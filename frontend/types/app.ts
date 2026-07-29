@@ -12,7 +12,7 @@ export type ToolId =
   | 'qr-code'
   | 'focus-plan';
 
-export type GameId = 'snake-brawl' | 'gomoku' | 'brain-challenge' | 'speed-racer';
+export type GameId = 'snake-brawl' | 'gomoku' | 'tetris' | 'brain-challenge' | 'speed-racer';
 
 export type ToolCategory = 'AI' | '音频' | '效率' | '多媒体' | '直播';
 export type ToolStatus = 'available' | 'coming-soon';

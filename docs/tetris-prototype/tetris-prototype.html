@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>俄罗斯方块 - 产品原型</title>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --page: #e7eefb;
+        --surface: #f7f9ff;
+        --surface-strong: #ffffff;
+        --surface-muted: #edf2ff;
+        --ink: #17223a;
+        --muted: #71809d;
+        --line: #d7e2f5;
+        --primary: #4b6bff;
+        --primary-soft: #e3e9ff;
+        --board: #101827;
+        --board-line: rgba(176, 203, 230, 0.09);
+        --cyan: #22c7d9;
+        --blue: #4b6bff;
+        --yellow: #f3c84b;
+        --green: #42c982;
+        --red: #ee6b5d;
+        --orange: #f49a45;
+        --magenta: #cf6de7;
+        --shadow: 0 28px 80px rgba(41, 60, 108, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+        letter-spacing: 0;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(75, 107, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(75, 107, 255, 0.035) 1px, transparent 1px),
+          var(--page);
+        background-size: 28px 28px;
+        color: var(--ink);
+        font-family: "Bahnschrift", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      button {
+        color: inherit;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .prototype-board {
+        display: grid;
+        gap: 58px;
+        grid-template-columns: 330px minmax(0, 1fr);
+        margin: 0 auto;
+        min-height: 1080px;
+        padding: 62px 64px;
+        width: min(1500px, 100%);
+      }
+
+      .brief {
+        align-self: center;
+        max-width: 330px;
+      }
+
+      .brief h1 {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .brief .subtitle {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.8;
+        margin: 14px 0 0;
+      }
+
+      .brief-section {
+        border-top: 1px solid rgba(105, 126, 169, 0.24);
+        margin-top: 30px;
+        padding-top: 24px;
+      }
+
+      .brief-section h2 {
+        font-size: 14px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .flow {
+        display: grid;
+        gap: 12px;
+      }
+
+      .flow-step {
+        align-items: center;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 30px 1fr;
+      }
+
+      .flow-index {
+        align-items: center;
+        background: var(--ink);
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .flow-step strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .flow-step span {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        margin-top: 2px;
+      }
+
+      .token-row {
+        display: flex;
+        gap: 9px;
+      }
+
+      .token {
+        border: 3px solid rgba(255, 255, 255, 0.72);
+        border-radius: 50%;
+        box-shadow: 0 3px 10px rgba(49, 64, 100, 0.12);
+        height: 26px;
+        width: 26px;
+      }
+
+      .brief-note {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.7;
+        margin: 14px 0 0;
+      }
+
+      .screens {
+        align-items: center;
+        display: flex;
+        gap: 30px;
+        justify-content: flex-end;
+        min-width: 0;
+      }
+
+      .screen-wrap {
+        min-width: 0;
+        text-align: center;
+      }
+
+      .screen-label {
+        color: #60708f;
+        font-size: 12px;
+        font-weight: 800;
+        margin: 0 0 12px;
+      }
+
+      .phone {
+        background: var(--surface);
+        border: 7px solid #141d33;
+        border-radius: 42px;
+        box-shadow: var(--shadow);
+        height: 844px;
+        overflow: hidden;
+        position: relative;
+        text-align: left;
+        width: 390px;
+      }
+
+      .phone::before {
+        background: #141d33;
+        border-radius: 0 0 16px 16px;
+        content: "";
+        height: 25px;
+        left: 50%;
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        width: 124px;
+        z-index: 20;
+      }
+
+      .screen {
+        background:
+          linear-gradient(rgba(75, 107, 255, 0.024) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(75, 107, 255, 0.024) 1px, transparent 1px),
+          var(--surface);
+        background-size: 20px 20px;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: space-between;
+        padding: 5px 19px 0;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .app-bar {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 40px 1fr 40px;
+        height: 50px;
+        padding: 0 14px;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 13px;
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        padding: 0;
+        width: 38px;
+      }
+
+      .icon-button svg {
+        height: 19px;
+        stroke-width: 2.4;
+        width: 19px;
+      }
+
+      .app-title {
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .pause-button {
+        background: var(--surface-muted);
+        color: var(--primary);
+      }
+
+      .game-content {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: calc(100% - 80px);
+        padding: 4px 14px 15px;
+      }
+
+      .score-strip {
+        border-bottom: 1px solid var(--line);
+        border-top: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: 1.3fr 0.8fr 0.8fr;
+        min-height: 52px;
+      }
+
+      .score-item {
+        align-items: center;
+        border-right: 1px solid var(--line);
+        display: flex;
+        justify-content: center;
+      }
+
+      .score-item:last-child {
+        border-right: 0;
+      }
+
+      .score-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .score-copy span {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .score-copy strong {
+        font-size: 16px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 900;
+        line-height: 18px;
+      }
+
+      .score-item:not(:first-child) .score-copy strong {
+        font-size: 14px;
+      }
+
+      .game-region {
+        display: grid;
+        flex: 1;
+        gap: 10px;
+        grid-template-columns: 244px 1fr;
+        min-height: 0;
+      }
+
+      .play-board {
+        aspect-ratio: 1 / 2;
+        background: var(--board);
+        border: 1px solid #273651;
+        border-radius: 16px;
+        box-shadow: 0 16px 38px rgba(16, 24, 39, 0.2);
+        display: grid;
+        gap: 2px;
+        grid-template-columns: repeat(10, 1fr);
+        grid-template-rows: repeat(20, 1fr);
+        overflow: hidden;
+        padding: 5px;
+        position: relative;
+      }
+
+      .board-cell {
+        background: rgba(255, 255, 255, 0.018);
+        border: 1px solid var(--board-line);
+        border-radius: 3px;
+        min-height: 0;
+        min-width: 0;
+      }
+
+      .board-cell.filled {
+        background: var(--piece);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        box-shadow:
+          inset 3px 3px 0 rgba(255, 255, 255, 0.22),
+          inset -3px -3px 0 rgba(0, 0, 0, 0.14);
+      }
+
+      .board-cell.ghost {
+        background: transparent;
+        border: 2px solid color-mix(in srgb, var(--piece) 55%, transparent);
+        box-shadow: none;
+      }
+
+      .cyan { --piece: var(--cyan); }
+      .blue { --piece: var(--blue); }
+      .yellow { --piece: var(--yellow); }
+      .green { --piece: var(--green); }
+      .red { --piece: var(--red); }
+      .orange { --piece: var(--orange); }
+      .magenta { --piece: var(--magenta); }
+
+      .side-rail {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        min-width: 0;
+      }
+
+      .rail-section {
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 10px;
+      }
+
+      .rail-label {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .mini-grid {
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(4, 14px);
+        grid-template-rows: repeat(3, 14px);
+        justify-content: center;
+        margin: 9px 0 3px;
+      }
+
+      .mini-cell {
+        border-radius: 3px;
+        height: 14px;
+        width: 14px;
+      }
+
+      .mini-cell.on {
+        background: var(--piece);
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.22);
+      }
+
+      .combo-panel {
+        align-items: center;
+        background: var(--ink);
+        border-radius: 14px;
+        color: #ffffff;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 104px;
+        padding: 10px 6px;
+      }
+
+      .combo-panel span {
+        color: #9eadc7;
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .combo-panel strong {
+        color: var(--yellow);
+        font-size: 22px;
+        font-weight: 900;
+        margin-top: 3px;
+      }
+
+      .speed-meter {
+        display: flex;
+        gap: 3px;
+        margin-top: 12px;
+      }
+
+      .speed-meter i {
+        background: #34415a;
+        border-radius: 2px;
+        height: 4px;
+        width: 9px;
+      }
+
+      .speed-meter i.on {
+        background: var(--cyan);
+      }
+
+      .controls {
+        align-items: center;
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr 1fr;
+        min-height: 114px;
+      }
+
+      .dpad,
+      .action-pad {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .action-pad {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .control-button {
+        align-items: center;
+        background: var(--surface-strong);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        box-shadow: 0 7px 14px rgba(56, 74, 116, 0.09);
+        display: flex;
+        height: 54px;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .control-button svg {
+        height: 22px;
+        stroke-width: 2.5;
+        width: 22px;
+      }
+
+      .control-button.down {
+        background: var(--surface-muted);
+      }
+
+      .control-button.rotate {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      .control-button.drop {
+        background: var(--primary);
+        color: #ffffff;
+      }
+
+      .pause-layer {
+        align-items: flex-end;
+        background: rgba(13, 20, 35, 0.58);
+        display: flex;
+        inset: 80px 0 0;
+        position: absolute;
+        z-index: 12;
+      }
+
+      .pause-sheet {
+        background: #ffffff;
+        border-radius: 28px 28px 0 0;
+        padding: 9px 18px 24px;
+        width: 100%;
+      }
+
+      .sheet-handle {
+        background: #d8deea;
+        border-radius: 99px;
+        height: 4px;
+        margin: 0 auto 17px;
+        width: 42px;
+      }
+
+      .pause-heading {
+        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .pause-heading h3 {
+        font-size: 21px;
+        margin: 0;
+      }
+
+      .pause-heading p {
+        color: var(--muted);
+        font-size: 10px;
+        margin: 5px 0 0;
+      }
+
+      .pause-badge {
+        align-items: center;
+        background: var(--primary-soft);
+        border-radius: 12px;
+        color: var(--primary);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .pause-badge svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .session-stats {
+        background: var(--surface-muted);
+        border-radius: 17px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 17px;
+        padding: 14px 4px;
+      }
+
+      .session-stat {
+        border-right: 1px solid var(--line);
+        text-align: center;
+      }
+
+      .session-stat:last-child {
+        border-right: 0;
+      }
+
+      .session-stat span {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+      }
+
+      .session-stat strong {
+        display: block;
+        font-size: 15px;
+        margin-top: 4px;
+      }
+
+      .pause-actions {
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 1fr 52px;
+        margin-top: 17px;
+      }
+
+      .resume-button,
+      .restart-button {
+        align-items: center;
+        border: 0;
+        border-radius: 15px;
+        display: flex;
+        height: 52px;
+        justify-content: center;
+      }
+
+      .resume-button {
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 900;
+        gap: 8px;
+      }
+
+      .restart-button {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      .resume-button svg,
+      .restart-button svg {
+        height: 19px;
+        stroke-width: 2.5;
+        width: 19px;
+      }
+
+      @media (max-width: 1220px) {
+        .prototype-board {
+          grid-template-columns: 1fr;
+        }
+
+        .brief {
+          max-width: 760px;
+        }
+
+        .screens {
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 850px) {
+        .prototype-board {
+          padding: 36px 18px 60px;
+        }
+
+        .screens {
+          flex-direction: column;
+        }
+
+        .phone {
+          max-width: calc(100vw - 36px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="prototype-board">
+      <section class="brief" aria-label="原型说明">
+        <h1>俄罗斯方块</h1>
+        <p class="subtitle">为移动端单手与双手操作优化的经典消除游戏，高对比棋盘让落点和连消反馈一眼可读。</p>
+
+        <div class="brief-section">
+          <h2>核心体验</h2>
+          <div class="flow">
+            <div class="flow-step"><div class="flow-index">01</div><div><strong>判断落点</strong><span>当前方块、投影、下一块同步可见</span></div></div>
+            <div class="flow-step"><div class="flow-index">02</div><div><strong>移动与旋转</strong><span>方向区和动作区左右分工</span></div></div>
+            <div class="flow-step"><div class="flow-index">03</div><div><strong>连续消行</strong><span>分数、等级、连消即时反馈</span></div></div>
+          </div>
+        </div>
+
+        <div class="brief-section">
+          <h2>视觉基调</h2>
+          <div class="token-row" aria-label="设计色板">
+            <span class="token" style="background:#17223a"></span>
+            <span class="token" style="background:#4b6bff"></span>
+            <span class="token" style="background:#22c7d9"></span>
+            <span class="token" style="background:#f3c84b"></span>
+            <span class="token" style="background:#ee6b5d"></span>
+          </div>
+          <p class="brief-note">延续 FunBox 的浅蓝底色和蓝色主操作色，棋盘使用墨黑蓝；彩色方块带轻微实体高光，清晰但不过度像素复古。</p>
+        </div>
+
+        <div class="brief-section">
+          <h2>操作原则</h2>
+          <p class="brief-note">左手负责横移和加速下落，右手负责旋转和硬降。暂停面板保留本局上下文，继续游戏是唯一主操作，重开保持次级。</p>
+        </div>
+      </section>
+
+      <section class="screens" aria-label="移动端游戏原型">
+        <div class="screen-wrap">
+          <p class="screen-label">A · 核心游戏界面</p>
+          <div class="phone">
+            <div class="screen">
+              <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+              <header class="app-bar">
+                <button class="icon-button" aria-label="返回" title="返回"><i data-lucide="arrow-left"></i></button>
+                <div class="app-title">俄罗斯方块</div>
+                <button class="icon-button pause-button" aria-label="暂停" title="暂停"><i data-lucide="pause"></i></button>
+              </header>
+
+              <div class="game-content">
+                <section class="score-strip" aria-label="本局数据">
+                  <div class="score-item"><div class="score-copy"><span>得分</span><strong>12,480</strong></div></div>
+                  <div class="score-item"><div class="score-copy"><span>等级</span><strong>06</strong></div></div>
+                  <div class="score-item"><div class="score-copy"><span>消行</span><strong>32</strong></div></div>
+                </section>
+
+                <div class="game-region">
+                  <div class="play-board" id="board-active" aria-label="十列二十行俄罗斯方块棋盘"></div>
+                  <aside class="side-rail">
+                    <section class="rail-section">
+                      <div class="rail-label">下一个</div>
+                      <div class="mini-grid" data-piece="t"></div>
+                    </section>
+                    <section class="rail-section">
+                      <div class="rail-label">暂存</div>
+                      <div class="mini-grid" data-piece="i"></div>
+                    </section>
+                    <section class="combo-panel">
+                      <span>连续消行</span>
+                      <strong>×3</strong>
+                      <div class="speed-meter" aria-label="下落速度"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+                    </section>
+                  </aside>
+                </div>
+
+                <div class="controls" aria-label="游戏控制">
+                  <div class="dpad">
+                    <button class="control-button" aria-label="向左" title="向左"><i data-lucide="chevron-left"></i></button>
+                    <button class="control-button down" aria-label="加速下落" title="加速下落"><i data-lucide="chevron-down"></i></button>
+                    <button class="control-button" aria-label="向右" title="向右"><i data-lucide="chevron-right"></i></button>
+                  </div>
+                  <div class="action-pad">
+                    <button class="control-button rotate" aria-label="旋转" title="旋转"><i data-lucide="rotate-cw"></i></button>
+                    <button class="control-button drop" aria-label="硬降" title="硬降"><i data-lucide="chevrons-down"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-wrap">
+          <p class="screen-label">B · 暂停与本局数据</p>
+          <div class="phone">
+            <div class="screen">
+              <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+              <header class="app-bar">
+                <button class="icon-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <div class="app-title">俄罗斯方块</div>
+                <button class="icon-button pause-button" aria-label="暂停"><i data-lucide="pause"></i></button>
+              </header>
+
+              <div class="game-content">
+                <section class="score-strip">
+                  <div class="score-item"><div class="score-copy"><span>得分</span><strong>12,480</strong></div></div>
+                  <div class="score-item"><div class="score-copy"><span>等级</span><strong>06</strong></div></div>
+                  <div class="score-item"><div class="score-copy"><span>消行</span><strong>32</strong></div></div>
+                </section>
+                <div class="game-region">
+                  <div class="play-board" id="board-paused"></div>
+                  <aside class="side-rail">
+                    <section class="rail-section"><div class="rail-label">下一个</div><div class="mini-grid" data-piece="t"></div></section>
+                    <section class="rail-section"><div class="rail-label">暂存</div><div class="mini-grid" data-piece="i"></div></section>
+                    <section class="combo-panel"><span>连续消行</span><strong>×3</strong><div class="speed-meter"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div></section>
+                  </aside>
+                </div>
+                <div class="controls">
+                  <div class="dpad"><button class="control-button"><i data-lucide="chevron-left"></i></button><button class="control-button down"><i data-lucide="chevron-down"></i></button><button class="control-button"><i data-lucide="chevron-right"></i></button></div>
+                  <div class="action-pad"><button class="control-button rotate"><i data-lucide="rotate-cw"></i></button><button class="control-button drop"><i data-lucide="chevrons-down"></i></button></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pause-layer">
+              <section class="pause-sheet" aria-label="暂停菜单">
+                <div class="sheet-handle"></div>
+                <div class="pause-heading">
+                  <div><h3>游戏暂停</h3><p>进度已保留，准备好后继续</p></div>
+                  <div class="pause-badge"><i data-lucide="pause"></i></div>
+                </div>
+                <div class="session-stats">
+                  <div class="session-stat"><span>本局得分</span><strong>12,480</strong></div>
+                  <div class="session-stat"><span>最高连消</span><strong>×3</strong></div>
+                  <div class="session-stat"><span>历史最佳</span><strong>38,260</strong></div>
+                </div>
+                <div class="pause-actions">
+                  <button class="resume-button"><i data-lucide="play"></i>继续游戏</button>
+                  <button class="restart-button" aria-label="重新开始" title="重新开始"><i data-lucide="rotate-ccw"></i></button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const settled = {
+        109: 'blue', 114: 'orange', 115: 'orange', 116: 'orange', 119: 'cyan',
+        125: 'blue', 128: 'green', 129: 'cyan', 134: 'magenta', 135: 'blue', 138: 'green', 139: 'cyan',
+        142: 'red', 143: 'red', 144: 'magenta', 145: 'blue', 146: 'yellow', 147: 'yellow', 148: 'green', 149: 'cyan',
+        151: 'red', 152: 'red', 153: 'magenta', 154: 'magenta', 155: 'blue', 156: 'yellow', 157: 'yellow', 158: 'green', 159: 'cyan',
+        161: 'orange', 162: 'orange', 163: 'orange', 164: 'magenta', 165: 'blue', 166: 'blue', 167: 'green', 168: 'green', 169: 'cyan',
+        170: 'cyan', 171: 'cyan', 172: 'orange', 173: 'orange', 174: 'red', 175: 'red', 176: 'blue', 177: 'green', 178: 'green', 179: 'yellow',
+        180: 'cyan', 181: 'cyan', 182: 'cyan', 183: 'orange', 184: 'red', 185: 'red', 186: 'blue', 187: 'blue', 188: 'yellow', 189: 'yellow',
+        190: 'green', 191: 'green', 192: 'magenta', 193: 'magenta', 194: 'orange', 195: 'orange', 196: 'red', 197: 'red', 198: 'yellow', 199: 'yellow'
+      };
+      const falling = { 36: 'magenta', 44: 'magenta', 45: 'magenta', 46: 'magenta' };
+      const ghost = { 96: 'magenta', 104: 'magenta', 105: 'magenta', 106: 'magenta' };
+
+      function createBoard(element) {
+        for (let index = 0; index < 200; index += 1) {
+          const cell = document.createElement('span');
+          cell.className = 'board-cell';
+          const color = falling[index] || settled[index];
+          if (color) cell.classList.add('filled', color);
+          if (ghost[index]) cell.classList.add('ghost', ghost[index]);
+          element.appendChild(cell);
+        }
+      }
+
+      const miniPieces = {
+        t: { color: 'magenta', cells: [1, 4, 5, 6] },
+        i: { color: 'cyan', cells: [4, 5, 6, 7] }
+      };
+
+      document.querySelectorAll('.mini-grid').forEach((grid) => {
+        const piece = miniPieces[grid.dataset.piece];
+        for (let index = 0; index < 12; index += 1) {
+          const cell = document.createElement('span');
+          cell.className = 'mini-cell';
+          if (piece.cells.includes(index)) cell.classList.add('on', piece.color);
+          grid.appendChild(cell);
+        }
+      });
+
+      document.querySelectorAll('.play-board').forEach(createBoard);
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

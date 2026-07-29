@@ -151,6 +151,16 @@ export const popularGames: GameItem[] = [
     status: 'playable',
   },
   {
+    id: 'tetris',
+    name: '俄罗斯方块',
+    genre: '经典消除',
+    tag: '可玩',
+    description: '支持方块暂存、落点投影、软降与硬降，用连续消行刷新最高分。',
+    accentColor: '#4b6bff',
+    route: '/games/tetris',
+    status: 'playable',
+  },
+  {
     id: 'brain-challenge',
     name: '脑力挑战',
     genre: '益智闯关',

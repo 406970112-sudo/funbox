@@ -157,7 +157,8 @@ function ToolTile({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
 
 function GameTile({ game, onPress }: { game: GameItem; onPress: () => void }) {
   const { colors } = useAppTheme();
-  const icon = game.id === 'gomoku' ? 'checkerboard' : 'snake';
+  const icon =
+    game.id === 'gomoku' ? 'checkerboard' : game.id === 'tetris' ? 'view-grid-outline' : 'snake';
 
   return (
     <Pressable
@@ -193,7 +194,7 @@ export function HomeScreen() {
   const quickTools = appTools
     .filter((tool) => tool.status === 'available' && tool.id !== HERO_TOOL_ID)
     .slice(0, 4);
-  const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 2);
+  const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 3);
   const availableToolCount = appTools.filter((tool) => tool.status === 'available').length;
 
   useEffect(() => {
@@ -288,7 +289,7 @@ export function HomeScreen() {
 
       <Reveal progress={reveals[3]}>
         <View style={styles.section}>
-          <SectionHeader title="放松一下" meta="两款小游戏，随时开一局" />
+          <SectionHeader title="放松一下" meta="三款小游戏，随时开一局" />
           <View style={styles.gameGrid}>
             {playableGames.map((game) => (
               <GameTile key={game.id} game={game} onPress={() => router.push(game.route)} />
