@@ -4,12 +4,12 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=__APP_ROOT__/email-agent-backend
-ExecStart=/usr/bin/node __APP_ROOT__/email-agent-backend/dist/app.js
+WorkingDirectory=__APP_ROOT__/email-agent/backend
+ExecStart=/usr/bin/node __APP_ROOT__/email-agent/backend/dist/app.js
 Restart=always
 RestartSec=5
 Environment=PORT=__EMAIL_AGENT_PORT__
-EnvironmentFile=-__APP_ROOT__/email-agent-backend/.env
+EnvironmentFile=__APP_ROOT__/email-agent/backend/.env
 User=__APP_USER__
 Group=__APP_GROUP__
 

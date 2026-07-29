@@ -43,6 +43,14 @@ server {
 
   add_header Permissions-Policy "camera=(self), microphone=(self)" always;
 
+  location = /email-agent {
+    return 301 /email-agent/;
+  }
+
+  location /email-agent/ {
+    try_files \$uri \$uri/ /email-agent/index.html;
+  }
+
   location = /api/agent {
     proxy_pass http://127.0.0.1:$EMAIL_AGENT_PORT/api/agent;
     proxy_http_version 1.1;
@@ -51,6 +59,16 @@ server {
     proxy_set_header X-Forwarded-Proto \$scheme;
     proxy_read_timeout 300s;
     proxy_send_timeout 300s;
+    proxy_buffering off;
+    proxy_cache off;
+  }
+
+  location = /api/recipients {
+    proxy_pass http://127.0.0.1:$EMAIL_AGENT_PORT/api/recipients;
+    proxy_http_version 1.1;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
   }
 
   location /api/ {
