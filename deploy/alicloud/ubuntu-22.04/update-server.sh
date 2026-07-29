@@ -31,6 +31,7 @@ BUILD_API="/tmp/$APP_NAME-api"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 DEPLOY_STARTED=false
+AUDIO_STORAGE_DIR=""
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%F %T')" "$*"
@@ -59,6 +60,29 @@ set_env_value() {
   ' "$file" >"$tmp"
   install -o root -g "$APP_GROUP" -m 640 "$tmp" "$file"
   rm -f "$tmp"
+}
+
+prepare_audio_storage() {
+  local configured_dir
+
+  configured_dir="$(awk -F= '$1 == "STORAGE_AUDIO_DIR" { sub(/^[^=]*=/, ""); print; exit }' "$BACKEND_ROOT/.env")"
+  configured_dir="${configured_dir:-voice}"
+
+  if [[ "$configured_dir" == /* ]]; then
+    AUDIO_STORAGE_DIR="$(realpath -m "$configured_dir")"
+  else
+    AUDIO_STORAGE_DIR="$(realpath -m "$BACKEND_ROOT/$configured_dir")"
+  fi
+
+  case "$AUDIO_STORAGE_DIR" in
+    "$BACKEND_ROOT"/*) ;;
+    *)
+      echo "STORAGE_AUDIO_DIR must resolve inside $BACKEND_ROOT."
+      exit 1
+      ;;
+  esac
+
+  install -d -o "$APP_USER" -g "$APP_GROUP" -m 755 "$AUDIO_STORAGE_DIR"
 }
 
 retry() {
@@ -327,6 +351,9 @@ if [[ -n "$CORS_ALLOWED_ORIGINS_OVERRIDE" ]]; then
   log "Applied deployment CORS allowed origins"
 fi
 
+prepare_audio_storage
+log "Prepared backend audio storage"
+
 cd "$APP_ROOT"
 
 if [[ "$SKIP_GIT_UPDATE" == "1" ]]; then
@@ -403,6 +430,7 @@ log "Verifying deployment"
 systemctl is-active --quiet "$BACKEND_SERVICE"
 systemctl is-active --quiet "$EMAIL_AGENT_SERVICE"
 systemctl is-active --quiet nginx
+runuser -u "$APP_USER" -- test -w "$AUDIO_STORAGE_DIR"
 curl --fail --silent --show-error http://127.0.0.1:3000/healthz
 if ! retry 10 2 curl --fail --silent --show-error "http://127.0.0.1:${EMAIL_AGENT_PORT}/api/"; then
   systemctl status --no-pager "$EMAIL_AGENT_SERVICE" || true
