@@ -41,6 +41,7 @@ BRANCH='main' \
 APP_ROOT='/srv/my-first-expo-app' \
 APP_DOMAIN='app.example.com' \
 API_DOMAIN='api.example.com' \
+CORS_ALLOWED_ORIGINS='https://app.example.com,https://www.app.example.com' \
 VOLC_APP_ID='your_app_id' \
 VOLC_ACCESS_TOKEN='your_access_token' \
 bash deploy/alicloud/ubuntu-22.04/deploy-project.sh
@@ -50,6 +51,7 @@ bash deploy/alicloud/ubuntu-22.04/deploy-project.sh
 
 - `VOLC_RESOURCE_ID`
 - `VOLC_ENDPOINT`
+- `CORS_ALLOWED_ORIGINS`
 - `SERVER_PORT`
 - `RATE_LIMIT_WINDOW_MS`
 - `RATE_LIMIT_MAX_REQUESTS`

@@ -19,6 +19,7 @@ FETCH_TIMEOUT_SECONDS="${FETCH_TIMEOUT_SECONDS:-120}"
 FETCH_RETRIES="${FETCH_RETRIES:-5}"
 FETCH_RETRY_DELAY_SECONDS="${FETCH_RETRY_DELAY_SECONDS:-15}"
 BACKUP_ROOT="${BACKUP_ROOT:-/srv/deploy-backups}"
+CORS_ALLOWED_ORIGINS_OVERRIDE="${CORS_ALLOWED_ORIGINS_OVERRIDE:-}"
 
 FRONTEND_ROOT="$APP_ROOT/frontend"
 BACKEND_ROOT="$APP_ROOT/backend"
@@ -33,6 +34,31 @@ DEPLOY_STARTED=false
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%F %T')" "$*"
+}
+
+set_env_value() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+  local tmp
+
+  tmp="$(mktemp)"
+  awk -v key="$key" -v value="$value" '
+    BEGIN { found = 0 }
+    index($0, key "=") == 1 {
+      print key "=" value
+      found = 1
+      next
+    }
+    { print }
+    END {
+      if (!found) {
+        print key "=" value
+      }
+    }
+  ' "$file" >"$tmp"
+  install -o root -g "$APP_GROUP" -m 640 "$tmp" "$file"
+  rm -f "$tmp"
 }
 
 retry() {
@@ -294,6 +320,11 @@ fi
 if [[ ! -f "$FRONTEND_ROOT/.env" || ! -f "$BACKEND_ROOT/.env" || ! -f "$EMAIL_AGENT_ROOT/.env" ]]; then
   echo "frontend/.env, backend/.env, and email-agent/backend/.env must already exist."
   exit 1
+fi
+
+if [[ -n "$CORS_ALLOWED_ORIGINS_OVERRIDE" ]]; then
+  set_env_value "$BACKEND_ROOT/.env" "CORS_ALLOWED_ORIGINS" "$CORS_ALLOWED_ORIGINS_OVERRIDE"
+  log "Applied deployment CORS allowed origins"
 fi
 
 cd "$APP_ROOT"
