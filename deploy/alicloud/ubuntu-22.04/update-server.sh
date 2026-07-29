@@ -32,6 +32,9 @@ TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 DEPLOY_STARTED=false
 AUDIO_STORAGE_DIR=""
+AVATAR_STORAGE_DIR=""
+DATABASE_FILE=""
+JWT_SECRET_FILE=""
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%F %T')" "$*"
@@ -83,6 +86,54 @@ prepare_audio_storage() {
   esac
 
   install -d -o "$APP_USER" -g "$APP_GROUP" -m 755 "$AUDIO_STORAGE_DIR"
+}
+
+prepare_auth_storage() {
+  local avatar_dir
+  local database_path
+  local jwt_secret_path
+
+  avatar_dir="$(awk -F= '$1 == "STORAGE_AVATAR_DIR" { sub(/^[^=]*=/, ""); print; exit }' "$BACKEND_ROOT/.env")"
+  database_path="$(awk -F= '$1 == "DATABASE_PATH" { sub(/^[^=]*=/, ""); print; exit }' "$BACKEND_ROOT/.env")"
+  jwt_secret_path="$(awk -F= '$1 == "AUTH_JWT_SECRET_FILE" { sub(/^[^=]*=/, ""); print; exit }' "$BACKEND_ROOT/.env")"
+
+  avatar_dir="${avatar_dir:-data/avatars}"
+  database_path="${database_path:-data/app.db}"
+  jwt_secret_path="${jwt_secret_path:-data/jwt-secret}"
+
+  set_env_value "$BACKEND_ROOT/.env" "STORAGE_AVATAR_DIR" "$avatar_dir"
+  set_env_value "$BACKEND_ROOT/.env" "DATABASE_PATH" "$database_path"
+  set_env_value "$BACKEND_ROOT/.env" "AUTH_JWT_SECRET_FILE" "$jwt_secret_path"
+
+  if [[ "$avatar_dir" == /* ]]; then
+    AVATAR_STORAGE_DIR="$(realpath -m "$avatar_dir")"
+  else
+    AVATAR_STORAGE_DIR="$(realpath -m "$BACKEND_ROOT/$avatar_dir")"
+  fi
+  if [[ "$database_path" == /* ]]; then
+    DATABASE_FILE="$(realpath -m "$database_path")"
+  else
+    DATABASE_FILE="$(realpath -m "$BACKEND_ROOT/$database_path")"
+  fi
+  if [[ "$jwt_secret_path" == /* ]]; then
+    JWT_SECRET_FILE="$(realpath -m "$jwt_secret_path")"
+  else
+    JWT_SECRET_FILE="$(realpath -m "$BACKEND_ROOT/$jwt_secret_path")"
+  fi
+
+  for path in "$AVATAR_STORAGE_DIR" "$DATABASE_FILE" "$JWT_SECRET_FILE"; do
+    case "$path" in
+      "$BACKEND_ROOT"/*) ;;
+      *)
+        echo "Auth storage paths must resolve inside $BACKEND_ROOT."
+        exit 1
+        ;;
+    esac
+  done
+
+  install -d -o "$APP_USER" -g "$APP_GROUP" -m 755 "$AVATAR_STORAGE_DIR"
+  install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$(dirname "$DATABASE_FILE")"
+  install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$(dirname "$JWT_SECRET_FILE")"
 }
 
 retry() {
@@ -146,6 +197,7 @@ configure_nginx_api_proxies() {
   local has_email_frontend
   local has_api
   local has_voice
+  local has_avatars
   local has_health
 
   shopt -s nullglob
@@ -190,6 +242,11 @@ configure_nginx_api_proxies() {
     else
       has_voice=0
     fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]+/avatars/[[:space:]]*\{' "$stripped"; then
+      has_avatars=1
+    else
+      has_avatars=0
+    fi
     if grep -Eq '^[[:space:]]*location[[:space:]]*=[[:space:]]*/healthz[[:space:]]*\{' "$stripped"; then
       has_health=1
     else
@@ -204,6 +261,7 @@ configure_nginx_api_proxies() {
       -v has_email_frontend="$has_email_frontend" \
       -v has_api="$has_api" \
       -v has_voice="$has_voice" \
+      -v has_avatars="$has_avatars" \
       -v has_health="$has_health" '
       BEGIN {
         block = ""
@@ -256,6 +314,16 @@ configure_nginx_api_proxies() {
           block = block \
                   "  location /voice/ {\n" \
                   "    proxy_pass http://127.0.0.1:" backend_port "/voice/;\n" \
+                  "    proxy_http_version 1.1;\n" \
+                  "    proxy_set_header Host $host;\n" \
+                  "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n" \
+                  "    proxy_set_header X-Forwarded-Proto $scheme;\n" \
+                  "  }\n\n"
+        }
+        if (has_avatars != 1) {
+          block = block \
+                  "  location /avatars/ {\n" \
+                  "    proxy_pass http://127.0.0.1:" backend_port "/avatars/;\n" \
                   "    proxy_http_version 1.1;\n" \
                   "    proxy_set_header Host $host;\n" \
                   "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n" \
@@ -353,6 +421,8 @@ fi
 
 prepare_audio_storage
 log "Prepared backend audio storage"
+prepare_auth_storage
+log "Prepared backend account storage"
 
 cd "$APP_ROOT"
 
@@ -431,6 +501,9 @@ systemctl is-active --quiet "$BACKEND_SERVICE"
 systemctl is-active --quiet "$EMAIL_AGENT_SERVICE"
 systemctl is-active --quiet nginx
 runuser -u "$APP_USER" -- test -w "$AUDIO_STORAGE_DIR"
+runuser -u "$APP_USER" -- test -w "$AVATAR_STORAGE_DIR"
+runuser -u "$APP_USER" -- test -w "$(dirname "$DATABASE_FILE")"
+runuser -u "$APP_USER" -- test -w "$(dirname "$JWT_SECRET_FILE")"
 curl --fail --silent --show-error http://127.0.0.1:3000/healthz
 if ! retry 10 2 curl --fail --silent --show-error "http://127.0.0.1:${EMAIL_AGENT_PORT}/api/"; then
   systemctl status --no-pager "$EMAIL_AGENT_SERVICE" || true

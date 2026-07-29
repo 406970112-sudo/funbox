@@ -1,159 +1,232 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import type { ComponentProps } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { profile } from '@/mocks/app-data';
+import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { appTools, getToolById, popularGames, recentActivities } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 
-const benefitPalettes = [
-  { backgroundColor: '#ffffff' },
-  { backgroundColor: '#eef3ff' },
-  { backgroundColor: '#fff0f5' },
-] as const;
+const availableToolCount = appTools.filter((tool) => tool.status === 'available').length;
+const playableGameCount = popularGames.filter((game) => game.status === 'playable').length;
+
+const recentToolActivities = recentActivities.flatMap((activity) => {
+  if (!activity.toolId) return [];
+  const tool = getToolById(activity.toolId);
+  return tool?.status === 'available' ? [{ activity, tool }] : [];
+});
 
 export function ProfileScreen() {
+  const router = useRouter();
   const { colors } = useAppTheme();
+  const { signOut, status, user } = useAuth();
+  const isAuthenticated = status === 'authenticated' && user !== null;
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
-      <View pointerEvents="none" style={styles.backgroundLayer}>
-        <View style={[styles.backgroundOrbTop, { backgroundColor: '#dce7ff' }]} />
-        <View style={[styles.backgroundOrbBottom, { backgroundColor: '#ffddeb' }]} />
-      </View>
-
       <View style={styles.topBar}>
-        <ThemedText style={styles.pageTitle}>个人中心</ThemedText>
-        <View style={styles.topActions}>
-          <View style={[styles.topActionButton, { backgroundColor: colors.surface }]}>
-            <MaterialCommunityIcons name="gift-outline" size={20} color={colors.text} />
-          </View>
-          <View style={[styles.topActionButton, { backgroundColor: colors.surface }]}>
-            <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
-          </View>
+        <View>
+          <ThemedText style={styles.pageTitle}>我的</ThemedText>
+          <ThemedText style={[styles.pageSubtitle, { color: colors.mutedText }]}>个人工作台</ThemedText>
+        </View>
+        <View style={[styles.brandMark, { backgroundColor: colors.surface }]}>
+          <MaterialCommunityIcons name="cube-outline" size={18} color={colors.primary} />
+          <ThemedText style={[styles.brandMarkText, { color: colors.primary }]}>FunBox</ThemedText>
         </View>
       </View>
 
       <View style={[styles.profileHero, { backgroundColor: colors.hero }]}>
-        <View style={styles.heroBubblePink} />
-        <View style={styles.heroBubbleBlue} />
-        <View style={styles.profileHeaderRow}>
-          <View style={styles.avatarWrap}>
-            <MaterialCommunityIcons name="account" size={28} color="#ffffff" />
+        <View pointerEvents="none" style={styles.heroAccentBack} />
+        <View pointerEvents="none" style={styles.heroAccentFront} />
+        {status === 'loading' ? (
+          <View style={styles.profileLoading}>
+            <ActivityIndicator color="#ffffff" />
+            <ThemedText style={styles.profileLoadingText}>正在读取账户</ThemedText>
           </View>
-          <View style={styles.profileCopy}>
-            <ThemedText style={styles.profileName}>{profile.user.name}</ThemedText>
-            <ThemedText style={styles.profileMeta}>
-              ID: {profile.user.id} · {profile.user.membership}
+        ) : (
+          <>
+            <View style={styles.profileHeaderRow}>
+              <View style={styles.avatarWrap}>
+                {isAuthenticated && user.avatarUrl ? (
+                  <Image
+                    contentFit="cover"
+                    source={{ uri: user.avatarUrl }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <MaterialCommunityIcons name="account" size={28} color="#ffffff" />
+                )}
+              </View>
+              <View style={styles.profileCopy}>
+                <ThemedText style={styles.profileName}>
+                  {isAuthenticated ? user.displayName : '登录 FunBox'}
+                </ThemedText>
+                <ThemedText style={styles.profileMeta}>
+                  {isAuthenticated ? `@${user.username}` : '建立你的个人空间'}
+                </ThemedText>
+              </View>
+              {isAuthenticated ? (
+                <Pressable
+                  accessibilityLabel="编辑个人资料"
+                  accessibilityRole="button"
+                  onPress={() => router.push('/profile/edit')}
+                  style={styles.heroEditButton}>
+                  <MaterialCommunityIcons name="pencil-outline" size={19} color="#ffffff" />
+                </Pressable>
+              ) : null}
+            </View>
+
+            <ThemedText style={styles.profileSignature}>
+              {isAuthenticated
+                ? '欢迎回来，继续使用你的轻量工具箱。'
+                : '登录后即可修改昵称、头像和账户密码。'}
             </ThemedText>
+
+            {!isAuthenticated ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/auth')}
+                style={({ pressed }) => [styles.heroLoginButton, { opacity: pressed ? 0.75 : 1 }]}>
+                <ThemedText style={styles.heroLoginText}>登录 / 注册</ThemedText>
+                <MaterialCommunityIcons name="arrow-right" size={18} color="#151b3b" />
+              </Pressable>
+            ) : null}
+
+            <AvailabilitySummary />
+          </>
+        )}
+      </View>
+
+      {isAuthenticated ? (
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>账户</ThemedText>
+          <View style={styles.accountActions}>
+            <AccountAction
+              icon="account-edit-outline"
+              label="编辑资料"
+              onPress={() => router.push('/profile/edit')}
+            />
+            <AccountAction
+              icon="shield-key-outline"
+              label="修改密码"
+              onPress={() => router.push('/profile/security')}
+            />
+            <AccountAction
+              destructive
+              icon="logout"
+              label="退出登录"
+              onPress={() => void signOut()}
+            />
           </View>
         </View>
-
-        <View style={styles.metricGrid}>
-          {profile.metrics.map((metric) => (
-            <View key={metric.id} style={styles.metricCard}>
-              <ThemedText style={styles.metricValue}>{metric.value}</ThemedText>
-              <ThemedText style={styles.metricLabel}>{metric.label}</ThemedText>
-            </View>
-          ))}
-        </View>
-      </View>
+      ) : null}
 
       <View style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>我的权益</ThemedText>
-        <View style={styles.benefitsGrid}>
-          {profile.benefits.map((benefit, index) => (
-            <View
-              key={benefit.id}
-              style={[
-                styles.benefitCard,
-                benefitPalettes[index],
-                {
-                  borderColor: colors.line,
-                },
-              ]}>
-              <ThemedText style={styles.benefitValue}>{benefit.value}</ThemedText>
-              <ThemedText style={[styles.benefitLabel, { color: colors.mutedText }]}>
-                {benefit.label}
-              </ThemedText>
-            </View>
-          ))}
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>最近使用</ThemedText>
+          <ThemedText style={[styles.sectionMeta, { color: colors.mutedText }]}>
+            {recentToolActivities.length} 项记录
+          </ThemedText>
         </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>常用功能</ThemedText>
-        <View style={styles.menuGroup}>
-          {profile.menus.map((menu) => (
+        <View style={styles.activityList}>
+          {recentToolActivities.map(({ activity, tool }) => (
             <Pressable
-              key={menu.id}
-              style={[
-                styles.menuRow,
+              accessibilityLabel={`${activity.title}，${activity.actionLabel}`}
+              accessibilityRole="button"
+              key={activity.id}
+              onPress={() => router.push(tool.route)}
+              style={({ pressed }) => [
+                styles.activityRow,
                 {
                   backgroundColor: colors.surface,
                   borderColor: colors.line,
+                  opacity: pressed ? 0.72 : 1,
                 },
               ]}>
-              <ThemedText style={styles.menuTitle}>{menu.title}</ThemedText>
-              {menu.badge ? (
-                <View style={[styles.menuBadge, { backgroundColor: colors.primary }]}>
-                  <ThemedText style={styles.menuBadgeText}>{menu.badge}</ThemedText>
-                </View>
-              ) : (
-                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.mutedText} />
-              )}
+              <View style={[styles.activityIcon, { backgroundColor: `${tool.accentColor}18` }]}>
+                <MaterialCommunityIcons name={tool.icon} size={24} color={tool.accentColor} />
+              </View>
+              <View style={styles.activityCopy}>
+                <ThemedText numberOfLines={1} style={styles.activityTitle}>
+                  {activity.title}
+                </ThemedText>
+                <ThemedText
+                  numberOfLines={1}
+                  style={[styles.activityDescription, { color: colors.mutedText }]}>
+                  {tool.tagline}
+                </ThemedText>
+              </View>
+              <View style={styles.activityAction}>
+                <ThemedText style={[styles.activityActionText, { color: tool.accentColor }]}>
+                  {activity.actionLabel}
+                </ThemedText>
+                <MaterialCommunityIcons name="arrow-right" size={18} color={tool.accentColor} />
+              </View>
             </Pressable>
           ))}
-        </View>
-      </View>
-
-      <View
-        style={[
-          styles.growthCard,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.line,
-          },
-        ]}>
-        <ThemedText style={styles.growthTitle}>{profile.growthTask.title}</ThemedText>
-        <ThemedText style={[styles.growthDescription, { color: colors.mutedText }]}>
-          {profile.growthTask.description}
-        </ThemedText>
-        <View style={[styles.growthAction, { backgroundColor: colors.hero }]}>
-          <ThemedText style={styles.growthActionText}>{profile.growthTask.actionLabel}</ThemedText>
         </View>
       </View>
     </MobileScreen>
   );
 }
 
+function AvailabilitySummary() {
+  return (
+    <View style={styles.availabilityRow}>
+      <View style={styles.availabilityItem}>
+        <ThemedText style={styles.availabilityValue}>{availableToolCount}</ThemedText>
+        <ThemedText style={styles.availabilityLabel}>可用工具</ThemedText>
+      </View>
+      <View style={styles.availabilityDivider} />
+      <View style={styles.availabilityItem}>
+        <ThemedText style={styles.availabilityValue}>{playableGameCount}</ThemedText>
+        <ThemedText style={styles.availabilityLabel}>可玩游戏</ThemedText>
+      </View>
+    </View>
+  );
+}
+
+type AccountActionProps = {
+  destructive?: boolean;
+  icon: ComponentProps<typeof MaterialCommunityIcons>['name'];
+  label: string;
+  onPress: () => void;
+};
+
+function AccountAction({ destructive = false, icon, label, onPress }: AccountActionProps) {
+  const { colors } = useAppTheme();
+  const accentColor = destructive ? '#d86f5b' : colors.primary;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.accountAction,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.line,
+          opacity: pressed ? 0.72 : 1,
+        },
+      ]}>
+      <View style={[styles.accountActionIcon, { backgroundColor: `${accentColor}18` }]}>
+        <MaterialCommunityIcons name={icon} size={20} color={accentColor} />
+      </View>
+      <ThemedText style={[styles.accountActionLabel, destructive ? { color: accentColor } : null]}>
+        {label}
+      </ThemedText>
+      <MaterialCommunityIcons name="chevron-right" size={21} color={colors.mutedText} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   pageContent: {
+    gap: 20,
     paddingTop: 14,
-  },
-  backgroundLayer: {
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
-  backgroundOrbTop: {
-    borderRadius: 999,
-    height: 220,
-    opacity: 0.48,
-    position: 'absolute',
-    right: -88,
-    top: -88,
-    width: 220,
-  },
-  backgroundOrbBottom: {
-    borderRadius: 999,
-    height: 150,
-    left: -44,
-    opacity: 0.58,
-    position: 'absolute',
-    top: 310,
-    width: 150,
   },
   topBar: {
     alignItems: 'center',
@@ -164,44 +237,47 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '800',
   },
-  topActions: {
-    flexDirection: 'row',
-    gap: 10,
+  pageSubtitle: {
+    fontSize: 12,
+    marginTop: 4,
   },
-  topActionButton: {
+  brandMark: {
     alignItems: 'center',
-    borderRadius: 18,
-    elevation: 1,
-    height: 38,
-    justifyContent: 'center',
-    shadowOffset: { height: 10, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    width: 38,
+    borderRadius: 16,
+    flexDirection: 'row',
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  brandMarkText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   profileHero: {
-    borderRadius: 30,
+    borderRadius: 28,
     overflow: 'hidden',
-    padding: 20,
+    padding: 22,
     position: 'relative',
   },
-  heroBubblePink: {
-    backgroundColor: 'rgba(255,107,143,0.28)',
-    borderRadius: 999,
-    height: 132,
+  heroAccentBack: {
+    backgroundColor: 'rgba(75,107,255,0.32)',
+    borderRadius: 24,
+    height: 180,
     position: 'absolute',
-    right: -20,
-    top: -34,
-    width: 132,
+    right: -44,
+    top: -58,
+    transform: [{ rotate: '18deg' }],
+    width: 112,
   },
-  heroBubbleBlue: {
-    backgroundColor: 'rgba(98,154,255,0.22)',
-    borderRadius: 999,
-    bottom: -46,
-    height: 128,
-    left: -8,
-    width: 128,
+  heroAccentFront: {
+    backgroundColor: 'rgba(255,107,143,0.28)',
+    borderRadius: 18,
+    height: 108,
     position: 'absolute',
+    right: 18,
+    top: -40,
+    transform: [{ rotate: '-18deg' }],
+    width: 58,
   },
   profileHeaderRow: {
     alignItems: 'center',
@@ -211,12 +287,18 @@ const styles = StyleSheet.create({
   avatarWrap: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 999,
+    borderRadius: 20,
     height: 60,
     justifyContent: 'center',
+    overflow: 'hidden',
     width: 60,
   },
+  avatarImage: {
+    height: '100%',
+    width: '100%',
+  },
   profileCopy: {
+    flex: 1,
     gap: 4,
   },
   profileName: {
@@ -228,104 +310,155 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.72)',
     fontSize: 13,
   },
-  metricGrid: {
+  profileSignature: {
+    color: 'rgba(255,255,255,0.76)',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 18,
+    maxWidth: 278,
+  },
+  profileLoading: {
+    alignItems: 'center',
     flexDirection: 'row',
     gap: 10,
-    marginTop: 18,
+    minHeight: 126,
   },
-  metricCard: {
+  profileLoadingText: {
+    color: 'rgba(255,255,255,0.72)',
+    fontSize: 13,
+  },
+  heroEditButton: {
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 20,
-    flex: 1,
-    paddingHorizontal: 12,
+    borderRadius: 15,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  heroLoginButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    flexDirection: 'row',
+    gap: 7,
+    marginTop: 16,
+    minHeight: 42,
+    paddingHorizontal: 14,
+  },
+  heroLoginText: {
+    color: '#151b3b',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  availabilityRow: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    borderRadius: 18,
+    flexDirection: 'row',
+    marginTop: 18,
+    paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  metricValue: {
+  availabilityItem: {
+    alignItems: 'baseline',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 7,
+  },
+  availabilityValue: {
     color: '#ffffff',
     fontSize: 20,
     fontWeight: '800',
   },
-  metricLabel: {
+  availabilityLabel: {
     color: 'rgba(255,255,255,0.72)',
     fontSize: 12,
-    marginTop: 6,
+  },
+  availabilityDivider: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    height: 22,
+    marginHorizontal: 14,
+    width: 1,
   },
   section: {
     gap: 12,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  benefitsGrid: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  benefitCard: {
-    borderRadius: 22,
-    borderWidth: 1,
-    flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-  },
-  benefitValue: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  benefitLabel: {
-    fontSize: 12,
-    marginTop: 6,
-  },
-  menuGroup: {
-    gap: 10,
-  },
-  menuRow: {
+  sectionHeader: {
     alignItems: 'center',
-    borderRadius: 22,
-    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 15,
   },
-  menuTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  menuBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  menuBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  growthCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 18,
-  },
-  growthTitle: {
-    fontSize: 17,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '800',
   },
-  growthDescription: {
-    fontSize: 14,
-    lineHeight: 22,
-    marginTop: 6,
+  sectionMeta: {
+    fontSize: 12,
   },
-  growthAction: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    marginTop: 14,
-    paddingHorizontal: 14,
+  accountActions: {
+    gap: 8,
+  },
+  accountAction: {
+    alignItems: 'center',
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 11,
+    minHeight: 62,
+    paddingHorizontal: 13,
     paddingVertical: 10,
   },
-  growthActionText: {
-    color: '#ffffff',
+  accountActionIcon: {
+    alignItems: 'center',
+    borderRadius: 14,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  accountActionLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  activityList: {
+    gap: 10,
+  },
+  activityRow: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 82,
+    padding: 14,
+  },
+  activityIcon: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
+  activityCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  activityTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  activityDescription: {
     fontSize: 12,
-    fontWeight: '700',
+    marginTop: 5,
+  },
+  activityAction: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 2,
+  },
+  activityActionText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
 });

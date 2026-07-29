@@ -12,20 +12,28 @@ import (
 	"path/filepath"
 	"strings"
 
+	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
 )
 
 type Server struct {
+	authService        *auth.Service
 	cfg                config.Config
 	rateLimiter        *RateLimiter
 	translationService *translation.Service
 	ttsService         *tts.Service
 }
 
-func NewServer(cfg config.Config, ttsService *tts.Service, translationService *translation.Service) *http.Server {
+func NewServer(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+) *http.Server {
 	api := &Server{
+		authService:        authService,
 		cfg:                cfg,
 		rateLimiter:        NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		translationService: translationService,
@@ -35,11 +43,18 @@ func NewServer(cfg config.Config, ttsService *tts.Service, translationService *t
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", api.handleHealthz)
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
+	mux.HandleFunc("POST /api/v1/auth/register", api.withAPIPipeline(api.handleRegister))
+	mux.HandleFunc("POST /api/v1/auth/login", api.withAPIPipeline(api.handleLogin))
+	mux.HandleFunc("GET /api/v1/auth/me", api.withAuth(api.handleMe))
+	mux.HandleFunc("PATCH /api/v1/users/me", api.withAuth(api.withAPIPipeline(api.handleUpdateProfile)))
+	mux.HandleFunc("PATCH /api/v1/users/me/password", api.withAuth(api.withAPIPipeline(api.handleChangePassword)))
+	mux.HandleFunc("POST /api/v1/users/me/avatar", api.withAuth(api.withAvatarPipeline(api.handleUploadAvatar)))
 	mux.HandleFunc("POST /api/v1/translation/translate", api.withTextPipeline(api.handleTranslate))
 	mux.HandleFunc("POST /api/translate", api.withTextPipeline(api.handleTranslate))
 	mux.HandleFunc("POST /api/v1/tts/synthesize", api.withTTSPipeline(api.handleSynthesize))
 	mux.HandleFunc("POST /api/synthesize", api.withTTSPipeline(api.handleSynthesize))
 	mux.HandleFunc("GET /voice/", api.handleServeAudio)
+	mux.HandleFunc("GET /avatars/", api.handleServeAvatar)
 
 	handler := api.withGlobalMiddleware(mux)
 
@@ -48,6 +63,47 @@ func NewServer(cfg config.Config, ttsService *tts.Service, translationService *t
 		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
+	}
+}
+
+func (s *Server) withAPIPipeline(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !s.allowOrigin(r) {
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": "origin_not_allowed"})
+			return
+		}
+
+		clientIP := clientIPFromRequest(r)
+		if retryAfter, limited := s.rateLimiter.Allow(clientIP); limited {
+			writeJSON(w, http.StatusTooManyRequests, map[string]any{
+				"error":             "rate_limited",
+				"retryAfterSeconds": retryAfter,
+			})
+			return
+		}
+
+		r.Body = http.MaxBytesReader(w, r.Body, s.cfg.Security.MaxRequestBodyBytes)
+		next.ServeHTTP(w, r)
+	}
+}
+
+func (s *Server) withAvatarPipeline(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !s.allowOrigin(r) {
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": "origin_not_allowed"})
+			return
+		}
+
+		clientIP := clientIPFromRequest(r)
+		if retryAfter, limited := s.rateLimiter.Allow(clientIP); limited {
+			writeJSON(w, http.StatusTooManyRequests, map[string]any{
+				"error":             "rate_limited",
+				"retryAfterSeconds": retryAfter,
+			})
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	}
 }
 
@@ -259,7 +315,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Vary", "Origin")
 	}
 
-	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
 }
 

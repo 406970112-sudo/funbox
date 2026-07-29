@@ -9,12 +9,24 @@ import (
 
 type Config struct {
 	AppEnv   string
+	Auth     AuthConfig
+	Database DatabaseConfig
 	Server   ServerConfig
 	Security SecurityConfig
 	Storage  StorageConfig
 	OpenAI   OpenAIConfig
 	TTS      TTSConfig
 	Volc     VolcConfig
+}
+
+type AuthConfig struct {
+	JWTSecret     string
+	JWTSecretFile string
+	TokenTTL      time.Duration
+}
+
+type DatabaseConfig struct {
+	Path string
 }
 
 type ServerConfig struct {
@@ -33,7 +45,9 @@ type SecurityConfig struct {
 }
 
 type StorageConfig struct {
-	AudioDir string
+	AudioDir       string
+	AvatarDir      string
+	MaxAvatarBytes int64
 }
 
 type TTSConfig struct {
@@ -60,6 +74,14 @@ type VolcConfig struct {
 func Load() (Config, error) {
 	cfg := Config{
 		AppEnv: envFirst("APP_ENV", "NODE_ENV", "development"),
+		Auth: AuthConfig{
+			JWTSecret:     envFirst("AUTH_JWT_SECRET", ""),
+			JWTSecretFile: envFirst("AUTH_JWT_SECRET_FILE", "data/jwt-secret"),
+			TokenTTL:      durationFromMs("AUTH_TOKEN_TTL_MS", "", "604800000"),
+		},
+		Database: DatabaseConfig{
+			Path: envFirst("DATABASE_PATH", "data/app.db"),
+		},
 		Server: ServerConfig{
 			AllowedOrigins: splitCSV(envFirst("CORS_ALLOWED_ORIGINS", "VOICE_ALLOWED_ORIGINS", "")),
 			Host:           envFirst("SERVER_HOST", "VOICE_SERVER_HOST", "0.0.0.0"),
@@ -74,7 +96,9 @@ func Load() (Config, error) {
 			RateLimitWindow:     durationFromMs("RATE_LIMIT_WINDOW_MS", "VOICE_RATE_LIMIT_WINDOW_MS", "900000"),
 		},
 		Storage: StorageConfig{
-			AudioDir: envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
+			AudioDir:       envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
+			AvatarDir:      envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
+			MaxAvatarBytes: int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
 		},
 		OpenAI: OpenAIConfig{
 			APIKey:          envFirst("OPENAI_API_KEY", ""),

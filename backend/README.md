@@ -2,7 +2,7 @@
 
 这是当前项目推荐使用的后端基础结构。它不是只为 TTS 临时写的一层转发，而是一个可以继续承载更多业务模块的 Go 服务。
 
-当前已经把 TTS 做成了其中一个模块，后面你可以继续往里加用户、鉴权、订单、任务、文件、日志等能力。
+当前已经接入用户鉴权、个人资料、头像文件、TTS 和翻译模块，后续可以继续增加订单、任务和日志等能力。
 
 ## 目录结构
 
@@ -12,6 +12,10 @@
   统一管理环境变量和服务配置。
 - `internal/httpapi`
   放 HTTP 服务相关的通用能力，例如路由装配、跨域、限流、错误返回。
+- `internal/auth`
+  用户名密码校验、bcrypt 密码哈希、JWT 签发与校验。
+- `internal/user`
+  SQLite 用户数据访问和自动建表。
 - `internal/tts`
   当前的 TTS 模块，包括请求结构、业务服务和火山引擎 provider。
 
@@ -21,6 +25,20 @@
   健康检查。
 - `GET /api/v1/system/ping`
   系统探活示例接口。
+- `POST /api/v1/auth/register`
+  使用账号、密码和昵称注册，成功后返回登录令牌。
+- `POST /api/v1/auth/login`
+  使用账号和密码登录。
+- `GET /api/v1/auth/me`
+  读取当前登录用户，需要 Bearer Token。
+- `PATCH /api/v1/users/me`
+  修改当前用户昵称。
+- `POST /api/v1/users/me/avatar`
+  上传 JPG 或 PNG 头像，文件字段名为 `avatar`。
+- `PATCH /api/v1/users/me/password`
+  修改密码并返回新令牌，旧令牌立即失效。
+- `GET /avatars/{fileName}`
+  读取用户头像文件。
 - `POST /api/v1/tts/synthesize`
   新版 TTS 接口。
 - `POST /api/synthesize`
@@ -36,10 +54,8 @@
 - `httpapi` 负责对外提供 HTTP 服务
 - `tts` 负责语音业务
 
-以后继续加业务时，推荐每个业务一个目录，例如：
+继续增加业务时，推荐每个业务一个目录，例如：
 
-- `internal/auth`
-- `internal/user`
 - `internal/order`
 - `internal/task`
 
@@ -63,7 +79,7 @@ go run ./cmd/api
 
 ## 环境变量
 
-至少需要配置：
+第三方功能需要配置：
 
 - `VOLC_APP_ID`
 - `VOLC_ACCESS_TOKEN`
@@ -80,19 +96,33 @@ go run ./cmd/api
 - `TTS_MAX_CONTEXT_LENGTH`
 - `TTS_REQUEST_TIMEOUT_MS`
 - `STORAGE_AUDIO_DIR`
+- `STORAGE_AVATAR_DIR`
+- `STORAGE_MAX_AVATAR_BYTES`
+- `DATABASE_PATH`
+- `AUTH_JWT_SECRET`
+- `AUTH_JWT_SECRET_FILE`
+- `AUTH_TOKEN_TTL_MS`
 - `VOLC_RESOURCE_ID`
 - `VOLC_ENDPOINT`
 
 完整示例见 [backend/.env.example](c:/Users/Administrator/Desktop/my-first-expo-app/backend/.env.example)。
 
+## 免费账户存储
+
+默认不依赖任何付费服务：
+
+- SQLite 数据库：`data/app.db`
+- 用户头像：`data/avatars/`
+- 自动生成的 JWT 密钥：`data/jwt-secret`
+
+首次启动会自动创建这三个位置。部署和备份时必须完整保留 `data/` 目录；如果 JWT 密钥丢失，现有登录令牌会全部失效。生产环境也可以通过 `AUTH_JWT_SECRET` 直接提供至少 32 个字符的固定密钥。
+
 ## 扩展建议
 
 如果你准备把它继续做成正式后端，推荐下一步优先补：
 
-1. 鉴权中间件
-2. 数据库层
-3. 统一日志
-4. 配置分环境管理
-5. 对象存储
-6. 任务队列
-7. 单元测试和集成测试
+1. 统一日志
+2. 配置分环境管理
+3. 数据目录自动备份
+4. 对象存储
+5. 任务队列

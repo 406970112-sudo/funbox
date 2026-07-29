@@ -51,6 +51,7 @@ backend/bin/
 backend/.gocache/
 backend/.gomodcache/
 backend/tmp/
+backend/data/
 
 # generated native folders
 /ios

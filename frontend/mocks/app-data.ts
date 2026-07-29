@@ -1,11 +1,8 @@
 import type {
   AppTool,
   GameItem,
-  ProfileMenuItem,
-  ProfileMetric,
   RecentActivity,
   ToolId,
-  UserProfile,
 } from '@/types/app';
 
 export const featuredBanner = {
@@ -150,39 +147,6 @@ export const popularGames: GameItem[] = [
     status: 'coming-soon',
   },
 ];
-
-export const profile = {
-  user: {
-    name: 'Brynn',
-    id: '102438',
-    membership: '普通会员',
-    signature: '把高频内容工具做成轻量、顺手、可持续的移动端体验。',
-  } satisfies UserProfile,
-  metrics: [
-    { id: 'points', label: '积分', value: '1280' },
-    { id: 'favorites', label: '收藏', value: '12' },
-    { id: 'active', label: '在用工具', value: '5' },
-  ] satisfies ProfileMetric[],
-  benefits: [
-    { id: 'coupon', label: '优惠券', value: '3 张' },
-    { id: 'trial', label: '会员体验', value: '7 天' },
-    { id: 'quota', label: '工具次数', value: '20 次' },
-  ] satisfies ProfileMetric[],
-  menus: [
-    { id: 'recent', title: '最近使用' },
-    { id: 'favorites', title: '我的收藏' },
-    { id: 'games', title: '我的游戏', badge: '2' },
-    { id: 'tasks', title: '任务中心' },
-    { id: 'membership', title: '会员中心' },
-    { id: 'feedback', title: '帮助与反馈' },
-    { id: 'settings', title: '设置' },
-  ] satisfies ProfileMenuItem[],
-  growthTask: {
-    title: '成长任务',
-    description: '连续签到 3 天，可再领取 50 积分。',
-    actionLabel: '去完成',
-  },
-};
 
 export function getToolById(toolId: ToolId) {
   return appTools.find((tool) => tool.id === toolId);

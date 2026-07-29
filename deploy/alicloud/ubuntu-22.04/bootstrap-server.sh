@@ -46,6 +46,7 @@ fi
 
 systemctl enable nginx
 systemctl start nginx
+systemctl enable --now certbot.timer
 
 echo "Bootstrap completed."
 echo "Node version: $(node -v)"

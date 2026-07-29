@@ -12,10 +12,12 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
+	"my-first-expo-app/backend/internal/user"
 )
 
 func main() {
@@ -25,6 +27,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("load config failed: %v", err)
 	}
+
+	userStore, err := user.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open user database failed: %v", err)
+	}
+	defer userStore.Close()
+
+	signingKey, err := auth.ResolveSigningKey(cfg.Auth.JWTSecret, cfg.Auth.JWTSecretFile)
+	if err != nil {
+		log.Fatalf("load auth signing key failed: %v", err)
+	}
+	authService := auth.NewService(userStore, signingKey, cfg.Auth.TokenTTL)
 
 	var ttsService *tts.Service
 	if cfg.Volc.AppID != "" && cfg.Volc.AccessToken != "" {
@@ -41,7 +55,7 @@ func main() {
 		log.Printf("translation disabled: missing OPENAI_API_KEY")
 	}
 
-	server := httpapi.NewServer(cfg, ttsService, translationService)
+	server := httpapi.NewServer(cfg, ttsService, translationService, authService)
 
 	go func() {
 		log.Printf("backend listening on %s", server.Addr)

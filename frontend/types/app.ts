@@ -51,22 +51,3 @@ export type GameItem = {
   route: `/games/${GameId}`;
   status: GameStatus;
 };
-
-export type ProfileMetric = {
-  id: string;
-  label: string;
-  value: string;
-};
-
-export type ProfileMenuItem = {
-  id: string;
-  title: string;
-  badge?: string;
-};
-
-export type UserProfile = {
-  name: string;
-  id: string;
-  membership: string;
-  signature: string;
-};
