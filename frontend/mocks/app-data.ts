@@ -127,6 +127,16 @@ export const popularGames: GameItem[] = [
     status: 'playable',
   },
   {
+    id: 'gomoku',
+    name: '五子棋人机对战',
+    genre: '策略棋类',
+    tag: '三档 AI',
+    description: '15×15 自由五子棋，支持轻松、进阶和高手难度，以及悔棋与比分记录。',
+    accentColor: '#cf794a',
+    route: '/games/gomoku',
+    status: 'playable',
+  },
+  {
     id: 'brain-challenge',
     name: '脑力挑战',
     genre: '益智闯关',

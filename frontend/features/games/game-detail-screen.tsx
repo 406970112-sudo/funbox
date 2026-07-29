@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { GomokuGameScreen } from '@/features/games/gomoku-game-screen';
 import { SnakeGameScreen } from '@/features/games/snake-game-screen';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { getGameById } from '@/mocks/app-data';
@@ -22,6 +23,15 @@ export function GameDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SnakeGameScreen />
+      </>
+    );
+  }
+
+  if (game?.id === 'gomoku') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <GomokuGameScreen />
       </>
     );
   }

@@ -14,7 +14,7 @@ type Config struct {
 	Server   ServerConfig
 	Security SecurityConfig
 	Storage  StorageConfig
-	OpenAI   OpenAIConfig
+	DeepSeek DeepSeekConfig
 	TTS      TTSConfig
 	Volc     VolcConfig
 }
@@ -56,12 +56,12 @@ type TTSConfig struct {
 	RequestTimeout   time.Duration
 }
 
-type OpenAIConfig struct {
-	APIKey          string
-	MaxTextLength   int
-	Model           string
-	ReasoningEffort string
-	RequestTimeout  time.Duration
+type DeepSeekConfig struct {
+	APIKey         string
+	BaseURL        string
+	MaxTextLength  int
+	Model          string
+	RequestTimeout time.Duration
 }
 
 type VolcConfig struct {
@@ -100,12 +100,12 @@ func Load() (Config, error) {
 			AvatarDir:      envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
 			MaxAvatarBytes: int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
 		},
-		OpenAI: OpenAIConfig{
-			APIKey:          envFirst("OPENAI_API_KEY", ""),
-			MaxTextLength:   intFirst("TRANSLATION_MAX_TEXT_LENGTH", "", "8000"),
-			Model:           envFirst("OPENAI_TRANSLATION_MODEL", "gpt-5.4"),
-			ReasoningEffort: envFirst("OPENAI_REASONING_EFFORT", "low"),
-			RequestTimeout:  durationFromMs("OPENAI_REQUEST_TIMEOUT_MS", "", "120000"),
+		DeepSeek: DeepSeekConfig{
+			APIKey:         envFirst("DEEPSEEK_API_KEY", ""),
+			BaseURL:        envFirst("DEEPSEEK_API_URL", "https://api.deepseek.com"),
+			MaxTextLength:  intFirst("TRANSLATION_MAX_TEXT_LENGTH", "", "8000"),
+			Model:          envFirst("DEEPSEEK_TRANSLATION_MODEL", "deepseek-chat"),
+			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
 		},
 		TTS: TTSConfig{
 			MaxContextLength: intFirst("TTS_MAX_CONTEXT_LENGTH", "VOICE_MAX_CONTEXT_LENGTH", "1000"),

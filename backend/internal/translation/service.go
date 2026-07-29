@@ -11,11 +11,9 @@ import (
 	"my-first-expo-app/backend/internal/config"
 )
 
-const openAIResponsesEndpoint = "https://api.openai.com/v1/responses"
-
 type Service struct {
 	client *http.Client
-	cfg    config.OpenAIConfig
+	cfg    config.DeepSeekConfig
 }
 
 type TranslateRequest struct {
@@ -57,16 +55,27 @@ type GlossaryItem struct {
 	Reason string `json:"reason"`
 }
 
-type openAIResponsePayload struct {
-	Output []struct {
-		Content []struct {
-			Text string `json:"text"`
-			Type string `json:"type"`
-		} `json:"content"`
-	} `json:"output"`
+type deepSeekResponsePayload struct {
+	Choices []struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
 }
 
-func NewService(cfg config.OpenAIConfig) *Service {
+type deepSeekTranslationPayload struct {
+	DetectedLanguage string `json:"detectedLanguage"`
+	TargetLanguage   string `json:"targetLanguage"`
+	Summary          string `json:"summary"`
+	Versions         []struct {
+		Label   string `json:"label"`
+		Summary string `json:"summary"`
+		Text    string `json:"text"`
+	} `json:"versions"`
+	Explanation Explanation `json:"explanation"`
+}
+
+func NewService(cfg config.DeepSeekConfig) *Service {
 	return &Service{
 		cfg: cfg,
 		client: &http.Client{
@@ -82,15 +91,16 @@ func (s *Service) Translate(ctx context.Context, request TranslateRequest) (Tran
 		return TranslateResponse{}, err
 	}
 
-	openAIRequestBody := s.buildOpenAIRequest(request)
-	bodyBytes, err := json.Marshal(openAIRequestBody)
+	deepSeekRequestBody := s.buildDeepSeekRequest(request)
+	bodyBytes, err := json.Marshal(deepSeekRequestBody)
 	if err != nil {
-		return TranslateResponse{}, fmt.Errorf("marshal openai request failed: %w", err)
+		return TranslateResponse{}, fmt.Errorf("marshal deepseek request failed: %w", err)
 	}
 
-	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, openAIResponsesEndpoint, bytes.NewReader(bodyBytes))
+	endpoint := strings.TrimRight(s.cfg.BaseURL, "/") + "/chat/completions"
+	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(bodyBytes))
 	if err != nil {
-		return TranslateResponse{}, fmt.Errorf("build openai request failed: %w", err)
+		return TranslateResponse{}, fmt.Errorf("build deepseek request failed: %w", err)
 	}
 
 	httpRequest.Header.Set("Authorization", "Bearer "+s.cfg.APIKey)
@@ -98,7 +108,7 @@ func (s *Service) Translate(ctx context.Context, request TranslateRequest) (Tran
 
 	httpResponse, err := s.client.Do(httpRequest)
 	if err != nil {
-		return TranslateResponse{}, fmt.Errorf("request openai failed: %w", err)
+		return TranslateResponse{}, fmt.Errorf("request deepseek failed: %w", err)
 	}
 	defer httpResponse.Body.Close()
 
@@ -106,40 +116,40 @@ func (s *Service) Translate(ctx context.Context, request TranslateRequest) (Tran
 		var errorBody map[string]any
 		_ = json.NewDecoder(httpResponse.Body).Decode(&errorBody)
 		return TranslateResponse{}, fmt.Errorf(
-			"openai request failed with status %d: %s",
+			"deepseek request failed with status %d: %s",
 			httpResponse.StatusCode,
-			extractOpenAIErrorMessage(errorBody),
+			extractDeepSeekErrorMessage(errorBody),
 		)
 	}
 
-	var payload openAIResponsePayload
+	var payload deepSeekResponsePayload
 	if err := json.NewDecoder(httpResponse.Body).Decode(&payload); err != nil {
-		return TranslateResponse{}, fmt.Errorf("decode openai response failed: %w", err)
+		return TranslateResponse{}, fmt.Errorf("decode deepseek response failed: %w", err)
 	}
 
-	rawText := extractOutputText(payload)
+	rawText := extractDeepSeekText(payload)
 	if rawText == "" {
-		return TranslateResponse{}, fmt.Errorf("openai returned empty translation payload")
+		return TranslateResponse{}, fmt.Errorf("deepseek returned empty translation payload")
 	}
 
-	var translated TranslateResponse
-	if err := json.Unmarshal([]byte(rawText), &translated); err != nil {
-		return TranslateResponse{}, fmt.Errorf("parse translation json failed: %w", err)
+	translated, err := decodeTranslationResponse(rawText)
+	if err != nil {
+		return TranslateResponse{}, err
+	}
+	if err := validateTranslatedResponse(translated); err != nil {
+		return TranslateResponse{}, err
 	}
 
 	translated.Model = s.cfg.Model
 	return translated, nil
 }
 
-func (s *Service) buildOpenAIRequest(request TranslateRequest) map[string]any {
+func (s *Service) buildDeepSeekRequest(request TranslateRequest) map[string]any {
 	return map[string]any{
 		"model": s.cfg.Model,
-		"reasoning": map[string]any{
-			"effort": s.cfg.ReasoningEffort,
-		},
-		"input": []map[string]any{
+		"messages": []map[string]any{
 			{
-				"role":    "developer",
+				"role":    "system",
 				"content": buildDeveloperPrompt(),
 			},
 			{
@@ -147,13 +157,8 @@ func (s *Service) buildOpenAIRequest(request TranslateRequest) map[string]any {
 				"content": buildUserPrompt(request),
 			},
 		},
-		"text": map[string]any{
-			"format": map[string]any{
-				"type":   "json_schema",
-				"name":   "translation_response",
-				"strict": true,
-				"schema": translationJSONSchema(),
-			},
+		"response_format": map[string]any{
+			"type": "json_object",
 		},
 	}
 }
@@ -184,6 +189,7 @@ func normalizeRequest(request TranslateRequest) TranslateRequest {
 }
 
 func buildDeveloperPrompt() string {
+	schema, _ := json.Marshal(translationJSONSchema())
 	return strings.Join([]string{
 		"You are an expert translation engine.",
 		"Always translate the full source text, never partially translate or leave mixed-language fragments unless the source intentionally contains fixed product names or API identifiers.",
@@ -191,7 +197,9 @@ func buildDeveloperPrompt() string {
 		"When preserveFormat is true, keep line breaks, numbering, and list structure.",
 		"When bilingual is true, still return only translated text in each version; the frontend handles parallel display.",
 		"When prioritizeTerms is true, keep terminology consistent across all versions.",
-		"Return only JSON that matches the provided schema.",
+		"The versions array must contain exactly three items in this order: standard, natural, formal. Their id values must be those exact strings.",
+		"Return exactly one valid JSON object with no markdown fences or commentary.",
+		"The JSON object must match this schema: " + string(schema),
 	}, " ")
 }
 
@@ -267,19 +275,76 @@ func translationJSONSchema() map[string]any {
 	}
 }
 
-func extractOutputText(payload openAIResponsePayload) string {
-	for _, item := range payload.Output {
-		for _, content := range item.Content {
-			if content.Type == "output_text" && strings.TrimSpace(content.Text) != "" {
-				return content.Text
-			}
+func extractDeepSeekText(payload deepSeekResponsePayload) string {
+	for _, choice := range payload.Choices {
+		if content := strings.TrimSpace(choice.Message.Content); content != "" {
+			return content
 		}
 	}
 
 	return ""
 }
 
-func extractOpenAIErrorMessage(payload map[string]any) string {
+func normalizeJSONResponse(rawText string) string {
+	trimmed := strings.TrimSpace(rawText)
+	if !strings.HasPrefix(trimmed, "```") {
+		return trimmed
+	}
+
+	if firstLineEnd := strings.Index(trimmed, "\n"); firstLineEnd >= 0 {
+		trimmed = trimmed[firstLineEnd+1:]
+	}
+
+	return strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(trimmed), "```"))
+}
+
+func decodeTranslationResponse(rawText string) (TranslateResponse, error) {
+	var payload deepSeekTranslationPayload
+	if err := json.Unmarshal([]byte(normalizeJSONResponse(rawText)), &payload); err != nil {
+		return TranslateResponse{}, fmt.Errorf("parse translation json failed: %w", err)
+	}
+
+	versionIDs := []string{"standard", "natural", "formal"}
+	versions := make([]TranslationVersion, 0, len(payload.Versions))
+	for index, version := range payload.Versions {
+		if index >= len(versionIDs) {
+			break
+		}
+		versions = append(versions, TranslationVersion{
+			ID:      versionIDs[index],
+			Label:   version.Label,
+			Summary: version.Summary,
+			Text:    version.Text,
+		})
+	}
+
+	return TranslateResponse{
+		DetectedLanguage: payload.DetectedLanguage,
+		TargetLanguage:   payload.TargetLanguage,
+		Summary:          payload.Summary,
+		Versions:         versions,
+		Explanation:      payload.Explanation,
+	}, nil
+}
+
+func validateTranslatedResponse(response TranslateResponse) error {
+	if response.DetectedLanguage == "" || response.TargetLanguage == "" {
+		return fmt.Errorf("deepseek returned translation without language metadata")
+	}
+	if len(response.Versions) != 3 {
+		return fmt.Errorf("deepseek returned %d translation versions, expected 3", len(response.Versions))
+	}
+
+	for _, version := range response.Versions {
+		if version.ID == "" || strings.TrimSpace(version.Text) == "" {
+			return fmt.Errorf("deepseek returned an invalid translation version")
+		}
+	}
+
+	return nil
+}
+
+func extractDeepSeekErrorMessage(payload map[string]any) string {
 	errorValue, ok := payload["error"].(map[string]any)
 	if !ok {
 		return "unknown_error"

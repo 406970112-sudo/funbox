@@ -191,7 +191,7 @@ func (s *Server) handleTranslate(w http.ResponseWriter, r *http.Request) {
 	if s.translationService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{
 			"error":  "translation_not_configured",
-			"detail": "OPENAI_API_KEY is not configured on the backend",
+			"detail": "DEEPSEEK_API_KEY is not configured on the backend",
 		})
 		return
 	}
@@ -209,7 +209,7 @@ func (s *Server) handleTranslate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.OpenAI.RequestTimeout)
+	ctx, cancel := context.WithTimeout(r.Context(), s.cfg.DeepSeek.RequestTimeout)
 	defer cancel()
 
 	result, err := s.translationService.Translate(ctx, request)

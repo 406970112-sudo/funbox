@@ -74,8 +74,9 @@ go run ./cmd/api
 
 - `backend/.env`
 - 当前工作目录下的 `.env`
+- `email-agent/backend/.env`
 
-所以你既可以在 `backend/` 目录里启动，也可以从仓库根目录启动。
+所以你既可以在 `backend/` 目录里启动，也可以从仓库根目录启动。翻译服务会优先使用后端自己的配置；未单独配置时，也可以复用邮件助手的 DeepSeek 配置。
 
 ## 环境变量
 
@@ -83,6 +84,7 @@ go run ./cmd/api
 
 - `VOLC_APP_ID`
 - `VOLC_ACCESS_TOKEN`
+- `DEEPSEEK_API_KEY`
 
 常用配置还有：
 
@@ -102,6 +104,10 @@ go run ./cmd/api
 - `AUTH_JWT_SECRET`
 - `AUTH_JWT_SECRET_FILE`
 - `AUTH_TOKEN_TTL_MS`
+- `DEEPSEEK_API_URL`
+- `DEEPSEEK_TRANSLATION_MODEL`
+- `DEEPSEEK_REQUEST_TIMEOUT_MS`
+- `TRANSLATION_MAX_TEXT_LENGTH`
 - `VOLC_RESOURCE_ID`
 - `VOLC_ENDPOINT`
 

@@ -2,11 +2,13 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -26,21 +28,18 @@ import {
   summarizeSource,
   TARGET_LANGUAGE_OPTIONS,
   TONE_OPTIONS,
-  TRANSLATION_MODE_OPTIONS,
   VERSION_OPTIONS,
 } from '@/lib/smart-translation';
 import { translateText } from '@/lib/translation-api';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
-import { SectionHeading } from '@/shared/ui/section-heading';
 import { SurfaceCard } from '@/shared/ui/surface-card';
 import type {
   ResolvedTranslationLanguage,
   TranslationDraft,
   TranslationHistoryItem,
   TranslationLanguage,
-  TranslationModeId,
   TranslationScene,
   TranslationTone,
   TranslationVersionId,
@@ -55,7 +54,8 @@ const QUICK_TOGGLE_OPTIONS = [
 export function SmartTranslationToolScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
-  const [activeMode, setActiveMode] = useState<TranslationModeId>('text');
+  const { width } = useWindowDimensions();
+  const isWideLayout = width >= 900;
   const [sourceText, setSourceText] = useState(SAMPLE_TRANSLATION_TEXT);
   const [sourceLanguage, setSourceLanguage] = useState<TranslationLanguage>('auto');
   const [targetLanguage, setTargetLanguage] = useState<ResolvedTranslationLanguage>('en');
@@ -71,6 +71,9 @@ export function SmartTranslationToolScreen() {
   const [draft, setDraft] = useState<TranslationDraft | null>(null);
   const [history, setHistory] = useState<TranslationHistoryItem[]>(createInitialTranslationHistory);
   const [currentRecordId, setCurrentRecordId] = useState<string | null>(null);
+  const [languagePicker, setLanguagePicker] = useState<'source' | 'target' | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const activeVersion = draft?.versions.find((version) => version.id === activeVersionId) ?? null;
   const currentRecord = history.find((item) => item.id === currentRecordId) ?? null;
@@ -137,6 +140,8 @@ export function SmartTranslationToolScreen() {
   }
 
   function handleSwapLanguages() {
+    setLanguagePicker(null);
+
     if (sourceLanguage === 'auto') {
       setSourceLanguage(targetLanguage);
       setTargetLanguage((detectedLanguage === 'auto' ? 'zh' : detectedLanguage) as ResolvedTranslationLanguage);
@@ -210,16 +215,6 @@ export function SmartTranslationToolScreen() {
     }
   }
 
-  function handleModePress(mode: TranslationModeId) {
-    setActiveMode(mode);
-
-    if (mode !== 'text') {
-      setStatusMessage(`${getModeLabel(mode)} 属于下一阶段能力，当前先保留导航入口。`);
-    } else {
-      setStatusMessage('已切换回文本翻译模式。');
-    }
-  }
-
   function handleToggleFavorite(recordId: string | null) {
     if (!recordId) {
       setStatusMessage('请先生成一条翻译结果，再执行收藏。');
@@ -242,6 +237,7 @@ export function SmartTranslationToolScreen() {
     setActiveVersionId('standard');
     setShowExplanation(false);
     setCurrentRecordId(record.id);
+    setShowHistory(false);
     setStatusMessage('已加载历史翻译记录，可继续修改后重新生成。');
   }
 
@@ -256,365 +252,460 @@ export function SmartTranslationToolScreen() {
   }
 
   return (
-    <MobileScreen>
+    <MobileScreen contentContainerStyle={styles.pageContent}>
       <PageHeader
-        eyebrow="AI Translation"
-        title="智能翻译工作台"
-        subtitle="把文本翻译升级成可调场景、风格、版本和解释的 AI 工作区，先完成 MVP 的主流程。"
+        title="智能翻译"
+        subtitle={`${getTranslationLanguageLabel(detectedLanguage)} → ${getTranslationLanguageLabel(
+          targetLanguage
+        )} · ${getSceneLabel(scene)} · ${getToneLabel(tone)}`}
         rightSlot={
-          <Pressable onPress={() => router.back()} style={styles.closeButton}>
-            <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <ToolIconButton
+              accessibilityLabel={`历史记录，共 ${history.length} 条`}
+              icon="history"
+              onPress={() => setShowHistory(true)}
+            />
+            <ToolIconButton accessibilityLabel="返回" icon="arrow-left" onPress={() => router.back()} />
+          </View>
         }
       />
 
-      <View style={[styles.heroCard, { backgroundColor: colors.hero }]}>
-        <View style={styles.heroHeader}>
-          <View style={styles.heroCopy}>
-            <ThemedText style={styles.heroTitle}>多版本翻译 + 可解释输出</ThemedText>
-            <ThemedText style={styles.heroDescription}>
-              当前版本支持文本翻译、自动识别、场景/风格控制、翻译解释、历史记录和复制。
-            </ThemedText>
-          </View>
-          <View style={[styles.heroBadge, { backgroundColor: 'rgba(255,255,255,0.16)' }]}>
-            <ThemedText style={styles.heroBadgeText}>MVP</ThemedText>
-          </View>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.modeRow}>
-          {TRANSLATION_MODE_OPTIONS.map((mode) => {
-            const selected = mode.id === activeMode;
-
-            return (
-              <Pressable
-                key={mode.id}
-                onPress={() => handleModePress(mode.id)}
-                style={[
-                  styles.modeChip,
-                  {
-                    backgroundColor: selected ? '#ffffff' : 'rgba(255,255,255,0.1)',
-                    borderColor: selected ? '#ffffff' : 'rgba(255,255,255,0.22)',
-                  },
-                ]}>
-                <ThemedText style={{ color: selected ? colors.hero : '#ffffff', fontWeight: '700' }}>
-                  {mode.label}
-                </ThemedText>
-                <ThemedText style={{ color: selected ? colors.mutedText : 'rgba(255,255,255,0.68)', fontSize: 11 }}>
-                  {mode.hint}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      <SurfaceCard style={[styles.statusCard, { backgroundColor: colors.surfaceMuted }]}>
-        <View style={styles.statusHeader}>
-          <ThemedText style={styles.statusTitle}>当前状态</ThemedText>
-          <ThemedText style={[styles.statusMeta, { color: colors.accent }]}>
-            {getTranslationLanguageLabel(detectedLanguage)} → {getTranslationLanguageLabel(targetLanguage)}
-          </ThemedText>
-        </View>
-        <ThemedText style={[styles.statusBody, { color: colors.mutedText }]}>{statusMessage}</ThemedText>
-      </SurfaceCard>
-
-      <SurfaceCard style={styles.workspaceCard}>
-        <SectionHeading title="原文输入区" actionLabel={`${currentLength}/${MAX_TRANSLATION_LENGTH}`} />
-
-        <View style={styles.inlineRow}>
-          <ThemedText style={styles.fieldLabel}>源语言</ThemedText>
-          <Pressable onPress={handleSwapLanguages} style={[styles.swapButton, { borderColor: colors.line }]}>
-            <MaterialCommunityIcons name="swap-horizontal" size={18} color={colors.primary} />
-            <ThemedText style={[styles.swapLabel, { color: colors.primary }]}>互换</ThemedText>
-          </Pressable>
-          <ThemedText style={styles.fieldLabel}>目标语言</ThemedText>
-        </View>
-
-        <View style={styles.languageColumns}>
-          <View style={styles.languageColumn}>
-            {LANGUAGE_OPTIONS.map((language) => (
-              <SelectorChip
-                key={language.id}
-                label={language.label}
-                selected={sourceLanguage === language.id}
-                onPress={() => setSourceLanguage(language.id)}
-              />
-            ))}
-          </View>
-          <View style={styles.languageColumn}>
-            {TARGET_LANGUAGE_OPTIONS.map((language) => (
-              <SelectorChip
-                key={language.id}
-                label={language.label}
-                selected={targetLanguage === language.id}
-                onPress={() => setTargetLanguage(language.id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        <TextInput
-          multiline
-          onChangeText={setSourceText}
-          placeholder="输入、粘贴或加载示例文本，系统会自动识别语言并生成多个版本。"
-          placeholderTextColor={colors.mutedText}
-          style={[styles.input, { borderColor: colors.line, color: colors.text }]}
-          textAlignVertical="top"
-          value={sourceText}
-        />
-
-        <View style={styles.actionRow}>
-          <ActionButton icon="content-paste" label="粘贴" onPress={handlePaste} />
-          <ActionButton icon="lightbulb-on-outline" label="示例" onPress={handleLoadSample} />
-          <ActionButton icon="delete-outline" label="清空" onPress={handleClear} />
-        </View>
-
-        <View style={[styles.detectCard, { borderColor: colors.line, backgroundColor: colors.surfaceMuted }]}>
-          <ThemedText style={styles.detectTitle}>自动识别</ThemedText>
-          <ThemedText style={[styles.detectBody, { color: colors.mutedText }]}>
-            当前输入看起来更接近 {getTranslationLanguageLabel(detectedLanguage)}，适合 {getSceneLabel(scene)} 场景，
-            已按 {getToneLabel(tone)} 风格准备生成。
-          </ThemedText>
-        </View>
-      </SurfaceCard>
-
-      <SurfaceCard style={styles.workspaceCard}>
-        <SectionHeading title="高级设置" actionLabel="场景决定方向，风格决定语气" />
-
-        <View style={styles.settingBlock}>
-          <ThemedText style={styles.settingTitle}>翻译场景</ThemedText>
-          <View style={styles.wrapRow}>
-            {SCENE_OPTIONS.map((item) => (
-              <SelectorChip
-                key={item.id}
-                label={item.label}
-                selected={scene === item.id}
-                onPress={() => setScene(item.id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.settingBlock}>
-          <ThemedText style={styles.settingTitle}>表达风格</ThemedText>
-          <View style={styles.wrapRow}>
-            {TONE_OPTIONS.map((item) => (
-              <SelectorChip
-                key={item.id}
-                label={item.label}
-                selected={tone === item.id}
-                onPress={() => setTone(item.id)}
-              />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.toggleGrid}>
-          {QUICK_TOGGLE_OPTIONS.map((option) => (
-            <ToggleCard
-              key={option.key}
-              label={option.label}
-              value={
-                option.key === 'preserveFormat'
-                  ? preserveFormat
-                  : option.key === 'bilingual'
-                    ? bilingual
-                    : prioritizeTerms
-              }
-              onPress={() => {
-                if (option.key === 'preserveFormat') {
-                  setPreserveFormat((value) => !value);
-                }
-
-                if (option.key === 'bilingual') {
-                  setBilingual((value) => !value);
-                }
-
-                if (option.key === 'prioritizeTerms') {
-                  setPrioritizeTerms((value) => !value);
-                }
-              }}
-            />
-          ))}
+      <View
+        style={[
+          styles.languageBar,
+          isWideLayout ? styles.languageBarWide : styles.languageBarStacked,
+          { backgroundColor: colors.surface, borderColor: colors.line },
+        ]}>
+        <View style={styles.languageControls}>
+          <LanguageButton
+            expanded={languagePicker === 'source'}
+            label="源语言"
+            value={getTranslationLanguageLabel(sourceLanguage)}
+            onPress={() => setLanguagePicker((current) => (current === 'source' ? null : 'source'))}
+          />
+          <ToolIconButton accessibilityLabel="交换语言" icon="swap-horizontal" onPress={handleSwapLanguages} />
+          <LanguageButton
+            expanded={languagePicker === 'target'}
+            label="目标语言"
+            value={getTranslationLanguageLabel(targetLanguage)}
+            onPress={() => setLanguagePicker((current) => (current === 'target' ? null : 'target'))}
+          />
         </View>
 
         <Pressable
-          disabled={submitting || activeMode !== 'text'}
-          onPress={() => void handleTranslate(false)}
-          style={[
-            styles.primaryButton,
-            {
-              backgroundColor: activeMode === 'text' ? colors.hero : colors.surfaceMuted,
-              opacity: submitting ? 0.72 : 1,
-            },
-          ]}>
-          {submitting ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <ThemedText style={styles.primaryButtonText}>开始翻译</ThemedText>
-          )}
+          accessibilityLabel="打开翻译偏好"
+          accessibilityRole="button"
+          onPress={() => setShowSettings(true)}
+          style={[styles.settingsSummary, { borderColor: colors.line, backgroundColor: colors.surfaceMuted }]}>
+          <MaterialCommunityIcons name="tune-variant" size={18} color={colors.accent} />
+          <View style={styles.settingsSummaryCopy}>
+            <ThemedText style={styles.settingsSummaryTitle}>翻译偏好</ThemedText>
+            <ThemedText style={[styles.settingsSummaryMeta, { color: colors.mutedText }]} numberOfLines={1}>
+              {getSceneLabel(scene)} · {getToneLabel(tone)}
+            </ThemedText>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={18} color={colors.mutedText} />
         </Pressable>
-      </SurfaceCard>
+      </View>
 
-      <SurfaceCard style={styles.workspaceCard}>
-        <SectionHeading title="译文输出区" actionLabel={draft?.summary ?? '等待生成译文'} />
-
-        {submitting ? (
-          <View style={styles.loadingState}>
-            <ThemedText style={[styles.loadingTitle, { color: colors.mutedText }]}>
-              正在理解语境并生成翻译
+      {languagePicker ? (
+        <View style={[styles.languageMenu, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <View style={styles.languageMenuHeader}>
+            <ThemedText style={styles.languageMenuTitle}>
+              {languagePicker === 'source' ? '选择源语言' : '选择目标语言'}
             </ThemedText>
-            <View style={[styles.skeleton, { backgroundColor: colors.surfaceMuted }]} />
-            <View style={[styles.skeletonShort, { backgroundColor: colors.surfaceMuted }]} />
-            <View style={[styles.skeletonTall, { backgroundColor: colors.surfaceMuted }]} />
+            <ToolIconButton accessibilityLabel="关闭语言选择" icon="close" onPress={() => setLanguagePicker(null)} />
           </View>
-        ) : null}
-
-        {!submitting && !draft ? (
-          <View style={[styles.emptyState, { borderColor: colors.line, backgroundColor: colors.surfaceMuted }]}>
-            <ThemedText style={styles.emptyTitle}>等待翻译</ThemedText>
-            <ThemedText style={[styles.emptyBody, { color: colors.mutedText }]}>
-              输入文本后点击“开始翻译”，这里会展示主译文、多版本切换和翻译解释。
-            </ThemedText>
+          <View style={styles.wrapRow}>
+            {(languagePicker === 'source' ? LANGUAGE_OPTIONS : TARGET_LANGUAGE_OPTIONS).map((language) => (
+              <SelectorChip
+                key={language.id}
+                label={language.label}
+                selected={
+                  languagePicker === 'source'
+                    ? sourceLanguage === language.id
+                    : targetLanguage === language.id
+                }
+                onPress={() => {
+                  if (languagePicker === 'source') {
+                    setSourceLanguage(language.id as TranslationLanguage);
+                  } else {
+                    setTargetLanguage(language.id as ResolvedTranslationLanguage);
+                  }
+                  setLanguagePicker(null);
+                }}
+              />
+            ))}
           </View>
-        ) : null}
+        </View>
+      ) : null}
 
-        {!submitting && draft ? (
-          <>
-            <View style={styles.versionRow}>
-              {VERSION_OPTIONS.map((version) => (
-                <Pressable
-                  key={version.id}
-                  onPress={() => setActiveVersionId(version.id)}
-                  style={[
-                    styles.versionChip,
-                    {
-                      backgroundColor: activeVersionId === version.id ? colors.primarySoft : colors.surfaceMuted,
-                      borderColor: activeVersionId === version.id ? colors.primary : colors.line,
-                    },
-                  ]}>
-                  <ThemedText style={styles.versionTitle}>{version.label}</ThemedText>
-                  <ThemedText style={[styles.versionSummary, { color: colors.mutedText }]}>
-                    {version.summary}
-                  </ThemedText>
-                </Pressable>
-              ))}
-            </View>
+      <View style={styles.statusLine}>
+        <MaterialCommunityIcons
+          name={draft ? 'check-circle-outline' : 'circle-slice-8'}
+          size={16}
+          color={draft ? colors.success : colors.accent}
+        />
+        <ThemedText style={[styles.statusText, { color: colors.mutedText }]}>{statusMessage}</ThemedText>
+      </View>
 
-            {bilingual ? (
-              <View style={styles.parallelBlock}>
-                <View style={[styles.parallelColumn, { borderColor: colors.line }]}>
-                  <ThemedText style={styles.parallelLabel}>原文</ThemedText>
-                  <ThemedText style={[styles.parallelText, { color: colors.mutedText }]}>{sourceText.trim()}</ThemedText>
-                </View>
-                <View style={[styles.parallelColumn, { borderColor: colors.line }]}>
-                  <ThemedText style={styles.parallelLabel}>译文</ThemedText>
-                  <ThemedText style={styles.parallelText}>{activeVersion?.text}</ThemedText>
-                </View>
+      <View style={[styles.workspaceGrid, isWideLayout ? styles.workspaceGridWide : styles.workspaceGridStacked]}>
+        <SurfaceCard
+          style={[
+            styles.workspacePanel,
+            isWideLayout ? styles.workspacePanelWide : null,
+            { borderTopColor: colors.primary },
+          ]}>
+          <View style={styles.panelHeader}>
+            <View style={styles.panelTitleRow}>
+              <View style={[styles.panelIcon, { backgroundColor: colors.primarySoft }]}>
+                <MaterialCommunityIcons name="text-box-edit-outline" size={19} color={colors.primary} />
               </View>
+              <ThemedText style={styles.panelTitle}>原文</ThemedText>
+            </View>
+            <ThemedText style={[styles.panelMeta, { color: colors.mutedText }]}>
+              {currentLength}/{MAX_TRANSLATION_LENGTH}
+            </ThemedText>
+          </View>
+
+          <TextInput
+            accessibilityLabel="原文输入"
+            multiline
+            onChangeText={setSourceText}
+            placeholder="输入或粘贴需要翻译的文本"
+            placeholderTextColor={colors.mutedText}
+            style={[
+              styles.input,
+              { backgroundColor: colors.background, borderColor: colors.line, color: colors.text },
+            ]}
+            textAlignVertical="top"
+            value={sourceText}
+          />
+
+          <View style={styles.actionRow}>
+            <ActionButton icon="content-paste" label="粘贴" onPress={handlePaste} />
+            <ActionButton icon="lightbulb-on-outline" label="示例" onPress={handleLoadSample} />
+            <ActionButton icon="delete-outline" label="清空" onPress={handleClear} />
+          </View>
+
+          <View style={styles.detectLine}>
+            <MaterialCommunityIcons name="auto-fix" size={16} color={colors.success} />
+            <ThemedText style={[styles.detectText, { color: colors.mutedText }]}>
+              {getTranslationLanguageLabel(detectedLanguage)} · {getSceneLabel(scene)} · {getToneLabel(tone)}
+            </ThemedText>
+          </View>
+
+          <Pressable
+            accessibilityLabel="开始翻译"
+            accessibilityRole="button"
+            disabled={submitting}
+            onPress={() => void handleTranslate(false)}
+            style={[styles.primaryButton, { backgroundColor: colors.accent, opacity: submitting ? 0.72 : 1 }]}>
+            {submitting ? (
+              <ActivityIndicator color={colors.hero} />
             ) : (
-              <View style={[styles.translationCard, { borderColor: colors.line }]}>
-                <ThemedText style={styles.translationText}>{activeVersion?.text}</ThemedText>
-              </View>
+              <>
+                <MaterialCommunityIcons name="translate" size={19} color={colors.hero} />
+                <ThemedText style={[styles.primaryButtonText, { color: colors.hero }]}>开始翻译</ThemedText>
+              </>
             )}
+          </Pressable>
+        </SurfaceCard>
 
-            <View style={styles.actionRow}>
-              <ActionButton icon="content-copy" label="复制" onPress={handleCopy} />
-              <ActionButton
-                icon={currentRecord?.favorite ? 'star' : 'star-outline'}
-                label={currentRecord?.favorite ? '已收藏' : '收藏'}
-                onPress={() => handleToggleFavorite(currentRecordId)}
-              />
-              <ActionButton icon="refresh" label="重新生成" onPress={() => void handleTranslate(true)} />
-              <ActionButton
-                icon={showExplanation ? 'chevron-up' : 'chevron-down'}
-                label={showExplanation ? '收起解释' : '翻译解释'}
-                onPress={() => setShowExplanation((value) => !value)}
-              />
+        <SurfaceCard
+          style={[
+            styles.workspacePanel,
+            isWideLayout ? styles.workspacePanelWide : null,
+            { borderTopColor: colors.success },
+          ]}>
+          <View style={styles.panelHeader}>
+            <View style={styles.panelTitleRow}>
+              <View style={[styles.panelIcon, { backgroundColor: 'rgba(124,200,171,0.14)' }]}>
+                <MaterialCommunityIcons name="text-box-check-outline" size={19} color={colors.success} />
+              </View>
+              <ThemedText style={styles.panelTitle}>译文</ThemedText>
             </View>
+            <ThemedText style={[styles.panelMeta, { color: draft ? colors.success : colors.mutedText }]}>
+              {draft ? '已生成' : '等待输入'}
+            </ThemedText>
+          </View>
 
-            {showExplanation ? (
-              <View style={[styles.explanationCard, { borderColor: colors.line, backgroundColor: colors.surfaceMuted }]}>
-                <ThemedText style={styles.explanationTitle}>翻译解释</ThemedText>
-                {draft.explanation.rationale.map((item) => (
-                  <ThemedText key={item} style={[styles.explanationText, { color: colors.mutedText }]}>
-                    • {item}
-                  </ThemedText>
+          {submitting ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator color={colors.primary} />
+              <ThemedText style={[styles.loadingTitle, { color: colors.mutedText }]}>正在生成多版本译文</ThemedText>
+              <View style={[styles.skeleton, { backgroundColor: colors.surfaceMuted }]} />
+              <View style={[styles.skeletonShort, { backgroundColor: colors.surfaceMuted }]} />
+              <View style={[styles.skeletonTall, { backgroundColor: colors.surfaceMuted }]} />
+            </View>
+          ) : null}
+
+          {!submitting && !draft ? (
+            <View style={styles.emptyState}>
+              <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceMuted }]}>
+                <MaterialCommunityIcons name="translate" size={28} color={colors.mutedText} />
+              </View>
+              <ThemedText style={styles.emptyTitle}>译文将在这里显示</ThemedText>
+              <ThemedText style={[styles.emptyBody, { color: colors.mutedText }]}>
+                {getTranslationLanguageLabel(targetLanguage)} · {getSceneLabel(scene)} · {getToneLabel(tone)}
+              </ThemedText>
+            </View>
+          ) : null}
+
+          {!submitting && draft ? (
+            <>
+              <View style={[styles.versionRow, { backgroundColor: colors.surfaceMuted }]}>
+                {VERSION_OPTIONS.map((version) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    key={version.id}
+                    onPress={() => setActiveVersionId(version.id)}
+                    style={[
+                      styles.versionChip,
+                      {
+                        backgroundColor: activeVersionId === version.id ? colors.surface : 'transparent',
+                        borderColor: activeVersionId === version.id ? colors.line : 'transparent',
+                      },
+                    ]}>
+                    <ThemedText
+                      style={[
+                        styles.versionTitle,
+                        { color: activeVersionId === version.id ? colors.text : colors.mutedText },
+                      ]}>
+                      {version.label}
+                    </ThemedText>
+                  </Pressable>
                 ))}
+              </View>
 
-                {draft.explanation.terminology.length ? (
-                  <View style={styles.glossaryBlock}>
-                    <ThemedText style={styles.glossaryTitle}>术语提示</ThemedText>
-                    {draft.explanation.terminology.map((item) => (
-                      <View key={`${item.source}-${item.target}`} style={styles.glossaryItem}>
-                        <ThemedText style={styles.glossaryPair}>
-                          {item.source} → {item.target}
-                        </ThemedText>
-                        <ThemedText style={[styles.glossaryReason, { color: colors.mutedText }]}>
-                          {item.reason}
-                        </ThemedText>
-                      </View>
-                    ))}
+              {bilingual ? (
+                <View style={[styles.parallelBlock, isWideLayout ? styles.parallelBlockWide : null]}>
+                  <View
+                    style={[
+                      styles.parallelColumn,
+                      isWideLayout ? styles.parallelColumnWide : null,
+                      { borderColor: colors.line },
+                    ]}>
+                    <ThemedText style={[styles.parallelLabel, { color: colors.mutedText }]}>原文</ThemedText>
+                    <ThemedText style={[styles.parallelText, { color: colors.mutedText }]}>{sourceText.trim()}</ThemedText>
                   </View>
-                ) : null}
+                  <View
+                    style={[
+                      styles.parallelColumn,
+                      isWideLayout ? styles.parallelColumnWide : null,
+                      { borderColor: colors.line },
+                    ]}>
+                    <ThemedText style={[styles.parallelLabel, { color: colors.success }]}>译文</ThemedText>
+                    <ThemedText style={styles.parallelText}>{activeVersion?.text}</ThemedText>
+                  </View>
+                </View>
+              ) : (
+                <View style={[styles.translationCard, { borderColor: colors.line }]}>
+                  <ThemedText style={styles.translationText}>{activeVersion?.text}</ThemedText>
+                </View>
+              )}
 
-                <View style={styles.glossaryBlock}>
-                  <ThemedText style={styles.glossaryTitle}>版本建议</ThemedText>
-                  {draft.explanation.alternatives.map((item) => (
+              <View style={styles.actionRow}>
+                <ActionButton icon="content-copy" label="复制" onPress={handleCopy} />
+                <ActionButton
+                  icon={currentRecord?.favorite ? 'star' : 'star-outline'}
+                  label={currentRecord?.favorite ? '已收藏' : '收藏'}
+                  onPress={() => handleToggleFavorite(currentRecordId)}
+                />
+                <ActionButton icon="refresh" label="重新生成" onPress={() => void handleTranslate(true)} />
+                <ActionButton
+                  icon={showExplanation ? 'chevron-up' : 'chevron-down'}
+                  label={showExplanation ? '收起解释' : '翻译解释'}
+                  onPress={() => setShowExplanation((value) => !value)}
+                />
+              </View>
+
+              {showExplanation ? (
+                <View style={[styles.explanationSection, { borderTopColor: colors.line }]}>
+                  <ThemedText style={styles.explanationTitle}>翻译解释</ThemedText>
+                  {draft.explanation.rationale.map((item) => (
                     <ThemedText key={item} style={[styles.explanationText, { color: colors.mutedText }]}>
                       • {item}
                     </ThemedText>
                   ))}
-                </View>
-              </View>
-            ) : null}
-          </>
-        ) : null}
-      </SurfaceCard>
 
-      <SurfaceCard style={styles.workspaceCard}>
-        <SectionHeading title="历史记录" actionLabel={`${history.length} 条`} />
-        <View style={styles.historyList}>
-          {history.map((item) => (
-            <View
-              key={item.id}
-              style={[
-                styles.historyCard,
-                {
-                  borderColor: currentRecordId === item.id ? colors.primary : colors.line,
-                  backgroundColor: currentRecordId === item.id ? colors.primarySoft : colors.surface,
-                },
-              ]}>
-              <View style={styles.historyHeader}>
-                <View style={styles.historyCopy}>
-                  <ThemedText style={styles.historyTitle}>{item.sourcePreview}</ThemedText>
-                  <ThemedText style={[styles.historyMeta, { color: colors.mutedText }]}>
-                    {getTranslationLanguageLabel(item.draft.detectedLanguage)} →{' '}
-                    {getTranslationLanguageLabel(item.targetLanguage)} · {getSceneLabel(item.scene)} ·{' '}
-                    {formatHistoryTime(item.createdAt)}
-                  </ThemedText>
-                </View>
-                {item.favorite ? (
-                  <MaterialCommunityIcons name="star" size={18} color={colors.accent} />
-                ) : null}
-              </View>
+                  {draft.explanation.terminology.length ? (
+                    <View style={styles.glossaryBlock}>
+                      <ThemedText style={styles.glossaryTitle}>术语提示</ThemedText>
+                      {draft.explanation.terminology.map((item) => (
+                        <View key={`${item.source}-${item.target}`} style={styles.glossaryItem}>
+                          <ThemedText style={styles.glossaryPair}>
+                            {item.source} → {item.target}
+                          </ThemedText>
+                          <ThemedText style={[styles.glossaryReason, { color: colors.mutedText }]}>
+                            {item.reason}
+                          </ThemedText>
+                        </View>
+                      ))}
+                    </View>
+                  ) : null}
 
-              <View style={styles.actionRow}>
-                <ActionButton icon="history" label="再次翻译" onPress={() => handleReuseHistory(item)} />
-                <ActionButton
-                  icon={item.favorite ? 'star-off-outline' : 'star-outline'}
-                  label={item.favorite ? '取消收藏' : '收藏'}
-                  onPress={() => handleToggleFavorite(item.id)}
-                />
-                <ActionButton icon="trash-can-outline" label="删除" onPress={() => handleDeleteHistory(item.id)} />
+                  <View style={styles.glossaryBlock}>
+                    <ThemedText style={styles.glossaryTitle}>版本建议</ThemedText>
+                    {draft.explanation.alternatives.map((item) => (
+                      <ThemedText key={item} style={[styles.explanationText, { color: colors.mutedText }]}>
+                        • {item}
+                      </ThemedText>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+            </>
+          ) : null}
+        </SurfaceCard>
+      </View>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setShowSettings(false)}
+        transparent
+        visible={showSettings}>
+        <View style={styles.modalRoot}>
+          <Pressable
+            accessibilityLabel="关闭翻译偏好"
+            accessibilityRole="button"
+            onPress={() => setShowSettings(false)}
+            style={styles.modalBackdrop}
+          />
+          <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetHeaderCopy}>
+                <ThemedText style={styles.sheetTitle}>翻译偏好</ThemedText>
+                <ThemedText style={[styles.sheetMeta, { color: colors.mutedText }]}>
+                  {getSceneLabel(scene)} · {getToneLabel(tone)}
+                </ThemedText>
               </View>
+              <ToolIconButton accessibilityLabel="关闭" icon="close" onPress={() => setShowSettings(false)} />
             </View>
-          ))}
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetContent}>
+              <View style={styles.settingBlock}>
+                <ThemedText style={styles.settingTitle}>翻译场景</ThemedText>
+                <View style={styles.wrapRow}>
+                  {SCENE_OPTIONS.map((item) => (
+                    <SelectorChip
+                      key={item.id}
+                      label={item.label}
+                      selected={scene === item.id}
+                      onPress={() => setScene(item.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.settingBlock}>
+                <ThemedText style={styles.settingTitle}>表达风格</ThemedText>
+                <View style={styles.wrapRow}>
+                  {TONE_OPTIONS.map((item) => (
+                    <SelectorChip
+                      key={item.id}
+                      label={item.label}
+                      selected={tone === item.id}
+                      onPress={() => setTone(item.id)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View style={[styles.toggleList, { borderTopColor: colors.line }]}>
+                {QUICK_TOGGLE_OPTIONS.map((option) => (
+                  <ToggleRow
+                    key={option.key}
+                    label={option.label}
+                    value={
+                      option.key === 'preserveFormat'
+                        ? preserveFormat
+                        : option.key === 'bilingual'
+                          ? bilingual
+                          : prioritizeTerms
+                    }
+                    onPress={() => {
+                      if (option.key === 'preserveFormat') setPreserveFormat((value) => !value);
+                      if (option.key === 'bilingual') setBilingual((value) => !value);
+                      if (option.key === 'prioritizeTerms') setPrioritizeTerms((value) => !value);
+                    }}
+                  />
+                ))}
+              </View>
+            </ScrollView>
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setShowSettings(false)}
+              style={[styles.sheetPrimaryButton, { backgroundColor: colors.primary }]}>
+              <MaterialCommunityIcons name="check" size={18} color={colors.hero} />
+              <ThemedText style={[styles.sheetPrimaryButtonText, { color: colors.hero }]}>应用设置</ThemedText>
+            </Pressable>
+          </View>
         </View>
-      </SurfaceCard>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setShowHistory(false)}
+        transparent
+        visible={showHistory}>
+        <View style={styles.modalRoot}>
+          <Pressable
+            accessibilityLabel="关闭历史记录"
+            accessibilityRole="button"
+            onPress={() => setShowHistory(false)}
+            style={styles.modalBackdrop}
+          />
+          <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetHeaderCopy}>
+                <ThemedText style={styles.sheetTitle}>历史记录</ThemedText>
+                <ThemedText style={[styles.sheetMeta, { color: colors.mutedText }]}>{history.length} 条</ThemedText>
+              </View>
+              <ToolIconButton accessibilityLabel="关闭" icon="close" onPress={() => setShowHistory(false)} />
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.historyList}>
+              {history.map((item) => (
+                <View key={item.id} style={[styles.historyRow, { borderTopColor: colors.line }]}>
+                  <Pressable
+                    accessibilityLabel={`加载历史翻译：${item.sourcePreview}`}
+                    accessibilityRole="button"
+                    onPress={() => handleReuseHistory(item)}
+                    style={styles.historyMain}>
+                    <View style={styles.historyCopy}>
+                      <ThemedText style={styles.historyTitle} numberOfLines={2}>
+                        {item.sourcePreview}
+                      </ThemedText>
+                      <ThemedText style={[styles.historyMeta, { color: colors.mutedText }]}>
+                        {getTranslationLanguageLabel(item.draft.detectedLanguage)} →{' '}
+                        {getTranslationLanguageLabel(item.targetLanguage)} · {getSceneLabel(item.scene)} ·{' '}
+                        {formatHistoryTime(item.createdAt)}
+                      </ThemedText>
+                    </View>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={colors.mutedText} />
+                  </Pressable>
+                  <View style={styles.historyActions}>
+                    <ToolIconButton
+                      accessibilityLabel={item.favorite ? '取消收藏' : '收藏'}
+                      icon={item.favorite ? 'star' : 'star-outline'}
+                      onPress={() => handleToggleFavorite(item.id)}
+                      tone={item.favorite ? colors.accent : colors.primary}
+                    />
+                    <ToolIconButton
+                      accessibilityLabel="删除"
+                      icon="trash-can-outline"
+                      onPress={() => handleDeleteHistory(item.id)}
+                      tone="#e98888"
+                    />
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </MobileScreen>
   );
 }
@@ -630,6 +721,7 @@ function SelectorChip({ label, selected, onPress }: SelectorChipProps) {
 
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
       style={[
         styles.selectorChip,
@@ -643,29 +735,94 @@ function SelectorChip({ label, selected, onPress }: SelectorChipProps) {
   );
 }
 
-type ToggleCardProps = {
+type LanguageButtonProps = {
+  expanded: boolean;
+  label: string;
+  value: string;
+  onPress: () => void;
+};
+
+function LanguageButton({ expanded, label, value, onPress }: LanguageButtonProps) {
+  const { colors } = useAppTheme();
+
+  return (
+    <Pressable
+      accessibilityLabel={`${label}：${value}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[
+        styles.languageButton,
+        {
+          backgroundColor: expanded ? colors.primarySoft : colors.surface,
+          borderColor: expanded ? colors.primary : colors.line,
+        },
+      ]}>
+      <View style={styles.languageButtonCopy}>
+        <ThemedText style={[styles.languageButtonLabel, { color: colors.mutedText }]}>{label}</ThemedText>
+        <ThemedText style={[styles.languageButtonValue, { color: expanded ? colors.primary : colors.text }]}>
+          {value}
+        </ThemedText>
+      </View>
+      <MaterialCommunityIcons
+        name={expanded ? 'chevron-up' : 'chevron-down'}
+        size={18}
+        color={expanded ? colors.primary : colors.mutedText}
+      />
+    </Pressable>
+  );
+}
+
+type ToggleRowProps = {
   label: string;
   value: boolean;
   onPress: () => void;
 };
 
-function ToggleCard({ label, value, onPress }: ToggleCardProps) {
+function ToggleRow({ label, value, onPress }: ToggleRowProps) {
   const { colors } = useAppTheme();
 
   return (
     <Pressable
+      accessibilityLabel={`${label}：${value ? '已开启' : '未开启'}`}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: value }}
       onPress={onPress}
-      style={[
-        styles.toggleCard,
-        {
-          backgroundColor: value ? colors.hero : colors.surfaceMuted,
-          borderColor: value ? colors.hero : colors.line,
-        },
-      ]}>
-      <ThemedText style={{ color: value ? '#ffffff' : colors.text, fontWeight: '700' }}>{label}</ThemedText>
-      <ThemedText style={{ color: value ? 'rgba(255,255,255,0.7)' : colors.mutedText, fontSize: 12 }}>
-        {value ? '已开启' : '未开启'}
-      </ThemedText>
+      style={styles.toggleRow}>
+      <ThemedText style={styles.toggleRowLabel}>{label}</ThemedText>
+      <View
+        style={[
+          styles.toggleTrack,
+          { backgroundColor: value ? colors.primary : colors.surfaceMuted, borderColor: value ? colors.primary : colors.line },
+        ]}>
+        <View
+          style={[
+            styles.toggleThumb,
+            { alignSelf: value ? 'flex-end' : 'flex-start', backgroundColor: value ? colors.hero : colors.mutedText },
+          ]}
+        />
+      </View>
+    </Pressable>
+  );
+}
+
+type ToolIconButtonProps = {
+  accessibilityLabel: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  onPress: () => void;
+  tone?: string;
+};
+
+function ToolIconButton({ accessibilityLabel, icon, onPress, tone }: ToolIconButtonProps) {
+  const { colors } = useAppTheme();
+
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      hitSlop={6}
+      onPress={onPress}
+      style={[styles.iconButton, { backgroundColor: colors.surfaceMuted, borderColor: colors.line }]}>
+      <MaterialCommunityIcons name={icon} size={19} color={tone ?? colors.primary} />
     </Pressable>
   );
 }
@@ -680,15 +837,15 @@ function ActionButton({ icon, label, onPress }: ActionButtonProps) {
   const { colors } = useAppTheme();
 
   return (
-    <Pressable onPress={onPress} style={[styles.actionButton, { borderColor: colors.line }]}>
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[styles.actionButton, { borderColor: colors.line }]}>
       <MaterialCommunityIcons name={icon} size={16} color={colors.primary} />
       <ThemedText style={[styles.actionButtonText, { color: colors.text }]}>{label}</ThemedText>
     </Pressable>
   );
-}
-
-function getModeLabel(mode: TranslationModeId) {
-  return TRANSLATION_MODE_OPTIONS.find((item) => item.id === mode)?.label ?? mode;
 }
 
 function inferLanguage(text: string): ResolvedTranslationLanguage | 'auto' {
@@ -732,277 +889,339 @@ type ClipboardLike = {
 };
 
 const styles = StyleSheet.create({
-  closeButton: {
-    borderRadius: 999,
-    padding: 8,
+  pageContent: {
+    gap: 14,
+    maxWidth: 1180,
+    paddingHorizontal: 20,
+    paddingTop: 16,
   },
-  heroCard: {
-    borderRadius: 30,
-    gap: 16,
-    padding: 20,
-  },
-  heroHeader: {
-    alignItems: 'flex-start',
+  headerActions: {
     flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-  },
-  heroCopy: {
-    flex: 1,
     gap: 8,
   },
-  heroTitle: {
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  heroDescription: {
-    color: 'rgba(255,255,255,0.78)',
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  heroBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  heroBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  modeRow: {
-    gap: 10,
-  },
-  modeChip: {
-    borderRadius: 20,
+  iconButton: {
+    alignItems: 'center',
+    borderRadius: 8,
     borderWidth: 1,
-    gap: 4,
-    minWidth: 120,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  languageBar: {
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 10,
+    padding: 10,
+  },
+  languageBarWide: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  languageBarStacked: {
+    flexDirection: 'column',
+  },
+  languageControls: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    minWidth: 0,
+  },
+  languageButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+    minHeight: 58,
+    minWidth: 0,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 9,
   },
-  statusCard: {
-    borderRadius: 24,
-    gap: 10,
-    padding: 18,
+  languageButtonCopy: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
   },
-  statusHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  languageButtonLabel: {
+    fontSize: 11,
+    lineHeight: 15,
   },
-  statusTitle: {
-    fontSize: 18,
+  languageButtonValue: {
+    fontSize: 15,
     fontWeight: '800',
+    lineHeight: 20,
   },
-  statusMeta: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  statusBody: {
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  workspaceCard: {
-    gap: 16,
-    padding: 18,
-  },
-  inlineRow: {
+  settingsSummary: {
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  fieldLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  swapButton: {
-    alignItems: 'center',
-    borderRadius: 999,
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 6,
+    gap: 10,
+    minHeight: 48,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  swapLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  languageColumns: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  languageColumn: {
+  settingsSummaryCopy: {
     flex: 1,
+    gap: 1,
+    minWidth: 0,
+  },
+  settingsSummaryTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  settingsSummaryMeta: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  languageMenu: {
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 14,
+    padding: 16,
+  },
+  languageMenuHeader: {
+    alignItems: 'center',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    justifyContent: 'space-between',
+  },
+  languageMenuTitle: {
+    fontSize: 16,
+    fontWeight: '800',
   },
   selectorChip: {
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    minHeight: 38,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+  },
+  statusLine: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 20,
+    paddingHorizontal: 2,
+  },
+  statusText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  workspaceGrid: {
+    gap: 14,
+    width: '100%',
+  },
+  workspaceGridWide: {
+    alignItems: 'stretch',
+    flexDirection: 'row',
+  },
+  workspaceGridStacked: {
+    flexDirection: 'column',
+  },
+  workspacePanel: {
+    borderRadius: 20,
+    borderTopWidth: 3,
+    gap: 14,
+    minWidth: 0,
+    padding: 20,
+  },
+  workspacePanelWide: {
+    flex: 1,
+    minHeight: 560,
+  },
+  panelHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 34,
+  },
+  panelTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 9,
+  },
+  panelIcon: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
+  panelTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 22,
+  },
+  panelMeta: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   input: {
-    borderRadius: 24,
+    borderRadius: 14,
     borderWidth: 1,
-    fontSize: 15,
-    minHeight: 188,
+    fontSize: 16,
+    lineHeight: 25,
+    minHeight: 210,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 15,
   },
   actionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   actionButton: {
     alignItems: 'center',
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: 7,
+    minHeight: 38,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   actionButtonText: {
     fontSize: 13,
     fontWeight: '700',
   },
-  detectCard: {
-    borderRadius: 22,
-    borderWidth: 1,
-    gap: 8,
-    padding: 14,
-  },
-  detectTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  detectBody: {
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  settingBlock: {
-    gap: 10,
-  },
-  settingTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  wrapRow: {
+  detectLine: {
+    alignItems: 'center',
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 7,
+    minHeight: 18,
   },
-  toggleGrid: {
-    gap: 10,
-  },
-  toggleCard: {
-    borderRadius: 22,
-    borderWidth: 1,
-    gap: 6,
-    padding: 14,
+  detectText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
   },
   primaryButton: {
     alignItems: 'center',
-    borderRadius: 999,
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 52,
     paddingHorizontal: 18,
-    paddingVertical: 16,
+    paddingVertical: 14,
   },
   primaryButtonText: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: '800',
   },
   loadingState: {
-    gap: 10,
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 22,
   },
   loadingTitle: {
     fontSize: 14,
   },
   skeleton: {
-    borderRadius: 14,
+    borderRadius: 6,
     height: 14,
     width: '82%',
   },
   skeletonShort: {
-    borderRadius: 14,
+    borderRadius: 6,
     height: 14,
     width: '56%',
   },
   skeletonTall: {
-    borderRadius: 22,
+    borderRadius: 10,
     height: 120,
     width: '100%',
   },
   emptyState: {
-    borderRadius: 22,
-    borderWidth: 1,
+    alignItems: 'center',
     gap: 8,
-    padding: 16,
+    justifyContent: 'center',
+    minHeight: 270,
+    padding: 24,
+  },
+  emptyIcon: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 52,
+    justifyContent: 'center',
+    marginBottom: 4,
+    width: 52,
   },
   emptyTitle: {
     fontSize: 16,
     fontWeight: '800',
+    textAlign: 'center',
   },
   emptyBody: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
   },
   versionRow: {
-    gap: 10,
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4,
   },
   versionChip: {
-    borderRadius: 22,
+    alignItems: 'center',
+    borderRadius: 7,
     borderWidth: 1,
-    gap: 6,
-    padding: 14,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 38,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   versionTitle: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
-  },
-  versionSummary: {
-    fontSize: 12,
     lineHeight: 18,
   },
   translationCard: {
-    borderRadius: 22,
+    borderRadius: 12,
     borderWidth: 1,
-    minHeight: 180,
-    padding: 16,
+    minHeight: 244,
+    padding: 18,
   },
   translationText: {
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 26,
   },
   parallelBlock: {
     gap: 10,
   },
+  parallelBlockWide: {
+    flexDirection: 'row',
+  },
   parallelColumn: {
-    borderRadius: 22,
+    borderRadius: 12,
     borderWidth: 1,
     gap: 10,
-    minHeight: 130,
+    minHeight: 190,
+    minWidth: 0,
     padding: 16,
   },
+  parallelColumnWide: {
+    flex: 1,
+  },
   parallelLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '800',
   },
   parallelText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 24,
   },
-  explanationCard: {
-    borderRadius: 22,
-    borderWidth: 1,
+  explanationSection: {
+    borderTopWidth: 1,
     gap: 10,
-    padding: 16,
+    paddingTop: 16,
   },
   explanationTitle: {
     fontSize: 16,
@@ -1031,31 +1250,135 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
-  historyList: {
-    gap: 12,
+  modalRoot: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
   },
-  historyCard: {
-    borderRadius: 22,
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.58)',
+  },
+  sheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     borderWidth: 1,
-    gap: 12,
-    padding: 14,
+    gap: 16,
+    maxHeight: '88%',
+    maxWidth: 640,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    width: '100%',
   },
-  historyHeader: {
-    alignItems: 'flex-start',
+  sheetHeader: {
+    alignItems: 'center',
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     justifyContent: 'space-between',
+  },
+  sheetHeaderCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 26,
+  },
+  sheetMeta: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  sheetContent: {
+    gap: 22,
+    paddingBottom: 4,
+  },
+  settingBlock: {
+    gap: 10,
+  },
+  settingTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  wrapRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  toggleList: {
+    borderTopWidth: 1,
+  },
+  toggleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 52,
+  },
+  toggleRowLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  toggleTrack: {
+    borderRadius: 12,
+    borderWidth: 1,
+    height: 24,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+    width: 42,
+  },
+  toggleThumb: {
+    borderRadius: 9,
+    height: 18,
+    width: 18,
+  },
+  sheetPrimaryButton: {
+    alignItems: 'center',
+    borderRadius: 10,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  sheetPrimaryButtonText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  historyList: {
+    paddingBottom: 8,
+  },
+  historyRow: {
+    alignItems: 'center',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 82,
+    paddingVertical: 12,
+  },
+  historyMain: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    minWidth: 0,
   },
   historyCopy: {
     flex: 1,
     gap: 4,
+    minWidth: 0,
   },
   historyTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
+    lineHeight: 20,
   },
   historyMeta: {
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 18,
+  },
+  historyActions: {
+    flexDirection: 'row',
+    gap: 6,
   },
 });

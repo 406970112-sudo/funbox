@@ -55,6 +55,26 @@ export function HomeScreen() {
         </View>
         <MaterialCommunityIcons name="chevron-right" size={24} color={colors.mutedText} />
       </Pressable>
+
+      <View style={styles.sectionHeader}>
+        <ThemedText style={styles.sectionTitle}>小游戏</ThemedText>
+        <ThemedText style={[styles.sectionMeta, { color: colors.mutedText }]}>人机挑战</ThemedText>
+      </View>
+
+      <Pressable
+        onPress={() => router.push('/games/gomoku')}
+        style={[styles.toolCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+        <View style={[styles.toolIconWrap, { backgroundColor: '#cf794a18' }]}>
+          <MaterialCommunityIcons name="checkerboard" size={25} color="#cf794a" />
+        </View>
+        <View style={styles.toolCopy}>
+          <ThemedText style={styles.toolTitle}>五子棋人机对战</ThemedText>
+          <ThemedText numberOfLines={1} style={[styles.toolDescription, { color: colors.mutedText }]}>
+            三档难度，支持悔棋与随时重开
+          </ThemedText>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={24} color={colors.mutedText} />
+      </Pressable>
     </MobileScreen>
   );
 }
@@ -90,6 +110,20 @@ const styles = StyleSheet.create({
   },
   topBar: {
     marginBottom: 4,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  sectionMeta: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   brandTitle: {
     fontSize: 24,

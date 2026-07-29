@@ -49,10 +49,10 @@ func main() {
 	}
 
 	var translationService *translation.Service
-	if cfg.OpenAI.APIKey != "" {
-		translationService = translation.NewService(cfg.OpenAI)
+	if cfg.DeepSeek.APIKey != "" {
+		translationService = translation.NewService(cfg.DeepSeek)
 	} else {
-		log.Printf("translation disabled: missing OPENAI_API_KEY")
+		log.Printf("translation disabled: missing DEEPSEEK_API_KEY")
 	}
 
 	server := httpapi.NewServer(cfg, ttsService, translationService, authService)
@@ -80,6 +80,8 @@ func loadEnvFiles() {
 	candidates := []string{
 		".env",
 		filepath.Join("backend", ".env"),
+		filepath.Join("email-agent", "backend", ".env"),
+		filepath.Join("..", "email-agent", "backend", ".env"),
 	}
 
 	for _, filePath := range candidates {

@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>二维码生成器 - 产品原型</title>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --page: #e7eefb;
+        --surface: #ffffff;
+        --surface-muted: #edf2ff;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dbe5f8;
+        --primary: #4b6bff;
+        --primary-soft: #e3e9ff;
+        --qr: #173f3a;
+        --mint: #eaf5ef;
+        --coral: #ef765f;
+        --shadow: 0 28px 80px rgba(41, 60, 108, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+        letter-spacing: 0;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(75, 107, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(75, 107, 255, 0.035) 1px, transparent 1px),
+          var(--page);
+        background-size: 28px 28px;
+        color: var(--ink);
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .prototype-board {
+        display: grid;
+        gap: 58px;
+        grid-template-columns: 330px minmax(0, 1fr);
+        margin: 0 auto;
+        min-height: 1080px;
+        padding: 62px 64px;
+        width: min(1500px, 100%);
+      }
+
+      .brief {
+        align-self: center;
+        max-width: 330px;
+      }
+
+      .brief h1 {
+        font-size: 38px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .brief .subtitle {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.8;
+        margin: 14px 0 0;
+      }
+
+      .brief-section {
+        border-top: 1px solid rgba(105, 126, 169, 0.24);
+        margin-top: 30px;
+        padding-top: 24px;
+      }
+
+      .brief-section h2 {
+        font-size: 14px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .flow {
+        display: grid;
+        gap: 12px;
+      }
+
+      .flow-step {
+        align-items: center;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 30px 1fr;
+      }
+
+      .flow-index {
+        align-items: center;
+        background: var(--ink);
+        border-radius: 9px;
+        color: white;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .flow-step strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .flow-step span {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        margin-top: 2px;
+      }
+
+      .token-row {
+        display: flex;
+        gap: 9px;
+      }
+
+      .token {
+        border: 3px solid rgba(255, 255, 255, 0.72);
+        border-radius: 50%;
+        box-shadow: 0 3px 10px rgba(49, 64, 100, 0.12);
+        height: 26px;
+        width: 26px;
+      }
+
+      .brief-note {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.7;
+        margin-top: 14px;
+      }
+
+      .screens {
+        align-items: center;
+        display: flex;
+        gap: 30px;
+        justify-content: flex-end;
+        min-width: 0;
+      }
+
+      .screen-wrap {
+        min-width: 0;
+        text-align: center;
+      }
+
+      .screen-label {
+        color: #60708f;
+        font-size: 12px;
+        font-weight: 800;
+        margin: 0 0 12px;
+      }
+
+      .phone {
+        background: #f5f8ff;
+        border: 7px solid #141d33;
+        border-radius: 42px;
+        box-shadow: var(--shadow);
+        height: 844px;
+        overflow: hidden;
+        position: relative;
+        text-align: left;
+        width: 390px;
+      }
+
+      .phone::before {
+        background: #141d33;
+        border-radius: 0 0 16px 16px;
+        content: "";
+        height: 25px;
+        left: 50%;
+        position: absolute;
+        top: 0;
+        transform: translateX(-50%);
+        width: 124px;
+        z-index: 20;
+      }
+
+      .screen {
+        background:
+          linear-gradient(rgba(75, 107, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(75, 107, 255, 0.025) 1px, transparent 1px),
+          #f5f8ff;
+        background-size: 20px 20px;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: space-between;
+        padding: 5px 19px 0;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .app-bar {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 40px 1fr 40px;
+        height: 52px;
+        padding: 0 14px;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 14px;
+        color: var(--ink);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        padding: 0;
+        width: 38px;
+      }
+
+      .icon-button:hover {
+        background: var(--surface-muted);
+      }
+
+      .app-title {
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .app-action {
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 900;
+        text-align: right;
+      }
+
+      .phone-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: calc(100% - 82px);
+        padding: 4px 14px 18px;
+      }
+
+      .type-tabs {
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 4px;
+      }
+
+      .type-tab {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 3px;
+        height: 45px;
+        justify-content: center;
+      }
+
+      .type-tab.active {
+        background: var(--ink);
+        color: #ffffff;
+      }
+
+      .type-tab svg {
+        height: 15px;
+        stroke-width: 2.3;
+        width: 15px;
+      }
+
+      .preview-stage {
+        align-items: center;
+        background: var(--mint);
+        border: 1px solid #d3e8dc;
+        border-radius: 24px;
+        display: flex;
+        flex-direction: column;
+        min-height: 272px;
+        padding: 17px;
+        position: relative;
+      }
+
+      .preview-top {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+      }
+
+      .preview-title {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .live-state {
+        align-items: center;
+        color: #51746b;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 5px;
+      }
+
+      .live-dot {
+        background: #2ab28a;
+        border-radius: 50%;
+        height: 6px;
+        width: 6px;
+      }
+
+      .qr-paper {
+        align-items: center;
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 14px 34px rgba(33, 75, 64, 0.12);
+        display: flex;
+        height: 194px;
+        justify-content: center;
+        margin-top: 11px;
+        position: relative;
+        width: 194px;
+      }
+
+      .qr-paper img {
+        border-radius: 10px;
+        display: block;
+        height: 166px;
+        image-rendering: pixelated;
+        width: 166px;
+      }
+
+      .qr-logo {
+        align-items: center;
+        background: var(--coral);
+        border: 5px solid #ffffff;
+        border-radius: 13px;
+        color: #ffffff;
+        display: flex;
+        font-size: 15px;
+        font-weight: 900;
+        height: 40px;
+        justify-content: center;
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+      }
+
+      .preview-caption {
+        color: #51746b;
+        font-size: 10px;
+        margin-top: 9px;
+      }
+
+      .section {
+        background: rgba(255, 255, 255, 0.84);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 13px;
+      }
+
+      .section-heading {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .section-heading strong {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .section-heading span {
+        color: var(--muted);
+        font-size: 9px;
+      }
+
+      .url-field {
+        align-items: center;
+        background: var(--surface-muted);
+        border: 1px solid transparent;
+        border-radius: 13px;
+        display: flex;
+        gap: 8px;
+        height: 42px;
+        padding: 0 11px;
+      }
+
+      .url-field:focus-within {
+        border-color: var(--primary);
+      }
+
+      .url-field svg {
+        color: var(--primary);
+        height: 16px;
+        width: 16px;
+      }
+
+      .url-field input {
+        background: transparent;
+        border: 0;
+        color: var(--ink);
+        font-size: 11px;
+        min-width: 0;
+        outline: 0;
+        width: 100%;
+      }
+
+      .style-row {
+        align-items: center;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr auto;
+      }
+
+      .swatches {
+        display: flex;
+        gap: 7px;
+      }
+
+      .swatch {
+        background: var(--color);
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px var(--line);
+        height: 25px;
+        padding: 0;
+        position: relative;
+        width: 25px;
+      }
+
+      .swatch.active::after {
+        border: 1.8px solid white;
+        border-left: 0;
+        border-top: 0;
+        content: "";
+        height: 7px;
+        left: 8px;
+        position: absolute;
+        top: 5px;
+        transform: rotate(45deg);
+        width: 4px;
+      }
+
+      .corner-control {
+        background: var(--surface-muted);
+        border-radius: 11px;
+        display: flex;
+        gap: 2px;
+        padding: 3px;
+      }
+
+      .corner-option {
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        padding: 7px 10px;
+      }
+
+      .corner-option.active {
+        background: #ffffff;
+        color: var(--ink);
+        box-shadow: 0 2px 8px rgba(56, 74, 116, 0.09);
+      }
+
+      .primary-button {
+        align-items: center;
+        background: var(--primary);
+        border: 0;
+        border-radius: 17px;
+        box-shadow: 0 12px 26px rgba(75, 107, 255, 0.28);
+        color: #ffffff;
+        display: flex;
+        font-size: 13px;
+        font-weight: 900;
+        gap: 8px;
+        height: 52px;
+        justify-content: center;
+        margin-top: auto;
+        width: 100%;
+      }
+
+      .primary-button svg {
+        height: 18px;
+        stroke-width: 2.5;
+        width: 18px;
+      }
+
+      .export-modal {
+        align-items: flex-end;
+        background: rgba(14, 22, 40, 0.54);
+        display: flex;
+        inset: 0;
+        opacity: 0;
+        pointer-events: none;
+        position: absolute;
+        transition: opacity 180ms ease;
+        z-index: 12;
+      }
+
+      .phone.export-open .export-modal {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .export-sheet {
+        background: #ffffff;
+        border-radius: 28px 28px 0 0;
+        padding: 9px 18px 26px;
+        transform: translateY(18px);
+        transition: transform 220ms ease;
+        width: 100%;
+      }
+
+      .phone.export-open .export-sheet {
+        transform: translateY(0);
+      }
+
+      .sheet-handle {
+        background: #d8deea;
+        border-radius: 99px;
+        height: 4px;
+        margin: 0 auto 17px;
+        width: 42px;
+      }
+
+      .sheet-header {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .sheet-header h3 {
+        font-size: 19px;
+        margin: 0;
+      }
+
+      .sheet-header p {
+        color: var(--muted);
+        font-size: 10px;
+        margin: 4px 0 0;
+      }
+
+      .sheet-close {
+        background: var(--surface-muted);
+      }
+
+      .export-preview {
+        align-items: center;
+        background: var(--mint);
+        border-radius: 18px;
+        display: flex;
+        gap: 14px;
+        margin-top: 15px;
+        padding: 12px;
+      }
+
+      .export-preview img {
+        background: white;
+        border-radius: 11px;
+        height: 74px;
+        image-rendering: pixelated;
+        padding: 6px;
+        width: 74px;
+      }
+
+      .file-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .file-copy strong {
+        display: block;
+        font-size: 12px;
+      }
+
+      .file-copy span {
+        color: #51746b;
+        display: block;
+        font-size: 9px;
+        margin-top: 4px;
+      }
+
+      .sheet-section {
+        margin-top: 17px;
+      }
+
+      .sheet-label {
+        font-size: 11px;
+        font-weight: 900;
+        margin-bottom: 8px;
+      }
+
+      .format-control {
+        background: var(--surface-muted);
+        border-radius: 13px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: 1fr 1fr;
+        padding: 3px;
+      }
+
+      .format-option {
+        background: transparent;
+        border: 0;
+        border-radius: 10px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 900;
+        height: 34px;
+      }
+
+      .format-option.active {
+        background: #ffffff;
+        color: var(--primary);
+        box-shadow: 0 3px 11px rgba(56, 74, 116, 0.09);
+      }
+
+      .setting-row {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        min-height: 50px;
+        justify-content: space-between;
+      }
+
+      .setting-row:last-child {
+        border-bottom: 0;
+      }
+
+      .setting-copy strong {
+        display: block;
+        font-size: 11px;
+      }
+
+      .setting-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        margin-top: 2px;
+      }
+
+      .select-value {
+        align-items: center;
+        color: var(--primary);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 3px;
+      }
+
+      .switch {
+        background: var(--primary);
+        border: 0;
+        border-radius: 99px;
+        height: 24px;
+        padding: 3px;
+        width: 42px;
+      }
+
+      .switch::after {
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 2px 5px rgba(25, 34, 54, 0.18);
+        content: "";
+        display: block;
+        height: 18px;
+        margin-left: 18px;
+        transition: margin 150ms ease;
+        width: 18px;
+      }
+
+      .switch.off {
+        background: #ccd5e6;
+      }
+
+      .switch.off::after {
+        margin-left: 0;
+      }
+
+      .sheet-actions {
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 1fr 50px;
+        margin-top: 17px;
+      }
+
+      .save-button,
+      .share-button {
+        align-items: center;
+        border: 0;
+        border-radius: 15px;
+        display: flex;
+        height: 50px;
+        justify-content: center;
+      }
+
+      .save-button {
+        background: var(--primary);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 7px;
+      }
+
+      .share-button {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      @media (max-width: 1220px) {
+        .prototype-board {
+          grid-template-columns: 1fr;
+        }
+
+        .brief {
+          max-width: 760px;
+        }
+
+        .screens {
+          justify-content: center;
+        }
+      }
+
+      @media (max-width: 850px) {
+        .prototype-board {
+          padding: 36px 18px 60px;
+        }
+
+        .screens {
+          flex-direction: column;
+        }
+
+        .phone {
+          max-width: calc(100vw - 36px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="prototype-board">
+      <section class="brief" aria-label="原型说明">
+        <h1>二维码生成器</h1>
+        <p class="subtitle">移动端高保真产品原型，覆盖从内容输入、实时预览到保存分享的完整闭环。</p>
+
+        <div class="brief-section">
+          <h2>核心路径</h2>
+          <div class="flow">
+            <div class="flow-step">
+              <div class="flow-index">01</div>
+              <div><strong>选择内容类型</strong><span>链接、文本、Wi-Fi、名片</span></div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-index">02</div>
+              <div><strong>输入并实时预览</strong><span>内容与样式修改即时反馈</span></div>
+            </div>
+            <div class="flow-step">
+              <div class="flow-index">03</div>
+              <div><strong>导出或分享</strong><span>PNG / SVG，支持透明背景</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="brief-section">
+          <h2>视觉基调</h2>
+          <div class="token-row" aria-label="设计色板">
+            <span class="token" style="background:#18233d"></span>
+            <span class="token" style="background:#4b6bff"></span>
+            <span class="token" style="background:#173f3a"></span>
+            <span class="token" style="background:#eaf5ef"></span>
+            <span class="token" style="background:#ef765f"></span>
+          </div>
+          <p class="brief-note">延续 FunBox 的浅蓝底色与蓝色主操作色，以墨绿二维码和薄荷预览区建立工具识别度。控件保持紧凑，避免多层卡片。</p>
+        </div>
+
+        <div class="brief-section">
+          <h2>交互原则</h2>
+          <p class="brief-note">二维码实时生成；内容无效时禁用导出。分享与保存集中在底部面板，不打断编辑上下文。首次进入默认选择“链接”。</p>
+        </div>
+      </section>
+
+      <section class="screens" aria-label="移动端界面原型">
+        <div class="screen-wrap">
+          <p class="screen-label">A · 编辑与实时预览</p>
+          <div class="phone" id="editor-phone">
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span>
+              </div>
+              <header class="app-bar">
+                <button class="icon-button" aria-label="返回" title="返回"><i data-lucide="arrow-left"></i></button>
+                <div class="app-title">二维码生成器</div>
+                <div class="app-action">历史</div>
+              </header>
+
+              <div class="phone-content">
+                <nav class="type-tabs" aria-label="二维码内容类型">
+                  <button class="type-tab active"><i data-lucide="link-2"></i><span>链接</span></button>
+                  <button class="type-tab"><i data-lucide="text"></i><span>文本</span></button>
+                  <button class="type-tab"><i data-lucide="wifi"></i><span>Wi-Fi</span></button>
+                  <button class="type-tab"><i data-lucide="contact"></i><span>名片</span></button>
+                </nav>
+
+                <section class="preview-stage">
+                  <div class="preview-top">
+                    <span class="preview-title">实时预览</span>
+                    <span class="live-state"><span class="live-dot"></span>内容有效</span>
+                  </div>
+                  <div class="qr-paper">
+                    <img src="./qr-preview.png" alt="FunBox 下载链接二维码" />
+                    <span class="qr-logo">F</span>
+                  </div>
+                  <span class="preview-caption">FunBox 下载页</span>
+                </section>
+
+                <section class="section">
+                  <div class="section-heading">
+                    <strong>输入链接</strong>
+                    <span>建议使用 HTTPS</span>
+                  </div>
+                  <label class="url-field">
+                    <i data-lucide="globe-2"></i>
+                    <input value="https://funbox.app/download" aria-label="链接地址" />
+                  </label>
+                </section>
+
+                <section class="section">
+                  <div class="section-heading">
+                    <strong>二维码样式</strong>
+                    <span>高容错</span>
+                  </div>
+                  <div class="style-row">
+                    <div class="swatches" aria-label="二维码颜色">
+                      <button class="swatch active" style="--color:#173f3a" aria-label="墨绿"></button>
+                      <button class="swatch" style="--color:#18233d" aria-label="深蓝"></button>
+                      <button class="swatch" style="--color:#4b6bff" aria-label="亮蓝"></button>
+                      <button class="swatch" style="--color:#d44d42" aria-label="朱红"></button>
+                    </div>
+                    <div class="corner-control" aria-label="模块圆角">
+                      <button class="corner-option">方角</button>
+                      <button class="corner-option active">圆角</button>
+                    </div>
+                  </div>
+                </section>
+
+                <button class="primary-button" data-open-export>
+                  <i data-lucide="download"></i>
+                  <span>导出二维码</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="export-modal" aria-hidden="true">
+              <div class="export-sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-header">
+                  <div><h3>导出二维码</h3><p>选择适合使用场景的文件规格</p></div>
+                  <button class="icon-button sheet-close" data-close-export aria-label="关闭"><i data-lucide="x"></i></button>
+                </div>
+                <div class="export-preview">
+                  <img src="./qr-preview.png" alt="二维码缩略图" />
+                  <div class="file-copy"><strong>funbox-download-qr.png</strong><span>预计 86 KB · 高容错</span></div>
+                  <i data-lucide="badge-check" style="color:#249578"></i>
+                </div>
+                <div class="sheet-section"><div class="sheet-label">文件格式</div><div class="format-control"><button class="format-option active">PNG 图片</button><button class="format-option">SVG 矢量</button></div></div>
+                <div class="sheet-section">
+                  <div class="setting-row"><div class="setting-copy"><strong>导出尺寸</strong><span>适合屏幕与印刷</span></div><span class="select-value">1024 × 1024 <i data-lucide="chevron-right"></i></span></div>
+                  <div class="setting-row"><div class="setting-copy"><strong>透明背景</strong><span>仅保留二维码与中心标识</span></div><button class="switch" aria-label="透明背景"></button></div>
+                </div>
+                <div class="sheet-actions"><button class="save-button"><i data-lucide="image-down"></i>保存到相册</button><button class="share-button" aria-label="分享"><i data-lucide="share-2"></i></button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen-wrap">
+          <p class="screen-label">B · 导出与分享</p>
+          <div class="phone export-open">
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span>
+              </div>
+              <header class="app-bar">
+                <button class="icon-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <div class="app-title">二维码生成器</div>
+                <div class="app-action">历史</div>
+              </header>
+              <div class="phone-content">
+                <nav class="type-tabs"><button class="type-tab active"><i data-lucide="link-2"></i><span>链接</span></button><button class="type-tab"><i data-lucide="text"></i><span>文本</span></button><button class="type-tab"><i data-lucide="wifi"></i><span>Wi-Fi</span></button><button class="type-tab"><i data-lucide="contact"></i><span>名片</span></button></nav>
+                <section class="preview-stage">
+                  <div class="preview-top"><span class="preview-title">实时预览</span><span class="live-state"><span class="live-dot"></span>内容有效</span></div>
+                  <div class="qr-paper"><img src="./qr-preview.png" alt="FunBox 下载链接二维码" /><span class="qr-logo">F</span></div>
+                  <span class="preview-caption">FunBox 下载页</span>
+                </section>
+                <section class="section"><div class="section-heading"><strong>输入链接</strong><span>建议使用 HTTPS</span></div><label class="url-field"><i data-lucide="globe-2"></i><input value="https://funbox.app/download" aria-label="链接地址" /></label></section>
+                <section class="section"><div class="section-heading"><strong>二维码样式</strong><span>高容错</span></div><div class="style-row"><div class="swatches"><button class="swatch active" style="--color:#173f3a"></button><button class="swatch" style="--color:#18233d"></button><button class="swatch" style="--color:#4b6bff"></button><button class="swatch" style="--color:#d44d42"></button></div><div class="corner-control"><button class="corner-option">方角</button><button class="corner-option active">圆角</button></div></div></section>
+                <button class="primary-button"><i data-lucide="download"></i><span>导出二维码</span></button>
+              </div>
+            </div>
+
+            <div class="export-modal" aria-hidden="false">
+              <div class="export-sheet">
+                <div class="sheet-handle"></div>
+                <div class="sheet-header">
+                  <div><h3>导出二维码</h3><p>选择适合使用场景的文件规格</p></div>
+                  <button class="icon-button sheet-close" aria-label="关闭"><i data-lucide="x"></i></button>
+                </div>
+                <div class="export-preview">
+                  <img src="./qr-preview.png" alt="二维码缩略图" />
+                  <div class="file-copy"><strong>funbox-download-qr.png</strong><span>预计 86 KB · 高容错</span></div>
+                  <i data-lucide="badge-check" style="color:#249578"></i>
+                </div>
+                <div class="sheet-section">
+                  <div class="sheet-label">文件格式</div>
+                  <div class="format-control"><button class="format-option active">PNG 图片</button><button class="format-option">SVG 矢量</button></div>
+                </div>
+                <div class="sheet-section">
+                  <div class="setting-row"><div class="setting-copy"><strong>导出尺寸</strong><span>适合屏幕与印刷</span></div><span class="select-value">1024 × 1024 <i data-lucide="chevron-right"></i></span></div>
+                  <div class="setting-row"><div class="setting-copy"><strong>透明背景</strong><span>仅保留二维码与中心标识</span></div><button class="switch" aria-label="透明背景"></button></div>
+                </div>
+                <div class="sheet-actions">
+                  <button class="save-button"><i data-lucide="image-down"></i>保存到相册</button>
+                  <button class="share-button" aria-label="分享"><i data-lucide="share-2"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      lucide.createIcons();
+
+      document.querySelectorAll('.type-tabs').forEach((tabs) => {
+        tabs.querySelectorAll('.type-tab').forEach((tab) => {
+          tab.addEventListener('click', () => {
+            tabs.querySelectorAll('.type-tab').forEach((item) => item.classList.remove('active'));
+            tab.classList.add('active');
+          });
+        });
+      });
+
+      document.querySelectorAll('.swatches').forEach((group) => {
+        group.querySelectorAll('.swatch').forEach((swatch) => {
+          swatch.addEventListener('click', () => {
+            group.querySelectorAll('.swatch').forEach((item) => item.classList.remove('active'));
+            swatch.classList.add('active');
+          });
+        });
+      });
+
+      document.querySelectorAll('.switch').forEach((control) => {
+        control.addEventListener('click', () => control.classList.toggle('off'));
+      });
+
+      document.querySelectorAll('[data-open-export]').forEach((button) => {
+        button.addEventListener('click', () => button.closest('.phone').classList.add('export-open'));
+      });
+
+      document.querySelectorAll('[data-close-export]').forEach((button) => {
+        button.addEventListener('click', () => button.closest('.phone').classList.remove('export-open'));
+      });
+    </script>
+  </body>
+</html>

@@ -11,7 +11,7 @@ export type ToolId =
   | 'smart-translation'
   | 'focus-plan';
 
-export type GameId = 'snake-brawl' | 'brain-challenge' | 'speed-racer';
+export type GameId = 'snake-brawl' | 'gomoku' | 'brain-challenge' | 'speed-racer';
 
 export type ToolCategory = 'AI' | '音频' | '效率' | '多媒体' | '直播';
 export type ToolStatus = 'available' | 'coming-soon';
