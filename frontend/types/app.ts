@@ -9,6 +9,7 @@ export type ToolId =
   | 'live-stream-capture'
   | 'image-cleanup'
   | 'smart-translation'
+  | 'qr-code'
   | 'focus-plan';
 
 export type GameId = 'snake-brawl' | 'gomoku' | 'brain-challenge' | 'speed-racer';

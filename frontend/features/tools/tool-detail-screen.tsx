@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-screen';
 import { TextToSpeechToolScreen } from '@/features/tools/tts-tool-screen';
+import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { ThemedText } from '@/components/themed-text';
@@ -25,6 +26,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <TextToSpeechToolScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'qr-code') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <QrCodeToolScreen />
       </>
     );
   }

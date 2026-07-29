@@ -18,7 +18,6 @@ import { DEFAULT_TTS_VOICE, TTS_VOICE_GROUPS, TTS_VOICE_OPTIONS } from '@/consta
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { getVoiceServerUrl, isVoiceServerLocked, synthesizeSpeech } from '@/lib/tts';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
-import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
 import { TTS_ENCODINGS, type SynthesisResult, type TTSEncoding } from '@/types/tts';
 
@@ -113,104 +112,89 @@ export function TextToSpeechToolScreen() {
   return (
     <>
       <MobileScreen contentContainerStyle={styles.screenContent}>
-        <PageHeader
-          title="文字转语音"
-          subtitle="让每段文字，都更接近你想要的声音。"
-          rightSlot={
-            <Pressable
-              accessibilityLabel="返回"
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.iconButton}>
-              <MaterialCommunityIcons name="arrow-left" size={21} color={colors.text} />
-            </Pressable>
-          }
-        />
-
-        <View style={[styles.voiceStage, { backgroundColor: colors.hero }]}>
-          <StepHeading inverse number="01" title="选择音色" />
+        <View style={styles.compactHeader}>
+          <ThemedText style={styles.headerTitle}>文字转语音</ThemedText>
           <Pressable
-            accessibilityHint="打开全部音色列表"
+            accessibilityLabel="返回"
             accessibilityRole="button"
-            onPress={() => setPickerVisible(true)}
-            style={styles.voiceSelector}>
-            <View style={styles.voiceIcon}>
-              <MaterialCommunityIcons name="account-voice" size={28} color="#ffffff" />
-            </View>
-            <View style={styles.voiceCopy}>
-              <ThemedText style={styles.voiceName}>{selectedVoice.label}</ThemedText>
-              <ThemedText style={styles.voiceMeta}>
-                {selectedVoice.group} · {selectedVoice.language}
-              </ThemedText>
-              <ThemedText numberOfLines={2} style={styles.voiceCapability}>
-                {selectedVoice.capabilities}
-              </ThemedText>
-            </View>
-            <View style={styles.voiceChevron}>
-              <MaterialCommunityIcons name="chevron-right" size={22} color="#ffffff" />
-            </View>
+            onPress={() => router.back()}
+            style={styles.iconButton}>
+            <MaterialCommunityIcons name="arrow-left" size={21} color={colors.text} />
           </Pressable>
         </View>
 
-        <SurfaceCard style={styles.editorCard}>
-          <View style={styles.editorSection}>
-            <StepHeading number="02" title="设定语气" />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.presetRow}>
+        <SurfaceCard style={styles.configurationCard}>
+          <Pressable
+            accessibilityHint="打开全部音色列表"
+            accessibilityLabel={`当前音色 ${selectedVoice.label}`}
+            accessibilityRole="button"
+            onPress={() => setPickerVisible(true)}
+            style={styles.voiceSelector}>
+            <View style={[styles.voiceIcon, { backgroundColor: colors.primarySoft }]}>
+              <MaterialCommunityIcons name="account-voice" size={21} color={colors.primary} />
+            </View>
+            <View style={styles.voiceCopy}>
+              <ThemedText style={[styles.configLabel, { color: colors.mutedText }]}>音色</ThemedText>
+              <ThemedText style={styles.voiceName}>{selectedVoice.label}</ThemedText>
+              <ThemedText style={[styles.voiceMeta, { color: colors.mutedText }]}>
+                {selectedVoice.group} · {selectedVoice.language}
+              </ThemedText>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={22} color={colors.mutedText} />
+          </Pressable>
+
+          <View style={[styles.configurationDivider, { backgroundColor: colors.line }]} />
+
+          <View style={styles.toneSection}>
+            <View style={styles.toneHeading}>
+              <ThemedText style={[styles.configLabel, { color: colors.mutedText }]}>语气</ThemedText>
+              <ThemedText style={[styles.toneHeadingValue, { color: colors.primary }]}>
+                {selectedPreset ?? '自定义'}
+              </ThemedText>
+            </View>
+            <View style={[styles.presetRow, { backgroundColor: colors.surfaceMuted }]}>
               {TONE_PRESETS.map((preset) => {
                 const selected = preset.label === selectedPreset;
 
                 return (
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityState={{ selected }}
                     key={preset.label}
                     onPress={() => setContextText(preset.prompt)}
                     style={[
                       styles.presetChip,
                       {
-                        backgroundColor: selected ? colors.primarySoft : colors.surface,
-                        borderColor: selected ? colors.primary : colors.line,
+                        backgroundColor: selected ? colors.primary : 'transparent',
                       },
                     ]}>
-                    {selected ? (
-                      <MaterialCommunityIcons name="check" size={15} color={colors.primary} />
-                    ) : null}
                     <ThemedText
                       style={[
                         styles.presetText,
-                        { color: selected ? colors.primary : colors.text },
+                        { color: selected ? '#ffffff' : colors.mutedText },
                       ]}>
                       {preset.label}
                     </ThemedText>
                   </Pressable>
                 );
               })}
-            </ScrollView>
-            <TextInput
-              accessibilityLabel="语气提示词"
-              multiline
-              onChangeText={setContextText}
-              placeholder="描述语速、情绪或表达方式"
-              placeholderTextColor={colors.mutedText}
-              selectionColor={colors.primary}
-              style={[
-                styles.toneInput,
-                {
-                  backgroundColor: colors.surfaceMuted,
-                  color: colors.text,
-                },
-              ]}
-              textAlignVertical="top"
-              value={contextText}
-            />
+            </View>
+            <ThemedText
+              numberOfLines={1}
+              style={[styles.toneHint, { color: colors.mutedText }]}>
+              {contextText}
+            </ThemedText>
           </View>
+        </SurfaceCard>
 
-          <View style={[styles.sectionDivider, { backgroundColor: colors.line }]} />
-
+        <SurfaceCard style={styles.editorCard}>
           <View style={styles.editorSection}>
-            <StepHeading meta={`${text.length} / ${MAX_TEXT_LENGTH}`} number="03" title="输入文本" />
+            <View style={styles.editorHeading}>
+              <ThemedText style={styles.editorTitle}>输入文本</ThemedText>
+              <ThemedText style={[styles.editorMeta, { color: colors.mutedText }]}>
+                {text.length} / {MAX_TEXT_LENGTH}
+              </ThemedText>
+            </View>
             <TextInput
               accessibilityLabel="需要转换的文本"
               maxLength={MAX_TEXT_LENGTH}
@@ -257,6 +241,30 @@ export function TextToSpeechToolScreen() {
 
           {advancedOpen ? (
             <View style={[styles.advancedBody, { borderTopColor: colors.line }]}>
+              <View style={styles.field}>
+                <ThemedText style={styles.fieldLabel}>自定义语气</ThemedText>
+                <TextInput
+                  accessibilityLabel="自定义语气"
+                  multiline
+                  onChangeText={setContextText}
+                  placeholder="描述语速、情绪或表达方式"
+                  placeholderTextColor={colors.mutedText}
+                  selectionColor={colors.primary}
+                  style={[
+                    styles.customToneInput,
+                    {
+                      backgroundColor: colors.surfaceMuted,
+                      color: colors.text,
+                    },
+                  ]}
+                  textAlignVertical="top"
+                  value={contextText}
+                />
+                <ThemedText style={[styles.fieldHint, { color: colors.mutedText }]}>
+                  选择上方预设后，仍可在这里微调表达方式
+                </ThemedText>
+              </View>
+
               <View style={styles.field}>
                 <ThemedText style={styles.fieldLabel}>输出格式</ThemedText>
                 <View style={[styles.segmentedControl, { backgroundColor: colors.surfaceMuted }]}>
@@ -527,29 +535,6 @@ export function TextToSpeechToolScreen() {
   );
 }
 
-type StepHeadingProps = {
-  inverse?: boolean;
-  meta?: string;
-  number: string;
-  title: string;
-};
-
-function StepHeading({ inverse = false, meta, number, title }: StepHeadingProps) {
-  const { colors } = useAppTheme();
-  const titleColor = inverse ? '#ffffff' : colors.text;
-  const mutedColor = inverse ? 'rgba(255,255,255,0.58)' : colors.mutedText;
-
-  return (
-    <View style={styles.stepHeading}>
-      <ThemedText style={[styles.stepNumber, { color: mutedColor }]}>{number}</ThemedText>
-      <ThemedText style={[styles.stepTitle, { color: titleColor }]}>{title}</ThemedText>
-      {meta ? (
-        <ThemedText style={[styles.stepMeta, { color: mutedColor }]}>{meta}</ThemedText>
-      ) : null}
-    </View>
-  );
-}
-
 type DetailRowProps = {
   label: string;
   value: string;
@@ -570,7 +555,18 @@ function DetailRow({ label, value }: DetailRowProps) {
 
 const styles = StyleSheet.create({
   screenContent: {
-    gap: 14,
+    gap: 12,
+  },
+  compactHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 40,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    lineHeight: 28,
   },
   iconButton: {
     alignItems: 'center',
@@ -578,115 +574,115 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 40,
   },
-  voiceStage: {
-    borderRadius: 28,
-    gap: 16,
-    padding: 20,
-  },
-  stepHeading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 9,
-  },
-  stepNumber: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  stepTitle: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  stepMeta: {
-    fontSize: 12,
-    fontWeight: '700',
+  configurationCard: {
+    borderRadius: 20,
+    padding: 14,
   },
   voiceSelector: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    borderWidth: 1,
     flexDirection: 'row',
-    gap: 13,
-    padding: 15,
+    gap: 12,
+    minHeight: 48,
+    paddingHorizontal: 2,
   },
   voiceIcon: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
-    height: 52,
+    borderRadius: 13,
+    height: 40,
     justifyContent: 'center',
-    width: 52,
+    width: 40,
   },
   voiceCopy: {
     flex: 1,
-    gap: 2,
+    gap: 1,
+  },
+  configLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 15,
   },
   voiceName: {
-    color: '#ffffff',
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: '800',
-    lineHeight: 25,
-  },
-  voiceMeta: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  voiceCapability: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 13,
     lineHeight: 19,
   },
-  voiceChevron: {
-    alignItems: 'center',
-    height: 32,
-    justifyContent: 'center',
-    width: 24,
+  voiceMeta: {
+    fontSize: 11,
+    lineHeight: 15,
   },
-  editorCard: {
-    gap: 18,
-    padding: 18,
-  },
-  editorSection: {
-    gap: 12,
-  },
-  sectionDivider: {
+  configurationDivider: {
     height: 1,
+    marginVertical: 12,
     width: '100%',
   },
-  presetRow: {
+  toneSection: {
     gap: 8,
-    paddingRight: 4,
+  },
+  toneHeading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  toneHeadingValue: {
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 15,
+  },
+  toneHint: {
+    fontSize: 11,
+    lineHeight: 16,
+    paddingHorizontal: 2,
+  },
+  editorCard: {
+    borderRadius: 20,
+    gap: 14,
+    padding: 16,
+  },
+  editorSection: {
+    gap: 10,
+  },
+  editorHeading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  editorTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 22,
+  },
+  editorMeta: {
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  presetRow: {
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 8,
+    padding: 4,
   },
   presetChip: {
     alignItems: 'center',
-    borderRadius: 18,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 12,
+    borderRadius: 10,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 32,
+    paddingHorizontal: 3,
     paddingVertical: 8,
   },
   presetText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-  },
-  toneInput: {
-    borderRadius: 16,
-    fontSize: 14,
-    lineHeight: 21,
-    minHeight: 88,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    lineHeight: 14,
+    textAlign: 'center',
   },
   textInput: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     fontSize: 16,
     lineHeight: 25,
-    minHeight: 210,
+    minHeight: 232,
     paddingHorizontal: 15,
     paddingVertical: 14,
   },
@@ -695,14 +691,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     flexDirection: 'row',
     gap: 11,
-    paddingTop: 16,
+    paddingTop: 14,
   },
   disclosureIcon: {
     alignItems: 'center',
-    borderRadius: 14,
-    height: 38,
+    borderRadius: 12,
+    height: 34,
     justifyContent: 'center',
-    width: 38,
+    width: 34,
   },
   disclosureCopy: {
     flex: 1,
@@ -718,8 +714,8 @@ const styles = StyleSheet.create({
   },
   advancedBody: {
     borderTopWidth: 1,
-    gap: 18,
-    paddingTop: 18,
+    gap: 16,
+    paddingTop: 16,
   },
   field: {
     gap: 8,
@@ -731,6 +727,14 @@ const styles = StyleSheet.create({
   fieldHint: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  customToneInput: {
+    borderRadius: 14,
+    fontSize: 14,
+    lineHeight: 21,
+    minHeight: 82,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   segmentedControl: {
     borderRadius: 16,
@@ -767,11 +771,11 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 16,
     flexDirection: 'row',
     gap: 9,
     justifyContent: 'center',
-    minHeight: 54,
+    minHeight: 52,
     paddingHorizontal: 18,
     paddingVertical: 14,
   },

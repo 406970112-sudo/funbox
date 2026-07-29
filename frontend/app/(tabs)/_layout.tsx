@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { appLayout } from '@/constants/app-theme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
 export default function TabLayout() {
@@ -19,11 +20,14 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.tabInactive,
         tabBarButton: HapticTab,
         tabBarStyle: {
+          alignSelf: 'center',
           backgroundColor: colors.card,
           borderTopColor: colors.line,
           height: 72,
+          maxWidth: appLayout.screenMaxWidth,
           paddingBottom: 10,
           paddingTop: 10,
+          width: '100%',
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -42,7 +46,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tools"
         options={{
-          href: null,
           title: '工具',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'grid' : 'grid-outline'} size={24} color={color} />

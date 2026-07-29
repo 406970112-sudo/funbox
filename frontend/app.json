@@ -55,6 +55,14 @@
           "photosPermission": "用于选择并上传账户头像"
         }
       ],
+      [
+        "expo-media-library",
+        {
+          "granularPermissions": ["photo"],
+          "photosPermission": "用于读取相册中的二维码图片",
+          "savePhotosPermission": "用于把生成的二维码保存到相册"
+        }
+      ],
       "expo-secure-store"
     ],
     "experiments": {

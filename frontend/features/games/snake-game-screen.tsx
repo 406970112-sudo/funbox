@@ -8,12 +8,19 @@ import {
   useState,
   type ComponentProps,
 } from 'react';
-import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
-import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
 
 type GameModeId = 'classic' | 'endless' | 'stage';
@@ -245,6 +252,7 @@ export function SnakeGameScreen() {
   const [modeId, setModeId] = useState<GameModeId>('classic');
   const [stageIndex, setStageIndex] = useState(0);
   const [skinId, setSkinId] = useState<SkinId>('neon');
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [bestScores, setBestScores] = useState<Record<GameModeId, number>>({
     ...sessionBestScores,
   });
@@ -256,16 +264,12 @@ export function SnakeGameScreen() {
 
   const activeSkin = SNAKE_SKINS[skinId];
   const activeStage = STAGE_LEVELS[stageIndex];
-  const boardOuterSize = Math.min(width - 32, 364);
-  const cellSize = Math.max(12, Math.floor(boardOuterSize / game.gridSize));
+  const boardOuterSize = Math.min(width - 60, 360);
+  const cellSize = Math.max(10, Math.floor(boardOuterSize / game.gridSize));
   const boardSize = cellSize * game.gridSize;
   const tickMs = getTickMs(game, modeId, stageIndex);
   const objectiveText = getObjectiveText(modeId, stageIndex, game);
   const statusText = getStatusText(game.status, game.crashReason, stageIndex);
-  const keyboardHint =
-    Platform.OS === 'web'
-      ? '方向键 / WASD 转向，空格开始或暂停，Shift 冲刺，Enter 重开。'
-      : '点击下方方向键控制移动，按住冲刺可短暂提速。';
   const primaryActionLabel = getPrimaryActionLabel(game.status);
   const bestScore = bestScores[modeId];
 
@@ -548,133 +552,36 @@ export function SnakeGameScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <MobileScreen contentContainerStyle={styles.pageContent}>
-        <PageHeader
-          eyebrow="Hot Game"
-          title="贪吃蛇大作战"
-          subtitle="热门游戏区首个可玩模块。现在可以直接刷分、冲无尽、打三关闯关模式。"
-          rightSlot={
-            <Pressable onPress={() => router.back()} style={styles.closeButton}>
+        <View style={styles.compactHeader}>
+          <ThemedText style={styles.pageTitle}>贪吃蛇大作战</ThemedText>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel="对局设置"
+              accessibilityRole="button"
+              onPress={() => setSettingsVisible(true)}
+              style={styles.closeButton}>
+              <MaterialCommunityIcons name="tune-variant" size={20} color={colors.text} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="返回"
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              style={styles.closeButton}>
               <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
             </Pressable>
-          }
-        />
-
-        <SurfaceCard
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: colors.hero,
-              borderColor: 'transparent',
-            },
-          ]}>
-          <View pointerEvents="none" style={styles.heroGlowWrap}>
-            <View
-              style={[
-                styles.heroGlowLarge,
-                {
-                  backgroundColor: activeSkin.boardGlow,
-                },
-              ]}
-            />
-            <View
-              style={[
-                styles.heroGlowSmall,
-                {
-                  backgroundColor: `${activeSkin.accent}22`,
-                },
-              ]}
-            />
           </View>
-          <View style={styles.heroTopRow}>
-            <View style={[styles.heroBadge, { backgroundColor: `${activeSkin.accent}22` }]}>
-              <ThemedText style={[styles.heroBadgeText, { color: '#ffffff' }]}>
-                热门街机
-              </ThemedText>
-            </View>
-            <View style={[styles.heroBadge, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-              <ThemedText style={styles.heroBadgeText}>三种模式</ThemedText>
-            </View>
-          </View>
-          <ThemedText style={styles.heroTitle}>《贪吃蛇大作战》</ThemedText>
-          <ThemedText style={styles.heroBody}>
-            自动移动、即时转向、金苹果加成长、无尽障碍递增，再加一个可以随时切换的蛇皮肤库。
-          </ThemedText>
-          <View style={styles.heroMetrics}>
-            <MetricPill label="当前模式" value={getModeLabel(modeId)} />
-            <MetricPill label="会话最高" value={`${bestScore}`} />
-            <MetricPill label="当前皮肤" value={getSkinLabel(skinId)} />
-          </View>
-        </SurfaceCard>
-
-        <SurfaceCard style={styles.selectorCard}>
-          <View style={styles.selectorSection}>
-            <ThemedText style={styles.selectorTitle}>模式选择</ThemedText>
-            <View style={styles.optionRow}>
-              {MODE_DEFINITIONS.map((mode) => (
-                <OptionChip
-                  key={mode.id}
-                  active={mode.id === modeId}
-                  accentColor={activeSkin.accent}
-                  label={mode.label}
-                  meta={mode.tagline}
-                  onPress={() => handleModeChange(mode.id)}
-                />
-              ))}
-            </View>
-            <ThemedText style={[styles.selectorDescription, { color: colors.mutedText }]}>
-              {MODE_DEFINITIONS.find((mode) => mode.id === modeId)?.summary}
-            </ThemedText>
-          </View>
-
-          {modeId === 'stage' ? (
-            <View style={styles.selectorSection}>
-              <View style={styles.inlineHeader}>
-                <ThemedText style={styles.selectorTitle}>关卡选择</ThemedText>
-                <ThemedText style={[styles.inlineMeta, { color: colors.mutedText }]}>
-                  共 {STAGE_LEVELS.length} 关
-                </ThemedText>
-              </View>
-              <View style={styles.optionRow}>
-                {STAGE_LEVELS.map((stage, index) => (
-                  <OptionChip
-                    key={stage.id}
-                    active={index === stageIndex}
-                    accentColor={activeSkin.accent}
-                    label={`第 ${index + 1} 关`}
-                    meta={stage.name}
-                    onPress={() => handleStageChange(index)}
-                  />
-                ))}
-              </View>
-              <ThemedText style={[styles.selectorDescription, { color: colors.mutedText }]}>
-                {activeStage.summary}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          <View style={styles.selectorSection}>
-            <ThemedText style={styles.selectorTitle}>蛇皮肤</ThemedText>
-            <View style={styles.optionRow}>
-              {(Object.keys(SNAKE_SKINS) as SkinId[]).map((candidateSkinId) => (
-                <OptionChip
-                  key={candidateSkinId}
-                  active={candidateSkinId === skinId}
-                  accentColor={SNAKE_SKINS[candidateSkinId].accent}
-                  label={getSkinLabel(candidateSkinId)}
-                  meta="免费"
-                  onPress={() => handleSkinChange(candidateSkinId)}
-                />
-              ))}
-            </View>
-          </View>
-        </SurfaceCard>
+        </View>
 
         <SurfaceCard style={styles.arenaCard}>
           <View style={styles.hudTopRow}>
-            <View>
+            <View style={styles.hudCopy}>
               <ThemedText style={styles.hudTitle}>{getModeLabel(modeId)}模式</ThemedText>
-              <ThemedText style={[styles.hudSubtitle, { color: colors.mutedText }]}>
-                {objectiveText}
+              <ThemedText
+                numberOfLines={1}
+                style={[styles.hudSubtitle, { color: colors.mutedText }]}>
+                {modeId === 'stage'
+                  ? objectiveText
+                  : `${getSkinLabel(skinId)} · 会话最高 ${bestScore}`}
               </ThemedText>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: `${activeSkin.accent}20` }]}>
@@ -717,14 +624,7 @@ export function SnakeGameScreen() {
               snake={game.snake}
               status={game.status}
               statusText={statusText}
-              subtitle={keyboardHint}
             />
-          </View>
-
-          <View style={styles.legendRow}>
-            <LegendPill color="#ff6b6b" label={FOOD_LIBRARY.apple.label} />
-            <LegendPill color="#ffcf5c" label={FOOD_LIBRARY.gold.label} />
-            <LegendPill color="#65748b" label={`障碍 ${game.obstacles.length}`} />
           </View>
 
           <ControlPad
@@ -748,33 +648,113 @@ export function SnakeGameScreen() {
             </Pressable>
           ) : null}
         </SurfaceCard>
-
-        <View style={styles.infoGrid}>
-          <SurfaceCard style={styles.infoCard}>
-            <View style={styles.inlineHeader}>
-              <ThemedText style={styles.infoTitle}>本局规则</ThemedText>
-              <ThemedText style={[styles.inlineMeta, { color: colors.mutedText }]}>
-                即开即玩
-              </ThemedText>
-            </View>
-            <InfoLine text="蛇会自动移动，只能改变前进方向，不能直接 180 度掉头。" />
-            <InfoLine text="经典模式固定节奏；无尽模式会提速并生成障碍；闯关模式带目标和时间限制。" />
-            <InfoLine text="撞墙、撞自己、撞障碍都会结束。金苹果会额外加分并多长 2 节。" />
-          </SurfaceCard>
-
-          <SurfaceCard style={styles.infoCard}>
-            <View style={styles.inlineHeader}>
-              <ThemedText style={styles.infoTitle}>操作说明</ThemedText>
-              <ThemedText style={[styles.inlineMeta, { color: colors.mutedText }]}>
-                手感优先
-              </ThemedText>
-            </View>
-            <InfoLine text="PC：WASD / 方向键转向，空格开始或暂停，Shift 冲刺。" />
-            <InfoLine text="移动端：使用方向键区域控制，长按“冲刺”临时加速。" />
-            <InfoLine text="想继续扩展时，可以在这里继续接护盾、磁铁、皮肤解锁和成就系统。" />
-          </SurfaceCard>
-        </View>
       </MobileScreen>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setSettingsVisible(false)}
+        transparent
+        visible={settingsVisible}>
+        <View style={styles.settingsOverlay}>
+          <View
+            style={[
+              styles.settingsSheet,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.line,
+              },
+            ]}>
+            <View style={styles.settingsHeader}>
+              <View style={styles.settingsHeaderCopy}>
+                <ThemedText style={styles.settingsTitle}>对局设置</ThemedText>
+                <ThemedText style={[styles.settingsMeta, { color: colors.mutedText }]}>
+                  {getModeLabel(modeId)} · {getSkinLabel(skinId)}
+                </ThemedText>
+              </View>
+              <Pressable
+                accessibilityLabel="关闭对局设置"
+                accessibilityRole="button"
+                onPress={() => setSettingsVisible(false)}
+                style={[styles.sheetCloseButton, { backgroundColor: colors.surfaceMuted }]}>
+                <MaterialCommunityIcons name="close" size={21} color={colors.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.settingsContent}>
+              <View style={styles.selectorSection}>
+                <ThemedText style={styles.selectorTitle}>模式</ThemedText>
+                <View style={styles.optionRow}>
+                  {MODE_DEFINITIONS.map((mode) => (
+                    <OptionChip
+                      key={mode.id}
+                      active={mode.id === modeId}
+                      accentColor={activeSkin.accent}
+                      label={mode.label}
+                      meta={mode.tagline}
+                      onPress={() => handleModeChange(mode.id)}
+                    />
+                  ))}
+                </View>
+                <ThemedText style={[styles.selectorDescription, { color: colors.mutedText }]}>
+                  {MODE_DEFINITIONS.find((mode) => mode.id === modeId)?.summary}
+                </ThemedText>
+              </View>
+
+              {modeId === 'stage' ? (
+                <View style={styles.selectorSection}>
+                  <View style={styles.inlineHeader}>
+                    <ThemedText style={styles.selectorTitle}>关卡</ThemedText>
+                    <ThemedText style={[styles.inlineMeta, { color: colors.mutedText }]}>
+                      共 {STAGE_LEVELS.length} 关
+                    </ThemedText>
+                  </View>
+                  <View style={styles.optionRow}>
+                    {STAGE_LEVELS.map((stage, index) => (
+                      <OptionChip
+                        key={stage.id}
+                        active={index === stageIndex}
+                        accentColor={activeSkin.accent}
+                        label={`第 ${index + 1} 关`}
+                        meta={stage.name}
+                        onPress={() => handleStageChange(index)}
+                      />
+                    ))}
+                  </View>
+                  <ThemedText style={[styles.selectorDescription, { color: colors.mutedText }]}>
+                    {activeStage.summary}
+                  </ThemedText>
+                </View>
+              ) : null}
+
+              <View style={styles.selectorSection}>
+                <ThemedText style={styles.selectorTitle}>皮肤</ThemedText>
+                <View style={styles.optionRow}>
+                  {(Object.keys(SNAKE_SKINS) as SkinId[]).map((candidateSkinId) => (
+                    <OptionChip
+                      key={candidateSkinId}
+                      active={candidateSkinId === skinId}
+                      accentColor={SNAKE_SKINS[candidateSkinId].accent}
+                      label={getSkinLabel(candidateSkinId)}
+                      meta="免费"
+                      onPress={() => handleSkinChange(candidateSkinId)}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <View style={[styles.settingsDivider, { backgroundColor: colors.line }]} />
+
+              <View style={styles.selectorSection}>
+                <ThemedText style={styles.selectorTitle}>规则</ThemedText>
+                <InfoLine text="只能改变前进方向，不能直接 180 度掉头。" />
+                <InfoLine text="撞墙、撞自己或障碍会结束；金苹果额外加分并增长 2 节。" />
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -1161,7 +1141,7 @@ function getSkinLabel(skinId: SkinId) {
 }
 
 function formatSpeed(tickMs: number) {
-  return `${(1000 / tickMs).toFixed(1)}格/秒`;
+  return `${(1000 / tickMs).toFixed(1)}/s`;
 }
 
 function SnakeBoard({
@@ -1174,7 +1154,6 @@ function SnakeBoard({
   snake,
   status,
   statusText,
-  subtitle,
 }: {
   boardSize: number;
   cellSize: number;
@@ -1185,7 +1164,6 @@ function SnakeBoard({
   snake: Position[];
   status: GameStatus;
   statusText: string;
-  subtitle: string;
 }) {
   const snakeIndices = new Map<string, number>();
   const obstacleKeys = new Set<string>(obstacles.map((position) => toPositionKey(position)));
@@ -1254,18 +1232,8 @@ function SnakeBoard({
       {status !== 'running' ? (
         <View style={styles.boardOverlay}>
           <ThemedText style={styles.boardOverlayTitle}>{statusText}</ThemedText>
-          <ThemedText style={styles.boardOverlayBody}>{subtitle}</ThemedText>
         </View>
       ) : null}
-    </View>
-  );
-}
-
-function MetricPill({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.metricPill}>
-      <ThemedText style={styles.metricPillLabel}>{label}</ThemedText>
-      <ThemedText style={styles.metricPillValue}>{value}</ThemedText>
     </View>
   );
 }
@@ -1285,6 +1253,8 @@ function OptionChip({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={[
         styles.optionChip,
@@ -1316,17 +1286,12 @@ function StatCard({
           borderColor: `${accentColor}20`,
         },
       ]}>
-      <ThemedText style={styles.statCardLabel}>{label}</ThemedText>
-      <ThemedText style={styles.statCardValue}>{value}</ThemedText>
-    </View>
-  );
-}
-
-function LegendPill({ color, label }: { color: string; label: string }) {
-  return (
-    <View style={styles.legendPill}>
-      <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <ThemedText style={styles.legendLabel}>{label}</ThemedText>
+      <ThemedText numberOfLines={1} style={styles.statCardLabel}>
+        {label}
+      </ThemedText>
+      <ThemedText numberOfLines={1} style={styles.statCardValue}>
+        {value}
+      </ThemedText>
     </View>
   );
 }
@@ -1365,18 +1330,21 @@ function ControlPad({
         <View style={styles.padRow}>
           <PadButton
             activeColor={activeColor}
+            accessibilityLabel="向上"
             icon="chevron-up"
             onPress={() => onDirectionPress('up')}
           />
         </View>
-        <View style={styles.padRow}>
+        <View style={[styles.padRow, styles.padMiddleRow]}>
           <PadButton
             activeColor={activeColor}
+            accessibilityLabel="向左"
             icon="chevron-left"
             onPress={() => onDirectionPress('left')}
           />
           <PadButton
             activeColor={activeColor}
+            accessibilityLabel="向右"
             icon="chevron-right"
             onPress={() => onDirectionPress('right')}
           />
@@ -1384,6 +1352,7 @@ function ControlPad({
         <View style={styles.padRow}>
           <PadButton
             activeColor={activeColor}
+            accessibilityLabel="向下"
             icon="chevron-down"
             onPress={() => onDirectionPress('down')}
           />
@@ -1394,6 +1363,8 @@ function ControlPad({
         <ActionButton activeColor={activeColor} label={primaryActionLabel} onPress={onPrimaryActionPress} />
         <ActionButton activeColor={activeColor} label="重开" onPress={onRestartPress} variant="secondary" />
         <Pressable
+          accessibilityLabel="冲刺"
+          accessibilityRole="button"
           onPressIn={onBoostPressIn}
           onPressOut={onBoostPressOut}
           style={[
@@ -1407,7 +1378,7 @@ function ControlPad({
             style={[
               styles.actionButtonText,
               {
-                color: boostActive ? '#ffffff' : activeColor,
+                color: boostActive ? '#07121c' : activeColor,
               },
             ]}>
             冲刺
@@ -1433,6 +1404,7 @@ function ActionButton({
 
   return (
     <Pressable
+      accessibilityRole="button"
       onPress={onPress}
       style={[
         styles.actionButton,
@@ -1445,7 +1417,7 @@ function ActionButton({
         style={[
           styles.actionButtonText,
           {
-            color: isPrimary ? '#ffffff' : activeColor,
+            color: isPrimary ? '#07121c' : activeColor,
           },
         ]}>
         {label}
@@ -1456,15 +1428,19 @@ function ActionButton({
 
 function PadButton({
   activeColor,
+  accessibilityLabel,
   icon,
   onPress,
 }: {
   activeColor: string;
+  accessibilityLabel: string;
   icon: PadIconName;
   onPress: () => void;
 }) {
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
       onPress={onPress}
       style={[
         styles.padButton,
@@ -1480,188 +1456,96 @@ function PadButton({
 
 const styles = StyleSheet.create({
   pageContent: {
-    paddingTop: 14,
-  },
-  closeButton: {
-    borderRadius: 999,
-    padding: 8,
-  },
-  heroCard: {
-    gap: 14,
-    overflow: 'hidden',
-    padding: 20,
-    position: 'relative',
-  },
-  heroGlowWrap: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  heroGlowLarge: {
-    borderRadius: 999,
-    height: 190,
-    position: 'absolute',
-    right: -24,
-    top: -40,
-    width: 190,
-  },
-  heroGlowSmall: {
-    borderRadius: 999,
-    bottom: -44,
-    height: 150,
-    left: -20,
-    position: 'absolute',
-    width: 150,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  heroBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  heroBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  heroTitle: {
-    color: '#ffffff',
-    fontSize: 30,
-    fontWeight: '800',
-    lineHeight: 36,
-  },
-  heroBody: {
-    color: 'rgba(255,255,255,0.78)',
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  heroMetrics: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 10,
+    paddingTop: 8,
   },
-  metricPill: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 18,
-    gap: 4,
-    minWidth: 100,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  metricPillLabel: {
-    color: 'rgba(255,255,255,0.62)',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  metricPillValue: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  selectorCard: {
-    gap: 18,
-    padding: 18,
-  },
-  selectorSection: {
-    gap: 10,
-  },
-  selectorTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  selectorDescription: {
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  inlineHeader: {
+  compactHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: 40,
   },
-  inlineMeta: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  optionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  optionChip: {
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 4,
-    minWidth: 104,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  optionChipLabel: {
-    fontSize: 14,
+  pageTitle: {
+    fontSize: 22,
     fontWeight: '800',
+    lineHeight: 28,
   },
-  optionChipMeta: {
-    fontSize: 11,
-    opacity: 0.72,
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 2,
+  },
+  closeButton: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   arenaCard: {
-    gap: 16,
-    padding: 18,
+    borderRadius: 20,
+    gap: 10,
+    padding: 12,
   },
   hudTopRow: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     justifyContent: 'space-between',
   },
+  hudCopy: {
+    flex: 1,
+  },
   hudTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '800',
+    lineHeight: 22,
   },
   hudSubtitle: {
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 4,
-    maxWidth: 250,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 1,
   },
   statusBadge: {
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
   },
   statusBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
   },
   hudMetricsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    gap: 6,
   },
   statCard: {
-    borderRadius: 18,
+    borderRadius: 12,
     borderWidth: 1,
-    gap: 6,
-    minWidth: 74,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+    paddingHorizontal: 7,
+    paddingVertical: 7,
   },
   statCardLabel: {
-    fontSize: 11,
+    fontSize: 10,
+    lineHeight: 13,
     opacity: 0.72,
   },
   statCardValue: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '800',
+    lineHeight: 17,
   },
   boardShell: {
     alignItems: 'center',
-    borderRadius: 30,
+    alignSelf: 'center',
+    borderRadius: 18,
     borderWidth: 1,
-    padding: 12,
+    overflow: 'hidden',
   },
   board: {
-    borderRadius: 24,
+    borderRadius: 17,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -1675,114 +1559,177 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     backgroundColor: 'rgba(6, 10, 18, 0.62)',
-    gap: 10,
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
   boardOverlayTitle: {
     color: '#ffffff',
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '800',
     textAlign: 'center',
   },
-  boardOverlayBody: {
-    color: 'rgba(255,255,255,0.78)',
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  legendRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  legendPill: {
+  controlsWrap: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
-  },
-  legendDot: {
-    borderRadius: 999,
-    height: 10,
-    width: 10,
-  },
-  legendLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  controlsWrap: {
-    gap: 14,
+    gap: 12,
+    justifyContent: 'space-between',
   },
   padGrid: {
     alignItems: 'center',
-    gap: 10,
+    flexShrink: 0,
+    gap: 4,
   },
   padRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 4,
+  },
+  padMiddleRow: {
+    gap: 50,
   },
   padButton: {
     alignItems: 'center',
-    borderRadius: 22,
+    borderRadius: 14,
     borderWidth: 1,
-    height: 64,
+    height: 42,
     justifyContent: 'center',
-    width: 64,
+    width: 42,
   },
   actionButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    flex: 1,
+    gap: 6,
+    maxWidth: 150,
   },
   actionButton: {
-    borderRadius: 16,
+    alignItems: 'center',
+    borderRadius: 12,
     borderWidth: 1,
-    minWidth: 92,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    justifyContent: 'center',
+    minHeight: 40,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    width: '100%',
   },
   actionButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
     textAlign: 'center',
   },
   nextStageButton: {
-    borderRadius: 18,
+    borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   nextStageButtonText: {
-    color: '#ffffff',
+    color: '#07121c',
     fontSize: 14,
     fontWeight: '800',
     textAlign: 'center',
   },
-  infoGrid: {
-    gap: 12,
+  settingsOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.46)',
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 10,
   },
-  infoCard: {
-    gap: 12,
-    padding: 18,
+  settingsSheet: {
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 16,
+    maxHeight: '88%',
+    padding: 16,
   },
-  infoTitle: {
-    fontSize: 17,
+  settingsHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  settingsHeaderCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  settingsTitle: {
+    fontSize: 19,
     fontWeight: '800',
+  },
+  settingsMeta: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  sheetCloseButton: {
+    alignItems: 'center',
+    borderRadius: 14,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  settingsContent: {
+    gap: 18,
+    paddingBottom: 8,
+  },
+  selectorSection: {
+    gap: 9,
+  },
+  selectorTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  selectorDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  inlineHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  inlineMeta: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  optionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  optionChip: {
+    borderRadius: 14,
+    borderWidth: 1,
+    flexBasis: 100,
+    flexGrow: 1,
+    gap: 3,
+    minHeight: 58,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+  },
+  optionChipLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  optionChipMeta: {
+    fontSize: 10,
+    lineHeight: 14,
+    opacity: 0.72,
+  },
+  settingsDivider: {
+    height: 1,
+    width: '100%',
   },
   infoLine: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   infoLineDot: {
     backgroundColor: '#4b6bff',
     borderRadius: 999,
-    height: 8,
-    marginTop: 8,
-    width: 8,
+    height: 6,
+    marginTop: 6,
+    width: 6,
   },
   infoLineText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });
