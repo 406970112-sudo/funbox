@@ -16,6 +16,11 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
 
 const HERO_TOOL_ID = 'text-to-speech';
+const HOME_TOOL_LIMIT = 6;
+const HOME_TOOL_EXCLUSIONS = new Set<AppTool['id']>([
+  'release-email-assistant',
+  'live-stream-capture',
+]);
 const WAVEFORM_HEIGHTS = [18, 34, 48, 28, 58, 42, 66, 38, 52, 26, 44, 20];
 
 type SectionHeaderProps = {
@@ -141,7 +146,7 @@ function ToolTile({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
         <MaterialCommunityIcons name="arrow-top-right" size={17} color={colors.mutedText} />
       </View>
       <View>
-        <ThemedText numberOfLines={1} style={styles.toolTitle}>
+        <ThemedText numberOfLines={2} style={styles.toolTitle}>
           {tool.name}
         </ThemedText>
         <ThemedText
@@ -191,8 +196,8 @@ export function HomeScreen() {
   const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(1))).current;
   const heroTool = appTools.find((tool) => tool.id === HERO_TOOL_ID);
   const quickTools = appTools
-    .filter((tool) => tool.status === 'available' && tool.id !== HERO_TOOL_ID)
-    .slice(0, 4);
+    .filter((tool) => tool.status === 'available' && !HOME_TOOL_EXCLUSIONS.has(tool.id))
+    .slice(0, HOME_TOOL_LIMIT);
   const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 3);
   const availableToolCount = appTools.filter((tool) => tool.status === 'available').length;
 
@@ -457,13 +462,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   toolTile: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    flexBasis: '48%',
+    flexBasis: '31%',
     flexGrow: 1,
     justifyContent: 'space-between',
-    minHeight: 132,
-    padding: 14,
+    minHeight: 124,
+    minWidth: 0,
+    padding: 12,
   },
   toolTileTop: {
     alignItems: 'flex-start',
@@ -472,19 +478,20 @@ const styles = StyleSheet.create({
   },
   toolIcon: {
     alignItems: 'center',
-    borderRadius: 13,
-    height: 42,
+    borderRadius: 12,
+    height: 40,
     justifyContent: 'center',
-    width: 42,
+    width: 40,
   },
   toolTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '900',
-    lineHeight: 21,
+    lineHeight: 19,
+    minHeight: 19,
   },
   toolTagline: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 10,
+    lineHeight: 14,
     marginTop: 2,
   },
   gameGrid: {
