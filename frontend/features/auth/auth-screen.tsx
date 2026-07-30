@@ -50,7 +50,6 @@ export function AuthScreen() {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
-  const [securityAnswerVisible, setSecurityAnswerVisible] = useState(false);
   const [questionMenuOpen, setQuestionMenuOpen] = useState(false);
   const [recoveryQuestion, setRecoveryQuestion] = useState('');
   const [recoveryToken, setRecoveryToken] = useState('');
@@ -365,8 +364,10 @@ export function AuthScreen() {
                 onToggle={() => setQuestionMenuOpen((open) => !open)}
                 value={securityQuestion}
               />
-              <SecretField
+              <AccountField
+                autoCapitalize="none"
                 autoComplete="off"
+                autoCorrect={false}
                 icon="shield-key-outline"
                 inputMode="text"
                 label="密保答案"
@@ -374,8 +375,6 @@ export function AuthScreen() {
                 placeholder="支持中文，1 至 64 个字符"
                 textContentType="none"
                 value={securityAnswer}
-                visible={securityAnswerVisible}
-                onToggleVisible={() => setSecurityAnswerVisible((visible) => !visible)}
               />
             </>
           ) : null}
@@ -391,8 +390,10 @@ export function AuthScreen() {
                   </ThemedText>
                 </View>
               </View>
-              <SecretField
+              <AccountField
+                autoCapitalize="none"
                 autoComplete="off"
+                autoCorrect={false}
                 icon="shield-key-outline"
                 inputMode="text"
                 label="问题答案"
@@ -401,8 +402,6 @@ export function AuthScreen() {
                 placeholder="请输入密保答案"
                 textContentType="none"
                 value={securityAnswer}
-                visible={securityAnswerVisible}
-                onToggleVisible={() => setSecurityAnswerVisible((visible) => !visible)}
               />
               <View style={[styles.recoveryNotice, { backgroundColor: colors.surfaceMuted }]}>
                 <MaterialCommunityIcons name="information-outline" size={18} color={colors.mutedText} />
