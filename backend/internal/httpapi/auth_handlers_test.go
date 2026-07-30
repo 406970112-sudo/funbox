@@ -17,6 +17,7 @@ import (
 
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/user"
 )
 
@@ -46,7 +47,12 @@ func TestAuthHTTPFlow(t *testing.T) {
 		},
 	}
 	authService := auth.NewService(store, []byte(strings.Repeat("k", 32)), time.Hour)
-	httpServer := NewServer(cfg, nil, nil, authService)
+	socialStore, err := social.OpenStore(filepath.Join(tempDir, "users.db"))
+	if err != nil {
+		t.Fatalf("open social store: %v", err)
+	}
+	t.Cleanup(func() { _ = socialStore.Close() })
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore)
 	testServer := httptest.NewServer(httpServer.Handler)
 	t.Cleanup(testServer.Close)
 

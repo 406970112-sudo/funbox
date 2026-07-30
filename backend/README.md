@@ -39,6 +39,30 @@
   修改密码并返回新令牌，旧令牌立即失效。
 - `GET /avatars/{fileName}`
   读取用户头像文件。
+- `GET /api/v1/users/search?q={keyword}`
+  按账号或昵称搜索用户，需要 Bearer Token。
+- `POST /api/v1/friend-requests`
+  发送好友申请。
+- `GET /api/v1/friend-requests`
+  读取收到和发出的好友申请。
+- `POST /api/v1/friend-requests/{requestID}/accept`
+  接受好友申请并创建单聊会话。
+- `POST /api/v1/friend-requests/{requestID}/reject`
+  拒绝好友申请。
+- `GET /api/v1/friends`
+  读取好友列表和在线状态。
+- `GET /api/v1/conversations`
+  读取单聊会话和未读数。
+- `GET /api/v1/conversations/{conversationID}/messages`
+  分页读取历史消息。
+- `POST /api/v1/conversations/{conversationID}/messages`
+  持久化发送消息。
+- `POST /api/v1/conversations/{conversationID}/read`
+  更新会话已读位置。
+- `POST /api/v1/realtime/ticket`
+  创建一分钟有效且只能使用一次的实时连接票据。
+- `GET /api/v1/realtime/ws?ticket={ticket}`
+  建立 WebSocket 实时连接。
 - `POST /api/v1/tts/synthesize`
   新版 TTS 接口。
 - `POST /api/synthesize`

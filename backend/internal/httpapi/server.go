@@ -14,6 +14,8 @@ import (
 
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/realtime"
+	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
 )
@@ -22,6 +24,8 @@ type Server struct {
 	authService        *auth.Service
 	cfg                config.Config
 	rateLimiter        *RateLimiter
+	realtimeHub        *realtime.Hub
+	socialStore        *social.Store
 	translationService *translation.Service
 	ttsService         *tts.Service
 }
@@ -31,11 +35,14 @@ func NewServer(
 	ttsService *tts.Service,
 	translationService *translation.Service,
 	authService *auth.Service,
+	socialStore *social.Store,
 ) *http.Server {
 	api := &Server{
 		authService:        authService,
 		cfg:                cfg,
 		rateLimiter:        NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
+		realtimeHub:        realtime.NewHub(),
+		socialStore:        socialStore,
 		translationService: translationService,
 		ttsService:         ttsService,
 	}
@@ -50,6 +57,18 @@ func NewServer(
 	mux.HandleFunc("PATCH /api/v1/users/me", api.withAuth(api.withAPIPipeline(api.handleUpdateProfile)))
 	mux.HandleFunc("PATCH /api/v1/users/me/password", api.withAuth(api.withAPIPipeline(api.handleChangePassword)))
 	mux.HandleFunc("POST /api/v1/users/me/avatar", api.withAuth(api.withAvatarPipeline(api.handleUploadAvatar)))
+	mux.HandleFunc("GET /api/v1/users/search", api.withAuth(api.withAPIPipeline(api.handleSearchUsers)))
+	mux.HandleFunc("POST /api/v1/friend-requests", api.withAuth(api.withAPIPipeline(api.handleCreateFriendRequest)))
+	mux.HandleFunc("GET /api/v1/friend-requests", api.withAuth(api.withAPIPipeline(api.handleListFriendRequests)))
+	mux.HandleFunc("POST /api/v1/friend-requests/{requestID}/accept", api.withAuth(api.withAPIPipeline(api.handleAcceptFriendRequest)))
+	mux.HandleFunc("POST /api/v1/friend-requests/{requestID}/reject", api.withAuth(api.withAPIPipeline(api.handleRejectFriendRequest)))
+	mux.HandleFunc("GET /api/v1/friends", api.withAuth(api.withAPIPipeline(api.handleListFriends)))
+	mux.HandleFunc("GET /api/v1/conversations", api.withAuth(api.withAPIPipeline(api.handleListConversations)))
+	mux.HandleFunc("GET /api/v1/conversations/{conversationID}/messages", api.withAuth(api.withAPIPipeline(api.handleListMessages)))
+	mux.HandleFunc("POST /api/v1/conversations/{conversationID}/messages", api.withAuth(api.withAPIPipeline(api.handleCreateMessage)))
+	mux.HandleFunc("POST /api/v1/conversations/{conversationID}/read", api.withAuth(api.withAPIPipeline(api.handleMarkConversationRead)))
+	mux.HandleFunc("POST /api/v1/realtime/ticket", api.withAuth(api.withAPIPipeline(api.handleCreateRealtimeTicket)))
+	mux.HandleFunc("GET /api/v1/realtime/ws", api.handleRealtime)
 	mux.HandleFunc("POST /api/v1/translation/translate", api.withTextPipeline(api.handleTranslate))
 	mux.HandleFunc("POST /api/translate", api.withTextPipeline(api.handleTranslate))
 	mux.HandleFunc("POST /api/v1/tts/synthesize", api.withTTSPipeline(api.handleSynthesize))
@@ -316,7 +335,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Vary", "Origin")
 	}
 
-	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }

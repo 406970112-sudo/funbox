@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1050" viewBox="0 0 1500 1050">
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#18233d" stroke-opacity=".045"/>
+    </pattern>
+    <linearGradient id="avatarA" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff8aaa"/><stop offset="1" stop-color="#ffb45f"/></linearGradient>
+    <linearGradient id="avatarB" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5b7cff"/><stop offset="1" stop-color="#72d7c4"/></linearGradient>
+    <linearGradient id="avatarC" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8d71df"/><stop offset="1" stop-color="#f18bb8"/></linearGradient>
+    <linearGradient id="avatarD" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4bf4f"/><stop offset="1" stop-color="#eb6e61"/></linearGradient>
+    <filter id="phoneShadow" x="-30%" y="-20%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="24" stdDeviation="22" flood-color="#2d4269" flood-opacity=".27"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-30%" width="140%" height="170%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#495e85" flood-opacity=".08"/>
+    </filter>
+    <clipPath id="screen1"><rect x="73" y="152" width="376" height="830" rx="35"/></clipPath>
+    <clipPath id="screen2"><rect x="562" y="152" width="376" height="830" rx="35"/></clipPath>
+    <clipPath id="screen3"><rect x="1051" y="152" width="376" height="830" rx="35"/></clipPath>
+    <style>
+      text { font-family: "DengXian", "Microsoft YaHei", sans-serif; fill: #18233d; letter-spacing: 0; }
+      .latin { font-family: "Bahnschrift", "Segoe UI", sans-serif; }
+      .title { font-size: 26px; font-weight: 700; }
+      .boardSub { font-size: 13px; font-weight: 600; fill: #64728e; }
+      .concept { font-size: 14px; font-weight: 700; }
+      .pageTitle { font-size: 26px; font-weight: 700; }
+      .pageMeta { font-size: 11px; font-weight: 600; fill: #7483a2; }
+      .sectionTitle { font-size: 15px; font-weight: 700; }
+      .body { font-size: 12px; }
+      .small { font-size: 10px; }
+      .tiny { font-size: 9px; }
+      .muted { fill: #7483a2; }
+      .white { fill: #fff; }
+      .blue { fill: #4b6bff; }
+      .green { fill: #1db991; }
+      .lime { fill: #c9f36a; }
+      .softLight { fill: #aab3c8; }
+      .bold { font-weight: 700; }
+      .medium { font-weight: 600; }
+      .icon { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+    </style>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle class="icon" cx="11" cy="11" r="7"/><path class="icon" d="m20 20-4-4"/></symbol>
+    <symbol id="i-user-plus" viewBox="0 0 24 24"><path class="icon" d="M15 20a6 6 0 0 0-12 0M9 11a4 4 0 1 0 0-8M19 8v6M16 11h6"/></symbol>
+    <symbol id="i-house" viewBox="0 0 24 24"><path class="icon" d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect class="icon" x="3" y="3" width="7" height="7" rx="1"/><rect class="icon" x="14" y="3" width="7" height="7" rx="1"/><rect class="icon" x="3" y="14" width="7" height="7" rx="1"/><rect class="icon" x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path class="icon" d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle class="icon" cx="12" cy="8" r="4"/><path class="icon" d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path class="icon" d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path class="icon" d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path class="icon" d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path class="icon" d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path class="icon" d="m22 2-7 20-4-9-9-4zM22 2 11 13"/></symbol>
+    <symbol id="i-checks" viewBox="0 0 24 24"><path class="icon" d="m2 12 5 5L17 7M13 17l2 2 7-9"/></symbol>
+  </defs>
+
+  <rect width="1500" height="1050" fill="#dce6f5"/>
+  <rect width="1500" height="1050" fill="url(#grid)"/>
+  <rect width="1500" height="8" fill="#151b3b"/>
+
+  <g transform="translate(72 38)">
+    <rect width="48" height="48" rx="15" fill="#151b3b"/>
+    <path d="M14 16 24 11l10 5v15l-10 5-10-5zM14 16l10 5 10-5M24 21v15" fill="none" stroke="#c9f36a" stroke-width="2" stroke-linejoin="round"/>
+    <text x="62" y="24" class="title latin">FunBox Social</text>
+    <text x="62" y="44" class="boardSub">好友与即时消息 · 移动端产品概念</text>
+  </g>
+  <text x="1428" y="72" text-anchor="end" class="small latin bold muted">PRODUCT CONCEPT · V1.0</text>
+
+  <g>
+    <circle cx="88" cy="121" r="12" fill="#151b3b"/><text x="88" y="125" text-anchor="middle" class="tiny latin bold white">01</text><text x="108" y="126" class="concept">消息首页</text>
+    <circle cx="577" cy="121" r="12" fill="#151b3b"/><text x="577" y="125" text-anchor="middle" class="tiny latin bold white">02</text><text x="597" y="126" class="concept">添加好友</text>
+    <circle cx="1066" cy="121" r="12" fill="#151b3b"/><text x="1066" y="125" text-anchor="middle" class="tiny latin bold white">03</text><text x="1086" y="126" class="concept">单聊详情</text>
+  </g>
+
+  <!-- Phone shells -->
+  <g filter="url(#phoneShadow)"><rect x="64" y="143" width="394" height="848" rx="44" fill="#0e152b"/><rect x="553" y="143" width="394" height="848" rx="44" fill="#0e152b"/><rect x="1042" y="143" width="394" height="848" rx="44" fill="#0e152b"/></g>
+  <rect x="73" y="152" width="376" height="830" rx="35" fill="#f4f7fd"/><rect x="562" y="152" width="376" height="830" rx="35" fill="#f4f7fd"/><rect x="1051" y="152" width="376" height="830" rx="35" fill="#eef3fb"/>
+  <rect x="215" y="160" width="92" height="25" rx="13" fill="#05091a"/><rect x="704" y="160" width="92" height="25" rx="13" fill="#05091a"/><rect x="1193" y="160" width="92" height="25" rx="13" fill="#05091a"/>
+
+  <!-- Screen 1 -->
+  <g clip-path="url(#screen1)">
+    <text x="94" y="180" class="tiny latin bold">9:41</text><text x="421" y="180" text-anchor="end" class="tiny latin bold">▮▮▮  ◔  ▰</text>
+    <text x="94" y="234" class="pageTitle">消息</text><text x="94" y="253" class="pageMeta">3 位好友在线</text>
+    <rect x="352" y="205" width="38" height="38" rx="13" fill="#fff" stroke="#dce5f6"/><use href="#i-search" x="362" y="215" width="18" height="18" color="#18233d"/>
+    <rect x="399" y="205" width="38" height="38" rx="13" fill="#151b3b"/><use href="#i-user-plus" x="409" y="215" width="18" height="18" color="#c9f36a"/>
+
+    <rect x="87" y="272" width="348" height="111" fill="#151b3b"/><path d="M410 272h25v72l-42-72z" fill="#ff6b8f"/><circle cx="105" cy="291" r="3" fill="#c9f36a"/><text x="115" y="295" class="small bold white">现在在线</text>
+    <g>
+      <circle cx="117" cy="329" r="20" fill="url(#avatarA)"/><circle cx="117" cy="325" r="7" fill="#ffe6db"/><path d="M106 342c2-9 20-9 22 0" fill="#ffe6db"/><circle cx="132" cy="342" r="5" fill="#1db991" stroke="#fff" stroke-width="2"/><text x="117" y="369" text-anchor="middle" class="tiny white">林溪</text>
+      <circle cx="174" cy="329" r="20" fill="url(#avatarB)"/><circle cx="174" cy="325" r="7" fill="#dceaff"/><path d="M163 342c2-9 20-9 22 0" fill="#dceaff"/><circle cx="189" cy="342" r="5" fill="#1db991" stroke="#fff" stroke-width="2"/><text x="174" y="369" text-anchor="middle" class="tiny white">阿泽</text>
+      <circle cx="231" cy="329" r="20" fill="url(#avatarC)"/><circle cx="231" cy="325" r="7" fill="#f2e6ff"/><path d="M220 342c2-9 20-9 22 0" fill="#f2e6ff"/><circle cx="246" cy="342" r="5" fill="#1db991" stroke="#fff" stroke-width="2"/><text x="231" y="369" text-anchor="middle" class="tiny white">一楠</text>
+      <circle cx="288" cy="329" r="20" fill="url(#avatarD)"/><circle cx="288" cy="325" r="7" fill="#fff1d8"/><path d="M277 342c2-9 20-9 22 0" fill="#fff1d8"/><text x="288" y="369" text-anchor="middle" class="tiny white">周小满</text>
+    </g>
+
+    <rect x="73" y="397" width="376" height="516" fill="#fff"/><text x="94" y="428" class="sectionTitle">最近消息</text><text x="428" y="428" text-anchor="end" class="tiny latin bold muted">全部已同步</text>
+    <g>
+      <circle cx="116" cy="471" r="23" fill="url(#avatarA)"/><circle cx="116" cy="466" r="8" fill="#ffe6db"/><path d="M103 486c3-11 23-11 26 0" fill="#ffe6db"/><circle cx="133" cy="487" r="5" fill="#1db991" stroke="#fff" stroke-width="2"/>
+      <text x="151" y="465" class="body bold">林溪</text><text x="151" y="485" class="small bold">下班后一起开一局？</text><text x="427" y="464" text-anchor="end" class="tiny latin muted">18:42</text><circle cx="417" cy="485" r="9" fill="#ff6b8f"/><text x="417" y="489" text-anchor="middle" class="tiny latin bold white">2</text><line x1="94" y1="512" x2="428" y2="512" stroke="#edf1f8"/>
+      <circle cx="116" cy="548" r="23" fill="url(#avatarB)"/><circle cx="116" cy="543" r="8" fill="#dceaff"/><path d="M103 563c3-11 23-11 26 0" fill="#dceaff"/><text x="151" y="542" class="body bold">阿泽</text><text x="151" y="562" class="small muted">收到，链接我晚点看</text><text x="427" y="541" text-anchor="end" class="tiny latin muted">17:06</text><use href="#i-checks" x="407" y="552" width="16" height="16" color="#4b6bff"/><line x1="94" y1="589" x2="428" y2="589" stroke="#edf1f8"/>
+      <circle cx="116" cy="625" r="23" fill="url(#avatarC)"/><circle cx="116" cy="620" r="8" fill="#f2e6ff"/><path d="M103 640c3-11 23-11 26 0" fill="#f2e6ff"/><text x="151" y="619" class="body bold">一楠</text><text x="151" y="639" class="small muted">你分享了一个工具</text><text x="427" y="619" text-anchor="end" class="tiny muted">周三</text><line x1="94" y1="666" x2="428" y2="666" stroke="#edf1f8"/>
+      <circle cx="116" cy="702" r="23" fill="url(#avatarD)"/><circle cx="116" cy="697" r="8" fill="#fff1d8"/><path d="M103 717c3-11 23-11 26 0" fill="#fff1d8"/><text x="151" y="696" class="body bold">周小满</text><text x="151" y="716" class="small muted">明天见</text><text x="427" y="696" text-anchor="end" class="tiny muted">周二</text>
+    </g>
+    <rect x="73" y="913" width="376" height="69" fill="#fff" stroke="#dce5f6"/>
+    <g color="#8f9bbb"><use href="#i-house" x="111" y="928" width="20" height="20"/><text x="121" y="965" text-anchor="middle" class="tiny muted">首页</text><use href="#i-grid" x="195" y="928" width="20" height="20"/><text x="205" y="965" text-anchor="middle" class="tiny muted">工具</text><use href="#i-message" x="279" y="928" width="20" height="20" color="#4b6bff"/><circle cx="300" cy="929" r="4" fill="#ff6b8f" stroke="#fff" stroke-width="2"/><text x="289" y="965" text-anchor="middle" class="tiny bold blue">消息</text><use href="#i-user" x="363" y="928" width="20" height="20"/><text x="373" y="965" text-anchor="middle" class="tiny muted">我的</text></g>
+  </g>
+
+  <!-- Screen 2 -->
+  <g clip-path="url(#screen2)">
+    <text x="583" y="180" class="tiny latin bold">9:41</text><text x="910" y="180" text-anchor="end" class="tiny latin bold">▮▮▮  ◔  ▰</text>
+    <use href="#i-back" x="582" y="211" width="22" height="22" color="#18233d"/><text x="750" y="228" text-anchor="middle" class="sectionTitle">添加好友</text><rect x="886" y="204" width="38" height="38" rx="13" fill="#fff" stroke="#dce5f6"/><use href="#i-scan" x="896" y="214" width="18" height="18" color="#18233d"/>
+    <rect x="582" y="263" width="336" height="48" fill="#fff" stroke="#dce5f6"/><use href="#i-search" x="595" y="278" width="18" height="18" color="#7483a2"/><text x="625" y="293" class="body latin">linxi_07</text><rect x="876" y="273" width="28" height="28" rx="9" fill="#151b3b"/><use href="#i-arrow" x="883" y="280" width="14" height="14" color="#c9f36a"/>
+    <rect x="582" y="324" width="336" height="78" fill="#151b3b"/><rect x="582" y="324" width="52" height="6" fill="#c9f36a"/><circle cx="620" cy="363" r="23" fill="url(#avatarA)"/><circle cx="620" cy="358" r="8" fill="#ffe6db"/><path d="M607 378c3-11 23-11 26 0" fill="#ffe6db"/><circle cx="637" cy="380" r="5" fill="#1db991" stroke="#fff" stroke-width="2"/><text x="657" y="359" class="body bold white">林溪</text><text x="657" y="378" class="tiny latin softLight">@linxi_07</text><rect x="843" y="346" width="61" height="31" rx="10" fill="#c9f36a"/><use href="#i-user-plus" x="851" y="355" width="13" height="13" color="#18233d"/><text x="872" y="367" class="tiny bold">添加</text>
+    <text x="582" y="445" class="sectionTitle">新的好友申请</text><circle cx="908" cy="440" r="10" fill="#ff6b8f"/><text x="908" y="444" text-anchor="middle" class="tiny latin bold white">2</text>
+    <rect x="582" y="460" width="336" height="154" fill="#fff"/>
+    <circle cx="607" cy="499" r="21" fill="url(#avatarB)"/><circle cx="607" cy="495" r="7" fill="#dceaff"/><path d="M596 511c2-9 20-9 22 0" fill="#dceaff"/><text x="642" y="495" class="body bold">陈一</text><text x="642" y="512" class="tiny muted">来自账号搜索</text><rect x="802" y="485" width="45" height="29" rx="9" fill="#edf1f8"/><text x="824" y="503" text-anchor="middle" class="tiny bold muted">忽略</text><rect x="854" y="485" width="50" height="29" rx="9" fill="#4b6bff"/><text x="879" y="503" text-anchor="middle" class="tiny bold white">接受</text><line x1="595" y1="537" x2="906" y2="537" stroke="#edf1f8"/>
+    <circle cx="607" cy="575" r="21" fill="url(#avatarC)"/><circle cx="607" cy="571" r="7" fill="#f2e6ff"/><path d="M596 587c2-9 20-9 22 0" fill="#f2e6ff"/><text x="642" y="571" class="body latin bold">Mia</text><text x="642" y="588" class="tiny muted">2 个共同好友</text><rect x="802" y="561" width="45" height="29" rx="9" fill="#edf1f8"/><text x="824" y="579" text-anchor="middle" class="tiny bold muted">忽略</text><rect x="854" y="561" width="50" height="29" rx="9" fill="#4b6bff"/><text x="879" y="579" text-anchor="middle" class="tiny bold white">接受</text>
+    <text x="582" y="657" class="sectionTitle">已发出的申请</text><text x="918" y="657" text-anchor="end" class="tiny muted">1 条</text><line x1="582" y1="675" x2="918" y2="675" stroke="#dce5f6"/>
+    <circle cx="607" cy="709" r="19" fill="url(#avatarD)"/><circle cx="607" cy="705" r="6" fill="#fff1d8"/><path d="M597 720c2-8 18-8 20 0" fill="#fff1d8"/><text x="639" y="705" class="body bold">苏木</text><text x="639" y="722" class="tiny latin muted">@sumu_lab</text><text x="917" y="713" text-anchor="end" class="tiny bold muted">等待回应</text><line x1="582" y1="743" x2="918" y2="743" stroke="#e5ebf5"/>
+    <rect x="562" y="913" width="376" height="69" fill="#fff" stroke="#dce5f6"/>
+    <g color="#8f9bbb"><use href="#i-house" x="600" y="928" width="20" height="20"/><text x="610" y="965" text-anchor="middle" class="tiny muted">首页</text><use href="#i-grid" x="684" y="928" width="20" height="20"/><text x="694" y="965" text-anchor="middle" class="tiny muted">工具</text><use href="#i-message" x="768" y="928" width="20" height="20" color="#4b6bff"/><text x="778" y="965" text-anchor="middle" class="tiny bold blue">消息</text><use href="#i-user" x="852" y="928" width="20" height="20"/><text x="862" y="965" text-anchor="middle" class="tiny muted">我的</text></g>
+  </g>
+
+  <!-- Screen 3 -->
+  <g clip-path="url(#screen3)">
+    <rect x="1051" y="152" width="376" height="101" fill="#fff"/><text x="1072" y="180" class="tiny latin bold">9:41</text><text x="1399" y="180" text-anchor="end" class="tiny latin bold">▮▮▮  ◔  ▰</text>
+    <use href="#i-back" x="1068" y="211" width="22" height="22" color="#18233d"/><circle cx="1128" cy="223" r="20" fill="url(#avatarA)"/><circle cx="1128" cy="219" r="7" fill="#ffe6db"/><path d="M1117 235c2-9 20-9 22 0" fill="#ffe6db"/><text x="1157" y="220" class="body bold">林溪</text><circle cx="1160" cy="235" r="3" fill="#1db991"/><text x="1168" y="239" class="tiny bold green">在线</text><rect x="1374" y="204" width="38" height="38" rx="13" fill="#fff" stroke="#dce5f6"/><use href="#i-more" x="1384" y="214" width="18" height="18" color="#18233d"/><line x1="1051" y1="253" x2="1427" y2="253" stroke="#dce5f6"/>
+    <text x="1239" y="279" text-anchor="middle" class="tiny latin bold muted">今天 18:36</text>
+
+    <circle cx="1084" cy="329" r="14" fill="url(#avatarA)"/><rect x="1108" y="292" width="238" height="55" rx="17" fill="#fff" filter="url(#softShadow)"/><text x="1122" y="315" class="body">刚看到你做的新工具了，</text><text x="1122" y="334" class="body">界面挺舒服的。</text><text x="1109" y="363" class="tiny latin muted">18:36</text>
+    <circle cx="1395" cy="418" r="14" fill="url(#avatarB)"/><rect x="1131" y="379" width="240" height="59" rx="17" fill="#151b3b"/><text x="1146" y="403" class="body white">谢谢！我把体验地址发你，</text><text x="1146" y="422" class="body white">正好帮我试一下。</text><use href="#i-checks" x="1313" y="446" width="12" height="12" color="#4b6bff"/><text x="1330" y="456" class="tiny latin muted">18:38 · 已读</text>
+    <circle cx="1395" cy="544" r="14" fill="url(#avatarB)"/><rect x="1146" y="478" width="225" height="99" rx="17" fill="#151b3b"/><text x="1161" y="502" class="body bold white">FunBox · 智能翻译</text><rect x="1161" y="516" width="185" height="44" fill="#25314a"/><rect x="1161" y="516" width="3" height="44" fill="#c9f36a"/><text x="1173" y="534" class="tiny bold lime">打开工具</text><text x="1173" y="551" class="tiny latin softLight">funbox.app/tools/translation</text><use href="#i-checks" x="1313" y="585" width="12" height="12" color="#4b6bff"/><text x="1330" y="595" class="tiny latin muted">18:39 · 已读</text>
+    <circle cx="1084" cy="646" r="14" fill="url(#avatarA)"/><rect x="1108" y="614" width="249" height="55" rx="17" fill="#fff" filter="url(#softShadow)"/><text x="1122" y="638" class="body">可以，晚点给你反馈。</text><text x="1122" y="657" class="body">下班后一起开一局？</text><text x="1109" y="685" class="tiny latin muted">18:42</text>
+    <circle cx="1395" cy="737" r="14" fill="url(#avatarB)"/><rect x="1256" y="708" width="115" height="47" rx="17" fill="#151b3b"/><text x="1270" y="737" class="body white">好，八点见。</text><use href="#i-checks" x="1297" y="765" width="12" height="12" color="#4b6bff"/><text x="1314" y="775" class="tiny latin muted">18:43 · 已送达</text>
+    <circle cx="1084" cy="817" r="14" fill="url(#avatarA)"/><rect x="1108" y="799" width="62" height="36" rx="16" fill="#fff"/><circle cx="1127" cy="817" r="3" fill="#8997ad"/><circle cx="1139" cy="817" r="3" fill="#8997ad"/><circle cx="1151" cy="817" r="3" fill="#8997ad"/>
+    <rect x="1051" y="902" width="376" height="80" fill="#fff" stroke="#dce5f6"/><rect x="1066" y="920" width="36" height="36" rx="12" fill="#edf1f8"/><use href="#i-plus" x="1075" y="929" width="18" height="18" color="#18233d"/><rect x="1110" y="919" width="245" height="38" fill="#f3f6fb" stroke="#e3e9f4"/><text x="1124" y="943" class="small muted">输入消息...</text><rect x="1364" y="919" width="38" height="38" rx="12" fill="#4b6bff"/><use href="#i-send" x="1374" y="929" width="18" height="18" color="#fff"/>
+  </g>
+</svg>

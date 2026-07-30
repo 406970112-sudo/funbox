@@ -10,6 +10,7 @@ import { DevSettings, Platform } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { SocialProvider } from '@/features/social/social-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 
@@ -52,25 +53,29 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
-          <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
-          <Stack.Screen
-            name="tools/[toolId]"
-            options={{
-              animation: 'slide_from_right',
-            }}
-          />
-          <Stack.Screen
-            name="games/[gameId]"
-            options={{
-              animation: 'slide_from_right',
-            }}
-          />
-        </Stack>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        <SocialProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="social/add-friend" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="social/chat/[conversationId]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen
+              name="tools/[toolId]"
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+            <Stack.Screen
+              name="games/[gameId]"
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+          </Stack>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        </SocialProvider>
       </AuthProvider>
     </ThemeProvider>
   );

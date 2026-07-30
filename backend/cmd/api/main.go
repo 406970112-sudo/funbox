@@ -15,6 +15,7 @@ import (
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
+	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
 	"my-first-expo-app/backend/internal/user"
@@ -33,6 +34,11 @@ func main() {
 		log.Fatalf("open user database failed: %v", err)
 	}
 	defer userStore.Close()
+	socialStore, err := social.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open social database failed: %v", err)
+	}
+	defer socialStore.Close()
 
 	signingKey, err := auth.ResolveSigningKey(cfg.Auth.JWTSecret, cfg.Auth.JWTSecretFile)
 	if err != nil {
@@ -55,7 +61,7 @@ func main() {
 		log.Printf("translation disabled: missing DEEPSEEK_API_KEY")
 	}
 
-	server := httpapi.NewServer(cfg, ttsService, translationService, authService)
+	server := httpapi.NewServer(cfg, ttsService, translationService, authService, socialStore)
 
 	go func() {
 		log.Printf("backend listening on %s", server.Addr)

@@ -11,6 +11,7 @@ export type ToolId =
   | 'image-cleanup'
   | 'smart-translation'
   | 'qr-code'
+  | 'resource-search'
   | 'focus-plan';
 
 export type GameId = 'snake-brawl' | 'gomoku' | 'tetris' | 'brain-challenge' | 'speed-racer';

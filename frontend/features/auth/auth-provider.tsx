@@ -18,6 +18,7 @@ import type { AuthUser, AvatarAsset } from '@/types/auth';
 type AuthStatus = 'anonymous' | 'authenticated' | 'loading';
 
 type AuthContextValue = {
+  accessToken: string | null;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   register: (username: string, password: string, displayName: string) => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
@@ -105,6 +106,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   return (
     <AuthContext.Provider
       value={{
+        accessToken: token,
         changePassword: savePassword,
         register: registerAccount,
         signIn,

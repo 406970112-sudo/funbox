@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox Social Product Design</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #1db991;
+        --canvas: #dce6f5;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 1050px;
+        overflow: hidden;
+        padding: 38px 58px 46px;
+        position: relative;
+        width: 1500px;
+      }
+
+      .board::before {
+        background: var(--navy);
+        content: "";
+        height: 8px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 auto 28px;
+        max-width: 1350px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 48px;
+        justify-content: center;
+        width: 48px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        color: #6b7892;
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .stage {
+        align-items: flex-start;
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+      }
+
+      .concept {
+        width: 404px;
+      }
+
+      .concept-label {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin: 0 0 12px 14px;
+      }
+
+      .concept-number {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .concept-name {
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #0e152b;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 44px;
+        box-shadow: 0 28px 54px rgba(45, 66, 105, 0.27), 0 4px 12px rgba(45, 66, 105, 0.14);
+        height: 850px;
+        padding: 9px;
+        position: relative;
+        width: 404px;
+      }
+
+      .speaker {
+        background: #05091a;
+        border-radius: 999px;
+        height: 25px;
+        left: 50%;
+        position: absolute;
+        top: 17px;
+        transform: translateX(-50%);
+        width: 92px;
+        z-index: 10;
+      }
+
+      .screen {
+        background: var(--screen);
+        border-radius: 35px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 34px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 8px 22px 0;
+        position: relative;
+        z-index: 5;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 12px;
+        stroke-width: 2.5;
+        width: 12px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 66px;
+        justify-content: space-between;
+        padding: 8px 22px 10px;
+      }
+
+      .page-title {
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .page-meta {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 5px;
+      }
+
+      .top-actions {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        padding: 0;
+        width: 38px;
+      }
+
+      .icon-button.primary {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--lime);
+      }
+
+      .icon-button svg {
+        height: 18px;
+        stroke-width: 2.3;
+        width: 18px;
+      }
+
+      .avatar {
+        background: #e1e7f5;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        object-fit: cover;
+      }
+
+      .avatar-wrap {
+        flex: 0 0 auto;
+        position: relative;
+      }
+
+      .online-dot {
+        background: var(--green);
+        border: 2px solid var(--white);
+        border-radius: 50%;
+        bottom: 1px;
+        height: 11px;
+        position: absolute;
+        right: 0;
+        width: 11px;
+      }
+
+      .online-strip {
+        background: var(--navy);
+        color: var(--white);
+        flex: 0 0 111px;
+        margin: 0 14px;
+        overflow: hidden;
+        padding: 14px 16px;
+        position: relative;
+      }
+
+      .online-strip::after {
+        background: var(--coral);
+        content: "";
+        height: 72px;
+        opacity: 0.9;
+        position: absolute;
+        right: -28px;
+        top: -24px;
+        transform: rotate(26deg);
+        width: 50px;
+      }
+
+      .strip-title {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 700;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+
+      .strip-pulse {
+        background: var(--lime);
+        border-radius: 50%;
+        height: 6px;
+        width: 6px;
+      }
+
+      .people-row {
+        align-items: flex-start;
+        display: flex;
+        gap: 15px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .person-mini {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        width: 44px;
+      }
+
+      .person-mini .avatar {
+        border: 2px solid rgba(255, 255, 255, 0.72);
+        height: 38px;
+        width: 38px;
+      }
+
+      .person-mini span {
+        font-size: 9px;
+        font-weight: 600;
+        max-width: 44px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .conversation-panel {
+        background: var(--white);
+        flex: 1 1 auto;
+        margin-top: 14px;
+        min-height: 0;
+        padding: 14px 20px 0;
+      }
+
+      .section-heading {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+
+      .section-heading h2 {
+        font-size: 14px;
+        font-weight: 800;
+        margin: 0;
+      }
+
+      .section-heading span {
+        color: var(--muted);
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .conversation {
+        align-items: center;
+        border-bottom: 1px solid #edf1f8;
+        display: grid;
+        gap: 11px;
+        grid-template-columns: 48px 1fr auto;
+        min-height: 72px;
+        padding: 8px 0;
+      }
+
+      .conversation:last-child {
+        border-bottom: 0;
+      }
+
+      .conversation .avatar {
+        height: 46px;
+        width: 46px;
+      }
+
+      .conversation-copy {
+        min-width: 0;
+      }
+
+      .conversation-name {
+        font-size: 12px;
+        font-weight: 800;
+        margin: 0 0 5px;
+      }
+
+      .conversation-preview {
+        color: var(--muted);
+        font-size: 10px;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .conversation-preview.unread {
+        color: var(--ink);
+        font-weight: 650;
+      }
+
+      .conversation-side {
+        align-items: flex-end;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+      }
+
+      .conversation-time {
+        color: var(--muted);
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .unread-count {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 8px;
+        font-weight: 800;
+        height: 18px;
+        justify-content: center;
+        width: 18px;
+      }
+
+      .delivered {
+        color: var(--blue);
+        height: 14px;
+        width: 14px;
+      }
+
+      .tabbar {
+        align-items: center;
+        background: var(--white);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 69px;
+        justify-content: space-around;
+        padding: 8px 18px 10px;
+      }
+
+      .tab {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 4px;
+        min-width: 50px;
+      }
+
+      .tab svg {
+        height: 20px;
+        stroke-width: 2.1;
+        width: 20px;
+      }
+
+      .tab.active {
+        color: var(--blue);
+      }
+
+      .tab-icon-wrap {
+        align-items: center;
+        display: flex;
+        height: 24px;
+        justify-content: center;
+        position: relative;
+      }
+
+      .tab-alert {
+        background: var(--coral);
+        border: 2px solid var(--white);
+        border-radius: 50%;
+        height: 8px;
+        position: absolute;
+        right: -5px;
+        top: -2px;
+        width: 8px;
+      }
+
+      .back-button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        display: flex;
+        height: 36px;
+        justify-content: flex-start;
+        padding: 0;
+        width: 36px;
+      }
+
+      .back-button svg {
+        height: 21px;
+        stroke-width: 2.5;
+        width: 21px;
+      }
+
+      .center-title {
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .friend-body {
+        flex: 1;
+        min-height: 0;
+        padding: 4px 20px 0;
+      }
+
+      .search-box {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 18px 1fr 28px;
+        height: 48px;
+        padding: 0 12px;
+      }
+
+      .search-box svg {
+        color: var(--muted);
+        height: 17px;
+        width: 17px;
+      }
+
+      .search-box input {
+        background: transparent;
+        border: 0;
+        color: var(--ink);
+        font-size: 11px;
+        min-width: 0;
+        outline: none;
+        width: 100%;
+      }
+
+      .search-box input::placeholder {
+        color: #98a4bc;
+      }
+
+      .search-submit {
+        align-items: center;
+        background: var(--navy);
+        border: 0;
+        border-radius: 9px;
+        color: var(--lime);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        padding: 0;
+        width: 28px;
+      }
+
+      .search-submit svg {
+        color: currentColor;
+        height: 14px;
+        stroke-width: 2.6;
+        width: 14px;
+      }
+
+      .search-result {
+        align-items: center;
+        background: var(--navy);
+        color: var(--white);
+        display: grid;
+        gap: 11px;
+        grid-template-columns: 48px 1fr auto;
+        margin-top: 12px;
+        min-height: 78px;
+        padding: 13px 14px;
+        position: relative;
+      }
+
+      .search-result::before {
+        background: var(--lime);
+        content: "";
+        height: 6px;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 52px;
+      }
+
+      .search-result .avatar {
+        height: 46px;
+        width: 46px;
+      }
+
+      .result-name {
+        font-size: 12px;
+        font-weight: 800;
+        margin: 0 0 4px;
+      }
+
+      .result-id {
+        color: rgba(255, 255, 255, 0.62);
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        margin: 0;
+      }
+
+      .add-button {
+        align-items: center;
+        background: var(--lime);
+        border: 0;
+        border-radius: 10px;
+        color: #17223c;
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        height: 30px;
+        padding: 0 10px;
+      }
+
+      .add-button svg {
+        height: 13px;
+        stroke-width: 2.7;
+        width: 13px;
+      }
+
+      .request-section {
+        margin-top: 22px;
+      }
+
+      .request-section .section-heading {
+        margin-bottom: 8px;
+      }
+
+      .request-count {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 50%;
+        color: var(--white) !important;
+        display: flex;
+        height: 19px;
+        justify-content: center;
+        width: 19px;
+      }
+
+      .request-list {
+        background: var(--white);
+        border-top: 1px solid var(--line);
+      }
+
+      .request-row {
+        align-items: center;
+        border-bottom: 1px solid #edf1f8;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 44px 1fr auto;
+        min-height: 76px;
+      }
+
+      .request-row .avatar {
+        height: 42px;
+        width: 42px;
+      }
+
+      .request-name {
+        font-size: 11px;
+        font-weight: 800;
+        margin: 0 0 4px;
+      }
+
+      .request-note {
+        color: var(--muted);
+        font-size: 9px;
+        margin: 0;
+      }
+
+      .request-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .request-action {
+        align-items: center;
+        border: 0;
+        border-radius: 9px;
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        height: 29px;
+        justify-content: center;
+        padding: 0 10px;
+      }
+
+      .request-action.accept {
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      .request-action.ignore {
+        background: #edf1f8;
+        color: var(--muted);
+      }
+
+      .sent-section {
+        margin-top: 20px;
+      }
+
+      .sent-row {
+        align-items: center;
+        border-bottom: 1px solid #e5ebf5;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 38px 1fr auto;
+        min-height: 62px;
+      }
+
+      .sent-row .avatar {
+        height: 36px;
+        width: 36px;
+      }
+
+      .sent-status {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .chat-screen {
+        background: #eef3fb;
+      }
+
+      .chat-topbar {
+        align-items: center;
+        background: var(--white);
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        flex: 0 0 66px;
+        gap: 8px;
+        grid-template-columns: 32px 42px 1fr 36px;
+        padding: 7px 18px 10px;
+      }
+
+      .chat-topbar .avatar {
+        height: 38px;
+        width: 38px;
+      }
+
+      .chat-name {
+        font-size: 12px;
+        font-weight: 800;
+        margin: 0;
+      }
+
+      .chat-status {
+        align-items: center;
+        color: var(--green);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 5px;
+        margin-top: 3px;
+      }
+
+      .chat-status::before {
+        background: var(--green);
+        border-radius: 50%;
+        content: "";
+        height: 6px;
+        width: 6px;
+      }
+
+      .chat-stream {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+        overflow: hidden;
+        padding: 16px 16px 10px;
+      }
+
+      .day-divider {
+        color: #8a97ad;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 8px;
+        font-weight: 700;
+        margin: 0 auto 2px;
+      }
+
+      .message-row {
+        align-items: flex-end;
+        display: flex;
+        gap: 7px;
+        max-width: 86%;
+      }
+
+      .message-row.outgoing {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+      }
+
+      .message-row .avatar {
+        height: 27px;
+        width: 27px;
+      }
+
+      .bubble-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .outgoing .bubble-stack {
+        align-items: flex-end;
+      }
+
+      .bubble {
+        background: var(--white);
+        border-radius: 17px 17px 17px 5px;
+        box-shadow: 0 4px 12px rgba(73, 94, 133, 0.06);
+        font-size: 11px;
+        line-height: 1.55;
+        padding: 10px 12px;
+      }
+
+      .outgoing .bubble {
+        background: var(--navy);
+        border-radius: 17px 17px 5px 17px;
+        color: var(--white);
+      }
+
+      .message-info {
+        color: #8996aa;
+        font-family: "Manrope", sans-serif;
+        font-size: 8px;
+        font-weight: 600;
+      }
+
+      .outgoing .message-info {
+        align-items: center;
+        display: flex;
+        gap: 3px;
+      }
+
+      .outgoing .message-info svg {
+        color: var(--blue);
+        height: 11px;
+        stroke-width: 2.6;
+        width: 11px;
+      }
+
+      .link-card {
+        background: rgba(201, 243, 106, 0.12);
+        border-left: 3px solid var(--lime);
+        margin-top: 8px;
+        padding: 7px 9px;
+        width: 184px;
+      }
+
+      .link-title {
+        color: var(--lime);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .link-meta {
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 8px;
+        margin-top: 3px;
+      }
+
+      .typing-row {
+        align-items: flex-end;
+        display: flex;
+        gap: 7px;
+      }
+
+      .typing-row .avatar {
+        height: 27px;
+        width: 27px;
+      }
+
+      .typing {
+        align-items: center;
+        background: var(--white);
+        border-radius: 16px 16px 16px 5px;
+        display: flex;
+        gap: 4px;
+        height: 34px;
+        padding: 0 13px;
+      }
+
+      .typing span {
+        animation: typing 1.2s infinite ease-in-out;
+        background: #8997ad;
+        border-radius: 50%;
+        height: 5px;
+        width: 5px;
+      }
+
+      .typing span:nth-child(2) {
+        animation-delay: 0.16s;
+      }
+
+      .typing span:nth-child(3) {
+        animation-delay: 0.32s;
+      }
+
+      @keyframes typing {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-3px); }
+      }
+
+      .composer {
+        align-items: center;
+        background: var(--white);
+        border-top: 1px solid var(--line);
+        display: grid;
+        flex: 0 0 71px;
+        gap: 8px;
+        grid-template-columns: 36px 1fr 38px;
+        padding: 10px 15px 13px;
+      }
+
+      .composer-action {
+        align-items: center;
+        background: #edf1f8;
+        border: 0;
+        border-radius: 12px;
+        color: var(--ink);
+        display: flex;
+        height: 36px;
+        justify-content: center;
+        padding: 0;
+        width: 36px;
+      }
+
+      .composer-action svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .composer-input {
+        align-items: center;
+        background: #f3f6fb;
+        border: 1px solid #e3e9f4;
+        color: #8a97ad;
+        display: flex;
+        font-size: 10px;
+        height: 38px;
+        padding: 0 13px;
+      }
+
+      .composer-send {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 12px;
+        color: var(--white);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        padding: 0;
+        width: 38px;
+      }
+
+      .composer-send svg {
+        height: 17px;
+        stroke-width: 2.4;
+        width: 17px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="box"></i></div>
+          <div>
+            <h1 class="board-title">FunBox Social</h1>
+            <p class="board-subtitle">好友与即时消息 · 移动端产品概念</p>
+          </div>
+        </div>
+        <div class="version">PRODUCT CONCEPT · V1.0</div>
+      </header>
+
+      <section class="stage">
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">01</span>
+            <span class="concept-name">消息首页</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <div>
+                  <h2 class="page-title">消息</h2>
+                  <div class="page-meta">3 位好友在线</div>
+                </div>
+                <div class="top-actions">
+                  <button class="icon-button" aria-label="搜索"><i data-lucide="search"></i></button>
+                  <button class="icon-button primary" aria-label="添加好友"><i data-lucide="user-plus"></i></button>
+                </div>
+              </header>
+
+              <section class="online-strip">
+                <div class="strip-title"><span class="strip-pulse"></span>现在在线</div>
+                <div class="people-row">
+                  <div class="person-mini">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                      <span class="online-dot"></span>
+                    </div>
+                    <span>林溪</span>
+                  </div>
+                  <div class="person-mini">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=12" alt="阿泽" />
+                      <span class="online-dot"></span>
+                    </div>
+                    <span>阿泽</span>
+                  </div>
+                  <div class="person-mini">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=32" alt="一楠" />
+                      <span class="online-dot"></span>
+                    </div>
+                    <span>一楠</span>
+                  </div>
+                  <div class="person-mini">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=5" alt="周小满" />
+                    </div>
+                    <span>周小满</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="conversation-panel">
+                <div class="section-heading">
+                  <h2>最近消息</h2>
+                  <span>全部已同步</span>
+                </div>
+
+                <div class="conversation">
+                  <div class="avatar-wrap">
+                    <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                    <span class="online-dot"></span>
+                  </div>
+                  <div class="conversation-copy">
+                    <p class="conversation-name">林溪</p>
+                    <p class="conversation-preview unread">下班后一起开一局？</p>
+                  </div>
+                  <div class="conversation-side">
+                    <span class="conversation-time">18:42</span>
+                    <span class="unread-count">2</span>
+                  </div>
+                </div>
+
+                <div class="conversation">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=12" alt="阿泽" />
+                  <div class="conversation-copy">
+                    <p class="conversation-name">阿泽</p>
+                    <p class="conversation-preview">收到，链接我晚点看</p>
+                  </div>
+                  <div class="conversation-side">
+                    <span class="conversation-time">17:06</span>
+                    <i class="delivered" data-lucide="check-check"></i>
+                  </div>
+                </div>
+
+                <div class="conversation">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=32" alt="一楠" />
+                  <div class="conversation-copy">
+                    <p class="conversation-name">一楠</p>
+                    <p class="conversation-preview">你分享了一个工具</p>
+                  </div>
+                  <div class="conversation-side">
+                    <span class="conversation-time">周三</span>
+                  </div>
+                </div>
+
+                <div class="conversation">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=5" alt="周小满" />
+                  <div class="conversation-copy">
+                    <p class="conversation-name">周小满</p>
+                    <p class="conversation-preview">明天见</p>
+                  </div>
+                  <div class="conversation-side">
+                    <span class="conversation-time">周二</span>
+                  </div>
+                </div>
+              </section>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab"><i data-lucide="grid-2x2"></i><span>工具</span></div>
+                <div class="tab active">
+                  <div class="tab-icon-wrap"><i data-lucide="message-circle"></i><span class="tab-alert"></span></div>
+                  <span>消息</span>
+                </div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">02</span>
+            <span class="concept-name">添加好友</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <button class="back-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <div class="center-title">添加好友</div>
+                <button class="icon-button" aria-label="扫一扫"><i data-lucide="scan-line"></i></button>
+              </header>
+
+              <div class="friend-body">
+                <div class="search-box">
+                  <i data-lucide="search"></i>
+                  <input value="linxi_07" readonly aria-label="搜索账号" />
+                  <button class="search-submit" aria-label="执行搜索"><i data-lucide="arrow-right"></i></button>
+                </div>
+
+                <div class="search-result">
+                  <div class="avatar-wrap">
+                    <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                    <span class="online-dot"></span>
+                  </div>
+                  <div>
+                    <p class="result-name">林溪</p>
+                    <p class="result-id">@linxi_07</p>
+                  </div>
+                  <button class="add-button"><i data-lucide="user-plus"></i>添加</button>
+                </div>
+
+                <section class="request-section">
+                  <div class="section-heading">
+                    <h2>新的好友申请</h2>
+                    <span class="request-count">2</span>
+                  </div>
+                  <div class="request-list">
+                    <div class="request-row">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=15" alt="陈一" />
+                      <div>
+                        <p class="request-name">陈一</p>
+                        <p class="request-note">来自账号搜索</p>
+                      </div>
+                      <div class="request-actions">
+                        <button class="request-action ignore">忽略</button>
+                        <button class="request-action accept">接受</button>
+                      </div>
+                    </div>
+                    <div class="request-row">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=24" alt="Mia" />
+                      <div>
+                        <p class="request-name">Mia</p>
+                        <p class="request-note">2 个共同好友</p>
+                      </div>
+                      <div class="request-actions">
+                        <button class="request-action ignore">忽略</button>
+                        <button class="request-action accept">接受</button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="sent-section">
+                  <div class="section-heading">
+                    <h2>已发出的申请</h2>
+                    <span>1 条</span>
+                  </div>
+                  <div class="sent-row">
+                    <img class="avatar" src="https://i.pravatar.cc/120?img=38" alt="苏木" />
+                    <div>
+                      <p class="request-name">苏木</p>
+                      <p class="request-note">@sumu_lab</p>
+                    </div>
+                    <span class="sent-status">等待回应</span>
+                  </div>
+                </section>
+              </div>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab"><i data-lucide="grid-2x2"></i><span>工具</span></div>
+                <div class="tab active"><i data-lucide="message-circle"></i><span>消息</span></div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">03</span>
+            <span class="concept-name">单聊详情</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen chat-screen">
+              <div class="status-bar" style="background: #ffffff">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="chat-topbar">
+                <button class="back-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                <div>
+                  <p class="chat-name">林溪</p>
+                  <div class="chat-status">在线</div>
+                </div>
+                <button class="icon-button" aria-label="会话设置"><i data-lucide="ellipsis"></i></button>
+              </header>
+
+              <section class="chat-stream">
+                <div class="day-divider">今天 18:36</div>
+
+                <div class="message-row">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                  <div class="bubble-stack">
+                    <div class="bubble">刚看到你做的新工具了，界面挺舒服的。</div>
+                    <span class="message-info">18:36</span>
+                  </div>
+                </div>
+
+                <div class="message-row outgoing">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=11" alt="我" />
+                  <div class="bubble-stack">
+                    <div class="bubble">谢谢！我把体验地址发你，正好帮我试一下。</div>
+                    <span class="message-info"><i data-lucide="check-check"></i>18:38 · 已读</span>
+                  </div>
+                </div>
+
+                <div class="message-row outgoing">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=11" alt="我" />
+                  <div class="bubble-stack">
+                    <div class="bubble">
+                      FunBox · 智能翻译
+                      <div class="link-card">
+                        <div class="link-title">打开工具</div>
+                        <div class="link-meta">funbox.app/tools/translation</div>
+                      </div>
+                    </div>
+                    <span class="message-info"><i data-lucide="check-check"></i>18:39 · 已读</span>
+                  </div>
+                </div>
+
+                <div class="message-row">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                  <div class="bubble-stack">
+                    <div class="bubble">可以，晚点给你反馈。下班后一起开一局？</div>
+                    <span class="message-info">18:42</span>
+                  </div>
+                </div>
+
+                <div class="message-row outgoing">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=11" alt="我" />
+                  <div class="bubble-stack">
+                    <div class="bubble">好，八点见。</div>
+                    <span class="message-info"><i data-lucide="check-check"></i>18:43 · 已送达</span>
+                  </div>
+                </div>
+
+                <div class="typing-row">
+                  <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                  <div class="typing"><span></span><span></span><span></span></div>
+                </div>
+              </section>
+
+              <footer class="composer">
+                <button class="composer-action" aria-label="更多"><i data-lucide="plus"></i></button>
+                <div class="composer-input">输入消息...</div>
+                <button class="composer-send" aria-label="发送"><i data-lucide="send"></i></button>
+              </footer>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
