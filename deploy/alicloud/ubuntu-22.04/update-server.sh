@@ -445,7 +445,8 @@ log "Building frontend"
 pushd "$FRONTEND_ROOT" >/dev/null
 # The repository currently uses npm workspaces and a frontend lock file that npm ci
 # cannot consume reliably on the server. Do not modify the checked-in lock file.
-npm install --package-lock=false --registry="$NPM_REGISTRY"
+# react-tetris exposes React-independent models but declares peers only through React 18.
+npm install --package-lock=false --legacy-peer-deps --registry="$NPM_REGISTRY"
 npx expo export --platform web
 popd >/dev/null
 
