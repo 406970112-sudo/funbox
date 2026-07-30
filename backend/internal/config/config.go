@@ -15,6 +15,7 @@ type Config struct {
 	Security SecurityConfig
 	Storage  StorageConfig
 	DeepSeek DeepSeekConfig
+	TinyPNG  TinyPNGConfig
 	TTS      TTSConfig
 	Volc     VolcConfig
 }
@@ -64,6 +65,13 @@ type DeepSeekConfig struct {
 	RequestTimeout time.Duration
 }
 
+type TinyPNGConfig struct {
+	APIKey         string
+	BaseURL        string
+	MaxImageBytes  int64
+	RequestTimeout time.Duration
+}
+
 type VolcConfig struct {
 	AccessToken string
 	AppID       string
@@ -106,6 +114,12 @@ func Load() (Config, error) {
 			MaxTextLength:  intFirst("TRANSLATION_MAX_TEXT_LENGTH", "", "8000"),
 			Model:          envFirst("DEEPSEEK_TRANSLATION_MODEL", "deepseek-chat"),
 			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
+		},
+		TinyPNG: TinyPNGConfig{
+			APIKey:         envFirst("TINYPNG_API_KEY", ""),
+			BaseURL:        envFirst("TINYPNG_API_URL", "https://api.tinify.com"),
+			MaxImageBytes:  int64(intFirst("TINYPNG_MAX_IMAGE_BYTES", "", "5242880")),
+			RequestTimeout: durationFromMs("TINYPNG_REQUEST_TIMEOUT_MS", "", "60000"),
 		},
 		TTS: TTSConfig{
 			MaxContextLength: intFirst("TTS_MAX_CONTEXT_LENGTH", "VOICE_MAX_CONTEXT_LENGTH", "1000"),

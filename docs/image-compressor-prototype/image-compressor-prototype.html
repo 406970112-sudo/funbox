@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 图片压缩 - 产品原型</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;800;900&family=Sora:wght@500;600;700;800&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f7;
+        --page: #dfe8f8;
+        --screen: #eef4ff;
+        --surface: #ffffff;
+        --surface-muted: #edf2ff;
+        --primary: #4b6bff;
+        --primary-soft: #e3e9ff;
+        --navy: #151b3b;
+        --mint: #1db991;
+        --mint-soft: #dff8ef;
+        --coral: #ff6b8f;
+        --amber: #f1b643;
+        --shadow: 0 30px 80px rgba(45, 67, 117, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background:
+          linear-gradient(rgba(75, 107, 255, 0.055) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(75, 107, 255, 0.055) 1px, transparent 1px),
+          var(--page);
+        background-size: 28px 28px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .board {
+        min-height: 1024px;
+        overflow: hidden;
+        padding: 42px 64px 48px;
+        position: relative;
+      }
+
+      .board::before {
+        background: var(--navy);
+        content: "";
+        height: 10px;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 auto 32px;
+        max-width: 1280px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: #ffffff;
+        display: flex;
+        font-family: "Sora", sans-serif;
+        font-size: 20px;
+        font-weight: 800;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .board-title {
+        font-family: "Sora", "Noto Sans SC", sans-serif;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: 0;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 5px 0 0;
+      }
+
+      .board-meta {
+        align-items: center;
+        display: flex;
+        gap: 18px;
+      }
+
+      .meta-item {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 11px;
+        font-weight: 700;
+        gap: 7px;
+      }
+
+      .meta-item svg {
+        color: var(--primary);
+        height: 16px;
+        width: 16px;
+      }
+
+      .screen-stage {
+        align-items: flex-start;
+        display: grid;
+        gap: 72px;
+        grid-template-columns: repeat(2, 410px);
+        justify-content: center;
+        margin: 0 auto;
+        max-width: 1280px;
+      }
+
+      .prototype-state {
+        position: relative;
+      }
+
+      .state-label {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin: 0 0 10px 8px;
+      }
+
+      .state-index {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 6px;
+        color: #ffffff;
+        display: flex;
+        font-family: "Sora", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 22px;
+        justify-content: center;
+        width: 22px;
+      }
+
+      .state-name {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #10162f;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 838px;
+        overflow: hidden;
+        padding: 8px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone::after {
+        border: 1px solid rgba(21, 27, 59, 0.12);
+        border-radius: 31px;
+        content: "";
+        inset: 8px;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      .screen {
+        background: var(--screen);
+        border-radius: 31px;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        height: 29px;
+        justify-content: space-between;
+        padding: 5px 22px 0;
+      }
+
+      .status-time {
+        font-family: "Sora", sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 12px;
+        stroke-width: 2.2;
+        width: 12px;
+      }
+
+      .app-bar {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 42px 1fr 64px;
+        height: 54px;
+        padding: 0 13px;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 12px;
+        color: var(--ink);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .icon-button svg {
+        height: 20px;
+        stroke-width: 2.2;
+        width: 20px;
+      }
+
+      .app-title {
+        font-size: 18px;
+        font-weight: 900;
+        margin: 0;
+        text-align: center;
+      }
+
+      .history-link {
+        background: transparent;
+        border: 0;
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 800;
+        padding: 8px 5px;
+        text-align: right;
+      }
+
+      .app-scroll {
+        height: calc(100% - 83px);
+        overflow: hidden;
+        padding: 6px 15px 22px;
+      }
+
+      .connection-row {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 2px 12px;
+      }
+
+      .connection-label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .connection-status {
+        align-items: center;
+        color: #16876c;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 6px;
+      }
+
+      .status-dot {
+        background: var(--mint);
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(29, 185, 145, 0.13);
+        height: 7px;
+        width: 7px;
+      }
+
+      .upload-stage {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 22px;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        min-height: 300px;
+        overflow: hidden;
+        padding: 30px 22px;
+        position: relative;
+        text-align: center;
+      }
+
+      .upload-stage::before,
+      .upload-stage::after {
+        border: 1px solid rgba(121, 151, 255, 0.32);
+        border-radius: 8px;
+        content: "";
+        height: 48px;
+        position: absolute;
+        transform: rotate(-13deg);
+        width: 210px;
+      }
+
+      .upload-stage::before {
+        right: -72px;
+        top: 22px;
+      }
+
+      .upload-stage::after {
+        bottom: 9px;
+        left: -89px;
+      }
+
+      .upload-icon {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 18px;
+        display: flex;
+        height: 72px;
+        justify-content: center;
+        position: relative;
+        width: 72px;
+        z-index: 1;
+      }
+
+      .upload-icon svg {
+        color: #b9c6ff;
+        height: 32px;
+        stroke-width: 1.8;
+        width: 32px;
+      }
+
+      .upload-title {
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.35;
+        margin: 19px 0 7px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .upload-copy {
+        color: #aeb8d9;
+        font-size: 11px;
+        line-height: 1.7;
+        margin: 0;
+        max-width: 250px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .upload-button {
+        align-items: center;
+        background: var(--coral);
+        border: 0;
+        border-radius: 15px;
+        color: #ffffff;
+        display: flex;
+        font-size: 13px;
+        font-weight: 900;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 22px;
+        min-height: 48px;
+        padding: 0 22px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .upload-button svg {
+        height: 18px;
+        stroke-width: 2.4;
+        width: 18px;
+      }
+
+      .mode-section {
+        margin-top: 17px;
+      }
+
+      .section-heading {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 2px 10px;
+      }
+
+      .section-title {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-meta {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .mode-control {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        display: grid;
+        gap: 4px;
+        grid-template-columns: repeat(2, 1fr);
+        padding: 4px;
+      }
+
+      .mode-option {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 13px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        justify-content: center;
+        min-height: 58px;
+      }
+
+      .mode-option strong {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .mode-option small {
+        font-size: 8px;
+        font-weight: 600;
+      }
+
+      .mode-option.selected {
+        background: var(--primary-soft);
+        color: #344fc9;
+      }
+
+      .privacy-note {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.66);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 600;
+        gap: 9px;
+        line-height: 1.65;
+        margin-top: 13px;
+        padding: 11px 12px;
+      }
+
+      .privacy-note svg {
+        color: var(--mint);
+        flex: 0 0 auto;
+        height: 17px;
+        margin-top: 1px;
+        stroke-width: 2;
+        width: 17px;
+      }
+
+      .result-scroll {
+        padding-bottom: 86px;
+      }
+
+      .summary-band {
+        background: var(--navy);
+        border-radius: 22px;
+        color: #ffffff;
+        overflow: hidden;
+        padding: 20px;
+        position: relative;
+      }
+
+      .summary-band::after {
+        border: 1px solid rgba(121, 151, 255, 0.35);
+        border-radius: 8px;
+        content: "";
+        height: 49px;
+        position: absolute;
+        right: -43px;
+        top: 31px;
+        transform: rotate(-14deg);
+        width: 190px;
+      }
+
+      .summary-top {
+        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+      }
+
+      .summary-kicker {
+        color: #aeb8d9;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .summary-value {
+        color: #ffffff;
+        font-family: "Sora", sans-serif;
+        font-size: 44px;
+        font-weight: 800;
+        letter-spacing: 0;
+        line-height: 1;
+        margin-top: 6px;
+      }
+
+      .summary-value span {
+        color: #c9f36a;
+        font-size: 20px;
+      }
+
+      .summary-check {
+        align-items: center;
+        background: #c9f36a;
+        border-radius: 15px;
+        color: #173a35;
+        display: flex;
+        height: 46px;
+        justify-content: center;
+        width: 46px;
+      }
+
+      .summary-check svg {
+        height: 24px;
+        stroke-width: 2.6;
+        width: 24px;
+      }
+
+      .summary-stats {
+        border-top: 1px solid rgba(255, 255, 255, 0.13);
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 17px;
+        padding-top: 14px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .summary-stat:not(:last-child) {
+        border-right: 1px solid rgba(255, 255, 255, 0.13);
+      }
+
+      .summary-stat {
+        padding-left: 13px;
+      }
+
+      .summary-stat:first-child {
+        padding-left: 0;
+      }
+
+      .summary-stat span {
+        color: #aeb8d9;
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .summary-stat strong {
+        display: block;
+        font-family: "Sora", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .files-section {
+        margin-top: 16px;
+      }
+
+      .file-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .file-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        display: grid;
+        gap: 11px;
+        grid-template-columns: 58px minmax(0, 1fr) 34px;
+        min-height: 82px;
+        padding: 10px;
+      }
+
+      .file-thumb {
+        border-radius: 12px;
+        height: 58px;
+        object-fit: cover;
+        width: 58px;
+      }
+
+      .file-info {
+        min-width: 0;
+      }
+
+      .file-name {
+        font-size: 11px;
+        font-weight: 900;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .file-size-line {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-family: "Sora", sans-serif;
+        font-size: 8px;
+        font-weight: 600;
+        gap: 5px;
+        margin-top: 7px;
+      }
+
+      .file-size-line svg {
+        color: #9aa6c1;
+        height: 11px;
+        stroke-width: 2;
+        width: 11px;
+      }
+
+      .saving {
+        color: #16876c;
+        font-size: 9px;
+        font-weight: 900;
+        margin-left: 4px;
+      }
+
+      .file-action {
+        align-items: center;
+        background: var(--surface-muted);
+        border: 0;
+        border-radius: 11px;
+        color: var(--primary);
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .file-action svg {
+        height: 16px;
+        stroke-width: 2.2;
+        width: 16px;
+      }
+
+      .file-row.processing {
+        grid-template-columns: 58px minmax(0, 1fr) 34px;
+      }
+
+      .processing .file-action {
+        color: var(--amber);
+      }
+
+      .progress-track {
+        background: #e9eef9;
+        border-radius: 4px;
+        height: 4px;
+        margin-top: 9px;
+        overflow: hidden;
+      }
+
+      .progress-value {
+        background: var(--amber);
+        border-radius: inherit;
+        height: 100%;
+        width: 68%;
+      }
+
+      .sticky-action {
+        background: linear-gradient(180deg, rgba(238, 244, 255, 0), var(--screen) 23%);
+        bottom: 0;
+        left: 0;
+        padding: 21px 15px 16px;
+        position: absolute;
+        right: 0;
+        z-index: 2;
+      }
+
+      .download-all {
+        align-items: center;
+        background: var(--primary);
+        border: 0;
+        border-radius: 17px;
+        box-shadow: 0 14px 28px rgba(75, 107, 255, 0.28);
+        color: #ffffff;
+        display: flex;
+        font-size: 13px;
+        font-weight: 900;
+        gap: 9px;
+        justify-content: center;
+        min-height: 54px;
+        width: 100%;
+      }
+
+      .download-all svg {
+        height: 19px;
+        stroke-width: 2.4;
+        width: 19px;
+      }
+
+      .board-footer {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 10px;
+        font-weight: 700;
+        gap: 18px;
+        justify-content: center;
+        margin-top: 22px;
+      }
+
+      .color-set {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .color-dot {
+        border: 2px solid rgba(255, 255, 255, 0.72);
+        border-radius: 50%;
+        height: 16px;
+        width: 16px;
+      }
+
+      @media (max-width: 980px) {
+        .board {
+          min-width: 460px;
+          padding: 34px 24px 48px;
+        }
+
+        .board-header {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 18px;
+          max-width: 410px;
+        }
+
+        .screen-stage {
+          grid-template-columns: 410px;
+        }
+
+        .board-footer {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark">F</div>
+          <div>
+            <h1 class="board-title">图片压缩</h1>
+            <p class="board-subtitle">FunBox / TinyPNG 批量压缩工作流</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          <div class="meta-item"><i data-lucide="shield-check"></i>密钥仅保留在服务端</div>
+          <div class="meta-item"><i data-lucide="smartphone"></i>390 × 822 主界面</div>
+          <div class="meta-item"><i data-lucide="layers-3"></i>上传 / 完成双状态</div>
+        </div>
+      </header>
+
+      <section class="screen-stage" aria-label="图片压缩产品原型">
+        <article class="prototype-state">
+          <div class="state-label">
+            <span class="state-index">01</span>
+            <span class="state-name">上传与压缩策略</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="status-bar">
+                <span class="status-time">9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-bar">
+                <button class="icon-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <h2 class="app-title">图片压缩</h2>
+                <button class="history-link">记录</button>
+              </div>
+              <div class="app-scroll">
+                <div class="connection-row">
+                  <span class="connection-label">高质量图片瘦身</span>
+                  <span class="connection-status"><span class="status-dot"></span>TinyPNG 在线</span>
+                </div>
+
+                <section class="upload-stage">
+                  <div class="upload-icon"><i data-lucide="images"></i></div>
+                  <h3 class="upload-title">添加需要压缩的图片</h3>
+                  <p class="upload-copy">支持 JPG、PNG、WebP<br />单次最多 20 张，每张不超过 5 MB</p>
+                  <button class="upload-button"><i data-lucide="plus"></i>选择图片</button>
+                </section>
+
+                <section class="mode-section">
+                  <div class="section-heading">
+                    <h3 class="section-title">压缩策略</h3>
+                    <span class="section-meta">上传前可调整</span>
+                  </div>
+                  <div class="mode-control" role="group" aria-label="压缩策略">
+                    <button class="mode-option selected">
+                      <strong>智能压缩</strong>
+                      <small>体积与画质平衡</small>
+                    </button>
+                    <button class="mode-option">
+                      <strong>优先画质</strong>
+                      <small>保留更多细节</small>
+                    </button>
+                  </div>
+                </section>
+
+                <div class="privacy-note">
+                  <i data-lucide="lock-keyhole"></i>
+                  <span>图片经安全通道发送至 TinyPNG，压缩完成后自动清理临时文件。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="prototype-state">
+          <div class="state-label">
+            <span class="state-index">02</span>
+            <span class="state-name">压缩完成与批量下载</span>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="status-bar">
+                <span class="status-time">9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-bar">
+                <button class="icon-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <h2 class="app-title">压缩结果</h2>
+                <button class="history-link">继续添加</button>
+              </div>
+              <div class="app-scroll result-scroll">
+                <section class="summary-band">
+                  <div class="summary-top">
+                    <div>
+                      <div class="summary-kicker">本次共节省</div>
+                      <div class="summary-value">71<span>%</span></div>
+                    </div>
+                    <div class="summary-check"><i data-lucide="check"></i></div>
+                  </div>
+                  <div class="summary-stats">
+                    <div class="summary-stat"><span>原始体积</span><strong>9.3 MB</strong></div>
+                    <div class="summary-stat"><span>压缩后</span><strong>2.7 MB</strong></div>
+                    <div class="summary-stat"><span>图片数</span><strong>3 张</strong></div>
+                  </div>
+                </section>
+
+                <section class="files-section">
+                  <div class="section-heading">
+                    <h3 class="section-title">文件列表</h3>
+                    <span class="section-meta">2 张完成 · 1 张处理中</span>
+                  </div>
+                  <div class="file-list">
+                    <article class="file-row">
+                      <img
+                        class="file-thumb"
+                        alt="山谷风景照片缩略图"
+                        src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&amp;fit=crop&amp;w=240&amp;q=80" />
+                      <div class="file-info">
+                        <h4 class="file-name">mountain-trip.jpg</h4>
+                        <div class="file-size-line">
+                          <span>4.8 MB</span><i data-lucide="arrow-right"></i><span>1.1 MB</span>
+                          <span class="saving">省 77%</span>
+                        </div>
+                      </div>
+                      <button class="file-action" aria-label="下载 mountain-trip.jpg"><i data-lucide="download"></i></button>
+                    </article>
+
+                    <article class="file-row">
+                      <img
+                        class="file-thumb"
+                        alt="红色运动鞋产品照片缩略图"
+                        src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&amp;fit=crop&amp;w=240&amp;q=80" />
+                      <div class="file-info">
+                        <h4 class="file-name">product-shot.png</h4>
+                        <div class="file-size-line">
+                          <span>2.6 MB</span><i data-lucide="arrow-right"></i><span>820 KB</span>
+                          <span class="saving">省 68%</span>
+                        </div>
+                      </div>
+                      <button class="file-action" aria-label="下载 product-shot.png"><i data-lucide="download"></i></button>
+                    </article>
+
+                    <article class="file-row processing">
+                      <img
+                        class="file-thumb"
+                        alt="复古游戏机照片缩略图"
+                        src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&amp;fit=crop&amp;w=240&amp;q=80" />
+                      <div class="file-info">
+                        <h4 class="file-name">campaign-banner.webp</h4>
+                        <div class="file-size-line"><span>1.9 MB</span><span>正在压缩 68%</span></div>
+                        <div class="progress-track"><div class="progress-value"></div></div>
+                      </div>
+                      <button class="file-action" aria-label="压缩处理中"><i data-lucide="loader-circle"></i></button>
+                    </article>
+                  </div>
+                </section>
+              </div>
+              <div class="sticky-action">
+                <button class="download-all"><i data-lucide="archive"></i>打包下载全部图片</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <footer class="board-footer">
+        <span>FunBox UI / Image Compressor v1</span>
+        <span class="color-set" aria-label="设计配色">
+          <span class="color-dot" style="background:#151b3b"></span>
+          <span class="color-dot" style="background:#4b6bff"></span>
+          <span class="color-dot" style="background:#ff6b8f"></span>
+          <span class="color-dot" style="background:#1db991"></span>
+        </span>
+        <span>Secure proxy · TinyPNG API</span>
+      </footer>
+    </main>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

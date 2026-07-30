@@ -7,6 +7,7 @@ export type ToolId =
   | 'text-to-speech'
   | 'release-email-assistant'
   | 'live-stream-capture'
+  | 'image-compressor'
   | 'image-cleanup'
   | 'smart-translation'
   | 'qr-code'

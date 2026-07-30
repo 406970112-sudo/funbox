@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-screen';
 import { TextToSpeechToolScreen } from '@/features/tools/tts-tool-screen';
 import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
+import { ImageCompressorScreen } from '@/features/tools/image-compressor-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { ThemedText } from '@/components/themed-text';
@@ -37,6 +38,10 @@ export function ToolDetailScreen() {
         <QrCodeToolScreen />
       </>
     );
+  }
+
+  if (tool?.id === 'image-compressor') {
+    return <ImageCompressorScreen />;
   }
 
   if (tool?.id === 'release-email-assistant') {

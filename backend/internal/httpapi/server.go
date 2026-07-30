@@ -43,6 +43,7 @@ func NewServer(
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", api.handleHealthz)
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
+	registerImageCompressionRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAPIPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAPIPipeline(api.handleLogin))
 	mux.HandleFunc("GET /api/v1/auth/me", api.withAuth(api.handleMe))
@@ -317,6 +318,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }
 
 func (s *Server) allowOrigin(r *http.Request) bool {
