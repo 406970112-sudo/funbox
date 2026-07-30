@@ -18,6 +18,8 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+const MOBILE_WEB_INPUT_STYLE_ID = 'mobile-web-input-zoom-guard';
+
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -32,6 +34,25 @@ export default function RootLayout() {
       void SplashScreen.hideAsync();
     }
   }, [fontError, fontsLoaded]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || document.getElementById(MOBILE_WEB_INPUT_STYLE_ID)) {
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = MOBILE_WEB_INPUT_STYLE_ID;
+    style.textContent = `
+      @media (max-width: 1024px) {
+        input, textarea, select, [contenteditable='true'] {
+          font-size: 16px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => style.remove();
+  }, []);
 
   if (fontError) {
     return (

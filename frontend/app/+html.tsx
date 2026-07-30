@@ -9,12 +9,20 @@ export default function Root({ children }: PropsWithChildren) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
         <ScrollViewStyleReset />
         <style
           dangerouslySetInnerHTML={{
-            __html: 'html, body, #root { touch-action: manipulation; }',
+            __html: `
+              html, body, #root { touch-action: manipulation; }
+
+              @media (max-width: 1024px) {
+                input, textarea, select, [contenteditable='true'] {
+                  font-size: 16px !important;
+                }
+              }
+            `,
           }}
         />
       </head>
