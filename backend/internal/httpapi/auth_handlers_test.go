@@ -61,11 +61,11 @@ func TestAuthHTTPFlow(t *testing.T) {
 		testServer.Client(),
 		http.MethodPost,
 		testServer.URL+"/api/v1/auth/register",
-		`{"username":"test_user","password":"password-123","displayName":"测试用户"}`,
+		`{"username":"13800138000","password":"password-123","displayName":"测试用户","securityQuestion":"你小时候最喜欢的书是什么？","securityAnswer":"海底两万里"}`,
 		"",
 		http.StatusCreated,
 	)
-	if registered.User.Username != "test_user" || registered.AccessToken == "" {
+	if registered.User.Username != "13800138000" || registered.AccessToken == "" {
 		t.Fatalf("unexpected registration response: %+v", registered)
 	}
 
@@ -133,9 +133,86 @@ func TestAuthHTTPFlow(t *testing.T) {
 		http.StatusOK,
 	)
 
-	if _, err := store.GetByUsername(context.Background(), "test_user"); err != nil {
+	if _, err := store.GetByUsername(context.Background(), "13800138000"); err != nil {
 		t.Fatalf("read persisted user: %v", err)
 	}
+
+	requestJSON[sessionResponse](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/register",
+		`{"username":"13900139000","password":"password-123","displayName":"找回用户","securityQuestion":"你的第一个昵称是什么？","securityAnswer":"小布同学"}`,
+		"",
+		http.StatusCreated,
+	)
+	question := requestJSON[map[string]string](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/password-recovery/question",
+		`{"username":"13900139000"}`,
+		"",
+		http.StatusOK,
+	)
+	if question["securityQuestion"] != "你的第一个昵称是什么？" {
+		t.Fatalf("recovery question = %q", question["securityQuestion"])
+	}
+	requestJSON[map[string]any](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/password-recovery/verify",
+		`{"username":"13900139000","securityAnswer":"错误答案"}`,
+		"",
+		http.StatusUnauthorized,
+	)
+	verified := requestJSON[map[string]string](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/password-recovery/verify",
+		`{"username":"13900139000","securityAnswer":"小布同学"}`,
+		"",
+		http.StatusOK,
+	)
+	if verified["recoveryToken"] == "" {
+		t.Fatal("recovery token is empty")
+	}
+	resetBody, err := json.Marshal(map[string]string{
+		"recoveryToken": verified["recoveryToken"],
+		"newPassword":   "recovered-456",
+	})
+	if err != nil {
+		t.Fatalf("encode recovery reset request: %v", err)
+	}
+	requestJSON[map[string]any](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/password-recovery/reset",
+		string(resetBody),
+		"",
+		http.StatusOK,
+	)
+	requestJSON[map[string]any](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/login",
+		`{"username":"13900139000","password":"password-123"}`,
+		"",
+		http.StatusUnauthorized,
+	)
+	requestJSON[sessionResponse](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/login",
+		`{"username":"13900139000","password":"recovered-456"}`,
+		"",
+		http.StatusOK,
+	)
 }
 
 func uploadTestAvatar(t *testing.T, server *httptest.Server, token string) string {

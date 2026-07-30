@@ -8,16 +8,17 @@ import (
 )
 
 type Config struct {
-	AppEnv   string
-	Auth     AuthConfig
-	Database DatabaseConfig
-	Server   ServerConfig
-	Security SecurityConfig
-	Storage  StorageConfig
-	DeepSeek DeepSeekConfig
-	TinyPNG  TinyPNGConfig
-	TTS      TTSConfig
-	Volc     VolcConfig
+	AppEnv         string
+	Auth           AuthConfig
+	Database       DatabaseConfig
+	Server         ServerConfig
+	Security       SecurityConfig
+	Storage        StorageConfig
+	DeepSeek       DeepSeekConfig
+	ResourceSearch ResourceSearchConfig
+	TinyPNG        TinyPNGConfig
+	TTS            TTSConfig
+	Volc           VolcConfig
 }
 
 type AuthConfig struct {
@@ -43,6 +44,12 @@ type SecurityConfig struct {
 	MaxRequestBodyBytes int64
 	RateLimitMax        int
 	RateLimitWindow     time.Duration
+}
+
+type ResourceSearchConfig struct {
+	CacheTTL       time.Duration
+	MaxResults     int
+	RequestTimeout time.Duration
 }
 
 type StorageConfig struct {
@@ -114,6 +121,11 @@ func Load() (Config, error) {
 			MaxTextLength:  intFirst("TRANSLATION_MAX_TEXT_LENGTH", "", "8000"),
 			Model:          envFirst("DEEPSEEK_TRANSLATION_MODEL", "deepseek-chat"),
 			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
+		},
+		ResourceSearch: ResourceSearchConfig{
+			CacheTTL:       durationFromMs("RESOURCE_SEARCH_CACHE_TTL_MS", "", "120000"),
+			MaxResults:     intFirst("RESOURCE_SEARCH_MAX_RESULTS", "", "20"),
+			RequestTimeout: durationFromMs("RESOURCE_SEARCH_REQUEST_TIMEOUT_MS", "", "12000"),
 		},
 		TinyPNG: TinyPNGConfig{
 			APIKey:         envFirst("TINYPNG_API_KEY", ""),

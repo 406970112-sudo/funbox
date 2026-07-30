@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { getAuthErrorMessage } from '@/lib/auth-api';
+import { isValidPassword } from '@/lib/auth-validation';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 
 export function ProfileSecurityScreen() {
@@ -27,6 +28,10 @@ export function ProfileSecurityScreen() {
   async function handleSubmit() {
     setMessage('');
     setSuccess(false);
+    if (!isValidPassword(newPassword)) {
+      setMessage('密码需为 8 至 72 个字符，并同时包含字母和数字。');
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setMessage('两次输入的新密码不一致。');
       return;
@@ -134,7 +139,7 @@ function PasswordField({ label, ...inputProps }: PasswordFieldProps) {
         <TextInput
           autoCapitalize="none"
           autoCorrect={false}
-          placeholder="至少 8 个字符"
+          placeholder="至少 8 位，包含字母和数字"
           placeholderTextColor={colors.mutedText}
           returnKeyType="done"
           secureTextEntry

@@ -12,6 +12,7 @@ export type ToolId =
   | 'smart-translation'
   | 'qr-code'
   | 'resource-search'
+  | 'ai-navigation'
   | 'focus-plan';
 
 export type GameId = 'snake-brawl' | 'gomoku' | 'tetris' | 'brain-challenge' | 'speed-racer';

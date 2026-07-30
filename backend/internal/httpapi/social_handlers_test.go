@@ -51,7 +51,7 @@ func TestSocialHTTPFlow(t *testing.T) {
 		testServer.Client(),
 		http.MethodPost,
 		testServer.URL+"/api/v1/auth/register",
-		`{"username":"alice_01","password":"password-123","displayName":"Alice"}`,
+		`{"username":"13800138000","password":"password-123","displayName":"Alice","securityQuestion":"你小时候最喜欢的书是什么？","securityAnswer":"海底两万里"}`,
 		"",
 		http.StatusCreated,
 	)
@@ -60,7 +60,7 @@ func TestSocialHTTPFlow(t *testing.T) {
 		testServer.Client(),
 		http.MethodPost,
 		testServer.URL+"/api/v1/auth/register",
-		`{"username":"bob_02","password":"password-456","displayName":"Bob"}`,
+		`{"username":"13900139000","password":"password-456","displayName":"Bob","securityQuestion":"你的第一个昵称是什么？","securityAnswer":"小布同学"}`,
 		"",
 		http.StatusCreated,
 	)

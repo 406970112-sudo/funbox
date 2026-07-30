@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FunBox 聚合资源搜索 - 产品概念 V2</title>
+    <style>
+      :root {
+        --ink: #151b3b;
+        --ink-2: #25304f;
+        --blue: #4b6bff;
+        --blue-soft: #e9eeff;
+        --lime: #baf04a;
+        --coral: #ff6b8f;
+        --mint: #1db991;
+        --page: #eef4ff;
+        --surface: #ffffff;
+        --muted: #7483a2;
+        --line: #dde6fb;
+        --shadow: 0 26px 56px rgba(49, 71, 122, 0.19);
+      }
+
+      * { box-sizing: border-box; }
+
+      html,
+      body {
+        width: 100%;
+        min-width: 1500px;
+        min-height: 1080px;
+        margin: 0;
+        overflow: hidden;
+        background: var(--page);
+        color: var(--ink);
+        font-family: "MiSans", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input { font: inherit; }
+
+      svg.icon {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2;
+      }
+
+      .board {
+        position: relative;
+        width: 1500px;
+        height: 1080px;
+        margin: 0 auto;
+        padding: 34px 66px 24px;
+        overflow: hidden;
+        background:
+          linear-gradient(rgba(93, 120, 178, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(93, 120, 178, 0.07) 1px, transparent 1px),
+          radial-gradient(circle at 50% 0%, #f9fbff 0, #eef4ff 58%, #e9f0fd 100%);
+        background-size: 32px 32px, 32px 32px, 100% 100%;
+        border-top: 8px solid var(--ink);
+      }
+
+      .board-header {
+        height: 72px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+
+      .brand-lockup { display: flex; align-items: center; gap: 14px; }
+
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 15px;
+        background: var(--ink);
+        color: var(--lime);
+        box-shadow: 0 10px 22px rgba(21, 27, 59, 0.18);
+      }
+
+      .brand-mark svg { width: 27px; height: 27px; }
+      .board-title { margin: 0; font-size: 27px; line-height: 34px; font-weight: 900; }
+      .board-subtitle { margin: 2px 0 0; color: var(--muted); font-size: 12px; font-weight: 700; }
+      .version { margin-top: 16px; color: #6c7996; font-size: 11px; font-weight: 800; }
+
+      .stages {
+        display: grid;
+        grid-template-columns: repeat(3, 408px);
+        gap: 72px;
+        align-items: start;
+        justify-content: center;
+      }
+
+      .stage-label {
+        height: 34px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 12px;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .stage-number {
+        display: grid;
+        place-items: center;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: var(--ink);
+        color: white;
+        font-size: 10px;
+      }
+
+      .phone {
+        position: relative;
+        width: 408px;
+        height: 858px;
+        padding: 9px;
+        border: 2px solid #0d1530;
+        border-radius: 52px;
+        background: #0d1530;
+        box-shadow: var(--shadow);
+      }
+
+      .screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 43px;
+        background: var(--page);
+      }
+
+      .status-bar {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 22px;
+        background: white;
+        font-size: 9px;
+        font-weight: 900;
+      }
+
+      .island {
+        position: absolute;
+        z-index: 5;
+        top: 8px;
+        left: 50%;
+        width: 92px;
+        height: 26px;
+        border-radius: 18px;
+        transform: translateX(-50%);
+        background: #071126;
+      }
+
+      .signal { display: flex; align-items: center; gap: 4px; color: #21304c; }
+      .signal svg { width: 12px; height: 12px; }
+
+      .topbar {
+        height: 67px;
+        display: grid;
+        grid-template-columns: 44px 1fr 44px;
+        align-items: center;
+        padding: 0 15px;
+        border-bottom: 1px solid #eef2fa;
+        background: white;
+      }
+
+      .topbar-title { text-align: center; font-size: 17px; font-weight: 900; }
+
+      .icon-button {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid transparent;
+        border-radius: 13px;
+        background: transparent;
+        color: var(--ink);
+      }
+
+      .icon-button.tonal { border-color: var(--line); background: #f6f8fd; }
+
+      .content {
+        height: calc(100% - 179px);
+        overflow: hidden;
+        padding: 14px 16px 18px;
+      }
+
+      .search-bar {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 9px 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: white;
+        color: var(--blue);
+        box-shadow: 0 8px 20px rgba(74, 102, 170, 0.08);
+      }
+
+      .search-text { flex: 1; color: var(--ink); font-size: 14px; font-weight: 800; }
+
+      .search-submit {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 11px;
+        background: var(--blue);
+        color: white;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin: 17px 2px 10px;
+      }
+
+      .section-heading h2 { margin: 0; font-size: 20px; line-height: 26px; font-weight: 900; }
+      .section-heading p { margin: 2px 0 0; color: var(--muted); font-size: 10px; line-height: 15px; }
+      .section-action { color: var(--blue); font-size: 10px; font-weight: 900; }
+
+      .progress-card {
+        padding: 15px;
+        border-radius: 19px;
+        background: var(--ink);
+        color: white;
+        overflow: hidden;
+      }
+
+      .progress-top { display: flex; align-items: center; justify-content: space-between; }
+      .progress-label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 900; }
+
+      .spinner {
+        width: 17px;
+        height: 17px;
+        border: 2px solid rgba(255, 255, 255, 0.27);
+        border-top-color: var(--lime);
+        border-radius: 50%;
+      }
+
+      .progress-count { color: var(--lime); font-size: 11px; font-weight: 900; }
+
+      .progress-track {
+        height: 5px;
+        margin-top: 13px;
+        overflow: hidden;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.13);
+      }
+
+      .progress-fill { width: 72%; height: 100%; border-radius: inherit; background: var(--lime); }
+
+      .source-status {
+        margin-top: 10px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: white;
+      }
+
+      .source-line {
+        min-height: 49px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 12px;
+        border-top: 1px solid #edf1fa;
+      }
+
+      .source-line:first-child { border-top: 0; }
+
+      .source-logo {
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        font-size: 9px;
+        font-weight: 900;
+      }
+
+      .qp { background: #edf0ff; color: #526fff; }
+      .yq { background: #e5f8f2; color: #199a7d; }
+      .tv { background: #fff0e9; color: #eb7b42; }
+      .fl { background: #ffe9f0; color: #ec5b85; }
+      .ys { background: #eef0ff; color: #7e69e8; }
+      .l2 { background: #fff6d9; color: #a66d00; }
+
+      .source-name { flex: 1; font-size: 11px; font-weight: 900; }
+      .source-state { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 800; }
+      .source-state.ok { color: var(--mint); }
+      .source-state.wait { color: var(--blue); }
+      .source-state.warn { color: var(--coral); }
+      .source-state svg { width: 14px; height: 14px; }
+
+      .skeletons { margin-top: 13px; }
+      .skeleton-row { padding: 10px 2px 12px; border-top: 1px solid var(--line); }
+      .skeleton-row:first-child { border-top: 0; }
+      .sk { height: 7px; border-radius: 5px; background: linear-gradient(90deg, #e8edf8, #f7f9fd 45%, #e8edf8 90%); }
+      .sk.title { width: 78%; height: 10px; }
+      .sk.meta { width: 52%; margin-top: 8px; }
+
+      .result-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 15px 2px 8px;
+      }
+
+      .result-summary strong { font-size: 19px; font-weight: 900; }
+      .result-summary span { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+
+      .sort-control {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--ink-2);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .sort-control svg { width: 14px; height: 14px; }
+
+      .segments {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3px;
+        height: 38px;
+        padding: 3px;
+        border-radius: 12px;
+        background: #e6ecf9;
+      }
+
+      .segment {
+        display: grid;
+        place-items: center;
+        border-radius: 9px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .segment.active { background: white; color: var(--ink); box-shadow: 0 3px 9px rgba(68, 87, 130, 0.1); }
+
+      .source-filters {
+        display: flex;
+        gap: 7px;
+        margin: 10px 0 6px;
+        overflow: hidden;
+      }
+
+      .filter {
+        flex: 0 0 auto;
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: white;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .filter.active { border-color: var(--ink); background: var(--ink); color: white; }
+
+      .result-list {
+        overflow: hidden;
+        border-top: 1px solid var(--line);
+        background: transparent;
+      }
+
+      .result-row {
+        position: relative;
+        display: grid;
+        grid-template-columns: 36px 1fr 22px;
+        gap: 10px;
+        padding: 13px 2px;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+      }
+
+      .result-row.selected {
+        margin: 4px -7px;
+        padding: 12px 9px;
+        border: 1px solid #bdc9ff;
+        border-radius: 15px;
+        background: #f8f9ff;
+      }
+
+      .result-main { min-width: 0; }
+      .result-title { margin: 0; font-size: 12px; line-height: 18px; font-weight: 900; }
+      .result-meta { margin-top: 5px; color: var(--muted); font-size: 9px; line-height: 14px; }
+
+      .match-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 7px;
+        color: var(--blue);
+        font-size: 8px;
+        font-weight: 900;
+      }
+
+      .match-label svg { width: 11px; height: 11px; }
+
+      .result-arrow { align-self: center; color: #a0aac0; }
+      .result-arrow svg { width: 16px; height: 16px; }
+
+      .bottom-nav {
+        position: absolute;
+        z-index: 3;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 72px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 8px 10px 10px;
+        border-top: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.97);
+      }
+
+      .nav-item { display: grid; place-items: center; align-content: center; gap: 3px; color: #929db6; font-size: 9px; font-weight: 800; }
+      .nav-item.active { color: var(--blue); }
+      .nav-item svg { width: 21px; height: 21px; }
+
+      .detail-underlay .content { filter: none; }
+      .detail-underlay .result-row { opacity: 0.68; }
+
+      .scrim {
+        position: absolute;
+        z-index: 6;
+        inset: 40px 0 0;
+        background: rgba(10, 18, 40, 0.43);
+      }
+
+      .sheet {
+        position: absolute;
+        z-index: 7;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        min-height: 543px;
+        padding: 10px 18px 19px;
+        border-radius: 26px 26px 0 0;
+        background: white;
+        box-shadow: 0 -18px 45px rgba(14, 27, 57, 0.19);
+      }
+
+      .sheet-handle { width: 38px; height: 4px; margin: 0 auto 12px; border-radius: 4px; background: #d9deea; }
+      .sheet-head { display: flex; align-items: center; justify-content: space-between; }
+      .sheet-head strong { font-size: 16px; font-weight: 900; }
+      .sheet .icon-button { width: 34px; height: 34px; }
+
+      .detail-source {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin-top: 12px;
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        background: #f8faff;
+      }
+
+      .detail-source-copy { flex: 1; }
+      .detail-source-copy strong { display: block; font-size: 11px; }
+      .detail-source-copy span { color: var(--muted); font-size: 9px; }
+      .available { display: flex; align-items: center; gap: 4px; color: var(--mint); font-size: 9px; font-weight: 900; }
+      .available svg { width: 13px; height: 13px; }
+
+      .detail-title { margin: 16px 2px 7px; font-size: 19px; line-height: 27px; font-weight: 900; }
+      .detail-description { margin: 0 2px; color: var(--muted); font-size: 10px; line-height: 17px; }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 13px;
+      }
+
+      .fact { padding: 10px; border-radius: 12px; background: var(--page); }
+      .fact span { display: block; color: var(--muted); font-size: 8px; }
+      .fact strong { display: block; margin-top: 4px; font-size: 10px; }
+
+      .code-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        padding: 11px 12px;
+        border: 1px dashed #b8c5e6;
+        border-radius: 13px;
+        background: #fbfcff;
+      }
+
+      .code-line .label { color: var(--muted); font-size: 9px; }
+      .code-line code { flex: 1; color: var(--ink); font-size: 12px; font-weight: 900; }
+      .code-line svg { width: 16px; height: 16px; color: var(--blue); }
+
+      .primary-button,
+      .secondary-button {
+        width: 100%;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .primary-button { margin-top: 14px; border: 0; background: var(--blue); color: white; }
+      .secondary-button { margin-top: 8px; border: 1px solid var(--line); background: white; color: var(--ink); }
+      .primary-button svg, .secondary-button svg { width: 17px; height: 17px; }
+
+      .safety-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        margin: 10px 2px 0;
+        color: var(--muted);
+        font-size: 8px;
+        line-height: 13px;
+      }
+
+      .safety-note svg { flex: 0 0 auto; width: 13px; height: 13px; }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <symbol id="cube" viewBox="0 0 24 24"><path d="m21 16-9 5-9-5V8l9-5 9 5v8Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+      <symbol id="arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+      <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+      <symbol id="refresh" viewBox="0 0 24 24"><path d="M20 11a8.1 8.1 0 1 0 2 5.5"/><path d="M20 4v7h-7"/></symbol>
+      <symbol id="chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+      <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+      <symbol id="circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="alert" viewBox="0 0 24 24"><path d="M21.7 18 13.7 4a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+      <symbol id="sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+      <symbol id="sparkles" viewBox="0 0 24 24"><path d="m12 3-1.8 4.2L6 9l4.2 1.8L12 15l1.8-4.2L18 9l-4.2-1.8L12 3ZM5 17l-.8 1.8L2.5 20l1.7.8L5 22.5l.8-1.7 1.7-.8-1.7-.8L5 17ZM19 14l-1.1 2.5-2.4 1 2.4 1.1L19 21l1.1-2.4 2.4-1.1-2.4-1L19 14Z"/></symbol>
+      <symbol id="shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3v8Z"/><path d="m9 12 2 2 4-4"/></symbol>
+      <symbol id="external" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+      <symbol id="link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></symbol>
+      <symbol id="copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+      <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+      <symbol id="home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></symbol>
+      <symbol id="grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></symbol>
+      <symbol id="message" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"/></symbol>
+      <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="9" r="3"/><path d="M6.5 19c1.2-3 3-4 5.5-4s4.3 1 5.5 4"/></symbol>
+      <symbol id="wifi" viewBox="0 0 24 24"><path d="M5 12.6a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 20h.01"/></symbol>
+      <symbol id="battery" viewBox="0 0 24 24"><rect width="16" height="10" x="2" y="7" rx="2"/><path d="M22 11v2M6 10h8v4H6z"/></symbol>
+    </svg>
+
+    <main class="board">
+      <header class="board-header">
+        <div class="brand-lockup">
+          <div class="brand-mark"><svg class="icon"><use href="#cube" /></svg></div>
+          <div>
+            <h1 class="board-title">FunBox · 聚合资源搜索</h1>
+            <p class="board-subtitle">站内统一结果 · 多来源实时归一 · 移动端产品概念</p>
+          </div>
+        </div>
+        <div class="version">PRODUCT CONCEPT · V2.0</div>
+      </header>
+
+      <section class="stages" aria-label="聚合资源搜索完整流程">
+        <article>
+          <div class="stage-label"><span class="stage-number">01</span><span>多源检索进度</span></div>
+          <div class="phone">
+            <div class="screen">
+              <div class="island"></div>
+              <div class="status-bar"><span>9:41</span><span class="signal"><svg class="icon"><use href="#wifi" /></svg><svg class="icon"><use href="#battery" /></svg></span></div>
+              <div class="topbar">
+                <button class="icon-button" aria-label="返回"><svg class="icon"><use href="#arrow-left" /></svg></button>
+                <div class="topbar-title">资源搜索</div>
+                <button class="icon-button tonal" aria-label="搜索历史"><svg class="icon"><use href="#refresh" /></svg></button>
+              </div>
+              <div class="content">
+                <div class="search-bar"><svg class="icon"><use href="#search" /></svg><span class="search-text">流浪地球 2</span><button class="search-submit" aria-label="重新搜索"><svg class="icon"><use href="#search" /></svg></button></div>
+                <div class="section-heading"><div><h2>正在聚合</h2><p>结果会分批出现，无需等待全部站点</p></div><span class="section-action">约 3 秒</span></div>
+                <div class="progress-card">
+                  <div class="progress-top"><span class="progress-label"><i class="spinner"></i>多源检索进行中</span><span class="progress-count">5 / 6</span></div>
+                  <div class="progress-track"><div class="progress-fill"></div></div>
+                </div>
+                <div class="source-status">
+                  <div class="source-line"><span class="source-logo qp">QP</span><span class="source-name">夸克盘搜</span><span class="source-state warn"><svg class="icon"><use href="#alert" /></svg>需原站</span></div>
+                  <div class="source-line"><span class="source-logo yq">YQ</span><span class="source-name">盘友圈</span><span class="source-state warn"><svg class="icon"><use href="#alert" /></svg>需原站</span></div>
+                  <div class="source-line"><span class="source-logo tv">TV</span><span class="source-name">TV 搜</span><span class="source-state warn"><svg class="icon"><use href="#alert" /></svg>不可用</span></div>
+                  <div class="source-line"><span class="source-logo fl">FL</span><span class="source-name">趣盘搜</span><span class="source-state warn"><svg class="icon"><use href="#alert" /></svg>不可用</span></div>
+                  <div class="source-line"><span class="source-logo ys">YS</span><span class="source-name">云搜</span><span class="source-state warn"><svg class="icon"><use href="#alert" /></svg>需原站</span></div>
+                  <div class="source-line"><span class="source-logo l2">L2</span><span class="source-name">老二搜索</span><span class="source-state wait"><i class="spinner" style="border-color:#dbe2ff;border-top-color:#4b6bff;width:14px;height:14px"></i>搜索中</span></div>
+                </div>
+                <div class="skeletons" aria-label="结果加载占位">
+                  <div class="skeleton-row"><div class="sk title"></div><div class="sk meta"></div></div>
+                  <div class="skeleton-row"><div class="sk title" style="width:66%"></div><div class="sk meta" style="width:44%"></div></div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span class="nav-item"><svg class="icon"><use href="#home" /></svg>首页</span>
+                <span class="nav-item active"><svg class="icon"><use href="#grid" /></svg>工具</span>
+                <span class="nav-item"><svg class="icon"><use href="#message" /></svg>消息</span>
+                <span class="nav-item"><svg class="icon"><use href="#user" /></svg>我的</span>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article>
+          <div class="stage-label"><span class="stage-number">02</span><span>站内聚合结果</span></div>
+          <div class="phone">
+            <div class="screen">
+              <div class="island"></div>
+              <div class="status-bar"><span>9:41</span><span class="signal"><svg class="icon"><use href="#wifi" /></svg><svg class="icon"><use href="#battery" /></svg></span></div>
+              <div class="topbar">
+                <button class="icon-button" aria-label="返回"><svg class="icon"><use href="#arrow-left" /></svg></button>
+                <div class="topbar-title">搜索结果</div>
+                <button class="icon-button tonal" aria-label="筛选"><svg class="icon"><use href="#sliders" /></svg></button>
+              </div>
+              <div class="content">
+                <div class="search-bar"><svg class="icon"><use href="#search" /></svg><span class="search-text">流浪地球 2</span><button class="search-submit" aria-label="搜索"><svg class="icon"><use href="#search" /></svg></button></div>
+                <div class="result-summary"><div><strong>找到 4 条结果</strong><span>1 个来源完成 · 5 个来源暂不可聚合</span></div><span class="sort-control">综合排序<svg class="icon"><use href="#sliders" /></svg></span></div>
+                <div class="segments"><span class="segment active">全部</span><span class="segment">影视</span><span class="segment">软件</span><span class="segment">资料</span></div>
+                <div class="source-filters"><span class="filter active">全部 4</span><span class="filter">老二搜索 4</span></div>
+                <div class="result-list">
+                  <div class="result-row selected"><span class="source-logo l2">L2</span><div class="result-main"><h3 class="result-title">流浪地球系列 1+2 4K 蓝光原盘</h3><div class="result-meta">夸克网盘 · 按需解析</div><div class="match-label"><svg class="icon"><use href="#sparkles" /></svg>匹配度最高 · 可按需解析</div></div><span class="result-arrow"><svg class="icon"><use href="#chevron-right" /></svg></span></div>
+                  <div class="result-row"><span class="source-logo l2">L2</span><div class="result-main"><h3 class="result-title">流浪地球 飞跃 2020 特别版 4K HDR</h3><div class="result-meta">夸克网盘 · 按需解析</div></div><span class="result-arrow"><svg class="icon"><use href="#chevron-right" /></svg></span></div>
+                  <div class="result-row"><span class="source-logo l2">L2</span><div class="result-main"><h3 class="result-title">流浪地球 2（2023）4K HDR &amp; Dv</h3><div class="result-meta">夸克网盘 · 按需解析</div></div><span class="result-arrow"><svg class="icon"><use href="#chevron-right" /></svg></span></div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span class="nav-item"><svg class="icon"><use href="#home" /></svg>首页</span>
+                <span class="nav-item active"><svg class="icon"><use href="#grid" /></svg>工具</span>
+                <span class="nav-item"><svg class="icon"><use href="#message" /></svg>消息</span>
+                <span class="nav-item"><svg class="icon"><use href="#user" /></svg>我的</span>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article>
+          <div class="stage-label"><span class="stage-number">03</span><span>结果详情与直达</span></div>
+          <div class="phone">
+            <div class="screen detail-underlay">
+              <div class="island"></div>
+              <div class="status-bar"><span>9:41</span><span class="signal"><svg class="icon"><use href="#wifi" /></svg><svg class="icon"><use href="#battery" /></svg></span></div>
+              <div class="topbar"><button class="icon-button"><svg class="icon"><use href="#arrow-left" /></svg></button><div class="topbar-title">搜索结果</div><button class="icon-button tonal"><svg class="icon"><use href="#sliders" /></svg></button></div>
+              <div class="content">
+                <div class="search-bar"><svg class="icon"><use href="#search" /></svg><span class="search-text">流浪地球 2</span><button class="search-submit"><svg class="icon"><use href="#search" /></svg></button></div>
+                <div class="result-summary"><div><strong>找到 4 条结果</strong><span>已归一展示</span></div></div>
+                <div class="result-list"><div class="result-row"><span class="source-logo l2">L2</span><div class="result-main"><h3 class="result-title">流浪地球系列 1+2 4K 蓝光原盘</h3><div class="result-meta">夸克网盘 · 按需解析</div></div></div><div class="result-row"><span class="source-logo l2">L2</span><div class="result-main"><h3 class="result-title">流浪地球 2（2023）4K HDR</h3><div class="result-meta">夸克网盘 · 按需解析</div></div></div></div>
+              </div>
+              <nav class="bottom-nav"><span class="nav-item"><svg class="icon"><use href="#home" /></svg>首页</span><span class="nav-item active"><svg class="icon"><use href="#grid" /></svg>工具</span><span class="nav-item"><svg class="icon"><use href="#message" /></svg>消息</span><span class="nav-item"><svg class="icon"><use href="#user" /></svg>我的</span></nav>
+              <div class="scrim"></div>
+              <section class="sheet" aria-label="资源详情">
+                <div class="sheet-handle"></div>
+                <div class="sheet-head"><strong>资源详情</strong><button class="icon-button tonal" aria-label="关闭"><svg class="icon"><use href="#x" /></svg></button></div>
+                <div class="detail-source"><span class="source-logo l2">L2</span><div class="detail-source-copy"><strong>老二搜索</strong><span>laoer.motewan.com · 第三方来源</span></div><span class="available"><svg class="icon"><use href="#circle-check" /></svg>可解析</span></div>
+                <h2 class="detail-title">流浪地球系列 1+2 4K 蓝光原盘</h2>
+                <p class="detail-description">已整理为统一结果格式。打开后直接进入资源链接，无需再次到来源站搜索。</p>
+                <div class="facts"><div class="fact"><span>资源类型</span><strong>夸克网盘</strong></div><div class="fact"><span>文件大小</span><strong>未标注</strong></div><div class="fact"><span>更新时间</span><strong>来源未标注</strong></div></div>
+                <button class="primary-button"><svg class="icon"><use href="#link" /></svg>打开资源链接</button>
+                <button class="secondary-button"><svg class="icon"><use href="#external" /></svg>查看原站记录</button>
+                <div class="safety-note"><svg class="icon"><use href="#shield" /></svg><span>结果来自第三方公开页面，FunBox 不存储资源内容。请在访问前确认来源与内容合规性。</span></div>
+              </section>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

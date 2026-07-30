@@ -17,24 +17,37 @@ import (
 )
 
 var (
-	ErrCurrentPasswordInvalid = errors.New("current password is invalid")
-	ErrDisplayNameInvalid     = errors.New("display name is invalid")
-	ErrInvalidCredentials     = errors.New("invalid credentials")
-	ErrPasswordInvalid        = errors.New("password is invalid")
-	ErrTokenInvalid           = errors.New("token is invalid")
-	ErrUsernameInvalid        = errors.New("username is invalid")
-	ErrUsernameTaken          = user.ErrUsernameTaken
+	ErrCurrentPasswordInvalid  = errors.New("current password is invalid")
+	ErrDisplayNameInvalid      = errors.New("display name is invalid")
+	ErrInvalidCredentials      = errors.New("invalid credentials")
+	ErrPasswordInvalid         = errors.New("password is invalid")
+	ErrRecoveryAnswerInvalid   = errors.New("recovery answer is invalid")
+	ErrRecoveryLocked          = errors.New("password recovery is locked")
+	ErrRecoveryTokenInvalid    = errors.New("recovery token is invalid")
+	ErrRecoveryUnavailable     = errors.New("password recovery is unavailable")
+	ErrSecurityAnswerInvalid   = errors.New("security answer is invalid")
+	ErrSecurityQuestionInvalid = errors.New("security question is invalid")
+	ErrTokenInvalid            = errors.New("token is invalid")
+	ErrUsernameInvalid         = errors.New("username is invalid")
+	ErrUsernameTaken           = user.ErrUsernameTaken
 )
 
-var usernamePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{2,31}$`)
+const (
+	maxRecoveryAttempts  = 5
+	recoveryLockDuration = 30 * time.Minute
+	recoveryTokenTTL     = 10 * time.Minute
+)
+
+var usernamePattern = regexp.MustCompile(`^1[3-9][0-9]{9}$`)
 
 type Store interface {
-	Create(context.Context, string, string, string) (user.User, error)
+	Create(context.Context, string, string, string, string, string) (user.User, error)
 	GetByID(context.Context, string) (user.User, error)
 	GetByUsername(context.Context, string) (user.User, error)
 	UpdateAvatar(context.Context, string, string) (user.User, string, error)
 	UpdateDisplayName(context.Context, string, string) (user.User, error)
 	UpdatePasswordHash(context.Context, string, string) (user.User, error)
+	UpdateRecoveryState(context.Context, string, int, time.Time) error
 }
 
 type Service struct {
@@ -54,6 +67,11 @@ type tokenClaims struct {
 	jwt.RegisteredClaims
 }
 
+type recoveryClaims struct {
+	TokenVersion int `json:"ver"`
+	jwt.RegisteredClaims
+}
+
 func NewService(store Store, signingKey []byte, tokenTTL time.Duration) *Service {
 	return &Service{
 		issuer:     "funbox-api",
@@ -68,6 +86,8 @@ func (s *Service) Register(
 	username string,
 	password string,
 	displayName string,
+	securityQuestion string,
+	securityAnswer string,
 ) (Session, error) {
 	normalizedUsername, err := validateUsername(username)
 	if err != nil {
@@ -81,13 +101,35 @@ func (s *Service) Register(
 	if err != nil {
 		return Session{}, err
 	}
+	normalizedQuestion, err := validateSecurityQuestion(securityQuestion)
+	if err != nil {
+		return Session{}, err
+	}
+	normalizedAnswer, err := normalizeSecurityAnswer(securityAnswer)
+	if err != nil {
+		return Session{}, err
+	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return Session{}, fmt.Errorf("hash password: %w", err)
 	}
+	securityAnswerHash, err := bcrypt.GenerateFromPassword(
+		[]byte(normalizedAnswer),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return Session{}, fmt.Errorf("hash security answer: %w", err)
+	}
 
-	created, err := s.store.Create(ctx, normalizedUsername, string(passwordHash), normalizedDisplayName)
+	created, err := s.store.Create(
+		ctx,
+		normalizedUsername,
+		string(passwordHash),
+		normalizedDisplayName,
+		normalizedQuestion,
+		string(securityAnswerHash),
+	)
 	if err != nil {
 		return Session{}, err
 	}
@@ -108,6 +150,104 @@ func (s *Service) Login(ctx context.Context, username string, password string) (
 		return Session{}, ErrInvalidCredentials
 	}
 	return s.sessionForUser(found)
+}
+
+func (s *Service) PasswordRecoveryQuestion(ctx context.Context, username string) (string, error) {
+	found, err := s.recoveryAccount(ctx, username)
+	if err != nil {
+		return "", err
+	}
+	if time.Now().UTC().Before(found.RecoveryLockedUntil) {
+		return "", ErrRecoveryLocked
+	}
+	return found.SecurityQuestion, nil
+}
+
+func (s *Service) VerifyRecoveryAnswer(
+	ctx context.Context,
+	username string,
+	securityAnswer string,
+) (string, error) {
+	found, err := s.recoveryAccount(ctx, username)
+	if err != nil {
+		return "", err
+	}
+
+	now := time.Now().UTC()
+	if now.Before(found.RecoveryLockedUntil) {
+		return "", ErrRecoveryLocked
+	}
+	normalizedAnswer, err := normalizeSecurityAnswer(securityAnswer)
+	if err != nil {
+		return "", err
+	}
+	if bcrypt.CompareHashAndPassword(
+		[]byte(found.SecurityAnswerHash),
+		[]byte(normalizedAnswer),
+	) != nil {
+		failedAttempts := found.RecoveryFailedAttempts + 1
+		lockedUntil := time.Time{}
+		resultErr := ErrRecoveryAnswerInvalid
+		if failedAttempts >= maxRecoveryAttempts {
+			failedAttempts = 0
+			lockedUntil = now.Add(recoveryLockDuration)
+			resultErr = ErrRecoveryLocked
+		}
+		if err := s.store.UpdateRecoveryState(
+			ctx,
+			found.ID,
+			failedAttempts,
+			lockedUntil,
+		); err != nil {
+			return "", err
+		}
+		return "", resultErr
+	}
+
+	if found.RecoveryFailedAttempts != 0 || !found.RecoveryLockedUntil.IsZero() {
+		if err := s.store.UpdateRecoveryState(ctx, found.ID, 0, time.Time{}); err != nil {
+			return "", err
+		}
+	}
+	return s.recoveryTokenForUser(found)
+}
+
+func (s *Service) ResetPasswordWithRecoveryToken(
+	ctx context.Context,
+	rawToken string,
+	newPassword string,
+) error {
+	if err := validatePassword(newPassword); err != nil {
+		return err
+	}
+
+	claims := &recoveryClaims{}
+	token, err := jwt.ParseWithClaims(
+		rawToken,
+		claims,
+		func(token *jwt.Token) (any, error) {
+			return s.signingKey, nil
+		},
+		jwt.WithAudience("password-reset"),
+		jwt.WithIssuer(s.issuer+"-password-recovery"),
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+	)
+	if err != nil || !token.Valid || claims.Subject == "" {
+		return ErrRecoveryTokenInvalid
+	}
+
+	found, err := s.store.GetByID(ctx, claims.Subject)
+	if err != nil || found.TokenVersion != claims.TokenVersion {
+		return ErrRecoveryTokenInvalid
+	}
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("hash recovered password: %w", err)
+	}
+	if _, err := s.store.UpdatePasswordHash(ctx, found.ID, string(passwordHash)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Service) AuthenticateToken(ctx context.Context, rawToken string) (user.User, error) {
@@ -203,6 +343,44 @@ func (s *Service) sessionForUser(account user.User) (Session, error) {
 	return Session{AccessToken: signed, User: account}, nil
 }
 
+func (s *Service) recoveryAccount(ctx context.Context, username string) (user.User, error) {
+	normalizedUsername, err := validateUsername(username)
+	if err != nil {
+		return user.User{}, err
+	}
+	found, err := s.store.GetByUsername(ctx, normalizedUsername)
+	if err != nil {
+		if errors.Is(err, user.ErrNotFound) {
+			return user.User{}, ErrRecoveryUnavailable
+		}
+		return user.User{}, err
+	}
+	if found.SecurityQuestion == "" || found.SecurityAnswerHash == "" {
+		return user.User{}, ErrRecoveryUnavailable
+	}
+	return found, nil
+}
+
+func (s *Service) recoveryTokenForUser(account user.User) (string, error) {
+	now := time.Now().UTC()
+	claims := recoveryClaims{
+		TokenVersion: account.TokenVersion,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Audience:  jwt.ClaimStrings{"password-reset"},
+			ExpiresAt: jwt.NewNumericDate(now.Add(recoveryTokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(now),
+			Issuer:    s.issuer + "-password-recovery",
+			Subject:   account.ID,
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := token.SignedString(s.signingKey)
+	if err != nil {
+		return "", fmt.Errorf("sign recovery token: %w", err)
+	}
+	return signed, nil
+}
+
 func validateUsername(value string) (string, error) {
 	normalized := strings.ToLower(strings.TrimSpace(value))
 	if !usernamePattern.MatchString(normalized) {
@@ -213,6 +391,18 @@ func validateUsername(value string) (string, error) {
 
 func validatePassword(value string) error {
 	if utf8.RuneCountInString(value) < 8 || len([]byte(value)) > 72 {
+		return ErrPasswordInvalid
+	}
+	hasLetter := false
+	hasNumber := false
+	for _, character := range value {
+		if unicode.IsControl(character) {
+			return ErrPasswordInvalid
+		}
+		hasLetter = hasLetter || unicode.IsLetter(character)
+		hasNumber = hasNumber || unicode.IsDigit(character)
+	}
+	if !hasLetter || !hasNumber {
 		return ErrPasswordInvalid
 	}
 	return nil
@@ -227,6 +417,34 @@ func validateDisplayName(value string) (string, error) {
 	for _, character := range normalized {
 		if unicode.IsControl(character) {
 			return "", ErrDisplayNameInvalid
+		}
+	}
+	return normalized, nil
+}
+
+func validateSecurityQuestion(value string) (string, error) {
+	normalized := strings.TrimSpace(value)
+	length := utf8.RuneCountInString(normalized)
+	if length < 4 || length > 64 {
+		return "", ErrSecurityQuestionInvalid
+	}
+	for _, character := range normalized {
+		if unicode.IsControl(character) {
+			return "", ErrSecurityQuestionInvalid
+		}
+	}
+	return normalized, nil
+}
+
+func normalizeSecurityAnswer(value string) (string, error) {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	length := utf8.RuneCountInString(normalized)
+	if length < 2 || length > 32 || len([]byte(normalized)) > 72 {
+		return "", ErrSecurityAnswerInvalid
+	}
+	for _, character := range normalized {
+		if unicode.IsControl(character) {
+			return "", ErrSecurityAnswerInvalid
 		}
 	}
 	return normalized, nil

@@ -31,9 +31,25 @@ type credentialsRequest struct {
 }
 
 type registerRequest struct {
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	DisplayName string `json:"displayName"`
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	DisplayName      string `json:"displayName"`
+	SecurityQuestion string `json:"securityQuestion"`
+	SecurityAnswer   string `json:"securityAnswer"`
+}
+
+type recoveryQuestionRequest struct {
+	Username string `json:"username"`
+}
+
+type recoveryAnswerRequest struct {
+	Username       string `json:"username"`
+	SecurityAnswer string `json:"securityAnswer"`
+}
+
+type recoveryResetRequest struct {
+	RecoveryToken string `json:"recoveryToken"`
+	NewPassword   string `json:"newPassword"`
 }
 
 type updateProfileRequest struct {
@@ -70,6 +86,8 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		request.Username,
 		request.Password,
 		request.DisplayName,
+		request.SecurityQuestion,
+		request.SecurityAnswer,
 	)
 	if err != nil {
 		s.writeAuthError(w, err)
@@ -93,6 +111,58 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, s.sessionResponse(session))
+}
+
+func (s *Server) handleRecoveryQuestion(w http.ResponseWriter, r *http.Request) {
+	var request recoveryQuestionRequest
+	if err := decodeJSONBody(r, &request); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+
+	question, err := s.authService.PasswordRecoveryQuestion(r.Context(), request.Username)
+	if err != nil {
+		s.writeAuthError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"securityQuestion": question})
+}
+
+func (s *Server) handleRecoveryAnswer(w http.ResponseWriter, r *http.Request) {
+	var request recoveryAnswerRequest
+	if err := decodeJSONBody(r, &request); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+
+	recoveryToken, err := s.authService.VerifyRecoveryAnswer(
+		r.Context(),
+		request.Username,
+		request.SecurityAnswer,
+	)
+	if err != nil {
+		s.writeAuthError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"recoveryToken": recoveryToken})
+}
+
+func (s *Server) handleRecoveryReset(w http.ResponseWriter, r *http.Request) {
+	var request recoveryResetRequest
+	if err := decodeJSONBody(r, &request); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+
+	if err := s.authService.ResetPasswordWithRecoveryToken(
+		r.Context(),
+		request.RecoveryToken,
+		request.NewPassword,
+	); err != nil {
+		s.writeAuthError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
 }
 
 func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
@@ -291,12 +361,24 @@ func (s *Server) writeAuthError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "password_invalid"})
 	case errors.Is(err, auth.ErrDisplayNameInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "display_name_invalid"})
+	case errors.Is(err, auth.ErrSecurityQuestionInvalid):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "security_question_invalid"})
+	case errors.Is(err, auth.ErrSecurityAnswerInvalid):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "security_answer_invalid"})
 	case errors.Is(err, auth.ErrUsernameTaken):
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "username_taken"})
 	case errors.Is(err, auth.ErrInvalidCredentials):
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "invalid_credentials"})
 	case errors.Is(err, auth.ErrCurrentPasswordInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "current_password_invalid"})
+	case errors.Is(err, auth.ErrRecoveryUnavailable):
+		writeJSON(w, http.StatusNotFound, map[string]any{"error": "recovery_unavailable"})
+	case errors.Is(err, auth.ErrRecoveryAnswerInvalid):
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "recovery_answer_invalid"})
+	case errors.Is(err, auth.ErrRecoveryLocked):
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"error": "recovery_locked"})
+	case errors.Is(err, auth.ErrRecoveryTokenInvalid):
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "recovery_token_invalid"})
 	case errors.Is(err, user.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "user_not_found"})
 	default:

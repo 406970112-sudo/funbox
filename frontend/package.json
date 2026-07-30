@@ -11,7 +11,9 @@
     "lint": "expo lint",
     "test:gomoku": "node --test --experimental-strip-types tests/gomoku-engine.test.mjs",
     "test:qr": "node --test --experimental-strip-types tests/qr-code.test.mjs",
-    "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs"
+    "test:ai-navigation": "node --test --experimental-strip-types tests/ai-navigation.test.mjs",
+    "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
+    "test:auth": "node --test --experimental-strip-types tests/auth-validation.test.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",

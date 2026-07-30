@@ -26,9 +26,15 @@
 - `GET /api/v1/system/ping`
   系统探活示例接口。
 - `POST /api/v1/auth/register`
-  使用账号、密码和昵称注册，成功后返回登录令牌。
+  使用手机号、密码、昵称和密保问题注册，成功后返回登录令牌。
 - `POST /api/v1/auth/login`
-  使用账号和密码登录。
+  使用手机号和密码登录。
+- `POST /api/v1/auth/password-recovery/question`
+  读取已注册手机号设置的密保问题。
+- `POST /api/v1/auth/password-recovery/verify`
+  验证密保答案，成功后返回 10 分钟有效的一次性重置令牌。
+- `POST /api/v1/auth/password-recovery/reset`
+  使用重置令牌设置新密码，并使旧登录令牌失效。
 - `GET /api/v1/auth/me`
   读取当前登录用户，需要 Bearer Token。
 - `PATCH /api/v1/users/me`

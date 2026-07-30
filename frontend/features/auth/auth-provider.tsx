@@ -20,7 +20,13 @@ type AuthStatus = 'anonymous' | 'authenticated' | 'loading';
 type AuthContextValue = {
   accessToken: string | null;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  register: (username: string, password: string, displayName: string) => Promise<void>;
+  register: (
+    username: string,
+    password: string,
+    displayName: string,
+    securityQuestion: string,
+    securityAnswer: string,
+  ) => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   status: AuthStatus;
@@ -75,8 +81,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
     await persistSession(session.accessToken, session.user);
   }
 
-  async function registerAccount(username: string, password: string, displayName: string) {
-    const session = await register(username, password, displayName);
+  async function registerAccount(
+    username: string,
+    password: string,
+    displayName: string,
+    securityQuestion: string,
+    securityAnswer: string,
+  ) {
+    const session = await register(
+      username,
+      password,
+      displayName,
+      securityQuestion,
+      securityAnswer,
+    );
     await persistSession(session.accessToken, session.user);
   }
 

@@ -516,6 +516,9 @@ curl --fail --silent --show-error http://127.0.0.1/api/recipients >/dev/null
 curl --fail --silent --show-error http://127.0.0.1/api/v1/system/ping
 curl --fail --silent --show-error --head http://127.0.0.1/email-agent/ >/dev/null
 curl --fail --silent --show-error --head http://127.0.0.1/tools/live-stream-capture >/dev/null
+for route in tools messages profile; do
+  curl --fail --location --silent --show-error --head "http://127.0.0.1/$route" >/dev/null
+done
 
 DEPLOY_STARTED=false
 trap - ERR

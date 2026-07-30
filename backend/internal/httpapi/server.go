@@ -15,19 +15,21 @@ import (
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/realtime"
+	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
 )
 
 type Server struct {
-	authService        *auth.Service
-	cfg                config.Config
-	rateLimiter        *RateLimiter
-	realtimeHub        *realtime.Hub
-	socialStore        *social.Store
-	translationService *translation.Service
-	ttsService         *tts.Service
+	authService           *auth.Service
+	cfg                   config.Config
+	rateLimiter           *RateLimiter
+	realtimeHub           *realtime.Hub
+	resourceSearchService resourceSearchService
+	socialStore           *social.Store
+	translationService    *translation.Service
+	ttsService            *tts.Service
 }
 
 func NewServer(
@@ -38,21 +40,26 @@ func NewServer(
 	socialStore *social.Store,
 ) *http.Server {
 	api := &Server{
-		authService:        authService,
-		cfg:                cfg,
-		rateLimiter:        NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
-		realtimeHub:        realtime.NewHub(),
-		socialStore:        socialStore,
-		translationService: translationService,
-		ttsService:         ttsService,
+		authService:           authService,
+		cfg:                   cfg,
+		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
+		realtimeHub:           realtime.NewHub(),
+		resourceSearchService: resourcesearch.NewService(cfg.ResourceSearch),
+		socialStore:           socialStore,
+		translationService:    translationService,
+		ttsService:            ttsService,
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", api.handleHealthz)
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
 	registerImageCompressionRoutes(mux, api)
+	registerResourceSearchRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAPIPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAPIPipeline(api.handleLogin))
+	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAPIPipeline(api.handleRecoveryQuestion))
+	mux.HandleFunc("POST /api/v1/auth/password-recovery/verify", api.withAPIPipeline(api.handleRecoveryAnswer))
+	mux.HandleFunc("POST /api/v1/auth/password-recovery/reset", api.withAPIPipeline(api.handleRecoveryReset))
 	mux.HandleFunc("GET /api/v1/auth/me", api.withAuth(api.handleMe))
 	mux.HandleFunc("PATCH /api/v1/users/me", api.withAuth(api.withAPIPipeline(api.handleUpdateProfile)))
 	mux.HandleFunc("PATCH /api/v1/users/me/password", api.withAuth(api.withAPIPipeline(api.handleChangePassword)))

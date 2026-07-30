@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox AI 导航 - 产品设计概念</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --canvas: #e9f0fb;
+        --surface: #ffffff;
+        --soft: #f2f6fd;
+        --primary: #4b6bff;
+        --primary-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #1db991;
+        --orange: #ff9a51;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(121, 145, 190, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(121, 145, 190, 0.07) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        margin: 0;
+        min-width: 1440px;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .board {
+        height: 1080px;
+        margin: 0 auto;
+        overflow: hidden;
+        padding: 34px 68px 42px;
+        position: relative;
+        width: 1500px;
+      }
+
+      .board::before {
+        background: var(--navy);
+        content: "";
+        height: 8px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .board-header {
+        align-items: center;
+        display: flex;
+        height: 56px;
+        justify-content: space-between;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 48px;
+        justify-content: center;
+        width: 48px;
+      }
+
+      .brand-mark svg {
+        height: 26px;
+        stroke-width: 2.2;
+        width: 26px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 0;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 4px 0 0;
+      }
+
+      .version {
+        color: var(--muted);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .stage {
+        align-items: flex-start;
+        display: grid;
+        gap: 62px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 21px;
+      }
+
+      .concept-label {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin: 0 0 10px 14px;
+      }
+
+      .concept-number {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .concept-name {
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #0d1528;
+        border-radius: 52px;
+        box-shadow: 0 22px 46px rgba(42, 64, 109, 0.2);
+        height: 858px;
+        padding: 9px;
+        position: relative;
+        width: 410px;
+      }
+
+      .screen {
+        background: var(--soft);
+        border-radius: 44px;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .speaker {
+        background: #071022;
+        border-radius: 999px;
+        height: 25px;
+        left: 50%;
+        position: absolute;
+        top: 17px;
+        transform: translateX(-50%);
+        width: 91px;
+        z-index: 10;
+      }
+
+      .status-bar {
+        align-items: center;
+        background: var(--surface);
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 800;
+        height: 42px;
+        justify-content: space-between;
+        padding: 4px 22px 0;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 4px;
+      }
+
+      .status-icons svg {
+        fill: currentColor;
+        height: 12px;
+        stroke-width: 2.3;
+        width: 12px;
+      }
+
+      .topbar {
+        align-items: center;
+        background: var(--surface);
+        display: grid;
+        grid-template-columns: 42px 1fr 42px;
+        height: 64px;
+        padding: 0 17px 9px;
+      }
+
+      .topbar-title {
+        font-size: 16px;
+        font-weight: 900;
+        margin: 0;
+        text-align: center;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: #f3f6fc;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        color: var(--ink);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        padding: 0;
+        width: 38px;
+      }
+
+      .icon-button.ghost {
+        background: transparent;
+        border-color: transparent;
+        justify-content: flex-start;
+      }
+
+      .icon-button svg {
+        height: 18px;
+        stroke-width: 2.2;
+        width: 18px;
+      }
+
+      .screen-body {
+        bottom: 72px;
+        left: 0;
+        overflow: hidden;
+        padding: 15px 16px 16px;
+        position: absolute;
+        right: 0;
+        top: 106px;
+      }
+
+      .intro-hero {
+        background: var(--navy);
+        border-radius: 24px;
+        min-height: 200px;
+        overflow: hidden;
+        padding: 21px;
+        position: relative;
+      }
+
+      .intro-hero::before,
+      .intro-hero::after {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        content: "";
+        height: 105px;
+        position: absolute;
+        right: -46px;
+        transform: rotate(-17deg);
+        width: 205px;
+      }
+
+      .intro-hero::before {
+        top: -36px;
+      }
+
+      .intro-hero::after {
+        right: -78px;
+        top: 76px;
+      }
+
+      .hero-mark {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 7px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-mark svg {
+        height: 17px;
+        stroke-width: 2.4;
+        width: 17px;
+      }
+
+      .hero-title {
+        color: #ffffff;
+        font-size: 25px;
+        font-weight: 900;
+        letter-spacing: 0;
+        line-height: 1.34;
+        margin: 14px 0 16px;
+        max-width: 240px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .search-box {
+        align-items: center;
+        background: #ffffff;
+        border: 0;
+        border-radius: 15px;
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 19px 1fr 35px;
+        height: 50px;
+        padding: 0 8px 0 14px;
+        position: relative;
+        width: 100%;
+        z-index: 1;
+      }
+
+      .search-box > svg {
+        color: var(--muted);
+        height: 17px;
+        width: 17px;
+      }
+
+      .search-placeholder {
+        color: #8a97af;
+        font-size: 11px;
+        text-align: left;
+      }
+
+      .search-go {
+        align-items: center;
+        background: var(--lime);
+        border: 0;
+        border-radius: 11px;
+        color: var(--navy);
+        display: flex;
+        height: 35px;
+        justify-content: center;
+        padding: 0;
+        width: 35px;
+      }
+
+      .search-go svg {
+        height: 17px;
+        stroke-width: 2.5;
+        width: 17px;
+      }
+
+      .section-heading {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 17px 2px 10px;
+      }
+
+      .section-heading h3 {
+        font-size: 16px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-heading span {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .country-rail {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 19px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        overflow: hidden;
+      }
+
+      .country-button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        height: 83px;
+        justify-content: center;
+        padding: 0;
+        position: relative;
+      }
+
+      .country-button + .country-button {
+        border-left: 1px solid #e8eef9;
+      }
+
+      .country-button.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      .country-button.active::after {
+        background: var(--primary);
+        bottom: 0;
+        content: "";
+        height: 3px;
+        left: 18px;
+        position: absolute;
+        right: 18px;
+      }
+
+      .country-code {
+        align-items: center;
+        background: var(--country-bg, #edf2ff);
+        border-radius: 11px;
+        color: var(--country-color, var(--primary));
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 31px;
+        justify-content: center;
+        width: 31px;
+      }
+
+      .country-label {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .country-count {
+        color: #98a5bb;
+        font-family: "Manrope", sans-serif;
+        font-size: 8px;
+      }
+
+      .quick-list,
+      .tool-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 19px;
+        overflow: hidden;
+      }
+
+      .quick-row,
+      .tool-row {
+        align-items: center;
+        display: grid;
+        gap: 11px;
+        grid-template-columns: 43px 1fr 28px;
+        min-height: 65px;
+        padding: 9px 12px;
+      }
+
+      .quick-row + .quick-row,
+      .tool-row + .tool-row {
+        border-top: 1px solid #e8eef9;
+      }
+
+      .ai-logo {
+        align-items: center;
+        background: var(--logo-bg, #edf2ff);
+        border-radius: 13px;
+        color: var(--logo-color, var(--primary));
+        display: flex;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 43px;
+        justify-content: center;
+        letter-spacing: 0;
+        position: relative;
+        width: 43px;
+      }
+
+      .ai-logo svg {
+        height: 20px;
+        stroke-width: 2.2;
+        width: 20px;
+      }
+
+      .ai-logo.featured::after {
+        background: var(--coral);
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        content: "";
+        height: 8px;
+        position: absolute;
+        right: -1px;
+        top: -1px;
+        width: 8px;
+      }
+
+      .ai-name {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+        margin: 0;
+      }
+
+      .ai-meta {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 600;
+        margin: 3px 0 0;
+      }
+
+      .official {
+        color: var(--green);
+        font-size: 7px;
+        font-weight: 800;
+      }
+
+      .row-action {
+        align-items: center;
+        color: #94a1b9;
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .row-action svg {
+        height: 16px;
+        stroke-width: 2.1;
+        width: 16px;
+      }
+
+      .row-action.saved {
+        color: var(--primary);
+      }
+
+      .row-action.saved svg {
+        fill: currentColor;
+      }
+
+      .tabbar {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        height: 72px;
+        left: 0;
+        position: absolute;
+        right: 0;
+      }
+
+      .tab {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 4px;
+      }
+
+      .tab svg {
+        height: 20px;
+        stroke-width: 2;
+        width: 20px;
+      }
+
+      .tab.active {
+        color: var(--primary);
+      }
+
+      .directory-body {
+        padding-top: 13px;
+      }
+
+      .directory-search {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 19px 1fr 30px;
+        height: 50px;
+        padding: 0 9px 0 14px;
+      }
+
+      .directory-search > svg {
+        color: var(--primary);
+        height: 17px;
+        width: 17px;
+      }
+
+      .directory-search span {
+        color: #8b98af;
+        font-size: 11px;
+      }
+
+      .search-filter {
+        align-items: center;
+        background: var(--soft);
+        border: 0;
+        border-radius: 10px;
+        color: var(--muted);
+        display: flex;
+        height: 30px;
+        justify-content: center;
+        padding: 0;
+        width: 30px;
+      }
+
+      .search-filter svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .country-switcher {
+        display: flex;
+        gap: 7px;
+        margin-top: 11px;
+        overflow: hidden;
+      }
+
+      .country-chip {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--muted);
+        display: flex;
+        flex: 0 0 auto;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+        height: 32px;
+        padding: 0 11px;
+      }
+
+      .country-chip.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: #ffffff;
+      }
+
+      .chip-dot {
+        background: var(--chip-color, var(--primary));
+        border-radius: 50%;
+        height: 6px;
+        width: 6px;
+      }
+
+      .category-tabs {
+        display: flex;
+        gap: 15px;
+        margin: 15px 2px 10px;
+      }
+
+      .category-tab {
+        background: transparent;
+        border: 0;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        padding: 0 0 7px;
+        position: relative;
+      }
+
+      .category-tab.active {
+        color: var(--ink);
+      }
+
+      .category-tab.active::after {
+        background: var(--lime);
+        bottom: 0;
+        content: "";
+        height: 3px;
+        left: 0;
+        position: absolute;
+        right: 0;
+      }
+
+      .list-caption {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 14px 2px 9px;
+      }
+
+      .list-caption strong {
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .list-caption span {
+        color: var(--muted);
+        font-size: 9px;
+      }
+
+      .tool-row {
+        grid-template-columns: 43px 1fr 28px;
+        min-height: 68px;
+      }
+
+      .disclaimer {
+        align-items: flex-start;
+        color: #8c99b0;
+        display: flex;
+        font-size: 8px;
+        gap: 6px;
+        line-height: 1.5;
+        margin: 11px 4px 0;
+      }
+
+      .disclaimer svg {
+        flex: 0 0 auto;
+        height: 12px;
+        margin-top: 1px;
+        width: 12px;
+      }
+
+      .us-hero {
+        background: var(--navy);
+        border-radius: 20px;
+        display: grid;
+        grid-template-columns: 53px 1fr 38px;
+        gap: 12px;
+        min-height: 94px;
+        overflow: hidden;
+        padding: 17px;
+        position: relative;
+      }
+
+      .us-hero::after {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        content: "";
+        height: 90px;
+        position: absolute;
+        right: -42px;
+        top: -28px;
+        transform: rotate(-16deg);
+        width: 145px;
+      }
+
+      .us-hero .ai-logo {
+        background: var(--lime);
+        border-radius: 15px;
+        color: var(--navy);
+        height: 53px;
+        width: 53px;
+      }
+
+      .us-hero-copy {
+        align-self: center;
+        min-width: 0;
+        position: relative;
+        z-index: 1;
+      }
+
+      .us-hero-copy strong {
+        color: #ffffff;
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .us-hero-copy span {
+        color: #aebbd0;
+        display: block;
+        font-size: 8.5px;
+        margin-top: 4px;
+      }
+
+      .hero-action {
+        align-items: center;
+        align-self: center;
+        background: var(--lime);
+        border: 0;
+        border-radius: 12px;
+        color: var(--navy);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        padding: 0;
+        position: relative;
+        width: 38px;
+        z-index: 1;
+      }
+
+      .hero-action svg {
+        height: 18px;
+        stroke-width: 2.4;
+        width: 18px;
+      }
+
+      .country-summary {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 14px 2px 9px;
+      }
+
+      .country-summary-copy {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .country-summary .country-code {
+        height: 27px;
+        width: 27px;
+      }
+
+      .country-summary strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .country-summary small {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        margin-top: 1px;
+      }
+
+      .country-summary > span {
+        color: var(--muted);
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .highlight-strip {
+        align-items: center;
+        background: #edf5ed;
+        border-left: 3px solid var(--green);
+        display: flex;
+        gap: 8px;
+        margin-top: 11px;
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .highlight-strip svg {
+        color: var(--green);
+        height: 14px;
+        width: 14px;
+      }
+
+      .highlight-strip span {
+        color: #48605a;
+        font-size: 8.5px;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
+      @media (max-width: 900px) {
+        body {
+          min-width: 0;
+        }
+
+        .board {
+          height: auto;
+          padding: 24px 16px 36px;
+          width: 100%;
+        }
+
+        .board-header {
+          margin: 0 auto;
+          max-width: 410px;
+        }
+
+        .brand-title {
+          font-size: 21px;
+        }
+
+        .brand-subtitle,
+        .version {
+          display: none;
+        }
+
+        .stage {
+          display: flex;
+          flex-direction: column;
+          margin: 22px auto 0;
+          max-width: 410px;
+        }
+
+        .phone {
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="orbit"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox · AI 导航</h1>
+            <p class="brand-subtitle">按国家找到全球主流 AI 官方入口 · 移动端产品概念</p>
+          </div>
+        </div>
+        <div class="version">PRODUCT CONCEPT · V1.0</div>
+      </header>
+
+      <section class="stage">
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">01</span>
+            <span class="concept-name">国家导航首页</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <button class="icon-button ghost" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <h2 class="topbar-title">AI 导航</h2>
+                <button class="icon-button" aria-label="我的收藏"><i data-lucide="bookmark"></i></button>
+              </header>
+
+              <div class="screen-body">
+                <section class="intro-hero">
+                  <div class="hero-mark"><i data-lucide="orbit"></i>全球 AI，一处直达</div>
+                  <h3 class="hero-title">按国家找到<br />你需要的 AI</h3>
+                  <button class="search-box" aria-label="搜索 AI 产品">
+                    <i data-lucide="search"></i>
+                    <span class="search-placeholder">搜索产品名或公司</span>
+                    <span class="search-go"><i data-lucide="arrow-right"></i></span>
+                  </button>
+                </section>
+
+                <div class="section-heading">
+                  <h3>选择国家</h3>
+                  <span>14 个官方入口</span>
+                </div>
+                <div class="country-rail">
+                  <button class="country-button active">
+                    <span class="country-code" style="--country-bg:#fff0ef;--country-color:#e04f48">CN</span>
+                    <span class="country-label">中国 <span class="country-count">6</span></span>
+                  </button>
+                  <button class="country-button">
+                    <span class="country-code" style="--country-bg:#e9efff;--country-color:#4166d5">US</span>
+                    <span class="country-label">美国 <span class="country-count">6</span></span>
+                  </button>
+                  <button class="country-button">
+                    <span class="country-code" style="--country-bg:#fff3e8;--country-color:#e27736">FR</span>
+                    <span class="country-label">法国 <span class="country-count">1</span></span>
+                  </button>
+                  <button class="country-button">
+                    <span class="country-code" style="--country-bg:#e9f7f3;--country-color:#198268">CA</span>
+                    <span class="country-label">加拿大 <span class="country-count">1</span></span>
+                  </button>
+                </div>
+
+                <div class="section-heading">
+                  <h3>中国 · 常用 AI</h3>
+                  <span>查看全部</span>
+                </div>
+                <div class="quick-list">
+                  <div class="quick-row">
+                    <div class="ai-logo featured" style="--logo-bg:#f0ebff;--logo-color:#7048d5">豆</div>
+                    <div><p class="ai-name">豆包 <span class="official">官方入口</span></p><p class="ai-meta">字节跳动 · 通用对话</p></div>
+                    <span class="row-action"><i data-lucide="arrow-up-right"></i></span>
+                  </div>
+                  <div class="quick-row">
+                    <div class="ai-logo" style="--logo-bg:#fff0e9;--logo-color:#f07445">QW</div>
+                    <div><p class="ai-name">通义千问 <span class="official">官方入口</span></p><p class="ai-meta">阿里巴巴 · 通用对话</p></div>
+                    <span class="row-action"><i data-lucide="arrow-up-right"></i></span>
+                  </div>
+                </div>
+              </div>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab active"><i data-lucide="grid-2x2"></i><span>工具</span></div>
+                <div class="tab"><i data-lucide="message-circle"></i><span>消息</span></div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">02</span>
+            <span class="concept-name">中国 AI 目录</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <button class="icon-button ghost" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <h2 class="topbar-title">中国 AI</h2>
+                <button class="icon-button" aria-label="更多选项"><i data-lucide="ellipsis"></i></button>
+              </header>
+
+              <div class="screen-body directory-body">
+                <div class="directory-search">
+                  <i data-lucide="search"></i>
+                  <span>搜索中国 AI 产品</span>
+                  <button class="search-filter" aria-label="筛选"><i data-lucide="sliders-horizontal"></i></button>
+                </div>
+
+                <div class="country-switcher">
+                  <button class="country-chip active"><span class="chip-dot" style="--chip-color:#ef5b55"></span>中国</button>
+                  <button class="country-chip"><span class="chip-dot" style="--chip-color:#5074d9"></span>美国</button>
+                  <button class="country-chip"><span class="chip-dot" style="--chip-color:#f09a55"></span>法国</button>
+                  <button class="country-chip"><span class="chip-dot" style="--chip-color:#1c9a79"></span>加拿大</button>
+                </div>
+
+                <div class="category-tabs">
+                  <button class="category-tab active">全部</button>
+                  <button class="category-tab">通用对话</button>
+                  <button class="category-tab">AI 搜索</button>
+                  <button class="category-tab">创作工具</button>
+                </div>
+
+                <div class="list-caption">
+                  <strong>6 个产品</strong>
+                  <span>按常用程度排序</span>
+                </div>
+                <div class="tool-list">
+                  <div class="tool-row">
+                    <div class="ai-logo featured" style="--logo-bg:#f0ebff;--logo-color:#7048d5">豆</div>
+                    <div><p class="ai-name">豆包 <span class="official">官方</span></p><p class="ai-meta">doubao.com · 通用对话</p></div>
+                    <span class="row-action saved"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#fff0e9;--logo-color:#f07445">QW</div>
+                    <div><p class="ai-name">通义千问 <span class="official">官方</span></p><p class="ai-meta">阿里巴巴 · 通用对话</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#eaf0ff;--logo-color:#3268c8">DS</div>
+                    <div><p class="ai-name">DeepSeek <span class="official">官方</span></p><p class="ai-meta">深度求索 · 推理与编程</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#eaf4ff;--logo-color:#2480d6">K</div>
+                    <div><p class="ai-name">Kimi <span class="official">官方</span></p><p class="ai-meta">月之暗面 · 长文本处理</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#e7f8f1;--logo-color:#149365">元</div>
+                    <div><p class="ai-name">腾讯元宝 <span class="official">官方</span></p><p class="ai-meta">腾讯 · 对话与搜索</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#edf1ff;--logo-color:#5368e8">智</div>
+                    <div><p class="ai-name">智谱清言 <span class="official">官方</span></p><p class="ai-meta">智谱 AI · 通用对话</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                </div>
+
+                <p class="disclaimer"><i data-lucide="shield-check"></i>仅聚合官方网站入口，服务内容与账号规则以对应平台为准。</p>
+              </div>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab active"><i data-lucide="grid-2x2"></i><span>工具</span></div>
+                <div class="tab"><i data-lucide="message-circle"></i><span>消息</span></div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">03</span>
+            <span class="concept-name">切换美国目录</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <button class="icon-button ghost" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <h2 class="topbar-title">美国 AI</h2>
+                <button class="icon-button" aria-label="我的收藏"><i data-lucide="bookmark"></i></button>
+              </header>
+
+              <div class="screen-body directory-body">
+                <div class="country-switcher" style="margin-top:0">
+                  <button class="country-chip"><span class="chip-dot" style="--chip-color:#ef5b55"></span>中国</button>
+                  <button class="country-chip active"><span class="chip-dot" style="--chip-color:#5074d9"></span>美国</button>
+                  <button class="country-chip"><span class="chip-dot" style="--chip-color:#f09a55"></span>法国</button>
+                  <button class="country-chip"><span class="chip-dot" style="--chip-color:#1c9a79"></span>加拿大</button>
+                </div>
+
+                <div class="country-summary">
+                  <div class="country-summary-copy">
+                    <span class="country-code" style="--country-bg:#e9efff;--country-color:#4166d5">US</span>
+                    <div><strong>美国 AI</strong><small>通用对话、搜索与办公</small></div>
+                  </div>
+                  <span>6 个入口</span>
+                </div>
+
+                <section class="us-hero">
+                  <div class="ai-logo">GPT</div>
+                  <div class="us-hero-copy"><strong>ChatGPT</strong><span>OpenAI · 通用对话与创作</span></div>
+                  <button class="hero-action" aria-label="打开 ChatGPT"><i data-lucide="arrow-up-right"></i></button>
+                </section>
+
+                <div class="list-caption">
+                  <strong>更多美国 AI</strong>
+                  <span>官方入口</span>
+                </div>
+                <div class="tool-list">
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#fff0e8;--logo-color:#c96335">C</div>
+                    <div><p class="ai-name">Claude <span class="official">官方</span></p><p class="ai-meta">Anthropic · 对话与编程</p></div>
+                    <span class="row-action saved"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#eef2ff;--logo-color:#4d70dd"><i data-lucide="sparkles"></i></div>
+                    <div><p class="ai-name">Gemini <span class="official">官方</span></p><p class="ai-meta">Google · 多模态助手</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#e6f7f4;--logo-color:#197d75">P</div>
+                    <div><p class="ai-name">Perplexity <span class="official">官方</span></p><p class="ai-meta">Perplexity AI · AI 搜索</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#eaf3ff;--logo-color:#2775ce">CP</div>
+                    <div><p class="ai-name">Microsoft Copilot <span class="official">官方</span></p><p class="ai-meta">Microsoft · 办公与搜索</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                  <div class="tool-row">
+                    <div class="ai-logo" style="--logo-bg:#edf0f4;--logo-color:#20252d">G</div>
+                    <div><p class="ai-name">Grok <span class="official">官方</span></p><p class="ai-meta">xAI · 实时信息与对话</p></div>
+                    <span class="row-action"><i data-lucide="bookmark"></i></span>
+                  </div>
+                </div>
+
+                <div class="highlight-strip"><i data-lucide="info"></i><span>部分海外服务可能受地区、网络与账号政策影响。</span></div>
+              </div>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab active"><i data-lucide="grid-2x2"></i><span>工具</span></div>
+                <div class="tab"><i data-lucide="message-circle"></i><span>消息</span></div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

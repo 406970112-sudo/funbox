@@ -28,8 +28,10 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    void SplashScreen.hideAsync();
-  }, []);
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontError, fontsLoaded]);
 
   if (fontError) {
     return (

@@ -20,14 +20,18 @@ var (
 )
 
 type User struct {
-	ID           string
-	Username     string
-	PasswordHash string
-	DisplayName  string
-	AvatarFile   string
-	TokenVersion int
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID                     string
+	Username               string
+	PasswordHash           string
+	DisplayName            string
+	AvatarFile             string
+	SecurityQuestion       string
+	SecurityAnswerHash     string
+	RecoveryFailedAttempts int
+	RecoveryLockedUntil    time.Time
+	TokenVersion           int
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 }
 
 type Store struct {
@@ -75,6 +79,10 @@ func (s *Store) migrate() error {
 			password_hash TEXT NOT NULL,
 			display_name TEXT NOT NULL,
 			avatar_file TEXT NOT NULL DEFAULT '',
+			security_question TEXT NOT NULL DEFAULT '',
+			security_answer_hash TEXT NOT NULL DEFAULT '',
+			recovery_failed_attempts INTEGER NOT NULL DEFAULT 0,
+			recovery_locked_until INTEGER NOT NULL DEFAULT 0,
 			token_version INTEGER NOT NULL DEFAULT 1,
 			created_at INTEGER NOT NULL,
 			updated_at INTEGER NOT NULL
@@ -87,6 +95,66 @@ func (s *Store) migrate() error {
 		}
 	}
 
+	columns := []struct {
+		name       string
+		definition string
+	}{
+		{name: "security_question", definition: "TEXT NOT NULL DEFAULT ''"},
+		{name: "security_answer_hash", definition: "TEXT NOT NULL DEFAULT ''"},
+		{name: "recovery_failed_attempts", definition: "INTEGER NOT NULL DEFAULT 0"},
+		{name: "recovery_locked_until", definition: "INTEGER NOT NULL DEFAULT 0"},
+	}
+	for _, column := range columns {
+		if err := s.ensureUserColumn(column.name, column.definition); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Store) ensureUserColumn(name string, definition string) error {
+	rows, err := s.db.Query(`PRAGMA table_info(users)`)
+	if err != nil {
+		return fmt.Errorf("read users table info: %w", err)
+	}
+
+	found := false
+	for rows.Next() {
+		var cid int
+		var columnName string
+		var columnType string
+		var notNull int
+		var defaultValue any
+		var primaryKey int
+		if err := rows.Scan(
+			&cid,
+			&columnName,
+			&columnType,
+			&notNull,
+			&defaultValue,
+			&primaryKey,
+		); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan users table info: %w", err)
+		}
+		if columnName == name {
+			found = true
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close users table info: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate users table info: %w", err)
+	}
+	if found {
+		return nil
+	}
+
+	if _, err := s.db.Exec(fmt.Sprintf(`ALTER TABLE users ADD COLUMN %s %s`, name, definition)); err != nil {
+		return fmt.Errorf("add users.%s column: %w", name, err)
+	}
 	return nil
 }
 
@@ -95,28 +163,36 @@ func (s *Store) Create(
 	username string,
 	passwordHash string,
 	displayName string,
+	securityQuestion string,
+	securityAnswerHash string,
 ) (User, error) {
 	now := time.Now().UTC()
 	created := User{
-		ID:           uuid.NewString(),
-		Username:     username,
-		PasswordHash: passwordHash,
-		DisplayName:  displayName,
-		TokenVersion: 1,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:                 uuid.NewString(),
+		Username:           username,
+		PasswordHash:       passwordHash,
+		DisplayName:        displayName,
+		SecurityQuestion:   securityQuestion,
+		SecurityAnswerHash: securityAnswerHash,
+		TokenVersion:       1,
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
 	_, err := s.db.ExecContext(
 		ctx,
 		`INSERT INTO users (
 			id, username, password_hash, display_name, avatar_file,
+			security_question, security_answer_hash,
+			recovery_failed_attempts, recovery_locked_until,
 			token_version, created_at, updated_at
-		) VALUES (?, ?, ?, ?, '', ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, '', ?, ?, 0, 0, ?, ?, ?)`,
 		created.ID,
 		created.Username,
 		created.PasswordHash,
 		created.DisplayName,
+		created.SecurityQuestion,
+		created.SecurityAnswerHash,
 		created.TokenVersion,
 		created.CreatedAt.Unix(),
 		created.UpdatedAt.Unix(),
@@ -184,7 +260,8 @@ func (s *Store) UpdatePasswordHash(ctx context.Context, id string, passwordHash 
 	result, err := s.db.ExecContext(
 		ctx,
 		`UPDATE users
-		 SET password_hash = ?, token_version = token_version + 1, updated_at = ?
+		 SET password_hash = ?, token_version = token_version + 1,
+		     recovery_failed_attempts = 0, recovery_locked_until = 0, updated_at = ?
 		 WHERE id = ?`,
 		passwordHash,
 		time.Now().UTC().Unix(),
@@ -199,14 +276,43 @@ func (s *Store) UpdatePasswordHash(ctx context.Context, id string, passwordHash 
 	return s.GetByID(ctx, id)
 }
 
+func (s *Store) UpdateRecoveryState(
+	ctx context.Context,
+	id string,
+	failedAttempts int,
+	lockedUntil time.Time,
+) error {
+	lockedUntilUnix := int64(0)
+	if !lockedUntil.IsZero() {
+		lockedUntilUnix = lockedUntil.Unix()
+	}
+	result, err := s.db.ExecContext(
+		ctx,
+		`UPDATE users
+		 SET recovery_failed_attempts = ?, recovery_locked_until = ?, updated_at = ?
+		 WHERE id = ?`,
+		failedAttempts,
+		lockedUntilUnix,
+		time.Now().UTC().Unix(),
+		id,
+	)
+	if err != nil {
+		return fmt.Errorf("update recovery state: %w", err)
+	}
+	return ensureUpdated(result)
+}
+
 const userSelect = `SELECT
 	id, username, password_hash, display_name, avatar_file,
+	security_question, security_answer_hash,
+	recovery_failed_attempts, recovery_locked_until,
 	token_version, created_at, updated_at
 	FROM users`
 
 func scanUser(row *sql.Row) (User, error) {
 	var result User
 	var createdAt int64
+	var recoveryLockedUntil int64
 	var updatedAt int64
 
 	err := row.Scan(
@@ -215,6 +321,10 @@ func scanUser(row *sql.Row) (User, error) {
 		&result.PasswordHash,
 		&result.DisplayName,
 		&result.AvatarFile,
+		&result.SecurityQuestion,
+		&result.SecurityAnswerHash,
+		&result.RecoveryFailedAttempts,
+		&recoveryLockedUntil,
 		&result.TokenVersion,
 		&createdAt,
 		&updatedAt,
@@ -227,6 +337,9 @@ func scanUser(row *sql.Row) (User, error) {
 	}
 
 	result.CreatedAt = time.Unix(createdAt, 0).UTC()
+	if recoveryLockedUntil > 0 {
+		result.RecoveryLockedUntil = time.Unix(recoveryLockedUntil, 0).UTC()
+	}
 	result.UpdatedAt = time.Unix(updatedAt, 0).UTC()
 	return result, nil
 }

@@ -30,7 +30,7 @@ export function AppLoadingScreen({ error = false, onRetry }: AppLoadingScreenPro
       Animated.timing(progress, {
         duration: 1_100,
         toValue: 1,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     );
     animation.start();

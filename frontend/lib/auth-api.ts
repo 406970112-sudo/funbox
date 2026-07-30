@@ -13,6 +13,14 @@ type UserResponse = {
   user: AuthUser;
 };
 
+type RecoveryQuestionResponse = {
+  securityQuestion: string;
+};
+
+type RecoveryTokenResponse = {
+  recoveryToken: string;
+};
+
 export class AuthAPIError extends Error {
   code: string;
   status: number;
@@ -49,13 +57,60 @@ export async function login(username: string, password: string) {
   return withResolvedSession(session);
 }
 
-export async function register(username: string, password: string, displayName: string) {
+export async function register(
+  username: string,
+  password: string,
+  displayName: string,
+  securityQuestion: string,
+  securityAnswer: string,
+) {
   const session = await requestJSON<AuthSession>('/api/v1/auth/register', {
-    body: JSON.stringify({ displayName, password, username }),
+    body: JSON.stringify({
+      displayName,
+      password,
+      securityAnswer,
+      securityQuestion,
+      username,
+    }),
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
   });
   return withResolvedSession(session);
+}
+
+export async function getPasswordRecoveryQuestion(username: string) {
+  const response = await requestJSON<RecoveryQuestionResponse>(
+    '/api/v1/auth/password-recovery/question',
+    {
+      body: JSON.stringify({ username }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    },
+  );
+  return response.securityQuestion;
+}
+
+export async function verifyPasswordRecoveryAnswer(username: string, securityAnswer: string) {
+  const response = await requestJSON<RecoveryTokenResponse>(
+    '/api/v1/auth/password-recovery/verify',
+    {
+      body: JSON.stringify({ securityAnswer, username }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+    },
+  );
+  return response.recoveryToken;
+}
+
+export async function resetPasswordWithRecoveryToken(
+  recoveryToken: string,
+  newPassword: string,
+) {
+  await requestJSON<{ success: boolean }>('/api/v1/auth/password-recovery/reset', {
+    body: JSON.stringify({ newPassword, recoveryToken }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  });
 }
 
 export async function getCurrentUser(token: string) {
@@ -126,12 +181,18 @@ export function getAuthErrorMessage(error: unknown) {
     avatar_type_invalid: '头像仅支持 JPG 或 PNG 格式。',
     current_password_invalid: '当前密码不正确。',
     display_name_invalid: '昵称需为 1 至 32 个字符。',
-    invalid_credentials: '账号或密码不正确。',
-    password_invalid: '密码需为 8 至 72 个字符。',
+    invalid_credentials: '手机号或密码不正确。',
+    password_invalid: '密码需为 8 至 72 个字符，并同时包含字母和数字。',
     rate_limited: '操作太频繁，请稍后再试。',
+    recovery_answer_invalid: '密保答案不正确。',
+    recovery_locked: '密保答案连续输错 5 次，请 30 分钟后再试。',
+    recovery_token_invalid: '本次身份验证已失效，请重新找回密码。',
+    recovery_unavailable: '该手机号未注册，或账号尚未设置密保问题。',
+    security_answer_invalid: '密保答案需为 2 至 32 个字符。',
+    security_question_invalid: '请选择有效的密保问题。',
     unauthorized: '登录状态已失效，请重新登录。',
-    username_invalid: '账号需为 3 至 32 位英文、数字或 . _ -。',
-    username_taken: '这个账号已经被使用。',
+    username_invalid: '请输入正确的 11 位中国大陆手机号。',
+    username_taken: '该手机号已经注册，可直接登录或找回密码。',
   };
 
   return messages[error.code] || '账户操作失败，请稍后重试。';

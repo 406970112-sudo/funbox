@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-screen';
+import { AiNavigationScreen } from '@/features/tools/ai-navigation-screen';
 import { TextToSpeechToolScreen } from '@/features/tools/tts-tool-screen';
 import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
 import { ImageCompressorScreen } from '@/features/tools/image-compressor-screen';
@@ -50,6 +51,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <ResourceSearchScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'ai-navigation') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <AiNavigationScreen />
       </>
     );
   }

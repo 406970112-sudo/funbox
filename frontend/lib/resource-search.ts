@@ -14,7 +14,8 @@ export type ResourceSearchSourceId =
   | 'panyq'
   | 'tvso'
   | 'funletu-pan'
-  | 'yunso';
+  | 'yunso'
+  | 'laoer-motewan';
 
 export const RESOURCE_SEARCH_SOURCES: readonly ResourceSearchSource[] = [
   {
@@ -67,12 +68,25 @@ export const RESOURCE_SEARCH_SOURCES: readonly ResourceSearchSource[] = [
     name: '云搜',
     url: 'https://www.yunso.net/',
   },
+  {
+    description: '免费网盘资源搜索',
+    domain: 'laoer.motewan.com',
+    id: 'laoer-motewan',
+    logo: 'L2',
+    logoBackground: '#fff6d9',
+    logoColor: '#a66d00',
+    name: '老二搜索',
+    url: 'https://laoer.motewan.com/',
+  },
 ];
 
 export const DEFAULT_RESOURCE_SEARCH_SOURCE_IDS: readonly ResourceSearchSourceId[] = [
   'quark-pan-search',
   'panyq',
   'tvso',
+  'funletu-pan',
+  'yunso',
+  'laoer-motewan',
 ];
 
 export function normalizeResourceSearchQuery(value: string) {
