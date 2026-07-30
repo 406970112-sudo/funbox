@@ -17,6 +17,7 @@ import {
   isValidPhoneAccount,
   isValidSecurityAnswer,
   normalizePhoneInput,
+  SECURITY_ANSWER_MAX_LENGTH,
   SECURITY_QUESTIONS,
 } from '@/lib/auth-validation';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
@@ -101,7 +102,7 @@ export function AuthScreen() {
         return;
       }
       if (!isValidSecurityAnswer(securityAnswer)) {
-        showError('密保答案需为 2 至 32 个字符。');
+        showError(`密保答案需为 1 至 ${SECURITY_ANSWER_MAX_LENGTH} 个字符。`);
         return;
       }
     }
@@ -365,10 +366,13 @@ export function AuthScreen() {
                 value={securityQuestion}
               />
               <SecretField
+                autoComplete="off"
                 icon="shield-key-outline"
+                inputMode="text"
                 label="密保答案"
                 onChangeText={setSecurityAnswer}
-                placeholder="请输入只有你知道的答案"
+                placeholder="支持中文，1 至 64 个字符"
+                textContentType="none"
                 value={securityAnswer}
                 visible={securityAnswerVisible}
                 onToggleVisible={() => setSecurityAnswerVisible((visible) => !visible)}
@@ -388,11 +392,14 @@ export function AuthScreen() {
                 </View>
               </View>
               <SecretField
+                autoComplete="off"
                 icon="shield-key-outline"
+                inputMode="text"
                 label="问题答案"
                 onChangeText={setSecurityAnswer}
                 onSubmitEditing={() => void handleRecoveryAnswer()}
                 placeholder="请输入密保答案"
+                textContentType="none"
                 value={securityAnswer}
                 visible={securityAnswerVisible}
                 onToggleVisible={() => setSecurityAnswerVisible((visible) => !visible)}

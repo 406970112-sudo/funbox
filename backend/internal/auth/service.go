@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"regexp"
@@ -33,9 +34,10 @@ var (
 )
 
 const (
-	maxRecoveryAttempts  = 5
-	recoveryLockDuration = 30 * time.Minute
-	recoveryTokenTTL     = 10 * time.Minute
+	maxRecoveryAttempts     = 5
+	maxSecurityAnswerLength = 64
+	recoveryLockDuration    = 30 * time.Minute
+	recoveryTokenTTL        = 10 * time.Minute
 )
 
 var usernamePattern = regexp.MustCompile(`^1[3-9][0-9]{9}$`)
@@ -115,7 +117,7 @@ func (s *Service) Register(
 		return Session{}, fmt.Errorf("hash password: %w", err)
 	}
 	securityAnswerHash, err := bcrypt.GenerateFromPassword(
-		[]byte(normalizedAnswer),
+		securityAnswerDigest(normalizedAnswer),
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
@@ -181,10 +183,7 @@ func (s *Service) VerifyRecoveryAnswer(
 	if err != nil {
 		return "", err
 	}
-	if bcrypt.CompareHashAndPassword(
-		[]byte(found.SecurityAnswerHash),
-		[]byte(normalizedAnswer),
-	) != nil {
+	if !securityAnswerMatches(found.SecurityAnswerHash, normalizedAnswer) {
 		failedAttempts := found.RecoveryFailedAttempts + 1
 		lockedUntil := time.Time{}
 		resultErr := ErrRecoveryAnswerInvalid
@@ -439,7 +438,7 @@ func validateSecurityQuestion(value string) (string, error) {
 func normalizeSecurityAnswer(value string) (string, error) {
 	normalized := strings.ToLower(strings.TrimSpace(value))
 	length := utf8.RuneCountInString(normalized)
-	if length < 2 || length > 32 || len([]byte(normalized)) > 72 {
+	if length < 1 || length > maxSecurityAnswerLength {
 		return "", ErrSecurityAnswerInvalid
 	}
 	for _, character := range normalized {
@@ -448,4 +447,18 @@ func normalizeSecurityAnswer(value string) (string, error) {
 		}
 	}
 	return normalized, nil
+}
+
+func securityAnswerDigest(normalizedAnswer string) []byte {
+	digest := sha256.Sum256([]byte(normalizedAnswer))
+	return digest[:]
+}
+
+func securityAnswerMatches(answerHash string, normalizedAnswer string) bool {
+	hash := []byte(answerHash)
+	if bcrypt.CompareHashAndPassword(hash, securityAnswerDigest(normalizedAnswer)) == nil {
+		return true
+	}
+	// Accounts created before answers were pre-hashed stored the normalized answer directly.
+	return bcrypt.CompareHashAndPassword(hash, []byte(normalizedAnswer)) == nil
 }

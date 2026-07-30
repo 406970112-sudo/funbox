@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/user"
 )
@@ -164,7 +166,10 @@ func TestValidation(t *testing.T) {
 		{name: "password without number", username: "13800138001", password: "passwordonly", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrPasswordInvalid},
 		{name: "empty display name", username: "13800138001", password: "password-123", displayName: " ", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrDisplayNameInvalid},
 		{name: "empty security question", username: "13800138001", password: "password-123", displayName: "用户", question: "", answer: "海底两万里", want: auth.ErrSecurityQuestionInvalid},
-		{name: "short security answer", username: "13800138001", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海", want: auth.ErrSecurityAnswerInvalid},
+		{name: "empty security answer", username: "13800138001", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: " ", want: auth.ErrSecurityAnswerInvalid},
+		{name: "one character Chinese answer", username: "13800138002", password: "password-123", displayName: "用户", question: "你印象最深的一座城市是哪里？", answer: "京"},
+		{name: "long Chinese answer", username: "13800138003", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: strings.Repeat("中", 64)},
+		{name: "answer over limit", username: "13800138004", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: strings.Repeat("中", 65), want: auth.ErrSecurityAnswerInvalid},
 	}
 
 	for _, test := range tests {
@@ -237,6 +242,36 @@ func TestPasswordRecovery(t *testing.T) {
 	}
 	if err := service.ResetPasswordWithRecoveryToken(ctx, recoveryToken, "another-789"); !errors.Is(err, auth.ErrRecoveryTokenInvalid) {
 		t.Fatalf("reused recovery token error = %v", err)
+	}
+}
+
+func TestPasswordRecoveryAcceptsLegacyAnswerHash(t *testing.T) {
+	store, err := user.OpenStore(filepath.Join(t.TempDir(), "users.db"))
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	legacyAnswer := "旧答案"
+	legacyHash, err := bcrypt.GenerateFromPassword([]byte(legacyAnswer), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("hash legacy answer: %v", err)
+	}
+	ctx := context.Background()
+	if _, err := store.Create(
+		ctx,
+		"13500135000",
+		"unused-password-hash",
+		"旧账号",
+		"你小时候最喜欢的书是什么？",
+		string(legacyHash),
+	); err != nil {
+		t.Fatalf("create legacy account: %v", err)
+	}
+
+	service := auth.NewService(store, []byte(strings.Repeat("l", 32)), time.Hour)
+	if _, err := service.VerifyRecoveryAnswer(ctx, "13500135000", legacyAnswer); err != nil {
+		t.Fatalf("verify legacy answer: %v", err)
 	}
 }
 

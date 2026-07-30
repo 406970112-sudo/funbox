@@ -6,6 +6,7 @@ import {
   isValidPhoneAccount,
   isValidSecurityAnswer,
   normalizePhoneInput,
+  SECURITY_QUESTIONS,
 } from '../lib/auth-validation.ts';
 
 test('normalizes phone input to eleven digits', () => {
@@ -25,7 +26,15 @@ test('requires passwords to contain letters and numbers', () => {
   assert.equal(isValidPassword('short1'), false);
 });
 
-test('requires a non-trivial security answer', () => {
+test('provides a practical set of common security questions', () => {
+  assert.equal(SECURITY_QUESTIONS.length, 8);
+  assert.equal(new Set(SECURITY_QUESTIONS).size, SECURITY_QUESTIONS.length);
+});
+
+test('accepts security answers containing Chinese characters', () => {
   assert.equal(isValidSecurityAnswer('海底两万里'), true);
-  assert.equal(isValidSecurityAnswer(' 海 '), false);
+  assert.equal(isValidSecurityAnswer(' 海 '), true);
+  assert.equal(isValidSecurityAnswer('中'.repeat(64)), true);
+  assert.equal(isValidSecurityAnswer('中'.repeat(65)), false);
+  assert.equal(isValidSecurityAnswer('   '), false);
 });

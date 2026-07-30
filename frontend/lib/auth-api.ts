@@ -188,7 +188,7 @@ export function getAuthErrorMessage(error: unknown) {
     recovery_locked: '密保答案连续输错 5 次，请 30 分钟后再试。',
     recovery_token_invalid: '本次身份验证已失效，请重新找回密码。',
     recovery_unavailable: '该手机号未注册，或账号尚未设置密保问题。',
-    security_answer_invalid: '密保答案需为 2 至 32 个字符。',
+    security_answer_invalid: '密保答案需为 1 至 64 个字符，支持中文。',
     security_question_invalid: '请选择有效的密保问题。',
     unauthorized: '登录状态已失效，请重新登录。',
     username_invalid: '请输入正确的 11 位中国大陆手机号。',
