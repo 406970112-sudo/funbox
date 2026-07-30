@@ -1,17 +1,53 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { DevSettings, Platform } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+void SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [fontsLoaded, fontError] = useFonts({
+    ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
+  });
+
+  useEffect(() => {
+    void SplashScreen.hideAsync();
+  }, []);
+
+  if (fontError) {
+    return (
+      <AppLoadingScreen
+        error
+        onRetry={() => {
+          if (Platform.OS === 'web') {
+            window.location.reload();
+          } else {
+            DevSettings.reload();
+          }
+        }}
+      />
+    );
+  }
+
+  if (!fontsLoaded) {
+    return <AppLoadingScreen />;
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

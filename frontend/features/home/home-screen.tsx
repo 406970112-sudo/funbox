@@ -1,8 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
-import { type PropsWithChildren, useEffect, useRef } from 'react';
+import { type PropsWithChildren, useRef } from 'react';
 import {
-  AccessibilityInfo,
   Animated,
   Platform,
   Pressable,
@@ -189,46 +188,13 @@ function GameTile({ game, onPress }: { game: GameItem; onPress: () => void }) {
 export function HomeScreen() {
   const router = useRouter();
   const { colors, colorScheme } = useAppTheme();
-  const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(0))).current;
+  const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(1))).current;
   const heroTool = appTools.find((tool) => tool.id === HERO_TOOL_ID);
   const quickTools = appTools
     .filter((tool) => tool.status === 'available' && tool.id !== HERO_TOOL_ID)
     .slice(0, 4);
   const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 3);
   const availableToolCount = appTools.filter((tool) => tool.status === 'available').length;
-
-  useEffect(() => {
-    let active = true;
-    let animation: Animated.CompositeAnimation | undefined;
-
-    AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => {
-      if (!active) {
-        return;
-      }
-
-      if (reduceMotion) {
-        reveals.forEach((value) => value.setValue(1));
-        return;
-      }
-
-      animation = Animated.stagger(
-        75,
-        reveals.map((value) =>
-          Animated.timing(value, {
-            duration: 360,
-            toValue: 1,
-            useNativeDriver: Platform.OS !== 'web',
-          }),
-        ),
-      );
-      animation.start();
-    });
-
-    return () => {
-      active = false;
-      animation?.stop();
-    };
-  }, [reveals]);
 
   if (!heroTool) {
     return null;

@@ -4,6 +4,7 @@
     "slug": "my-first-expo-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "backgroundColor": "#eef4ff",
     "icon": "./assets/images/icon.png",
     "scheme": "myfirstexpoapp",
     "userInterfaceStyle": "automatic",
@@ -43,9 +44,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#eef4ff",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0f1317"
           }
         }
       ],
