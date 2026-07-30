@@ -15,14 +15,13 @@ import { appTools, popularGames } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
 
-const HERO_TOOL_ID = 'text-to-speech';
+import { FeaturedToolCarousel } from './featured-tool-carousel';
+
 const HOME_TOOL_LIMIT = 6;
 const HOME_TOOL_EXCLUSIONS = new Set<AppTool['id']>([
   'release-email-assistant',
   'live-stream-capture',
 ]);
-const WAVEFORM_HEIGHTS = [18, 34, 48, 28, 58, 42, 66, 38, 52, 26, 44, 20];
-
 type SectionHeaderProps = {
   title: string;
   meta: string;
@@ -68,58 +67,6 @@ function SectionHeader({ title, meta, onPress }: SectionHeaderProps) {
         </Pressable>
       ) : null}
     </View>
-  );
-}
-
-function HeroTool({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
-  const { colorScheme } = useAppTheme();
-  const backgroundColor = colorScheme === 'dark' ? '#173a35' : '#183f3a';
-
-  return (
-    <Pressable
-      accessibilityHint={`打开${tool.name}`}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.heroCard,
-        { backgroundColor },
-        pressed && styles.heroPressed,
-      ]}>
-      <View style={styles.heroTexture}>
-        <View style={styles.heroTextureLine} />
-        <View style={[styles.heroTextureLine, styles.heroTextureLineMiddle]} />
-        <View style={[styles.heroTextureLine, styles.heroTextureLineBottom]} />
-      </View>
-
-      <View style={styles.heroCopy}>
-        <View style={styles.heroToolName}>
-          <MaterialCommunityIcons name={tool.icon} size={18} color="#c9f36a" />
-          <ThemedText style={styles.heroToolNameText}>{tool.name}</ThemedText>
-        </View>
-        <ThemedText style={styles.heroTitle}>把灵感{`\n`}变成声音</ThemedText>
-        <ThemedText style={styles.heroDescription}>
-          输入文字，选择音色，即刻生成可试听的语音
-        </ThemedText>
-        <View style={styles.heroAction}>
-          <MaterialCommunityIcons name="arrow-top-right" size={21} color="#173a35" />
-        </View>
-      </View>
-
-      <View style={styles.waveform}>
-        {WAVEFORM_HEIGHTS.map((height, index) => (
-          <View
-            key={`${height}-${index}`}
-            style={[
-              styles.waveformBar,
-              {
-                backgroundColor: index === 6 ? '#c9f36a' : 'rgba(255, 255, 255, 0.34)',
-                height,
-              },
-            ]}
-          />
-        ))}
-      </View>
-    </Pressable>
   );
 }
 
@@ -194,16 +141,11 @@ export function HomeScreen() {
   const router = useRouter();
   const { colors, colorScheme } = useAppTheme();
   const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(1))).current;
-  const heroTool = appTools.find((tool) => tool.id === HERO_TOOL_ID);
   const quickTools = appTools
     .filter((tool) => tool.status === 'available' && !HOME_TOOL_EXCLUSIONS.has(tool.id))
     .slice(0, HOME_TOOL_LIMIT);
   const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 3);
   const availableToolCount = appTools.filter((tool) => tool.status === 'available').length;
-
-  if (!heroTool) {
-    return null;
-  }
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
@@ -240,7 +182,7 @@ export function HomeScreen() {
       </Reveal>
 
       <Reveal progress={reveals[1]}>
-        <HeroTool tool={heroTool} onPress={() => router.push(heroTool.route)} />
+        <FeaturedToolCarousel onToolPress={(tool) => router.push(tool.route)} />
       </Reveal>
 
       <Reveal progress={reveals[2]}>
@@ -274,7 +216,7 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   pageContent: {
-    gap: 22,
+    gap: 18,
     paddingTop: 16,
   },
   backgroundPattern: {
@@ -334,98 +276,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 16,
   },
-  heroCard: {
-    borderRadius: 24,
-    minHeight: 228,
-    overflow: 'hidden',
-    padding: 20,
-    position: 'relative',
-  },
-  heroPressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.99 }],
-  },
-  heroTexture: {
-    bottom: -12,
-    height: 120,
-    opacity: 0.42,
-    position: 'absolute',
-    pointerEvents: 'none',
-    right: -28,
-    transform: [{ rotate: '-12deg' }],
-    width: 180,
-  },
-  heroTextureLine: {
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    borderRadius: 8,
-    borderWidth: 1,
-    height: 32,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 170,
-  },
-  heroTextureLineMiddle: {
-    right: 18,
-    top: 38,
-  },
-  heroTextureLineBottom: {
-    right: 36,
-    top: 76,
-  },
-  heroCopy: {
-    alignItems: 'flex-start',
-    maxWidth: 230,
-    zIndex: 2,
-  },
-  heroToolName: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 7,
-    marginBottom: 18,
-  },
-  heroToolNameText: {
-    color: '#e8f4ef',
-    fontSize: 12,
-    fontWeight: '800',
-    lineHeight: 18,
-  },
-  heroTitle: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '900',
-    lineHeight: 34,
-  },
-  heroDescription: {
-    color: '#b9cec7',
-    fontSize: 12,
-    lineHeight: 19,
-    marginTop: 8,
-    maxWidth: 205,
-  },
-  heroAction: {
-    alignItems: 'center',
-    backgroundColor: '#c9f36a',
-    borderRadius: 18,
-    height: 36,
-    justifyContent: 'center',
-    marginTop: 18,
-    width: 36,
-  },
-  waveform: {
-    alignItems: 'center',
-    bottom: 64,
-    flexDirection: 'row',
-    gap: 5,
-    height: 72,
-    position: 'absolute',
-    pointerEvents: 'none',
-    right: 17,
-  },
-  waveformBar: {
-    borderRadius: 3,
-    width: 4,
-  },
   section: {
     gap: 13,
   },
@@ -467,7 +317,7 @@ const styles = StyleSheet.create({
     flexBasis: '31%',
     flexGrow: 1,
     justifyContent: 'space-between',
-    minHeight: 124,
+    minHeight: 130,
     minWidth: 0,
     padding: 12,
   },

@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FunBox 首页轮播产品设计 V1</title>
+  <style>
+    :root {
+      --page: #eef4ff;
+      --ink: #111715;
+      --muted: #7b8797;
+      --line: #dce5f3;
+      --surface: #ffffff;
+      --blue: #4b6bff;
+      --green: #17463d;
+      --lime: #c9f36a;
+      --mint: #dff2ea;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #dfe6ef;
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    body {
+      display: grid;
+      min-height: 100vh;
+      place-items: center;
+    }
+
+    button { font: inherit; }
+
+    .phone {
+      background: var(--page);
+      height: 932px;
+      overflow: hidden;
+      position: relative;
+      width: 430px;
+    }
+
+    .status-bar {
+      align-items: center;
+      display: flex;
+      height: 42px;
+      justify-content: space-between;
+      padding: 8px 24px 0;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .status-icons {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+    }
+
+    .signal {
+      align-items: end;
+      display: flex;
+      gap: 2px;
+      height: 14px;
+    }
+
+    .signal i {
+      background: var(--ink);
+      border-radius: 2px;
+      display: block;
+      width: 3px;
+    }
+
+    .signal i:nth-child(1) { height: 5px; }
+    .signal i:nth-child(2) { height: 8px; }
+    .signal i:nth-child(3) { height: 11px; }
+    .signal i:nth-child(4) { height: 14px; }
+
+    .battery {
+      border: 1.8px solid var(--ink);
+      border-radius: 4px;
+      height: 14px;
+      padding: 2px;
+      position: relative;
+      width: 24px;
+    }
+
+    .battery::before {
+      background: var(--ink);
+      border-radius: 1px;
+      content: "";
+      inset: 2px 5px 2px 2px;
+      position: absolute;
+    }
+
+    .battery::after {
+      background: var(--ink);
+      border-radius: 0 2px 2px 0;
+      content: "";
+      height: 6px;
+      right: -4px;
+      top: 2px;
+      width: 2px;
+    }
+
+    .page {
+      height: calc(100% - 42px);
+      overflow: hidden;
+      padding: 14px 0 98px;
+      position: relative;
+    }
+
+    .pattern {
+      height: 170px;
+      opacity: .55;
+      overflow: hidden;
+      pointer-events: none;
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 190px;
+    }
+
+    .pattern span {
+      border: 1px solid #dce6f5;
+      border-radius: 10px;
+      height: 48px;
+      position: absolute;
+      right: -30px;
+      top: 16px;
+      transform: rotate(-15deg);
+      width: 190px;
+    }
+
+    .pattern span:nth-child(2) { right: -48px; top: 72px; }
+
+    .header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      align-items: center;
+      display: flex;
+      gap: 11px;
+    }
+
+    .brand-mark {
+      align-items: center;
+      background: #18211f;
+      border-radius: 12px;
+      color: white;
+      display: flex;
+      height: 46px;
+      justify-content: center;
+      width: 46px;
+    }
+
+    .brand-mark svg { height: 25px; width: 25px; }
+
+    .brand-name {
+      font-family: Georgia, serif;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .brand-subtitle {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 5px;
+    }
+
+    .count {
+      color: #66758a;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .carousel-label {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin: 22px 20px 10px;
+    }
+
+    .carousel-label strong {
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .carousel-status {
+      align-items: center;
+      color: var(--muted);
+      display: flex;
+      font-size: 10px;
+      font-weight: 800;
+      gap: 6px;
+    }
+
+    .next-section-preview {
+      margin-top: 24px;
+      padding: 0 20px;
+    }
+
+    .carousel-viewport {
+      overflow: hidden;
+      padding-left: 20px;
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 10px;
+      transform: translateX(0);
+      transition: transform 500ms cubic-bezier(.22,.8,.3,1);
+    }
+
+    .feature-card {
+      border: 0;
+      border-radius: 21px;
+      color: #fff;
+      flex: 0 0 365px;
+      height: 190px;
+      overflow: hidden;
+      padding: 18px 20px;
+      position: relative;
+      text-align: left;
+    }
+
+    .feature-card.tts { background: var(--green); }
+    .feature-card.compress { background: #335bce; }
+    .feature-card.qr { background: #e96d4d; }
+    .feature-card.translate { background: #23705f; }
+
+    .feature-type {
+      align-items: center;
+      display: flex;
+      font-size: 11px;
+      font-weight: 800;
+      gap: 7px;
+      opacity: .93;
+    }
+
+    .feature-type svg { height: 18px; width: 18px; }
+
+    .feature-title {
+      font-size: 27px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-top: 17px;
+      max-width: 195px;
+    }
+
+    .feature-desc {
+      color: rgba(255,255,255,.68);
+      font-size: 11px;
+      line-height: 1.6;
+      margin-top: 8px;
+      max-width: 210px;
+    }
+
+    .feature-action {
+      align-items: center;
+      background: var(--lime);
+      border-radius: 50%;
+      bottom: 18px;
+      color: #173a35;
+      display: flex;
+      height: 36px;
+      justify-content: center;
+      position: absolute;
+      right: 18px;
+      width: 36px;
+    }
+
+    .feature-action svg { height: 19px; width: 19px; }
+
+    .wave {
+      align-items: center;
+      display: flex;
+      gap: 5px;
+      height: 74px;
+      position: absolute;
+      right: 20px;
+      top: 51px;
+    }
+
+    .wave i {
+      background: rgba(255,255,255,.3);
+      border-radius: 3px;
+      display: block;
+      width: 4px;
+    }
+
+    .wave i:nth-child(1) { height: 20px; }
+    .wave i:nth-child(2) { height: 34px; }
+    .wave i:nth-child(3) { height: 50px; }
+    .wave i:nth-child(4) { height: 29px; }
+    .wave i:nth-child(5) { background: var(--lime); height: 66px; }
+    .wave i:nth-child(6) { height: 39px; }
+    .wave i:nth-child(7) { height: 54px; }
+    .wave i:nth-child(8) { height: 25px; }
+
+    .compress-art {
+      border: 2px solid rgba(255,255,255,.35);
+      border-radius: 12px;
+      height: 76px;
+      position: absolute;
+      right: 28px;
+      top: 43px;
+      transform: rotate(4deg);
+      width: 92px;
+    }
+
+    .compress-art::before,
+    .compress-art::after {
+      border: 2px solid rgba(255,255,255,.5);
+      content: "";
+      height: 16px;
+      position: absolute;
+      width: 16px;
+    }
+
+    .compress-art::before { border-width: 2px 0 0 2px; left: 12px; top: 12px; }
+    .compress-art::after { border-width: 0 2px 2px 0; bottom: 12px; right: 12px; }
+
+    .pagination {
+      align-items: center;
+      display: flex;
+      gap: 6px;
+      height: 28px;
+      justify-content: center;
+    }
+
+    .pagination button {
+      background: #bdc8d8;
+      border: 0;
+      border-radius: 4px;
+      height: 5px;
+      padding: 0;
+      transition: width 250ms ease, background 250ms ease;
+      width: 5px;
+    }
+
+    .pagination button.active {
+      background: #1f4e43;
+      width: 19px;
+    }
+
+    .section {
+      padding: 0 20px;
+    }
+
+    .section-head {
+      align-items: end;
+      display: flex;
+      justify-content: space-between;
+      margin: 7px 0 13px;
+    }
+
+    .section-title {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .section-subtitle {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .all-link {
+      align-items: center;
+      display: flex;
+      font-size: 12px;
+      font-weight: 900;
+      gap: 5px;
+    }
+
+    .all-link svg { height: 16px; width: 16px; }
+
+    .tool-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      height: 130px;
+      justify-content: space-between;
+      padding: 12px;
+      position: relative;
+    }
+
+    .tool-card::after {
+      color: #8290a4;
+      content: "↗";
+      font-size: 18px;
+      position: absolute;
+      right: 12px;
+      top: 11px;
+    }
+
+    .tool-icon {
+      align-items: center;
+      background: #f0f3ff;
+      border-radius: 12px;
+      color: var(--blue);
+      display: flex;
+      height: 40px;
+      justify-content: center;
+      width: 40px;
+    }
+
+    .tool-icon.green { background: #eaf5f1; color: #19755f; }
+    .tool-icon.bluegray { background: #ecf2f6; color: #1f4d78; }
+    .tool-icon svg { height: 22px; width: 22px; }
+
+    .tool-name {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .tool-desc {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.4;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bottom-nav {
+      align-items: center;
+      background: rgba(255,255,255,.98);
+      border-top: 1px solid #e4ebf5;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 86px;
+      left: 0;
+      position: absolute;
+      right: 0;
+    }
+
+    .nav-item {
+      align-items: center;
+      color: #8090a8;
+      display: flex;
+      flex-direction: column;
+      font-size: 11px;
+      font-weight: 800;
+      gap: 4px;
+    }
+
+    .nav-item.active { color: var(--blue); }
+    .nav-item svg { height: 24px; width: 24px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .carousel-track { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="FunBox 首页轮播产品设计图">
+    <div class="status-bar">
+      <span>19:17</span>
+      <div class="status-icons">
+        <span class="signal"><i></i><i></i><i></i><i></i></span>
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true"><path d="M1 4.8C5.8.7 12.2.7 17 4.8M4 7.8c3-2.5 7-2.5 10 0M7 10.5c1.3-1 2.7-1 4 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="9" cy="12.5" r="1" fill="currentColor"/></svg>
+        <span class="battery"></span>
+      </div>
+    </div>
+
+    <div class="page">
+      <div class="pattern"><span></span><span></span></div>
+
+      <header class="header">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m4.5 7.3 7.5-4 7.5 4v9.4l-7.5 4-7.5-4V7.3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="m4.8 7.5 7.2 4 7.2-4M12 11.5v9" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div class="brand-name">FunBox</div>
+            <div class="brand-subtitle">工具与游戏，随手即用</div>
+          </div>
+        </div>
+        <div class="count">8 个工具</div>
+      </header>
+
+      <div class="carousel-label">
+        <strong>精选功能</strong>
+        <span class="carousel-status">01 / 04</span>
+      </div>
+
+      <section class="carousel-viewport" aria-label="精选功能轮播">
+        <div class="carousel-track" id="carouselTrack">
+          <article class="feature-card tts">
+            <div class="feature-type">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2 10h2l1.2-4 2.2 8L10 3l2.3 13 1.8-8 1.3 4H18" stroke="#c9f36a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              文字转语音
+            </div>
+            <div class="feature-title">把灵感<br />变成声音</div>
+            <div class="feature-desc">选择音色，即刻生成可试听语音</div>
+            <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <span class="feature-action">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 15 15 5M7 5h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </article>
+
+          <article class="feature-card compress">
+            <div class="feature-type">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="m5.5 13 3.2-3 2.3 2 1.8-1.7 2.2 2.2M13.4 7.5h.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              图片压缩
+            </div>
+            <div class="feature-title">体积更小<br />画质依旧</div>
+            <div class="feature-desc">批量压缩 JPG、PNG 与 WebP</div>
+            <div class="compress-art"></div>
+            <span class="feature-action">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 15 15 5M7 5h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </article>
+
+          <article class="feature-card qr">
+            <div class="feature-type">二维码生成器</div>
+            <div class="feature-title">一码直达<br />分享更快</div>
+            <div class="feature-desc">链接、文本与 Wi-Fi 均可生成</div>
+            <span class="feature-action">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 15 15 5M7 5h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </article>
+
+          <article class="feature-card translate">
+            <div class="feature-type">智能翻译</div>
+            <div class="feature-title">自然表达<br />不止直译</div>
+            <div class="feature-desc">按语境与风格生成多版本译文</div>
+            <span class="feature-action">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M5 15 15 5M7 5h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </article>
+        </div>
+      </section>
+
+      <div class="pagination" id="pagination" aria-label="轮播分页">
+        <button class="active" aria-label="第 1 张"></button>
+        <button aria-label="第 2 张"></button>
+        <button aria-label="第 3 张"></button>
+        <button aria-label="第 4 张"></button>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">常用工具</div>
+            <div class="section-subtitle">高频能力，一步直达</div>
+          </div>
+          <div class="all-link">全部
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 10h14M12 5l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <div class="tool-grid">
+          <article class="tool-card">
+            <div class="tool-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M5 5l2 2M2 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div><div class="tool-name">AI 导航</div><div class="tool-desc">全球主流 AI 官方入口</div></div>
+          </article>
+          <article class="tool-card">
+            <div class="tool-icon bluegray">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12h2l1.3-5 2.5 10L12 3l2.4 15 1.7-8 1.4 4H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div><div class="tool-name">文字转语音</div><div class="tool-desc">现有能力已接入</div></div>
+          </article>
+          <article class="tool-card">
+            <div class="tool-icon green">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm11 0v2m4-2v6m-4 0h2" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            </div>
+            <div><div class="tool-name">二维码生成</div><div class="tool-desc">实时生成与导出</div></div>
+          </article>
+          <article class="tool-card">
+            <div class="tool-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 18V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v12M7 8h7M7 12h5M3 20h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div><div class="tool-name">资源搜索</div><div class="tool-desc">聚合第三方搜索站点</div></div>
+          </article>
+          <article class="tool-card">
+            <div class="tool-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2"/><path d="M8 9h8v6H8z" fill="currentColor" opacity=".3"/></svg>
+            </div>
+            <div><div class="tool-name">图片压缩</div><div class="tool-desc">TinyPNG 批量压缩</div></div>
+          </article>
+          <article class="tool-card">
+            <div class="tool-icon green">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h10M9 3v3m-3 4c2 3 5 5 8 6M15 7l-5 9m5-5h5m-2.5-2v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div><div class="tool-name">智能翻译</div><div class="tool-desc">AI 语境增强翻译</div></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="next-section-preview">
+        <div class="section-title">放松一下</div>
+        <div class="section-subtitle">三款小游戏，随时开一局</div>
+      </section>
+    </div>
+
+    <nav class="bottom-nav" aria-label="底部导航">
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 11 9-8 9 8v9H15v-6H9v6H3v-9Z" fill="currentColor"/></svg>
+        首页
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+        工具
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 0 1-9 8l-5 2 1.4-4A8 8 0 1 1 20 11Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        消息
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 21c.7-5 3.3-7 8-7s7.3 2 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        我的
+      </div>
+    </nav>
+  </main>
+
+  <script>
+    const track = document.getElementById('carouselTrack');
+    const dots = [...document.querySelectorAll('#pagination button')];
+    let active = 0;
+
+    function showSlide(index) {
+      active = index;
+      track.style.transform = `translateX(${-active * 375}px)`;
+      dots.forEach((dot, dotIndex) => dot.classList.toggle('active', dotIndex === active));
+    }
+
+    dots.forEach((dot, index) => dot.addEventListener('click', () => showSlide(index)));
+  </script>
+</body>
+</html>
