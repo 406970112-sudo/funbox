@@ -50,12 +50,7 @@ func (s *Server) withImageCompressionPipeline(next http.HandlerFunc) http.Handle
 			return
 		}
 
-		clientIP := clientIPFromRequest(r)
-		if retryAfter, limited := s.rateLimiter.Allow(clientIP); limited {
-			writeJSON(w, http.StatusTooManyRequests, map[string]any{
-				"error":             "rate_limited",
-				"retryAfterSeconds": retryAfter,
-			})
+		if !s.allowRateLimitedRequest(w, r, "image-compression") {
 			return
 		}
 

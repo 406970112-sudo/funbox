@@ -63,11 +63,11 @@ func NewServer(
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/grants", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureGrant))))
 	registerImageCompressionRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
-	mux.HandleFunc("POST /api/v1/auth/register", api.withAPIPipeline(api.handleRegister))
-	mux.HandleFunc("POST /api/v1/auth/login", api.withAPIPipeline(api.handleLogin))
-	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAPIPipeline(api.handleRecoveryQuestion))
-	mux.HandleFunc("POST /api/v1/auth/password-recovery/verify", api.withAPIPipeline(api.handleRecoveryAnswer))
-	mux.HandleFunc("POST /api/v1/auth/password-recovery/reset", api.withAPIPipeline(api.handleRecoveryReset))
+	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
+	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
+	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))
+	mux.HandleFunc("POST /api/v1/auth/password-recovery/verify", api.withAuthPipeline(api.handleRecoveryAnswer))
+	mux.HandleFunc("POST /api/v1/auth/password-recovery/reset", api.withAuthPipeline(api.handleRecoveryReset))
 	mux.HandleFunc("GET /api/v1/auth/me", api.withAuth(api.handleMe))
 	mux.HandleFunc("PATCH /api/v1/users/me", api.withAuth(api.withAPIPipeline(api.handleUpdateProfile)))
 	mux.HandleFunc("PATCH /api/v1/users/me/password", api.withAuth(api.withAPIPipeline(api.handleChangePassword)))
@@ -102,18 +102,21 @@ func NewServer(
 }
 
 func (s *Server) withAPIPipeline(next http.HandlerFunc) http.HandlerFunc {
+	return s.withJSONPipeline("api", next)
+}
+
+func (s *Server) withAuthPipeline(next http.HandlerFunc) http.HandlerFunc {
+	return s.withJSONPipeline("auth", next)
+}
+
+func (s *Server) withJSONPipeline(scope string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !s.allowOrigin(r) {
 			writeJSON(w, http.StatusForbidden, map[string]any{"error": "origin_not_allowed"})
 			return
 		}
 
-		clientIP := clientIPFromRequest(r)
-		if retryAfter, limited := s.rateLimiter.Allow(clientIP); limited {
-			writeJSON(w, http.StatusTooManyRequests, map[string]any{
-				"error":             "rate_limited",
-				"retryAfterSeconds": retryAfter,
-			})
+		if !s.allowRateLimitedRequest(w, r, scope) {
 			return
 		}
 
@@ -129,12 +132,7 @@ func (s *Server) withAvatarPipeline(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		clientIP := clientIPFromRequest(r)
-		if retryAfter, limited := s.rateLimiter.Allow(clientIP); limited {
-			writeJSON(w, http.StatusTooManyRequests, map[string]any{
-				"error":             "rate_limited",
-				"retryAfterSeconds": retryAfter,
-			})
+		if !s.allowRateLimitedRequest(w, r, "avatar") {
 			return
 		}
 
@@ -151,12 +149,7 @@ func (s *Server) withTextPipeline(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		clientIP := clientIPFromRequest(r)
-		if retryAfter, limited := s.rateLimiter.Allow(clientIP); limited {
-			writeJSON(w, http.StatusTooManyRequests, map[string]any{
-				"error":             "rate_limited",
-				"retryAfterSeconds": retryAfter,
-			})
+		if !s.allowRateLimitedRequest(w, r, "text") {
 			return
 		}
 
@@ -195,12 +188,7 @@ func (s *Server) withTTSPipeline(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		clientIP := clientIPFromRequest(r)
-		if retryAfter, limited := s.rateLimiter.Allow(clientIP); limited {
-			writeJSON(w, http.StatusTooManyRequests, map[string]any{
-				"error":             "rate_limited",
-				"retryAfterSeconds": retryAfter,
-			})
+		if !s.allowRateLimitedRequest(w, r, "tts") {
 			return
 		}
 
@@ -352,7 +340,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
-	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
+	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,Retry-After,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }
 
 func (s *Server) allowOrigin(r *http.Request) bool {

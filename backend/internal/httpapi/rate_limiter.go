@@ -1,7 +1,9 @@
 package httpapi
 
 import (
+	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -56,14 +58,51 @@ func (r *RateLimiter) Allow(key string) (retryAfterSeconds int, limited bool) {
 	return 0, false
 }
 
+func (s *Server) allowRateLimitedRequest(w http.ResponseWriter, r *http.Request, scope string) bool {
+	retryAfter, limited := s.rateLimiter.Allow(rateLimitKeyFromRequest(r, scope))
+	if !limited {
+		return true
+	}
+
+	w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+	writeJSON(w, http.StatusTooManyRequests, map[string]any{
+		"error":             "rate_limited",
+		"retryAfterSeconds": retryAfter,
+	})
+	return false
+}
+
+func rateLimitKeyFromRequest(r *http.Request, scope string) string {
+	return clientIPFromRequest(r) + "\x00" + scope
+}
+
 func clientIPFromRequest(r *http.Request) string {
-	forwardedFor := strings.TrimSpace(r.Header.Get("X-Forwarded-For"))
-	if forwardedFor != "" {
-		parts := strings.Split(forwardedFor, ",")
-		if len(parts) > 0 {
-			return strings.TrimSpace(parts[0])
+	remoteIP, ok := normalizedIP(r.RemoteAddr)
+	if ok && remoteIP.IsLoopback() {
+		if realIP, valid := normalizedIP(r.Header.Get("X-Real-IP")); valid {
+			return realIP.String()
+		}
+
+		parts := strings.Split(r.Header.Get("X-Forwarded-For"), ",")
+		for index := len(parts) - 1; index >= 0; index-- {
+			if forwardedIP, valid := normalizedIP(parts[index]); valid {
+				return forwardedIP.String()
+			}
 		}
 	}
 
-	return r.RemoteAddr
+	if ok {
+		return remoteIP.String()
+	}
+	return strings.TrimSpace(r.RemoteAddr)
+}
+
+func normalizedIP(value string) (net.IP, bool) {
+	value = strings.TrimSpace(value)
+	if host, _, err := net.SplitHostPort(value); err == nil {
+		value = host
+	}
+	value = strings.Trim(value, "[]")
+	parsed := net.ParseIP(value)
+	return parsed, parsed != nil
 }
