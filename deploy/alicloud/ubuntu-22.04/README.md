@@ -39,6 +39,7 @@ sudo \
 REPO_URL='https://your.git.repo.git' \
 BRANCH='main' \
 APP_ROOT='/srv/my-first-expo-app' \
+PERSISTENT_ROOT='/srv/my-first-expo-app-shared' \
 APP_DOMAIN='app.example.com' \
 API_DOMAIN='api.example.com' \
 CORS_ALLOWED_ORIGINS='https://app.example.com,https://www.app.example.com' \
@@ -60,9 +61,12 @@ bash deploy/alicloud/ubuntu-22.04/deploy-project.sh
 - `TTS_MAX_CONTEXT_LENGTH`
 - `TTS_REQUEST_TIMEOUT_MS`
 - `STORAGE_AUDIO_DIR`
+- `PERSISTENT_ROOT`
 - `APP_USER`
 - `APP_GROUP`
 - `GOPROXY`
+
+`PERSISTENT_ROOT` 必须是位于应用和 release 目录之外的绝对路径。部署脚本会把 SQLite 数据库、用户头像和 JWT 密钥保存到该目录；旧 `.env` 中的相对路径会自动基于该目录解析并改写为绝对路径。默认值为 `/srv/my-first-expo-app-shared`。
 
 ### 3. 开 HTTPS
 
@@ -113,10 +117,11 @@ sudo bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04/update-server.sh
 1. 检查服务器是否存在未提交的已跟踪文件改动。
 2. 使用 `git fetch` 和 `git merge --ff-only` 更新 `main`。
 3. 保留现有的 `frontend/.env`、`backend/.env` 和 Nginx 配置。
-4. 重新构建 Expo Web 前端和 Go 后端。
-5. 将当前线上前端和后端二进制备份到 `/srv/deploy-backups/`。
-6. 发布新版本、重启后端、重载 Nginx 并执行健康检查。
-7. 发布失败时自动恢复本次备份。
+4. 将账号数据路径固定到 `/srv/my-first-expo-app-shared`，并拒绝 release 目录内的持久化路径。
+5. 重新构建 Expo Web 前端和 Go 后端。
+6. 将当前线上前端和后端二进制备份到 `/srv/deploy-backups/`。
+7. 发布新版本、重启后端、重载 Nginx 并执行健康检查。
+8. 发布失败时自动恢复本次备份。
 
 查看最近一次发布结果：
 

@@ -14,6 +14,7 @@ APP_GROUP="${APP_GROUP:-www-data}"
 SERVER_PORT="${SERVER_PORT:-3000}"
 GOPROXY="${GOPROXY:-https://goproxy.cn,direct}"
 NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmmirror.com}"
+PERSISTENT_ROOT="${PERSISTENT_ROOT:-/srv/my-first-expo-app-shared}"
 
 VOLC_APP_ID="${VOLC_APP_ID:-}"
 VOLC_ACCESS_TOKEN="${VOLC_ACCESS_TOKEN:-}"
@@ -33,6 +34,18 @@ DATABASE_PATH="${DATABASE_PATH:-data/app.db}"
 AUTH_JWT_SECRET_FILE="${AUTH_JWT_SECRET_FILE:-data/jwt-secret}"
 AUTH_TOKEN_TTL_MS="${AUTH_TOKEN_TTL_MS:-604800000}"
 
+resolve_persistent_path() {
+  local configured_path="$1"
+  local default_path="$2"
+
+  configured_path="${configured_path:-$default_path}"
+  if [[ "$configured_path" == /* ]]; then
+    realpath -m "$configured_path"
+  else
+    realpath -m "$PERSISTENT_ROOT/$configured_path"
+  fi
+}
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Please run this script with sudo or as root."
   exit 1
@@ -47,6 +60,34 @@ if [[ -z "$VOLC_APP_ID" || -z "$VOLC_ACCESS_TOKEN" ]]; then
   echo "VOLC_APP_ID and VOLC_ACCESS_TOKEN are required."
   exit 1
 fi
+
+if [[ "$PERSISTENT_ROOT" != /* ]]; then
+  echo "PERSISTENT_ROOT must be an absolute path."
+  exit 1
+fi
+
+PERSISTENT_ROOT="$(realpath -m "$PERSISTENT_ROOT")"
+RESOLVED_APP_ROOT="$(realpath -m "$APP_ROOT")"
+case "$PERSISTENT_ROOT" in
+  /|"$RESOLVED_APP_ROOT"|"$RESOLVED_APP_ROOT"/*|/srv/my-first-expo-app-releases|/srv/my-first-expo-app-releases/*)
+    echo "PERSISTENT_ROOT must be outside the application and release directories."
+    exit 1
+    ;;
+esac
+
+STORAGE_AVATAR_DIR="$(resolve_persistent_path "$STORAGE_AVATAR_DIR" "data/avatars")"
+DATABASE_PATH="$(resolve_persistent_path "$DATABASE_PATH" "data/app.db")"
+AUTH_JWT_SECRET_FILE="$(resolve_persistent_path "$AUTH_JWT_SECRET_FILE" "data/jwt-secret")"
+
+for path in "$STORAGE_AVATAR_DIR" "$DATABASE_PATH" "$AUTH_JWT_SECRET_FILE"; do
+  case "$path" in
+    "$PERSISTENT_ROOT"/*) ;;
+    *)
+      echo "Auth storage paths must resolve inside $PERSISTENT_ROOT."
+      exit 1
+      ;;
+  esac
+done
 
 if [[ ! -d "$APP_ROOT/.git" ]]; then
   if [[ -z "$REPO_URL" ]]; then
@@ -63,9 +104,10 @@ else
 fi
 
 mkdir -p "$APP_ROOT/backend/$STORAGE_AUDIO_DIR"
-mkdir -p "$APP_ROOT/backend/$STORAGE_AVATAR_DIR"
-mkdir -p "$APP_ROOT/backend/$(dirname "$DATABASE_PATH")"
-mkdir -p "$APP_ROOT/backend/$(dirname "$AUTH_JWT_SECRET_FILE")"
+install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$PERSISTENT_ROOT"
+install -d -o "$APP_USER" -g "$APP_GROUP" -m 755 "$STORAGE_AVATAR_DIR"
+install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$(dirname "$DATABASE_PATH")"
+install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$(dirname "$AUTH_JWT_SECRET_FILE")"
 mkdir -p "/var/www/$APP_NAME"
 
 cat >"$APP_ROOT/backend/.env" <<EOF
@@ -79,6 +121,7 @@ STORAGE_AUDIO_DIR=$STORAGE_AUDIO_DIR
 STORAGE_AVATAR_DIR=$STORAGE_AVATAR_DIR
 STORAGE_MAX_AVATAR_BYTES=$STORAGE_MAX_AVATAR_BYTES
 
+PERSISTENT_ROOT=$PERSISTENT_ROOT
 DATABASE_PATH=$DATABASE_PATH
 AUTH_JWT_SECRET_FILE=$AUTH_JWT_SECRET_FILE
 AUTH_TOKEN_TTL_MS=$AUTH_TOKEN_TTL_MS
@@ -147,7 +190,7 @@ ln -sf "/etc/nginx/sites-available/$API_DOMAIN.conf" "/etc/nginx/sites-enabled/$
 rm -f /etc/nginx/sites-enabled/default
 
 chown -R "$APP_USER:$APP_GROUP" "$APP_ROOT/backend/$STORAGE_AUDIO_DIR"
-chown -R "$APP_USER:$APP_GROUP" "$APP_ROOT/backend/data"
+chown -R "$APP_USER:$APP_GROUP" "$PERSISTENT_ROOT"
 chown -R "$APP_USER:$APP_GROUP" "/var/www/$APP_NAME/frontend"
 
 systemctl daemon-reload

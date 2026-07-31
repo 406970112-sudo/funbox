@@ -20,6 +20,8 @@ FETCH_RETRIES="${FETCH_RETRIES:-5}"
 FETCH_RETRY_DELAY_SECONDS="${FETCH_RETRY_DELAY_SECONDS:-15}"
 BACKUP_ROOT="${BACKUP_ROOT:-/srv/deploy-backups}"
 CORS_ALLOWED_ORIGINS_OVERRIDE="${CORS_ALLOWED_ORIGINS_OVERRIDE:-}"
+DEFAULT_PERSISTENT_ROOT="/srv/my-first-expo-app-shared"
+PERSISTENT_ROOT="${PERSISTENT_ROOT:-}"
 
 FRONTEND_ROOT="$APP_ROOT/frontend"
 BACKEND_ROOT="$APP_ROOT/backend"
@@ -78,6 +80,42 @@ read_env_value() {
   ' "$file"
 }
 
+resolve_persistent_path() {
+  local configured_path="$1"
+  local default_path="$2"
+
+  configured_path="${configured_path:-$default_path}"
+  if [[ "$configured_path" == /* ]]; then
+    realpath -m "$configured_path"
+  else
+    realpath -m "$PERSISTENT_ROOT/$configured_path"
+  fi
+}
+
+prepare_persistent_root() {
+  local configured_root
+  local resolved_app_root
+
+  configured_root="$(read_env_value "$BACKEND_ROOT/.env" "PERSISTENT_ROOT")"
+  PERSISTENT_ROOT="${PERSISTENT_ROOT:-${configured_root:-$DEFAULT_PERSISTENT_ROOT}}"
+  if [[ "$PERSISTENT_ROOT" != /* ]]; then
+    echo "PERSISTENT_ROOT must be an absolute path."
+    exit 1
+  fi
+
+  PERSISTENT_ROOT="$(realpath -m "$PERSISTENT_ROOT")"
+  resolved_app_root="$(realpath -m "$APP_ROOT")"
+  case "$PERSISTENT_ROOT" in
+    /|"$resolved_app_root"|"$resolved_app_root"/*|/srv/my-first-expo-app-releases|/srv/my-first-expo-app-releases/*)
+      echo "PERSISTENT_ROOT must be outside the application and release directories."
+      exit 1
+      ;;
+  esac
+
+  install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$PERSISTENT_ROOT"
+  set_env_value "$BACKEND_ROOT/.env" "PERSISTENT_ROOT" "$PERSISTENT_ROOT"
+}
+
 sync_deepseek_config() {
   local email_env="$EMAIL_AGENT_ROOT/.env"
   local backend_env="$BACKEND_ROOT/.env"
@@ -126,39 +164,23 @@ prepare_auth_storage() {
   local database_path
   local jwt_secret_path
 
-  avatar_dir="$(awk -F= '$1 == "STORAGE_AVATAR_DIR" { sub(/^[^=]*=/, ""); print; exit }' "$BACKEND_ROOT/.env")"
-  database_path="$(awk -F= '$1 == "DATABASE_PATH" { sub(/^[^=]*=/, ""); print; exit }' "$BACKEND_ROOT/.env")"
-  jwt_secret_path="$(awk -F= '$1 == "AUTH_JWT_SECRET_FILE" { sub(/^[^=]*=/, ""); print; exit }' "$BACKEND_ROOT/.env")"
+  avatar_dir="$(read_env_value "$BACKEND_ROOT/.env" "STORAGE_AVATAR_DIR")"
+  database_path="$(read_env_value "$BACKEND_ROOT/.env" "DATABASE_PATH")"
+  jwt_secret_path="$(read_env_value "$BACKEND_ROOT/.env" "AUTH_JWT_SECRET_FILE")"
 
-  avatar_dir="${avatar_dir:-data/avatars}"
-  database_path="${database_path:-data/app.db}"
-  jwt_secret_path="${jwt_secret_path:-data/jwt-secret}"
+  AVATAR_STORAGE_DIR="$(resolve_persistent_path "$avatar_dir" "data/avatars")"
+  DATABASE_FILE="$(resolve_persistent_path "$database_path" "data/app.db")"
+  JWT_SECRET_FILE="$(resolve_persistent_path "$jwt_secret_path" "data/jwt-secret")"
 
-  set_env_value "$BACKEND_ROOT/.env" "STORAGE_AVATAR_DIR" "$avatar_dir"
-  set_env_value "$BACKEND_ROOT/.env" "DATABASE_PATH" "$database_path"
-  set_env_value "$BACKEND_ROOT/.env" "AUTH_JWT_SECRET_FILE" "$jwt_secret_path"
-
-  if [[ "$avatar_dir" == /* ]]; then
-    AVATAR_STORAGE_DIR="$(realpath -m "$avatar_dir")"
-  else
-    AVATAR_STORAGE_DIR="$(realpath -m "$BACKEND_ROOT/$avatar_dir")"
-  fi
-  if [[ "$database_path" == /* ]]; then
-    DATABASE_FILE="$(realpath -m "$database_path")"
-  else
-    DATABASE_FILE="$(realpath -m "$BACKEND_ROOT/$database_path")"
-  fi
-  if [[ "$jwt_secret_path" == /* ]]; then
-    JWT_SECRET_FILE="$(realpath -m "$jwt_secret_path")"
-  else
-    JWT_SECRET_FILE="$(realpath -m "$BACKEND_ROOT/$jwt_secret_path")"
-  fi
+  set_env_value "$BACKEND_ROOT/.env" "STORAGE_AVATAR_DIR" "$AVATAR_STORAGE_DIR"
+  set_env_value "$BACKEND_ROOT/.env" "DATABASE_PATH" "$DATABASE_FILE"
+  set_env_value "$BACKEND_ROOT/.env" "AUTH_JWT_SECRET_FILE" "$JWT_SECRET_FILE"
 
   for path in "$AVATAR_STORAGE_DIR" "$DATABASE_FILE" "$JWT_SECRET_FILE"; do
     case "$path" in
-      "$BACKEND_ROOT"/*) ;;
+      "$PERSISTENT_ROOT"/*) ;;
       *)
-        echo "Auth storage paths must resolve inside $BACKEND_ROOT."
+        echo "Auth storage paths must resolve inside $PERSISTENT_ROOT."
         exit 1
         ;;
     esac
@@ -446,6 +468,9 @@ if [[ ! -f "$FRONTEND_ROOT/.env" || ! -f "$BACKEND_ROOT/.env" || ! -f "$EMAIL_AG
   echo "frontend/.env, backend/.env, and email-agent/backend/.env must already exist."
   exit 1
 fi
+
+prepare_persistent_root
+log "Prepared shared persistent storage at $PERSISTENT_ROOT"
 
 sync_deepseek_config
 log "Synchronized DeepSeek configuration from the email agent"
