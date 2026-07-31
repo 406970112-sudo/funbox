@@ -66,7 +66,9 @@ bash deploy/alicloud/ubuntu-22.04/deploy-project.sh
 - `APP_GROUP`
 - `GOPROXY`
 
-`PERSISTENT_ROOT` 必须是位于应用和 release 目录之外的绝对路径。部署脚本会把 SQLite 数据库、用户头像和 JWT 密钥保存到该目录；旧 `.env` 中的相对路径会自动基于该目录解析并改写为绝对路径。默认值为 `/srv/my-first-expo-app-shared`。
+`PERSISTENT_ROOT` 必须是位于应用和 release 目录之外的绝对路径。部署脚本会把 SQLite 数据库、用户头像和 JWT 密钥保存到该目录；旧 `.env` 中的相对路径会自动改写为共享目录中的绝对路径。默认值为 `/srv/my-first-expo-app-shared`。
+
+首次从 release 内的数据目录切换到共享目录时，更新脚本会通过 SQLite 在线备份迁移上一版数据库，并只复制数据库当前引用的头像与 JWT 密钥。迁移仅在共享数据库尚不存在时执行，后续发布不会覆盖已有共享数据。GitHub Actions 通过 `PREVIOUS_APP_ROOT=/srv/my-first-expo-app-current` 指定上一版应用目录。
 
 ### 3. 开 HTTPS
 
@@ -118,10 +120,11 @@ sudo bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04/update-server.sh
 2. 使用 `git fetch` 和 `git merge --ff-only` 更新 `main`。
 3. 保留现有的 `frontend/.env`、`backend/.env` 和 Nginx 配置。
 4. 将账号数据路径固定到 `/srv/my-first-expo-app-shared`，并拒绝 release 目录内的持久化路径。
-5. 重新构建 Expo Web 前端和 Go 后端。
-6. 将当前线上前端和后端二进制备份到 `/srv/deploy-backups/`。
-7. 发布新版本、重启后端、重载 Nginx 并执行健康检查。
-8. 发布失败时自动恢复本次备份。
+5. 共享数据库不存在时，从 `PREVIOUS_APP_ROOT` 自动迁移上一版数据库、当前头像和 JWT 密钥。
+6. 重新构建 Expo Web 前端和 Go 后端。
+7. 将当前线上前端和后端二进制备份到 `/srv/deploy-backups/`。
+8. 发布新版本、重启后端、重载 Nginx 并执行健康检查。
+9. 发布失败时自动恢复本次备份。
 
 查看最近一次发布结果：
 

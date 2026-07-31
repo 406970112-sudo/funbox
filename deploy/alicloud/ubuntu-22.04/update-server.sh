@@ -22,14 +22,17 @@ BACKUP_ROOT="${BACKUP_ROOT:-/srv/deploy-backups}"
 CORS_ALLOWED_ORIGINS_OVERRIDE="${CORS_ALLOWED_ORIGINS_OVERRIDE:-}"
 DEFAULT_PERSISTENT_ROOT="/srv/my-first-expo-app-shared"
 PERSISTENT_ROOT="${PERSISTENT_ROOT:-}"
+PREVIOUS_APP_ROOT="${PREVIOUS_APP_ROOT:-/srv/my-first-expo-app-current}"
 
 FRONTEND_ROOT="$APP_ROOT/frontend"
 BACKEND_ROOT="$APP_ROOT/backend"
+PREVIOUS_BACKEND_ROOT="$PREVIOUS_APP_ROOT/backend"
 EMAIL_AGENT_ROOT="$APP_ROOT/email-agent/backend"
 EMAIL_AGENT_FRONTEND_ROOT="$APP_ROOT/email-agent/frontend"
 WEB_ROOT="/var/www/$APP_NAME/frontend"
 EMAIL_AGENT_WEB_ROOT="$WEB_ROOT/email-agent"
 BUILD_API="/tmp/$APP_NAME-api"
+BUILD_AUTH_STORAGE_MIGRATOR="/tmp/$APP_NAME-auth-storage-migrator"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 DEPLOY_STARTED=false
@@ -37,6 +40,9 @@ AUDIO_STORAGE_DIR=""
 AVATAR_STORAGE_DIR=""
 DATABASE_FILE=""
 JWT_SECRET_FILE=""
+LEGACY_AVATAR_STORAGE_DIR=""
+LEGACY_DATABASE_FILE=""
+LEGACY_JWT_SECRET_FILE=""
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%F %T')" "$*"
@@ -83,12 +89,29 @@ read_env_value() {
 resolve_persistent_path() {
   local configured_path="$1"
   local default_path="$2"
+  local resolved_path
+
+  configured_path="${configured_path:-$default_path}"
+  if [[ "$configured_path" == /* ]]; then
+    resolved_path="$(realpath -m "$configured_path")"
+    case "$resolved_path" in
+      "$PERSISTENT_ROOT"/*) printf '%s\n' "$resolved_path" ;;
+      *) realpath -m "$PERSISTENT_ROOT/$default_path" ;;
+    esac
+  else
+    realpath -m "$PERSISTENT_ROOT/$configured_path"
+  fi
+}
+
+resolve_legacy_path() {
+  local configured_path="$1"
+  local default_path="$2"
 
   configured_path="${configured_path:-$default_path}"
   if [[ "$configured_path" == /* ]]; then
     realpath -m "$configured_path"
   else
-    realpath -m "$PERSISTENT_ROOT/$configured_path"
+    realpath -m "$PREVIOUS_BACKEND_ROOT/$configured_path"
   fi
 }
 
@@ -163,10 +186,28 @@ prepare_auth_storage() {
   local avatar_dir
   local database_path
   local jwt_secret_path
+  local legacy_avatar_dir
+  local legacy_database_path
+  local legacy_jwt_secret_path
+  local previous_env="$PREVIOUS_BACKEND_ROOT/.env"
 
   avatar_dir="$(read_env_value "$BACKEND_ROOT/.env" "STORAGE_AVATAR_DIR")"
   database_path="$(read_env_value "$BACKEND_ROOT/.env" "DATABASE_PATH")"
   jwt_secret_path="$(read_env_value "$BACKEND_ROOT/.env" "AUTH_JWT_SECRET_FILE")"
+
+  if [[ -f "$previous_env" ]]; then
+    legacy_avatar_dir="$(read_env_value "$previous_env" "STORAGE_AVATAR_DIR")"
+    legacy_database_path="$(read_env_value "$previous_env" "DATABASE_PATH")"
+    legacy_jwt_secret_path="$(read_env_value "$previous_env" "AUTH_JWT_SECRET_FILE")"
+  else
+    legacy_avatar_dir="$avatar_dir"
+    legacy_database_path="$database_path"
+    legacy_jwt_secret_path="$jwt_secret_path"
+  fi
+
+  LEGACY_AVATAR_STORAGE_DIR="$(resolve_legacy_path "$legacy_avatar_dir" "data/avatars")"
+  LEGACY_DATABASE_FILE="$(resolve_legacy_path "$legacy_database_path" "data/app.db")"
+  LEGACY_JWT_SECRET_FILE="$(resolve_legacy_path "$legacy_jwt_secret_path" "data/jwt-secret")"
 
   AVATAR_STORAGE_DIR="$(resolve_persistent_path "$avatar_dir" "data/avatars")"
   DATABASE_FILE="$(resolve_persistent_path "$database_path" "data/app.db")"
@@ -189,6 +230,21 @@ prepare_auth_storage() {
   install -d -o "$APP_USER" -g "$APP_GROUP" -m 755 "$AVATAR_STORAGE_DIR"
   install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$(dirname "$DATABASE_FILE")"
   install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$(dirname "$JWT_SECRET_FILE")"
+}
+
+migrate_legacy_auth_storage() {
+  if [[ ! -x "$BUILD_AUTH_STORAGE_MIGRATOR" ]]; then
+    echo "Auth storage migrator not found: $BUILD_AUTH_STORAGE_MIGRATOR"
+    exit 1
+  fi
+
+  runuser -u "$APP_USER" -- "$BUILD_AUTH_STORAGE_MIGRATOR" \
+    -source-database "$LEGACY_DATABASE_FILE" \
+    -source-avatars "$LEGACY_AVATAR_STORAGE_DIR" \
+    -source-jwt-secret "$LEGACY_JWT_SECRET_FILE" \
+    -target-database "$DATABASE_FILE" \
+    -target-avatars "$AVATAR_STORAGE_DIR" \
+    -target-jwt-secret "$JWT_SECRET_FILE"
 }
 
 retry() {
@@ -537,7 +593,11 @@ export PATH="/usr/local/go/bin:$PATH"
 export GOPROXY
 pushd "$BACKEND_ROOT" >/dev/null
 go build -buildvcs=false -o "$BUILD_API" ./cmd/api
+go build -buildvcs=false -o "$BUILD_AUTH_STORAGE_MIGRATOR" ./cmd/migrate-auth-storage
 popd >/dev/null
+
+log "Migrating legacy account storage when shared storage is empty"
+migrate_legacy_auth_storage
 
 log "Building email agent"
 pushd "$EMAIL_AGENT_ROOT" >/dev/null

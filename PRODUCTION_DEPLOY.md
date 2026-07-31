@@ -164,6 +164,7 @@ server {
 如果你准备正式对外提供服务，推荐优先补：
 
 - `/srv/my-first-expo-app-shared/data/` 定期备份
+- 首次切换到共享目录时，由更新脚本从上一版 release 自动迁移 SQLite、当前头像和 JWT 密钥；已有共享数据库不会被覆盖
 - 邮箱验证和密码找回
 - 用户量增长后迁移到 PostgreSQL 和对象存储
 - 日志和监控
