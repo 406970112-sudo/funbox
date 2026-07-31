@@ -73,7 +73,6 @@ export default function TabLayout() {
                 <View
                   accessibilityElementsHidden
                   importantForAccessibility="no-hide-descendants"
-                  pointerEvents="none"
                   style={[styles.unreadDot, { borderColor: colors.card }]}
                   testID="messages-unread-dot"
                 />
@@ -111,6 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     borderWidth: 1.5,
     height: 9,
+    pointerEvents: 'none',
     position: 'absolute',
     right: -1,
     top: -2,
