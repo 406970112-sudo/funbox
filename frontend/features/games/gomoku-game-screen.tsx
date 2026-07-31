@@ -29,8 +29,9 @@ import {
   type GomokuPosition,
   type Stone,
 } from '@/features/games/gomoku-engine';
+import { getGameSocialCapability } from '@/features/games/game-social-model';
 import { useGameSocial } from '@/features/games/game-social-provider';
-import { SocialAvatar } from '@/features/social/social-ui';
+import { SocialAvatar, SocialEmptyState } from '@/features/social/social-ui';
 import { useSocial } from '@/features/social/social-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
@@ -446,11 +447,13 @@ function GomokuAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => vo
 }
 
 function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
+  const router = useRouter();
   const { user } = useAuth();
   const { colors, colorScheme } = useAppTheme();
   const { width } = useWindowDimensions();
   const { friends } = useSocial();
   const {
+    authenticated,
     createMatch,
     error,
     loading,
@@ -464,6 +467,9 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const gameMatches = matches.filter((match) => match.gameId === 'gomoku');
   const selectedMatch = gameMatches.find((match) => match.id === selectedMatchId) ?? null;
+  const loginRequired = Boolean(
+    getGameSocialCapability('gomoku')?.requiresAuthentication && !authenticated,
+  );
 
   async function runAction(action: () => Promise<GameMatch>, selectResult = true) {
     setBusy(true);
@@ -512,6 +518,23 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
             </View>
           </View>
 
+          {loginRequired ? (
+            <SocialEmptyState
+              action={
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => router.push('/auth')}
+                  style={[styles.loginButton, { backgroundColor: colors.primary }]}>
+                  <ThemedText style={styles.loginButtonText}>登录 / 注册</ThemedText>
+                  <MaterialCommunityIcons name="arrow-right" size={17} color="#ffffff" />
+                </Pressable>
+              }
+              description="登录后即可邀请好友，并实时同步每一步棋。"
+              icon="account-lock-outline"
+              title="登录后和好友对战"
+            />
+          ) : (
+            <>
           {error || localError ? (
             <View style={[styles.gameSocialError, { backgroundColor: colors.surfaceMuted }]}>
               <MaterialCommunityIcons name="alert-circle-outline" size={18} color={colors.accent} />
@@ -653,6 +676,8 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
               })
             )}
           </View>
+            </>
+          )}
         </MobileScreen>
       </>
     );
@@ -1476,6 +1501,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 17,
     textAlign: 'center',
+  },
+  loginButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 7,
+    marginTop: 8,
+    minHeight: 40,
+    paddingHorizontal: 16,
+  },
+  loginButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
   },
   matchRow: {
     alignItems: 'center',

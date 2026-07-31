@@ -1,10 +1,10 @@
 import type { GameSocialCapability } from '@/types/game-social';
 
 const GAME_SOCIAL_CAPABILITIES: Record<string, GameSocialCapability> = {
-  'brick-breaker': { friendLeaderboard: true, friendMatch: false },
-  gomoku: { friendLeaderboard: false, friendMatch: true },
-  'snake-brawl': { friendLeaderboard: true, friendMatch: false },
-  tetris: { friendLeaderboard: true, friendMatch: false },
+  'brick-breaker': { friendLeaderboard: true, friendMatch: false, requiresAuthentication: true },
+  gomoku: { friendLeaderboard: false, friendMatch: true, requiresAuthentication: true },
+  'snake-brawl': { friendLeaderboard: true, friendMatch: false, requiresAuthentication: true },
+  tetris: { friendLeaderboard: true, friendMatch: false, requiresAuthentication: true },
 };
 
 export function getGameSocialCapability(gameId: string): GameSocialCapability | null {

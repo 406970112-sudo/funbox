@@ -44,4 +44,5 @@ export type GameLeaderboardEntry = {
 export type GameSocialCapability = {
   friendLeaderboard: boolean;
   friendMatch: boolean;
+  requiresAuthentication: boolean;
 };

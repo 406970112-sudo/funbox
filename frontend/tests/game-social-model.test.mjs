@@ -10,10 +10,12 @@ test('registers friend matches and score leaderboards by game capability', () =>
   assert.deepEqual(getGameSocialCapability('gomoku'), {
     friendMatch: true,
     friendLeaderboard: false,
+    requiresAuthentication: true,
   });
   assert.deepEqual(getGameSocialCapability('tetris'), {
     friendMatch: false,
     friendLeaderboard: true,
+    requiresAuthentication: true,
   });
   assert.equal(getGameSocialCapability('brain-challenge'), null);
 });

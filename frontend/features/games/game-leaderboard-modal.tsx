@@ -1,8 +1,10 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useRouter } from 'expo-router';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { getGameSocialCapability } from '@/features/games/game-social-model';
 import { useGameSocial } from '@/features/games/game-social-provider';
 import { SocialAvatar } from '@/features/social/social-ui';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -21,15 +23,19 @@ export function GameLeaderboardModal({
   title: string;
   visible: boolean;
 }) {
+  const router = useRouter();
   const { colors } = useAppTheme();
-  const { getLeaderboard } = useGameSocial();
+  const { authenticated, getLeaderboard } = useGameSocial();
   const [entries, setEntries] = useState<GameLeaderboardEntry[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState<GameLeaderboardPeriod>('weekly');
+  const loginRequired = Boolean(
+    getGameSocialCapability(gameId)?.requiresAuthentication && !authenticated,
+  );
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || loginRequired) return;
     let active = true;
     setLoading(true);
     setError('');
@@ -46,7 +52,7 @@ export function GameLeaderboardModal({
     return () => {
       active = false;
     };
-  }, [gameId, getLeaderboard, period, visible]);
+  }, [gameId, getLeaderboard, loginRequired, period, visible]);
 
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
@@ -65,7 +71,7 @@ export function GameLeaderboardModal({
             </Pressable>
           </View>
 
-          <View style={[styles.periodSwitch, { backgroundColor: colors.surfaceMuted }]}>
+          {!loginRequired ? <View style={[styles.periodSwitch, { backgroundColor: colors.surfaceMuted }]}>
             {([
               ['weekly', '本周'],
               ['all-time', '总榜'],
@@ -84,14 +90,32 @@ export function GameLeaderboardModal({
                 </Pressable>
               );
             })}
-          </View>
+          </View> : null}
 
           <ScrollView
             contentContainerStyle={styles.listContent}
             nestedScrollEnabled
             showsVerticalScrollIndicator={false}
             style={styles.list}>
-            {loading ? (
+            {loginRequired ? (
+              <View style={styles.stateView}>
+                <MaterialCommunityIcons name="account-lock-outline" size={28} color={colors.primary} />
+                <ThemedText style={styles.emptyTitle}>登录后查看好友榜</ThemedText>
+                <ThemedText style={[styles.stateText, { color: colors.mutedText }]}>
+                  登录后即可查看你和好友的本周及历史排名
+                </ThemedText>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    onClose();
+                    router.push('/auth');
+                  }}
+                  style={[styles.loginButton, { backgroundColor: colors.primary }]}>
+                  <ThemedText style={styles.loginButtonText}>登录 / 注册</ThemedText>
+                  <MaterialCommunityIcons name="arrow-right" size={17} color="#ffffff" />
+                </Pressable>
+              </View>
+            ) : loading ? (
               <View style={styles.stateView}>
                 <ActivityIndicator color={colors.primary} />
                 <ThemedText style={[styles.stateText, { color: colors.mutedText }]}>正在同步排名</ThemedText>
@@ -197,6 +221,16 @@ const styles = StyleSheet.create({
   stateView: { alignItems: 'center', gap: 8, justifyContent: 'center', minHeight: 250, padding: 24 },
   stateText: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
   emptyTitle: { fontSize: 15, fontWeight: '800', marginTop: 2 },
+  loginButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 7,
+    marginTop: 8,
+    minHeight: 40,
+    paddingHorizontal: 16,
+  },
+  loginButtonText: { color: '#ffffff', fontSize: 12, fontWeight: '800' },
   entry: {
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,

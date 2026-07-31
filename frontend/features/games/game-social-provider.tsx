@@ -29,6 +29,7 @@ import type {
 } from '@/types/game-social';
 
 type GameSocialContextValue = {
+  authenticated: boolean;
   createMatch: (gameId: string, opponentId: string) => Promise<GameMatch>;
   error: string;
   getLeaderboard: (
@@ -99,6 +100,7 @@ export function GameSocialProvider({ children }: PropsWithChildren) {
   }, []);
 
   const value = useMemo<GameSocialContextValue>(() => ({
+    authenticated: Boolean(accessToken),
     createMatch: async (gameId, opponentId) => {
       if (!accessToken) throw new Error('Authentication required');
       return runMatchMutation(() => createGameMatch(accessToken, gameId, opponentId));
