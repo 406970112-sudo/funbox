@@ -2,6 +2,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  SSQAPIError,
+  fetchSSQHistory,
+  getSSQErrorMessage,
+} from '../lib/double-color-ball-api.ts';
+import {
+  getSavedSSQBatch,
+  removeSavedSSQBatch,
+  setSavedSSQBatch,
+} from '../lib/double-color-ball-storage.ts';
+import {
   analyzeDraws,
   generateReferenceBatch,
   getDrawStructure,
@@ -116,5 +126,54 @@ function intersectionSize(left, right) {
   const rightSet = new Set(right);
   return left.filter((value) => rightSet.has(value)).length;
 }
+
+test('requests the backend history contract and maps source errors to actionable copy', async () => {
+  const originalFetch = globalThis.fetch;
+  let requestedURL = '';
+  globalThis.fetch = async (input) => {
+    requestedURL = String(input);
+    return new Response(JSON.stringify({
+      analysisWindowMax: 300,
+      draws: makeSequentialDraws(360),
+      fetchedAt: '2026-07-31T08:00:00Z',
+      source: 'cwl',
+      sourceUrl: 'https://www.cwl.gov.cn/example',
+      stale: false,
+    }), { headers: { 'Content-Type': 'application/json' }, status: 200 });
+  };
+  try {
+    const snapshot = await fetchSSQHistory(undefined, 'http://127.0.0.1:3000');
+    assert.equal(requestedURL, 'http://127.0.0.1:3000/api/v1/lottery/ssq/history');
+    assert.equal(snapshot.draws.length, 360);
+    assert.equal(snapshot.source, 'cwl');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+
+  assert.equal(
+    getSSQErrorMessage(new SSQAPIError('lottery_source_unavailable', 502)),
+    '官方开奖数据暂时不可用，请稍后重试。',
+  );
+  assert.equal(
+    getSSQErrorMessage(new SSQAPIError('lottery_source_invalid', 502)),
+    '官方开奖数据格式异常，暂时无法生成参考组合。',
+  );
+});
+
+test('saved batch storage round-trips only the current batch payload', async () => {
+  await removeSavedSSQBatch();
+  const analysis = analyzeDraws(makeSequentialDraws(100), 100);
+  const saved = {
+    batch: generateReferenceBatch(analysis, 2),
+    batchIndex: 2,
+    issue: analysis.latestDraw.issue,
+    windowSize: 100,
+  };
+
+  await setSavedSSQBatch(saved);
+  assert.deepEqual(await getSavedSSQBatch(), saved);
+  await removeSavedSSQBatch();
+  assert.equal(await getSavedSSQBatch(), null);
+});
 
 export { makeSequentialDraws };

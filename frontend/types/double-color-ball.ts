@@ -80,3 +80,19 @@ export type BacktestSummary = {
   };
   sampleCount: number;
 };
+
+export type SSQHistorySnapshot = {
+  analysisWindowMax: 300;
+  draws: SSQDraw[];
+  fetchedAt: string;
+  source: 'cwl';
+  sourceUrl: string;
+  stale: boolean;
+};
+
+export type SavedSSQBatch = {
+  batch: ReferenceBatch;
+  batchIndex: number;
+  issue: string;
+  windowSize: SSQWindowSize;
+};
