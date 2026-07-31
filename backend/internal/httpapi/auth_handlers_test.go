@@ -52,7 +52,7 @@ func TestAuthHTTPFlow(t *testing.T) {
 		t.Fatalf("open social store: %v", err)
 	}
 	t.Cleanup(func() { _ = socialStore.Close() })
-	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil, nil)
 	testServer := httptest.NewServer(httpServer.Handler)
 	t.Cleanup(testServer.Close)
 
@@ -243,7 +243,7 @@ func TestProfileUpdateIsNotBlockedByExhaustedAuthRateLimit(t *testing.T) {
 		},
 	}
 	authService := auth.NewService(store, []byte(strings.Repeat("k", 32)), time.Hour)
-	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil, nil)
 	testServer := httptest.NewServer(httpServer.Handler)
 	t.Cleanup(testServer.Close)
 

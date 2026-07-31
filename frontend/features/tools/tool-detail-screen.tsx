@@ -7,6 +7,7 @@ import { AiNavigationScreen } from '@/features/tools/ai-navigation-screen';
 import { TextToSpeechToolScreen } from '@/features/tools/tts-tool-screen';
 import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
 import { ImageCompressorScreen } from '@/features/tools/image-compressor-screen';
+import { HotNewsScreen } from '@/features/tools/hot-news-screen';
 import { ResourceSearchScreen } from '@/features/tools/resource-search-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
@@ -77,6 +78,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <ResourceSearchScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'hot-news') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <HotNewsScreen />
       </>
     );
   }

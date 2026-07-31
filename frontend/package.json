@@ -19,7 +19,8 @@
     "test:social-unread": "node --test --experimental-strip-types tests/unread-message-state.test.mjs",
     "test:ssq": "node --test --experimental-strip-types tests/double-color-ball.test.mjs",
     "test:auth": "node --test --experimental-strip-types tests/auth-validation.test.mjs",
-    "test:card-score": "node --test --experimental-strip-types tests/card-score.test.mjs"
+    "test:card-score": "node --test --experimental-strip-types tests/card-score.test.mjs",
+    "test:news": "node --test --experimental-strip-types tests/hot-news.test.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",

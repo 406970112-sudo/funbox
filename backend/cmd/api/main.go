@@ -16,6 +16,7 @@ import (
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
+	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
@@ -81,13 +82,24 @@ func main() {
 		log.Printf("translation disabled: missing DEEPSEEK_API_KEY")
 	}
 
-	server := httpapi.NewServer(
+	newsSource := news.NewRSSSource(
+		&http.Client{Timeout: cfg.News.RequestTimeout},
+		cfg.News.FeedURLs,
+		cfg.News.MaxArticlesPerFeed,
+	)
+	newsService := news.NewService(cfg.News, newsSource, news.NewDeepSeekSummarizer(cfg.DeepSeek))
+	backgroundContext, cancelBackground := context.WithCancel(context.Background())
+	defer cancelBackground()
+	go newsService.Run(backgroundContext)
+
+	server := httpapi.NewServerWithNews(
 		cfg,
 		ttsService,
 		translationService,
 		authService,
 		socialStore,
 		accessStore,
+		newsService,
 		scoreService,
 	)
 
@@ -101,6 +113,7 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
+	cancelBackground()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

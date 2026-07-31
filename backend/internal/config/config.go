@@ -16,6 +16,7 @@ type Config struct {
 	Storage        StorageConfig
 	DeepSeek       DeepSeekConfig
 	Lottery        LotteryConfig
+	News           NewsConfig
 	ResourceSearch ResourceSearchConfig
 	TinyPNG        TinyPNGConfig
 	TTS            TTSConfig
@@ -60,6 +61,16 @@ type LotteryConfig struct {
 	Referer        string
 	RequestTimeout time.Duration
 	SourceURL      string
+}
+
+type NewsConfig struct {
+	FeedURLs           []string
+	Lookback           time.Duration
+	MaxArticlesPerFeed int
+	MaxEvents          int
+	RefreshInterval    time.Duration
+	RequestTimeout     time.Duration
+	SummaryLimit       int
 }
 
 type StorageConfig struct {
@@ -140,6 +151,18 @@ func Load() (Config, error) {
 			RequestTimeout: durationFromMs("LOTTERY_REQUEST_TIMEOUT_MS", "", "10000"),
 			SourceURL:      envFirst("LOTTERY_SOURCE_URL", "https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=ssq&issueCount=400"),
 		},
+		News: NewsConfig{
+			FeedURLs: splitCSV(envFirst(
+				"NEWS_RSS_FEEDS",
+				"https://36kr.com/feed,https://www.ifanr.com/feed,https://www.solidot.org/index.rss,https://feeds.bbci.co.uk/zhongwen/simp/rss.xml",
+			)),
+			Lookback:           durationFromHours("NEWS_LOOKBACK_HOURS", "48"),
+			MaxArticlesPerFeed: intFirst("NEWS_MAX_ARTICLES_PER_FEED", "", "20"),
+			MaxEvents:          intFirst("NEWS_MAX_EVENTS", "", "60"),
+			RefreshInterval:    durationFromMs("NEWS_REFRESH_INTERVAL_MS", "", "900000"),
+			RequestTimeout:     durationFromMs("NEWS_REQUEST_TIMEOUT_MS", "", "12000"),
+			SummaryLimit:       intFirst("NEWS_SUMMARY_LIMIT", "", "8"),
+		},
 		ResourceSearch: ResourceSearchConfig{
 			CacheTTL:       durationFromMs("RESOURCE_SEARCH_CACHE_TTL_MS", "", "120000"),
 			MaxResults:     intFirst("RESOURCE_SEARCH_MAX_RESULTS", "", "20"),
@@ -205,6 +228,15 @@ func durationFromMs(key string, fallbackKey string, defaultValue string) time.Du
 	}
 
 	return time.Duration(parsed) * time.Millisecond
+}
+
+func durationFromHours(key string, defaultValue string) time.Duration {
+	value := envFirst(key, defaultValue)
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		parsed, _ = strconv.Atoi(defaultValue)
+	}
+	return time.Duration(parsed) * time.Hour
 }
 
 func splitCSV(value string) []string {

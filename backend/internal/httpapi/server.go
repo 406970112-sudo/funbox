@@ -16,6 +16,7 @@ import (
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/lottery"
+	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/score"
@@ -31,6 +32,7 @@ type Server struct {
 	rateLimiter           *RateLimiter
 	realtimeHub           *realtime.Hub
 	lotteryService        lotteryHistoryService
+	newsService           newsFeedService
 	resourceSearchService resourceSearchService
 	scoreService          *score.Service
 	socialStore           *social.Store
@@ -47,6 +49,32 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, scoreServices...)
+}
+
+func NewServerWithNews(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, scoreServices...)
+}
+
+func newServer(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
 	var scoreService *score.Service
 	if len(scoreServices) > 0 {
 		scoreService = scoreServices[0]
@@ -58,6 +86,7 @@ func NewServer(
 		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:           realtime.NewHub(),
 		lotteryService:        lottery.NewService(cfg.Lottery),
+		newsService:           newsService,
 		resourceSearchService: resourcesearch.NewService(cfg.ResourceSearch),
 		scoreService:          scoreService,
 		socialStore:           socialStore,
@@ -74,6 +103,7 @@ func NewServer(
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/grants", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureGrant))))
 	registerImageCompressionRoutes(mux, api)
 	registerLotteryRoutes(mux, api)
+	registerNewsRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))

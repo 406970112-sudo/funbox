@@ -45,7 +45,7 @@ func TestSocialHTTPFlow(t *testing.T) {
 		},
 	}
 	authService := auth.NewService(userStore, []byte(strings.Repeat("s", 32)), time.Hour)
-	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil, nil)
 	testServer := httptest.NewServer(httpServer.Handler)
 	t.Cleanup(testServer.Close)
 

@@ -15,6 +15,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "hot-news",
+    "name": "热点速览",
+    "tagline": "每日 AI 简报与多源追踪",
+    "description": "聚合真实 RSS 新闻，按兴趣整理每日简报，并提供带来源引用的 AI 摘要、事件脉络与原文链接。",
+    "icon": "newspaper-variant-multiple-outline",
+    "category": "AI",
+    "route": "/tools/hot-news",
+    "accentColor": "#4b6bff",
+    "badges": ["真实来源", "AI 摘要"],
+    "usageLabel": "查看今日热点",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "release-email-assistant",
     "name": "发版邮件助手",
     "tagline": "生成发版通知邮件",

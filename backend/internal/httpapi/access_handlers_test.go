@@ -62,7 +62,7 @@ func TestFeatureAccessHTTPFlow(t *testing.T) {
 		},
 	}
 	authService := auth.NewService(userStore, []byte(strings.Repeat("k", 32)), time.Hour)
-	httpServer := NewServer(cfg, nil, nil, authService, socialStore, accessStore)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, accessStore, nil)
 	testServer := httptest.NewServer(httpServer.Handler)
 	t.Cleanup(testServer.Close)
 
