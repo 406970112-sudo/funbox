@@ -157,12 +157,12 @@ function addParkedBall(session: BrickBreakerSession) {
       friction: 0,
       frictionAir: 0,
       inertia: Infinity,
-      isStatic: true,
       label: 'ball',
       restitution: 1,
       slop: 0.01,
     },
   );
+  Matter.Body.setStatic(body, true);
   Matter.Composite.add(session.engine.world, body);
   session.balls.set(body.id, { body, parked: true });
 }

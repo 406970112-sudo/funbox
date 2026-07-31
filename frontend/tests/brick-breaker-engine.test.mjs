@@ -70,6 +70,36 @@ test('launches the ball, advances with bounded time, and freezes while paused', 
   disposeBrickBreakerSession(session);
 });
 
+test('bounces off a wall and keeps moving with finite physics values', () => {
+  const session = createBrickBreakerSession({ random: () => 0.99 });
+  launchBrickBreakerBall(session);
+
+  const ball = [...session.balls.values()][0].body;
+  assert.ok(ball.velocity.x > 0);
+
+  let bounced = false;
+  for (let frame = 0; frame < 120; frame += 1) {
+    stepBrickBreakerSession(session, 16);
+    assert.ok(Number.isFinite(ball.position.x));
+    assert.ok(Number.isFinite(ball.position.y));
+    assert.ok(Number.isFinite(ball.velocity.x));
+    assert.ok(Number.isFinite(ball.velocity.y));
+    if (ball.velocity.x < 0) {
+      bounced = true;
+      break;
+    }
+  }
+
+  assert.equal(bounced, true);
+  const xAfterBounce = ball.position.x;
+  for (let frame = 0; frame < 5; frame += 1) {
+    stepBrickBreakerSession(session, 16);
+  }
+  assert.ok(ball.position.x < xAfterBounce);
+
+  disposeBrickBreakerSession(session);
+});
+
 test('damages reinforced bricks before destroying them and updates scoring', () => {
   const session = createBrickBreakerSession({ random: () => 0.99 });
   launchBrickBreakerBall(session);
