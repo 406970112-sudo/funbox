@@ -1,12 +1,15 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
 
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
@@ -123,6 +126,9 @@ func TestSocialHTTPFlow(t *testing.T) {
 		t.Fatalf("accepted friend request = %+v", accepted)
 	}
 
+	connectRealtime(t, testServer.URL, alice.AccessToken)
+	bobSocket := connectRealtime(t, testServer.URL, bob.AccessToken)
+
 	friends := requestJSON[map[string][]friendResponse](
 		t,
 		testServer.Client(),
@@ -132,7 +138,7 @@ func TestSocialHTTPFlow(t *testing.T) {
 		alice.AccessToken,
 		http.StatusOK,
 	)
-	if len(friends["friends"]) != 1 || friends["friends"][0].User.ID != bob.User.ID {
+	if len(friends["friends"]) != 1 || friends["friends"][0].User.ID != bob.User.ID || !friends["friends"][0].User.Online {
 		t.Fatalf("friends = %+v", friends["friends"])
 	}
 
@@ -147,6 +153,25 @@ func TestSocialHTTPFlow(t *testing.T) {
 	)["message"]
 	if createdMessage.Body != "下班后一起开一局？" || createdMessage.SenderID != alice.User.ID {
 		t.Fatalf("created message = %+v", createdMessage)
+	}
+
+	_ = bobSocket.SetReadDeadline(time.Now().Add(2 * time.Second))
+	var liveEvent struct {
+		Data json.RawMessage `json:"data"`
+		Type string          `json:"type"`
+	}
+	if err := bobSocket.ReadJSON(&liveEvent); err != nil {
+		t.Fatalf("read realtime message: %v", err)
+	}
+	if liveEvent.Type != "message.created" {
+		t.Fatalf("realtime event type = %q", liveEvent.Type)
+	}
+	var liveMessage messageResponse
+	if err := json.Unmarshal(liveEvent.Data, &liveMessage); err != nil {
+		t.Fatalf("decode realtime message: %v", err)
+	}
+	if liveMessage.ID != createdMessage.ID {
+		t.Fatalf("realtime message = %+v", liveMessage)
 	}
 
 	conversations := requestJSON[map[string][]conversationResponse](
@@ -196,4 +221,31 @@ func TestSocialHTTPFlow(t *testing.T) {
 	if aliceConversations["conversations"][0].LastMessage == nil || !aliceConversations["conversations"][0].LastMessage.Read {
 		t.Fatalf("alice last message was not marked read: %+v", aliceConversations["conversations"])
 	}
+}
+
+func connectRealtime(t *testing.T, serverURL string, accessToken string) *websocket.Conn {
+	t.Helper()
+	ticketResponse := requestJSON[struct {
+		Ticket string `json:"ticket"`
+	}](
+		t,
+		http.DefaultClient,
+		http.MethodPost,
+		serverURL+"/api/v1/realtime/ticket",
+		"{}",
+		accessToken,
+		http.StatusCreated,
+	)
+
+	websocketURL := "ws" + strings.TrimPrefix(serverURL, "http") +
+		"/api/v1/realtime/ws?ticket=" + ticketResponse.Ticket
+	connection, response, err := websocket.DefaultDialer.Dial(websocketURL, nil)
+	if err != nil {
+		if response != nil {
+			t.Fatalf("connect realtime: %v (status %d)", err, response.StatusCode)
+		}
+		t.Fatalf("connect realtime: %v", err)
+	}
+	t.Cleanup(func() { _ = connection.Close() })
+	return connection
 }

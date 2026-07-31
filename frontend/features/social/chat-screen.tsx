@@ -31,7 +31,7 @@ export function ChatScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const { colors } = useAppTheme();
   const { accessToken, user } = useAuth();
-  const { conversations, lastEventSequence, refresh } = useSocial();
+  const { connectionStatus, conversations, lastEventSequence, refresh } = useSocial();
   const conversation = conversations.find((item) => item.id === conversationId);
   const listRef = useRef<FlatList<SocialMessage>>(null);
   const [error, setError] = useState('');
@@ -61,6 +61,21 @@ export function ChatScreen() {
       active = false;
     };
   }, [accessToken, conversationId, lastEventSequence]);
+
+  useEffect(() => {
+    if (!accessToken || !conversationId || connectionStatus === 'connected') return;
+
+    const pollMessages = () => {
+      void listMessages(accessToken, conversationId)
+        .then((nextMessages) => {
+          setMessages(nextMessages);
+          setError('');
+        })
+        .catch((requestError) => setError(getSocialErrorMessage(requestError)));
+    };
+    const timer = setInterval(pollMessages, 4_000);
+    return () => clearInterval(timer);
+  }, [accessToken, connectionStatus, conversationId]);
 
   async function submitMessage() {
     const body = input.trim();

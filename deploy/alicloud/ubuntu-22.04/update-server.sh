@@ -250,6 +250,7 @@ configure_nginx_api_proxies() {
   local has_agent
   local has_recipients
   local has_email_frontend
+  local has_realtime
   local has_api
   local has_voice
   local has_avatars
@@ -287,6 +288,11 @@ configure_nginx_api_proxies() {
     else
       has_email_frontend=0
     fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]*=[[:space:]]*/api/v1/realtime/ws[[:space:]]*\{' "$stripped"; then
+      has_realtime=1
+    else
+      has_realtime=0
+    fi
     if grep -Eq '^[[:space:]]*location[[:space:]]+/api/[[:space:]]*\{' "$stripped"; then
       has_api=1
     else
@@ -314,6 +320,7 @@ configure_nginx_api_proxies() {
       -v has_agent="$has_agent" \
       -v has_recipients="$has_recipients" \
       -v has_email_frontend="$has_email_frontend" \
+      -v has_realtime="$has_realtime" \
       -v has_api="$has_api" \
       -v has_voice="$has_voice" \
       -v has_avatars="$has_avatars" \
@@ -351,6 +358,20 @@ configure_nginx_api_proxies() {
                   "    proxy_set_header Host $host;\n" \
                   "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n" \
                   "    proxy_set_header X-Forwarded-Proto $scheme;\n" \
+                  "  }\n\n"
+        }
+        if (has_realtime != 1) {
+          block = block \
+                  "  location = /api/v1/realtime/ws {\n" \
+                  "    proxy_pass http://127.0.0.1:" backend_port "/api/v1/realtime/ws;\n" \
+                  "    proxy_http_version 1.1;\n" \
+                  "    proxy_set_header Host $host;\n" \
+                  "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n" \
+                  "    proxy_set_header X-Forwarded-Proto $scheme;\n" \
+                  "    proxy_set_header Upgrade $http_upgrade;\n" \
+                  "    proxy_set_header Connection \"upgrade\";\n" \
+                  "    proxy_read_timeout 75s;\n" \
+                  "    proxy_send_timeout 75s;\n" \
                   "  }\n\n"
         }
         if (has_api != 1) {
