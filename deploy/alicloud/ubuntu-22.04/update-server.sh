@@ -65,6 +65,39 @@ set_env_value() {
   rm -f "$tmp"
 }
 
+read_env_value() {
+  local file="$1"
+  local key="$2"
+
+  awk -v key="$key" '
+    index($0, key "=") == 1 {
+      sub(/^[^=]*=/, "")
+      print
+      exit
+    }
+  ' "$file"
+}
+
+sync_deepseek_config() {
+  local email_env="$EMAIL_AGENT_ROOT/.env"
+  local backend_env="$BACKEND_ROOT/.env"
+  local api_key
+  local api_url
+
+  api_key="$(read_env_value "$email_env" "DEEPSEEK_API_KEY")"
+  if [[ -z "$api_key" ]]; then
+    echo "DEEPSEEK_API_KEY is missing from $email_env."
+    exit 1
+  fi
+
+  set_env_value "$backend_env" "DEEPSEEK_API_KEY" "$api_key"
+
+  api_url="$(read_env_value "$email_env" "DEEPSEEK_API_URL")"
+  if [[ -n "$api_url" ]]; then
+    set_env_value "$backend_env" "DEEPSEEK_API_URL" "$api_url"
+  fi
+}
+
 prepare_audio_storage() {
   local configured_dir
 
@@ -413,6 +446,9 @@ if [[ ! -f "$FRONTEND_ROOT/.env" || ! -f "$BACKEND_ROOT/.env" || ! -f "$EMAIL_AG
   echo "frontend/.env, backend/.env, and email-agent/backend/.env must already exist."
   exit 1
 fi
+
+sync_deepseek_config
+log "Synchronized DeepSeek configuration from the email agent"
 
 if [[ -n "$CORS_ALLOWED_ORIGINS_OVERRIDE" ]]; then
   set_env_value "$BACKEND_ROOT/.env" "CORS_ALLOWED_ORIGINS" "$CORS_ALLOWED_ORIGINS_OVERRIDE"
