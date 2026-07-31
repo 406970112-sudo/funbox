@@ -17,6 +17,7 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
 
 import { FeaturedToolCarousel } from './featured-tool-carousel';
+import { GameArtwork } from './game-artwork';
 
 const HOME_TOOL_LIMIT = 6;
 const HOME_TOOL_EXCLUSIONS = new Set<AppTool['id']>([
@@ -109,8 +110,6 @@ function ToolTile({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
 
 function GameTile({ game, onPress }: { game: GameItem; onPress: () => void }) {
   const { colors } = useAppTheme();
-  const icon =
-    game.id === 'gomoku' ? 'checkerboard' : game.id === 'tetris' ? 'view-grid-outline' : 'snake';
 
   return (
     <Pressable
@@ -123,10 +122,14 @@ function GameTile({ game, onPress }: { game: GameItem; onPress: () => void }) {
         pressed && styles.pressed,
       ]}>
       <View style={[styles.gameVisual, { backgroundColor: `${game.accentColor}1c` }]}>
-        <View style={[styles.gameIcon, { backgroundColor: game.accentColor }]}>
-          <MaterialCommunityIcons name={icon} size={26} color="#ffffff" />
+        <View style={styles.gameArtwork}>
+          <GameArtwork
+            accentColor={game.accentColor}
+            contrastColor={colors.text}
+            gameId={game.id}
+            mutedColor={colors.mutedText}
+          />
         </View>
-        <MaterialCommunityIcons name="play-circle" size={24} color={game.accentColor} />
       </View>
       <ThemedText numberOfLines={1} style={styles.gameTitle}>
         {game.name}
@@ -363,18 +366,15 @@ const styles = StyleSheet.create({
   gameVisual: {
     alignItems: 'center',
     borderRadius: 13,
-    flexDirection: 'row',
     height: 58,
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  gameIcon: {
-    alignItems: 'center',
-    borderRadius: 11,
-    height: 40,
     justifyContent: 'center',
-    width: 40,
+    marginBottom: 10,
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+  },
+  gameArtwork: {
+    height: 48,
+    width: 64,
   },
   gameTitle: {
     fontSize: 14,
