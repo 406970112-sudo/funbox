@@ -84,6 +84,23 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "sudo -n bash '$REMOTE_RELEASE_DIR/source/deploy/alicloud/ubuntu-22.04/configure-tinypng-secret.sh'"
 
+      - name: Prune stale releases
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          REMOTE_RELEASE_DIR: /tmp/my-first-expo-app-${{ github.sha }}
+        run: |
+          : "${DEPLOY_HOST:?Missing DEPLOY_HOST repository secret}"
+          : "${DEPLOY_USER:?Missing DEPLOY_USER repository secret}"
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -p "${DEPLOY_PORT:-22}" \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "sudo -n env RELEASES_ROOT=/srv/my-first-expo-app-releases CURRENT_LINK=/srv/my-first-expo-app-current bash '$REMOTE_RELEASE_DIR/source/deploy/alicloud/ubuntu-22.04/prune-releases.sh'"
+
       - name: Update production server
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
