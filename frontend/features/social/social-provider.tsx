@@ -2,12 +2,14 @@ import {
   createContext,
   type PropsWithChildren,
   startTransition,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import { clearConversationUnreadCount } from '@/features/social/unread-message-state';
 import {
   createFriendRequest,
   createMessage,
@@ -192,13 +194,11 @@ export function SocialProvider({ children }: PropsWithChildren) {
     return message;
   }
 
-  async function markRead(conversationId: string) {
+  const markRead = useCallback(async (conversationId: string) => {
     if (!accessToken) throw new Error('Authentication required');
     await markConversationRead(accessToken, conversationId);
-    setConversations((items) =>
-      items.map((item) => (item.id === conversationId ? { ...item, unreadCount: 0 } : item)),
-    );
-  }
+    setConversations((items) => clearConversationUnreadCount(items, conversationId));
+  }, [accessToken]);
 
   return (
     <SocialContext.Provider

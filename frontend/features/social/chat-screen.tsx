@@ -22,7 +22,6 @@ import {
   createMessage,
   getSocialErrorMessage,
   listMessages,
-  markConversationRead,
 } from '@/lib/social-api';
 import type { SocialMessage } from '@/types/social';
 
@@ -31,7 +30,7 @@ export function ChatScreen() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
   const { colors } = useAppTheme();
   const { accessToken, user } = useAuth();
-  const { connectionStatus, conversations, lastEventSequence, refresh } = useSocial();
+  const { connectionStatus, conversations, lastEventSequence, markRead, refresh } = useSocial();
   const conversation = conversations.find((item) => item.id === conversationId);
   const listRef = useRef<FlatList<SocialMessage>>(null);
   const [error, setError] = useState('');
@@ -49,8 +48,7 @@ export function ChatScreen() {
         if (!active) return;
         setMessages(nextMessages);
         setError('');
-        await markConversationRead(accessToken, conversationId);
-        if (active) void refresh();
+        await markRead(conversationId);
       } catch (requestError) {
         if (active) setError(getSocialErrorMessage(requestError));
       } finally {
@@ -60,7 +58,7 @@ export function ChatScreen() {
     return () => {
       active = false;
     };
-  }, [accessToken, conversationId, lastEventSequence]);
+  }, [accessToken, conversationId, lastEventSequence, markRead]);
 
   useEffect(() => {
     if (!accessToken || !conversationId || connectionStatus === 'connected') return;

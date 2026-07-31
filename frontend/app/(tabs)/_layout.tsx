@@ -1,13 +1,18 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { appLayout } from '@/constants/app-theme';
+import { useSocial } from '@/features/social/social-provider';
+import { getUnreadMessageState } from '@/features/social/unread-message-state';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
 export default function TabLayout() {
   const { colors } = useAppTheme();
+  const { conversations } = useSocial();
+  const unreadState = getUnreadMessageState(conversations);
 
   return (
     <Tabs
@@ -55,9 +60,24 @@ export default function TabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
+          tabBarAccessibilityLabel: unreadState.accessibilityLabel,
           title: '消息',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={23} color={color} />
+            <View style={styles.messageIcon}>
+              <Ionicons
+                name={focused ? 'chatbubble' : 'chatbubble-outline'}
+                size={23}
+                color={color}
+              />
+              {unreadState.hasUnread ? (
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={[styles.unreadDot, { borderColor: colors.card }]}
+                  testID="messages-unread-dot"
+                />
+              ) : null}
+            </View>
           ),
         }}
       />
@@ -77,3 +97,23 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  messageIcon: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  unreadDot: {
+    backgroundColor: '#f04444',
+    borderRadius: 5,
+    borderWidth: 1.5,
+    height: 9,
+    pointerEvents: 'none',
+    position: 'absolute',
+    right: -1,
+    top: -2,
+    width: 9,
+  },
+});
