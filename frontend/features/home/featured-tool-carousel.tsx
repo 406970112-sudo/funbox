@@ -18,6 +18,11 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 import { getToolById } from '@/mocks/app-data';
 import type { AppIconName, AppTool, ToolId } from '@/types/app';
 
+import {
+  getNextCarouselStep,
+  type CarouselDirection,
+} from './featured-carousel-sequence';
+
 const AUTO_PLAY_INTERVAL_MS = 5200;
 const CARD_GAP = 10;
 const NEXT_CARD_PEEK = 30;
@@ -176,6 +181,7 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
   const cardStep = cardWidth + CARD_GAP;
   const listRef = useRef<FlatList<FeaturedSlide>>(null);
   const activeIndexRef = useRef(0);
+  const autoPlayDirectionRef = useRef<CarouselDirection>(1);
   const isInteractingRef = useRef(false);
   const lastInteractionAtRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -220,12 +226,17 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
         return;
       }
 
-      const nextIndex = (activeIndexRef.current + 1) % featuredSlides.length;
-      activeIndexRef.current = nextIndex;
-      setActiveIndex(nextIndex);
+      const nextStep = getNextCarouselStep(
+        activeIndexRef.current,
+        autoPlayDirectionRef.current,
+        featuredSlides.length,
+      );
+      autoPlayDirectionRef.current = nextStep.direction;
+      activeIndexRef.current = nextStep.index;
+      setActiveIndex(nextStep.index);
       listRef.current?.scrollToOffset({
         animated: true,
-        offset: nextIndex * cardStep,
+        offset: nextStep.index * cardStep,
       });
     }, AUTO_PLAY_INTERVAL_MS);
 
