@@ -99,7 +99,7 @@ func TestServiceHistoryRejectsDuplicateOrOutOfRangeBalls(t *testing.T) {
 
 - [ ] **Step 2: Run the focused backend test and confirm RED**
 
-Run: `go test ./internal/lottery -run 'TestServiceHistory' -count=1` from `backend/`  
+Run: `go test ./internal/lottery -run 'TestServiceHistory' -count=1` from `backend/`
 Expected: FAIL because package `internal/lottery` and its exported types do not exist.
 
 - [ ] **Step 3: Add configuration defaults**
@@ -199,8 +199,8 @@ Keep `service_test.go` in package `lottery` so the test can replace the private 
 
 - [ ] **Step 6: Run and format backend service tests**
 
-Run: `gofmt -w internal/config/config.go internal/lottery/service.go internal/lottery/service_test.go` from `backend/`  
-Run: `go test ./internal/lottery ./internal/config -count=1` from `backend/`  
+Run: `gofmt -w internal/config/config.go internal/lottery/service.go internal/lottery/service_test.go` from `backend/`
+Run: `go test ./internal/lottery ./internal/config -count=1` from `backend/`
 Expected: PASS.
 
 - [ ] **Step 7: Commit the backend service slice**
@@ -266,7 +266,7 @@ func TestLotteryHistoryHandlerMapsSourceErrors(t *testing.T) {
 
 - [ ] **Step 2: Run the focused handler test and confirm RED**
 
-Run: `go test ./internal/httpapi -run LotteryHistory -count=1` from `backend/`  
+Run: `go test ./internal/httpapi -run LotteryHistory -count=1` from `backend/`
 Expected: FAIL because `lotteryService`, route registration, and handler do not exist.
 
 - [ ] **Step 3: Implement interface, route and error mapping**
@@ -296,8 +296,8 @@ Initialize `lotteryService: lottery.NewService(cfg.Lottery)` in `NewServer` and 
 
 - [ ] **Step 4: Format and run handler plus full backend tests**
 
-Run: `gofmt -w internal/httpapi/server.go internal/httpapi/lottery_handlers.go internal/httpapi/lottery_handlers_test.go` from `backend/`  
-Run: `go test ./... -count=1` from `backend/`  
+Run: `gofmt -w internal/httpapi/server.go internal/httpapi/lottery_handlers.go internal/httpapi/lottery_handlers_test.go` from `backend/`
+Run: `go test ./... -count=1` from `backend/`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the HTTP endpoint slice**
@@ -398,7 +398,7 @@ test('classifies exactly the top and bottom quartiles by activity rank', () => {
 
 - [ ] **Step 3: Run the frontend test and confirm RED**
 
-Run: `npm run test:ssq` from `frontend/`  
+Run: `npm run test:ssq` from `frontend/`
 Expected: FAIL because the script and module do not exist.
 
 - [ ] **Step 4: Add the test script and implement pure statistics**
@@ -427,8 +427,8 @@ export function getDrawStructure(draw: Pick<SSQDraw, 'red'>): DrawStructure {
 
 - [ ] **Step 5: Run statistics tests and lint the new modules**
 
-Run: `npm run test:ssq` from `frontend/`  
-Run: `npx eslint lib/double-color-ball.ts types/double-color-ball.ts tests/double-color-ball.test.mjs` from `frontend/`  
+Run: `npm run test:ssq` from `frontend/`
+Run: `npx eslint lib/double-color-ball.ts types/double-color-ball.ts tests/double-color-ball.test.mjs` from `frontend/`
 Expected: PASS.
 
 - [ ] **Step 6: Commit the statistics slice**
@@ -490,7 +490,7 @@ test('changes the batch when batchIndex changes', () => {
 
 - [ ] **Step 2: Run generator tests and confirm RED**
 
-Run: `npm run test:ssq -- --test-name-pattern="deterministic|batchIndex"` from `frontend/`  
+Run: `npm run test:ssq -- --test-name-pattern="deterministic|batchIndex"` from `frontend/`
 Expected: FAIL because generator functions and types do not exist.
 
 - [ ] **Step 3: Implement seeded sampling, constraints and score**
@@ -559,8 +559,8 @@ For every target, pass only the immediately preceding `windowSize` draws into `a
 
 - [ ] **Step 6: Run all SSQ domain tests and lint**
 
-Run: `npm run test:ssq` from `frontend/`  
-Run: `npx eslint lib/double-color-ball.ts types/double-color-ball.ts tests/double-color-ball.test.mjs` from `frontend/`  
+Run: `npm run test:ssq` from `frontend/`
+Run: `npx eslint lib/double-color-ball.ts types/double-color-ball.ts tests/double-color-ball.test.mjs` from `frontend/`
 Expected: PASS.
 
 - [ ] **Step 7: Commit generator and backtest**
@@ -615,7 +615,7 @@ test('maps lottery API errors to actionable Chinese copy', () => {
 
 - [ ] **Step 2: Run focused tests and confirm RED**
 
-Run: `npm run test:ssq -- --test-name-pattern="storage|API errors"` from `frontend/`  
+Run: `npm run test:ssq -- --test-name-pattern="storage|API errors"` from `frontend/`
 Expected: FAIL because API and storage modules do not exist.
 
 - [ ] **Step 3: Implement API client and exact response type**
@@ -655,8 +655,8 @@ Use module memory in `.ts`, `window.localStorage` in `.web.ts`, and `SecureStore
 
 - [ ] **Step 5: Run API/storage tests and lint**
 
-Run: `npm run test:ssq` from `frontend/`  
-Run: `npx eslint lib/double-color-ball-api.ts lib/double-color-ball-storage*.ts types/double-color-ball.ts` from `frontend/`  
+Run: `npm run test:ssq` from `frontend/`
+Run: `npx eslint lib/double-color-ball-api.ts lib/double-color-ball-storage*.ts types/double-color-ball.ts` from `frontend/`
 Expected: PASS.
 
 - [ ] **Step 6: Commit API and storage**
@@ -696,7 +696,7 @@ test('screen keeps probability and responsibility guardrails visible', async () 
 
 - [ ] **Step 2: Run UI guardrail test and confirm RED**
 
-Run: `npm run test:ssq -- --test-name-pattern="guardrails"` from `frontend/`  
+Run: `npm run test:ssq -- --test-name-pattern="guardrails"` from `frontend/`
 Expected: FAIL because the screen file does not exist.
 
 - [ ] **Step 3: Build reusable visual components**
@@ -747,9 +747,9 @@ Render states exactly:
 
 - [ ] **Step 5: Run UI tests, TypeScript and focused lint**
 
-Run: `npm run test:ssq` from `frontend/`  
-Run: `npx tsc --noEmit` from `frontend/`  
-Run: `npx eslint features/tools/double-color-ball-components.tsx features/tools/double-color-ball-screen.tsx` from `frontend/`  
+Run: `npm run test:ssq` from `frontend/`
+Run: `npx tsc --noEmit` from `frontend/`
+Run: `npx eslint features/tools/double-color-ball-components.tsx features/tools/double-color-ball-screen.tsx` from `frontend/`
 Expected: PASS.
 
 - [ ] **Step 6: Commit the screen slice**
@@ -790,7 +790,7 @@ test('registers double color ball for every app role', async () => {
 
 - [ ] **Step 2: Run registration test and confirm RED**
 
-Run: `npm run test:ssq -- --test-name-pattern="registers"` from `frontend/`  
+Run: `npm run test:ssq -- --test-name-pattern="registers"` from `frontend/`
 Expected: FAIL because the registry entry does not exist.
 
 - [ ] **Step 3: Register the tool**
@@ -830,9 +830,9 @@ if (tool?.id === 'double-color-ball') {
 
 - [ ] **Step 5: Run registration test and complete frontend static checks**
 
-Run: `npm run test:ssq` from `frontend/`  
-Run: `npm run frontend:lint` from the repository root  
-Run: `npx tsc --noEmit` from `frontend/`  
+Run: `npm run test:ssq` from `frontend/`
+Run: `npm run frontend:lint` from the repository root
+Run: `npx tsc --noEmit` from `frontend/`
 Expected: PASS.
 
 - [ ] **Step 6: Commit registration**
@@ -858,21 +858,21 @@ git commit -m "feat: register ssq probability reference tool"
 
 - [ ] **Step 1: Run full automated verification**
 
-Run: `go test ./... -count=1` from `backend/`  
-Run: `npm run test:ssq` from `frontend/`  
-Run: `npm run lint` from `frontend/`  
-Run: `npx tsc --noEmit` from `frontend/`  
+Run: `go test ./... -count=1` from `backend/`
+Run: `npm run test:ssq` from `frontend/`
+Run: `npm run lint` from `frontend/`
+Run: `npx tsc --noEmit` from `frontend/`
 Expected: all commands exit 0.
 
 - [ ] **Step 2: Start backend and Expo Web on free ports**
 
-Run backend from `backend/` with `go run ./cmd/api`. Use the configured default `http://127.0.0.1:3000` unless occupied.  
-Run frontend from `frontend/` with `npx expo start --web --port 8081`. If 8081 is occupied, increment to the next free port.  
+Run backend from `backend/` with `go run ./cmd/api`. Use the configured default `http://127.0.0.1:3000` unless occupied.
+Run frontend from `frontend/` with `npx expo start --web --port 8081`. If 8081 is occupied, increment to the next free port.
 Expected: both long-running processes remain active and print their URLs.
 
 - [ ] **Step 3: Verify the live data contract**
 
-Run: `Invoke-RestMethod http://127.0.0.1:3000/api/v1/lottery/ssq/history | ConvertTo-Json -Depth 5`  
+Run: `Invoke-RestMethod http://127.0.0.1:3000/api/v1/lottery/ssq/history | ConvertTo-Json -Depth 5`
 Expected: source `cwl`, `analysisWindowMax` 300, 360-400 validated draws, latest issue first, and `stale` false under normal network conditions.
 
 - [ ] **Step 4: Verify the rendered workflow at desktop-narrow and mobile sizes**
@@ -893,7 +893,7 @@ Save screenshots to `output/ssq-analysis-430.png` and `output/ssq-combinations-3
 
 - [ ] **Step 5: Check browser console and network failures**
 
-Expected console: no React key warnings, unhandled promise rejections, or layout errors.  
+Expected console: no React key warnings, unhandled promise rejections, or layout errors.
 Expected network: one history request on initial load; no repeated request when switching windows or combinations.
 
 - [ ] **Step 6: Stop long-running verification processes**
@@ -902,8 +902,8 @@ Terminate the backend and Expo sessions cleanly after screenshots and console ch
 
 - [ ] **Step 7: Review the final diff and commit verification fixes**
 
-Run: `git diff --check`  
-Run: `git status --short`  
+Run: `git diff --check`
+Run: `git status --short`
 Confirm only intended feature files and pre-existing user changes are present. If verification required code fixes, commit only those feature files:
 
 ```bash
