@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FunBox · 市场雷达产品方案 V1</title>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --board: #e4ebf6;
+      --page: #eef4ff;
+      --surface: #ffffff;
+      --surface-muted: #f3f6fb;
+      --ink: #18233d;
+      --muted: #7483a2;
+      --line: #dce5f6;
+      --blue: #4b6bff;
+      --blue-soft: #e6ebff;
+      --navy: #151b3b;
+      --lime: #c9f36a;
+      --coral: #ff6b8f;
+      --up: #ef5962;
+      --down: #21ad78;
+      --amber: #f1a33b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--board);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      min-width: 1500px;
+    }
+
+    button { font: inherit; }
+
+    .board {
+      background:
+        linear-gradient(rgba(255,255,255,.36) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.36) 1px, transparent 1px),
+        var(--board);
+      background-size: 40px 40px;
+      min-height: 1080px;
+      padding: 34px 44px 38px;
+      width: 1600px;
+    }
+
+    .board-header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin: 0 auto;
+      max-width: 1512px;
+    }
+
+    .brand {
+      align-items: center;
+      display: flex;
+      gap: 16px;
+    }
+
+    .brand-mark {
+      align-items: center;
+      background: var(--navy);
+      border-radius: 14px;
+      color: var(--lime);
+      display: flex;
+      height: 54px;
+      justify-content: center;
+      width: 54px;
+    }
+
+    .brand-mark svg { height: 27px; width: 27px; }
+
+    .board-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .board-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin: 5px 0 0;
+    }
+
+    .version {
+      border-left: 3px solid var(--blue);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.7;
+      padding-left: 12px;
+      text-align: right;
+    }
+
+    .version strong {
+      color: var(--ink);
+      display: block;
+      font-size: 14px;
+    }
+
+    .stage {
+      display: grid;
+      gap: 28px;
+      grid-template-columns: 308px 1fr 1fr;
+      margin: 28px auto 0;
+      max-width: 1512px;
+    }
+
+    .strategy {
+      align-self: stretch;
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(255,255,255,.9);
+      display: flex;
+      flex-direction: column;
+      min-height: 900px;
+      padding: 26px 24px;
+    }
+
+    .strategy-kicker {
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .strategy h2 {
+      font-size: 25px;
+      font-weight: 900;
+      line-height: 1.35;
+      margin: 10px 0 10px;
+    }
+
+    .strategy-lead {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+      margin: 0;
+    }
+
+    .strategy-section {
+      border-top: 1px solid var(--line);
+      margin-top: 24px;
+      padding-top: 20px;
+    }
+
+    .strategy-section h3 {
+      font-size: 14px;
+      font-weight: 900;
+      margin: 0 0 12px;
+    }
+
+    .problem-list,
+    .goal-list {
+      display: grid;
+      gap: 11px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .problem-list li,
+    .goal-list li {
+      align-items: flex-start;
+      color: #56647f;
+      display: flex;
+      font-size: 12px;
+      gap: 9px;
+      line-height: 1.55;
+    }
+
+    .problem-list i,
+    .goal-list i {
+      color: var(--coral);
+      flex: 0 0 auto;
+      height: 15px;
+      margin-top: 2px;
+      width: 15px;
+    }
+
+    .goal-list i { color: var(--down); }
+
+    .approaches {
+      display: grid;
+      gap: 8px;
+    }
+
+    .approach {
+      align-items: center;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 9px;
+      grid-template-columns: 24px 1fr;
+      min-height: 55px;
+      padding: 10px 11px;
+    }
+
+    .approach-number {
+      align-items: center;
+      background: var(--surface-muted);
+      color: var(--muted);
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      height: 24px;
+      justify-content: center;
+      width: 24px;
+    }
+
+    .approach strong {
+      display: block;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .approach span {
+      color: var(--muted);
+      display: block;
+      font-size: 9px;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    .approach.selected {
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+
+    .approach.selected .approach-number {
+      background: var(--lime);
+      color: var(--navy);
+    }
+
+    .approach.selected strong { color: #fff; }
+    .approach.selected span { color: #aebbd0; }
+
+    .strategy-outcome {
+      background: #edf5ed;
+      border-left: 3px solid var(--down);
+      color: #48605a;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.7;
+      margin-top: auto;
+      padding: 13px 14px;
+    }
+
+    .concept {
+      min-width: 0;
+    }
+
+    .concept-label {
+      align-items: center;
+      display: flex;
+      gap: 9px;
+      height: 34px;
+      margin-bottom: 10px;
+    }
+
+    .concept-index {
+      align-items: center;
+      background: var(--navy);
+      color: var(--lime);
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      height: 25px;
+      justify-content: center;
+      width: 25px;
+    }
+
+    .concept-label strong {
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .concept-label span:last-child {
+      color: var(--muted);
+      font-size: 10px;
+      margin-left: auto;
+    }
+
+    .phone {
+      background: #091126;
+      border: 5px solid #091126;
+      border-radius: 38px;
+      box-shadow: 0 22px 48px rgba(36, 55, 94, .18);
+      height: 855px;
+      margin: 0 auto;
+      max-width: 430px;
+      overflow: hidden;
+      padding: 8px;
+      position: relative;
+      width: 100%;
+    }
+
+    .phone::before {
+      background: #091126;
+      border-radius: 0 0 14px 14px;
+      content: "";
+      height: 25px;
+      left: 50%;
+      position: absolute;
+      top: 8px;
+      transform: translateX(-50%);
+      width: 92px;
+      z-index: 5;
+    }
+
+    .screen {
+      background: var(--page);
+      border-radius: 27px;
+      display: grid;
+      grid-template-rows: 30px 54px 1fr 66px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .status-bar {
+      align-items: center;
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      justify-content: space-between;
+      padding: 5px 18px 0;
+    }
+
+    .status-icons {
+      align-items: center;
+      display: flex;
+      gap: 6px;
+    }
+
+    .status-icons svg { height: 12px; width: 12px; }
+
+    .topbar {
+      align-items: center;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 42px 1fr 42px;
+      padding: 0 12px;
+    }
+
+    .topbar h2 {
+      font-size: 16px;
+      font-weight: 900;
+      margin: 0;
+      text-align: center;
+    }
+
+    .icon-button {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      display: flex;
+      height: 36px;
+      justify-content: center;
+      padding: 0;
+      width: 36px;
+    }
+
+    .icon-button.secondary {
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      justify-self: end;
+    }
+
+    .icon-button svg { height: 18px; width: 18px; }
+
+    .scroll {
+      min-height: 0;
+      overflow: hidden;
+      padding: 13px 14px 18px;
+    }
+
+    .pulse-hero {
+      background: var(--navy);
+      border-radius: 20px;
+      color: #fff;
+      min-height: 135px;
+      overflow: hidden;
+      padding: 16px 17px;
+      position: relative;
+    }
+
+    .pulse-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 20px 20px;
+      bottom: 0;
+      opacity: .8;
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 43%;
+    }
+
+    .radar {
+      border: 1px solid rgba(201,243,106,.34);
+      border-radius: 50%;
+      height: 94px;
+      position: absolute;
+      right: 17px;
+      top: 21px;
+      width: 94px;
+    }
+
+    .radar::before,
+    .radar::after {
+      border: 1px solid rgba(201,243,106,.27);
+      border-radius: 50%;
+      content: "";
+      left: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .radar::before { height: 62px; width: 62px; }
+    .radar::after { height: 31px; width: 31px; }
+
+    .radar-line {
+      background: var(--lime);
+      height: 1px;
+      left: 47px;
+      position: absolute;
+      top: 47px;
+      transform: rotate(-32deg);
+      transform-origin: left center;
+      width: 42px;
+    }
+
+    .radar-dot {
+      background: var(--coral);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      height: 9px;
+      position: absolute;
+      right: 25px;
+      top: 23px;
+      width: 9px;
+    }
+
+    .hero-eyebrow {
+      color: var(--lime);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .pulse-score {
+      align-items: flex-end;
+      display: flex;
+      gap: 7px;
+      margin-top: 7px;
+    }
+
+    .pulse-score strong {
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .pulse-score span {
+      color: var(--lime);
+      font-size: 13px;
+      font-weight: 900;
+      margin-bottom: 3px;
+    }
+
+    .pulse-meta {
+      color: #aebbd0;
+      font-size: 9px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .pulse-signal {
+      align-items: center;
+      display: flex;
+      font-size: 10px;
+      font-weight: 800;
+      gap: 6px;
+      margin-top: 9px;
+    }
+
+    .pulse-signal b { color: var(--coral); }
+
+    .controls {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 13px;
+    }
+
+    .market-tabs {
+      display: flex;
+      gap: 18px;
+    }
+
+    .market-tab {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 0 8px;
+      position: relative;
+    }
+
+    .market-tab.active { color: var(--ink); }
+    .market-tab.active::after {
+      background: var(--blue);
+      bottom: 0;
+      content: "";
+      height: 3px;
+      left: 0;
+      position: absolute;
+      right: 0;
+    }
+
+    .period-tabs {
+      background: #fff;
+      border: 1px solid var(--line);
+      display: flex;
+      height: 28px;
+    }
+
+    .period-tabs span {
+      align-items: center;
+      color: var(--muted);
+      display: flex;
+      font-size: 8px;
+      font-weight: 800;
+      justify-content: center;
+      width: 30px;
+    }
+
+    .period-tabs .active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .section-head {
+      align-items: flex-end;
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 2px 8px;
+    }
+
+    .section-head h3 {
+      font-size: 14px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .section-head span {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    .strength-list,
+    .signal-list,
+    .asset-list {
+      background: #fff;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .strength-row {
+      align-items: center;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 76px 54px 13px;
+      min-height: 42px;
+      padding: 0 11px;
+    }
+
+    .strength-row:first-child { border-top: 0; }
+
+    .strength-name {
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .sparkline {
+      height: 22px;
+      width: 76px;
+    }
+
+    .sparkline polyline {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+    }
+
+    .value {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+
+    .strength-row > svg {
+      color: var(--muted);
+      height: 13px;
+      width: 13px;
+    }
+
+    .signal-row {
+      align-items: center;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 9px;
+      grid-template-columns: 28px 1fr auto;
+      min-height: 46px;
+      padding: 0 11px;
+    }
+
+    .signal-row:first-child { border-top: 0; }
+
+    .signal-icon {
+      align-items: center;
+      background: var(--blue-soft);
+      color: var(--blue);
+      display: flex;
+      height: 27px;
+      justify-content: center;
+      width: 27px;
+    }
+
+    .signal-icon.coral {
+      background: #fff0f3;
+      color: var(--coral);
+    }
+
+    .signal-icon svg { height: 14px; width: 14px; }
+
+    .signal-copy strong {
+      display: block;
+      font-size: 10px;
+    }
+
+    .signal-copy span {
+      color: var(--muted);
+      display: block;
+      font-size: 8px;
+      margin-top: 2px;
+    }
+
+    .signal-tag {
+      color: var(--up);
+      font-size: 8px;
+      font-weight: 900;
+    }
+
+    .source-line {
+      align-items: center;
+      color: var(--muted);
+      display: flex;
+      font-size: 8px;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 11px;
+    }
+
+    .source-line svg { height: 11px; width: 11px; }
+
+    .detail-value {
+      background: var(--navy);
+      border-radius: 20px;
+      color: #fff;
+      min-height: 174px;
+      overflow: hidden;
+      padding: 18px;
+      position: relative;
+    }
+
+    .detail-title {
+      color: #aebbd0;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .detail-number {
+      color: var(--coral);
+      font-family: Arial, sans-serif;
+      font-size: 31px;
+      font-weight: 900;
+      margin-top: 6px;
+    }
+
+    .detail-period {
+      color: #aebbd0;
+      font-size: 8px;
+      margin-top: 3px;
+    }
+
+    .detail-chart {
+      bottom: 33px;
+      height: 88px;
+      position: absolute;
+      right: 17px;
+      width: 205px;
+    }
+
+    .detail-chart .grid {
+      stroke: rgba(255,255,255,.09);
+      stroke-width: 1;
+    }
+
+    .detail-chart .line {
+      fill: none;
+      stroke: var(--lime);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 3;
+    }
+
+    .range-switch {
+      bottom: 13px;
+      color: #8d99b0;
+      display: flex;
+      font-family: Arial, sans-serif;
+      font-size: 8px;
+      font-weight: 800;
+      gap: 16px;
+      position: absolute;
+      right: 22px;
+    }
+
+    .range-switch .active { color: var(--lime); }
+
+    .insight {
+      background: #edf5ed;
+      border-left: 3px solid var(--down);
+      margin-top: 13px;
+      padding: 12px 13px;
+    }
+
+    .insight h3 {
+      align-items: center;
+      display: flex;
+      font-size: 11px;
+      gap: 6px;
+      margin: 0 0 8px;
+    }
+
+    .insight h3 svg { color: var(--down); height: 14px; width: 14px; }
+
+    .insight p {
+      color: #48605a;
+      font-size: 9px;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .asset-header,
+    .asset-row {
+      align-items: center;
+      display: grid;
+      grid-template-columns: 1fr 66px 55px;
+      padding: 0 12px;
+    }
+
+    .asset-header {
+      background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 800;
+      height: 29px;
+    }
+
+    .asset-row {
+      border-top: 1px solid var(--line);
+      font-size: 10px;
+      min-height: 41px;
+    }
+
+    .asset-name { font-weight: 900; }
+    .asset-change,
+    .asset-weight {
+      font-family: Arial, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .asset-weight { color: var(--muted); }
+
+    .method-row {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: flex;
+      gap: 9px;
+      min-height: 46px;
+      padding: 0 12px;
+    }
+
+    .method-row svg { color: var(--blue); height: 16px; width: 16px; }
+
+    .method-row strong {
+      display: block;
+      font-size: 10px;
+    }
+
+    .method-row span {
+      color: var(--muted);
+      display: block;
+      font-size: 8px;
+      margin-top: 2px;
+    }
+
+    .follow-button {
+      align-items: center;
+      background: var(--blue);
+      border: 0;
+      color: #fff;
+      display: flex;
+      font-size: 11px;
+      font-weight: 900;
+      gap: 7px;
+      height: 45px;
+      justify-content: center;
+      margin-top: 13px;
+      width: 100%;
+    }
+
+    .follow-button svg { height: 16px; width: 16px; }
+
+    .bottom-nav {
+      background: #fff;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 7px 10px 5px;
+    }
+
+    .nav-item {
+      align-items: center;
+      color: #8f9bbb;
+      display: flex;
+      flex-direction: column;
+      font-size: 8px;
+      font-weight: 800;
+      gap: 3px;
+      justify-content: center;
+    }
+
+    .nav-item.active { color: var(--blue); }
+    .nav-item svg { height: 18px; width: 18px; }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <header class="board-header">
+      <div class="brand">
+        <div class="brand-mark"><i data-lucide="radar"></i></div>
+        <div>
+          <h1 class="board-title">FunBox · 市场雷达</h1>
+          <p class="board-subtitle">把板块涨跌变成可解释的市场信号</p>
+        </div>
+      </div>
+      <div class="version"><strong>PRODUCT CONCEPT · V1.0</strong>单功能点 · 移动端工具</div>
+    </header>
+
+    <section class="stage">
+      <aside class="strategy">
+        <div class="strategy-kicker">产品决策</div>
+        <h2>从“行情陈列”升级为“市场判断”</h2>
+        <p class="strategy-lead">首版只解决一个问题：用户能否在 30 秒内找到今日主线，并在一次点击后看懂板块为何涨跌。</p>
+
+        <section class="strategy-section">
+          <h3>原应用的问题</h3>
+          <ul class="problem-list">
+            <li><i data-lucide="circle-alert"></i><span>只有涨跌，没有趋势、原因和计算口径</span></li>
+            <li><i data-lucide="circle-alert"></i><span>重复卡片占据空间，重要信息没有优先级</span></li>
+            <li><i data-lucide="circle-alert"></i><span>广告打断浏览，数据可信度被削弱</span></li>
+            <li><i data-lucide="circle-alert"></i><span>AI、全球、有色被拆散，缺少统一判断入口</span></li>
+          </ul>
+        </section>
+
+        <section class="strategy-section">
+          <h3>三个可选方向</h3>
+          <div class="approaches">
+            <div class="approach">
+              <div class="approach-number">A</div>
+              <div><strong>纯行情墙</strong><span>实现最快，但与原应用差异不大</span></div>
+            </div>
+            <div class="approach selected">
+              <div class="approach-number">B</div>
+              <div><strong>市场雷达 · 采用</strong><span>总览 + 异动 + 详情，价值与范围平衡</span></div>
+            </div>
+            <div class="approach">
+              <div class="approach-number">C</div>
+              <div><strong>自选预警</strong><span>长期价值高，首版需要账户与通知系统</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="strategy-section">
+          <h3>首版验收目标</h3>
+          <ul class="goal-list">
+            <li><i data-lucide="circle-check"></i><span>30 秒内识别最强、最弱板块</span></li>
+            <li><i data-lucide="circle-check"></i><span>一次点击看到趋势、代表标的和权重</span></li>
+            <li><i data-lucide="circle-check"></i><span>每个数字都能查看更新时间与计算口径</span></li>
+          </ul>
+        </section>
+
+        <div class="strategy-outcome">推荐作为 FunBox 新工具接入：保留现有“首页 / 工具 / 消息 / 我的”结构，不新增一级导航。</div>
+      </aside>
+
+      <article class="concept">
+        <div class="concept-label">
+          <span class="concept-index">01</span>
+          <strong>市场总览</strong>
+          <span>今日判断 · 强弱排行 · 异动</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+            </div>
+            <header class="topbar">
+              <button class="icon-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+              <h2>市场雷达</h2>
+              <button class="icon-button secondary" aria-label="数据说明"><i data-lucide="info"></i></button>
+            </header>
+            <div class="scroll">
+              <section class="pulse-hero">
+                <div class="pulse-grid"></div>
+                <div class="radar"><span class="radar-line"></span><span class="radar-dot"></span></div>
+                <div class="hero-eyebrow">今日脉搏</div>
+                <div class="pulse-score"><strong>68</strong><span>偏强</span></div>
+                <div class="pulse-meta">上涨 18 · 下跌 6</div>
+                <div class="pulse-signal"><i data-lucide="trending-up" style="width:14px;height:14px;color:var(--lime)"></i>最强信号 <b>AI算力 +3.39%</b></div>
+              </section>
+
+              <div class="controls">
+                <div class="market-tabs"><span class="market-tab active">全球</span><span class="market-tab">AI产业</span><span class="market-tab">有色金属</span></div>
+                <div class="period-tabs"><span class="active">1日</span><span>5日</span><span>20日</span></div>
+              </div>
+
+              <div class="section-head"><h3>板块强弱</h3><span>按涨跌幅排序</span></div>
+              <div class="strength-list">
+                <div class="strength-row"><span class="strength-name">AI算力</span><svg class="sparkline" viewBox="0 0 76 22"><polyline stroke="#ef5962" points="1,18 10,17 18,13 27,15 36,9 45,11 55,6 64,7 75,2" /></svg><span class="value up">+3.39%</span><i data-lucide="chevron-right"></i></div>
+                <div class="strength-row"><span class="strength-name">CPO</span><svg class="sparkline" viewBox="0 0 76 22"><polyline stroke="#ef5962" points="1,19 10,16 19,17 28,11 37,13 46,8 55,9 65,4 75,3" /></svg><span class="value up">+6.08%</span><i data-lucide="chevron-right"></i></div>
+                <div class="strength-row"><span class="strength-name">半导体</span><svg class="sparkline" viewBox="0 0 76 22"><polyline stroke="#ef5962" points="1,15 10,17 19,13 28,14 37,8 46,10 55,6 65,8 75,4" /></svg><span class="value up">+3.80%</span><i data-lucide="chevron-right"></i></div>
+                <div class="strength-row"><span class="strength-name">黄金</span><svg class="sparkline" viewBox="0 0 76 22"><polyline stroke="#ef5962" points="1,17 10,14 19,15 28,11 37,12 46,9 55,10 65,5 75,6" /></svg><span class="value up">+4.36%</span><i data-lucide="chevron-right"></i></div>
+                <div class="strength-row"><span class="strength-name">生物医药</span><svg class="sparkline" viewBox="0 0 76 22"><polyline stroke="#21ad78" points="1,5 10,7 19,6 28,11 37,10 46,14 55,13 65,18 75,20" /></svg><span class="value down">-1.49%</span><i data-lucide="chevron-right"></i></div>
+              </div>
+
+              <div class="section-head"><h3>异动信号</h3><span>规则自动识别</span></div>
+              <div class="signal-list">
+                <div class="signal-row"><span class="signal-icon"><i data-lucide="bar-chart-3"></i></span><span class="signal-copy"><strong>存储</strong><span>涨幅与成交活跃度同步提升</span></span><span class="signal-tag">放量上行</span></div>
+                <div class="signal-row"><span class="signal-icon coral"><i data-lucide="activity"></i></span><span class="signal-copy"><strong>生物医药</strong><span>连续 3 个观察周期弱于市场</span></span><span class="signal-tag down">连续走弱</span></div>
+              </div>
+              <div class="source-line"><i data-lucide="clock-3"></i><span>更新 14:32 · 延迟约15分钟 · 查看数据口径</span></div>
+            </div>
+            <nav class="bottom-nav">
+              <div class="nav-item"><i data-lucide="house"></i><span>首页</span></div>
+              <div class="nav-item active"><i data-lucide="grid-2x2"></i><span>工具</span></div>
+              <div class="nav-item"><i data-lucide="message-circle"></i><span>消息</span></div>
+              <div class="nav-item"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+            </nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="concept">
+        <div class="concept-label">
+          <span class="concept-index">02</span>
+          <strong>板块详情</strong>
+          <span>趋势 · 原因 · 标的 · 口径</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+            </div>
+            <header class="topbar">
+              <button class="icon-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+              <h2>AI算力</h2>
+              <button class="icon-button secondary" aria-label="收藏"><i data-lucide="bookmark"></i></button>
+            </header>
+            <div class="scroll">
+              <section class="detail-value">
+                <div class="detail-title">板块涨跌</div>
+                <div class="detail-number">+3.39%</div>
+                <div class="detail-period">1日 · 更新 14:32</div>
+                <svg class="detail-chart" viewBox="0 0 205 88">
+                  <line class="grid" x1="0" y1="20" x2="205" y2="20" />
+                  <line class="grid" x1="0" y1="46" x2="205" y2="46" />
+                  <line class="grid" x1="0" y1="72" x2="205" y2="72" />
+                  <polyline class="line" points="1,68 20,64 39,67 58,53 77,56 96,39 116,44 135,28 154,33 175,15 204,20" />
+                </svg>
+                <div class="range-switch"><span class="active">1D</span><span>5D</span><span>20D</span></div>
+              </section>
+
+              <section class="insight">
+                <h3><i data-lucide="lightbulb"></i>为什么上涨</h3>
+                <p>芯片与服务器同步走强<br />成交活跃度高于近5日</p>
+              </section>
+
+              <div class="section-head"><h3>代表标的</h3><span>按权重排序</span></div>
+              <div class="asset-list">
+                <div class="asset-header"><span>标的</span><span style="text-align:right">涨跌</span><span style="text-align:right">权重</span></div>
+                <div class="asset-row"><span class="asset-name">英伟达</span><span class="asset-change up">+4.18%</span><span class="asset-weight">30%</span></div>
+                <div class="asset-row"><span class="asset-name">台积电</span><span class="asset-change up">+2.64%</span><span class="asset-weight">25%</span></div>
+                <div class="asset-row"><span class="asset-name">博通</span><span class="asset-change up">+3.71%</span><span class="asset-weight">20%</span></div>
+                <div class="asset-row"><span class="asset-name">中际旭创</span><span class="asset-change up">+2.86%</span><span class="asset-weight">15%</span></div>
+                <div class="asset-row"><span class="asset-name">工业富联</span><span class="asset-change up">+1.93%</span><span class="asset-weight">10%</span></div>
+              </div>
+
+              <div class="section-head"><h3>计算口径</h3><span>可追溯</span></div>
+              <div class="method-row"><i data-lucide="database"></i><div><strong>5只代表标的 · 流通市值加权</strong><span>行情延迟约15分钟，权重每月复核</span></div></div>
+              <button class="follow-button"><i data-lucide="bookmark-plus"></i><span>加入关注</span></button>
+            </div>
+            <nav class="bottom-nav">
+              <div class="nav-item"><i data-lucide="house"></i><span>首页</span></div>
+              <div class="nav-item active"><i data-lucide="grid-2x2"></i><span>工具</span></div>
+              <div class="nav-item"><i data-lucide="message-circle"></i><span>消息</span></div>
+              <div class="nav-item"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+            </nav>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

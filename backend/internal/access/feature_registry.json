@@ -30,6 +30,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "market-radar",
+    "name": "市场雷达",
+    "tagline": "板块强弱与趋势洞察",
+    "description": "按全球、AI 与有色市场查看板块强弱、趋势、驱动原因、代表标的和计算口径。",
+    "icon": "chart-timeline-variant-shimmer",
+    "category": "行情",
+    "route": "/tools/market-radar",
+    "accentColor": "#4b6bff",
+    "badges": ["市场快照", "趋势洞察"],
+    "usageLabel": "查看雷达",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "live-stream-capture",
     "name": "音视频推流",
     "tagline": "LiveKit 本地采集",

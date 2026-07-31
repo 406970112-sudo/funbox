@@ -9,6 +9,7 @@ import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
 import { ImageCompressorScreen } from '@/features/tools/image-compressor-screen';
 import { ResourceSearchScreen } from '@/features/tools/resource-search-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
+import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
@@ -110,6 +111,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <LiveStreamCaptureScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'market-radar') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <MarketRadarScreen />
       </>
     );
   }
