@@ -156,6 +156,7 @@ func (s *Store) migrate() error {
 			PRIMARY KEY(conversation_id, user_id)
 		)`,
 	}
+	statements = append(statements, gameSocialMigrationStatements()...)
 
 	for _, statement := range statements {
 		if _, err := s.db.Exec(statement); err != nil {

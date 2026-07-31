@@ -22,6 +22,8 @@ import {
   getStoredTetrisBestScore,
   setStoredTetrisBestScore,
 } from '@/features/games/tetris-best-score';
+import { GameLeaderboardModal } from '@/features/games/game-leaderboard-modal';
+import { useGameScoreSubmission } from '@/features/games/use-game-score-submission';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 type SessionState = {
@@ -525,6 +527,7 @@ export function TetrisGameScreen() {
   const { height, width } = useWindowDimensions();
   const [session, dispatchSession] = useReducer(sessionReducer, undefined, createInitialSession);
   const [bestScore, setBestScore] = useState(0);
+  const [leaderboardVisible, setLeaderboardVisible] = useState(false);
   const repeatDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const repeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const entryProgress = useRef(new Animated.Value(0)).current;
@@ -542,6 +545,8 @@ export function TetrisGameScreen() {
   const bestScoreForDisplay = Math.max(bestScore, game.points);
   const isPlaying = game.state === 'PLAYING';
   const nextPiece = game.queue.queue[0];
+
+  useGameScoreSubmission('tetris', game.points, game.state === 'LOST');
 
   useEffect(() => {
     let active = true;
@@ -733,19 +738,28 @@ export function TetrisGameScreen() {
               <MaterialCommunityIcons color={COLORS.ink} name="arrow-left" size={23} />
             </Pressable>
             <Text style={styles.appTitle}>俄罗斯方块</Text>
-            <Pressable
-              accessibilityLabel="暂停游戏"
-              accessibilityRole="button"
-              disabled={!isPlaying}
-              onPress={() => dispatchWithImpact('PAUSE', Haptics.ImpactFeedbackStyle.Light)}
-              style={({ pressed }) => [
-                styles.headerButton,
-                styles.pauseButton,
-                pressed && styles.headerButtonPressed,
-                !isPlaying && styles.controlButtonDisabled,
-              ]}>
-              <MaterialCommunityIcons color={COLORS.primary} name="pause" size={21} />
-            </Pressable>
+            <View style={styles.appBarActions}>
+              <Pressable
+                accessibilityLabel="查看好友排行榜"
+                accessibilityRole="button"
+                onPress={() => setLeaderboardVisible(true)}
+                style={({ pressed }) => [styles.headerButton, pressed && styles.headerButtonPressed]}>
+                <MaterialCommunityIcons color={COLORS.ink} name="podium" size={21} />
+              </Pressable>
+              <Pressable
+                accessibilityLabel="暂停游戏"
+                accessibilityRole="button"
+                disabled={!isPlaying}
+                onPress={() => dispatchWithImpact('PAUSE', Haptics.ImpactFeedbackStyle.Light)}
+                style={({ pressed }) => [
+                  styles.headerButton,
+                  styles.pauseButton,
+                  pressed && styles.headerButtonPressed,
+                  !isPlaying && styles.controlButtonDisabled,
+                ]}>
+                <MaterialCommunityIcons color={COLORS.primary} name="pause" size={21} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.playArea}>
@@ -812,6 +826,12 @@ export function TetrisGameScreen() {
           </View>
         </Animated.View>
       </SafeAreaView>
+      <GameLeaderboardModal
+        gameId="tetris"
+        onClose={() => setLeaderboardVisible(false)}
+        title="俄罗斯方块"
+        visible={leaderboardVisible}
+      />
     </View>
   );
 }
@@ -858,6 +878,11 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '900',
     lineHeight: 24,
+  },
+  appBarActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 2,
   },
   headerButton: {
     alignItems: 'center',

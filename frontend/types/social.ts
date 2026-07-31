@@ -45,6 +45,10 @@ export type RealtimeEvent = {
     | 'friend.accepted'
     | 'friend.rejected'
     | 'friend.requested'
+    | 'game.match.finished'
+    | 'game.match.invited'
+    | 'game.match.updated'
+    | 'game.score.updated'
     | 'message.created'
     | 'presence.changed';
 };

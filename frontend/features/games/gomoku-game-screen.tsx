@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { useAuth } from '@/features/auth/auth-provider';
 import {
   GOMOKU_BOARD_SIZE,
   buildBoardFromMoves,
@@ -28,8 +29,12 @@ import {
   type GomokuPosition,
   type Stone,
 } from '@/features/games/gomoku-engine';
+import { useGameSocial } from '@/features/games/game-social-provider';
+import { SocialAvatar } from '@/features/social/social-ui';
+import { useSocial } from '@/features/social/social-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
+import type { GameMatch } from '@/types/game-social';
 
 type MatchStatus = 'playing' | 'human-won' | 'ai-won' | 'draw';
 type ScoreBoard = {
@@ -66,6 +71,16 @@ const DIFFICULTIES: {
 ];
 
 export function GomokuGameScreen() {
+  const [mode, setMode] = useState<'ai' | 'friend'>('ai');
+
+  if (mode === 'friend') {
+    return <GomokuFriendGameScreen onExit={() => setMode('ai')} />;
+  }
+
+  return <GomokuAIGameScreen onOpenFriendMatch={() => setMode('friend')} />;
+}
+
+function GomokuAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => void }) {
   const router = useRouter();
   const { colors, colorScheme } = useAppTheme();
   const { width } = useWindowDimensions();
@@ -236,20 +251,23 @@ export function GomokuGameScreen() {
           <View style={styles.headerTitle}>
             <ThemedText style={styles.pageTitle}>五子棋</ThemedText>
           </View>
-          <Pressable
-            accessibilityLabel={`对局设置，当前难度${activeDifficulty.label}`}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showSettings }}
-            onPress={() => setShowSettings(true)}
-            style={[
-              styles.settingsTrigger,
-              { backgroundColor: colors.surfaceMuted },
-            ]}>
-            <ThemedText style={[styles.settingsTriggerText, { color: colors.text }]}>
-              {activeDifficulty.label}
-            </ThemedText>
-            <MaterialCommunityIcons name="chevron-down" size={17} color={colors.mutedText} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel="好友对战"
+              accessibilityRole="button"
+              onPress={onOpenFriendMatch}
+              style={[styles.headerActionButton, { backgroundColor: colors.primarySoft }]}>
+              <MaterialCommunityIcons name="account-multiple" size={19} color={colors.primary} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel={`对局设置，当前难度 ${activeDifficulty.label}`}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: showSettings }}
+              onPress={() => setShowSettings(true)}
+              style={[styles.headerActionButton, { backgroundColor: colors.surfaceMuted }]}>
+              <MaterialCommunityIcons name="tune-variant" size={19} color={colors.text} />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.gameHud}>
@@ -425,6 +443,443 @@ export function GomokuGameScreen() {
       </MobileScreen>
     </>
   );
+}
+
+function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
+  const { user } = useAuth();
+  const { colors, colorScheme } = useAppTheme();
+  const { width } = useWindowDimensions();
+  const { friends } = useSocial();
+  const {
+    createMatch,
+    error,
+    loading,
+    matches,
+    resignMatch,
+    respondMatch,
+    submitMove,
+  } = useGameSocial();
+  const [busy, setBusy] = useState(false);
+  const [localError, setLocalError] = useState('');
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const gameMatches = matches.filter((match) => match.gameId === 'gomoku');
+  const selectedMatch = gameMatches.find((match) => match.id === selectedMatchId) ?? null;
+
+  async function runAction(action: () => Promise<GameMatch>, selectResult = true) {
+    setBusy(true);
+    setLocalError('');
+    try {
+      const match = await action();
+      if (selectResult) setSelectedMatchId(match.id);
+      return match;
+    } catch {
+      setLocalError('操作没有完成，请稍后再试。');
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!selectedMatch) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <MobileScreen contentContainerStyle={styles.friendPageContent}>
+          <View style={styles.topBar}>
+            <View style={styles.headerSide}>
+              <Pressable
+                accessibilityLabel="返回 AI 对战"
+                accessibilityRole="button"
+                onPress={onExit}
+                style={styles.iconButton}>
+                <MaterialCommunityIcons name="arrow-left" size={22} color={colors.text} />
+              </Pressable>
+            </View>
+            <View style={styles.headerTitle}>
+              <ThemedText style={styles.pageTitle}>五子棋</ThemedText>
+            </View>
+            <View style={styles.headerSide} />
+          </View>
+
+          <View style={[styles.friendModeSwitch, { backgroundColor: colors.surfaceMuted }]}>
+            <Pressable onPress={onExit} style={styles.friendModeButton}>
+              <MaterialCommunityIcons name="robot-outline" size={18} color={colors.mutedText} />
+              <ThemedText style={[styles.friendModeText, { color: colors.mutedText }]}>AI 练习</ThemedText>
+            </Pressable>
+            <View style={[styles.friendModeButton, { backgroundColor: colors.primary }]}>
+              <MaterialCommunityIcons name="account-multiple" size={18} color="#ffffff" />
+              <ThemedText style={[styles.friendModeText, { color: '#ffffff' }]}>好友对战</ThemedText>
+            </View>
+          </View>
+
+          {error || localError ? (
+            <View style={[styles.gameSocialError, { backgroundColor: colors.surfaceMuted }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={18} color={colors.accent} />
+              <ThemedText style={[styles.gameSocialErrorText, { color: colors.mutedText }]}>
+                {localError || error}
+              </ThemedText>
+            </View>
+          ) : null}
+
+          <View style={styles.lobbySection}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <ThemedText style={styles.sectionTitle}>我的对局</ThemedText>
+                <ThemedText style={[styles.sectionSubtitle, { color: colors.mutedText }]}>
+                  邀请会通过好友消息实时送达
+                </ThemedText>
+              </View>
+              {loading ? <ActivityIndicator color={colors.primary} size="small" /> : null}
+            </View>
+            {gameMatches.length === 0 ? (
+              <View style={[styles.emptyLobby, { borderColor: colors.line }]}>
+                <MaterialCommunityIcons name="checkerboard" size={25} color={colors.primary} />
+                <ThemedText style={styles.emptyLobbyTitle}>还没有好友对局</ThemedText>
+                <ThemedText style={[styles.emptyLobbyText, { color: colors.mutedText }]}>
+                  从下面选择一位好友发起五子棋邀请
+                </ThemedText>
+              </View>
+            ) : (
+              gameMatches.slice(0, 8).map((match) => {
+                const peer = getMatchPeer(match, user?.id ?? '');
+                const incoming = match.status === 'pending' && match.opponent.id === user?.id;
+                return (
+                  <View key={match.id} style={[styles.matchRow, { borderBottomColor: colors.line }]}>
+                    <SocialAvatar showOnline size={42} user={peer} />
+                    <View style={styles.matchRowCopy}>
+                      <ThemedText numberOfLines={1} style={styles.matchRowTitle}>
+                        {peer.displayName}
+                      </ThemedText>
+                      <ThemedText style={[styles.matchRowMeta, { color: colors.mutedText }]}>
+                        {getMatchStatusLabel(match, user?.id ?? '')}
+                      </ThemedText>
+                    </View>
+                    {incoming ? (
+                      <View style={styles.inlineActions}>
+                        <Pressable
+                          accessibilityLabel={`拒绝 ${peer.displayName} 的邀请`}
+                          disabled={busy}
+                          onPress={() => void runAction(() => respondMatch(match.id, 'decline'), false)}
+                          style={[styles.smallIconButton, { borderColor: colors.line }]}>
+                          <MaterialCommunityIcons name="close" size={18} color={colors.mutedText} />
+                        </Pressable>
+                        <Pressable
+                          accessibilityLabel={`接受 ${peer.displayName} 的邀请`}
+                          disabled={busy}
+                          onPress={() => void runAction(() => respondMatch(match.id, 'accept'))}
+                          style={[styles.smallIconButton, { backgroundColor: colors.primary }]}>
+                          <MaterialCommunityIcons name="check" size={18} color="#ffffff" />
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Pressable
+                        accessibilityLabel={`查看与 ${peer.displayName} 的对局`}
+                        onPress={() => setSelectedMatchId(match.id)}
+                        style={[styles.matchOpenButton, { backgroundColor: colors.surfaceMuted }]}>
+                        <ThemedText style={[styles.matchOpenText, { color: colors.primary }]}>查看</ThemedText>
+                        <MaterialCommunityIcons name="chevron-right" size={17} color={colors.primary} />
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </View>
+
+          <View style={styles.lobbySection}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <ThemedText style={styles.sectionTitle}>选择好友</ThemedText>
+                <ThemedText style={[styles.sectionSubtitle, { color: colors.mutedText }]}>
+                  在线好友会更快响应邀请
+                </ThemedText>
+              </View>
+              <View style={[styles.friendCountChip, { backgroundColor: colors.primarySoft }]}>
+                <ThemedText style={[styles.friendCountText, { color: colors.primary }]}>
+                  {friends.length} 位
+                </ThemedText>
+              </View>
+            </View>
+            {friends.length === 0 ? (
+              <View style={[styles.emptyLobby, { borderColor: colors.line }]}>
+                <MaterialCommunityIcons name="account-plus-outline" size={25} color={colors.primary} />
+                <ThemedText style={styles.emptyLobbyTitle}>先添加一位好友</ThemedText>
+                <ThemedText style={[styles.emptyLobbyText, { color: colors.mutedText }]}>
+                  好友关系建立后，就可以在这里发起对战
+                </ThemedText>
+              </View>
+            ) : (
+              friends.map((friend) => {
+                const openMatch = gameMatches.find(
+                  (match) =>
+                    (match.status === 'active' || match.status === 'pending') &&
+                    getMatchPeer(match, user?.id ?? '').id === friend.user.id,
+                );
+                return (
+                  <View key={friend.user.id} style={[styles.friendInviteRow, { borderBottomColor: colors.line }]}>
+                    <SocialAvatar showOnline size={44} user={friend.user} />
+                    <View style={styles.matchRowCopy}>
+                      <ThemedText numberOfLines={1} style={styles.matchRowTitle}>
+                        {friend.user.displayName}
+                      </ThemedText>
+                      <ThemedText style={[styles.matchRowMeta, { color: colors.mutedText }]}>
+                        {friend.user.online ? '在线，可以立即开始' : '离线，邀请会保留'}
+                      </ThemedText>
+                    </View>
+                    <Pressable
+                      accessibilityLabel={`邀请 ${friend.user.displayName} 对战`}
+                      disabled={busy}
+                      onPress={() => {
+                        if (openMatch) {
+                          setSelectedMatchId(openMatch.id);
+                          return;
+                        }
+                        void runAction(() => createMatch('gomoku', friend.user.id));
+                      }}
+                      style={[
+                        styles.inviteButton,
+                        { backgroundColor: openMatch ? colors.surfaceMuted : colors.primary },
+                      ]}>
+                      <ThemedText
+                        style={[
+                          styles.inviteButtonText,
+                          { color: openMatch ? colors.primary : '#ffffff' },
+                        ]}>
+                        {openMatch ? '继续' : '邀请'}
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </MobileScreen>
+      </>
+    );
+  }
+
+  return (
+    <GomokuOnlineMatch
+      busy={busy}
+      match={selectedMatch}
+      onAccept={() => void runAction(() => respondMatch(selectedMatch.id, 'accept'))}
+      onBack={() => setSelectedMatchId(null)}
+      onDecline={() => void runAction(() => respondMatch(selectedMatch.id, 'decline'), false).then(() => setSelectedMatchId(null))}
+      onMove={(row, col) =>
+        void runAction(() =>
+          submitMove(selectedMatch.id, {
+            clientMoveId: createGameMoveId(),
+            col,
+            row,
+          }),
+        )
+      }
+      onResign={() => void runAction(() => resignMatch(selectedMatch.id))}
+      userId={user?.id ?? ''}
+    />
+  );
+}
+
+function GomokuOnlineMatch({
+  busy,
+  match,
+  onAccept,
+  onBack,
+  onDecline,
+  onMove,
+  onResign,
+  userId,
+}: {
+  busy: boolean;
+  match: GameMatch;
+  onAccept: () => void;
+  onBack: () => void;
+  onDecline: () => void;
+  onMove: (row: number, col: number) => void;
+  onResign: () => void;
+  userId: string;
+}) {
+  const { colors, colorScheme } = useAppTheme();
+  const { width } = useWindowDimensions();
+  const moves: GomokuMove[] = match.moves.map((move) => ({
+    col: move.col,
+    row: move.row,
+    stone: move.userId === match.inviter.id ? 'black' : 'white',
+  }));
+  const board = buildBoardFromMoves(moves);
+  const lastMove = moves.at(-1) ?? null;
+  const winningLine = lastMove ? getWinningLine(board, lastMove) : [];
+  const winningIndexes = new Set(winningLine.map(positionKey));
+  const isMyTurn = match.status === 'active' && match.currentTurnUserId === userId;
+  const incoming = match.status === 'pending' && match.opponent.id === userId;
+  const boardOuterSize = Math.min(width - 12, 405);
+  const cellSize = Math.max(17, Math.floor(boardOuterSize / GOMOKU_BOARD_SIZE));
+  const boardSize = cellSize * GOMOKU_BOARD_SIZE;
+  const boardPalette = colorScheme === 'dark'
+    ? { board: '#9a6a3d', grid: 'rgba(40, 24, 15, 0.62)', shell: '#201a17' }
+    : { board: '#ddb778', grid: 'rgba(67, 42, 22, 0.58)', shell: '#f4e6ce' };
+  const status = getOnlineMatchStatus(match, userId);
+
+  return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <MobileScreen contentContainerStyle={styles.pageContent}>
+        <View style={styles.topBar}>
+          <View style={styles.headerSide}>
+            <Pressable accessibilityLabel="返回对战大厅" onPress={onBack} style={styles.iconButton}>
+              <MaterialCommunityIcons name="arrow-left" size={22} color={colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.headerTitle}>
+            <ThemedText style={styles.pageTitle}>好友对战</ThemedText>
+          </View>
+          <View style={styles.headerSide} />
+        </View>
+
+        <View style={styles.gameHud}>
+          <PlayerStatus
+            active={match.currentTurnUserId === match.inviter.id || match.winnerUserId === match.inviter.id}
+            label={match.inviter.id === userId ? '你' : match.inviter.displayName}
+            meta="黑方"
+            stone="black"
+          />
+          <View style={styles.turnSummary}>
+            <View style={styles.turnStatus}>
+              {busy ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <View style={[styles.turnDot, { backgroundColor: status.color }]} />
+              )}
+              <ThemedText style={styles.turnLabel}>{status.title}</ThemedText>
+            </View>
+            <ThemedText style={[styles.turnMeta, { color: colors.mutedText }]}>
+              实时对局 · {match.moves.length} 手
+            </ThemedText>
+          </View>
+          <PlayerStatus
+            active={match.currentTurnUserId === match.opponent.id || match.winnerUserId === match.opponent.id}
+            align="right"
+            label={match.opponent.id === userId ? '你' : match.opponent.displayName}
+            meta="白方"
+            stone="white"
+          />
+        </View>
+
+        <View style={[styles.boardStage, { backgroundColor: boardPalette.shell, borderColor: colors.line }]}>
+          <GomokuBoardView
+            board={board}
+            boardColor={boardPalette.board}
+            boardSize={boardSize}
+            cellSize={cellSize}
+            disabled={!isMyTurn || busy}
+            gridColor={boardPalette.grid}
+            lastMove={lastMove}
+            onCellPress={({ row, col }) => onMove(row, col)}
+            winningIndexes={winningIndexes}
+          />
+        </View>
+
+        <View style={[styles.onlineStatusBanner, { backgroundColor: colors.surfaceMuted }]}>
+          <MaterialCommunityIcons name={status.icon} size={22} color={status.color} />
+          <View style={styles.resultCopy}>
+            <ThemedText style={styles.resultTitle}>{status.title}</ThemedText>
+            <ThemedText style={[styles.resultText, { color: colors.mutedText }]}>
+              {status.description}
+            </ThemedText>
+          </View>
+        </View>
+
+        {incoming ? (
+          <View style={styles.actionRow}>
+            <GameActionButton disabled={busy} icon="close" label="拒绝" onPress={onDecline} />
+            <GameActionButton
+              accentColor={colors.primary}
+              disabled={busy}
+              icon="check"
+              label="接受对战"
+              onPress={onAccept}
+              primary
+            />
+          </View>
+        ) : match.status === 'active' ? (
+          <View style={styles.actionRow}>
+            <GameActionButton icon="arrow-left" label="稍后继续" onPress={onBack} />
+            <GameActionButton
+              disabled={busy}
+              icon="flag-outline"
+              label="认输"
+              onPress={onResign}
+            />
+          </View>
+        ) : (
+          <View style={styles.actionRow}>
+            <GameActionButton
+              accentColor={colors.primary}
+              icon="account-multiple"
+              label="返回对战大厅"
+              onPress={onBack}
+              primary
+            />
+          </View>
+        )}
+      </MobileScreen>
+    </>
+  );
+}
+
+function getMatchPeer(match: GameMatch, userId: string) {
+  return match.inviter.id === userId ? match.opponent : match.inviter;
+}
+
+function getMatchStatusLabel(match: GameMatch, userId: string) {
+  if (match.status === 'active') return match.currentTurnUserId === userId ? '进行中 · 轮到你' : '进行中 · 等待好友';
+  if (match.status === 'pending') return match.opponent.id === userId ? '邀请你对战' : '等待好友接受';
+  if (match.status === 'declined') return '邀请已拒绝';
+  if (!match.winnerUserId) return '已结束 · 和棋';
+  return match.winnerUserId === userId ? '已结束 · 你获胜' : '已结束 · 好友获胜';
+}
+
+function getOnlineMatchStatus(match: GameMatch, userId: string): {
+  color: string;
+  description: string;
+  icon: IconName;
+  title: string;
+} {
+  if (match.status === 'pending') {
+    const incoming = match.opponent.id === userId;
+    return {
+      color: '#4b6bff',
+      description: incoming ? '接受后由发起邀请的黑方先手。' : '好友接受后，对局会自动更新并开始。',
+      icon: incoming ? 'email-fast-outline' : 'clock-outline',
+      title: incoming ? '收到好友邀请' : '等待好友接受',
+    };
+  }
+  if (match.status === 'declined') {
+    return { color: '#7483a2', description: '可以返回大厅选择其他好友。', icon: 'close-circle-outline', title: '邀请已拒绝' };
+  }
+  if (match.status === 'active') {
+    const myTurn = match.currentTurnUserId === userId;
+    return {
+      color: myTurn ? '#1db991' : '#4b6bff',
+      description: myTurn ? '选择棋盘上的空位落子。' : '好友落子后棋盘会自动同步。',
+      icon: myTurn ? 'gesture-tap' : 'progress-clock',
+      title: myTurn ? '轮到你落子' : '等待好友落子',
+    };
+  }
+  if (!match.winnerUserId) {
+    return { color: '#7483a2', description: '棋盘已满，双方本局战平。', icon: 'handshake-outline', title: '本局和棋' };
+  }
+  const won = match.winnerUserId === userId;
+  return {
+    color: won ? '#1db991' : '#ff6b8f',
+    description: won ? '漂亮的五连，胜负结果已同步给好友。' : '这局已经结束，可以返回大厅再发起挑战。',
+    icon: won ? 'trophy-outline' : 'flag-checkered',
+    title: won ? '你赢了这局' : '好友赢下这局',
+  };
+}
+
+function createGameMoveId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function GomokuBoardView({
@@ -726,6 +1181,20 @@ const styles = StyleSheet.create({
   headerSide: {
     width: 78,
   },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'flex-end',
+    width: 78,
+  },
+  headerActionButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
   iconButton: {
     alignItems: 'center',
     borderRadius: 16,
@@ -890,6 +1359,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  onlineStatusBanner: {
+    alignItems: 'center',
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+  },
   resultCopy: {
     flex: 1,
   },
@@ -923,6 +1401,156 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     lineHeight: 16,
+  },
+  friendPageContent: {
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+  },
+  friendModeSwitch: {
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 4,
+    padding: 4,
+  },
+  friendModeButton: {
+    alignItems: 'center',
+    borderRadius: 11,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+    minHeight: 42,
+  },
+  friendModeText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  gameSocialError: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  gameSocialErrorText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  lobbySection: {
+    gap: 8,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 23,
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  emptyLobby: {
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 6,
+    justifyContent: 'center',
+    minHeight: 138,
+    padding: 20,
+  },
+  emptyLobbyTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 3,
+  },
+  emptyLobbyText: {
+    fontSize: 11,
+    lineHeight: 17,
+    textAlign: 'center',
+  },
+  matchRow: {
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 10,
+    minHeight: 64,
+    paddingVertical: 10,
+  },
+  friendInviteRow: {
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 10,
+    minHeight: 66,
+    paddingVertical: 10,
+  },
+  matchRowCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  matchRowTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 19,
+  },
+  matchRowMeta: {
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  inlineActions: {
+    flexDirection: 'row',
+    gap: 7,
+  },
+  smallIconButton: {
+    alignItems: 'center',
+    borderRadius: 11,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  matchOpenButton: {
+    alignItems: 'center',
+    borderRadius: 11,
+    flexDirection: 'row',
+    minHeight: 36,
+    paddingLeft: 12,
+    paddingRight: 7,
+  },
+  matchOpenText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  inviteButton: {
+    alignItems: 'center',
+    borderRadius: 11,
+    justifyContent: 'center',
+    minHeight: 36,
+    minWidth: 58,
+    paddingHorizontal: 12,
+  },
+  inviteButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  friendCountChip: {
+    borderRadius: 11,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  friendCountText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   modalRoot: {
     flex: 1,

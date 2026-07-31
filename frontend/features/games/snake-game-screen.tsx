@@ -19,6 +19,8 @@ import {
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { GameLeaderboardModal } from '@/features/games/game-leaderboard-modal';
+import { useGameScoreSubmission } from '@/features/games/use-game-score-submission';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { SurfaceCard } from '@/shared/ui/surface-card';
@@ -253,6 +255,7 @@ export function SnakeGameScreen() {
   const [stageIndex, setStageIndex] = useState(0);
   const [skinId, setSkinId] = useState<SkinId>('neon');
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [leaderboardVisible, setLeaderboardVisible] = useState(false);
   const [bestScores, setBestScores] = useState<Record<GameModeId, number>>({
     ...sessionBestScores,
   });
@@ -272,6 +275,8 @@ export function SnakeGameScreen() {
   const statusText = getStatusText(game.status, game.crashReason, stageIndex);
   const primaryActionLabel = getPrimaryActionLabel(game.status);
   const bestScore = bestScores[modeId];
+
+  useGameScoreSubmission('snake-brawl', game.score, TERMINAL_STATUSES.has(game.status));
 
   useEffect(() => {
     modeIdRef.current = modeId;
@@ -556,6 +561,13 @@ export function SnakeGameScreen() {
           <ThemedText style={styles.pageTitle}>贪吃蛇大作战</ThemedText>
           <View style={styles.headerActions}>
             <Pressable
+              accessibilityLabel="查看好友排行榜"
+              accessibilityRole="button"
+              onPress={() => setLeaderboardVisible(true)}
+              style={styles.closeButton}>
+              <MaterialCommunityIcons name="podium" size={20} color={colors.text} />
+            </Pressable>
+            <Pressable
               accessibilityLabel="对局设置"
               accessibilityRole="button"
               onPress={() => setSettingsVisible(true)}
@@ -755,6 +767,12 @@ export function SnakeGameScreen() {
           </View>
         </View>
       </Modal>
+      <GameLeaderboardModal
+        gameId="snake-brawl"
+        onClose={() => setLeaderboardVisible(false)}
+        title="贪吃蛇"
+        visible={leaderboardVisible}
+      />
     </>
   );
 }

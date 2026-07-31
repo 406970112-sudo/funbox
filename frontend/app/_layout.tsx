@@ -11,6 +11,7 @@ import 'react-native-reanimated';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { FeatureAccessProvider } from '@/features/access/feature-access-provider';
+import { GameSocialProvider } from '@/features/games/game-social-provider';
 import { SocialProvider } from '@/features/social/social-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
@@ -79,7 +80,8 @@ export default function RootLayout() {
       <AuthProvider>
         <FeatureAccessProvider>
           <SocialProvider>
-          <Stack screenOptions={{ headerShown: false }}>
+            <GameSocialProvider>
+              <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
@@ -99,8 +101,9 @@ export default function RootLayout() {
                 animation: 'slide_from_right',
               }}
             />
-          </Stack>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              </Stack>
+              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            </GameSocialProvider>
           </SocialProvider>
         </FeatureAccessProvider>
       </AuthProvider>

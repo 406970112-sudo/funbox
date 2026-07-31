@@ -18,6 +18,8 @@ import {
   getStoredBrickBreakerBestScore,
   setStoredBrickBreakerBestScore,
 } from '@/features/games/brick-breaker-best-score';
+import { GameLeaderboardModal } from '@/features/games/game-leaderboard-modal';
+import { useGameScoreSubmission } from '@/features/games/use-game-score-submission';
 import {
   createBrickBreakerSession,
   disposeBrickBreakerSession,
@@ -307,6 +309,7 @@ export function BrickBreakerGameScreen() {
   }
   const [snapshot, setSnapshot] = useState(() => getBrickBreakerSnapshot(sessionRef.current!));
   const [bestScore, setBestScore] = useState(0);
+  const [leaderboardVisible, setLeaderboardVisible] = useState(false);
   const bestScoreRef = useRef(0);
   const steeringWidthRef = useRef(1);
   const heldKeysRef = useRef({ left: false, right: false });
@@ -316,6 +319,8 @@ export function BrickBreakerGameScreen() {
   const availableFieldHeight = Math.max(388, windowHeight - 250);
   const fieldWidth = Math.min(screenWidth - 28, (availableFieldHeight * 360) / 560, 360);
   const fieldHeight = (fieldWidth * 560) / 360;
+
+  useGameScoreSubmission('brick-breaker', snapshot.score, snapshot.status === 'lost');
 
   const refreshSnapshot = useCallback(() => {
     if (sessionRef.current) {
@@ -476,19 +481,29 @@ export function BrickBreakerGameScreen() {
             <Text style={styles.title}>打砖块</Text>
             <Text style={styles.bestScore}>最佳 {formatScore(bestScore)}</Text>
           </View>
-          <Pressable
-            accessibilityLabel="暂停游戏"
-            accessibilityRole="button"
-            disabled={snapshot.status !== 'playing'}
-            hitSlop={12}
-            onPress={handlePause}
-            style={({ pressed }) => [
-              styles.iconButton,
-              snapshot.status !== 'playing' && styles.iconButtonDisabled,
-              pressed && styles.pressed,
-            ]}>
-            <MaterialCommunityIcons color={COLORS.ink} name="pause" size={24} />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel="查看好友排行榜"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setLeaderboardVisible(true)}
+              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+              <MaterialCommunityIcons color={COLORS.ink} name="podium" size={22} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="暂停游戏"
+              accessibilityRole="button"
+              disabled={snapshot.status !== 'playing'}
+              hitSlop={12}
+              onPress={handlePause}
+              style={({ pressed }) => [
+                styles.iconButton,
+                snapshot.status !== 'playing' && styles.iconButtonDisabled,
+                pressed && styles.pressed,
+              ]}>
+              <MaterialCommunityIcons color={COLORS.ink} name="pause" size={24} />
+            </Pressable>
+          </View>
         </View>
 
         <ScoreStrip snapshot={snapshot} />
@@ -544,6 +559,12 @@ export function BrickBreakerGameScreen() {
           />
         ) : null}
       </View>
+      <GameLeaderboardModal
+        gameId="brick-breaker"
+        onClose={() => setLeaderboardVisible(false)}
+        title="打砖块"
+        visible={leaderboardVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -572,6 +593,10 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     width: 40,
+  },
+  headerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   iconButtonDisabled: {
     opacity: 0.35,
