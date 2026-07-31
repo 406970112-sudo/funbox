@@ -56,3 +56,6 @@ backend/data/
 # generated native folders
 /ios
 /android
+
+# isolated Codex feature workspaces
+.worktrees/
