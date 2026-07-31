@@ -1,30 +1,85 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { type Href, useRouter } from 'expo-router';
-import type { ComponentProps } from 'react';
+import { type ComponentProps, useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { getToolById, popularGames, recentActivities } from '@/mocks/app-data';
+import { getGameById, getToolById, popularGames } from '@/mocks/app-data';
+import { getStoredRecentUsage } from '@/lib/recent-usage-storage';
+import type { RecentUsageItem } from '@/lib/recent-usage';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 
 const playableGameCount = popularGames.filter((game) => game.status === 'playable').length;
+
+type RecentUsageDisplayItem = {
+  accentColor: string;
+  actionLabel: string;
+  description: string;
+  icon: ComponentProps<typeof MaterialCommunityIcons>['name'];
+  id: string;
+  route: Href;
+  title: string;
+};
 
 export function ProfileScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
   const { signOut, status, user } = useAuth();
   const { visibleTools } = useFeatureAccess();
+  const [recentUsage, setRecentUsage] = useState<RecentUsageItem[]>([]);
   const isAuthenticated = status === 'authenticated' && user !== null;
   const visibleToolIDs = new Set(visibleTools.map((tool) => tool.id));
   const availableToolCount = visibleTools.filter((tool) => tool.status === 'available').length;
-  const recentToolActivities = recentActivities.flatMap((activity) => {
-    if (!activity.toolId || !visibleToolIDs.has(activity.toolId)) return [];
-    const tool = getToolById(activity.toolId);
-    return tool?.status === 'available' ? [{ activity, tool }] : [];
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      void getStoredRecentUsage().then((items) => {
+        if (active) setRecentUsage(items);
+      });
+
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  const recentItems = recentUsage.flatMap<RecentUsageDisplayItem>((item) => {
+    if (item.kind === 'tool') {
+      if (!visibleToolIDs.has(item.itemId)) return [];
+
+      const tool = getToolById(item.itemId);
+      if (!tool || tool.status !== 'available') return [];
+
+      return [{
+        accentColor: tool.accentColor,
+        actionLabel: '再次使用',
+        description: tool.tagline,
+        icon: tool.icon,
+        id: `tool:${tool.id}`,
+        route: tool.route,
+        title: tool.name,
+      }];
+    }
+
+    const game = getGameById(item.itemId);
+    if (!game || game.status !== 'playable') return [];
+
+    return [{
+      accentColor: game.accentColor,
+      actionLabel: '继续游戏',
+      description: game.genre,
+      icon: 'gamepad-variant-outline',
+      id: `game:${game.id}`,
+      route: game.route,
+      title: game.name,
+    }];
   });
 
   return (
@@ -137,16 +192,16 @@ export function ProfileScreen() {
         <View style={styles.sectionHeader}>
           <ThemedText style={styles.sectionTitle}>最近使用</ThemedText>
           <ThemedText style={[styles.sectionMeta, { color: colors.mutedText }]}>
-            {recentToolActivities.length} 项记录
+            {recentItems.length} 项记录
           </ThemedText>
         </View>
         <View style={styles.activityList}>
-          {recentToolActivities.map(({ activity, tool }) => (
+          {recentItems.length > 0 ? recentItems.map((item) => (
             <Pressable
-              accessibilityLabel={`${activity.title}，${activity.actionLabel}`}
+              accessibilityLabel={`${item.title}，${item.actionLabel}`}
               accessibilityRole="button"
-              key={activity.id}
-              onPress={() => router.push(tool.route)}
+              key={item.id}
+              onPress={() => router.push(item.route)}
               style={({ pressed }) => [
                 styles.activityRow,
                 {
@@ -155,27 +210,39 @@ export function ProfileScreen() {
                   opacity: pressed ? 0.72 : 1,
                 },
               ]}>
-              <View style={[styles.activityIcon, { backgroundColor: `${tool.accentColor}18` }]}>
-                <MaterialCommunityIcons name={tool.icon} size={24} color={tool.accentColor} />
+              <View style={[styles.activityIcon, { backgroundColor: `${item.accentColor}18` }]}>
+                <MaterialCommunityIcons name={item.icon} size={24} color={item.accentColor} />
               </View>
               <View style={styles.activityCopy}>
                 <ThemedText numberOfLines={1} style={styles.activityTitle}>
-                  {activity.title}
+                  {item.title}
                 </ThemedText>
                 <ThemedText
                   numberOfLines={1}
                   style={[styles.activityDescription, { color: colors.mutedText }]}>
-                  {tool.tagline}
+                  {item.description}
                 </ThemedText>
               </View>
               <View style={styles.activityAction}>
-                <ThemedText style={[styles.activityActionText, { color: tool.accentColor }]}>
-                  {activity.actionLabel}
+                <ThemedText style={[styles.activityActionText, { color: item.accentColor }]}>
+                  {item.actionLabel}
                 </ThemedText>
-                <MaterialCommunityIcons name="arrow-right" size={18} color={tool.accentColor} />
+                <MaterialCommunityIcons name="arrow-right" size={18} color={item.accentColor} />
               </View>
             </Pressable>
-          ))}
+          )) : (
+            <View style={[styles.emptyActivity, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+              <View style={[styles.emptyActivityIcon, { backgroundColor: colors.surfaceMuted }]}>
+                <MaterialCommunityIcons name="history" size={24} color={colors.mutedText} />
+              </View>
+              <View style={styles.activityCopy}>
+                <ThemedText style={styles.activityTitle}>还没有使用记录</ThemedText>
+                <ThemedText style={[styles.activityDescription, { color: colors.mutedText }]}>
+                  打开一个工具或游戏后会显示在这里
+                </ThemedText>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </MobileScreen>
@@ -432,6 +499,23 @@ const styles = StyleSheet.create({
   },
   activityList: {
     gap: 10,
+  },
+  emptyActivity: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 82,
+    padding: 14,
+  },
+  emptyActivityIcon: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
   },
   activityRow: {
     alignItems: 'center',

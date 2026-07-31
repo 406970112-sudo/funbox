@@ -1,5 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -12,6 +13,7 @@ import { getGameById } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
+import { recordStoredRecentUsage } from '@/lib/recent-usage-storage';
 import type { GameId } from '@/types/app';
 
 export function GameDetailScreen() {
@@ -19,6 +21,18 @@ export function GameDetailScreen() {
   const game = getGameById(params.gameId);
   const router = useRouter();
   const { colors } = useAppTheme();
+  const gameId = game?.id;
+  const gameStatus = game?.status;
+
+  useEffect(() => {
+    if (!gameId || gameStatus !== 'playable') return;
+
+    void recordStoredRecentUsage({
+      itemId: gameId,
+      kind: 'game',
+      usedAt: Date.now(),
+    });
+  }, [gameId, gameStatus]);
 
   if (game?.id === 'snake-brawl') {
     return (

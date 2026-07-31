@@ -1,7 +1,6 @@
 import type {
   AppTool,
   GameItem,
-  RecentActivity,
   ToolId,
 } from '@/types/app';
 import type { UserRole } from '@/types/access';
@@ -26,23 +25,6 @@ export const appTools: AppTool[] = registeredTools.map(({ initialRoles: _initial
 export const initialToolRoles = new Map(
   registeredTools.map((tool) => [tool.id, tool.initialRoles ?? ['admin']] as const),
 );
-
-export const recentActivities: RecentActivity[] = [
-  {
-    id: 'recent-tts',
-    title: '品牌欢迎词配音',
-    type: '工具',
-    actionLabel: '继续生成',
-    toolId: 'text-to-speech',
-  },
-  {
-    id: 'recent-translation',
-    title: '智能翻译工作台',
-    type: '工具',
-    actionLabel: '继续翻译',
-    toolId: 'smart-translation',
-  },
-];
 
 export const popularGames: GameItem[] = [
   {
@@ -111,6 +93,6 @@ export function getToolById(toolId: ToolId) {
   return appTools.find((tool) => tool.id === toolId);
 }
 
-export function getGameById(gameId: GameItem['id']) {
+export function getGameById(gameId: string) {
   return popularGames.find((game) => game.id === gameId);
 }

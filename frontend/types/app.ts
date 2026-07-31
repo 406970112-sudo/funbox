@@ -32,15 +32,6 @@ export type AppTool = {
   featured?: boolean;
 };
 
-export type RecentActivity = {
-  id: string;
-  title: string;
-  type: '工具' | '游戏';
-  actionLabel: string;
-  toolId?: ToolId;
-  gameId?: GameId;
-};
-
 export type GameItem = {
   id: GameId;
   name: string;

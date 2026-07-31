@@ -1,5 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-screen';
@@ -22,6 +23,7 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
+import { recordStoredRecentUsage } from '@/lib/recent-usage-storage';
 import type { ToolId } from '@/types/app';
 
 export function ToolDetailScreen() {
@@ -30,6 +32,19 @@ export function ToolDetailScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
   const { canAccessTool, status } = useFeatureAccess();
+  const toolId = tool?.id;
+  const toolStatus = tool?.status;
+  const toolIsAccessible = toolId ? canAccessTool(toolId) : false;
+
+  useEffect(() => {
+    if (!toolId || toolStatus !== 'available' || !toolIsAccessible) return;
+
+    void recordStoredRecentUsage({
+      itemId: toolId,
+      kind: 'tool',
+      usedAt: Date.now(),
+    });
+  }, [toolId, toolIsAccessible, toolStatus]);
 
   if (status === 'loading') {
     return <AppLoadingScreen />;
