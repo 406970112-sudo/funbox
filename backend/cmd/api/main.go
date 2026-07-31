@@ -12,6 +12,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
@@ -39,6 +40,18 @@ func main() {
 		log.Fatalf("open social database failed: %v", err)
 	}
 	defer socialStore.Close()
+	accessStore, err := access.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open access database failed: %v", err)
+	}
+	defer accessStore.Close()
+	registry, err := access.Registry()
+	if err != nil {
+		log.Fatalf("load feature registry failed: %v", err)
+	}
+	if err := accessStore.SyncRegistry(context.Background(), registry); err != nil {
+		log.Fatalf("sync feature registry failed: %v", err)
+	}
 
 	signingKey, err := auth.ResolveSigningKey(cfg.Auth.JWTSecret, cfg.Auth.JWTSecretFile)
 	if err != nil {
@@ -61,7 +74,14 @@ func main() {
 		log.Printf("translation disabled: missing DEEPSEEK_API_KEY")
 	}
 
-	server := httpapi.NewServer(cfg, ttsService, translationService, authService, socialStore)
+	server := httpapi.NewServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+	)
 
 	go func() {
 		log.Printf("backend listening on %s", server.Addr)

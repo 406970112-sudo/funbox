@@ -5,6 +5,7 @@ const { getDefaultConfig } = require('expo/metro-config');
 const { FileStore } = require('metro-cache');
 
 const config = getDefaultConfig(__dirname);
+config.watchFolders = [path.resolve(__dirname, '..')];
 const cacheRoot = path.join(__dirname, '.expo', 'metro-cache');
 const fileMapCacheRoot = path.join(cacheRoot, 'file-map');
 const transformCacheRoot = path.join(cacheRoot, 'transforms');

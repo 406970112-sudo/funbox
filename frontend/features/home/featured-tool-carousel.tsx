@@ -41,6 +41,7 @@ type FeaturedSlide = FeaturedSlideConfig & {
 
 type FeaturedToolCarouselProps = {
   onToolPress: (tool: AppTool) => void;
+  tools: AppTool[];
 };
 
 const FEATURED_SLIDE_CONFIGS: FeaturedSlideConfig[] = [
@@ -167,7 +168,7 @@ function FeaturedCard({
   );
 }
 
-export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps) {
+export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouselProps) {
   const { colors } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
   const viewportWidth = Math.min(windowWidth, appLayout.screenMaxWidth) - PAGE_HORIZONTAL_PADDING;
@@ -180,6 +181,8 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
   const [activeIndex, setActiveIndex] = useState(0);
   const [appIsActive, setAppIsActive] = useState(AppState.currentState !== 'background');
   const [reduceMotion, setReduceMotion] = useState(false);
+  const visibleToolIDs = new Set(tools.map((tool) => tool.id));
+  const featuredSlides = FEATURED_SLIDES.filter((slide) => visibleToolIDs.has(slide.toolId));
 
   useEffect(() => {
     void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
@@ -207,7 +210,7 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
   }, [cardStep]);
 
   useEffect(() => {
-    if (reduceMotion || !appIsActive || FEATURED_SLIDES.length < 2) {
+    if (reduceMotion || !appIsActive || featuredSlides.length < 2) {
       return;
     }
 
@@ -217,7 +220,7 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
         return;
       }
 
-      const nextIndex = (activeIndexRef.current + 1) % FEATURED_SLIDES.length;
+      const nextIndex = (activeIndexRef.current + 1) % featuredSlides.length;
       activeIndexRef.current = nextIndex;
       setActiveIndex(nextIndex);
       listRef.current?.scrollToOffset({
@@ -227,10 +230,10 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
     }, AUTO_PLAY_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [appIsActive, cardStep, reduceMotion]);
+  }, [appIsActive, cardStep, featuredSlides.length, reduceMotion]);
 
   function setCurrentSlide(index: number, animated: boolean) {
-    const normalizedIndex = Math.max(0, Math.min(index, FEATURED_SLIDES.length - 1));
+    const normalizedIndex = Math.max(0, Math.min(index, featuredSlides.length - 1));
     lastInteractionAtRef.current = Date.now();
     activeIndexRef.current = normalizedIndex;
     setActiveIndex(normalizedIndex);
@@ -242,13 +245,13 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
 
   function updateIndexFromScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const nextIndex = Math.round(event.nativeEvent.contentOffset.x / cardStep);
-    const normalizedIndex = Math.max(0, Math.min(nextIndex, FEATURED_SLIDES.length - 1));
+    const normalizedIndex = Math.max(0, Math.min(nextIndex, featuredSlides.length - 1));
     activeIndexRef.current = normalizedIndex;
     setActiveIndex(normalizedIndex);
     isInteractingRef.current = false;
   }
 
-  if (FEATURED_SLIDES.length === 0) {
+  if (featuredSlides.length === 0) {
     return null;
   }
 
@@ -257,7 +260,8 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
       <View style={styles.carouselHeader}>
         <ThemedText style={styles.carouselTitle}>精选功能</ThemedText>
         <ThemedText style={[styles.carouselCount, { color: colors.mutedText }]}>
-          {String(activeIndex + 1).padStart(2, '0')} / {String(FEATURED_SLIDES.length).padStart(2, '0')}
+          {String(Math.min(activeIndex + 1, featuredSlides.length)).padStart(2, '0')} /{' '}
+          {String(featuredSlides.length).padStart(2, '0')}
         </ThemedText>
       </View>
 
@@ -265,7 +269,7 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
         ref={listRef}
         accessibilityLabel="精选功能轮播"
         contentContainerStyle={styles.carouselContent}
-        data={FEATURED_SLIDES}
+        data={featuredSlides}
         decelerationRate="fast"
         disableIntervalMomentum
         extraData={cardWidth}
@@ -293,7 +297,7 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
             style={[
               styles.cardSlot,
               {
-                marginRight: index === FEATURED_SLIDES.length - 1 ? 0 : CARD_GAP,
+                marginRight: index === featuredSlides.length - 1 ? 0 : CARD_GAP,
                 width: cardWidth,
               },
             ]}>
@@ -311,7 +315,7 @@ export function FeaturedToolCarousel({ onToolPress }: FeaturedToolCarouselProps)
       />
 
       <View accessibilityLabel="轮播分页" style={styles.pagination}>
-        {FEATURED_SLIDES.map((slide, index) => {
+        {featuredSlides.map((slide, index) => {
           const selected = index === activeIndex;
           return (
             <Pressable

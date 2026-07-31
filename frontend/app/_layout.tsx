@@ -10,6 +10,7 @@ import { DevSettings, Platform } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
+import { FeatureAccessProvider } from '@/features/access/feature-access-provider';
 import { SocialProvider } from '@/features/social/social-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
@@ -76,12 +77,14 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <SocialProvider>
+        <FeatureAccessProvider>
+          <SocialProvider>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="admin/permissions" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="social/add-friend" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="social/chat/[conversationId]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen
@@ -98,7 +101,8 @@ export default function RootLayout() {
             />
           </Stack>
           <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        </SocialProvider>
+          </SocialProvider>
+        </FeatureAccessProvider>
       </AuthProvider>
     </ThemeProvider>
   );

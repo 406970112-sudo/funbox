@@ -52,7 +52,7 @@ func TestAuthHTTPFlow(t *testing.T) {
 		t.Fatalf("open social store: %v", err)
 	}
 	t.Cleanup(func() { _ = socialStore.Close() })
-	httpServer := NewServer(cfg, nil, nil, authService, socialStore)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil)
 	testServer := httptest.NewServer(httpServer.Handler)
 	t.Cleanup(testServer.Close)
 

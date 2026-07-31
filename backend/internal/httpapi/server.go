@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/realtime"
@@ -22,6 +23,7 @@ import (
 )
 
 type Server struct {
+	accessStore           *access.Store
 	authService           *auth.Service
 	cfg                   config.Config
 	rateLimiter           *RateLimiter
@@ -38,8 +40,10 @@ func NewServer(
 	translationService *translation.Service,
 	authService *auth.Service,
 	socialStore *social.Store,
+	accessStore *access.Store,
 ) *http.Server {
 	api := &Server{
+		accessStore:           accessStore,
 		authService:           authService,
 		cfg:                   cfg,
 		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
@@ -53,6 +57,10 @@ func NewServer(
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", api.handleHealthz)
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
+	mux.HandleFunc("GET /api/v1/features", api.withOptionalAuth(api.withAPIPipeline(api.handleVisibleFeatures)))
+	mux.HandleFunc("GET /api/v1/admin/features", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleAdminFeatures))))
+	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/roles", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureRoles))))
+	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/grants", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureGrant))))
 	registerImageCompressionRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAPIPipeline(api.handleRegister))
@@ -342,7 +350,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Vary", "Origin")
 	}
 
-	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }

@@ -9,6 +9,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
+	"my-first-expo-app/backend/internal/roles"
 	"my-first-expo-app/backend/internal/user"
 )
 
@@ -64,6 +65,9 @@ func TestOpenStoreMigratesExistingUsersTable(t *testing.T) {
 	if legacy.SecurityQuestion != "" || legacy.SecurityAnswerHash != "" {
 		t.Fatalf("legacy recovery fields = %q, %q", legacy.SecurityQuestion, legacy.SecurityAnswerHash)
 	}
+	if legacy.Role != roles.Normal {
+		t.Fatalf("legacy role = %q, want normal", legacy.Role)
+	}
 
 	created, err := store.Create(
 		context.Background(),
@@ -78,5 +82,12 @@ func TestOpenStoreMigratesExistingUsersTable(t *testing.T) {
 	}
 	if created.SecurityQuestion == "" || created.SecurityAnswerHash == "" {
 		t.Fatalf("new recovery fields were not saved: %+v", created)
+	}
+	updated, err := store.UpdateRoleByUsername(context.Background(), created.Username, roles.Admin)
+	if err != nil {
+		t.Fatalf("update role: %v", err)
+	}
+	if updated.Role != roles.Admin {
+		t.Fatalf("updated role = %q, want admin", updated.Role)
 	}
 }

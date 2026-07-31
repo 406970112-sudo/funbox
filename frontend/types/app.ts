@@ -3,21 +3,11 @@ import type { ComponentProps } from 'react';
 
 export type AppIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-export type ToolId =
-  | 'text-to-speech'
-  | 'release-email-assistant'
-  | 'live-stream-capture'
-  | 'image-compressor'
-  | 'image-cleanup'
-  | 'smart-translation'
-  | 'qr-code'
-  | 'resource-search'
-  | 'ai-navigation'
-  | 'focus-plan';
+export type ToolId = string;
 
 export type GameId = 'snake-brawl' | 'gomoku' | 'tetris' | 'brain-challenge' | 'speed-racer';
 
-export type ToolCategory = 'AI' | '音频' | '效率' | '多媒体' | '直播';
+export type ToolCategory = string;
 export type ToolStatus = 'available' | 'coming-soon';
 export type GameStatus = 'playable' | 'coming-soon';
 
@@ -28,7 +18,7 @@ export type AppTool = {
   description: string;
   icon: AppIconName;
   category: ToolCategory;
-  route: `/tools/${ToolId}`;
+  route: `/tools/${string}`;
   accentColor: string;
   badges: string[];
   usageLabel: string;

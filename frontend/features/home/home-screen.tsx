@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { appTools, popularGames } from '@/mocks/app-data';
+import { popularGames } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
 
@@ -140,12 +141,13 @@ function GameTile({ game, onPress }: { game: GameItem; onPress: () => void }) {
 export function HomeScreen() {
   const router = useRouter();
   const { colors, colorScheme } = useAppTheme();
+  const { visibleTools } = useFeatureAccess();
   const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(1))).current;
-  const quickTools = appTools
+  const quickTools = visibleTools
     .filter((tool) => tool.status === 'available' && !HOME_TOOL_EXCLUSIONS.has(tool.id))
     .slice(0, HOME_TOOL_LIMIT);
   const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 3);
-  const availableToolCount = appTools.filter((tool) => tool.status === 'available').length;
+  const availableToolCount = visibleTools.filter((tool) => tool.status === 'available').length;
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
@@ -182,7 +184,10 @@ export function HomeScreen() {
       </Reveal>
 
       <Reveal progress={reveals[1]}>
-        <FeaturedToolCarousel onToolPress={(tool) => router.push(tool.route)} />
+        <FeaturedToolCarousel
+          tools={visibleTools}
+          onToolPress={(tool) => router.push(tool.route)}
+        />
       </Reveal>
 
       <Reveal progress={reveals[2]}>

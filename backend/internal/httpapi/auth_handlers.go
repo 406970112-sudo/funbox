@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 
 	"my-first-expo-app/backend/internal/auth"
+	"my-first-expo-app/backend/internal/roles"
 	"my-first-expo-app/backend/internal/user"
 )
 
@@ -62,11 +63,12 @@ type changePasswordRequest struct {
 }
 
 type authUserResponse struct {
-	AvatarURL   string `json:"avatarUrl"`
-	CreatedAt   string `json:"createdAt"`
-	DisplayName string `json:"displayName"`
-	ID          string `json:"id"`
-	Username    string `json:"username"`
+	AvatarURL   string     `json:"avatarUrl"`
+	CreatedAt   string     `json:"createdAt"`
+	DisplayName string     `json:"displayName"`
+	ID          string     `json:"id"`
+	Role        roles.Role `json:"role"`
+	Username    string     `json:"username"`
 }
 
 type sessionResponse struct {
@@ -328,6 +330,10 @@ func authenticatedUserFromContext(ctx context.Context) (user.User, bool) {
 	return account, ok
 }
 
+func contextWithAuthenticatedUser(ctx context.Context, account user.User) context.Context {
+	return context.WithValue(ctx, authenticatedUserContextKey{}, account)
+}
+
 func (s *Server) sessionResponse(session auth.Session) sessionResponse {
 	return sessionResponse{
 		AccessToken: session.AccessToken,
@@ -349,6 +355,7 @@ func (s *Server) publicUser(account user.User) authUserResponse {
 		CreatedAt:   account.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		DisplayName: account.DisplayName,
 		ID:          account.ID,
+		Role:        account.Role,
 		Username:    account.Username,
 	}
 }

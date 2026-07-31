@@ -12,6 +12,8 @@ import (
 
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
+
+	"my-first-expo-app/backend/internal/roles"
 )
 
 var (
@@ -24,6 +26,7 @@ type User struct {
 	Username               string
 	PasswordHash           string
 	DisplayName            string
+	Role                   roles.Role
 	AvatarFile             string
 	SecurityQuestion       string
 	SecurityAnswerHash     string
@@ -78,6 +81,7 @@ func (s *Store) migrate() error {
 			username TEXT NOT NULL COLLATE NOCASE UNIQUE,
 			password_hash TEXT NOT NULL,
 			display_name TEXT NOT NULL,
+			role TEXT NOT NULL DEFAULT 'normal',
 			avatar_file TEXT NOT NULL DEFAULT '',
 			security_question TEXT NOT NULL DEFAULT '',
 			security_answer_hash TEXT NOT NULL DEFAULT '',
@@ -103,6 +107,7 @@ func (s *Store) migrate() error {
 		{name: "security_answer_hash", definition: "TEXT NOT NULL DEFAULT ''"},
 		{name: "recovery_failed_attempts", definition: "INTEGER NOT NULL DEFAULT 0"},
 		{name: "recovery_locked_until", definition: "INTEGER NOT NULL DEFAULT 0"},
+		{name: "role", definition: "TEXT NOT NULL DEFAULT 'normal'"},
 	}
 	for _, column := range columns {
 		if err := s.ensureUserColumn(column.name, column.definition); err != nil {
@@ -172,6 +177,7 @@ func (s *Store) Create(
 		Username:           username,
 		PasswordHash:       passwordHash,
 		DisplayName:        displayName,
+		Role:               roles.Normal,
 		SecurityQuestion:   securityQuestion,
 		SecurityAnswerHash: securityAnswerHash,
 		TokenVersion:       1,
@@ -182,15 +188,16 @@ func (s *Store) Create(
 	_, err := s.db.ExecContext(
 		ctx,
 		`INSERT INTO users (
-			id, username, password_hash, display_name, avatar_file,
+			id, username, password_hash, display_name, role, avatar_file,
 			security_question, security_answer_hash,
 			recovery_failed_attempts, recovery_locked_until,
 			token_version, created_at, updated_at
-		) VALUES (?, ?, ?, ?, '', ?, ?, 0, 0, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?, '', ?, ?, 0, 0, ?, ?, ?)`,
 		created.ID,
 		created.Username,
 		created.PasswordHash,
 		created.DisplayName,
+		created.Role,
 		created.SecurityQuestion,
 		created.SecurityAnswerHash,
 		created.TokenVersion,
@@ -213,6 +220,30 @@ func (s *Store) GetByID(ctx context.Context, id string) (User, error) {
 
 func (s *Store) GetByUsername(ctx context.Context, username string) (User, error) {
 	return scanUser(s.db.QueryRowContext(ctx, userSelect+` WHERE username = ?`, username))
+}
+
+func (s *Store) UpdateRoleByUsername(
+	ctx context.Context,
+	username string,
+	role roles.Role,
+) (User, error) {
+	if !roles.IsValid(role) {
+		return User{}, fmt.Errorf("invalid role %q", role)
+	}
+	result, err := s.db.ExecContext(
+		ctx,
+		`UPDATE users SET role = ?, updated_at = ? WHERE username = ? COLLATE NOCASE`,
+		role,
+		time.Now().UTC().Unix(),
+		strings.TrimSpace(username),
+	)
+	if err != nil {
+		return User{}, fmt.Errorf("update user role: %w", err)
+	}
+	if err := ensureUpdated(result); err != nil {
+		return User{}, err
+	}
+	return s.GetByUsername(ctx, username)
 }
 
 func (s *Store) UpdateDisplayName(ctx context.Context, id string, displayName string) (User, error) {
@@ -303,7 +334,7 @@ func (s *Store) UpdateRecoveryState(
 }
 
 const userSelect = `SELECT
-	id, username, password_hash, display_name, avatar_file,
+	id, username, password_hash, display_name, role, avatar_file,
 	security_question, security_answer_hash,
 	recovery_failed_attempts, recovery_locked_until,
 	token_version, created_at, updated_at
@@ -320,6 +351,7 @@ func scanUser(row *sql.Row) (User, error) {
 		&result.Username,
 		&result.PasswordHash,
 		&result.DisplayName,
+		&result.Role,
 		&result.AvatarFile,
 		&result.SecurityQuestion,
 		&result.SecurityAnswerHash,

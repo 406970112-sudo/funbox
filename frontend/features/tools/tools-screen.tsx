@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
-import { appTools } from '@/mocks/app-data';
+import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
@@ -13,7 +13,8 @@ import { ToolCard } from '@/shared/ui/tool-card';
 export function ToolsScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
-  const categories = Array.from(new Set(appTools.map((tool) => tool.category)));
+  const { visibleTools } = useFeatureAccess();
+  const categories = Array.from(new Set(visibleTools.map((tool) => tool.category)));
 
   return (
     <MobileScreen>
@@ -27,7 +28,7 @@ export function ToolsScreen() {
         <View style={styles.summaryHeader}>
           <ThemedText style={styles.summaryTitle}>本周活跃工具</ThemedText>
           <ThemedText style={[styles.summaryMeta, { color: colors.accent }]}>
-            {appTools.length} 个模块
+            {visibleTools.length} 个模块
           </ThemedText>
         </View>
         <ThemedText style={[styles.summaryBody, { color: colors.mutedText }]}>
@@ -54,7 +55,7 @@ export function ToolsScreen() {
       <View style={styles.section}>
         <SectionHeading title="全部工具" actionLabel="统一路由" />
         <View style={styles.toolList}>
-          {appTools.map((tool) => (
+          {visibleTools.map((tool) => (
             <ToolCard key={tool.id} tool={tool} onPress={() => router.push(tool.route)} />
           ))}
         </View>

@@ -1,29 +1,31 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { appTools, getToolById, popularGames, recentActivities } from '@/mocks/app-data';
+import { getToolById, popularGames, recentActivities } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 
-const availableToolCount = appTools.filter((tool) => tool.status === 'available').length;
 const playableGameCount = popularGames.filter((game) => game.status === 'playable').length;
-
-const recentToolActivities = recentActivities.flatMap((activity) => {
-  if (!activity.toolId) return [];
-  const tool = getToolById(activity.toolId);
-  return tool?.status === 'available' ? [{ activity, tool }] : [];
-});
 
 export function ProfileScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
   const { signOut, status, user } = useAuth();
+  const { visibleTools } = useFeatureAccess();
   const isAuthenticated = status === 'authenticated' && user !== null;
+  const visibleToolIDs = new Set(visibleTools.map((tool) => tool.id));
+  const availableToolCount = visibleTools.filter((tool) => tool.status === 'available').length;
+  const recentToolActivities = recentActivities.flatMap((activity) => {
+    if (!activity.toolId || !visibleToolIDs.has(activity.toolId)) return [];
+    const tool = getToolById(activity.toolId);
+    return tool?.status === 'available' ? [{ activity, tool }] : [];
+  });
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
@@ -95,7 +97,7 @@ export function ProfileScreen() {
               </Pressable>
             ) : null}
 
-            <AvailabilitySummary />
+            <AvailabilitySummary availableToolCount={availableToolCount} />
           </>
         )}
       </View>
@@ -114,6 +116,13 @@ export function ProfileScreen() {
               label="修改密码"
               onPress={() => router.push('/profile/security')}
             />
+            {user.role === 'admin' ? (
+              <AccountAction
+                icon="shield-crown-outline"
+                label="管理后台"
+                onPress={() => router.push('/admin/permissions' as Href)}
+              />
+            ) : null}
             <AccountAction
               destructive
               icon="logout"
@@ -173,7 +182,7 @@ export function ProfileScreen() {
   );
 }
 
-function AvailabilitySummary() {
+function AvailabilitySummary({ availableToolCount }: { availableToolCount: number }) {
   return (
     <View style={styles.availabilityRow}>
       <View style={styles.availabilityItem}>
