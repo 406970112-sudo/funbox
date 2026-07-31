@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FunBox · 双色球概率参考产品设计 V1</title>
+  <style>
+    :root {
+      --board: #eef4ff;
+      --paper: #ffffff;
+      --surface: #f6f8fd;
+      --ink: #151b3b;
+      --text: #18233d;
+      --muted: #7483a2;
+      --line: #dde6fb;
+      --primary: #4b6bff;
+      --primary-soft: #e8edff;
+      --red: #ff5f72;
+      --red-soft: #fff0f3;
+      --blue: #3785ff;
+      --blue-soft: #eaf3ff;
+      --lime: #c9f36a;
+      --green: #20ad78;
+      --amber: #f2aa3b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--board);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    body { min-width: 1600px; }
+
+    .board {
+      width: 1600px;
+      height: 1080px;
+      padding: 30px 34px;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255,255,255,.42) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.42) 1px, transparent 1px),
+        var(--board);
+      background-size: 40px 40px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 330px 430px 430px 1fr;
+      gap: 30px;
+      height: 1020px;
+    }
+
+    .strategy {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 26px 26px 18px;
+      background: rgba(255,255,255,.94);
+      border: 1px solid rgba(212,222,242,.95);
+      border-radius: 22px;
+      box-shadow: 0 16px 40px rgba(45,70,130,.09);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      background: var(--ink);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 20px;
+      width: 20px;
+      height: 4px;
+      border-radius: 4px;
+      background: var(--lime);
+    }
+
+    .brand-mark::after { transform: rotate(90deg); }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .brand-copy span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .strategy h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 29px;
+      line-height: 1.15;
+      font-weight: 900;
+    }
+
+    .strategy-lead {
+      margin: 10px 0 0;
+      color: #5f6d89;
+      font-size: 13px;
+      line-height: 1.75;
+    }
+
+    .strategy-section {
+      margin-top: 21px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .strategy-section h2 {
+      margin: 0 0 11px;
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .issue-list,
+    .scope-list,
+    .success-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .issue-list li,
+    .scope-list li,
+    .success-list li {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      align-items: start;
+      gap: 8px;
+      color: #56647f;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .scope-list .dot { background: var(--primary); }
+    .success-list .dot { background: var(--lime); }
+
+    .approaches {
+      display: grid;
+      gap: 8px;
+    }
+
+    .approach {
+      display: grid;
+      grid-template-columns: 25px 1fr;
+      align-items: center;
+      gap: 10px;
+      min-height: 54px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .approach-index {
+      display: grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 7px;
+      background: #e9edf6;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .approach strong {
+      display: block;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .approach span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .approach.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 9px 22px rgba(75,107,255,.20);
+    }
+
+    .approach.selected .approach-index {
+      background: var(--lime);
+      color: var(--ink);
+    }
+
+    .approach.selected strong { color: #fff; }
+    .approach.selected span { color: #dfe5ff; }
+
+    .entry {
+      margin-top: auto;
+      padding: 11px 12px;
+      border-radius: 8px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .concept {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+    }
+
+    .concept-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      height: 38px;
+      margin-bottom: 8px;
+      color: #fff;
+      background: var(--ink);
+      border-radius: 19px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .concept-label b { color: var(--lime); }
+    .concept-label span { color: #b7c0d9; font-size: 9px; }
+
+    .phone {
+      position: relative;
+      flex: 1;
+      padding: 10px;
+      border-radius: 38px;
+      background: #101426;
+      box-shadow: 0 24px 52px rgba(36,55,94,.20);
+      overflow: hidden;
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      z-index: 10;
+      top: 17px;
+      left: 50%;
+      width: 86px;
+      height: 22px;
+      border-radius: 0 0 12px 12px;
+      background: #101426;
+      transform: translateX(-50%);
+    }
+
+    .screen {
+      position: relative;
+      display: grid;
+      grid-template-rows: 33px 56px 1fr 68px;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 28px;
+      background: #f8faff;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 20px 0;
+      color: #12182f;
+      font: 900 10px/1 Arial, sans-serif;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .signal-bars { font-size: 10px; letter-spacing: -2px; }
+    .battery {
+      position: relative;
+      width: 22px;
+      height: 10px;
+      border: 1.5px solid #12182f;
+      border-radius: 3px;
+    }
+
+    .battery::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 14px;
+      height: 4px;
+      border-radius: 1px;
+      background: #12182f;
+    }
+
+    .battery::after {
+      content: "";
+      position: absolute;
+      right: -3px;
+      top: 3px;
+      width: 2px;
+      height: 4px;
+      border-radius: 0 1px 1px 0;
+      background: #12182f;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      align-items: center;
+      padding: 0 14px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--ink);
+      font: 900 24px/1 Arial, sans-serif;
+    }
+
+    .icon-button.info {
+      justify-self: end;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .scroll {
+      min-height: 0;
+      overflow: hidden;
+      padding: 12px 16px 14px;
+    }
+
+    .data-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .meta-chip {
+      padding: 5px 8px;
+      border-radius: 10px;
+      background: #edf5ed;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 154px;
+      padding: 15px 16px;
+      overflow: hidden;
+      border-radius: 17px;
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -26px;
+      top: -24px;
+      width: 132px;
+      height: 132px;
+      border: 1px solid rgba(201,243,106,.28);
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 22px rgba(201,243,106,.04), inset 0 0 0 44px rgba(201,243,106,.035);
+    }
+
+    .hero-kicker { color: #aeb9d4; font-size: 10px; font-weight: 800; }
+    .hero-period { margin-top: 5px; font-size: 20px; font-weight: 900; }
+    .hero-copy { margin-top: 4px; color: #aeb9d4; font-size: 9px; }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .hero-stat {
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+
+    .hero-stat span {
+      display: block;
+      color: #9da9c6;
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    .hero-stat strong {
+      display: block;
+      margin-top: 4px;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .hero-stat strong.lime { color: var(--lime); }
+
+    .truth-strip {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-left: 3px solid var(--amber);
+      background: #fff8eb;
+      color: #655333;
+      font-size: 9px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .truth-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--amber);
+      color: #fff;
+      font-size: 11px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 11px;
+      padding: 4px;
+      border-radius: 10px;
+      background: #eef1f8;
+    }
+
+    .tab {
+      padding: 7px 0;
+      border-radius: 7px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .tab.active { background: #fff; color: var(--primary); box-shadow: 0 2px 8px rgba(42,64,120,.08); }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin: 13px 2px 8px;
+    }
+
+    .section-head h3 { margin: 0; font-size: 13px; color: var(--ink); font-weight: 900; }
+    .section-head span { color: var(--muted); font-size: 8px; font-weight: 700; }
+
+    .heat-panel {
+      padding: 11px 10px 9px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .heat-grid {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 5px;
+    }
+
+    .heat-ball {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #f1f3f8;
+      color: #8993a8;
+      font: 800 7px/1 Arial, sans-serif;
+    }
+
+    .heat-ball.warm { background: #ffd9df; color: #cb4057; }
+    .heat-ball.hot { background: var(--red); color: #fff; }
+    .heat-ball.cool { background: #e9eff8; color: #697a98; }
+
+    .heat-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 8px;
+    }
+
+    .structure-panel {
+      display: grid;
+      gap: 8px;
+      padding: 10px 11px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .structure-row {
+      display: grid;
+      grid-template-columns: 56px 1fr 58px;
+      align-items: center;
+      gap: 8px;
+      min-height: 22px;
+    }
+
+    .structure-row > span { color: #56647f; font-size: 9px; font-weight: 800; }
+    .structure-row > strong { color: var(--ink); font-size: 9px; text-align: right; }
+
+    .bar {
+      height: 6px;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #edf1f7;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--primary);
+    }
+
+    .bar.red i { background: var(--red); }
+    .bar.lime i { background: var(--green); }
+
+    .primary-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      margin-top: 11px;
+      border-radius: 9px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 8px 18px rgba(75,107,255,.20);
+    }
+
+    .mini-note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .combo-summary {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .combo-summary-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .combo-summary strong { display: block; font-size: 14px; }
+    .combo-summary span { display: block; margin-top: 3px; color: #aeb9d4; font-size: 8px; }
+
+    .score-badge {
+      padding: 6px 8px;
+      border-radius: 9px;
+      background: var(--lime);
+      color: var(--ink) !important;
+      font: 900 9px/1 Arial, sans-serif;
+    }
+
+    .combo-truth {
+      margin-top: 10px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(255,255,255,.12);
+      color: #dfe5f5;
+      font-size: 8px;
+      line-height: 1.5;
+    }
+
+    .combo-list { display: grid; gap: 7px; margin-top: 10px; }
+
+    .combo-card {
+      padding: 9px 9px 8px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .combo-card.selected {
+      border: 2px solid var(--primary);
+      background: #fbfcff;
+    }
+
+    .combo-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+
+    .combo-head strong { color: var(--ink); font-size: 10px; }
+    .combo-head span { color: var(--muted); font-size: 8px; font-weight: 800; }
+
+    .balls {
+      display: grid;
+      grid-template-columns: repeat(6, 28px) 1fr 28px;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ball {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--red);
+      box-shadow: inset 0 -3px 0 rgba(151,24,47,.14);
+      font: 900 9px/1 Arial, sans-serif;
+    }
+
+    .ball.blue { grid-column: 8; background: var(--blue); box-shadow: inset 0 -3px 0 rgba(24,72,160,.18); }
+
+    .evidence {
+      margin-top: 11px;
+      padding: 11px 12px;
+      background: #eef2ff;
+      border-left: 3px solid var(--primary);
+    }
+
+    .evidence h3 { margin: 0 0 8px; color: var(--ink); font-size: 11px; font-weight: 900; }
+
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 12px;
+    }
+
+    .evidence-item { display: flex; align-items: center; gap: 6px; color: #52617f; font-size: 8px; font-weight: 800; }
+    .check { display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: var(--green); color: #fff; font-size: 9px; }
+
+    .backtest {
+      margin-top: 10px;
+      padding: 10px 11px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .backtest-head { display: flex; align-items: center; justify-content: space-between; }
+    .backtest-head strong { color: var(--ink); font-size: 10px; }
+    .backtest-head span { color: var(--muted); font-size: 8px; }
+
+    .backtest-bars { display: grid; gap: 6px; margin-top: 8px; }
+    .backtest-row { display: grid; grid-template-columns: 62px 1fr 30px; align-items: center; gap: 7px; color: #66748f; font-size: 8px; }
+    .backtest-row b { color: var(--text); text-align: right; }
+
+    .secondary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.7fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .secondary-button,
+    .regenerate-button {
+      display: grid;
+      place-items: center;
+      height: 40px;
+      border-radius: 9px;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .secondary-button { color: var(--primary); background: var(--primary-soft); }
+    .regenerate-button { color: #fff; background: var(--primary); }
+
+    .responsible {
+      margin-top: 7px;
+      color: #8a94aa;
+      font-size: 7.5px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .bottom-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 7px 12px 5px;
+      background: #fff;
+      border-top: 1px solid var(--line);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
+      color: #929db5;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .nav-item.active { color: var(--primary); }
+    .nav-symbol { width: 17px; height: 17px; border: 1.6px solid currentColor; border-radius: 5px; }
+    .nav-item:nth-child(1) .nav-symbol { border-radius: 50% 50% 5px 5px; }
+    .nav-item:nth-child(3) .nav-symbol { border-radius: 8px; }
+    .nav-item:nth-child(4) .nav-symbol { border-radius: 50%; }
+
+    .annotations {
+      position: relative;
+      min-width: 0;
+    }
+
+    .annotation-title {
+      margin: 12px 0 0 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .annotation {
+      position: absolute;
+      left: 4px;
+      width: 220px;
+      padding-left: 72px;
+      color: var(--ink);
+    }
+
+    .annotation::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 15px;
+      width: 54px;
+      height: 2px;
+      background: var(--primary);
+    }
+
+    .annotation-number {
+      position: absolute;
+      left: 48px;
+      top: 5px;
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .annotation strong { display: block; font-size: 13px; font-weight: 900; }
+    .annotation span { display: block; margin-top: 6px; color: var(--muted); font-size: 9px; line-height: 1.6; }
+
+    .annotation.a1 { top: 234px; }
+    .annotation.a2 { top: 468px; }
+    .annotation.a3 { top: 744px; }
+    .annotation.a2::before, .annotation.a2 .annotation-number { background: var(--red); }
+    .annotation.a3::before, .annotation.a3 .annotation-number { background: var(--green); }
+
+    .guardrail {
+      position: absolute;
+      left: 4px;
+      right: 0;
+      bottom: 4px;
+      padding: 14px 15px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .guardrail strong { display: block; color: var(--ink); font-size: 11px; }
+    .guardrail span { display: block; margin-top: 5px; color: var(--muted); font-size: 8px; line-height: 1.55; }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <section class="stage">
+      <aside class="strategy">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <div class="brand-copy"><strong>FunBox / 产品提案 V1</strong><span>移动端工具 · 概率分析</span></div>
+        </div>
+        <h1>双色球<br />概率参考</h1>
+        <p class="strategy-lead">把“猜号码”升级为可解释的历史分析与结构化参考组合。</p>
+
+        <section class="strategy-section">
+          <h2>用户真正的问题</h2>
+          <ul class="issue-list">
+            <li><i class="dot"></i><span>随机开奖无法被可靠预测，黑盒“命中率”容易误导</span></li>
+            <li><i class="dot"></i><span>现有荐号只给结果，不说明数据区间与生成依据</span></li>
+            <li><i class="dot"></i><span>多组号码重复度高，实际覆盖范围很窄</span></li>
+          </ul>
+        </section>
+
+        <section class="strategy-section">
+          <h2>三个产品方向</h2>
+          <div class="approaches">
+            <div class="approach"><div class="approach-index">A</div><div><strong>黑盒 AI 荐号</strong><span>结果直观，但不可解释、信任风险高</span></div></div>
+            <div class="approach"><div class="approach-index">B</div><div><strong>纯统计实验室</strong><span>指标最全，但学习成本和操作负担高</span></div></div>
+            <div class="approach selected"><div class="approach-index">C</div><div><strong>证据链参考号 · 推荐</strong><span>先讲概率事实，再分析结构，最后给参考组合</span></div></div>
+          </div>
+        </section>
+
+        <section class="strategy-section">
+          <h2>MVP 功能闭环</h2>
+          <ul class="scope-list">
+            <li><i class="dot"></i><span>同步公开历史开奖，支持近 30 / 100 / 300 期</span></li>
+            <li><i class="dot"></i><span>冷热、遗漏、三区、奇偶、和值结构分析</span></li>
+            <li><i class="dot"></i><span>生成 5 组参考组合，并控制组间重复度</span></li>
+            <li><i class="dot"></i><span>逐组展示生成依据与历史回测分布</span></li>
+          </ul>
+        </section>
+
+        <section class="strategy-section">
+          <h2>首版验收标准</h2>
+          <ul class="success-list">
+            <li><i class="dot"></i><span>30 秒内理解历史结构和本期参考思路</span></li>
+            <li><i class="dot"></i><span>每一组号码都能追溯到结构规则</span></li>
+            <li><i class="dot"></i><span>不出现“提高中奖率”“必中”等误导承诺</span></li>
+          </ul>
+        </section>
+
+        <div class="entry">推荐入口：工具 ＞ 双色球概率参考</div>
+      </aside>
+
+      <article class="concept">
+        <div class="concept-label"><b>01</b> 概率分析总览 <span>事实 · 热度 · 结构</span></div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status"><span>9:41</span><span class="status-icons"><span class="signal-bars">▂▅▇</span><span>⌁</span><i class="battery"></i></span></div>
+            <header class="topbar"><button class="icon-button">‹</button><h2>双色球概率实验室</h2><button class="icon-button info">i</button></header>
+            <div class="scroll">
+              <div class="data-meta"><span>已同步至 2026-07-30 · 近 300 期</span><span class="meta-chip">示意数据</span></div>
+              <section class="hero">
+                <div class="hero-kicker">下期开奖 · 第 2026088 期</div>
+                <div class="hero-period">结构分析已更新</div>
+                <div class="hero-copy">基于频次、遗漏与分布约束生成参考</div>
+                <div class="hero-stats">
+                  <div class="hero-stat"><span>红球热区</span><strong>08—21</strong></div>
+                  <div class="hero-stat"><span>蓝球关注</span><strong>07 / 12</strong></div>
+                  <div class="hero-stat"><span>结构匹配</span><strong class="lime">72 / 100</strong></div>
+                </div>
+              </section>
+              <div class="truth-strip"><i class="truth-icon">!</i><span>每个合法号码组合理论中奖概率相同：约 1 / 17,721,088</span></div>
+              <div class="tabs"><div class="tab">近 30 期</div><div class="tab active">近 100 期</div><div class="tab">近 300 期</div></div>
+
+              <div class="section-head"><h3>红球冷热分布</h3><span>颜色越深，出现频次越高</span></div>
+              <div class="heat-panel">
+                <div class="heat-grid">
+                  <i class="heat-ball cool">01</i><i class="heat-ball">02</i><i class="heat-ball cool">03</i><i class="heat-ball warm">04</i><i class="heat-ball">05</i><i class="heat-ball warm">06</i><i class="heat-ball">07</i><i class="heat-ball hot">08</i><i class="heat-ball hot">09</i><i class="heat-ball">10</i><i class="heat-ball warm">11</i>
+                  <i class="heat-ball hot">12</i><i class="heat-ball warm">13</i><i class="heat-ball hot">14</i><i class="heat-ball">15</i><i class="heat-ball cool">16</i><i class="heat-ball warm">17</i><i class="heat-ball hot">18</i><i class="heat-ball">19</i><i class="heat-ball warm">20</i><i class="heat-ball hot">21</i><i class="heat-ball">22</i>
+                  <i class="heat-ball cool">23</i><i class="heat-ball warm">24</i><i class="heat-ball">25</i><i class="heat-ball">26</i><i class="heat-ball hot">27</i><i class="heat-ball">28</i><i class="heat-ball cool">29</i><i class="heat-ball warm">30</i><i class="heat-ball hot">31</i><i class="heat-ball">32</i><i class="heat-ball warm">33</i>
+                </div>
+                <div class="heat-legend"><span>冷号 03 · 16 · 29</span><span>热号 08 · 14 · 21 · 31</span></div>
+              </div>
+
+              <div class="section-head"><h3>常见结构区间</h3><span>不是预测，只用于组合约束</span></div>
+              <div class="structure-panel">
+                <div class="structure-row"><span>三区比例</span><div class="bar"><i style="width:72%"></i></div><strong>2 : 2 : 2</strong></div>
+                <div class="structure-row"><span>奇偶比例</span><div class="bar red"><i style="width:65%"></i></div><strong>3 : 3</strong></div>
+                <div class="structure-row"><span>和值范围</span><div class="bar lime"><i style="width:58%"></i></div><strong>96—118</strong></div>
+              </div>
+              <div class="primary-button">查看下期参考组合</div>
+              <div class="mini-note">结构匹配度用于解释模型规则，不代表中奖概率或收益</div>
+            </div>
+            <nav class="bottom-nav"><div class="nav-item"><i class="nav-symbol"></i><span>首页</span></div><div class="nav-item active"><i class="nav-symbol"></i><span>工具</span></div><div class="nav-item"><i class="nav-symbol"></i><span>消息</span></div><div class="nav-item"><i class="nav-symbol"></i><span>我的</span></div></nav>
+          </div>
+        </div>
+      </article>
+
+      <article class="concept">
+        <div class="concept-label"><b>02</b> 下期参考组合 <span>号码 · 依据 · 回测</span></div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status"><span>9:41</span><span class="status-icons"><span class="signal-bars">▂▅▇</span><span>⌁</span><i class="battery"></i></span></div>
+            <header class="topbar"><button class="icon-button">‹</button><h2>下期参考组合</h2><button class="icon-button info">i</button></header>
+            <div class="scroll">
+              <section class="combo-summary">
+                <div class="combo-summary-top"><div><strong>第 2026088 期 · 5 组</strong><span>近 100 期结构约束 · 组间去重</span></div><span class="score-badge">已更新</span></div>
+                <div class="combo-truth">这些组合只代表模型偏好的结构，不比其他合法组合拥有更高的理论中奖概率。</div>
+              </section>
+
+              <div class="combo-list">
+                <section class="combo-card selected"><div class="combo-head"><strong>A · 均衡型</strong><span>结构匹配 82</span></div><div class="balls"><i class="ball">03</i><i class="ball">08</i><i class="ball">14</i><i class="ball">21</i><i class="ball">27</i><i class="ball">31</i><i class="ball blue">12</i></div></section>
+                <section class="combo-card"><div class="combo-head"><strong>B · 分散型</strong><span>结构匹配 78</span></div><div class="balls"><i class="ball">02</i><i class="ball">11</i><i class="ball">16</i><i class="ball">22</i><i class="ball">29</i><i class="ball">33</i><i class="ball blue">07</i></div></section>
+                <section class="combo-card"><div class="combo-head"><strong>C · 趋势型</strong><span>结构匹配 75</span></div><div class="balls"><i class="ball">05</i><i class="ball">09</i><i class="ball">13</i><i class="ball">18</i><i class="ball">24</i><i class="ball">30</i><i class="ball blue">15</i></div></section>
+                <section class="combo-card"><div class="combo-head"><strong>D · 冷热混合</strong><span>结构匹配 73</span></div><div class="balls"><i class="ball">01</i><i class="ball">07</i><i class="ball">12</i><i class="ball">19</i><i class="ball">26</i><i class="ball">32</i><i class="ball blue">04</i></div></section>
+                <section class="combo-card"><div class="combo-head"><strong>E · 低重合型</strong><span>结构匹配 70</span></div><div class="balls"><i class="ball">04</i><i class="ball">10</i><i class="ball">15</i><i class="ball">20</i><i class="ball">25</i><i class="ball">28</i><i class="ball blue">09</i></div></section>
+              </div>
+
+              <section class="evidence">
+                <h3>组合 A · 生成依据</h3>
+                <div class="evidence-grid"><div class="evidence-item"><i class="check">✓</i><span>三区 2 : 2 : 2</span></div><div class="evidence-item"><i class="check">✓</i><span>奇偶 3 : 3</span></div><div class="evidence-item"><i class="check">✓</i><span>和值 104</span></div><div class="evidence-item"><i class="check">✓</i><span>热冷混合 4 : 2</span></div></div>
+              </section>
+
+              <section class="backtest">
+                <div class="backtest-head"><strong>历史回测分布</strong><span>仅描述模型行为</span></div>
+                <div class="backtest-bars">
+                  <div class="backtest-row"><span>红球命中 0—1</span><div class="bar"><i style="width:78%"></i></div><b>78%</b></div>
+                  <div class="backtest-row"><span>红球命中 2—3</span><div class="bar red"><i style="width:20%"></i></div><b>20%</b></div>
+                  <div class="backtest-row"><span>红球命中 4+</span><div class="bar lime"><i style="width:2%"></i></div><b>2%</b></div>
+                </div>
+              </section>
+
+              <div class="secondary-actions"><div class="secondary-button">保存本期</div><div class="regenerate-button">换一批组合</div></div>
+              <div class="responsible">仅供娱乐与概率研究参考 · 18+ · 理性购彩 · 示例号码不构成任何承诺</div>
+            </div>
+            <nav class="bottom-nav"><div class="nav-item"><i class="nav-symbol"></i><span>首页</span></div><div class="nav-item active"><i class="nav-symbol"></i><span>工具</span></div><div class="nav-item"><i class="nav-symbol"></i><span>消息</span></div><div class="nav-item"><i class="nav-symbol"></i><span>我的</span></div></nav>
+          </div>
+        </div>
+      </article>
+
+      <aside class="annotations">
+        <div class="annotation-title">核心体验顺序</div>
+        <div class="annotation a1"><i class="annotation-number">1</i><strong>先讲概率事实</strong><span>第一屏直接说明每个合法组合理论概率相同，建立可信边界。</span></div>
+        <div class="annotation a2"><i class="annotation-number">2</i><strong>再看结构信号</strong><span>冷热与遗漏只用于描述历史，不包装成“未来胜率”。</span></div>
+        <div class="annotation a3"><i class="annotation-number">3</i><strong>最后给透明参考号</strong><span>5 组号码控制重合，并能逐组查看生成依据与回测。</span></div>
+        <div class="guardrail"><strong>产品护栏</strong><span>禁止“必中、稳赚、提高中奖率”；所有回测注明样本区间；数据源、更新时间、算法口径可追溯。</span></div>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

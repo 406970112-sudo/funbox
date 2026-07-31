@@ -8,6 +8,7 @@ import type {
   ReferenceStructure,
   ReferenceStrategy,
   RelaxedConstraint,
+  SavedSSQBatch,
   SSQAnalysis,
   SSQDraw,
   SSQWindowSize,
@@ -180,6 +181,28 @@ export function runWalkForwardBacktest(
   }
 
   return summary;
+}
+
+export function resolveReferenceBatch(
+  analysis: SSQAnalysis,
+  saved: SavedSSQBatch | null,
+) {
+  const matches = Boolean(
+    saved
+    && saved.issue === analysis.latestDraw.issue
+    && saved.windowSize === analysis.windowSize
+    && saved.batch.generatedForIssue === analysis.latestDraw.issue
+    && saved.batch.windowSize === analysis.windowSize
+    && saved.batch.batchIndex === saved.batchIndex,
+  );
+  if (matches && saved) {
+    return { batch: saved.batch, batchIndex: saved.batchIndex, restored: true };
+  }
+  return {
+    batch: generateReferenceBatch(analysis, 0),
+    batchIndex: 0,
+    restored: false,
+  };
 }
 
 function buildStats(

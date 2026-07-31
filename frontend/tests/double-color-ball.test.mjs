@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -15,6 +16,7 @@ import {
   analyzeDraws,
   generateReferenceBatch,
   getDrawStructure,
+  resolveReferenceBatch,
   runWalkForwardBacktest,
 } from '../lib/double-color-ball.ts';
 
@@ -174,6 +176,40 @@ test('saved batch storage round-trips only the current batch payload', async () 
   assert.deepEqual(await getSavedSSQBatch(), saved);
   await removeSavedSSQBatch();
   assert.equal(await getSavedSSQBatch(), null);
+});
+
+test('restores only a saved batch matching the current issue and window', () => {
+  const analysis = analyzeDraws(makeSequentialDraws(100), 100);
+  const savedBatch = generateReferenceBatch(analysis, 3);
+  const matching = {
+    batch: savedBatch,
+    batchIndex: 3,
+    issue: analysis.latestDraw.issue,
+    windowSize: 100,
+  };
+
+  assert.deepEqual(resolveReferenceBatch(analysis, matching), {
+    batch: savedBatch,
+    batchIndex: 3,
+    restored: true,
+  });
+  const fallback = resolveReferenceBatch(analysis, { ...matching, issue: 'different' });
+  assert.equal(fallback.batchIndex, 0);
+  assert.equal(fallback.batch.generatedForIssue, analysis.latestDraw.issue);
+  assert.equal(fallback.restored, false);
+});
+
+test('registers the probability reference as an available tool for every app role', () => {
+  const registry = JSON.parse(readFileSync(
+    new URL('../../backend/internal/access/feature_registry.json', import.meta.url),
+    'utf8',
+  ));
+  const tool = registry.find((item) => item.id === 'double-color-ball');
+
+  assert.ok(tool);
+  assert.equal(tool.route, '/tools/double-color-ball');
+  assert.equal(tool.status, 'available');
+  assert.deepEqual(tool.initialRoles, ['normal', 'vip', 'svip', 'admin']);
 });
 
 export { makeSequentialDraws };
