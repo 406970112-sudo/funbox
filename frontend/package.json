@@ -15,6 +15,7 @@
     "test:qr": "node --test --experimental-strip-types tests/qr-code.test.mjs",
     "test:ai-navigation": "node --test --experimental-strip-types tests/ai-navigation.test.mjs",
     "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
+    "test:social-refresh": "node --test --experimental-strip-types tests/latest-request-gate.test.mjs",
     "test:social-unread": "node --test --experimental-strip-types tests/unread-message-state.test.mjs",
     "test:auth": "node --test --experimental-strip-types tests/auth-validation.test.mjs"
   },

@@ -5,10 +5,12 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import { createLatestRequestGate } from '@/features/social/latest-request-gate';
 import { clearConversationUnreadCount } from '@/features/social/unread-message-state';
 import {
   createFriendRequest,
@@ -66,15 +68,20 @@ export function SocialProvider({ children }: PropsWithChildren) {
   const [lastEventSequence, setLastEventSequence] = useState(0);
   const [loading, setLoading] = useState(false);
   const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([]);
+  const refreshGateRef = useRef<ReturnType<typeof createLatestRequestGate> | null>(null);
+  if (refreshGateRef.current === null) {
+    refreshGateRef.current = createLatestRequestGate();
+  }
+  const refreshGate = refreshGateRef.current;
 
   async function refreshForToken(token: string, showLoading = false) {
     if (showLoading) setLoading(true);
     try {
-      const [nextFriends, nextRequests, nextConversations] = await Promise.all([
-        listFriends(token),
-        listFriendRequests(token),
-        listConversations(token),
-      ]);
+      const nextState = await refreshGate.run(() =>
+        Promise.all([listFriends(token), listFriendRequests(token), listConversations(token)]),
+      );
+      if (!nextState) return;
+      const [nextFriends, nextRequests, nextConversations] = nextState;
       startTransition(() => {
         setFriends(nextFriends);
         setIncomingRequests(nextRequests.incoming);
@@ -91,6 +98,7 @@ export function SocialProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (!accessToken) {
+      refreshGate.invalidate();
       setConnectionStatus('idle');
       setConversations([]);
       setFriends([]);
@@ -150,10 +158,11 @@ export function SocialProvider({ children }: PropsWithChildren) {
     void connect();
     return () => {
       active = false;
+      refreshGate.invalidate();
       if (reconnectTimer) clearTimeout(reconnectTimer);
       socket?.close();
     };
-  }, [accessToken]);
+  }, [accessToken, refreshGate]);
 
   async function refresh() {
     if (!accessToken) return;
