@@ -299,25 +299,19 @@ git commit -m "feat: 接入市场雷达快照数据层"
 - Produces: 首屏加载、数据页面、刷新中、陈旧缓存、终态错误与重试交互。
 - Preserves: 分类、周期、详情、返回、关注和底部导航现有交互。
 
-- [ ] **Step 1: 添加禁止演示数据的失败检查**
+- [ ] **Step 1: 用内置 Browser 记录页面行为红灯**
 
-```js
-test('production market radar code contains no demo fallback', async () => {
-	const files = [
-		new URL('../lib/market-radar.ts', import.meta.url),
-		new URL('../lib/market-radar-api.ts', import.meta.url),
-		new URL('../features/tools/market-radar-screen.tsx', import.meta.url),
-	];
-	const source = (await Promise.all(files.map((file) => readFile(file, 'utf8')))).join('\n');
-	assert.doesNotMatch(source, /演示数据|演示快照|MARKET_SECTORS|MARKET_BREADTH/);
-});
-```
+启动已完成的后端接口和当前 Expo Web，加载 `browser:control-in-app-browser` 后打开 `/tools/market-radar`。以用户可见行为检查“页面从后端展示 `东方财富公开行情` 且不显示演示快照”。
 
-- [ ] **Step 2: 运行测试并确认旧页面文案失败**
+Expected: FAIL。当前页面仍显示 `演示快照` / `演示数据`，不会请求或展示真实快照。保存 DOM 状态和控制台输出作为红灯证据，不提交截图或临时文件。
+
+- [ ] **Step 2: 保持数据层聚焦测试为绿**
 
 ```powershell
 npm run test:market-radar
 ```
+
+Expected: Task 3 的数据合同测试保持 PASS；页面行为仍由 Step 1 的 Browser 红灯约束。
 
 - [ ] **Step 3: 接入异步快照状态机**
 
