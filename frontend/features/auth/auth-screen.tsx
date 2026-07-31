@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -38,6 +38,7 @@ const recoverySteps: { key: RecoveryStep; label: string }[] = [
 
 export function AuthScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ returnTo?: string }>();
   const { colors } = useAppTheme();
   const { register, signIn, status } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
@@ -59,9 +60,12 @@ export function AuthScreen() {
   const [newPasswordConfirmVisible, setNewPasswordConfirmVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<FormMessage | null>(null);
+  const returnTo = typeof params.returnTo === 'string' && params.returnTo.startsWith('/tools/')
+    ? params.returnTo as Href
+    : '/profile';
 
   if (status === 'authenticated') {
-    return <Redirect href="/profile" />;
+    return <Redirect href={returnTo} />;
   }
 
   function showError(text: string) {
@@ -113,7 +117,7 @@ export function AuthScreen() {
       } else {
         await signIn(phone, password);
       }
-      router.replace('/profile');
+      router.replace(returnTo);
     } catch (error) {
       showError(getAuthErrorMessage(error));
     } finally {

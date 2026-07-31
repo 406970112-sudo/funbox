@@ -16,6 +16,7 @@ import (
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
+	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
@@ -45,6 +46,11 @@ func main() {
 		log.Fatalf("open access database failed: %v", err)
 	}
 	defer accessStore.Close()
+	scoreStore, err := score.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open score database failed: %v", err)
+	}
+	defer scoreStore.Close()
 	registry, err := access.Registry()
 	if err != nil {
 		log.Fatalf("load feature registry failed: %v", err)
@@ -58,6 +64,7 @@ func main() {
 		log.Fatalf("load auth signing key failed: %v", err)
 	}
 	authService := auth.NewService(userStore, signingKey, cfg.Auth.TokenTTL)
+	scoreService := score.NewService(scoreStore, signingKey, 7*24*time.Hour)
 
 	var ttsService *tts.Service
 	if cfg.Volc.AppID != "" && cfg.Volc.AccessToken != "" {
@@ -81,6 +88,7 @@ func main() {
 		authService,
 		socialStore,
 		accessStore,
+		scoreService,
 	)
 
 	go func() {

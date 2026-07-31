@@ -1,5 +1,20 @@
 [
   {
+    "id": "card-score",
+    "name": "打牌记分",
+    "tagline": "多人记分，散场结算",
+    "description": "创建牌局并邀请好友各自报分，全员确认后自动累计总分并生成最简转账方案。",
+    "icon": "cards-playing-outline",
+    "category": "生活",
+    "route": "/tools/card-score",
+    "accentColor": "#ef6b4a",
+    "badges": ["多人", "实时记分"],
+    "usageLabel": "开始记分",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "release-email-assistant",
     "name": "发版邮件助手",
     "tagline": "生成发版通知邮件",

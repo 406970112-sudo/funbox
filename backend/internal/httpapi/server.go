@@ -17,6 +17,7 @@ import (
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/resourcesearch"
+	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
@@ -29,6 +30,7 @@ type Server struct {
 	rateLimiter           *RateLimiter
 	realtimeHub           *realtime.Hub
 	resourceSearchService resourceSearchService
+	scoreService          *score.Service
 	socialStore           *social.Store
 	translationService    *translation.Service
 	ttsService            *tts.Service
@@ -41,7 +43,12 @@ func NewServer(
 	authService *auth.Service,
 	socialStore *social.Store,
 	accessStore *access.Store,
+	scoreServices ...*score.Service,
 ) *http.Server {
+	var scoreService *score.Service
+	if len(scoreServices) > 0 {
+		scoreService = scoreServices[0]
+	}
 	api := &Server{
 		accessStore:           accessStore,
 		authService:           authService,
@@ -49,6 +56,7 @@ func NewServer(
 		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:           realtime.NewHub(),
 		resourceSearchService: resourcesearch.NewService(cfg.ResourceSearch),
+		scoreService:          scoreService,
 		socialStore:           socialStore,
 		translationService:    translationService,
 		ttsService:            ttsService,
@@ -84,6 +92,7 @@ func NewServer(
 	mux.HandleFunc("POST /api/v1/conversations/{conversationID}/read", api.withAuth(api.withAPIPipeline(api.handleMarkConversationRead)))
 	mux.HandleFunc("POST /api/v1/realtime/ticket", api.withAuth(api.withAPIPipeline(api.handleCreateRealtimeTicket)))
 	mux.HandleFunc("GET /api/v1/realtime/ws", api.handleRealtime)
+	registerScoreRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/translation/translate", api.withTextPipeline(api.handleTranslate))
 	mux.HandleFunc("POST /api/translate", api.withTextPipeline(api.handleTranslate))
 	mux.HandleFunc("POST /api/v1/tts/synthesize", api.withTTSPipeline(api.handleSynthesize))

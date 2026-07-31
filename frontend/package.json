@@ -17,7 +17,8 @@
     "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
     "test:social-refresh": "node --test --experimental-strip-types tests/latest-request-gate.test.mjs",
     "test:social-unread": "node --test --experimental-strip-types tests/unread-message-state.test.mjs",
-    "test:auth": "node --test --experimental-strip-types tests/auth-validation.test.mjs"
+    "test:auth": "node --test --experimental-strip-types tests/auth-validation.test.mjs",
+    "test:card-score": "node --test --experimental-strip-types tests/card-score.test.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",

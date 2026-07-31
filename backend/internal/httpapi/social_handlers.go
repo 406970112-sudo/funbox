@@ -277,7 +277,11 @@ func (s *Server) handleRealtime(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "realtime_ticket_invalid"})
 		return
 	}
-	_ = s.realtimeHub.ServeWS(w, r, userID, s.publishPresence)
+	var onPresence func(string, bool)
+	if !strings.HasPrefix(userID, "score:") {
+		onPresence = s.publishPresence
+	}
+	_ = s.realtimeHub.ServeWS(w, r, userID, onPresence)
 }
 
 func (s *Server) publishPresence(userID string, online bool) {

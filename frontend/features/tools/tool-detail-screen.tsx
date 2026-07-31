@@ -11,6 +11,7 @@ import { ResourceSearchScreen } from '@/features/tools/resource-search-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
+import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { getToolById } from '@/mocks/app-data';
@@ -120,6 +121,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <MarketRadarScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'card-score') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <CardScoreScreen />
       </>
     );
   }
