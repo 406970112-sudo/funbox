@@ -73,7 +73,7 @@ func NewServer(
 	mux.HandleFunc("PATCH /api/v1/users/me/password", api.withAuth(api.withAPIPipeline(api.handleChangePassword)))
 	mux.HandleFunc("POST /api/v1/users/me/avatar", api.withAuth(api.withAvatarPipeline(api.handleUploadAvatar)))
 	mux.HandleFunc("GET /api/v1/users/search", api.withAuth(api.withAPIPipeline(api.handleSearchUsers)))
-	mux.HandleFunc("POST /api/v1/friend-requests", api.withAuth(api.withAPIPipeline(api.handleCreateFriendRequest)))
+	mux.HandleFunc("POST /api/v1/friend-requests", api.withAuth(api.withRateLimitedAPIPipeline("friend-request", api.handleCreateFriendRequest)))
 	mux.HandleFunc("GET /api/v1/friend-requests", api.withAuth(api.withAPIPipeline(api.handleListFriendRequests)))
 	mux.HandleFunc("POST /api/v1/friend-requests/{requestID}/accept", api.withAuth(api.withAPIPipeline(api.handleAcceptFriendRequest)))
 	mux.HandleFunc("POST /api/v1/friend-requests/{requestID}/reject", api.withAuth(api.withAPIPipeline(api.handleRejectFriendRequest)))
@@ -102,11 +102,15 @@ func NewServer(
 }
 
 func (s *Server) withAPIPipeline(next http.HandlerFunc) http.HandlerFunc {
-	return s.withJSONPipeline("api", next)
+	return s.withJSONPipeline("", next)
 }
 
 func (s *Server) withAuthPipeline(next http.HandlerFunc) http.HandlerFunc {
 	return s.withJSONPipeline("auth", next)
+}
+
+func (s *Server) withRateLimitedAPIPipeline(scope string, next http.HandlerFunc) http.HandlerFunc {
+	return s.withJSONPipeline(scope, next)
 }
 
 func (s *Server) withJSONPipeline(scope string, next http.HandlerFunc) http.HandlerFunc {
@@ -116,7 +120,7 @@ func (s *Server) withJSONPipeline(scope string, next http.HandlerFunc) http.Hand
 			return
 		}
 
-		if !s.allowRateLimitedRequest(w, r, scope) {
+		if scope != "" && !s.allowRateLimitedRequest(w, r, scope) {
 			return
 		}
 

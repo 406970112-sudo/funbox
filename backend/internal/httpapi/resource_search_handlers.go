@@ -15,8 +15,8 @@ type resourceSearchService interface {
 }
 
 func registerResourceSearchRoutes(mux *http.ServeMux, api *Server) {
-	mux.HandleFunc("GET /api/v1/resource-search/search", api.withAPIPipeline(api.handleResourceSearch))
-	mux.HandleFunc("POST /api/v1/resource-search/results/{resultID}/resolve", api.withAPIPipeline(api.handleResolveResourceResult))
+	mux.HandleFunc("GET /api/v1/resource-search/search", api.withRateLimitedAPIPipeline("resource-search", api.handleResourceSearch))
+	mux.HandleFunc("POST /api/v1/resource-search/results/{resultID}/resolve", api.withRateLimitedAPIPipeline("resource-search", api.handleResolveResourceResult))
 }
 
 func (s *Server) handleResourceSearch(w http.ResponseWriter, r *http.Request) {

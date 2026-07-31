@@ -9,7 +9,7 @@ import (
 	"my-first-expo-app/backend/internal/config"
 )
 
-func TestRateLimitBucketsAreScopedByRequestClass(t *testing.T) {
+func TestOrdinaryAPIRequestsDoNotConsumeLimitedRequestClasses(t *testing.T) {
 	api := &Server{
 		cfg: config.Config{
 			Security: config.SecurityConfig{MaxRequestBodyBytes: 1024},
@@ -19,23 +19,17 @@ func TestRateLimitBucketsAreScopedByRequestClass(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /first", api.withAPIPipeline(okHandler))
 	mux.HandleFunc("GET /login", api.withAuthPipeline(okHandler))
+	mux.HandleFunc("GET /resource", api.withRateLimitedAPIPipeline("resource-search", okHandler))
 	server := httptest.NewServer(api.withGlobalMiddleware(mux))
 	t.Cleanup(server.Close)
 
 	assertResponseStatus(t, server.URL+"/first", http.StatusOK)
+	assertResponseStatus(t, server.URL+"/first", http.StatusOK)
 	assertResponseStatus(t, server.URL+"/login", http.StatusOK)
+	assertResponseStatus(t, server.URL+"/resource", http.StatusOK)
 
-	response, err := http.Get(server.URL + "/first")
-	if err != nil {
-		t.Fatalf("request rate-limited route: %v", err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusTooManyRequests {
-		t.Fatalf("expected status %d, got %d", http.StatusTooManyRequests, response.StatusCode)
-	}
-	if response.Header.Get("Retry-After") == "" {
-		t.Fatal("expected Retry-After header")
-	}
+	assertRateLimited(t, server.URL+"/login")
+	assertRateLimited(t, server.URL+"/resource")
 }
 
 func TestClientIPTrustsHeadersOnlyFromLoopbackProxy(t *testing.T) {
@@ -94,5 +88,20 @@ func assertResponseStatus(t *testing.T, url string, want int) {
 	defer response.Body.Close()
 	if response.StatusCode != want {
 		t.Fatalf("GET %s: expected status %d, got %d", url, want, response.StatusCode)
+	}
+}
+
+func assertRateLimited(t *testing.T, url string) {
+	t.Helper()
+	response, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("GET %s: %v", url, err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusTooManyRequests {
+		t.Fatalf("GET %s: expected status %d, got %d", url, http.StatusTooManyRequests, response.StatusCode)
+	}
+	if response.Header.Get("Retry-After") == "" {
+		t.Fatalf("GET %s: expected Retry-After header", url)
 	}
 }

@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -34,6 +34,7 @@ export function AddFriendScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SocialUser[]>([]);
   const [searching, setSearching] = useState(false);
+  const pendingActionsRef = useRef(new Set<string>());
   const pendingIncoming = incomingRequests.filter((request) => request.status === 'pending');
   const pendingOutgoing = outgoingRequests.filter((request) => request.status === 'pending');
   const friendIDs = new Set(friends.map((friend) => friend.user.id));
@@ -61,6 +62,8 @@ export function AddFriendScreen() {
   }
 
   async function addFriend(user: SocialUser) {
+    if (pendingActionsRef.current.has(user.id)) return;
+    pendingActionsRef.current.add(user.id);
     setBusyId(user.id);
     setFeedback('');
     try {
@@ -69,11 +72,14 @@ export function AddFriendScreen() {
     } catch (error) {
       setFeedback(getSocialErrorMessage(error));
     } finally {
+      pendingActionsRef.current.delete(user.id);
       setBusyId('');
     }
   }
 
   async function respond(request: FriendRequest, action: 'accept' | 'reject') {
+    if (pendingActionsRef.current.has(request.id)) return;
+    pendingActionsRef.current.add(request.id);
     setBusyId(request.id);
     setFeedback('');
     try {
@@ -82,6 +88,7 @@ export function AddFriendScreen() {
     } catch (error) {
       setFeedback(getSocialErrorMessage(error));
     } finally {
+      pendingActionsRef.current.delete(request.id);
       setBusyId('');
     }
   }

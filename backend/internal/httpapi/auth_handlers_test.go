@@ -215,6 +215,71 @@ func TestAuthHTTPFlow(t *testing.T) {
 	)
 }
 
+func TestProfileUpdateIsNotBlockedByExhaustedAuthRateLimit(t *testing.T) {
+	tempDir := t.TempDir()
+	databasePath := filepath.Join(tempDir, "users.db")
+	store, err := user.OpenStore(databasePath)
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	socialStore, err := social.OpenStore(databasePath)
+	if err != nil {
+		t.Fatalf("open social store: %v", err)
+	}
+	t.Cleanup(func() { _ = socialStore.Close() })
+
+	cfg := config.Config{
+		Auth: config.AuthConfig{TokenTTL: time.Hour},
+		Server: config.ServerConfig{
+			Host:         "127.0.0.1",
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 5 * time.Second,
+		},
+		Security: config.SecurityConfig{
+			MaxRequestBodyBytes: 64 << 10,
+			RateLimitMax:        1,
+			RateLimitWindow:     time.Hour,
+		},
+	}
+	authService := auth.NewService(store, []byte(strings.Repeat("k", 32)), time.Hour)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil)
+	testServer := httptest.NewServer(httpServer.Handler)
+	t.Cleanup(testServer.Close)
+
+	registered := requestJSON[sessionResponse](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/register",
+		`{"username":"13800138000","password":"password-123","displayName":"测试用户","securityQuestion":"你小时候最喜欢的书是什么？","securityAnswer":"海底两万里"}`,
+		"",
+		http.StatusCreated,
+	)
+	requestJSON[map[string]any](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/login",
+		`{"username":"13800138000","password":"password-123"}`,
+		"",
+		http.StatusTooManyRequests,
+	)
+
+	updated := requestJSON[map[string]authUserResponse](
+		t,
+		testServer.Client(),
+		http.MethodPatch,
+		testServer.URL+"/api/v1/users/me",
+		`{"displayName":"限流后仍可修改"}`,
+		registered.AccessToken,
+		http.StatusOK,
+	)
+	if updated["user"].DisplayName != "限流后仍可修改" {
+		t.Fatalf("updated user = %+v", updated["user"])
+	}
+}
+
 func uploadTestAvatar(t *testing.T, server *httptest.Server, token string) string {
 	t.Helper()
 
