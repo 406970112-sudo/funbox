@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { BrickBreakerGameScreen } from '@/features/games/brick-breaker-game-screen';
 import { GomokuGameScreen } from '@/features/games/gomoku-game-screen';
 import { SnakeGameScreen } from '@/features/games/snake-game-screen';
 import { TetrisGameScreen } from '@/features/games/tetris-game-screen';
@@ -42,6 +43,15 @@ export function GameDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <TetrisGameScreen />
+      </>
+    );
+  }
+
+  if (game?.id === 'brick-breaker') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <BrickBreakerGameScreen />
       </>
     );
   }

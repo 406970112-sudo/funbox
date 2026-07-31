@@ -10,6 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test:gomoku": "node --test --experimental-strip-types tests/gomoku-engine.test.mjs",
+    "test:brick-breaker-engine": "node --test --experimental-strip-types tests/brick-breaker-engine.test.mjs",
+    "test:brick-breaker-rules": "node --test --experimental-strip-types tests/brick-breaker-rules.test.mjs",
     "test:qr": "node --test --experimental-strip-types tests/qr-code.test.mjs",
     "test:ai-navigation": "node --test --experimental-strip-types tests/ai-navigation.test.mjs",
     "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
@@ -45,6 +47,7 @@
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.10",
     "livekit-client": "^2.19.2",
+    "matter-js": "^0.20.0",
     "qrcode": "^1.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -63,6 +66,7 @@
     "ws": "^7.5.10"
   },
   "devDependencies": {
+    "@types/matter-js": "^0.20.2",
     "@types/qrcode": "^1.5.6",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",

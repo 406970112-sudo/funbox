@@ -76,6 +76,16 @@ export const popularGames: GameItem[] = [
     status: 'playable',
   },
   {
+    id: 'brick-breaker',
+    name: '打砖块',
+    genre: '休闲街机',
+    tag: '道具连击',
+    description: '三条生命挑战渐进关卡，接住穿透、多球和加宽道具打出高连击。',
+    accentColor: '#ff7466',
+    route: '/games/brick-breaker',
+    status: 'playable',
+  },
+  {
     id: 'brain-challenge',
     name: '脑力挑战',
     genre: '益智闯关',

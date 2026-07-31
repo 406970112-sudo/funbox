@@ -146,7 +146,7 @@ export function HomeScreen() {
   const quickTools = visibleTools
     .filter((tool) => tool.status === 'available' && !HOME_TOOL_EXCLUSIONS.has(tool.id))
     .slice(0, HOME_TOOL_LIMIT);
-  const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 3);
+  const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 4);
   const availableToolCount = visibleTools.filter((tool) => tool.status === 'available').length;
 
   return (
@@ -207,7 +207,7 @@ export function HomeScreen() {
 
       <Reveal progress={reveals[3]}>
         <View style={styles.section}>
-          <SectionHeader title="放松一下" meta="三款小游戏，随时开一局" />
+          <SectionHeader title="放松一下" meta="四款小游戏，随时开一局" />
           <View style={styles.gameGrid}>
             {playableGames.map((game) => (
               <GameTile key={game.id} game={game} onPress={() => router.push(game.route)} />

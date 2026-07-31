@@ -5,7 +5,13 @@ export type AppIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 export type ToolId = string;
 
-export type GameId = 'snake-brawl' | 'gomoku' | 'tetris' | 'brain-challenge' | 'speed-racer';
+export type GameId =
+  | 'snake-brawl'
+  | 'gomoku'
+  | 'tetris'
+  | 'brick-breaker'
+  | 'brain-challenge'
+  | 'speed-racer';
 
 export type ToolCategory = string;
 export type ToolStatus = 'available' | 'coming-soon';
