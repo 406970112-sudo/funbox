@@ -15,6 +15,7 @@ type Config struct {
 	Security       SecurityConfig
 	Storage        StorageConfig
 	DeepSeek       DeepSeekConfig
+	Lottery        LotteryConfig
 	ResourceSearch ResourceSearchConfig
 	TinyPNG        TinyPNGConfig
 	TTS            TTSConfig
@@ -50,6 +51,15 @@ type ResourceSearchConfig struct {
 	CacheTTL       time.Duration
 	MaxResults     int
 	RequestTimeout time.Duration
+}
+
+type LotteryConfig struct {
+	CacheTTL       time.Duration
+	FetchCount     int
+	MinimumDraws   int
+	Referer        string
+	RequestTimeout time.Duration
+	SourceURL      string
 }
 
 type StorageConfig struct {
@@ -121,6 +131,14 @@ func Load() (Config, error) {
 			MaxTextLength:  intFirst("TRANSLATION_MAX_TEXT_LENGTH", "", "8000"),
 			Model:          envFirst("DEEPSEEK_TRANSLATION_MODEL", "deepseek-chat"),
 			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
+		},
+		Lottery: LotteryConfig{
+			CacheTTL:       durationFromMs("LOTTERY_CACHE_TTL_MS", "", "900000"),
+			FetchCount:     intFirst("LOTTERY_FETCH_COUNT", "", "400"),
+			MinimumDraws:   intFirst("LOTTERY_MINIMUM_DRAWS", "", "360"),
+			Referer:        envFirst("LOTTERY_REFERER", "https://www.cwl.gov.cn/ygkj/wqkjgg/ssq/"),
+			RequestTimeout: durationFromMs("LOTTERY_REQUEST_TIMEOUT_MS", "", "10000"),
+			SourceURL:      envFirst("LOTTERY_SOURCE_URL", "https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=ssq&issueCount=400"),
 		},
 		ResourceSearch: ResourceSearchConfig{
 			CacheTTL:       durationFromMs("RESOURCE_SEARCH_CACHE_TTL_MS", "", "120000"),
