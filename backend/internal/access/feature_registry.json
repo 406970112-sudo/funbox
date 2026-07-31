@@ -60,6 +60,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "double-color-ball",
+    "name": "双色球概率参考",
+    "tagline": "历史数据与结构化参考号",
+    "description": "查看近期开奖的冷热、遗漏和分布结构，并生成五组可解释、低重合的下期参考号码。",
+    "icon": "chart-bell-curve-cumulative",
+    "category": "数据",
+    "route": "/tools/double-color-ball",
+    "accentColor": "#ff5f72",
+    "badges": ["历史分析", "理性参考"],
+    "usageLabel": "查看概率分析",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "live-stream-capture",
     "name": "音视频推流",
     "tagline": "LiveKit 本地采集",

@@ -10,6 +10,7 @@ import { ImageCompressorScreen } from '@/features/tools/image-compressor-screen'
 import { ResourceSearchScreen } from '@/features/tools/resource-search-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
+import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { ThemedText } from '@/components/themed-text';
@@ -130,6 +131,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <CardScoreScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'double-color-ball') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DoubleColorBallScreen />
       </>
     );
   }
