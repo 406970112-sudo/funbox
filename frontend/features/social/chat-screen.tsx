@@ -35,6 +35,7 @@ export function ChatScreen() {
   const listRef = useRef<FlatList<SocialMessage>>(null);
   const [error, setError] = useState('');
   const [input, setInput] = useState('');
+  const [inputHeight, setInputHeight] = useState(44);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<SocialMessage[]>([]);
   const [sending, setSending] = useState(false);
@@ -89,6 +90,7 @@ export function ChatScreen() {
       );
       setMessages((items) => (items.some((item) => item.id === message.id) ? items : [...items, message]));
       setInput('');
+      setInputHeight(44);
       void refresh();
     } catch (requestError) {
       setError(getSocialErrorMessage(requestError));
@@ -199,13 +201,14 @@ export function ChatScreen() {
         ) : null}
 
         <View style={[styles.composer, { backgroundColor: colors.surface, borderTopColor: colors.line }]}>
-          <View style={[styles.composerAccessory, { backgroundColor: colors.surfaceMuted }]}>
-            <MaterialCommunityIcons name="message-text-outline" size={18} color={colors.text} />
-          </View>
           <TextInput
             accessibilityLabel="输入消息"
             multiline
+            numberOfLines={1}
             onChangeText={setInput}
+            onContentSizeChange={({ nativeEvent }) => {
+              setInputHeight(Math.min(112, Math.max(44, nativeEvent.contentSize.height)));
+            }}
             onSubmitEditing={() => {
               if (Platform.OS === 'web') void submitMessage();
             }}
@@ -214,6 +217,7 @@ export function ChatScreen() {
             style={[
               styles.composerInput,
               { backgroundColor: colors.surfaceMuted, borderColor: colors.line, color: colors.text },
+              { height: inputHeight, overflow: inputHeight >= 112 ? 'scroll' : 'hidden' },
             ]}
             value={input}
           />
@@ -359,33 +363,25 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   composer: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    gap: 8,
-    minHeight: 72,
-    paddingBottom: 12,
-    paddingHorizontal: 14,
-    paddingTop: 10,
-  },
-  composerAccessory: {
-    alignItems: 'center',
-    borderRadius: 12,
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
+    gap: 10,
+    minHeight: 68,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
   },
   composerInput: {
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
     flex: 1,
-    fontSize: 12,
-    lineHeight: 18,
-    maxHeight: 88,
-    minHeight: 40,
+    fontSize: 13,
+    lineHeight: 20,
+    maxHeight: 112,
+    minHeight: 44,
     outlineStyle: 'none',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   } as never,
   dateDivider: {
     color: '#8996aa',
@@ -467,9 +463,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#4b6bff',
     borderRadius: 12,
-    height: 40,
+    height: 44,
     justifyContent: 'center',
-    width: 40,
+    width: 44,
   },
   sendButtonDisabled: {
     opacity: 0.45,
