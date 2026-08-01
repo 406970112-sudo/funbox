@@ -10,9 +10,12 @@ import (
 	"testing"
 
 	"my-first-expo-app/backend/internal/marketradar"
+	"my-first-expo-app/backend/internal/news"
 )
 
 type fakeMarketRadarService struct {
+	detail       marketradar.SectorDetail
+	detailErr    error
 	err          error
 	forceRefresh bool
 	snapshot     marketradar.Snapshot
@@ -21,6 +24,10 @@ type fakeMarketRadarService struct {
 func (f *fakeMarketRadarService) Snapshot(_ context.Context, force bool) (marketradar.Snapshot, error) {
 	f.forceRefresh = force
 	return f.snapshot, f.err
+}
+
+func (f *fakeMarketRadarService) SectorDetail(_ context.Context, _ string) (marketradar.SectorDetail, error) {
+	return f.detail, f.detailErr
 }
 
 func TestMarketRadarSnapshotHandlerReturnsSnapshot(t *testing.T) {
@@ -64,6 +71,37 @@ func TestMarketRadarSnapshotHandlerMapsSourceErrors(t *testing.T) {
 		if response.Code != http.StatusBadGateway || !strings.Contains(response.Body.String(), test.body) {
 			t.Fatalf("error %v: status/body = %d %s", test.err, response.Code, response.Body.String())
 		}
+	}
+}
+
+func TestMarketRadarSectorDetailHandlerReturnsDetailWithNews(t *testing.T) {
+	api := &Server{
+		marketRadarService: &fakeMarketRadarService{detail: marketradar.SectorDetail{
+			Sector: marketradar.Sector{ID: "BK1134", Name: "算力概念"},
+		}},
+		newsService: fakeNewsFeedService{snapshot: news.FeedSnapshot{
+			Events: []news.Event{
+				{ID: "n1", Title: "AI 算力需求增长"},
+				{ID: "n2", Title: "天气转凉"},
+			},
+		}},
+	}
+	mux := http.NewServeMux()
+	registerMarketRadarRoutes(mux, api)
+
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/v1/market-radar/sectors/BK1134", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), "算力概念") {
+		t.Fatalf("detail name missing: %s", response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), "AI 算力需求增长") {
+		t.Fatalf("related news missing: %s", response.Body.String())
+	}
+	if strings.Contains(response.Body.String(), "天气转凉") {
+		t.Fatalf("unrelated news should be filtered: %s", response.Body.String())
 	}
 }
 

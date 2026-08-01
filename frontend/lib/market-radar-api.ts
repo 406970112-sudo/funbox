@@ -1,4 +1,4 @@
-import type { MarketPeriodId, MarketRadarSnapshot } from '../types/market-radar.ts';
+import type { MarketPeriodId, MarketRadarSnapshot, MarketSectorDetail } from '../types/market-radar.ts';
 
 type ErrorPayload = {
   error?: string;
@@ -37,6 +37,26 @@ export async function fetchMarketRadarSnapshot(
   return payload as MarketRadarSnapshot;
 }
 
+export async function fetchMarketRadarSectorDetail(
+  sectorId: string,
+  signal?: AbortSignal,
+  apiBaseUrl?: string,
+): Promise<MarketSectorDetail> {
+  const baseUrl = apiBaseUrl ?? (await resolveAPIBaseURL());
+  const response = await fetch(
+    `${baseUrl.replace(/\/$/, '')}/api/v1/market-radar/sectors/${encodeURIComponent(sectorId)}`,
+    { signal },
+  );
+  const payload = (await response.json().catch(() => ({}))) as Partial<MarketSectorDetail> & ErrorPayload;
+  if (!response.ok) {
+    throw new MarketRadarAPIError(payload.error || 'request_failed', response.status);
+  }
+  if (!isValidMarketRadarSectorDetail(payload)) {
+    throw new MarketRadarAPIError('market_radar_source_invalid', response.status);
+  }
+  return payload as MarketSectorDetail;
+}
+
 export function getMarketRadarErrorMessage(error: unknown) {
   if (!(error instanceof MarketRadarAPIError)) {
     return '暂时无法连接行情服务，请稍后重试。';
@@ -58,19 +78,27 @@ function isValidMarketRadarSnapshot(value: unknown): value is MarketRadarSnapsho
     && typeof snapshot.fetchedAt === 'string'
     && Number.isFinite(Date.parse(snapshot.fetchedAt))
     && Array.isArray(snapshot.categories)
+    && snapshot.categories.some((category) => category?.id === 'market')
     && Array.isArray(snapshot.periods)
+    && snapshot.periods.some((period) => period?.id === '1d')
     && Array.isArray(snapshot.sectors)
     && snapshot.sectors.length > 0
+    && Array.isArray(snapshot.indices)
+    && Array.isArray(snapshot.signals)
     && typeof snapshot.coverage === 'object'
     && snapshot.coverage !== null
     && Number.isInteger(snapshot.coverage.loaded)
     && Number.isInteger(snapshot.coverage.requested)
     && typeof snapshot.pulses === 'object'
     && snapshot.pulses !== null
-    && snapshot.sectors.some((sector) => sector.categoryIds.includes('ai'))
-    && snapshot.sectors.some((sector) => sector.categoryIds.includes('metals'))
     && snapshot.sectors.every(isValidSector)
   );
+}
+
+function isValidMarketRadarSectorDetail(value: unknown): value is MarketSectorDetail {
+  if (!isValidSector(value)) return false;
+  const detail = value as Partial<MarketSectorDetail>;
+  return Array.isArray(detail.related) && Array.isArray(detail.news);
 }
 
 function isValidSector(value: unknown): boolean {
@@ -100,6 +128,8 @@ function isValidSector(value: unknown): boolean {
   const indicator = sector.indicator as Record<string, unknown>;
   return (
     Number.isFinite(indicator.amount)
+    && Number.isFinite(indicator.averageAmount)
+    && Number.isFinite(indicator.averageTurnover)
     && Number.isFinite(indicator.close)
     && Number.isFinite(indicator.turnover)
     && Number.isInteger(indicator.advancing)

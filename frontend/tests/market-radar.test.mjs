@@ -7,40 +7,71 @@ import {
   getMarketPulse,
   getMarketSector,
   getRankedMarketSectors,
+  getSignalSectors,
+  getWatchSectorSummaries,
+  searchMarketSectors,
+  sortMarketSectors,
 } from '../lib/market-radar.ts';
 import {
   MarketRadarAPIError,
+  fetchMarketRadarSectorDetail,
   fetchMarketRadarSnapshot,
   getMarketRadarErrorMessage,
 } from '../lib/market-radar-api.ts';
 
 const aiSector = {
-  anomaly: '近5日上涨8.00%，同类板块最强',
-  categoryIds: ['global', 'ai'],
+  categoryIds: ['market', 'ai'],
   changes: { '1d': 3.2, '5d': 8, '20d': 18 },
   constituents: [
-    { change: 4.8, code: '601138', name: '工业富联', weight: 53 },
-    { change: 4.4, code: '300308', name: '中际旭创', weight: 47 },
+    { change: 4.8, code: '601138', name: '工业富联', weight: 53, amount: 120000000 },
+    { change: 4.4, code: '300308', name: '中际旭创', weight: 47, amount: 90000000 },
   ],
   id: 'BK1134',
-  indicator: { advancing: 2, amount: 311939554793, close: 1764.6, coverage: 2, declining: 0, turnover: 2.88 },
+  indicator: {
+    advancing: 18,
+    amount: 311939554793,
+    averageAmount: 200000000000,
+    averageTurnover: 2.0,
+    close: 1764.6,
+    coverage: 36,
+    declining: 6,
+    turnover: 3.1,
+  },
   methodology: '东方财富公开板块行情 · 日K收盘价区间收益 · 成分按流通市值权重',
   name: '算力概念',
   series: [100, 101, 102, 103, 104, 105],
 };
 
-const metalsSector = {
-  categoryIds: ['global', 'metals'],
-  changes: { '1d': 1, '5d': 2, '20d': 9 },
-  constituents: [{ change: 4.1, code: '600547', name: '山东黄金', weight: 100 }],
+const manufacturingSector = {
+  categoryIds: ['market', 'manufacturing'],
+  changes: { '1d': -1.2, '5d': 2, '20d': 9 },
+  constituents: [{ change: 4.1, code: '600547', name: '山东黄金', weight: 100, amount: 80000000 }],
   id: 'BK0732',
-  indicator: { advancing: 1, amount: 123456789, close: 2000, coverage: 1, declining: 0, turnover: 1.2 },
+  indicator: {
+    advancing: 12,
+    amount: 123456789,
+    averageAmount: 150000000,
+    averageTurnover: 1.0,
+    close: 2000,
+    coverage: 24,
+    declining: 8,
+    turnover: 1.2,
+  },
   methodology: '东方财富公开板块行情 · 日K收盘价区间收益 · 成分按流通市值权重',
   name: '贵金属',
   series: [100, 101, 102],
 };
 
 function makeSnapshot(overrides = {}) {
+  const categories = [
+    { id: 'market', label: '全市场' },
+    { id: 'ai', label: 'AI科技' },
+    { id: 'new-energy', label: '新能源' },
+    { id: 'health', label: '医药消费' },
+    { id: 'finance', label: '金融地产' },
+    { id: 'manufacturing', label: '周期制造' },
+    { id: 'themes', label: '热门题材' },
+  ];
   const pulse = (score) => ({
     advancing: 1,
     declining: 0,
@@ -48,25 +79,35 @@ function makeSnapshot(overrides = {}) {
     state: score >= 80 ? '强势' : '偏强',
     strongestSectorId: 'BK1134',
   });
+  const pulses = {};
+  for (const category of categories) {
+    pulses[category.id] = { '1d': pulse(100), '5d': pulse(100), '20d': pulse(100) };
+  }
   return {
-    categories: [
-      { id: 'global', label: '全球' },
-      { id: 'ai', label: 'AI' },
-      { id: 'metals', label: '有色' },
+    categories,
+    coverage: { loaded: 2, requested: 46 },
+    fetchedAt: '2026-08-01T09:41:00+08:00',
+    indices: [
+      { id: 'sh', name: '上证指数', code: '000001', close: 3832.26, change: 0.72, region: 'A股' },
+      { id: 'hsi', name: '恒生指数', code: 'HSI', close: 25884.43, change: 0.1, region: '港股' },
     ],
-    coverage: { loaded: 2, requested: 10 },
-    fetchedAt: '2026-07-31T09:41:00+08:00',
     periods: [
       { id: '1d', label: '1日' },
       { id: '5d', label: '5日' },
       { id: '20d', label: '20日' },
     ],
-    pulses: {
-      global: { '1d': pulse(100), '5d': pulse(100), '20d': pulse(100) },
-      ai: { '1d': pulse(100), '5d': pulse(100), '20d': pulse(100) },
-      metals: { '1d': pulse(100), '5d': pulse(100), '20d': pulse(100) },
-    },
-    sectors: [aiSector, metalsSector],
+    pulses,
+    sectors: [aiSector, manufacturingSector],
+    signals: [
+      {
+        id: 'sig-leader-BK1134',
+        type: 'leader',
+        title: '领涨',
+        description: '算力概念 近1日+3.20%，处于当前板块领涨位置',
+        sectorId: 'BK1134',
+        severity: 3,
+      },
+    ],
     source: 'eastmoney',
     sourceUrl: 'https://quote.eastmoney.com',
     stale: false,
@@ -79,7 +120,7 @@ test('ranks sectors from an API snapshot without mutating it', () => {
   const original = JSON.parse(JSON.stringify(snapshot));
 
   assert.deepEqual(
-    getRankedMarketSectors(snapshot, 'global', '1d').map((sector) => sector.id),
+    getRankedMarketSectors(snapshot, 'market', '1d').map((sector) => sector.id),
     ['BK1134', 'BK0732'],
   );
   assert.deepEqual(snapshot, original);
@@ -91,6 +132,21 @@ test('reads pulse and full sector detail from the snapshot', () => {
   assert.equal(pulse.strongestSectorId, 'BK1134');
   assert.equal(getMarketSector(snapshot, 'BK0732')?.name, '贵金属');
   assert.equal(getMarketSector(snapshot, 'missing-sector'), undefined);
+});
+
+test('searches, sorts, and resolves watched sectors', () => {
+  const snapshot = makeSnapshot();
+  assert.equal(searchMarketSectors(snapshot, '算力')[0]?.id, 'BK1134');
+  assert.equal(searchMarketSectors(snapshot, 'missing').length, 0);
+  assert.equal(
+    sortMarketSectors(snapshot.sectors, '1d', 'amount')[0]?.id,
+    'BK1134',
+  );
+  assert.equal(
+    getWatchSectorSummaries(snapshot, ['BK0732', 'missing'])[0]?.name,
+    '贵金属',
+  );
+  assert.equal(getSignalSectors(snapshot)[0]?.sector.name, '算力概念');
 });
 
 test('requests a forced backend refresh', async () => {
@@ -105,6 +161,28 @@ test('requests a forced backend refresh', async () => {
     const result = await fetchMarketRadarSnapshot(undefined, true, 'http://127.0.0.1:3000');
     assert.equal(result.source, 'eastmoney');
     assert.equal(requestedUrl, 'http://127.0.0.1:3000/api/v1/market-radar/snapshot?refresh=1');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('requests sector detail with a real news list', async () => {
+  const snapshot = makeSnapshot();
+  const originalFetch = globalThis.fetch;
+  let requestedUrl = '';
+  globalThis.fetch = async (url) => {
+    requestedUrl = String(url);
+    return new Response(JSON.stringify({
+      ...snapshot.sectors[0],
+      related: [{ id: 'BK1128', name: 'CPO概念', score: 92 }],
+      news: [{ id: 'n1', title: 'AI 算力需求增长', publishedAt: '2026-08-01T08:00:00Z', summary: { oneSentence: '算力需求增长' }, sources: [] }],
+    }), { status: 200 });
+  };
+  try {
+    const detail = await fetchMarketRadarSectorDetail('BK1134', undefined, 'http://127.0.0.1:3000');
+    assert.equal(detail.id, 'BK1134');
+    assert.equal(detail.news.length, 1);
+    assert.equal(requestedUrl, 'http://127.0.0.1:3000/api/v1/market-radar/sectors/BK1134');
   } finally {
     globalThis.fetch = originalFetch;
   }

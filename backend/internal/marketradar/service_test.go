@@ -72,6 +72,42 @@ func TestSnapshotRequiresAIAndMetalsCoverage(t *testing.T) {
 	}
 }
 
+func TestSnapshotIncludesIndicesAndSignals(t *testing.T) {
+	upstream := newMarketRadarUpstream(t)
+	service := NewService(testMarketRadarConfig(upstream.URL()))
+
+	snapshot, err := service.Snapshot(context.Background(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshot.Indices) != len(indexDefinitions) {
+		t.Fatalf("indices = %d, want %d", len(snapshot.Indices), len(indexDefinitions))
+	}
+	if len(snapshot.Signals) == 0 {
+		t.Fatal("expected at least one market signal")
+	}
+}
+
+func TestSectorDetailIncludesFullConstituentsAndRelated(t *testing.T) {
+	upstream := newMarketRadarUpstream(t)
+	service := NewService(testMarketRadarConfig(upstream.URL()))
+
+	snapshot, err := service.Snapshot(context.Background(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	detail, err := service.SectorDetail(context.Background(), snapshot.Sectors[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(detail.Constituents) < 3 {
+		t.Fatalf("full constituents = %d", len(detail.Constituents))
+	}
+	if len(detail.Related) != 3 {
+		t.Fatalf("related sectors = %d", len(detail.Related))
+	}
+}
+
 func TestSnapshotReturnsTypedErrorsWithoutCache(t *testing.T) {
 	t.Run("unavailable", func(t *testing.T) {
 		upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -147,6 +183,12 @@ func (u *marketRadarUpstream) handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_, _ = io.WriteString(w, quoteFixture)
+	case "/api/qt/ulist.np/get":
+		if u.fail.Load() {
+			_, _ = io.WriteString(w, `{"rc":1,"data":null}`)
+			return
+		}
+		_, _ = io.WriteString(w, indexFixture)
 	default:
 		http.NotFound(w, r)
 	}
@@ -195,6 +237,21 @@ const quoteFixture = `{"rc":0,"data":{"total":3,"diff":[
 	{"f3":2.0,"f12":"600001","f14":"样例甲","f21":1000},
 	{"f3":-1.0,"f12":"600002","f14":"样例乙","f21":600},
 	{"f3":0.5,"f12":"600003","f14":"样例丙","f21":400}
+]}}`
+
+const indexFixture = `{"rc":0,"data":{"diff":[
+	{"f2":3832.26,"f3":0.72,"f12":"000001","f14":"上证指数"},
+	{"f2":13578.93,"f3":2.21,"f12":"399001","f14":"深证成指"},
+	{"f2":3343.96,"f3":3.06,"f12":"399006","f14":"创业板指"},
+	{"f2":1635.96,"f3":2.99,"f12":"000688","f14":"科创50"},
+	{"f2":4588.2,"f3":0.85,"f12":"000300","f14":"沪深300"},
+	{"f2":7493.99,"f3":2.52,"f12":"000905","f14":"中证500"},
+	{"f2":25884.43,"f3":0.1,"f12":"HSI","f14":"恒生指数"},
+	{"f2":4829.22,"f3":0.53,"f12":"HSTECH","f14":"恒生科技"},
+	{"f2":25373.85,"f3":1.0,"f12":"NDX","f14":"纳斯达克"},
+	{"f2":7489.72,"f3":0.7,"f12":"SPX","f14":"标普500"},
+	{"f2":52485.03,"f3":0.53,"f12":"DJIA","f14":"道琼斯"},
+	{"f2":64362.02,"f3":4.03,"f12":"N225","f14":"日经225"}
 ]}}`
 
 func testMarketRadarConfig(baseURL string) Config {
