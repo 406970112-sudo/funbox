@@ -195,9 +195,15 @@ function CompareRow({ name, roles }: { name: string; roles: UserRole[] }) {
       <ThemedText numberOfLines={1} style={styles.compareName}>
         {name}
       </ThemedText>
-      <AccessMark available={roles.includes('normal')} />
-      <AccessMark available={roles.includes('vip')} />
-      <AccessMark available={roles.includes('svip')} />
+      <View style={styles.compareMarkCell}>
+        <AccessMark available={roles.includes('normal')} />
+      </View>
+      <View style={styles.compareMarkCell}>
+        <AccessMark available={roles.includes('vip')} />
+      </View>
+      <View style={styles.compareMarkCell}>
+        <AccessMark available={roles.includes('svip')} />
+      </View>
     </View>
   );
 }
@@ -418,5 +424,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     paddingRight: 8,
+  },
+  compareMarkCell: {
+    alignItems: 'center',
+    flex: 1,
   },
 });
