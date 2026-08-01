@@ -19,10 +19,13 @@ import { DoubleColorBallLabClassicScreen } from '@/features/tools/double-color-b
 import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
+import { FocusScreen } from '@/features/focus/focus-screen';
 import { ReadingHomeScreen } from '@/features/reading/reading-home-screen';
+import { useAuth } from '@/features/auth/auth-provider';
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
-import { getToolById } from '@/mocks/app-data';
+import { getToolById, initialToolRoles } from '@/mocks/app-data';
+import { identityPresentation } from '@/lib/identity';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
@@ -37,6 +40,7 @@ export function ToolDetailScreen() {
   const tool = getToolById(params.toolId);
   const router = useRouter();
   const { colors } = useAppTheme();
+  const { status: authStatus, user } = useAuth();
   const { canAccessTool, status } = useFeatureAccess();
   const toolId = tool?.id;
   const toolStatus = tool?.status;
@@ -67,17 +71,68 @@ export function ToolDetailScreen() {
   }
 
   if (tool && !canAccessTool(tool.id)) {
+    const requiredMemberRoles = (initialToolRoles.get(tool.id) ?? []).filter(
+      (role) => role === 'vip' || role === 'svip',
+    );
+    const requiredLabel =
+      requiredMemberRoles.length > 0
+        ? requiredMemberRoles.map((role) => identityPresentation(role).label).join(' / ')
+        : '管理员';
     return (
       <MobileScreen>
         <PageHeader
           title="暂无访问权限"
-          subtitle="此功能入口尚未对当前身份开放，请联系管理员调整权限。"
+          subtitle="此功能需要会员身份，升级后即可解锁。"
           rightSlot={
             <Pressable onPress={() => router.back()} style={styles.closeButton}>
               <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
             </Pressable>
           }
         />
+        <View
+          style={[
+            styles.noticeCard,
+            { backgroundColor: colors.surface, borderColor: colors.line },
+          ]}>
+          <View style={[styles.noticeIcon, { backgroundColor: colors.primarySoft }]}>
+            <MaterialCommunityIcons name="lock-outline" size={26} color={colors.primary} />
+          </View>
+          <ThemedText style={styles.noticeTitle}>该功能需要{requiredLabel}身份</ThemedText>
+          <ThemedText style={[styles.noticeBody, { color: colors.mutedText }]}>
+            {authStatus === 'authenticated'
+              ? `当前身份为${identityPresentation(user?.role ?? 'normal').label}，升级后即可使用此功能。`
+              : '登录并开通会员后即可使用此功能。'}
+          </ThemedText>
+          {requiredMemberRoles.length > 0 ? (
+            <View style={styles.noticeRoleRow}>
+              {requiredMemberRoles.map((role) => {
+                const item = identityPresentation(role);
+                return (
+                  <View
+                    key={role}
+                    style={[
+                      styles.noticeRolePill,
+                      { backgroundColor: `${item.color}18`, borderColor: `${item.color}55` },
+                    ]}>
+                    <MaterialCommunityIcons name={item.icon} size={12} color={item.color} />
+                    <ThemedText style={[styles.noticeRoleText, { color: item.color }]}>
+                      {item.label}
+                    </ThemedText>
+                  </View>
+                );
+              })}
+            </View>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push(authStatus === 'authenticated' ? '/profile/membership' : '/auth')}
+            style={[styles.noticeButton, { backgroundColor: colors.hero }]}>
+            <ThemedText style={styles.noticeButtonText}>
+              {authStatus === 'authenticated' ? '查看权益' : '登录 / 注册'}
+            </ThemedText>
+            <MaterialCommunityIcons name="arrow-right" size={17} color="#c9f36a" />
+          </Pressable>
+        </View>
       </MobileScreen>
     );
   }
@@ -172,6 +227,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <CardScoreScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'focus-plan') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <FocusScreen />
       </>
     );
   }
@@ -273,6 +337,61 @@ const styles = StyleSheet.create({
   closeButton: {
     borderRadius: 999,
     padding: 8,
+  },
+  noticeBody: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  noticeButton: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 14,
+  },
+  noticeButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  noticeCard: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 12,
+    padding: 20,
+  },
+  noticeIcon: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 52,
+    justifyContent: 'center',
+    width: 52,
+  },
+  noticeRolePill: {
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 5,
+    minHeight: 28,
+    paddingHorizontal: 10,
+  },
+  noticeRoleRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  noticeRoleText: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  noticeTitle: {
+    fontSize: 18,
+    fontWeight: '900',
   },
   placeholderCard: {
     gap: 12,
