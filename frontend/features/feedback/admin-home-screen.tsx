@@ -1,17 +1,18 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Redirect, useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
-import { MobileScreen } from '@/shared/ui/mobile-screen';
+
+const ADMIN_DESKTOP_BREAKPOINT = 900;
 
 type AdminEntryProps = {
   description: string;
+  desktop?: boolean;
   icon: ComponentProps<typeof MaterialCommunityIcons>['name'];
   label: string;
   onPress: () => void;
@@ -21,7 +22,9 @@ type AdminEntryProps = {
 export function AdminHomeScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
+  const { width } = useWindowDimensions();
   const { status, user } = useAuth();
+  const isDesktop = width >= ADMIN_DESKTOP_BREAKPOINT;
 
   if (status === 'loading' || !user) {
     return <AppLoadingScreen />;
@@ -31,58 +34,49 @@ export function AdminHomeScreen() {
   }
 
   return (
-    <MobileScreen contentContainerStyle={styles.pageContent}>
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityLabel="返回我的"
-          accessibilityRole="button"
-          onPress={() => router.back()}
-          style={[styles.iconButton, { backgroundColor: colors.surface }]}>
-          <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
-        </Pressable>
-        <View style={styles.topBarCopy}>
-          <ThemedText style={styles.pageTitle}>管理后台</ThemedText>
-          <ThemedText style={[styles.pageSubtitle, { color: colors.mutedText }]}>
-            FunBox 管理
-          </ThemedText>
+    <ScrollView
+      contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+      style={styles.root}>
+      <View style={[styles.page, isDesktop && styles.pageDesktop]}>
+        <View style={[styles.heroBand, { backgroundColor: colors.hero }]}>
+          <View pointerEvents="none" style={styles.heroAccent} />
+          <ThemedText style={styles.heroTitle}>管理控制台</ThemedText>
+          <ThemedText style={styles.heroBody}>查看入口权限与用户提交的内容</ThemedText>
         </View>
-        <AdminIdentityChip username={user.username} />
-      </View>
 
-      <View style={[styles.heroBand, { backgroundColor: colors.hero }]}>
-        <View pointerEvents="none" style={styles.heroAccent} />
-        <ThemedText style={styles.heroTitle}>管理控制台</ThemedText>
-        <ThemedText style={styles.heroBody}>查看入口权限与用户提交的内容</ThemedText>
+        <View style={[styles.entryList, isDesktop && styles.entryListDesktop]}>
+          <AdminEntry
+            description="查询用户并调整普通用户 / VIP / SVIP 身份"
+            desktop={isDesktop}
+            icon="account-key-outline"
+            label="用户身份"
+            onPress={() => router.push('/admin/users')}
+            tone="#1db991"
+          />
+          <AdminEntry
+            description="管理功能与游戏入口的角色可见性与用户特批"
+            desktop={isDesktop}
+            icon="key-outline"
+            label="入口权限"
+            onPress={() => router.push('/admin/permissions')}
+            tone="#4b6bff"
+          />
+          <AdminEntry
+            description="查看用户提交的文字与图片"
+            desktop={isDesktop}
+            icon="message-alert-outline"
+            label="问题反馈"
+            onPress={() => router.push('/admin/feedback')}
+            tone="#e8667a"
+          />
+        </View>
       </View>
-
-      <View style={styles.entryList}>
-        <AdminEntry
-          description="查询用户并调整普通用户、VIP 或 SVIP 身份"
-          icon="account-key-outline"
-          label="用户身份"
-          onPress={() => router.push('/admin/users')}
-          tone="#1db991"
-        />
-        <AdminEntry
-          description="管理功能入口的角色与用户特批"
-          icon="key-outline"
-          label="入口权限"
-          onPress={() => router.push('/admin/permissions')}
-          tone="#4b6bff"
-        />
-        <AdminEntry
-          description="查看用户提交的文字与图片"
-          icon="message-alert-outline"
-          label="问题反馈"
-          onPress={() => router.push('/admin/feedback')}
-          tone="#e8667a"
-        />
-      </View>
-    </MobileScreen>
+    </ScrollView>
   );
 }
 
-function AdminEntry({ description, icon, label, onPress, tone }: AdminEntryProps) {
+function AdminEntry({ description, desktop = false, icon, label, onPress, tone }: AdminEntryProps) {
   const { colors } = useAppTheme();
   return (
     <Pressable
@@ -90,6 +84,7 @@ function AdminEntry({ description, icon, label, onPress, tone }: AdminEntryProps
       onPress={onPress}
       style={({ pressed }) => [
         styles.entryCard,
+        desktop && styles.entryCardDesktop,
         {
           backgroundColor: colors.surface,
           borderColor: colors.line,
@@ -111,40 +106,22 @@ function AdminEntry({ description, icon, label, onPress, tone }: AdminEntryProps
 }
 
 const styles = StyleSheet.create({
-  pageContent: {
-    gap: 20,
-    paddingTop: 14,
-  },
-  topBar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  topBarCopy: {
+  root: {
     flex: 1,
-    marginLeft: 10,
   },
-  pageTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+  scrollContent: {
+    flexGrow: 1,
   },
-  pageSubtitle: {
-    fontSize: 12,
-    marginTop: 3,
+  page: {
+    alignSelf: 'center',
+    gap: 20,
+    maxWidth: 430,
+    padding: 16,
+    width: '100%',
   },
-  iconButton: {
-    alignItems: 'center',
-    borderRadius: 16,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
-  adminMark: {
-    alignItems: 'center',
-    borderRadius: 15,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
+  pageDesktop: {
+    maxWidth: 1080,
+    padding: 24,
   },
   heroBand: {
     borderRadius: 24,
@@ -175,6 +152,11 @@ const styles = StyleSheet.create({
   entryList: {
     gap: 12,
   },
+  entryListDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
+  },
   entryCard: {
     alignItems: 'center',
     borderRadius: 20,
@@ -183,6 +165,11 @@ const styles = StyleSheet.create({
     gap: 13,
     minHeight: 84,
     padding: 14,
+  },
+  entryCardDesktop: {
+    flexBasis: '31%',
+    flexGrow: 1,
+    minWidth: 280,
   },
   entryIcon: {
     alignItems: 'center',

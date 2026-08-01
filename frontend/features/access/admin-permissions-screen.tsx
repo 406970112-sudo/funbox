@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import {
+  Fragment,
   startTransition,
   type ComponentProps,
   useDeferredValue,
@@ -16,9 +17,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -31,9 +30,8 @@ import {
 } from '@/lib/access-api';
 import { isValidPhoneAccount, normalizePhoneInput } from '@/lib/auth-validation';
 import { identityPresentation } from '@/lib/identity';
-import { getToolById } from '@/mocks/app-data';
+import { getGameById, getToolById } from '@/mocks/app-data';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
-import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { ManagedFeature, UserRole } from '@/types/access';
 
 const roleDescriptions: Record<UserRole, string> = {
@@ -67,8 +65,19 @@ type FormMessage = {
   tone: 'error' | 'success';
 };
 
+function getFeatureVisual(feature: ManagedFeature) {
+  const tool = getToolById(feature.id);
+  if (tool) {
+    return { accent: tool.accentColor, icon: tool.icon };
+  }
+  const game = getGameById(feature.id);
+  if (game) {
+    return { accent: game.accentColor, icon: 'gamepad-variant-outline' as const };
+  }
+  return { accent: null, icon: 'puzzle-outline' as const };
+}
+
 export function AdminPermissionsScreen() {
-  const router = useRouter();
   const { colors } = useAppTheme();
   const { width } = useWindowDimensions();
   const { accessToken, status: authStatus, user } = useAuth();
@@ -178,23 +187,8 @@ export function AdminPermissionsScreen() {
 
   if (width >= PERMISSIONS_DESKTOP_BREAKPOINT) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <View style={styles.desktopPage}>
-          <View style={styles.topBar}>
-            <Pressable
-              accessibilityLabel="返回管理后台"
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={[styles.iconButton, { backgroundColor: colors.surface }]}>
-              <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
-            </Pressable>
-            <View style={styles.topBarCopy}>
-              <ThemedText style={styles.pageTitle}>入口权限</ThemedText>
-              <ThemedText style={[styles.pageSubtitle, { color: colors.mutedText }]}>管理后台 · 功能入口可见性</ThemedText>
-            </View>
-            <AdminIdentityChip username={user.username} />
-          </View>
-
           <View style={[styles.summaryBand, styles.desktopSummaryBand, { backgroundColor: colors.hero }]}>
             <SummaryItem label="功能入口" value={features.length} />
             <View style={styles.summaryDivider} />
@@ -230,19 +224,26 @@ export function AdminPermissionsScreen() {
                 showsVerticalScrollIndicator={false}
                 style={styles.desktopFeatureScroll}>
                 {filteredFeatures.length > 0 ? (
-                  filteredFeatures.map((feature) => (
-                    <DesktopFeatureRow
-                      feature={feature}
-                      key={feature.id}
-                      onPress={() => {
-                        setExpandedFeatureID(feature.id);
-                        setGrantUsername('');
-                        setMessage(null);
-                      }}
-                      saving={savingFeatureID === feature.id}
-                      selected={selectedFeature?.id === feature.id}
-                    />
-                  ))
+                  filteredFeatures.map((feature, index) => {
+                    const previous = filteredFeatures[index - 1];
+                    return (
+                      <Fragment key={feature.id}>
+                        {!previous || previous.category !== feature.category ? (
+                          <FeatureCategoryLabel category={feature.category} />
+                        ) : null}
+                        <DesktopFeatureRow
+                          feature={feature}
+                          onPress={() => {
+                            setExpandedFeatureID(feature.id);
+                            setGrantUsername('');
+                            setMessage(null);
+                          }}
+                          saving={savingFeatureID === feature.id}
+                          selected={selectedFeature?.id === feature.id}
+                        />
+                      </Fragment>
+                    );
+                  })
                 ) : (
                   <EmptySearchState />
                 )}
@@ -278,69 +279,66 @@ export function AdminPermissionsScreen() {
             </View>
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <MobileScreen contentContainerStyle={styles.pageContent}>
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityLabel="返回"
-          accessibilityRole="button"
-          onPress={() => router.back()}
-          style={[styles.iconButton, { backgroundColor: colors.surface }]}>
-          <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
-        </Pressable>
-        <View style={styles.topBarCopy}>
-          <ThemedText style={styles.pageTitle}>入口权限</ThemedText>
-          <ThemedText style={[styles.pageSubtitle, { color: colors.mutedText }]}>管理后台</ThemedText>
+    <ScrollView
+      contentContainerStyle={styles.mobileScrollContent}
+      showsVerticalScrollIndicator={false}
+      style={styles.safeArea}>
+      <View style={styles.mobilePage}>
+        <View style={[styles.summaryBand, { backgroundColor: colors.hero }]}>
+          <SummaryItem label="功能入口" value={features.length} />
+          <View style={styles.summaryDivider} />
+          <SummaryItem label="身份受限" value={restrictedCount} />
+          <View style={styles.summaryDivider} />
+          <SummaryItem label="用户特批" value={grantCount} />
         </View>
-        <AdminIdentityChip username={user.username} />
+
+        <View style={[styles.policyRow, { backgroundColor: colors.primarySoft }]}>
+          <MaterialCommunityIcons name="shield-lock-outline" size={18} color={colors.primary} />
+          <ThemedText style={[styles.policyText, { color: colors.primary }]}>新入口默认仅管理员可见</ThemedText>
+        </View>
+
+        <SearchField colors={colors} onChangeText={setSearch} value={search} />
+
+        {message ? <MessageRow message={message} /> : null}
+
+        <View style={styles.featureList}>
+          {filteredFeatures.length > 0 ? (
+            filteredFeatures.map((feature, index) => {
+              const previous = filteredFeatures[index - 1];
+              return (
+                <Fragment key={feature.id}>
+                  {!previous || previous.category !== feature.category ? (
+                    <FeatureCategoryLabel category={feature.category} />
+                  ) : null}
+                  <FeaturePermissionCard
+                    expanded={expandedFeatureID === feature.id}
+                    feature={feature}
+                    grantUsername={expandedFeatureID === feature.id ? grantUsername : ''}
+                    saving={savingFeatureID === feature.id}
+                    onAddGrant={() => addGrant(feature)}
+                    onChangeGrantUsername={(value) => setGrantUsername(normalizePhoneInput(value))}
+                    onRemoveGrant={(username) => void setGrant(feature, username, false)}
+                    onToggleExpanded={() => {
+                      setExpandedFeatureID((current) => (current === feature.id ? null : feature.id));
+                      setGrantUsername('');
+                      setMessage(null);
+                    }}
+                    onToggleRole={(role) => void toggleRole(feature, role)}
+                  />
+                </Fragment>
+              );
+            })
+          ) : (
+            <EmptySearchState />
+          )}
+        </View>
       </View>
-
-      <View style={[styles.summaryBand, { backgroundColor: colors.hero }]}>
-        <SummaryItem label="功能入口" value={features.length} />
-        <View style={styles.summaryDivider} />
-        <SummaryItem label="身份受限" value={restrictedCount} />
-        <View style={styles.summaryDivider} />
-        <SummaryItem label="用户特批" value={grantCount} />
-      </View>
-
-      <View style={[styles.policyRow, { backgroundColor: colors.primarySoft }]}>
-        <MaterialCommunityIcons name="shield-lock-outline" size={18} color={colors.primary} />
-        <ThemedText style={[styles.policyText, { color: colors.primary }]}>新入口默认仅管理员可见</ThemedText>
-      </View>
-
-      <SearchField colors={colors} onChangeText={setSearch} value={search} />
-
-      {message ? <MessageRow message={message} /> : null}
-
-      <View style={styles.featureList}>
-        {filteredFeatures.length > 0 ? (
-          filteredFeatures.map((feature) => (
-            <FeaturePermissionCard
-              expanded={expandedFeatureID === feature.id}
-              feature={feature}
-              grantUsername={expandedFeatureID === feature.id ? grantUsername : ''}
-              key={feature.id}
-              saving={savingFeatureID === feature.id}
-              onAddGrant={() => addGrant(feature)}
-              onChangeGrantUsername={(value) => setGrantUsername(normalizePhoneInput(value))}
-              onRemoveGrant={(username) => void setGrant(feature, username, false)}
-              onToggleExpanded={() => {
-                setExpandedFeatureID((current) => (current === feature.id ? null : feature.id));
-                setGrantUsername('');
-                setMessage(null);
-              }}
-              onToggleRole={(role) => void toggleRole(feature, role)}
-            />
-          ))
-        ) : (
-          <EmptySearchState />
-        )}
-      </View>
-    </MobileScreen>
+    </ScrollView>
   );
 }
 
@@ -382,6 +380,18 @@ function SearchField({ colors, desktop = false, onChangeText, value }: SearchFie
   );
 }
 
+function FeatureCategoryLabel({ category }: { category: string }) {
+  const { colors } = useAppTheme();
+  return (
+    <View style={styles.featureCategoryLabelRow}>
+      <ThemedText style={[styles.featureCategoryLabel, { color: colors.mutedText }]}>
+        {category}
+      </ThemedText>
+      <View style={[styles.featureCategoryLine, { backgroundColor: colors.line }]} />
+    </View>
+  );
+}
+
 type DesktopFeatureRowProps = {
   feature: ManagedFeature;
   onPress: () => void;
@@ -391,8 +401,8 @@ type DesktopFeatureRowProps = {
 
 function DesktopFeatureRow({ feature, onPress, saving, selected }: DesktopFeatureRowProps) {
   const { colors } = useAppTheme();
-  const tool = getToolById(feature.id);
-  const accentColor = tool?.accentColor ?? colors.primary;
+  const visual = getFeatureVisual(feature);
+  const accentColor = visual.accent ?? colors.primary;
 
   return (
     <Pressable
@@ -409,7 +419,7 @@ function DesktopFeatureRow({ feature, onPress, saving, selected }: DesktopFeatur
         },
       ]}>
       <View style={[styles.desktopFeatureIcon, { backgroundColor: `${accentColor}18` }]}>
-        <MaterialCommunityIcons name={tool?.icon ?? 'puzzle-outline'} size={20} color={accentColor} />
+        <MaterialCommunityIcons name={visual.icon} size={20} color={accentColor} />
       </View>
       <View style={styles.featureCopy}>
         <ThemedText numberOfLines={1} style={styles.desktopFeatureName}>{feature.name}</ThemedText>
@@ -432,13 +442,13 @@ function DesktopFeatureRow({ feature, onPress, saving, selected }: DesktopFeatur
 
 function DesktopEditorHeader({ feature, saving }: { feature: ManagedFeature; saving: boolean }) {
   const { colors } = useAppTheme();
-  const tool = getToolById(feature.id);
-  const accentColor = tool?.accentColor ?? colors.primary;
+  const visual = getFeatureVisual(feature);
+  const accentColor = visual.accent ?? colors.primary;
 
   return (
     <View style={[styles.desktopEditorHeader, { borderBottomColor: colors.line }]}>
       <View style={[styles.desktopEditorIcon, { backgroundColor: `${accentColor}18` }]}>
-        <MaterialCommunityIcons name={tool?.icon ?? 'puzzle-outline'} size={23} color={accentColor} />
+        <MaterialCommunityIcons name={visual.icon} size={23} color={accentColor} />
       </View>
       <View style={styles.desktopEditorTitleCopy}>
         <ThemedText numberOfLines={1} style={styles.desktopEditorTitle}>{feature.name}</ThemedText>
@@ -496,8 +506,8 @@ function FeaturePermissionCard({
   saving,
 }: FeaturePermissionCardProps) {
   const { colors } = useAppTheme();
-  const tool = getToolById(feature.id);
-  const accentColor = tool?.accentColor ?? colors.primary;
+  const visual = getFeatureVisual(feature);
+  const accentColor = visual.accent ?? colors.primary;
 
   return (
     <View style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
@@ -508,7 +518,7 @@ function FeaturePermissionCard({
         style={styles.featureHeader}>
         <View style={[styles.featureIcon, { backgroundColor: `${accentColor}18` }]}>
           <MaterialCommunityIcons
-            name={tool?.icon ?? 'puzzle-outline'}
+            name={visual.icon}
             size={21}
             color={accentColor}
           />
@@ -764,6 +774,8 @@ function roleLabel(role: UserRole) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   pageContent: { gap: 14, paddingTop: 12 },
+  mobileScrollContent: { paddingBottom: 28 },
+  mobilePage: { alignSelf: 'center', gap: 14, maxWidth: 430, padding: 16, width: '100%' },
   desktopPage: { alignSelf: 'center', flex: 1, gap: 14, maxWidth: 1280, minHeight: 0, padding: 20, width: '100%' },
   topBar: { alignItems: 'center', flexDirection: 'row', gap: 12 },
   iconButton: { alignItems: 'center', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
@@ -796,6 +808,9 @@ const styles = StyleSheet.create({
   countBadgeText: { fontSize: 11, fontWeight: '900' },
   desktopFeatureScroll: { flex: 1, marginTop: 10 },
   desktopFeatureList: { paddingBottom: 10 },
+  featureCategoryLabelRow: { alignItems: 'center', flexDirection: 'row', gap: 9, paddingHorizontal: 13, paddingTop: 12 },
+  featureCategoryLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 0.4 },
+  featureCategoryLine: { flex: 1, height: 1, opacity: 0.7 },
   desktopFeatureRow: { alignItems: 'center', borderBottomWidth: 1, borderLeftWidth: 3, flexDirection: 'row', gap: 11, minHeight: 66, paddingHorizontal: 13 },
   desktopFeatureIcon: { alignItems: 'center', borderRadius: 8, height: 38, justifyContent: 'center', width: 38 },
   desktopFeatureName: { fontSize: 13, fontWeight: '900' },
@@ -811,6 +826,7 @@ const styles = StyleSheet.create({
   desktopEditorScroll: { flex: 1 },
   desktopEditorContent: { padding: 20 },
   featureList: { gap: 10 },
+  featureCategoryLabelRowMobile: { paddingHorizontal: 2, paddingTop: 6 },
   featureCard: { borderRadius: 18, borderWidth: 1, overflow: 'hidden' },
   featureHeader: { alignItems: 'center', flexDirection: 'row', gap: 11, minHeight: 72, padding: 13 },
   featureIcon: { alignItems: 'center', borderRadius: 13, height: 42, justifyContent: 'center', width: 42 },

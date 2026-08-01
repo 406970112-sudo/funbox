@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,9 +12,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -41,7 +39,6 @@ type AssignableRole = (typeof assignableRoles)[number];
 type FormMessage = { text: string; tone: 'error' | 'success' };
 
 export function AdminUsersScreen() {
-  const router = useRouter();
   const { width } = useWindowDimensions();
   const { colors } = useAppTheme();
   const { accessToken, status: authStatus, user } = useAuth();
@@ -205,23 +202,9 @@ export function AdminUsersScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <View style={styles.appFrame}>
-        {isDesktop ? <AdminRail onBack={() => router.push('/admin')} onNavigate={(path) => router.push(path)} /> : null}
         <View style={styles.workspace}>
-          <View style={[styles.desktopHeader, { backgroundColor: colors.surface, borderBottomColor: colors.line }]}>
-            {!isDesktop ? (
-              <Pressable accessibilityLabel="返回" onPress={() => router.back()} style={styles.headerIconButton}>
-                <MaterialCommunityIcons name="arrow-left" size={21} color={colors.text} />
-              </Pressable>
-            ) : null}
-            <View style={styles.headerCopy}>
-              <ThemedText style={styles.headerEyebrow}>管理后台 / 用户管理</ThemedText>
-              <ThemedText style={styles.headerTitle}>用户身份</ThemedText>
-            </View>
-            <AdminIdentityChip compact={!isDesktop} username={user.username} />
-          </View>
-
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.titleRow}>
               <View style={styles.titleCopy}>
@@ -294,37 +277,7 @@ export function AdminUsersScreen() {
           </View>
         </Modal>
       ) : null}
-    </SafeAreaView>
-  );
-}
-
-function AdminRail({ onBack, onNavigate }: { onBack: () => void; onNavigate: (path: '/admin/permissions' | '/admin/feedback') => void }) {
-  return (
-    <View style={styles.rail}>
-      <Pressable accessibilityRole="button" onPress={onBack} style={styles.brandRow}>
-        <View style={styles.brandMark}><ThemedText style={styles.brandMarkText}>F</ThemedText></View>
-        <ThemedText style={styles.brandText}>FunBox</ThemedText>
-      </Pressable>
-      <ThemedText style={styles.railSection}>管理工具</ThemedText>
-      <View style={styles.railNav}>
-        <RailItem active icon="account-key-outline" label="用户身份" onPress={() => undefined} />
-        <RailItem icon="key-outline" label="入口权限" onPress={() => onNavigate('/admin/permissions')} />
-        <RailItem icon="message-alert-outline" label="问题反馈" onPress={() => onNavigate('/admin/feedback')} />
-      </View>
-      <View style={styles.railFooter}>
-        <MaterialCommunityIcons name="shield-check-outline" size={17} color="#c9f36a" />
-        <ThemedText style={styles.railFooterText}>管理员控制台</ThemedText>
-      </View>
     </View>
-  );
-}
-
-function RailItem({ active = false, icon, label, onPress }: { active?: boolean; icon: keyof typeof MaterialCommunityIcons.glyphMap; label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.railItem, active && styles.railItemActive]}>
-      <MaterialCommunityIcons name={icon} size={19} color={active ? '#c9f36a' : '#a7b1d1'} />
-      <ThemedText style={[styles.railItemText, active && styles.railItemTextActive]}>{label}</ThemedText>
-    </Pressable>
   );
 }
 

@@ -37,10 +37,11 @@ export function ProfileScreen() {
   const { colorScheme, colors } = useAppTheme();
   const { clearIdentityChangeNotice, identityChangeNotice, refreshUser, signOut, status, user } =
     useAuth();
-  const { visibleTools } = useFeatureAccess();
+  const { visibleGames, visibleTools } = useFeatureAccess();
   const [recentUsage, setRecentUsage] = useState<RecentUsageItem[]>([]);
   const isAuthenticated = status === 'authenticated' && user !== null;
   const visibleToolIDs = new Set(visibleTools.map((tool) => tool.id));
+  const visibleGameIDs = new Set(visibleGames.map((game) => game.id));
   const availableToolCount = visibleTools.filter((tool) => tool.status === 'available').length;
 
   useFocusEffect(
@@ -77,7 +78,7 @@ export function ProfileScreen() {
     }
 
     const game = getGameById(item.itemId);
-    if (!game || game.status !== 'playable') return [];
+    if (!game || game.status !== 'playable' || !visibleGameIDs.has(game.id)) return [];
 
     return [{
       accentColor: game.accentColor,

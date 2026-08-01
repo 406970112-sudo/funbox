@@ -120,6 +120,9 @@ func (s *Store) SyncRegistry(ctx context.Context, definitions []FeatureDefinitio
 	}
 	now := time.Now().UTC().Unix()
 	for index, definition := range definitions {
+		if definition.ID == "" || definition.Name == "" || !isManagedRoute(definition.Route) {
+			return fmt.Errorf("invalid feature registry entry at index %d", index)
+		}
 		result, err := tx.ExecContext(
 			ctx,
 			`INSERT OR IGNORE INTO features (

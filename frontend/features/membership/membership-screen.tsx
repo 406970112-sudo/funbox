@@ -13,18 +13,16 @@ import {
   type MembershipFeatureMatrix,
 } from '@/lib/access-api';
 import { identityPresentation } from '@/lib/identity';
-import { appTools, initialToolRoles, popularGames } from '@/mocks/app-data';
+import { appTools, initialToolRoles } from '@/mocks/app-data';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { UserRole } from '@/types/access';
-
-const playableGameCount = popularGames.filter((game) => game.status === 'playable').length;
 
 export function MembershipScreen() {
   const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
   const { accessToken, refreshUser, status, user } = useAuth();
-  const { visibleTools } = useFeatureAccess();
+  const { visibleGames, visibleTools } = useFeatureAccess();
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
   const [featureMatrix, setFeatureMatrix] = useState<MembershipFeatureMatrix[]>([]);
 
@@ -59,6 +57,7 @@ export function MembershipScreen() {
   const item = identityPresentation(role, colorScheme);
   const palette = membershipPalette(role, colorScheme === 'dark');
   const availableTools = visibleTools.filter((tool) => tool.status === 'available');
+  const playableGameCount = visibleGames.length;
   const matrixByID = useMemo(
     () => new Map(featureMatrix.map((feature) => [feature.id, feature.roles])),
     [featureMatrix],

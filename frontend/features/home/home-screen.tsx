@@ -25,7 +25,6 @@ import {
 } from '@/lib/home-tool-selection';
 import { getStoredToolUsage } from '@/lib/tool-usage-storage';
 import { getCommonToolIds, type ToolUsageStat } from '@/lib/tool-usage';
-import { popularGames } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
 
@@ -157,7 +156,7 @@ export function HomeScreen() {
   const { colors, colorScheme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
-  const { visibleTools } = useFeatureAccess();
+  const { visibleGames, visibleTools } = useFeatureAccess();
   const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(1))).current;
   const [toolUsage, setToolUsage] = useState<ToolUsageStat[]>([]);
   const availableTools = visibleTools.filter((tool) => tool.status === 'available');
@@ -181,7 +180,7 @@ export function HomeScreen() {
     const tool = availableTools.find((candidate) => candidate.id === toolId);
     return tool ? [tool] : [];
   });
-  const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 5);
+  const playableGames = visibleGames.slice(0, 5);
   const availableToolCount = availableTools.length;
   const contentWidth = Math.min(windowWidth, appLayout.screenMaxWidth) - 32;
   const gameCardWidth = Math.round(contentWidth * GAME_CARD_WIDTH_RATIO);
@@ -264,7 +263,10 @@ export function HomeScreen() {
       {playableGames.length > 0 ? (
         <Reveal progress={reveals[3]}>
           <View style={styles.section}>
-            <SectionHeader title="放松一下" meta="五款小游戏，随时开一局" />
+            <SectionHeader
+              title="放松一下"
+              meta={`${playableGames.length} 款小游戏，随时开一局`}
+            />
             <FlatList
               contentContainerStyle={styles.gameListContent}
               data={playableGames}

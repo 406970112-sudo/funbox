@@ -18,12 +18,19 @@ export const featuredBanner = {
   actionLabel: '查看热门内容',
 };
 
-const registeredTools = featureRegistry as RegisteredTool[];
+const registeredFeatures = featureRegistry as RegisteredTool[];
+const registeredTools = registeredFeatures.filter((entry) => entry.route.startsWith('/tools/'));
 
 export const appTools: AppTool[] = registeredTools.map(({ initialRoles: _initialRoles, ...tool }) => tool);
 
 export const initialToolRoles = new Map(
   registeredTools.map((tool) => [tool.id, tool.initialRoles ?? ['admin']] as const),
+);
+
+export const initialGameRoles = new Map(
+  registeredFeatures
+    .filter((entry) => entry.route.startsWith('/games/'))
+    .map((game) => [game.id, game.initialRoles ?? ['admin']] as const),
 );
 
 export const popularGames: GameItem[] = [

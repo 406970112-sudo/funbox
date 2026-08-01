@@ -4,13 +4,17 @@ import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { useAuth } from '@/features/auth/auth-provider';
+import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { BrickBreakerGameScreen } from '@/features/games/brick-breaker-game-screen';
 import { GomokuGameScreen } from '@/features/games/gomoku-game-screen';
 import { SnakeGameScreen } from '@/features/games/snake-game-screen';
 import { TetrisGameScreen } from '@/features/games/tetris-game-screen';
 import { XiangqiGameScreen } from '@/features/games/xiangqi-game-screen';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { getGameById } from '@/mocks/app-data';
+import { identityPresentation } from '@/lib/identity';
+import { getGameById, initialGameRoles } from '@/mocks/app-data';
+import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
@@ -22,18 +26,70 @@ export function GameDetailScreen() {
   const game = getGameById(params.gameId);
   const router = useRouter();
   const { colors } = useAppTheme();
+  const { status: authStatus, user } = useAuth();
+  const { canAccessGame, status: accessStatus } = useFeatureAccess();
   const gameId = game?.id;
   const gameStatus = game?.status;
+  const gameIsAccessible = gameId ? canAccessGame(gameId) : false;
 
   useEffect(() => {
-    if (!gameId || gameStatus !== 'playable') return;
+    if (!gameId || gameStatus !== 'playable' || !gameIsAccessible) return;
 
     void recordStoredRecentUsage({
       itemId: gameId,
       kind: 'game',
       usedAt: Date.now(),
     });
-  }, [gameId, gameStatus]);
+  }, [gameId, gameIsAccessible, gameStatus]);
+
+  if (accessStatus === 'loading') {
+    return <AppLoadingScreen />;
+  }
+
+  if (game && !gameIsAccessible) {
+    const requiredMemberRoles = (initialGameRoles.get(game.id) ?? []).filter(
+      (role) => role === 'vip' || role === 'svip',
+    );
+    const requiredLabel =
+      requiredMemberRoles.length > 0
+        ? requiredMemberRoles.map((role) => identityPresentation(role).label).join(' / ')
+        : '管理员';
+    return (
+      <MobileScreen>
+        <PageHeader
+          title="暂无访问权限"
+          subtitle="此游戏需要对应身份，升级后即可解锁。"
+          rightSlot={
+            <Pressable onPress={() => router.back()} style={styles.closeButton}>
+              <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
+            </Pressable>
+          }
+        />
+        <SurfaceCard style={styles.noticeCard}>
+          <View style={[styles.noticeIcon, { backgroundColor: colors.primarySoft }]}>
+            <MaterialCommunityIcons name="lock-outline" size={26} color={colors.primary} />
+          </View>
+          <ThemedText style={styles.noticeTitle}>该游戏需要{requiredLabel}身份</ThemedText>
+          <ThemedText style={[styles.noticeBody, { color: colors.mutedText }]}>
+            {authStatus === 'authenticated'
+              ? `当前身份为${identityPresentation(user?.role ?? 'normal').label}，升级后即可使用此游戏。`
+              : '登录并开通会员后即可使用此游戏。'}
+          </ThemedText>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() =>
+              router.push(authStatus === 'authenticated' ? '/profile/membership' : '/auth')
+            }
+            style={[styles.noticeButton, { backgroundColor: colors.hero }]}>
+            <ThemedText style={styles.noticeButtonText}>
+              {authStatus === 'authenticated' ? '查看权益' : '登录 / 注册'}
+            </ThemedText>
+            <MaterialCommunityIcons name="arrow-right" size={17} color="#c9f36a" />
+          </Pressable>
+        </SurfaceCard>
+      </MobileScreen>
+    );
+  }
 
   if (game?.id === 'snake-brawl') {
     return (
@@ -167,5 +223,41 @@ const styles = StyleSheet.create({
   statusChipText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  noticeCard: {
+    alignItems: 'center',
+    gap: 12,
+    padding: 22,
+  },
+  noticeIcon: {
+    alignItems: 'center',
+    borderRadius: 18,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
+  noticeTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  noticeBody: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  noticeButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 18,
+  },
+  noticeButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

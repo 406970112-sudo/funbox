@@ -1,0 +1,2912 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>FunBox 管理后台导航统一 - 产品设计</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="FunBox 管理后台导航统一 - 产品设计" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;FunBox 管理后台导航统一 - 产品设计&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --red: light-dark(rgb(186 38 35), rgb(250 66 62));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: var(--border-radius-lg, 12.5px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed=&quot;true&quot;],
+    [aria-selected=&quot;true&quot;],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: 16px !important;
+  height: 16px !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;admin-console-unification-root&quot; class=&quot;ac-wrap&quot; data-ac-mode=&quot;desktop&quot;&gt;
+  &lt;style&gt;
+    .ac-wrap {
+      --ac-ink: light-dark(#18233d, #f1f3f8);
+      --ac-muted: light-dark(#7483a2, #9eacb9);
+      --ac-line: light-dark(#dbe4f5, #2b3542);
+      --ac-canvas: light-dark(#eef4ff, #0f1317);
+      --ac-surface: light-dark(#ffffff, #171d22);
+      --ac-surface-soft: light-dark(#f1f5ff, #1d2730);
+      --ac-primary: light-dark(#4568f2, #8ec1f3);
+      --ac-on-primary: light-dark(#ffffff, #0e1b2c);
+      --ac-primary-soft: light-dark(#e5ebff, #17314a);
+      --ac-success: #1db991;
+      --ac-rose: #e8667a;
+      --ac-lime: #c9f36a;
+      --ac-navy: #151b3b;
+      color-scheme: light dark;
+      background: transparent;
+      font-family: &quot;Noto Sans SC&quot;, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, system-ui, sans-serif;
+      letter-spacing: 0;
+    }
+    .ac-wrap *,
+    .ac-wrap *::before,
+    .ac-wrap *::after {
+      box-sizing: border-box;
+    }
+    .ac-wrap button,
+    .ac-wrap input,
+    .ac-wrap textarea {
+      font: inherit;
+      letter-spacing: 0;
+    }
+    .ac-wrap button {
+      cursor: pointer;
+    }
+    .ac-wrap svg {
+      display: block;
+    }
+    .ac-preview-bar {
+      align-items: center;
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      margin: 0 auto 14px;
+      max-width: 1180px;
+      padding: 0 2px;
+    }
+    .ac-preview-label {
+      color: var(--ac-muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .ac-segmented {
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 12px;
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+    }
+    .ac-seg {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      border-radius: 9px;
+      color: var(--ac-muted);
+      display: flex;
+      font-size: 12px;
+      font-weight: 700;
+      gap: 7px;
+      min-height: 36px;
+      padding: 0 14px;
+    }
+    .ac-seg i {
+      width: 16px;
+      height: 16px;
+    }
+    .ac-seg.is-active {
+      background: var(--ac-primary);
+      color: var(--ac-on-primary);
+    }
+    .ac-shell {
+      background: var(--ac-canvas);
+      border: 1px solid var(--ac-line);
+      border-radius: 20px;
+      box-shadow: 0 18px 52px rgba(45, 64, 105, 0.14);
+      display: flex;
+      margin: 0 auto;
+      max-width: 1180px;
+      min-height: 640px;
+      overflow: hidden;
+    }
+    .ac-sidebar {
+      background: #141b39;
+      color: #ffffff;
+      display: flex;
+      flex: 0 0 218px;
+      flex-direction: column;
+      padding: 18px 14px 16px;
+    }
+    .ac-brand {
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      gap: 11px;
+      margin-bottom: 16px;
+      padding: 2px 6px 18px;
+    }
+    .ac-brand-mark {
+      align-items: center;
+      background: var(--ac-lime);
+      border-radius: 9px;
+      color: #141b39;
+      display: flex;
+      font-size: 17px;
+      font-weight: 900;
+      height: 34px;
+      justify-content: center;
+      width: 34px;
+    }
+    .ac-brand-name {
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 900;
+    }
+    .ac-brand-sub {
+      color: #8a94b5;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .ac-nav-section {
+      color: #66739a;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      margin: 18px 10px 7px;
+      text-transform: uppercase;
+    }
+    .ac-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .ac-nav-item {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      border-radius: 9px;
+      color: #a7b1d1;
+      display: flex;
+      gap: 10px;
+      min-height: 42px;
+      padding: 0 11px;
+      text-align: left;
+      width: 100%;
+    }
+    .ac-nav-item i {
+      width: 18px;
+      height: 18px;
+    }
+    .ac-nav-item span {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .ac-nav-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+    }
+    .ac-nav-item.is-active {
+      background: rgba(201, 243, 106, 0.12);
+      color: #ffffff;
+    }
+    .ac-nav-item.is-active i {
+      color: var(--ac-lime);
+    }
+    .ac-sidebar-foot {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: auto;
+      padding-top: 14px;
+    }
+    .ac-admin-chip {
+      align-items: center;
+      border-radius: 9px;
+      color: #cbd3ea;
+      display: flex;
+      font-size: 11px;
+      font-weight: 700;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 10px;
+    }
+    .ac-admin-chip i {
+      color: var(--ac-lime);
+      width: 16px;
+      height: 16px;
+    }
+    .ac-back-link {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: #8a94b5;
+      display: flex;
+      font-size: 12px;
+      font-weight: 700;
+      gap: 9px;
+      margin-top: 8px;
+      padding: 8px 10px;
+      width: 100%;
+    }
+    .ac-back-link i {
+      width: 16px;
+      height: 16px;
+    }
+    .ac-back-link:hover {
+      color: #ffffff;
+    }
+    .ac-main {
+      background: var(--ac-canvas);
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .ac-topbar {
+      align-items: center;
+      background: var(--ac-surface);
+      border-bottom: 1px solid var(--ac-line);
+      display: flex;
+      gap: 14px;
+      min-height: 68px;
+      padding: 10px 22px;
+    }
+    .ac-topbar-copy {
+      min-width: 0;
+    }
+    .ac-breadcrumb {
+      align-items: center;
+      color: var(--ac-muted);
+      display: flex;
+      font-size: 11px;
+      font-weight: 700;
+      gap: 6px;
+    }
+    .ac-breadcrumb i {
+      width: 12px;
+      height: 12px;
+    }
+    .ac-breadcrumb-current {
+      color: var(--ac-muted);
+      font-weight: 800;
+    }
+    .ac-topbar-title {
+      color: var(--ac-ink);
+      font-size: 17px;
+      font-weight: 900;
+      margin: 4px 0 0;
+    }
+    .ac-topbar-subtitle {
+      color: var(--ac-muted);
+      font-size: 11px;
+      font-weight: 600;
+      margin: 2px 0 0;
+    }
+    .ac-topbar-actions {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+    }
+    .ac-icon-btn {
+      align-items: center;
+      background: var(--ac-surface-soft);
+      border: 1px solid var(--ac-line);
+      border-radius: 11px;
+      color: var(--ac-ink);
+      display: flex;
+      height: 38px;
+      justify-content: center;
+      position: relative;
+      width: 38px;
+    }
+    .ac-icon-btn i {
+      width: 18px;
+      height: 18px;
+    }
+    .ac-dot {
+      background: var(--ac-rose);
+      border: 2px solid var(--ac-surface);
+      border-radius: 50%;
+      height: 8px;
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      width: 8px;
+    }
+    .ac-identity {
+      align-items: center;
+      background: var(--ac-surface-soft);
+      border: 1px solid var(--ac-line);
+      border-radius: 11px;
+      display: flex;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 10px 0 5px;
+    }
+    .ac-avatar {
+      align-items: center;
+      background: var(--ac-navy);
+      border-radius: 9px;
+      color: var(--ac-lime);
+      display: flex;
+      flex: 0 0 auto;
+      font-size: 12px;
+      font-weight: 900;
+      height: 28px;
+      justify-content: center;
+      width: 28px;
+    }
+    .ac-avatar.sm {
+      border-radius: 9px;
+      font-size: 11px;
+      height: 32px;
+      width: 32px;
+    }
+    .ac-identity-text {
+      color: var(--ac-ink);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ac-content {
+      flex: 1;
+      padding: 22px 24px 34px;
+    }
+    .ac-page {
+      display: none;
+    }
+    .ac-page.is-active {
+      display: block;
+    }
+    .ac-hero {
+      align-items: center;
+      background: linear-gradient(135deg, #1b2450, #121735);
+      border-radius: 18px;
+      color: #ffffff;
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 22px 24px;
+    }
+    .ac-hero-kicker {
+      color: var(--ac-lime);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .ac-hero h2 {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 900;
+      margin: 6px 0 4px;
+    }
+    .ac-hero p {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 12px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .ac-btn {
+      align-items: center;
+      border: 0;
+      border-radius: 10px;
+      display: inline-flex;
+      font-size: 12px;
+      font-weight: 800;
+      gap: 7px;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
+    .ac-btn i {
+      width: 16px;
+      height: 16px;
+    }
+    .ac-btn-lime {
+      background: var(--ac-lime);
+      color: #18233d;
+    }
+    .ac-btn-primary {
+      background: var(--ac-primary);
+      color: var(--ac-on-primary);
+    }
+    .ac-btn-ghost {
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      color: var(--ac-ink);
+    }
+    .ac-stats {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 20px;
+    }
+    .ac-stats-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .ac-stat {
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 14px;
+      min-width: 0;
+      padding: 14px 16px;
+    }
+    .ac-stat-label {
+      color: var(--ac-muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .ac-stat-value {
+      color: var(--ac-ink);
+      font-size: 24px;
+      font-weight: 900;
+      margin-top: 6px;
+    }
+    .ac-stat-trend {
+      color: var(--ac-success);
+      font-size: 10px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .ac-stat-trend.down {
+      color: var(--ac-rose);
+    }
+    .ac-grid2 {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ac-panel {
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 14px;
+      min-width: 0;
+      padding: 16px 18px;
+    }
+    .ac-panel-head {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .ac-panel-head h3 {
+      color: var(--ac-ink);
+      font-size: 14px;
+      font-weight: 900;
+      margin: 0;
+    }
+    .ac-link {
+      background: none;
+      border: 0;
+      color: var(--ac-primary);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 0;
+    }
+    .ac-feedback-mini {
+      border-top: 1px solid var(--ac-line);
+      display: grid;
+      gap: 10px;
+      padding-top: 10px;
+    }
+    .ac-feedback-mini-row {
+      align-items: center;
+      display: grid;
+      gap: 9px;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+    .ac-feedback-mini-name {
+      color: var(--ac-ink);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ac-feedback-mini-time {
+      color: var(--ac-muted);
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .ac-feedback-mini-status {
+      color: var(--ac-rose);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .ac-quick-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ac-quick-btn {
+      align-items: center;
+      background: var(--ac-surface-soft);
+      border: 1px solid var(--ac-line);
+      border-radius: 12px;
+      color: var(--ac-ink);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
+      min-height: 86px;
+      padding: 10px;
+    }
+    .ac-quick-btn i {
+      color: var(--ac-primary);
+      height: 20px;
+      width: 20px;
+    }
+    .ac-quick-btn span {
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ac-page-tools {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .ac-search {
+      align-items: center;
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 11px;
+      display: flex;
+      flex: 1 1 260px;
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 12px;
+    }
+    .ac-search i {
+      color: var(--ac-muted);
+      height: 17px;
+      width: 17px;
+    }
+    .ac-search input {
+      background: transparent;
+      border: 0;
+      color: var(--ac-ink);
+      flex: 1;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 0;
+      outline: none;
+    }
+    .ac-search input::placeholder {
+      color: var(--ac-muted);
+    }
+    .ac-filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .ac-filter {
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 9px;
+      color: var(--ac-muted);
+      font-size: 11px;
+      font-weight: 800;
+      min-height: 34px;
+      padding: 0 12px;
+    }
+    .ac-filter.is-active {
+      background: var(--ac-primary-soft);
+      border-color: var(--ac-primary);
+      color: var(--ac-primary);
+    }
+    .ac-table-panel {
+      overflow: hidden;
+      padding: 0;
+    }
+    .ac-table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .ac-table th {
+      color: var(--ac-muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 12px 18px;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    .ac-table td {
+      border-top: 1px solid var(--ac-line);
+      color: var(--ac-ink);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 12px 18px;
+    }
+    .ac-user-cell {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+    }
+    .ac-user-cell strong {
+      color: var(--ac-ink);
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ac-user-cell small {
+      color: var(--ac-muted);
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .ac-badge {
+      align-items: center;
+      border-radius: 999px;
+      display: inline-flex;
+      font-size: 10px;
+      font-weight: 800;
+      gap: 5px;
+      min-height: 22px;
+      padding: 0 9px;
+      white-space: nowrap;
+    }
+    .ac-badge.normal {
+      background: #eef1f6;
+      color: #7483a2;
+    }
+    .ac-badge.vip {
+      background: #fdf2dd;
+      color: #b07a1f;
+    }
+    .ac-badge.svip {
+      background: #fde9ed;
+      color: #b34f61;
+    }
+    .ac-badge.admin {
+      background: #e6ebff;
+      color: #4b6bff;
+    }
+    .ac-badge.rose {
+      background: #fde9ed;
+      color: #b34f61;
+    }
+    .ac-badge.primary {
+      background: var(--ac-primary-soft);
+      color: var(--ac-primary);
+    }
+    .ac-row-action {
+      color: var(--ac-muted);
+      display: block;
+      height: 16px;
+      width: 16px;
+    }
+    .ac-pagination {
+      align-items: center;
+      color: var(--ac-muted);
+      display: flex;
+      font-size: 11px;
+      font-weight: 700;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+    .ac-page-btn {
+      align-items: center;
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 9px;
+      color: var(--ac-ink);
+      display: inline-flex;
+      font-size: 11px;
+      font-weight: 800;
+      gap: 6px;
+      min-height: 34px;
+      padding: 0 12px;
+    }
+    .ac-page-btn i {
+      height: 14px;
+      width: 14px;
+    }
+    .ac-page-btn:disabled {
+      opacity: 0.45;
+    }
+    .ac-split {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+    }
+    .ac-pane {
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 14px;
+      min-width: 0;
+      padding: 16px;
+    }
+    .ac-pane-head {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .ac-pane-head h3 {
+      color: var(--ac-ink);
+      font-size: 14px;
+      font-weight: 900;
+      margin: 0;
+    }
+    .ac-count {
+      color: var(--ac-muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .ac-search-compact {
+      flex: none;
+      margin-bottom: 12px;
+    }
+    .ac-feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ac-feature-group-label {
+      color: var(--ac-muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      margin: 4px 4px 0;
+      text-transform: uppercase;
+    }
+    .ac-feature {
+      align-items: center;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      display: flex;
+      gap: 10px;
+      min-height: 56px;
+      padding: 10px 12px;
+      text-align: left;
+      width: 100%;
+    }
+    .ac-feature:hover {
+      background: var(--ac-surface-soft);
+    }
+    .ac-feature.is-active {
+      background: var(--ac-primary-soft);
+      border-color: var(--ac-primary);
+    }
+    .ac-feature-icon {
+      align-items: center;
+      background: var(--ac-surface);
+      border: 1px solid var(--ac-line);
+      border-radius: 10px;
+      color: var(--ac-primary);
+      display: flex;
+      height: 34px;
+      justify-content: center;
+      width: 34px;
+    }
+    .ac-feature-icon i {
+      height: 17px;
+      width: 17px;
+    }
+    .ac-feature-name {
+      color: var(--ac-ink);
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ac-feature-meta {
+      color: var(--ac-muted);
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .ac-role-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .ac-chip {
+      border: 1px solid var(--ac-line);
+      border-radius: 999px;
+      color: var(--ac-muted);
+      font-size: 9px;
+      font-weight: 800;
+      padding: 3px 7px;
+      white-space: nowrap;
+    }
+    .ac-editor-block {
+      border-top: 1px solid var(--ac-line);
+      margin-top: 14px;
+      padding-top: 14px;
+    }
+    .ac-label {
+      color: var(--ac-muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+    }
+    .ac-role-toggle-group {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .ac-role-toggle {
+      align-items: center;
+      background: var(--ac-surface-soft);
+      border: 1px solid var(--ac-line);
+      border-radius: 10px;
+      color: var(--ac-ink);
+      display: flex;
+      font-size: 11px;
+      font-weight: 800;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 12px;
+    }
+    .ac-role-toggle i {
+      color: var(--ac-success);
+      height: 15px;
+      width: 15px;
+    }
+    .ac-role-toggle.is-on {
+      background: var(--ac-primary-soft);
+      border-color: var(--ac-primary);
+      color: var(--ac-primary);
+    }
+    .ac-grant-row {
+      display: flex;
+      gap: 8px;
+    }
+    .ac-grant-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .ac-grant {
+      align-items: center;
+      background: var(--ac-surface-soft);
+      border: 1px solid var(--ac-line);
+      border-radius: 9px;
+      color: var(--ac-ink);
+      display: flex;
+      font-size: 11px;
+      font-weight: 700;
+      justify-content: space-between;
+      min-height: 34px;
+      padding: 0 10px;
+    }
+    .ac-grant button {
+      background: none;
+      border: 0;
+      color: var(--ac-muted);
+      padding: 2px;
+    }
+    .ac-note {
+      align-items: flex-start;
+      background: var(--ac-primary-soft);
+      border-radius: 10px;
+      color: var(--ac-primary);
+      display: flex;
+      font-size: 10px;
+      font-weight: 700;
+      gap: 7px;
+      line-height: 1.5;
+      margin-top: 14px;
+      padding: 10px 12px;
+    }
+    .ac-note i {
+      flex: 0 0 auto;
+      height: 14px;
+      margin-top: 1px;
+      width: 14px;
+    }
+    .ac-feedback-card {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      display: block;
+      margin-bottom: 8px;
+      padding: 12px;
+      text-align: left;
+      width: 100%;
+    }
+    .ac-feedback-card:hover {
+      background: var(--ac-surface-soft);
+    }
+    .ac-feedback-card.is-active {
+      background: var(--ac-primary-soft);
+      border-color: var(--ac-primary);
+    }
+    .ac-feedback-top {
+      align-items: center;
+      display: flex;
+      gap: 9px;
+    }
+    .ac-feedback-top strong {
+      color: var(--ac-ink);
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .ac-feedback-top small {
+      color: var(--ac-muted);
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+    .ac-feedback-card p {
+      color: var(--ac-ink);
+      font-size: 12px;
+      line-height: 1.55;
+      margin: 10px 0 0;
+    }
+    .ac-image-count {
+      align-items: center;
+      color: var(--ac-muted);
+      display: inline-flex;
+      font-size: 10px;
+      font-weight: 700;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .ac-image-count i {
+      height: 13px;
+      width: 13px;
+    }
+    .ac-detail-user {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+    }
+    .ac-detail-user strong {
+      color: var(--ac-ink);
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .ac-detail-user small {
+      color: var(--ac-muted);
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .ac-detail-body p {
+      color: var(--ac-ink);
+      font-size: 13px;
+      line-height: 1.7;
+      margin: 14px 0;
+    }
+    .ac-detail-images {
+      display: flex;
+      gap: 10px;
+    }
+    .ac-thumb {
+      align-items: center;
+      background: linear-gradient(135deg, #dbe5ff, #eef1ff);
+      border: 1px solid var(--ac-line);
+      border-radius: 10px;
+      color: var(--ac-primary);
+      display: flex;
+      font-size: 10px;
+      font-weight: 800;
+      height: 86px;
+      justify-content: center;
+      width: 110px;
+    }
+    .ac-reply {
+      border-top: 1px solid var(--ac-line);
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 14px;
+    }
+    .ac-reply textarea {
+      background: var(--ac-surface-soft);
+      border: 1px solid var(--ac-line);
+      border-radius: 10px;
+      color: var(--ac-ink);
+      flex: 1;
+      font-size: 12px;
+      min-height: 68px;
+      padding: 10px;
+      resize: none;
+    }
+    .ac-bottomnav {
+      background: var(--ac-surface);
+      border-top: 1px solid var(--ac-line);
+      display: none;
+      padding: 8px 10px;
+    }
+    .ac-bottom-item {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: var(--ac-muted);
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      padding: 6px 2px;
+    }
+    .ac-bottom-item i {
+      height: 20px;
+      width: 20px;
+    }
+    .ac-bottom-item span {
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .ac-bottom-item.is-active {
+      color: var(--ac-primary);
+    }
+    .ac-mobile-only {
+      display: none;
+    }
+    .ac-desktop-only {
+      display: flex;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-shell {
+      max-width: 420px;
+      min-height: 0;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-sidebar {
+      display: none;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-bottomnav {
+      display: flex;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-topbar {
+      min-height: 58px;
+      padding: 8px 12px;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-content {
+      padding: 16px 14px 26px;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-mobile-only {
+      display: flex;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-desktop-only {
+      display: none;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-identity-text,
+    [data-ac-mode=&quot;mobile&quot;] .ac-topbar-subtitle {
+      display: none;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-grid2,
+    [data-ac-mode=&quot;mobile&quot;] .ac-split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-pane-editor,
+    [data-ac-mode=&quot;mobile&quot;] .ac-pane-detail {
+      display: none;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-hero {
+      padding: 18px;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-hero h2 {
+      font-size: 17px;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-table th:nth-child(2),
+    [data-ac-mode=&quot;mobile&quot;] .ac-table td:nth-child(2),
+    [data-ac-mode=&quot;mobile&quot;] .ac-table th:nth-child(4),
+    [data-ac-mode=&quot;mobile&quot;] .ac-table td:nth-child(4) {
+      display: none;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-table th,
+    [data-ac-mode=&quot;mobile&quot;] .ac-table td {
+      padding: 11px 12px;
+    }
+    [data-ac-mode=&quot;mobile&quot;] .ac-pagination {
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    @media (max-width: 720px) {
+      .ac-preview-bar {
+        flex-wrap: wrap;
+      }
+      .ac-shell {
+        border-radius: 16px;
+        min-height: 0;
+      }
+      .ac-sidebar {
+        display: none;
+      }
+      .ac-bottomnav {
+        display: flex;
+      }
+      .ac-mobile-only {
+        display: flex;
+      }
+      .ac-desktop-only,
+      .ac-identity-text,
+      .ac-topbar-subtitle {
+        display: none;
+      }
+      .ac-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .ac-grid2,
+      .ac-split {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .ac-pane-editor,
+      .ac-pane-detail {
+        display: none;
+      }
+      .ac-table th:nth-child(2),
+      .ac-table td:nth-child(2),
+      .ac-table th:nth-child(4),
+      .ac-table td:nth-child(4) {
+        display: none;
+      }
+      .ac-table th,
+      .ac-table td {
+        padding: 11px 12px;
+      }
+      .ac-pagination {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+    }
+  &lt;/style&gt;
+  &lt;div class=&quot;ac-preview-bar&quot;&gt;
+    &lt;span class=&quot;ac-preview-label&quot;&gt;管理后台导航统一预览&lt;/span&gt;
+    &lt;div class=&quot;ac-segmented&quot; role=&quot;group&quot; aria-label=&quot;预览设备&quot;&gt;
+      &lt;button class=&quot;ac-seg is-active&quot; type=&quot;button&quot; data-ac-mode=&quot;desktop&quot; aria-pressed=&quot;true&quot;&gt;
+        &lt;i data-lucide=&quot;monitor&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;桌面端&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;button class=&quot;ac-seg&quot; type=&quot;button&quot; data-ac-mode=&quot;mobile&quot; aria-pressed=&quot;false&quot;&gt;
+        &lt;i data-lucide=&quot;smartphone&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;移动端&lt;/span&gt;
+      &lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;ac-shell&quot; aria-label=&quot;FunBox 管理后台统一框架预览&quot;&gt;
+    &lt;aside class=&quot;ac-sidebar&quot; aria-label=&quot;后台主导航&quot;&gt;
+      &lt;div class=&quot;ac-brand&quot;&gt;
+        &lt;div class=&quot;ac-brand-mark&quot;&gt;F&lt;/div&gt;
+        &lt;div&gt;
+          &lt;div class=&quot;ac-brand-name&quot;&gt;FunBox&lt;/div&gt;
+          &lt;div class=&quot;ac-brand-sub&quot;&gt;管理后台&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;ac-nav-section&quot;&gt;管理工具&lt;/div&gt;
+      &lt;nav class=&quot;ac-nav&quot;&gt;
+        &lt;button class=&quot;ac-nav-item is-active&quot; type=&quot;button&quot; data-ac-nav=&quot;home&quot; aria-current=&quot;page&quot;&gt;
+          &lt;i data-lucide=&quot;layout-dashboard&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;后台首页&lt;/span&gt;
+        &lt;/button&gt;
+        &lt;button class=&quot;ac-nav-item&quot; type=&quot;button&quot; data-ac-nav=&quot;users&quot;&gt;
+          &lt;i data-lucide=&quot;users&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;用户身份&lt;/span&gt;
+        &lt;/button&gt;
+        &lt;button class=&quot;ac-nav-item&quot; type=&quot;button&quot; data-ac-nav=&quot;permissions&quot;&gt;
+          &lt;i data-lucide=&quot;key&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;入口权限&lt;/span&gt;
+        &lt;/button&gt;
+        &lt;button class=&quot;ac-nav-item&quot; type=&quot;button&quot; data-ac-nav=&quot;feedback&quot;&gt;
+          &lt;i data-lucide=&quot;message-square&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;问题反馈&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/nav&gt;
+      &lt;div class=&quot;ac-nav-section&quot;&gt;内容运营&lt;/div&gt;
+      &lt;nav class=&quot;ac-nav&quot;&gt;
+        &lt;button class=&quot;ac-nav-item&quot; type=&quot;button&quot; data-ac-nav=&quot;reading&quot;&gt;
+          &lt;i data-lucide=&quot;book-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;阅读管理&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/nav&gt;
+      &lt;div class=&quot;ac-sidebar-foot&quot;&gt;
+        &lt;div class=&quot;ac-admin-chip&quot;&gt;
+          &lt;i data-lucide=&quot;shield-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;管理员控制台&lt;/span&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;ac-back-link&quot; type=&quot;button&quot;&gt;
+          &lt;i data-lucide=&quot;arrow-left&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;返回 FunBox&lt;/span&gt;
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/aside&gt;
+    &lt;div class=&quot;ac-main&quot;&gt;
+      &lt;header class=&quot;ac-topbar&quot;&gt;
+        &lt;button class=&quot;ac-icon-btn ac-mobile-only&quot; type=&quot;button&quot; aria-label=&quot;返回&quot;&gt;
+          &lt;i data-lucide=&quot;arrow-left&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+        &lt;/button&gt;
+        &lt;div class=&quot;ac-topbar-copy&quot;&gt;
+          &lt;div class=&quot;ac-breadcrumb&quot;&gt;
+            &lt;span&gt;管理后台&lt;/span&gt;&lt;i data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+            &lt;strong class=&quot;ac-breadcrumb-current&quot;&gt;工作台&lt;/strong&gt;
+          &lt;/div&gt;
+          &lt;h1 class=&quot;ac-topbar-title&quot;&gt;管理控制台&lt;/h1&gt;
+          &lt;p class=&quot;ac-topbar-subtitle&quot;&gt;后台各模块统一在此管理&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;ac-topbar-actions&quot;&gt;
+          &lt;button class=&quot;ac-icon-btn ac-desktop-only&quot; type=&quot;button&quot; aria-label=&quot;通知&quot;&gt;
+            &lt;i data-lucide=&quot;bell&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span class=&quot;ac-dot&quot;&gt;&lt;/span&gt;
+          &lt;/button&gt;
+          &lt;div class=&quot;ac-identity&quot;&gt;
+            &lt;span class=&quot;ac-avatar&quot;&gt;F&lt;/span&gt;
+            &lt;span class=&quot;ac-identity-text&quot;&gt;FunBox 管理员&lt;/span&gt;
+          &lt;/div&gt;
+          &lt;button class=&quot;ac-icon-btn ac-mobile-only&quot; type=&quot;button&quot; aria-label=&quot;更多&quot;&gt;
+            &lt;i data-lucide=&quot;more-horizontal&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/header&gt;
+      &lt;div class=&quot;ac-content&quot;&gt;
+        &lt;section class=&quot;ac-page is-active&quot; data-ac-page=&quot;home&quot;&gt;
+          &lt;div class=&quot;ac-hero&quot;&gt;
+            &lt;div&gt;
+              &lt;div class=&quot;ac-hero-kicker&quot;&gt;工作台&lt;/div&gt;
+              &lt;h2&gt;早上好，FunBox 管理员&lt;/h2&gt;
+              &lt;p&gt;今天有 6 条待处理反馈，3 条阅读内容待发布。&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;button class=&quot;ac-btn ac-btn-lime&quot; type=&quot;button&quot;&gt;
+              &lt;i data-lucide=&quot;inbox&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;查看反馈&lt;/span&gt;
+            &lt;/button&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ac-stats&quot;&gt;
+            &lt;div class=&quot;ac-stat&quot;&gt;
+              &lt;div class=&quot;ac-stat-label&quot;&gt;用户总数&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-value&quot;&gt;128&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-trend&quot;&gt;+12 本周&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-stat&quot;&gt;
+              &lt;div class=&quot;ac-stat-label&quot;&gt;功能入口&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-value&quot;&gt;17&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-trend&quot;&gt;9 个身份受限&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-stat&quot;&gt;
+              &lt;div class=&quot;ac-stat-label&quot;&gt;待处理反馈&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-value&quot;&gt;6&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-trend down&quot;&gt;3 条来自 VIP&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-stat&quot;&gt;
+              &lt;div class=&quot;ac-stat-label&quot;&gt;阅读内容&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-value&quot;&gt;24&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-trend&quot;&gt;3 条待发布&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ac-grid2&quot;&gt;
+            &lt;div class=&quot;ac-panel&quot;&gt;
+              &lt;div class=&quot;ac-panel-head&quot;&gt;
+                &lt;h3&gt;最近反馈&lt;/h3&gt;
+                &lt;button class=&quot;ac-link&quot; type=&quot;button&quot;&gt;查看全部&lt;/button&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-feedback-mini&quot;&gt;
+                &lt;div class=&quot;ac-feedback-mini-row&quot;&gt;
+                  &lt;span class=&quot;ac-avatar sm&quot;&gt;林&lt;/span&gt;
+                  &lt;div&gt;
+                    &lt;div class=&quot;ac-feedback-mini-name&quot;&gt;林小满&lt;/div&gt;
+                    &lt;div class=&quot;ac-feedback-mini-time&quot;&gt;07-31 18:24&lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;span class=&quot;ac-feedback-mini-status&quot;&gt;待处理&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;ac-feedback-mini-row&quot;&gt;
+                  &lt;span class=&quot;ac-avatar sm&quot;&gt;陈&lt;/span&gt;
+                  &lt;div&gt;
+                    &lt;div class=&quot;ac-feedback-mini-name&quot;&gt;陈默&lt;/div&gt;
+                    &lt;div class=&quot;ac-feedback-mini-time&quot;&gt;07-31 16:02&lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;span class=&quot;ac-feedback-mini-status&quot;&gt;待处理&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;ac-feedback-mini-row&quot;&gt;
+                  &lt;span class=&quot;ac-avatar sm&quot;&gt;周&lt;/span&gt;
+                  &lt;div&gt;
+                    &lt;div class=&quot;ac-feedback-mini-name&quot;&gt;周可&lt;/div&gt;
+                    &lt;div class=&quot;ac-feedback-mini-time&quot;&gt;07-30 21:47&lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;span class=&quot;ac-feedback-mini-status&quot; style=&quot;color: var(--ac-success)&quot;&gt;已处理&lt;/span&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-panel&quot;&gt;
+              &lt;div class=&quot;ac-panel-head&quot;&gt;
+                &lt;h3&gt;快捷入口&lt;/h3&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-quick-grid&quot;&gt;
+                &lt;button class=&quot;ac-quick-btn&quot; type=&quot;button&quot; data-ac-nav=&quot;users&quot;&gt;
+                  &lt;i data-lucide=&quot;users&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;用户身份&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-quick-btn&quot; type=&quot;button&quot; data-ac-nav=&quot;permissions&quot;&gt;
+                  &lt;i data-lucide=&quot;key&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;入口权限&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-quick-btn&quot; type=&quot;button&quot; data-ac-nav=&quot;feedback&quot;&gt;
+                  &lt;i data-lucide=&quot;message-square&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;问题反馈&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-quick-btn&quot; type=&quot;button&quot; data-ac-nav=&quot;reading&quot;&gt;
+                  &lt;i data-lucide=&quot;book-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;阅读管理&lt;/span&gt;
+                &lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+        &lt;section class=&quot;ac-page&quot; data-ac-page=&quot;users&quot;&gt;
+          &lt;div class=&quot;ac-page-tools&quot;&gt;
+            &lt;div class=&quot;ac-search&quot;&gt;
+              &lt;i data-lucide=&quot;search&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+              &lt;input type=&quot;search&quot; placeholder=&quot;搜索昵称或手机号&quot; aria-label=&quot;搜索用户&quot; /&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-filter-group&quot; role=&quot;group&quot; aria-label=&quot;身份筛选&quot;&gt;
+              &lt;button class=&quot;ac-filter is-active&quot; type=&quot;button&quot;&gt;全部&lt;/button&gt;
+              &lt;button class=&quot;ac-filter&quot; type=&quot;button&quot;&gt;VIP&lt;/button&gt;
+              &lt;button class=&quot;ac-filter&quot; type=&quot;button&quot;&gt;SVIP&lt;/button&gt;
+              &lt;button class=&quot;ac-filter&quot; type=&quot;button&quot;&gt;管理员&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;button class=&quot;ac-btn ac-btn-ghost&quot; type=&quot;button&quot;&gt;
+              &lt;i data-lucide=&quot;refresh-cw&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;刷新&lt;/span&gt;
+            &lt;/button&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ac-panel ac-table-panel&quot;&gt;
+            &lt;table class=&quot;ac-table&quot;&gt;
+              &lt;thead&gt;
+                &lt;tr&gt;
+                  &lt;th&gt;用户&lt;/th&gt;
+                  &lt;th&gt;手机号&lt;/th&gt;
+                  &lt;th&gt;身份&lt;/th&gt;
+                  &lt;th&gt;更新时间&lt;/th&gt;
+                  &lt;th&gt;&lt;/th&gt;
+                &lt;/tr&gt;
+              &lt;/thead&gt;
+              &lt;tbody&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;
+                    &lt;div class=&quot;ac-user-cell&quot;&gt;
+                      &lt;span class=&quot;ac-avatar sm&quot;&gt;林&lt;/span&gt;
+                      &lt;span&gt;&lt;strong&gt;林小满&lt;/strong&gt;&lt;small&gt;ID a1b2c3d4&lt;/small&gt;&lt;/span&gt;
+                    &lt;/div&gt;
+                  &lt;/td&gt;
+                  &lt;td&gt;138****2048&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge normal&quot;&gt;普通用户&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-31 18:24&lt;/td&gt;
+                  &lt;td&gt;&lt;i class=&quot;ac-row-action&quot; data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;
+                    &lt;div class=&quot;ac-user-cell&quot;&gt;
+                      &lt;span class=&quot;ac-avatar sm&quot;&gt;陈&lt;/span&gt;
+                      &lt;span&gt;&lt;strong&gt;陈默&lt;/strong&gt;&lt;small&gt;ID e5f6a7b8&lt;/small&gt;&lt;/span&gt;
+                    &lt;/div&gt;
+                  &lt;/td&gt;
+                  &lt;td&gt;186****7712&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge vip&quot;&gt;VIP&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-31 16:02&lt;/td&gt;
+                  &lt;td&gt;&lt;i class=&quot;ac-row-action&quot; data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;
+                    &lt;div class=&quot;ac-user-cell&quot;&gt;
+                      &lt;span class=&quot;ac-avatar sm&quot;&gt;周&lt;/span&gt;
+                      &lt;span&gt;&lt;strong&gt;周可&lt;/strong&gt;&lt;small&gt;ID c9d0e1f2&lt;/small&gt;&lt;/span&gt;
+                    &lt;/div&gt;
+                  &lt;/td&gt;
+                  &lt;td&gt;159****3309&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge svip&quot;&gt;SVIP&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-30 21:47&lt;/td&gt;
+                  &lt;td&gt;&lt;i class=&quot;ac-row-action&quot; data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;
+                    &lt;div class=&quot;ac-user-cell&quot;&gt;
+                      &lt;span class=&quot;ac-avatar sm&quot;&gt;F&lt;/span&gt;
+                      &lt;span&gt;&lt;strong&gt;FunBox 管理员&lt;/strong&gt;&lt;small&gt;ID f3f4f5f6&lt;/small&gt;&lt;/span&gt;
+                    &lt;/div&gt;
+                  &lt;/td&gt;
+                  &lt;td&gt;177****0101&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge admin&quot;&gt;管理员&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-29 10:15&lt;/td&gt;
+                  &lt;td&gt;&lt;i class=&quot;ac-row-action&quot; data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;
+                    &lt;div class=&quot;ac-user-cell&quot;&gt;
+                      &lt;span class=&quot;ac-avatar sm&quot;&gt;王&lt;/span&gt;
+                      &lt;span&gt;&lt;strong&gt;王宁&lt;/strong&gt;&lt;small&gt;ID a7b8c9d0&lt;/small&gt;&lt;/span&gt;
+                    &lt;/div&gt;
+                  &lt;/td&gt;
+                  &lt;td&gt;135****6688&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge normal&quot;&gt;普通用户&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-29 09:31&lt;/td&gt;
+                  &lt;td&gt;&lt;i class=&quot;ac-row-action&quot; data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/td&gt;
+                &lt;/tr&gt;
+              &lt;/tbody&gt;
+            &lt;/table&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ac-pagination&quot;&gt;
+            &lt;span&gt;共 128 人 · 第 1 / 7 页&lt;/span&gt;
+            &lt;div style=&quot;display: flex; gap: 8px&quot;&gt;
+              &lt;button class=&quot;ac-page-btn&quot; type=&quot;button&quot; disabled&gt;
+                &lt;i data-lucide=&quot;chevron-left&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;上一页&lt;/span&gt;
+              &lt;/button&gt;
+              &lt;button class=&quot;ac-page-btn&quot; type=&quot;button&quot;&gt;
+                &lt;span&gt;下一页&lt;/span&gt;&lt;i data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+              &lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+        &lt;section class=&quot;ac-page&quot; data-ac-page=&quot;permissions&quot;&gt;
+          &lt;div class=&quot;ac-stats ac-stats-3&quot;&gt;
+            &lt;div class=&quot;ac-stat&quot;&gt;
+              &lt;div class=&quot;ac-stat-label&quot;&gt;功能入口&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-value&quot;&gt;17&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-stat&quot;&gt;
+              &lt;div class=&quot;ac-stat-label&quot;&gt;身份受限&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-value&quot;&gt;9&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-stat&quot;&gt;
+              &lt;div class=&quot;ac-stat-label&quot;&gt;用户特批&lt;/div&gt;
+              &lt;div class=&quot;ac-stat-value&quot;&gt;5&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ac-split&quot;&gt;
+            &lt;div class=&quot;ac-pane ac-pane-list&quot;&gt;
+              &lt;div class=&quot;ac-pane-head&quot;&gt;
+                &lt;h3&gt;功能入口&lt;/h3&gt;
+                &lt;span class=&quot;ac-count&quot;&gt;17 个&lt;/span&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-search ac-search-compact&quot;&gt;
+                &lt;i data-lucide=&quot;search&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+                &lt;input type=&quot;search&quot; placeholder=&quot;搜索功能名称或分类&quot; aria-label=&quot;搜索功能入口&quot; /&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-feature-list&quot;&gt;
+                &lt;button class=&quot;ac-feature is-active&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;messages-square&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;聊天室&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;社交&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;vip&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;svip&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-feature&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;book-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;免费阅读&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;阅读&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;vip&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;svip&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;div class=&quot;ac-feature-group-label&quot;&gt;游戏&lt;/div&gt;
+                &lt;button class=&quot;ac-feature&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;circle-dot&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;五子棋&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;游戏&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;vip&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;svip&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-feature&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;square-stack&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;打砖块&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;游戏&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;vip&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-feature&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;route&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;贪吃蛇&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;游戏&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;vip&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;svip&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-feature&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;grid-2x2&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;俄罗斯方块&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;游戏&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;normal&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-feature&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;chess&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;中国象棋&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;游戏&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;vip&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;svip&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;button class=&quot;ac-feature&quot; type=&quot;button&quot;&gt;
+                  &lt;span class=&quot;ac-feature-icon&quot;&gt;&lt;i data-lucide=&quot;wrench&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;span class=&quot;ac-feature-name&quot;&gt;工具箱&lt;/span&gt;
+                    &lt;div class=&quot;ac-feature-meta&quot;&gt;工具&lt;/div&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-role-chips&quot;&gt;&lt;span class=&quot;ac-chip&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;vip&lt;/span&gt;&lt;span class=&quot;ac-chip&quot;&gt;svip&lt;/span&gt;&lt;/span&gt;
+                &lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-pane ac-pane-editor&quot;&gt;
+              &lt;div class=&quot;ac-pane-head&quot;&gt;
+                &lt;h3&gt;聊天室&lt;/h3&gt;
+                &lt;span class=&quot;ac-badge primary&quot;&gt;已发布&lt;/span&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-editor-block&quot;&gt;
+                &lt;div class=&quot;ac-label&quot;&gt;角色可见性&lt;/div&gt;
+                &lt;div class=&quot;ac-role-toggle-group&quot;&gt;
+                  &lt;button class=&quot;ac-role-toggle is-on&quot; type=&quot;button&quot;&gt;
+                    &lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;普通用户&lt;/span&gt;
+                  &lt;/button&gt;
+                  &lt;button class=&quot;ac-role-toggle is-on&quot; type=&quot;button&quot;&gt;
+                    &lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;VIP&lt;/span&gt;
+                  &lt;/button&gt;
+                  &lt;button class=&quot;ac-role-toggle is-on&quot; type=&quot;button&quot;&gt;
+                    &lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;SVIP&lt;/span&gt;
+                  &lt;/button&gt;
+                  &lt;button class=&quot;ac-role-toggle&quot; type=&quot;button&quot;&gt;
+                    &lt;span&gt;管理员&lt;/span&gt;
+                  &lt;/button&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-editor-block&quot;&gt;
+                &lt;div class=&quot;ac-label&quot;&gt;用户特批&lt;/div&gt;
+                &lt;div class=&quot;ac-grant-row&quot;&gt;
+                  &lt;div class=&quot;ac-search ac-search-compact&quot; style=&quot;margin-bottom: 0&quot;&gt;
+                    &lt;input type=&quot;tel&quot; placeholder=&quot;输入手机号添加特批&quot; aria-label=&quot;用户特批手机号&quot; /&gt;
+                  &lt;/div&gt;
+                  &lt;button class=&quot;ac-btn ac-btn-primary&quot; type=&quot;button&quot;&gt;
+                    &lt;i data-lucide=&quot;plus&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;添加&lt;/span&gt;
+                  &lt;/button&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;ac-grant-list&quot;&gt;
+                  &lt;div class=&quot;ac-grant&quot;&gt;
+                    &lt;span&gt;138****2048&lt;/span&gt;
+                    &lt;button type=&quot;button&quot; aria-label=&quot;移除 138****2048&quot;&gt;
+                      &lt;i data-lucide=&quot;x&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+                    &lt;/button&gt;
+                  &lt;/div&gt;
+                  &lt;div class=&quot;ac-grant&quot;&gt;
+                    &lt;span&gt;186****7712&lt;/span&gt;
+                    &lt;button type=&quot;button&quot; aria-label=&quot;移除 186****7712&quot;&gt;
+                      &lt;i data-lucide=&quot;x&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+                    &lt;/button&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-note&quot;&gt;
+                &lt;i data-lucide=&quot;shield-check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+                &lt;span&gt;新入口默认仅管理员可见，发布后对用户生效。&lt;/span&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+        &lt;section class=&quot;ac-page&quot; data-ac-page=&quot;feedback&quot;&gt;
+          &lt;div class=&quot;ac-split&quot;&gt;
+            &lt;div class=&quot;ac-pane ac-pane-list&quot;&gt;
+              &lt;div class=&quot;ac-pane-head&quot;&gt;
+                &lt;h3&gt;全部反馈&lt;/h3&gt;
+                &lt;span class=&quot;ac-count&quot;&gt;6 条待处理&lt;/span&gt;
+              &lt;/div&gt;
+              &lt;button class=&quot;ac-feedback-card is-active&quot; type=&quot;button&quot;&gt;
+                &lt;div class=&quot;ac-feedback-top&quot;&gt;
+                  &lt;span class=&quot;ac-avatar sm&quot;&gt;林&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;strong&gt;林小满&lt;/strong&gt;
+                    &lt;small&gt;07-31 18:24&lt;/small&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-badge rose&quot; style=&quot;margin-left: auto&quot;&gt;待处理&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;p&gt;阅读页在夜间模式下章节标题会被顶栏遮挡，翻页按钮也偏小。&lt;/p&gt;
+                &lt;span class=&quot;ac-image-count&quot;&gt;&lt;i data-lucide=&quot;image&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;2&lt;/span&gt;
+              &lt;/button&gt;
+              &lt;button class=&quot;ac-feedback-card&quot; type=&quot;button&quot;&gt;
+                &lt;div class=&quot;ac-feedback-top&quot;&gt;
+                  &lt;span class=&quot;ac-avatar sm&quot;&gt;陈&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;strong&gt;陈默&lt;/strong&gt;
+                    &lt;small&gt;07-31 16:02&lt;/small&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-badge rose&quot; style=&quot;margin-left: auto&quot;&gt;待处理&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;p&gt;五子棋好友对战偶尔提示房间已满，重新进入后又正常。&lt;/p&gt;
+                &lt;span class=&quot;ac-image-count&quot;&gt;&lt;i data-lucide=&quot;image&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;1&lt;/span&gt;
+              &lt;/button&gt;
+              &lt;button class=&quot;ac-feedback-card&quot; type=&quot;button&quot;&gt;
+                &lt;div class=&quot;ac-feedback-top&quot;&gt;
+                  &lt;span class=&quot;ac-avatar sm&quot;&gt;周&lt;/span&gt;
+                  &lt;span&gt;
+                    &lt;strong&gt;周可&lt;/strong&gt;
+                    &lt;small&gt;07-30 21:47&lt;/small&gt;
+                  &lt;/span&gt;
+                  &lt;span class=&quot;ac-badge primary&quot; style=&quot;margin-left: auto&quot;&gt;已处理&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;p&gt;希望工具箱里的二维码工具支持自定义前景色和尺寸。&lt;/p&gt;
+                &lt;span class=&quot;ac-image-count&quot;&gt;&lt;i data-lucide=&quot;image&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;1&lt;/span&gt;
+              &lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ac-pane ac-pane-detail&quot;&gt;
+              &lt;div class=&quot;ac-pane-head&quot;&gt;
+                &lt;h3&gt;反馈详情&lt;/h3&gt;
+                &lt;span class=&quot;ac-badge rose&quot;&gt;待处理&lt;/span&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-detail-user&quot;&gt;
+                &lt;span class=&quot;ac-avatar sm&quot;&gt;林&lt;/span&gt;
+                &lt;span&gt;
+                  &lt;strong&gt;林小满&lt;/strong&gt;
+                  &lt;small&gt;@linxiaoman · 138****2048 · 07-31 18:24&lt;/small&gt;
+                &lt;/span&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-detail-body&quot;&gt;
+                &lt;p&gt;阅读页在夜间模式下章节标题会被顶栏遮挡，翻页按钮也偏小。切换到浅色模式后没有这个问题，麻烦帮忙看一下。&lt;/p&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-detail-images&quot;&gt;
+                &lt;div class=&quot;ac-thumb&quot;&gt;截图 1&lt;/div&gt;
+                &lt;div class=&quot;ac-thumb&quot;&gt;截图 2&lt;/div&gt;
+              &lt;/div&gt;
+              &lt;div class=&quot;ac-reply&quot;&gt;
+                &lt;textarea aria-label=&quot;回复用户&quot; placeholder=&quot;回复用户...&quot;&gt;&lt;/textarea&gt;
+                &lt;button class=&quot;ac-btn ac-btn-primary&quot; type=&quot;button&quot;&gt;
+                  &lt;i data-lucide=&quot;check&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;标记已处理&lt;/span&gt;
+                &lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+        &lt;section class=&quot;ac-page&quot; data-ac-page=&quot;reading&quot;&gt;
+          &lt;div class=&quot;ac-page-tools&quot;&gt;
+            &lt;div class=&quot;ac-search&quot;&gt;
+              &lt;i data-lucide=&quot;search&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+              &lt;input type=&quot;search&quot; placeholder=&quot;搜索书名或作者&quot; aria-label=&quot;搜索阅读内容&quot; /&gt;
+            &lt;/div&gt;
+            &lt;button class=&quot;ac-btn ac-btn-primary&quot; type=&quot;button&quot;&gt;
+              &lt;i data-lucide=&quot;upload&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;导入书籍&lt;/span&gt;
+            &lt;/button&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ac-panel ac-table-panel&quot;&gt;
+            &lt;table class=&quot;ac-table&quot;&gt;
+              &lt;thead&gt;
+                &lt;tr&gt;
+                  &lt;th&gt;书名&lt;/th&gt;
+                  &lt;th&gt;作者&lt;/th&gt;
+                  &lt;th&gt;章节&lt;/th&gt;
+                  &lt;th&gt;状态&lt;/th&gt;
+                  &lt;th&gt;更新时间&lt;/th&gt;
+                &lt;/tr&gt;
+              &lt;/thead&gt;
+              &lt;tbody&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;&lt;strong&gt;夜航西飞&lt;/strong&gt;&lt;/td&gt;
+                  &lt;td&gt;柏瑞尔·马卡姆&lt;/td&gt;
+                  &lt;td&gt;24 / 32&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge primary&quot;&gt;已发布&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-31 14:20&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;&lt;strong&gt;人类群星闪耀时&lt;/strong&gt;&lt;/td&gt;
+                  &lt;td&gt;斯蒂芬·茨威格&lt;/td&gt;
+                  &lt;td&gt;8 / 12&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge primary&quot;&gt;已发布&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-30 11:08&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;&lt;strong&gt;银河系漫游指南&lt;/strong&gt;&lt;/td&gt;
+                  &lt;td&gt;道格拉斯·亚当斯&lt;/td&gt;
+                  &lt;td&gt;0 / 26&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge normal&quot;&gt;待发布&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-29 17:42&lt;/td&gt;
+                &lt;/tr&gt;
+                &lt;tr&gt;
+                  &lt;td&gt;&lt;strong&gt;思考，快与慢&lt;/strong&gt;&lt;/td&gt;
+                  &lt;td&gt;丹尼尔·卡尼曼&lt;/td&gt;
+                  &lt;td&gt;15 / 38&lt;/td&gt;
+                  &lt;td&gt;&lt;span class=&quot;ac-badge normal&quot;&gt;待发布&lt;/span&gt;&lt;/td&gt;
+                  &lt;td&gt;07-28 09:55&lt;/td&gt;
+                &lt;/tr&gt;
+              &lt;/tbody&gt;
+            &lt;/table&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ac-pagination&quot;&gt;
+            &lt;span&gt;共 24 本 · 第 1 / 6 页&lt;/span&gt;
+            &lt;div style=&quot;display: flex; gap: 8px&quot;&gt;
+              &lt;button class=&quot;ac-page-btn&quot; type=&quot;button&quot; disabled&gt;
+                &lt;i data-lucide=&quot;chevron-left&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;上一页&lt;/span&gt;
+              &lt;/button&gt;
+              &lt;button class=&quot;ac-page-btn&quot; type=&quot;button&quot;&gt;
+                &lt;span&gt;下一页&lt;/span&gt;&lt;i data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+              &lt;/button&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;nav class=&quot;ac-bottomnav&quot; aria-label=&quot;后台底部导航&quot;&gt;
+      &lt;button class=&quot;ac-bottom-item is-active&quot; type=&quot;button&quot; data-ac-nav=&quot;home&quot;&gt;
+        &lt;i data-lucide=&quot;layout-dashboard&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;首页&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;button class=&quot;ac-bottom-item&quot; type=&quot;button&quot; data-ac-nav=&quot;users&quot;&gt;
+        &lt;i data-lucide=&quot;users&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;用户&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;button class=&quot;ac-bottom-item&quot; type=&quot;button&quot; data-ac-nav=&quot;permissions&quot;&gt;
+        &lt;i data-lucide=&quot;key&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;权限&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;button class=&quot;ac-bottom-item&quot; type=&quot;button&quot; data-ac-nav=&quot;feedback&quot;&gt;
+        &lt;i data-lucide=&quot;message-square&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;反馈&lt;/span&gt;
+      &lt;/button&gt;
+      &lt;button class=&quot;ac-bottom-item&quot; type=&quot;button&quot; data-ac-nav=&quot;reading&quot;&gt;
+        &lt;i data-lucide=&quot;book-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;阅读&lt;/span&gt;
+      &lt;/button&gt;
+    &lt;/nav&gt;
+  &lt;/div&gt;
+  &lt;script&gt;
+    (function () {
+      var root = document.getElementById(&quot;admin-console-unification-root&quot;);
+      if (!root) return;
+      var modeButtons = Array.prototype.slice.call(root.querySelectorAll(&quot;[data-ac-mode]&quot;));
+      var navButtons = Array.prototype.slice.call(root.querySelectorAll(&quot;[data-ac-nav]&quot;));
+      var pages = Array.prototype.slice.call(root.querySelectorAll(&quot;[data-ac-page]&quot;));
+      var titleEl = root.querySelector(&quot;.ac-topbar-title&quot;);
+      var subtitleEl = root.querySelector(&quot;.ac-topbar-subtitle&quot;);
+      var breadcrumbEl = root.querySelector(&quot;.ac-breadcrumb-current&quot;);
+      var pageMeta = {
+        home: { title: &quot;管理控制台&quot;, subtitle: &quot;后台各模块统一在此管理&quot;, crumb: &quot;工作台&quot; },
+        users: { title: &quot;用户身份&quot;, subtitle: &quot;查询用户并调整普通用户 / VIP / SVIP 身份&quot;, crumb: &quot;用户与权限&quot; },
+        permissions: { title: &quot;入口权限&quot;, subtitle: &quot;管理功能与游戏入口的角色可见性与用户特批&quot;, crumb: &quot;用户与权限&quot; },
+        feedback: { title: &quot;问题反馈&quot;, subtitle: &quot;查看用户提交的文字与图片&quot;, crumb: &quot;内容运营&quot; },
+        reading: { title: &quot;阅读管理&quot;, subtitle: &quot;导入、发布与隐藏阅读内容&quot;, crumb: &quot;内容运营&quot; }
+      };
+      function refreshIcons() {
+        if (window.lucide) {
+          try {
+            window.lucide.createIcons({ attrs: { width: 16, height: 16 } });
+          } catch (error) {}
+        }
+      }
+      function setMode(mode) {
+        root.setAttribute(&quot;data-ac-mode&quot;, mode);
+        modeButtons.forEach(function (button) {
+          var active = button.getAttribute(&quot;data-ac-mode&quot;) === mode;
+          button.classList.toggle(&quot;is-active&quot;, active);
+          button.setAttribute(&quot;aria-pressed&quot;, active ? &quot;true&quot; : &quot;false&quot;);
+        });
+      }
+      function setPage(page) {
+        pages.forEach(function (panel) {
+          panel.classList.toggle(&quot;is-active&quot;, panel.getAttribute(&quot;data-ac-page&quot;) === page);
+        });
+        navButtons.forEach(function (button) {
+          var active = button.getAttribute(&quot;data-ac-nav&quot;) === page;
+          button.classList.toggle(&quot;is-active&quot;, active);
+          if (active) {
+            button.setAttribute(&quot;aria-current&quot;, &quot;page&quot;);
+          } else {
+            button.removeAttribute(&quot;aria-current&quot;);
+          }
+        });
+        var meta = pageMeta[page];
+        if (meta) {
+          if (titleEl) titleEl.textContent = meta.title;
+          if (subtitleEl) subtitleEl.textContent = meta.subtitle;
+          if (breadcrumbEl) breadcrumbEl.textContent = meta.crumb;
+        }
+        refreshIcons();
+      }
+      modeButtons.forEach(function (button) {
+        button.addEventListener(&quot;click&quot;, function () {
+          setMode(button.getAttribute(&quot;data-ac-mode&quot;));
+        });
+      });
+      navButtons.forEach(function (button) {
+        button.addEventListener(&quot;click&quot;, function () {
+          setPage(button.getAttribute(&quot;data-ac-nav&quot;));
+        });
+      });
+      setMode(&quot;desktop&quot;);
+      setPage(&quot;home&quot;);
+      refreshIcons();
+    })();
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

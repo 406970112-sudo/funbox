@@ -14,7 +14,6 @@ import {
   View,
 } from 'react-native';
 
-import { AdminIdentityChip } from '@/components/identity-ui';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   changeAdminReadingStatus,
@@ -234,15 +233,9 @@ export function AdminReadingScreen() {
 
   return (
     <ReadingPage style={styles.adminPage}>
-      <View style={styles.adminFrame}>
-        {!compact ? <AdminSidebar onBack={() => router.back()} /> : null}
-        <View style={styles.workspace}>
-          <View style={styles.workspaceTop}>
-            {compact ? <ReadingBrand compact /> : <View><Text style={styles.breadcrumb}>工作台 / 内容管理</Text><Text style={styles.workspaceTitle}>内容管理</Text></View>}
-            <View style={styles.headerActions}>{!compact && user ? <AdminIdentityChip username={user.username} /> : null}<PrimaryButton secondary icon="sync" disabled={busy} onPress={() => void runProviderSync()}>同步正版 API</PrimaryButton><PrimaryButton icon="upload-outline" disabled={busy} onPress={() => void chooseUpload()}>上传新书</PrimaryButton>{compact ? <IconButton accessibilityLabel="关闭后台" icon="close" onPress={() => router.back()} /> : null}</View>
-          </View>
-          <ScrollView contentContainerStyle={styles.workspaceScroll}>
-            <View style={styles.pageHeading}><View><Text style={styles.pageTitle}>内容概览</Text><Text style={styles.pageSubtitle}>上传、审核与发布免费阅读内容</Text></View><Text style={styles.updatedAt}>数据库实时状态</Text></View>
+      <View style={styles.workspace}>
+        <ScrollView contentContainerStyle={styles.workspaceScroll}>
+          <View style={styles.pageHeading}><View><Text style={styles.pageTitle}>内容概览</Text><Text style={styles.pageSubtitle}>上传、审核与发布免费阅读内容</Text></View><Text style={styles.updatedAt}>数据库实时状态</Text></View>
 
             <View style={styles.statsGrid}>
               <StatCard icon="book-check-outline" label="当前列表" value={books.length} note="本筛选范围" color={readingColors.blue} />
@@ -289,8 +282,7 @@ export function AdminReadingScreen() {
               </View>
             </View>
             <View style={styles.compliance}><MaterialCommunityIcons name="shield-check-outline" size={18} color={readingColors.green} /><Text style={styles.complianceText}>所有内容都必须有明确授权，发布、下架和资料修改会记录管理员审计日志。</Text></View>
-          </ScrollView>
-        </View>
+        </ScrollView>
       </View>
       <Modal animationType="fade" onRequestClose={() => setPendingStatus(null)} transparent visible={pendingStatus !== null}>
         <View style={styles.confirmBackdrop}>
@@ -309,19 +301,6 @@ export function AdminReadingScreen() {
       </Modal>
     </ReadingPage>
   );
-}
-
-function AdminSidebar({ onBack }: { onBack: () => void }) {
-  const items = [
-    { icon: 'view-dashboard-outline' as const, label: '概览' },
-    { icon: 'book-open-page-variant-outline' as const, label: '内容管理', active: true },
-    { icon: 'api' as const, label: '供应商 API' },
-    { icon: 'shield-check-outline' as const, label: '审核任务' },
-    { icon: 'account-key-outline' as const, label: '用户与权限' },
-    { icon: 'chart-line' as const, label: '阅读数据' },
-    { icon: 'cog-outline' as const, label: '系统设置' },
-  ];
-  return <View style={styles.sidebar}><ReadingBrand compact inverse /><Text style={styles.sidebarGroup}>工作台</Text>{items.slice(0, 4).map((item) => <View key={item.label} style={[styles.sidebarItem, item.active && styles.sidebarItemActive]}><MaterialCommunityIcons name={item.icon} size={19} color={item.active ? '#fff' : '#929bb4'} /><Text style={[styles.sidebarLabel, item.active && styles.sidebarLabelActive]}>{item.label}</Text></View>)}<Text style={styles.sidebarGroup}>系统</Text>{items.slice(4).map((item) => <View key={item.label} style={styles.sidebarItem}><MaterialCommunityIcons name={item.icon} size={19} color="#929bb4" /><Text style={styles.sidebarLabel}>{item.label}</Text></View>)}<Pressable onPress={onBack} style={styles.sidebarBack}><MaterialCommunityIcons name="arrow-left" size={18} color="#a9b1c7" /><Text style={styles.sidebarLabel}>返回 Funbox</Text></Pressable></View>;
 }
 
 function StatCard({ color, icon, label, note, value }: { color: string; icon: React.ComponentProps<typeof MaterialCommunityIcons>['name']; label: string; note: string; value: number }) { return <View style={styles.statCard}><View style={[styles.statIcon, { backgroundColor: `${color}14` }]}><MaterialCommunityIcons name={icon} size={21} color={color} /></View><Text style={styles.statLabel}>{label}</Text><Text style={styles.statValue}>{value}</Text><Text style={[styles.statNote, { color }]}>{note}</Text></View>; }

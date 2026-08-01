@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,9 +9,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -29,7 +27,6 @@ import { AdminFeedbackDetail } from '@/features/feedback/admin-feedback-detail';
 import type { FeedbackSubmission } from '@/types/feedback';
 
 export function AdminFeedbackScreen() {
-  const router = useRouter();
   const { colors } = useAppTheme();
   const { accessToken, status, user } = useAuth();
   const { width } = useWindowDimensions();
@@ -94,24 +91,7 @@ export function AdminFeedbackScreen() {
     items.find((item) => item.id === effectiveSelectedID) ?? null;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityLabel="返回管理后台"
-          accessibilityRole="button"
-          onPress={() => router.back()}
-          style={[styles.iconButton, { backgroundColor: colors.surface }]}>
-          <MaterialCommunityIcons name="arrow-left" size={20} color={colors.text} />
-        </Pressable>
-        <View style={styles.topBarCopy}>
-          <ThemedText style={styles.pageTitle}>问题反馈</ThemedText>
-          <ThemedText style={[styles.pageSubtitle, { color: colors.mutedText }]}>
-            用户提交的文字与图片
-          </ThemedText>
-        </View>
-        <AdminIdentityChip username={user.username} />
-      </View>
-
+    <View style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {loading ? (
         <View style={styles.centerState}>
           <ActivityIndicator color={colors.primary} />
@@ -169,7 +149,7 @@ export function AdminFeedbackScreen() {
           total={total}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
