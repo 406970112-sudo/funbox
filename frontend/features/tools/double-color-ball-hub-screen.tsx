@@ -92,9 +92,9 @@ export function DoubleColorBallHubScreen() {
                 <MaterialCommunityIcons name="flask-outline" size={22} color={BLUE} />
               </View>
               <View style={styles.choiceCopy}>
-                <ThemedText style={styles.choiceTitle}>双色球计划实验室</ThemedText>
+                <ThemedText style={styles.choiceTitle}>双色球计划实验室 V2</ThemedText>
                 <ThemedText style={[styles.choiceSubtitle, { color: colors.mutedText }]}>
-                  三套算法、收益回测与导出
+                  随机 / 概率 / 概率权重 · 1000 期
                 </ThemedText>
               </View>
               <View style={[styles.badge, { backgroundColor: LIME }]}>
@@ -103,7 +103,37 @@ export function DoubleColorBallHubScreen() {
             </View>
             <View style={[styles.choiceAction, styles.choiceActionNew]}>
               <ThemedText style={[styles.choiceActionText, { color: '#ffffff' }]}>
-                进入计划实验室
+                进入计划实验室 V2
+              </ThemedText>
+              <MaterialCommunityIcons name="arrow-right" size={16} color="#ffffff" />
+            </View>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/tools/double-color-ball-lab-classic')}
+            style={({ pressed }) => [
+              styles.choiceCard,
+              styles.choiceCardClassic,
+              pressed && styles.pressed,
+            ]}>
+            <View style={styles.choiceHead}>
+              <View style={[styles.choiceIcon, { backgroundColor: '#fff7e8' }]}>
+                <MaterialCommunityIcons name="flask-outline" size={22} color="#a76a00" />
+              </View>
+              <View style={styles.choiceCopy}>
+                <ThemedText style={styles.choiceTitle}>双色球计划实验室 V1</ThemedText>
+                <ThemedText style={[styles.choiceSubtitle, { color: colors.mutedText }]}>
+                  低频优先 / 时间加权 / 正态拟合
+                </ThemedText>
+              </View>
+              <View style={[styles.badge, { backgroundColor: '#fff0e1' }]}>
+                <ThemedText style={[styles.badgeText, { color: '#a76a00' }]}>经典版</ThemedText>
+              </View>
+            </View>
+            <View style={[styles.choiceAction, styles.choiceActionClassic]}>
+              <ThemedText style={[styles.choiceActionText, { color: '#ffffff' }]}>
+                进入经典实验室
               </ThemedText>
               <MaterialCommunityIcons name="arrow-right" size={16} color="#ffffff" />
             </View>
@@ -112,7 +142,7 @@ export function DoubleColorBallHubScreen() {
           <View style={[styles.notePanel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
             <MaterialCommunityIcons name="information-outline" size={16} color={BLUE} />
             <ThemedText style={[styles.noteText, { color: colors.mutedText }]}>
-              两个功能都使用中国福彩网官方历史开奖，开奖是独立随机事件，均不提供中奖保证。
+              三个功能都使用中国福彩网官方历史开奖，开奖是独立随机事件，均不提供中奖保证。
             </ThemedText>
           </View>
         </ScrollView>
@@ -125,9 +155,11 @@ const styles = StyleSheet.create({
   badge: { alignItems: 'center', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 5 },
   badgeText: { fontSize: 8, fontWeight: '900', lineHeight: 12 },
   choiceAction: { alignItems: 'center', borderRadius: 8, flexDirection: 'row', gap: 6, height: 36, justifyContent: 'center', marginTop: 12 },
+  choiceActionClassic: { backgroundColor: '#a76a00' },
   choiceActionNew: { backgroundColor: '#4b6bff' },
   choiceActionText: { fontSize: 10, fontWeight: '900', lineHeight: 15 },
   choiceCard: { borderRadius: 12, borderWidth: 1, marginTop: 12, padding: 14 },
+  choiceCardClassic: { backgroundColor: '#fffaf0', borderColor: '#f0d9b0' },
   choiceCardNew: { backgroundColor: '#f5f8ff', borderColor: '#c7d6ff' },
   choiceCopy: { flex: 1, minWidth: 0 },
   choiceHead: { alignItems: 'center', flexDirection: 'row', gap: 11 },

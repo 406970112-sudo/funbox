@@ -27,59 +27,58 @@ import {
   buildLabBacktestCsv,
   getLabAlgorithmLabel,
   runLabBacktest,
-} from '@/lib/double-color-ball-lab';
+} from '@/lib/double-color-ball-lab-classic';
 import {
   fetchSSQLabHistory,
   getSSQLabErrorMessage,
 } from '@/lib/double-color-ball-lab-api';
 import { downloadWebData } from '@/lib/qr-export';
 import type {
-  SSQLabAlgorithm,
-  SSQLabBacktestSummary,
-  SSQLabFetchCount,
-  SSQLabHistorySnapshot,
-  SSQLabTargetCount,
-  SSQLabWindowSize,
-} from '@/types/double-color-ball-lab';
+  SSQLabClassicAlgorithm,
+  SSQLabClassicBacktestSummary,
+  SSQLabClassicFetchCount,
+  SSQLabClassicHistorySnapshot,
+  SSQLabClassicTargetCount,
+  SSQLabClassicWindowSize,
+} from '@/types/double-color-ball-lab-classic';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 type LoadState = 'error' | 'loading' | 'ready';
 
-const fetchCounts: readonly SSQLabFetchCount[] = [100, 200, 500, 1000];
-const windows: readonly SSQLabWindowSize[] = [20, 30, 50];
-const algorithms: readonly SSQLabAlgorithm[] = ['random', 'probability', 'probability-weighted'];
-const weights: readonly number[] = [30, 50, 70];
-const targetCounts: readonly SSQLabTargetCount[] = [20, 50, 100];
+const fetchCounts: readonly SSQLabClassicFetchCount[] = [100, 200, 400, 1000];
+const windows: readonly SSQLabClassicWindowSize[] = [30, 100, 300];
+const algorithms: readonly SSQLabClassicAlgorithm[] = ['low-frequency', 'time-weighted', 'normal-fit'];
+const decays: readonly number[] = [0.999, 0.995, 0.99];
+const targetCounts: readonly SSQLabClassicTargetCount[] = [20, 50, 100];
 
 const CORAL = '#ff5f72';
 const BLUE = '#3785ff';
 const GREEN = '#20ad78';
 const INDIGO = '#151b3b';
 const LIME = '#c9f36a';
-const THEORETICAL_EV_PER_TICKET = 0.853105;
 
-export function DoubleColorBallLabScreen() {
+export function DoubleColorBallLabClassicScreen() {
   const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
-  const [algorithm, setAlgorithm] = useState<SSQLabAlgorithm>('probability-weighted');
+  const [algorithm, setAlgorithm] = useState<SSQLabClassicAlgorithm>('low-frequency');
   const [error, setError] = useState<unknown>(null);
   const [exporting, setExporting] = useState(false);
-  const [fetchCount, setFetchCount] = useState<SSQLabFetchCount>(1000);
+  const [fetchCount, setFetchCount] = useState<SSQLabClassicFetchCount>(400);
   const [infoVisible, setInfoVisible] = useState(false);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [message, setMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [runNonce, setRunNonce] = useState(0);
-  const [snapshot, setSnapshot] = useState<SSQLabHistorySnapshot | null>(null);
-  const [targetCount, setTargetCount] = useState<SSQLabTargetCount>(50);
-  const [weight, setWeight] = useState(50);
-  const [windowSize, setWindowSize] = useState<SSQLabWindowSize>(30);
+  const [snapshot, setSnapshot] = useState<SSQLabClassicHistorySnapshot | null>(null);
+  const [targetCount, setTargetCount] = useState<SSQLabClassicTargetCount>(50);
+  const [decay, setDecay] = useState(0.999);
+  const [windowSize, setWindowSize] = useState<SSQLabClassicWindowSize>(100);
   const requestRef = useRef<AbortController | null>(null);
-  const snapshotRef = useRef<SSQLabHistorySnapshot | null>(null);
+  const snapshotRef = useRef<SSQLabClassicHistorySnapshot | null>(null);
   const dark = colorScheme === 'dark';
   const pageSurface = dark ? colors.background : '#f7f9fe';
 
-  const loadHistory = useCallback(async (count: SSQLabFetchCount, initial: boolean) => {
+  const loadHistory = useCallback(async (count: SSQLabClassicFetchCount, initial: boolean) => {
     requestRef.current?.abort();
     const controller = new AbortController();
     requestRef.current = controller;
@@ -112,7 +111,7 @@ export function DoubleColorBallLabScreen() {
     return () => requestRef.current?.abort();
   }, [loadHistory]);
 
-  function handleFetchCountChange(nextCount: SSQLabFetchCount) {
+  function handleFetchCountChange(nextCount: SSQLabClassicFetchCount) {
     if (nextCount === fetchCount) return;
     setFetchCount(nextCount);
     void loadHistory(nextCount, false);
@@ -122,18 +121,18 @@ export function DoubleColorBallLabScreen() {
     if (!snapshot || snapshot.draws.length < windowSize) return null;
     return runLabBacktest(snapshot.draws, {
       algorithm,
+      decay,
       targetCount,
-      weight,
       windowSize,
     });
-  }, [algorithm, runNonce, snapshot, targetCount, weight, windowSize]);
+  }, [algorithm, decay, runNonce, snapshot, targetCount, windowSize]);
 
   async function handleExport() {
     if (!summary || exporting) return;
     setExporting(true);
     try {
       const csv = buildLabBacktestCsv(summary);
-      const fileName = `双色球计划实验室回测-${getLabAlgorithmLabel(summary.algorithm)}-${summary.windowSize}期.csv`;
+      const fileName = `双色球计划实验室V1回测-${getLabAlgorithmLabel(summary.algorithm)}-${summary.windowSize}期.csv`;
       if (Platform.OS === 'web') {
         downloadWebData(csv, fileName, 'text/csv;charset=utf-8');
         setMessage('CSV 已导出，可用 Excel 打开');
@@ -168,7 +167,7 @@ export function DoubleColorBallLabScreen() {
         style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
         <MaterialCommunityIcons name="chevron-left" size={29} color={colors.text} />
       </Pressable>
-      <ThemedText style={styles.headerTitle}>双色球计划实验室 V2</ThemedText>
+      <ThemedText style={styles.headerTitle}>双色球计划实验室 V1</ThemedText>
       <Pressable
         accessibilityLabel="查看概率说明"
         accessibilityRole="button"
@@ -268,7 +267,7 @@ export function DoubleColorBallLabScreen() {
           <SegmentedChips
             labels={fetchCounts.map((count) => String(count))}
             selected={String(fetchCount)}
-            onSelect={(value) => handleFetchCountChange(Number(value) as SSQLabFetchCount)}
+            onSelect={(value) => handleFetchCountChange(Number(value) as SSQLabClassicFetchCount)}
           />
         </LabPanel>
 
@@ -276,7 +275,7 @@ export function DoubleColorBallLabScreen() {
           <SegmentedChips
             labels={windows.map((window) => `${window} 期`)}
             selected={String(windowSize)}
-            onSelect={(value) => setWindowSize(Number(value) as SSQLabWindowSize)}
+            onSelect={(value) => setWindowSize(Number(value) as SSQLabClassicWindowSize)}
           />
         </LabPanel>
 
@@ -318,12 +317,12 @@ export function DoubleColorBallLabScreen() {
           </View>
         </LabPanel>
 
-        {algorithm === 'probability-weighted' ? (
-          <LabPanel title="概率权重" caption="参数可调">
+        {algorithm === 'time-weighted' ? (
+          <LabPanel title="时间衰减" caption="参数可调">
             <SegmentedChips
-              labels={weights.map((value) => String(value))}
-              selected={String(weight)}
-              onSelect={(value) => setWeight(Number(value))}
+              labels={decays.map((value) => value.toFixed(3))}
+              selected={decay.toFixed(3)}
+              onSelect={(value) => setDecay(Number(value))}
             />
           </LabPanel>
         ) : null}
@@ -332,7 +331,7 @@ export function DoubleColorBallLabScreen() {
           <SegmentedChips
             labels={targetCounts.map((count) => `${count} 期`)}
             selected={String(targetCount)}
-            onSelect={(value) => setTargetCount(Number(value) as SSQLabTargetCount)}
+            onSelect={(value) => setTargetCount(Number(value) as SSQLabClassicTargetCount)}
           />
         </LabPanel>
 
@@ -408,7 +407,7 @@ export function DoubleColorBallLabScreen() {
   );
 }
 
-function LabResults({ summary }: { summary: SSQLabBacktestSummary }) {
+function LabResults({ summary }: { summary: SSQLabClassicBacktestSummary }) {
   const { colors } = useAppTheme();
   const hitRate = summary.targetCount === 0
     ? 0
@@ -418,7 +417,7 @@ function LabResults({ summary }: { summary: SSQLabBacktestSummary }) {
     { label: '总奖金', value: `${summary.totalPrize} 元`, tone: summary.net >= 0 ? 'win' as const : 'loss' as const },
     { label: '净收益', value: `${summary.net} 元`, tone: summary.net >= 0 ? 'win' as const : 'loss' as const },
     { label: '每注期望', value: summary.evPerTicket.toFixed(2), tone: 'normal' as const },
-    { label: '1000期理论期望', value: `${Math.round(1000 * THEORETICAL_EV_PER_TICKET)} 元`, tone: 'accent' as const },
+    { label: '剔除头奖净收益', value: `${summary.netWithoutFirstPrize} 元`, tone: summary.netWithoutFirstPrize >= 0 ? 'win' as const : 'loss' as const },
     { label: '中奖率', value: `${hitRate}%`, tone: 'normal' as const },
   ];
   const rows = [
@@ -455,8 +454,8 @@ function LabResults({ summary }: { summary: SSQLabBacktestSummary }) {
         <View style={styles.resultsHeading}>
           <ThemedText style={styles.sectionTitle}>收益回测结果</ThemedText>
           <ThemedText style={[styles.sectionCaption, { color: colors.mutedText }]}>
-            {summary.algorithm === 'probability-weighted'
-              ? `${getLabAlgorithmLabel(summary.algorithm)} · 权重 ${summary.weight}`
+            {summary.algorithm === 'time-weighted'
+              ? `${getLabAlgorithmLabel(summary.algorithm)} · 衰减 ${summary.decay}`
               : `${getLabAlgorithmLabel(summary.algorithm)} · ${summary.windowSize} 期窗口`}
           </ThemedText>
         </View>
@@ -467,12 +466,11 @@ function LabResults({ summary }: { summary: SSQLabBacktestSummary }) {
               style={[
                 styles.metric,
                 { borderColor: colors.line },
-                metric.tone === 'accent' && styles.metricAccent,
               ]}>
               <ThemedText
                 style={[
                   styles.metricLabel,
-                  { color: metric.tone === 'accent' ? '#aab5d6' : colors.mutedText },
+                  { color: colors.mutedText },
                 ]}>
                 {metric.label}
               </ThemedText>
@@ -481,7 +479,6 @@ function LabResults({ summary }: { summary: SSQLabBacktestSummary }) {
                   styles.metricValue,
                   metric.tone === 'loss' && styles.metricLoss,
                   metric.tone === 'win' && styles.metricWin,
-                  metric.tone === 'accent' && styles.metricAccentValue,
                 ]}>
                 {metric.value}
               </ThemedText>
@@ -642,7 +639,7 @@ function ProbabilityExplanation() {
     <View style={[styles.infoPanel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
       <ThemedText style={styles.infoTitle}>概率说明</ThemedText>
       <ThemedText style={[styles.infoText, { color: colors.mutedText }]}>
-        历史频率、最近遗漏和随机抽样只描述数据与生成规则，不能预测独立随机开奖，也不会提高任何合法组合的理论中奖概率。
+        历史频次、时间权重和正态拟合只描述数据与生成规则，不能预测独立随机开奖，也不会提高任何合法组合的理论中奖概率。
       </ThemedText>
     </View>
   );
@@ -657,7 +654,7 @@ function InlineMessage({ text }: { text: string }) {
   );
 }
 
-function SourceFooter({ snapshot }: { snapshot: SSQLabHistorySnapshot }) {
+function SourceFooter({ snapshot }: { snapshot: SSQLabClassicHistorySnapshot }) {
   const { colors } = useAppTheme();
   return (
     <View style={styles.sourceFooter}>
@@ -721,10 +718,10 @@ function ToolBottomNavigation() {
   );
 }
 
-function algorithmCaption(algorithm: SSQLabAlgorithm) {
-  if (algorithm === 'probability-weighted') return '频率 + 最近遗漏加权，默认权重 50';
-  if (algorithm === 'probability') return '按历史出现频率生成';
-  return '真实随机抽样，每次结果不同';
+function algorithmCaption(algorithm: SSQLabClassicAlgorithm) {
+  if (algorithm === 'time-weighted') return '按 0.999^n 给近期出现加权';
+  if (algorithm === 'normal-fit') return '各位置拟合正态分布取顶点';
+  return '出现频次最低的红球与蓝球';
 }
 
 function padBall(number: number) {

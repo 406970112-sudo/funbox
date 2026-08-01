@@ -14,6 +14,7 @@ import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-sc
 import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
 import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
 import { DoubleColorBallLabScreen } from '@/features/tools/double-color-ball-lab-screen';
+import { DoubleColorBallLabClassicScreen } from '@/features/tools/double-color-ball-lab-classic-screen';
 import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
@@ -186,6 +187,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <DoubleColorBallLabScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'double-color-ball-lab-classic') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DoubleColorBallLabClassicScreen />
       </>
     );
   }

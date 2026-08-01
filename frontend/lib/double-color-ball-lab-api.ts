@@ -1,4 +1,4 @@
-import type { SSQLabFetchCount, SSQLabHistorySnapshot } from '../types/double-color-ball-lab.ts';
+import type { SSQLabHistorySnapshot } from '../types/double-color-ball-lab.ts';
 
 type ErrorPayload = {
   error?: string;
@@ -17,7 +17,7 @@ export class SSQLabAPIError extends Error {
 }
 
 export async function fetchSSQLabHistory(
-  count: SSQLabFetchCount,
+  count: number,
   signal?: AbortSignal,
   apiBaseUrl?: string,
 ): Promise<SSQLabHistorySnapshot> {
