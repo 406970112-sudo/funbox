@@ -70,6 +70,14 @@ export function AdminHomeScreen() {
             onPress={() => router.push('/admin/feedback')}
             tone="#e8667a"
           />
+          <AdminEntry
+            description="上传收款码并维护会员支付说明"
+            desktop={isDesktop}
+            icon="qrcode"
+            label="会员收款"
+            onPress={() => router.push('/admin/membership')}
+            tone="#e8a33d"
+          />
         </View>
       </View>
     </ScrollView>

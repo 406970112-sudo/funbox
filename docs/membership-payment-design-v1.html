@@ -1,0 +1,2048 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 会员开通 · 扫码支付 MVP 产品设计</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce4f2;
+        --line-strong: #cdd8ea;
+        --canvas: #edf2fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --primary: #4568f2;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --gold: #e8a33d;
+        --gold-dark: #8a5b13;
+        --rose: #e8667a;
+        --rose-dark: #b34f61;
+        --gray: #7483a2;
+        --teal: #18a78f;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        margin: 0 auto;
+        max-width: 1520px;
+        padding: 36px 24px 54px;
+        width: min(1520px, calc(100vw - 24px));
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 24px;
+        width: 24px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .section {
+        background: var(--surface);
+        border: 1px solid rgba(205, 216, 234, 0.82);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        margin: 0 0 22px;
+        padding: 24px 26px 26px;
+      }
+
+      .section-head {
+        align-items: baseline;
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .section-kicker {
+        color: var(--primary);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin: 5px 0 0;
+      }
+
+      .section-note {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        max-width: 520px;
+        text-align: right;
+      }
+
+      .phones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+      }
+
+      .phone-wrap {
+        width: 320px;
+      }
+
+      .phone-label {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding-top: 13px;
+      }
+
+      .phone-label .dot {
+        border-radius: 50%;
+        height: 8px;
+        width: 8px;
+      }
+
+      .phone-label span {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #f4f7fd;
+        border: 1px solid #c8d4e8;
+        border-radius: 42px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.22);
+        height: 760px;
+        overflow: hidden;
+        position: relative;
+        width: 320px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 42px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        padding: 10px 16px 14px;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        color: #18233d;
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 0 5px;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        min-height: 46px;
+        padding: 4px 2px 8px;
+      }
+
+      .topbar-title {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .topbar-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .brand-mark-mini {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 32px;
+        padding: 0 9px;
+      }
+
+      .brand-mark-mini svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .back-icon {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .back-icon svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #4a5568, #5d6b82);
+        border-radius: 18px;
+        color: #ffffff;
+        padding: 16px 15px 13px;
+        position: relative;
+      }
+
+      .hero.vip {
+        background: linear-gradient(135deg, #1d2447, #3a3c58 55%, #6b5223);
+      }
+
+      .hero.svip {
+        background: linear-gradient(135deg, #221a2b, #4a2436 58%, #71303f);
+      }
+
+      .hero-glow {
+        border-radius: 50%;
+        filter: blur(26px);
+        height: 120px;
+        opacity: 0.34;
+        position: absolute;
+        right: -30px;
+        top: -46px;
+        width: 150px;
+      }
+
+      .hero.vip .hero-glow {
+        background: #e8a33d;
+      }
+
+      .hero.svip .hero-glow {
+        background: #e8667a;
+      }
+
+      .hero-row {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        position: relative;
+      }
+
+      .hero-icon {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 12px;
+        display: flex;
+        height: 44px;
+        justify-content: center;
+        width: 44px;
+      }
+
+      .hero-icon svg {
+        height: 20px;
+        width: 20px;
+      }
+
+      .hero-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .hero-title {
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .hero-sub {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 4px;
+      }
+
+      .hero-chips {
+        display: flex;
+        gap: 7px;
+        margin-top: 12px;
+        position: relative;
+      }
+
+      .hero-chip {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        flex: 1;
+        min-width: 0;
+        padding: 7px 8px;
+      }
+
+      .hero-chip .label {
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .hero-chip .value {
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 900;
+        margin-top: 3px;
+      }
+
+      .panel {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 4px 12px;
+      }
+
+      .panel-title {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+        min-height: 34px;
+      }
+
+      .panel-title .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .panel-title .pill {
+        background: #eef1f6;
+        border-radius: 5px;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 800;
+        padding: 3px 7px;
+      }
+
+      .plan-grid {
+        border-top: 1px solid var(--line);
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 1fr 1fr;
+        padding: 10px 0 6px;
+      }
+
+      .plan-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-width: 0;
+        padding: 11px 10px 10px;
+        position: relative;
+      }
+
+      .plan-card.svip {
+        border-color: #efaeb9;
+        background: linear-gradient(160deg, #fff8fa, #fdeef1);
+      }
+
+      .plan-icon {
+        align-items: center;
+        border-radius: 8px;
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .plan-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .plan-card.vip .plan-icon {
+        background: #f6d999;
+        color: #7a5112;
+      }
+
+      .plan-card.svip .plan-icon {
+        background: #f3aebb;
+        color: #6e2634;
+      }
+
+      .plan-name {
+        font-size: 10px;
+        font-weight: 900;
+        margin-top: 8px;
+      }
+
+      .plan-tag {
+        color: var(--rose-dark);
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .plan-price {
+        align-items: baseline;
+        display: flex;
+        gap: 3px;
+        margin-top: 5px;
+      }
+
+      .plan-price .yen {
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .plan-price .num {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .plan-price .period {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .plan-action {
+        align-items: center;
+        background: #f0f2f7;
+        border-radius: 7px;
+        color: #5b6478;
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 4px;
+        height: 28px;
+        justify-content: center;
+        margin-top: 9px;
+        width: 100%;
+      }
+
+      .plan-card.svip .plan-action {
+        background: #d95b6f;
+        color: #ffffff;
+      }
+
+      .plan-action svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .benefit-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 46px;
+      }
+
+      .benefit-icon {
+        align-items: center;
+        border-radius: 8px;
+        display: flex;
+        flex: 0 0 28px;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .benefit-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .benefit-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .benefit-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .benefit-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .benefit-check {
+        color: var(--teal);
+      }
+
+      .benefit-check svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .expand {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        justify-content: center;
+        min-height: 34px;
+      }
+
+      .expand svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .order-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 13px 13px 11px;
+      }
+
+      .order-row {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .order-plan-icon {
+        align-items: center;
+        background: #fdeef1;
+        border-radius: 10px;
+        color: var(--rose-dark);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .order-plan-icon svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .order-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .order-name {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .order-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .order-price {
+        color: var(--rose-dark);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .qr-card {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 14px 12px 12px;
+      }
+
+      .qr-title {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .qr-sub {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .qr {
+        display: grid;
+        gap: 1px;
+        grid-template-columns: repeat(21, 1fr);
+        height: 150px;
+        margin: 12px auto 0;
+        padding: 8px;
+        width: 150px;
+      }
+
+      .qr-cell {
+        background: #ffffff;
+      }
+
+      .qr-cell.on {
+        background: #151b3b;
+      }
+
+      .qr-frame {
+        border: 1px solid #d5dce8;
+        border-radius: 12px;
+      }
+
+      .qr-amount {
+        align-items: baseline;
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        margin-top: 12px;
+      }
+
+      .qr-amount .yen {
+        color: var(--rose-dark);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .qr-amount .num {
+        color: var(--rose-dark);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .note-strip {
+        align-items: flex-start;
+        background: #fff8ec;
+        border: 1px solid #f0d9a8;
+        border-radius: 10px;
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 10px;
+      }
+
+      .note-strip svg {
+        color: var(--gold-dark);
+        flex: 0 0 auto;
+        height: 15px;
+        margin-top: 1px;
+        width: 15px;
+      }
+
+      .note-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .note-title {
+        font-size: 9px;
+        font-weight: 900;
+      }
+
+      .note-text {
+        color: #6d5a32;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 15px;
+        margin-top: 3px;
+      }
+
+      .steps {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 4px 12px;
+      }
+
+      .step-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 42px;
+      }
+
+      .step-row:first-child {
+        border-top: 0;
+      }
+
+      .step-num {
+        align-items: center;
+        background: #eef1f6;
+        border-radius: 50%;
+        color: var(--muted);
+        display: flex;
+        flex: 0 0 20px;
+        font-size: 8px;
+        font-weight: 900;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .step-row.done .step-num {
+        background: var(--teal);
+        color: #ffffff;
+      }
+
+      .step-row.current .step-num {
+        background: var(--primary);
+        color: #ffffff;
+      }
+
+      .step-row.done .step-num::after {
+        content: "✓";
+      }
+
+      .step-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .step-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .step-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .step-state {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .step-row.done .step-state {
+        color: var(--teal);
+      }
+
+      .step-row.current .step-state {
+        color: var(--primary);
+      }
+
+      .primary-btn {
+        align-items: center;
+        background: #d95b6f;
+        border-radius: 10px;
+        color: #ffffff;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 6px;
+        height: 44px;
+        justify-content: center;
+        margin-top: 12px;
+        width: 100%;
+      }
+
+      .primary-btn.blue {
+        background: var(--primary);
+      }
+
+      .primary-btn.gray {
+        background: #eef1f6;
+        color: #5b6478;
+      }
+
+      .primary-btn svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .link-row {
+        align-items: center;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        justify-content: center;
+        margin-top: 12px;
+      }
+
+      .link-row svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .disclaimer {
+        color: var(--faint);
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 14px;
+        margin-top: 12px;
+        text-align: center;
+      }
+
+      .wait-hero {
+        background: linear-gradient(135deg, #4568f2, #3550c8);
+        border-radius: 18px;
+        color: #ffffff;
+        margin-top: 8px;
+        padding: 17px 15px 14px;
+        position: relative;
+      }
+
+      .wait-icon {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 12px;
+        display: flex;
+        height: 44px;
+        justify-content: center;
+        width: 44px;
+      }
+
+      .wait-icon svg {
+        height: 20px;
+        width: 20px;
+      }
+
+      .wait-title {
+        font-size: 15px;
+        font-weight: 900;
+        margin-top: 12px;
+      }
+
+      .wait-sub {
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 4px;
+      }
+
+      .empty-qr {
+        align-items: center;
+        background: #f7f8fc;
+        border: 1px dashed #cdd8ea;
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 12px;
+        min-height: 168px;
+        padding: 16px;
+      }
+
+      .empty-qr svg {
+        height: 26px;
+        width: 26px;
+      }
+
+      .empty-qr .main {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .empty-qr .sub {
+        font-size: 8px;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .desktop {
+        background: #eef2f9;
+        border: 1px solid #c8d4e8;
+        border-radius: 18px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.2);
+        display: grid;
+        grid-template-columns: 216px 1fr;
+        height: 760px;
+        overflow: hidden;
+      }
+
+      .desktop-sidebar {
+        background: #141b39;
+        display: flex;
+        flex-direction: column;
+        padding: 18px 14px;
+      }
+
+      .side-brand {
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        gap: 10px;
+        min-height: 54px;
+        padding: 0 6px 14px;
+      }
+
+      .side-mark {
+        align-items: center;
+        background: var(--lime);
+        border-radius: 8px;
+        color: var(--navy);
+        display: flex;
+        font-size: 16px;
+        font-weight: 900;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .side-brand-name {
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .side-brand-sub {
+        color: #8a94b5;
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .nav-section {
+        color: #66739a;
+        font-size: 9px;
+        font-weight: 800;
+        margin: 18px 10px 7px;
+        text-transform: uppercase;
+      }
+
+      .nav-item {
+        align-items: center;
+        border-radius: 8px;
+        color: #a7b1d1;
+        display: flex;
+        font-size: 12px;
+        font-weight: 700;
+        gap: 10px;
+        min-height: 40px;
+        padding: 0 10px;
+      }
+
+      .nav-item svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .nav-item.active {
+        background: rgba(201, 243, 106, 0.12);
+        color: #ffffff;
+        font-weight: 900;
+      }
+
+      .nav-item.active svg {
+        color: var(--lime);
+      }
+
+      .side-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        color: #a7b1d1;
+        font-size: 10px;
+        font-weight: 700;
+        margin-top: auto;
+        padding-top: 14px;
+      }
+
+      .side-user {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+      }
+
+      .side-user .avatar {
+        align-items: center;
+        background: var(--lime);
+        border-radius: 50%;
+        color: var(--navy);
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .desktop-main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .desktop-topbar {
+        align-items: center;
+        background: #ffffff;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        min-height: 62px;
+        padding: 0 22px;
+      }
+
+      .topbar-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .breadcrumb {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 5px;
+      }
+
+      .breadcrumb svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .topbar-title {
+        font-size: 16px;
+        font-weight: 900;
+        margin-top: 3px;
+      }
+
+      .topbar-sub {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .admin-chip {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 7px;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        min-height: 30px;
+        padding: 0 9px;
+      }
+
+      .admin-chip svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .desktop-content {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: 20px 22px;
+      }
+
+      .content-title-row {
+        align-items: flex-start;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
+      .content-title {
+        font-size: 20px;
+        font-weight: 900;
+      }
+
+      .content-sub {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+
+      .config-badge {
+        align-items: center;
+        background: #e9f7ee;
+        border: 1px solid #b9e2c8;
+        border-radius: 7px;
+        color: #2f8b55;
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        min-height: 30px;
+        padding: 0 10px;
+      }
+
+      .config-badge svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .admin-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 360px 1fr;
+        margin-top: 16px;
+      }
+
+      .admin-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-width: 0;
+        padding: 15px;
+      }
+
+      .admin-card-head {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .admin-card-head .hint {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+      }
+
+      .qr-large {
+        display: grid;
+        gap: 1px;
+        grid-template-columns: repeat(21, 1fr);
+        height: 196px;
+        margin: 14px auto 0;
+        padding: 10px;
+        width: 196px;
+      }
+
+      .qr-large .qr-cell.on {
+        background: #141b39;
+      }
+
+      .qr-meta {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 12px;
+        text-align: center;
+      }
+
+      .qr-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .action-btn {
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        display: flex;
+        flex: 1;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 34px;
+        justify-content: center;
+      }
+
+      .action-btn svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .action-btn.primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #ffffff;
+      }
+
+      .action-btn.danger {
+        color: var(--rose-dark);
+      }
+
+      .field-label {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 800;
+        margin: 14px 0 6px;
+      }
+
+      .note-textarea {
+        background: #f7f8fc;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 17px;
+        min-height: 64px;
+        padding: 10px;
+        resize: none;
+        width: 100%;
+      }
+
+      .price-list {
+        border-top: 1px solid var(--line);
+        margin-top: 12px;
+        padding-top: 10px;
+      }
+
+      .price-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        min-height: 36px;
+      }
+
+      .price-tag {
+        align-items: center;
+        border-radius: 6px;
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 4px;
+        height: 24px;
+        padding: 0 7px;
+      }
+
+      .price-tag svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .price-tag.vip {
+        background: #fdf2dd;
+        color: var(--gold-dark);
+      }
+
+      .price-tag.svip {
+        background: #fde9ed;
+        color: var(--rose-dark);
+      }
+
+      .price-copy {
+        color: var(--muted);
+        flex: 1;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .price-num {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .save-btn {
+        align-items: center;
+        background: var(--primary);
+        border-radius: 7px;
+        color: #ffffff;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 5px;
+        height: 36px;
+        justify-content: center;
+        margin-top: 14px;
+        width: 100%;
+      }
+
+      .save-btn svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .admin-bottom {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 14px;
+      }
+
+      .guide-step {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 40px;
+      }
+
+      .guide-step:first-child {
+        border-top: 0;
+      }
+
+      .guide-num {
+        align-items: center;
+        background: #eef1f6;
+        border-radius: 50%;
+        color: var(--muted);
+        display: flex;
+        flex: 0 0 20px;
+        font-size: 8px;
+        font-weight: 900;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .guide-copy {
+        flex: 1;
+        font-size: 9px;
+        font-weight: 700;
+        min-width: 0;
+      }
+
+      .guide-link {
+        align-items: center;
+        background: #eef2ff;
+        border-radius: 7px;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 4px;
+        height: 30px;
+        padding: 0 9px;
+      }
+
+      .guide-link svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .change-row {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 46px;
+        padding: 9px 0;
+      }
+
+      .change-row:first-child {
+        border-top: 0;
+      }
+
+      .change-dot {
+        border-radius: 4px;
+        flex: 0 0 8px;
+        height: 8px;
+        margin-top: 5px;
+        width: 8px;
+      }
+
+      .change-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .change-title {
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .change-meta {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .flow {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .flow-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 16px;
+        position: relative;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .flow-title {
+        font-size: 13px;
+        font-weight: 900;
+        margin-top: 12px;
+      }
+
+      .flow-desc {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 17px;
+        margin-top: 6px;
+      }
+
+      .flow-arrow {
+        align-items: center;
+        color: var(--faint);
+        display: flex;
+        justify-content: center;
+        position: absolute;
+        right: -15px;
+        top: 34px;
+      }
+
+      .flow-arrow svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .flow-foot {
+        align-items: center;
+        background: #eef2ff;
+        border-radius: 10px;
+        color: var(--primary);
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 7px;
+        margin-top: 14px;
+        padding: 11px 13px;
+      }
+
+      .flow-foot svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .principles {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .principle {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 15px;
+      }
+
+      .principle-num {
+        color: var(--primary);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .principle-title {
+        font-size: 12px;
+        font-weight: 900;
+        margin-top: 9px;
+      }
+
+      .principle-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 7px;
+      }
+
+      .footnote {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        margin: 0;
+        padding: 0 6px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="box"></i></div>
+          <div>
+            <h1 class="board-title">会员开通 · 扫码收款 MVP</h1>
+            <p class="board-subtitle">用户端开通入口 + 人工收款闭环 + 后台收款码配置</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          FunBox 产品设计 V1.0
+          <strong>2026-08-01 · 待评审</strong>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">User Flow</div>
+            <h2 class="section-title">用户端：从「想开通」到「等待开通」</h2>
+          </div>
+          <p class="section-note">VIP ¥2/月、SVIP ¥5/月；扫码付款备注手机号，管理员人工核实后开通。</p>
+        </div>
+
+        <div class="phones">
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gray)"></span><span>会员中心 · 普通用户</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div class="back-icon"><i data-lucide="arrow-left"></i></div>
+                  <div style="flex: 1; margin-left: 9px">
+                    <div class="topbar-title">会员中心</div>
+                    <div class="topbar-sub">我的身份与全部权益</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+
+                <div class="hero">
+                  <div class="hero-glow"></div>
+                  <div class="hero-row">
+                    <div class="hero-icon"><i data-lucide="user-round"></i></div>
+                    <div class="hero-copy">
+                      <div class="hero-title">普通用户</div>
+                      <div class="hero-sub">注册后的默认身份，开通会员解锁专属工具</div>
+                    </div>
+                  </div>
+                  <div class="hero-chips">
+                    <div class="hero-chip"><div class="label">可用工具</div><div class="value">9 个</div></div>
+                    <div class="hero-chip"><div class="label">可玩游戏</div><div class="value">5 个</div></div>
+                    <div class="hero-chip"><div class="label">到期时间</div><div class="value">暂无</div></div>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-title"><span>开通会员</span><span class="pill">单月购买 · 人工开通</span></div>
+                  <div class="plan-grid">
+                    <div class="plan-card vip">
+                      <div class="plan-icon"><i data-lucide="gem"></i></div>
+                      <div class="plan-name">VIP 月卡</div>
+                      <div class="plan-price"><span class="yen">¥</span><span class="num">2</span><span class="period">/月</span></div>
+                      <div class="plan-action">立即开通</div>
+                    </div>
+                    <div class="plan-card svip">
+                      <div class="plan-icon"><i data-lucide="crown"></i></div>
+                      <div class="plan-name">SVIP 月卡 <span class="plan-tag">推荐</span></div>
+                      <div class="plan-price"><span class="yen">¥</span><span class="num">5</span><span class="period">/月</span></div>
+                      <div class="plan-action"><i data-lucide="arrow-right"></i>立即开通</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-title"><span>升级后可解锁</span><span class="count">VIP / SVIP</span></div>
+                  <div class="benefit-row">
+                    <div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radar"></i></div>
+                    <div class="benefit-copy"><div class="benefit-name">市场雷达</div><div class="benefit-desc">行情快照与提醒</div></div>
+                    <span style="color: var(--gold-dark); font-size: 8px; font-weight: 900">VIP / SVIP</span>
+                  </div>
+                  <div class="benefit-row">
+                    <div class="benefit-icon" style="background: #fff1e4; color: #d9822b"><i data-lucide="sparkles"></i></div>
+                    <div class="benefit-copy"><div class="benefit-name">AI 导航</div><div class="benefit-desc">智能能力直达</div></div>
+                    <span style="color: var(--gold-dark); font-size: 8px; font-weight: 900">VIP / SVIP</span>
+                  </div>
+                  <div class="benefit-row">
+                    <div class="benefit-icon" style="background: #fdeef1; color: var(--rose-dark)"><i data-lucide="languages"></i></div>
+                    <div class="benefit-copy"><div class="benefit-name">智能翻译</div><div class="benefit-desc">多语言文本翻译</div></div>
+                    <span style="color: var(--rose-dark); font-size: 8px; font-weight: 900">SVIP</span>
+                  </div>
+                  <div class="expand"><span>查看全部权益对比</span><i data-lucide="chevron-down"></i></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--rose)"></span><span>扫码支付 · SVIP 月卡</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div class="back-icon"><i data-lucide="arrow-left"></i></div>
+                  <div style="flex: 1; margin-left: 9px">
+                    <div class="topbar-title">扫码支付</div>
+                    <div class="topbar-sub">SVIP 月卡 · ¥5.00</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="shield-check"></i>人工开通</div>
+                </div>
+
+                <div class="order-card">
+                  <div class="order-row">
+                    <div class="order-plan-icon"><i data-lucide="crown"></i></div>
+                    <div class="order-copy">
+                      <div class="order-name">SVIP 月卡</div>
+                      <div class="order-desc">解锁配置给 SVIP 的全部功能</div>
+                    </div>
+                    <div class="order-price">¥5.00</div>
+                  </div>
+                </div>
+
+                <div class="qr-card qr-frame">
+                  <div class="qr-title">扫描下方二维码付款</div>
+                  <div class="qr-sub">收款码由管理员配置 · 仅登录用户可见</div>
+                  <div class="qr" id="qrUser"></div>
+                  <div class="qr-amount"><span class="yen">¥</span><span class="num">5.00</span></div>
+                </div>
+
+                <div class="note-strip">
+                  <i data-lucide="message-circle"></i>
+                  <div class="note-copy">
+                    <div class="note-title">转账备注填写注册手机号</div>
+                    <div class="note-text">请备注 138****5678，管理员凭备注核对并手动开通，请勿关闭本页。</div>
+                  </div>
+                </div>
+
+                <div class="steps">
+                  <div class="step-row">
+                    <div class="step-num">1</div>
+                    <div class="step-copy"><div class="step-name">扫码支付</div><div class="step-desc">微信或支付宝扫码支付 ¥5.00</div></div>
+                  </div>
+                  <div class="step-row">
+                    <div class="step-num">2</div>
+                    <div class="step-copy"><div class="step-name">备注手机号</div><div class="step-desc">转账时填写注册手机号</div></div>
+                  </div>
+                  <div class="step-row">
+                    <div class="step-num">3</div>
+                    <div class="step-copy"><div class="step-name">等待开通</div><div class="step-desc">管理员核实后手动开通</div></div>
+                  </div>
+                </div>
+
+                <div class="primary-btn"><i data-lucide="check"></i>我已支付，等待开通</div>
+                <div class="link-row"><i data-lucide="headset"></i>联系管理员 · 上传付款截图</div>
+                <div class="disclaimer">人工开通非自动到账，管理员核实后手动调整身份，通常 24 小时内完成。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--primary)"></span><span>支付后 · 等待管理员开通</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div class="back-icon"><i data-lucide="arrow-left"></i></div>
+                  <div style="flex: 1; margin-left: 9px">
+                    <div class="topbar-title">开通申请</div>
+                    <div class="topbar-sub">SVIP 月卡 · ¥5.00</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="clock-3"></i>核实中</div>
+                </div>
+
+                <div class="wait-hero">
+                  <div class="wait-icon"><i data-lucide="hourglass"></i></div>
+                  <div class="wait-title">开通申请已提交</div>
+                  <div class="wait-sub">请等待管理员核实转账并手动开通，通常 24 小时内完成。开通后回到会员中心即可看到最新身份。</div>
+                </div>
+
+                <div class="steps">
+                  <div class="step-row done">
+                    <div class="step-num">1</div>
+                    <div class="step-copy"><div class="step-name">扫码支付</div><div class="step-desc">微信 / 支付宝支付 ¥5.00</div></div>
+                    <div class="step-state">已完成</div>
+                  </div>
+                  <div class="step-row done">
+                    <div class="step-num">2</div>
+                    <div class="step-copy"><div class="step-name">备注手机号</div><div class="step-desc">138****5678</div></div>
+                    <div class="step-state">已完成</div>
+                  </div>
+                  <div class="step-row current">
+                    <div class="step-num">3</div>
+                    <div class="step-copy"><div class="step-name">管理员核实开通</div><div class="step-desc">人工核对转账备注</div></div>
+                    <div class="step-state">进行中</div>
+                  </div>
+                </div>
+
+                <div class="panel" style="margin-top: 12px">
+                  <div class="benefit-row">
+                    <div class="benefit-icon" style="background: #eef2ff; color: var(--primary)"><i data-lucide="bell-ring"></i></div>
+                    <div class="benefit-copy"><div class="benefit-name">开通成功后会提醒你</div><div class="benefit-desc">身份更新后，前台与会员中心自动刷新</div></div>
+                  </div>
+                </div>
+
+                <div class="primary-btn blue"><i data-lucide="refresh-cw"></i>刷新开通状态</div>
+                <div class="primary-btn gray"><i data-lucide="headset"></i>联系管理员</div>
+                <div class="disclaimer">如超过 24 小时未开通，请通过问题反馈提交付款截图与手机号，管理员会优先核实。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gold)"></span><span>边界态 · 收款码未配置</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div class="back-icon"><i data-lucide="arrow-left"></i></div>
+                  <div style="flex: 1; margin-left: 9px">
+                    <div class="topbar-title">扫码支付</div>
+                    <div class="topbar-sub">SVIP 月卡 · ¥5.00</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+
+                <div class="order-card">
+                  <div class="order-row">
+                    <div class="order-plan-icon"><i data-lucide="crown"></i></div>
+                    <div class="order-copy">
+                      <div class="order-name">SVIP 月卡</div>
+                      <div class="order-desc">解锁配置给 SVIP 的全部功能</div>
+                    </div>
+                    <div class="order-price">¥5.00</div>
+                  </div>
+                </div>
+
+                <div class="empty-qr">
+                  <i data-lucide="qrcode"></i>
+                  <div class="main">收款码暂未配置</div>
+                  <div class="sub">请联系管理员配置收款码后重试，本页不会展示任何占位二维码。</div>
+                </div>
+
+                <div class="primary-btn gray" style="opacity: 0.55"><i data-lucide="check"></i>我已支付，等待开通</div>
+                <div class="link-row"><i data-lucide="headset"></i>联系管理员</div>
+                <div class="disclaimer">套餐价格已展示，但收款码未配置时不允许提交开通申请。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Admin Console</div>
+            <h2 class="section-title">管理后台：会员收款设置</h2>
+          </div>
+          <p class="section-note">上传 / 更换 / 移除收款码，编辑支付说明，并保留配置变更记录。</p>
+        </div>
+
+        <div class="desktop">
+          <div class="desktop-sidebar">
+            <div class="side-brand">
+              <div class="side-mark">F</div>
+              <div>
+                <div class="side-brand-name">FunBox</div>
+                <div class="side-brand-sub">管理后台</div>
+              </div>
+            </div>
+            <div class="nav-section">管理工具</div>
+            <div class="nav-item"><i data-lucide="layout-dashboard"></i>后台首页</div>
+            <div class="nav-item"><i data-lucide="user-cog"></i>用户身份</div>
+            <div class="nav-item"><i data-lucide="key-round"></i>入口权限</div>
+            <div class="nav-item"><i data-lucide="message-square-warning"></i>问题反馈</div>
+            <div class="nav-section">会员运营</div>
+            <div class="nav-item active"><i data-lucide="qr-code"></i>会员收款</div>
+            <div class="nav-section">内容运营</div>
+            <div class="nav-item"><i data-lucide="book-open"></i>阅读管理</div>
+            <div class="side-footer">
+              <div class="side-user">
+                <div class="avatar">A</div>
+                <span>admin1 · 管理员</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="desktop-main">
+            <div class="desktop-topbar">
+              <div class="topbar-copy">
+                <div class="breadcrumb"><span>管理后台</span><i data-lucide="chevron-right"></i><span>会员运营</span></div>
+                <div class="topbar-title">会员收款设置</div>
+                <div class="topbar-sub">维护收款码与支付说明，人工开通闭环</div>
+              </div>
+              <div class="admin-chip"><i data-lucide="shield-check"></i>管理员 · admin1</div>
+            </div>
+
+            <div class="desktop-content">
+              <div class="content-title-row">
+                <div>
+                  <div class="content-title">会员收款设置</div>
+                  <div class="content-sub">收款码配置后，用户端扫码支付页即时生效</div>
+                </div>
+                <div class="config-badge"><i data-lucide="circle-check"></i>已配置 · 用户端可见</div>
+              </div>
+
+              <div class="admin-grid">
+                <div class="admin-card">
+                  <div class="admin-card-head"><span>收款二维码</span><span class="hint">png / jpg / webp · ≤ 2MB</span></div>
+                  <div class="qr-large qr-frame" id="qrAdmin"></div>
+                  <div class="qr-meta">最近更新：admin1 · 2026-08-01 10:24</div>
+                  <div class="qr-actions">
+                    <div class="action-btn primary"><i data-lucide="upload"></i>更换收款码</div>
+                    <div class="action-btn danger"><i data-lucide="trash-2"></i>移除</div>
+                  </div>
+                </div>
+
+                <div class="admin-card">
+                  <div class="admin-card-head"><span>支付说明与定价</span><span class="hint">保存后用户端即时更新</span></div>
+                  <div class="field-label">转账备注要求</div>
+                  <textarea class="note-textarea">转账请备注您的注册手机号，方便管理员核对开通；付款后请点击「我已支付」并等待人工开通。</textarea>
+                  <div class="price-list">
+                    <div class="price-row">
+                      <div class="price-tag vip"><i data-lucide="gem"></i>VIP</div>
+                      <div class="price-copy">单月人工开通</div>
+                      <div class="price-num">¥2 / 月</div>
+                    </div>
+                    <div class="price-row">
+                      <div class="price-tag svip"><i data-lucide="crown"></i>SVIP</div>
+                      <div class="price-copy">单月人工开通</div>
+                      <div class="price-num">¥5 / 月</div>
+                    </div>
+                  </div>
+                  <div class="save-btn"><i data-lucide="save"></i>保存设置</div>
+                </div>
+              </div>
+
+              <div class="admin-bottom">
+                <div class="admin-card">
+                  <div class="admin-card-head"><span>开通处理指引</span><span class="hint">人工核销规范</span></div>
+                  <div class="guide-step" style="margin-top: 8px"><div class="guide-num">1</div><div class="guide-copy">核对转账备注中的手机号与金额</div></div>
+                  <div class="guide-step"><div class="guide-num">2</div><div class="guide-copy">在用户身份中搜索该手机号</div></div>
+                  <div class="guide-step"><div class="guide-num">3</div><div class="guide-copy">调整身份并填写付款来源，留存审计</div></div>
+                  <div class="qr-actions" style="margin-top: 12px">
+                    <div class="action-btn primary" style="flex: 1"><i data-lucide="user-cog"></i>前往用户身份开通</div>
+                  </div>
+                </div>
+
+                <div class="admin-card">
+                  <div class="admin-card-head"><span>配置变更记录</span><span class="hint">最近 3 条</span></div>
+                  <div class="change-row">
+                    <div class="change-dot" style="background: var(--primary)"></div>
+                    <div class="change-copy"><div class="change-title">上传收款二维码</div><div class="change-meta">admin1 · 2026-08-01 10:24</div></div>
+                  </div>
+                  <div class="change-row">
+                    <div class="change-dot" style="background: var(--gold)"></div>
+                    <div class="change-copy"><div class="change-title">更新转账备注要求</div><div class="change-meta">admin1 · 2026-08-01 10:18</div></div>
+                  </div>
+                  <div class="change-row">
+                    <div class="change-dot" style="background: var(--rose)"></div>
+                    <div class="change-copy"><div class="change-title">移除旧收款码后重新上传</div><div class="change-meta">admin1 · 2026-07-28 15:06</div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Closed Loop</div>
+            <h2 class="section-title">人工收款闭环：付款到开通</h2>
+          </div>
+          <p class="section-note">身份调整复用后台「用户身份」能力，所有动作都有审计记录。</p>
+        </div>
+        <div class="flow">
+          <div class="flow-card">
+            <div class="flow-num">01</div>
+            <div class="flow-title">用户扫码付款</div>
+            <div class="flow-desc">选择 VIP / SVIP，扫码支付对应金额，并在转账备注中填写注册手机号。</div>
+            <div class="flow-arrow"><i data-lucide="arrow-right"></i></div>
+          </div>
+          <div class="flow-card">
+            <div class="flow-num">02</div>
+            <div class="flow-title">管理员核对转账</div>
+            <div class="flow-desc">管理员根据备注手机号与金额核对到账，必要时通过问题反馈补充付款截图。</div>
+            <div class="flow-arrow"><i data-lucide="arrow-right"></i></div>
+          </div>
+          <div class="flow-card">
+            <div class="flow-num">03</div>
+            <div class="flow-title">手动开通身份</div>
+            <div class="flow-desc">在用户身份页搜索手机号，调整为 VIP / SVIP，原因填写付款来源，审计自动留存。</div>
+          </div>
+        </div>
+        <div class="flow-foot"><i data-lucide="refresh-cw"></i>用户回到前台或会员中心后，自动刷新身份与可见权益；本期身份不设到期，正式支付上线后再接到期与自动降级。</div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Design Principles</div>
+            <h2 class="section-title">方案要点</h2>
+          </div>
+          <p class="section-note">五条原则约束人工收款闭环，避免「支付了却说不清、开通了却查不到」。</p>
+        </div>
+        <div class="principles">
+          <div class="principle">
+            <div class="principle-num">01</div>
+            <div class="principle-title">预期管理</div>
+            <div class="principle-desc">所有文案明确人工开通非即时到账，用户知道付款后要等、要备注手机号。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">02</div>
+            <div class="principle-title">可追溯</div>
+            <div class="principle-desc">收款码配置有变更记录，身份调整原因规范填写，形成完整证据链。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">03</div>
+            <div class="principle-title">双端一致</div>
+            <div class="principle-desc">会员中心与后台共用身份令牌、颜色与文案，不另起一套视觉。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">04</div>
+            <div class="principle-title">留好接缝</div>
+            <div class="principle-desc">价格、套餐、收款码、支付说明均以配置字段承载，正式支付可平滑替换。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">05</div>
+            <div class="principle-title">安全收敛</div>
+            <div class="principle-desc">收款码仅管理员可传、仅登录用户可见，未配置时只显示空状态。</div>
+          </div>
+        </div>
+      </section>
+
+      <p class="footnote">FunBox 会员开通扫码收款 MVP · 配套文档：docs/membership-payment-prd-v1.md</p>
+    </div>
+
+    <script>
+      function buildQR(rootId, seed) {
+        const root = document.getElementById(rootId);
+        if (!root) return;
+        let value = seed;
+        const next = () => {
+          value = (value * 1103515245 + 12345) % 2147483648;
+          return value / 2147483648;
+        };
+        for (let i = 0; i < 21; i += 1) {
+          for (let j = 0; j < 21; j += 1) {
+            const inCorner =
+              (i < 7 && j < 7) || (i < 7 && j > 13) || (i > 13 && j < 7);
+            const on = inCorner ? true : next() > 0.52;
+            const cell = document.createElement("span");
+            cell.className = "qr-cell" + (on ? " on" : "");
+            root.appendChild(cell);
+          }
+        }
+      }
+      buildQR("qrUser", 20260801);
+      buildQR("qrAdmin", 20260802);
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

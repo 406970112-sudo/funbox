@@ -11,7 +11,7 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 
 const ADMIN_DESKTOP_BREAKPOINT = 900;
 
-type AdminPageKey = 'index' | 'users' | 'permissions' | 'feedback' | 'reading';
+type AdminPageKey = 'index' | 'users' | 'permissions' | 'feedback' | 'membership' | 'reading';
 
 type AdminNavItem = {
   icon: ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -36,6 +36,12 @@ const NAV_SECTIONS: Array<{ items: AdminNavItem[]; title: string }> = [
       { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读管理', path: '/admin/reading' },
     ],
   },
+  {
+    title: '会员运营',
+    items: [
+      { key: 'membership', icon: 'qrcode', label: '会员收款', path: '/admin/membership' },
+    ],
+  },
 ];
 
 const MOBILE_NAV_ITEMS: AdminNavItem[] = [
@@ -43,6 +49,7 @@ const MOBILE_NAV_ITEMS: AdminNavItem[] = [
   { key: 'users', icon: 'account-key-outline', label: '用户', path: '/admin/users' },
   { key: 'permissions', icon: 'key-outline', label: '权限', path: '/admin/permissions' },
   { key: 'feedback', icon: 'message-alert-outline', label: '反馈', path: '/admin/feedback' },
+  { key: 'membership', icon: 'qrcode', label: '收款', path: '/admin/membership' },
   { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读', path: '/admin/reading' },
 ];
 
@@ -66,6 +73,11 @@ const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; ti
     breadcrumb: '内容运营',
     subtitle: '查看用户提交的文字与图片',
     title: '问题反馈',
+  },
+  membership: {
+    breadcrumb: '会员运营',
+    subtitle: '维护收款码与支付说明，人工开通闭环',
+    title: '会员收款',
   },
   reading: {
     breadcrumb: '内容运营',
@@ -237,6 +249,7 @@ function adminPageKey(pathname: string): AdminPageKey {
     segment === 'users' ||
     segment === 'permissions' ||
     segment === 'feedback' ||
+    segment === 'membership' ||
     segment === 'reading'
   ) {
     return segment;

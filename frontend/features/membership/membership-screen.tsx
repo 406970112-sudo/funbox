@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -13,10 +13,13 @@ import {
   type MembershipFeatureMatrix,
 } from '@/lib/access-api';
 import { identityPresentation } from '@/lib/identity';
+import { getMembershipPaymentInfo } from '@/lib/membership-payment-api';
+import { DEFAULT_MEMBERSHIP_PLANS } from '@/lib/membership-payment-model';
 import { appTools, initialToolRoles } from '@/mocks/app-data';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { UserRole } from '@/types/access';
+import type { MembershipPlan } from '@/types/membership';
 
 export function MembershipScreen() {
   const router = useRouter();
@@ -25,6 +28,7 @@ export function MembershipScreen() {
   const { visibleGames, visibleTools } = useFeatureAccess();
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
   const [featureMatrix, setFeatureMatrix] = useState<MembershipFeatureMatrix[]>([]);
+  const [paymentInfo, setPaymentInfo] = useState<Awaited<ReturnType<typeof getMembershipPaymentInfo>> | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -38,6 +42,13 @@ export function MembershipScreen() {
           })
           .catch(() => {
             if (active) setFeatureMatrix([]);
+          });
+        void getMembershipPaymentInfo(accessToken)
+          .then((info) => {
+            if (active) setPaymentInfo(info);
+          })
+          .catch(() => {
+            if (active) setPaymentInfo(null);
           });
       }
       return () => {
@@ -126,6 +137,34 @@ export function MembershipScreen() {
           <HeroChip label="到期时间" value="暂无" />
         </View>
       </View>
+
+      {role === 'normal' || role === 'vip' ? (
+        <OpenMembershipPanel
+          currentRole={role}
+          enabled={paymentInfo ? paymentInfo.enabled : true}
+          onSelect={(tier) =>
+            router.push(`/profile/membership/payment?tier=${tier}` as Href)
+          }
+          plans={paymentInfo?.plans?.length ? paymentInfo.plans : DEFAULT_MEMBERSHIP_PLANS}
+        />
+      ) : role === 'svip' ? (
+        <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <View style={styles.panelHead}>
+            <ThemedText style={styles.panelTitle}>开通会员</ThemedText>
+            <ThemedText style={[styles.panelMeta, { color: colors.mutedText }]}>
+              已开通全部会员等级
+            </ThemedText>
+          </View>
+          <View style={styles.memberAllNotice}>
+            <View style={[styles.memberAllIcon, { backgroundColor: `${palette.iconColor}1c` }]}>
+              <MaterialCommunityIcons name={item.icon} size={20} color={palette.iconColor} />
+            </View>
+            <ThemedText style={styles.memberAllText}>
+              你已拥有全部会员权益，无需再次开通。
+            </ThemedText>
+          </View>
+        </View>
+      ) : null}
 
       <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
         <View style={styles.panelHead}>
@@ -249,6 +288,100 @@ export function MembershipScreen() {
         )}
       </View>
     </MobileScreen>
+  );
+}
+
+function OpenMembershipPanel({
+  currentRole,
+  enabled,
+  onSelect,
+  plans,
+}: {
+  currentRole: UserRole;
+  enabled: boolean;
+  onSelect: (tier: 'vip' | 'svip') => void;
+  plans: MembershipPlan[];
+}) {
+  const { colors } = useAppTheme();
+  return (
+    <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+      <View style={styles.panelHead}>
+        <ThemedText style={styles.panelTitle}>开通会员</ThemedText>
+        <ThemedText style={[styles.panelMeta, { color: colors.mutedText }]}>
+          单月购买 · 人工开通
+        </ThemedText>
+      </View>
+      <View style={styles.planGrid}>
+        {plans.map((plan) => {
+          const isCurrent = currentRole === plan.tier;
+          const isSvip = plan.tier === 'svip';
+          return (
+            <View
+              key={plan.tier}
+              style={[
+                styles.planCard,
+                isSvip && styles.planCardSvip,
+                { borderColor: isSvip ? '#efaeb9' : colors.line },
+              ]}>
+              <View
+                style={[
+                  styles.planIcon,
+                  { backgroundColor: isSvip ? '#f3aebb' : '#f6d999' },
+                ]}>
+                <MaterialCommunityIcons
+                  name={isSvip ? 'crown-outline' : 'diamond-stone'}
+                  size={15}
+                  color={isSvip ? '#6e2634' : '#7a5112'}
+                />
+              </View>
+              <View style={styles.planNameRow}>
+                <ThemedText style={styles.planName}>
+                  {isSvip ? 'SVIP 月卡' : 'VIP 月卡'}
+                </ThemedText>
+                {isSvip ? (
+                  <ThemedText style={styles.planTag}>推荐</ThemedText>
+                ) : null}
+              </View>
+              <View style={styles.planPrice}>
+                <ThemedText style={styles.planYen}>¥</ThemedText>
+                <ThemedText style={styles.planNum}>
+                  {(plan.priceCents / 100).toFixed(0)}
+                </ThemedText>
+                <ThemedText style={[styles.planPeriod, { color: colors.mutedText }]}>
+                  /月
+                </ThemedText>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: isCurrent || !enabled }}
+                disabled={isCurrent || !enabled}
+                onPress={() => onSelect(plan.tier)}
+                style={({ pressed }) => [
+                  styles.planAction,
+                  {
+                    backgroundColor: isSvip ? '#d95b6f' : '#f0f2f7',
+                    opacity: pressed ? 0.78 : isCurrent || !enabled ? 0.46 : 1,
+                  },
+                ]}>
+                <ThemedText
+                  style={[
+                    styles.planActionText,
+                    { color: isSvip ? '#ffffff' : '#5b6478' },
+                  ]}>
+                  {isCurrent
+                    ? '当前身份'
+                    : enabled
+                      ? currentRole === 'vip'
+                        ? '升级开通'
+                        : '立即开通'
+                      : '收款码未配置'}
+                </ThemedText>
+              </Pressable>
+            </View>
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
@@ -413,6 +546,97 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
     marginTop: 5,
+  },
+  planGrid: {
+    flexDirection: 'row',
+    gap: 9,
+    marginTop: 4,
+    paddingTop: 10,
+  },
+  planCard: {
+    borderColor: '#dce4f2',
+    borderRadius: 12,
+    borderWidth: 1,
+    flex: 1,
+    minWidth: 0,
+    padding: 11,
+  },
+  planCardSvip: {
+    backgroundColor: '#fff6f8',
+  },
+  planIcon: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
+  planNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 8,
+  },
+  planName: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  planTag: {
+    color: '#b34f61',
+    fontSize: 8,
+    fontWeight: '800',
+  },
+  planPrice: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    gap: 2,
+    marginTop: 5,
+  },
+  planYen: {
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  planNum: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  planPeriod: {
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  planAction: {
+    alignItems: 'center',
+    borderRadius: 8,
+    height: 30,
+    justifyContent: 'center',
+    marginTop: 10,
+    width: '100%',
+  },
+  planActionText: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  memberAllNotice: {
+    alignItems: 'center',
+    borderTopColor: '#dce4f2',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+    minHeight: 58,
+    paddingVertical: 10,
+  },
+  memberAllIcon: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
+  memberAllText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '700',
   },
   panel: {
     borderRadius: 18,

@@ -18,6 +18,7 @@ import (
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
+	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/score"
@@ -60,6 +61,11 @@ func main() {
 		log.Fatalf("open feedback database failed: %v", err)
 	}
 	defer feedbackStore.Close()
+	membershipStore, err := membership.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open membership database failed: %v", err)
+	}
+	defer membershipStore.Close()
 	scoreStore, err := score.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("open score database failed: %v", err)
@@ -119,6 +125,11 @@ func main() {
 		cfg.Storage.MaxFeedbackImageBytes,
 		cfg.Storage.MaxFeedbackImages,
 	)
+	membershipService := membership.NewService(
+		membershipStore,
+		cfg.Storage.PaymentQRDir,
+		cfg.Storage.MaxPaymentQRBytes,
+	)
 
 	var ttsService *tts.Service
 	if cfg.Volc.AppID != "" && cfg.Volc.AccessToken != "" {
@@ -145,7 +156,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithReadingNewsFeedbackAndFocus(
+	server := httpapi.NewServerWithMembership(
 		cfg,
 		ttsService,
 		translationService,
@@ -156,6 +167,7 @@ func main() {
 		readingService,
 		feedbackService,
 		focusStore,
+		membershipService,
 		scoreService,
 	)
 

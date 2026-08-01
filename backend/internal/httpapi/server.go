@@ -20,6 +20,7 @@ import (
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/lotterylab"
 	"my-first-expo-app/backend/internal/marketradar"
+	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
@@ -41,6 +42,7 @@ type Server struct {
 	lotteryService        lotteryHistoryService
 	lotteryLabService     lotteryLabHistoryService
 	marketRadarService    marketRadarSnapshotService
+	membershipService     *membership.Service
 	newsService           newsFeedService
 	readingService        *reading.Service
 	readingImporter       *reading.Importer
@@ -60,7 +62,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -73,7 +75,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -96,6 +98,7 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
 		nil,
 		nil,
 		scoreServices...,
@@ -125,6 +128,7 @@ func NewServerWithReadingNewsAndFeedback(
 		readingService,
 		feedbackService,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -153,6 +157,37 @@ func NewServerWithReadingNewsFeedbackAndFocus(
 		readingService,
 		feedbackService,
 		focusStore,
+		nil,
+		scoreServices...,
+	)
+}
+
+func NewServerWithMembership(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	feedbackService *feedback.Service,
+	focusStore *focus.Store,
+	membershipService *membership.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		feedbackService,
+		focusStore,
+		membershipService,
 		scoreServices...,
 	)
 }
@@ -168,6 +203,7 @@ func newServer(
 	readingService *reading.Service,
 	feedbackService *feedback.Service,
 	focusStore *focus.Store,
+	membershipService *membership.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
@@ -195,6 +231,7 @@ func newServer(
 		lotteryService:        lottery.NewService(cfg.Lottery),
 		lotteryLabService:     lotterylab.NewService(lotterylab.Config{}),
 		marketRadarService:    marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
+		membershipService:     membershipService,
 		newsService:           newsService,
 		readingService:        readingService,
 		readingImporter:       readingImporter,
@@ -210,6 +247,12 @@ func newServer(
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
 	mux.HandleFunc("GET /api/v1/features", api.withOptionalAuth(api.withAPIPipeline(api.handleVisibleFeatures)))
 	mux.HandleFunc("GET /api/v1/membership/features", api.withAuth(api.withAPIPipeline(api.handleMembershipFeatureMatrix)))
+	mux.HandleFunc("GET /api/v1/membership/payment", api.withAuth(api.withAPIPipeline(api.handleMembershipPaymentInfo)))
+	mux.HandleFunc("GET /api/v1/admin/membership/settings", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleAdminMembershipSettings))))
+	mux.HandleFunc("POST /api/v1/admin/membership/payment/qr", api.withAuth(api.withAdmin(api.withPaymentQRUploadPipeline(api.handleAdminUploadPaymentQR))))
+	mux.HandleFunc("DELETE /api/v1/admin/membership/payment/qr", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleAdminRemovePaymentQR))))
+	mux.HandleFunc("PUT /api/v1/admin/membership/payment/note", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleAdminUpdatePaymentNote))))
+	mux.HandleFunc("GET /payment-qr/", api.handleServePaymentQR)
 	mux.HandleFunc("GET /api/v1/admin/features", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleAdminFeatures))))
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/roles", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureRoles))))
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/grants", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureGrant))))
