@@ -40,7 +40,7 @@ import { GameArtwork } from './game-artwork';
 const GAME_LIST_GAP = 10;
 const GAME_CARD_WIDTH_RATIO = 0.29;
 const BOTTOM_EXTRA_PADDING = 16;
-const DEFAULT_RECOMMENDATION_TOOL_ID = 'free-reading';
+const DEFAULT_RECOMMENDATION_TOOL_ID = 'card-score';
 
 type SectionHeaderProps = {
   actionLabel?: string;
