@@ -15,6 +15,7 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/marketradar"
 	"my-first-expo-app/backend/internal/news"
@@ -31,6 +32,7 @@ type Server struct {
 	accessStore           *access.Store
 	authService           *auth.Service
 	cfg                   config.Config
+	feedbackService       *feedback.Service
 	rateLimiter           *RateLimiter
 	realtimeHub           *realtime.Hub
 	lotteryService        lotteryHistoryService
@@ -54,7 +56,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -67,7 +69,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -90,6 +92,33 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
+		scoreServices...,
+	)
+}
+
+func NewServerWithReadingNewsAndFeedback(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	feedbackService *feedback.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		feedbackService,
 		scoreServices...,
 	)
 }
@@ -103,6 +132,7 @@ func newServer(
 	accessStore *access.Store,
 	newsService *news.Service,
 	readingService *reading.Service,
+	feedbackService *feedback.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
@@ -123,6 +153,7 @@ func newServer(
 		accessStore:           accessStore,
 		authService:           authService,
 		cfg:                   cfg,
+		feedbackService:       feedbackService,
 		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:           realtime.NewHub(),
 		lotteryService:        lottery.NewService(cfg.Lottery),
@@ -151,6 +182,7 @@ func newServer(
 	registerResourceSearchRoutes(mux, api)
 	registerReadingRoutes(mux, api)
 	registerAdminReadingRoutes(mux, api)
+	registerFeedbackRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))

@@ -15,6 +15,7 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/feedback"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
@@ -53,6 +54,11 @@ func main() {
 		log.Fatalf("open reading database failed: %v", err)
 	}
 	defer readingStore.Close()
+	feedbackStore, err := feedback.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open feedback database failed: %v", err)
+	}
+	defer feedbackStore.Close()
 	scoreStore, err := score.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("open score database failed: %v", err)
@@ -101,6 +107,13 @@ func main() {
 			log.Printf("seed mock reading provider failed: %v", err)
 		}
 	}
+	feedbackService := feedback.NewService(
+		feedbackStore,
+		cfg.Storage.FeedbackDir,
+		cfg.Storage.MaxFeedbackImageBytes,
+		cfg.Storage.MaxFeedbackImages,
+	)
+
 	var ttsService *tts.Service
 	if cfg.Volc.AppID != "" && cfg.Volc.AccessToken != "" {
 		ttsProvider := tts.NewVolcEngineProvider(cfg.Volc)
@@ -126,7 +139,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithReadingAndNews(
+	server := httpapi.NewServerWithReadingNewsAndFeedback(
 		cfg,
 		ttsService,
 		translationService,
@@ -135,6 +148,7 @@ func main() {
 		accessStore,
 		newsService,
 		readingService,
+		feedbackService,
 		scoreService,
 	)
 

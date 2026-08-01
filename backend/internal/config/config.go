@@ -77,8 +77,11 @@ type NewsConfig struct {
 type StorageConfig struct {
 	AudioDir                 string
 	AvatarDir                string
+	FeedbackDir              string
 	ReadingDir               string
 	MaxAvatarBytes           int64
+	MaxFeedbackImageBytes    int64
+	MaxFeedbackImages        int
 	MaxReadingUploadBytes    int64
 	MaxReadingExtractedBytes int64
 }
@@ -153,8 +156,11 @@ func Load() (Config, error) {
 		Storage: StorageConfig{
 			AudioDir:                 envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
 			AvatarDir:                envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
+			FeedbackDir:              envFirst("STORAGE_FEEDBACK_DIR", "data/feedback-images"),
 			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
 			MaxAvatarBytes:           int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
+			MaxFeedbackImageBytes:    int64(intFirst("STORAGE_MAX_FEEDBACK_IMAGE_BYTES", "", "5242880")),
+			MaxFeedbackImages:        intFirst("STORAGE_MAX_FEEDBACK_IMAGES", "", "3"),
 			MaxReadingUploadBytes:    int64(intFirst("STORAGE_MAX_READING_UPLOAD_BYTES", "", "52428800")),
 			MaxReadingExtractedBytes: int64(intFirst("STORAGE_MAX_READING_EXTRACTED_BYTES", "", "209715200")),
 		},

@@ -41,6 +41,12 @@
   修改当前用户昵称。
 - `POST /api/v1/users/me/avatar`
   上传 JPG 或 PNG 头像，文件字段名为 `avatar`。
+- `POST /api/v1/feedback`
+  已登录用户提交问题反馈，`multipart/form-data` 包含 `description` 和可选的 `images` 图片字段。
+- `GET /api/v1/admin/feedback?limit=30&offset=0`
+  管理员分页查看反馈、用户信息和图片元数据。
+- `GET /api/v1/admin/feedback/{feedbackID}/images/{imageID}`
+  管理员读取反馈图片，需携带 Bearer Token。
 - `PATCH /api/v1/users/me/password`
   修改密码并返回新令牌，旧令牌立即失效。
 - `GET /avatars/{fileName}`
@@ -130,6 +136,9 @@ go run ./cmd/api
 - `STORAGE_AUDIO_DIR`
 - `STORAGE_AVATAR_DIR`
 - `STORAGE_MAX_AVATAR_BYTES`
+- `STORAGE_FEEDBACK_DIR`
+- `STORAGE_MAX_FEEDBACK_IMAGE_BYTES`
+- `STORAGE_MAX_FEEDBACK_IMAGES`
 - `DATABASE_PATH`
 - `AUTH_JWT_SECRET`
 - `AUTH_JWT_SECRET_FILE`
@@ -149,6 +158,7 @@ go run ./cmd/api
 
 - SQLite 数据库：`data/app.db`
 - 用户头像：`data/avatars/`
+- 反馈图片：`data/feedback-images/`
 - 自动生成的 JWT 密钥：`data/jwt-secret`
 
 首次启动会自动创建这三个位置。本地开发必须完整保留 `data/` 目录；生产部署脚本会将数据库、头像和 JWT 密钥重定向到固定的 `/srv/my-first-expo-app-shared/`，避免切换 release 时丢失数据。共享数据库首次创建前，更新脚本会从上一版 release 在线备份数据库，并只迁移数据库当前引用的头像；已有共享数据库不会被覆盖。如果 JWT 密钥丢失，现有登录令牌会全部失效。生产环境也可以通过 `AUTH_JWT_SECRET` 直接提供至少 32 个字符的固定密钥。

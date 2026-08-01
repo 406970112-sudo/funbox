@@ -171,11 +171,16 @@ export function ProfileScreen() {
               label="修改密码"
               onPress={() => router.push('/profile/security')}
             />
+            <AccountAction
+              icon="message-alert-outline"
+              label="问题反馈"
+              onPress={() => router.push('/profile/feedback' as Href)}
+            />
             {user.role === 'admin' ? (
               <AccountAction
                 icon="shield-crown-outline"
                 label="管理后台"
-                onPress={() => router.push('/admin/permissions' as Href)}
+                onPress={() => router.push('/admin' as Href)}
               />
             ) : null}
             <AccountAction
