@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "用于采集直播画面",
+        "NSCameraUsageDescription": "用于采集直播画面与扫描牌局房间二维码",
         "NSMicrophoneUsageDescription": "用于采集直播声音"
       }
     },

@@ -3,7 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Modal, Pressable, StyleSheet, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { ThemedText } from '@/components/themed-text';
@@ -40,7 +40,6 @@ import type {
   ScoreParticipant,
   ScoreRealtimeStatus,
   ScoreRoomSnapshot,
-  ScoreRound,
 } from '@/types/card-score';
 
 import {
@@ -53,6 +52,7 @@ import {
   SegmentedControl,
   TransferRow,
 } from './card-score-components';
+import { ScoreScanJoinFlow } from './card-score-scan-flow';
 
 type LandingMode = 'create' | 'join';
 type Feedback = { message: string; tone?: 'error' | 'info' | 'success' };
@@ -65,6 +65,7 @@ export function CardScoreScreen() {
   const params = useLocalSearchParams<{ invite?: string }>();
   const { accessToken, status: authStatus } = useAuth();
   const [mode, setMode] = useState<LandingMode>(params.invite ? 'join' : 'create');
+  const [scanOpen, setScanOpen] = useState(Boolean(params.invite));
   const [room, setRoom] = useState<ScoreRoomSnapshot | null>(null);
   const [guestToken, setGuestToken] = useState<string | null>(null);
   const [history, setHistory] = useState<ScoreRoomSnapshot[]>([]);
@@ -111,6 +112,7 @@ export function CardScoreScreen() {
         try {
           const storedRoom = await getScoreRoom(storedCredential, stored.roomId);
           if (!active) return;
+          setScanOpen(false);
           setGuestToken(stored.guestToken);
           applyRoom(storedRoom);
         } catch {
@@ -140,9 +142,9 @@ export function CardScoreScreen() {
     };
   }, [accessToken, room?.version]);
 
+  const roomId = room?.id;
   useEffect(() => {
-    if (!room || !credential) return;
-    const roomId = room.id;
+    if (!roomId || !credential) return;
     const disconnect = connectScoreRealtime(
       credential,
       roomId,
@@ -161,7 +163,7 @@ export function CardScoreScreen() {
       subscription.remove();
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     };
-  }, [credential, refreshRoom, room?.id]);
+  }, [credential, refreshRoom, roomId]);
 
   async function runMutation(action: () => Promise<ScoreRoomSnapshot>, success?: string) {
     if (busy) return;
@@ -208,6 +210,29 @@ export function CardScoreScreen() {
     setRealtimeStatus('connecting');
   }
 
+  async function enterScanRoom(credential: ScoreCredential, roomId: string) {
+    setGuestToken(null);
+    const next = await getScoreRoom(credential, roomId);
+    applyRoom(next);
+    setScanOpen(false);
+  }
+
+  async function joinFromScan(input: { inviteToken: string; displayName: string }) {
+    const result = await joinScoreRoom({
+      inviteToken: input.inviteToken,
+      displayName: input.displayName,
+    });
+    setGuestToken(result.guestToken);
+    await setStoredScoreSession({
+      roomId: result.room.id,
+      guestToken: result.guestToken,
+      participantId: result.actor.participantId,
+      savedAt: new Date().toISOString(),
+    });
+    applyRoom(result.room);
+    setScanOpen(false);
+  }
+
   if (loading || authStatus === 'loading') {
     return (
       <MobileScreen contentContainerStyle={styles.centered}>
@@ -217,71 +242,94 @@ export function CardScoreScreen() {
     );
   }
 
+  const scanModal = scanOpen ? (
+    <Modal
+      animationType="slide"
+      onRequestClose={() => setScanOpen(false)}
+      presentationStyle="fullScreen"
+      visible>
+      <ScoreScanJoinFlow
+        accessToken={accessToken}
+        initialInvite={params.invite}
+        onClose={() => setScanOpen(false)}
+        onEnterRoom={(credential, roomId) => enterScanRoom(credential, roomId)}
+        onJoin={(input) => joinFromScan(input)}
+      />
+    </Modal>
+  ) : null;
+
   if (!room) {
     return (
-      <LandingView
-        accessToken={accessToken}
-        busy={busy}
-        feedback={feedback}
-        history={history}
-        initialInvite={params.invite}
-        mode={mode}
-        onBack={() => router.back()}
-        onCreate={async (name, maxPlayers, centsPerPoint) => {
-          if (!accessToken) {
-            router.push({ pathname: '/auth', params: { returnTo: '/tools/card-score' } });
-            return;
-          }
-          setBusy(true);
-          setFeedback(null);
-          try {
-            const result = await createScoreRoom(accessToken, { name, maxPlayers, centsPerPoint });
-            setGuestToken(null);
-            applyRoom({ ...result.room, inviteToken: result.inviteToken });
-          } catch (error) {
-            setFeedback({ message: getCardScoreErrorMessage(error) });
-          } finally {
-            setBusy(false);
-          }
-        }}
-        onJoin={async (code, displayName, inviteToken) => {
-          setBusy(true);
-          setFeedback(null);
-          try {
-            const result = await joinScoreRoom({ code, displayName, inviteToken });
-            setGuestToken(result.guestToken);
-            await setStoredScoreSession({
-              roomId: result.room.id,
-              guestToken: result.guestToken,
-              participantId: result.actor.participantId,
-              savedAt: new Date().toISOString(),
-            });
-            applyRoom(result.room);
-          } catch (error) {
-            setFeedback({ message: getCardScoreErrorMessage(error) });
-          } finally {
-            setBusy(false);
-          }
-        }}
-        onModeChange={setMode}
-        onOpenHistory={(item) => void openHistoryRoom(item)}
-      />
+      <>
+        {scanModal}
+        <LandingView
+          accessToken={accessToken}
+          busy={busy}
+          feedback={feedback}
+          history={history}
+          initialInvite={params.invite}
+          mode={mode}
+          onBack={() => router.back()}
+          onCreate={async (name, maxPlayers, centsPerPoint) => {
+            if (!accessToken) {
+              router.push({ pathname: '/auth', params: { returnTo: '/tools/card-score' } });
+              return;
+            }
+            setBusy(true);
+            setFeedback(null);
+            try {
+              const result = await createScoreRoom(accessToken, { name, maxPlayers, centsPerPoint });
+              setGuestToken(null);
+              applyRoom({ ...result.room, inviteToken: result.inviteToken });
+            } catch (error) {
+              setFeedback({ message: getCardScoreErrorMessage(error) });
+            } finally {
+              setBusy(false);
+            }
+          }}
+          onJoin={async (code, displayName, inviteToken) => {
+            setBusy(true);
+            setFeedback(null);
+            try {
+              const result = await joinScoreRoom({ code, displayName, inviteToken });
+              setGuestToken(result.guestToken);
+              await setStoredScoreSession({
+                roomId: result.room.id,
+                guestToken: result.guestToken,
+                participantId: result.actor.participantId,
+                savedAt: new Date().toISOString(),
+              });
+              applyRoom(result.room);
+            } catch (error) {
+              setFeedback({ message: getCardScoreErrorMessage(error) });
+            } finally {
+              setBusy(false);
+            }
+          }}
+          onModeChange={setMode}
+          onOpenHistory={(item) => void openHistoryRoom(item)}
+          onOpenScanner={() => setScanOpen(true)}
+        />
+      </>
     );
   }
 
   if (!credential) return null;
   const self = room.participants.find((participant) => participant.id === room.selfParticipantId);
   return (
-    <RoomView
-      busy={busy}
-      credential={credential}
-      feedback={feedback}
-      onExit={() => void leaveRoom()}
-      onMutation={runMutation}
-      realtimeStatus={realtimeStatus}
-      room={room}
-      self={self}
-    />
+    <>
+      {scanModal}
+      <RoomView
+        busy={busy}
+        credential={credential}
+        feedback={feedback}
+        onExit={() => void leaveRoom()}
+        onMutation={runMutation}
+        realtimeStatus={realtimeStatus}
+        room={room}
+        self={self}
+      />
+    </>
   );
 }
 
@@ -297,6 +345,7 @@ function LandingView({
   onJoin,
   onModeChange,
   onOpenHistory,
+  onOpenScanner,
 }: {
   accessToken: string | null;
   busy: boolean;
@@ -309,6 +358,7 @@ function LandingView({
   onJoin: (code: string, displayName: string, inviteToken?: string) => Promise<void>;
   onModeChange: (mode: LandingMode) => void;
   onOpenHistory: (room: ScoreRoomSnapshot) => void;
+  onOpenScanner: () => void;
 }) {
   const { colors } = useAppTheme();
   const [name, setName] = useState('今晚牌局');
@@ -360,6 +410,16 @@ function LandingView({
         ) : (
           <>
             {initialInvite ? <FeedbackBanner message="邀请已识别，填写昵称即可加入。" tone="info" /> : null}
+            {!initialInvite ? (
+              <>
+                <PrimaryAction icon="qrcode-scan" label="扫一扫加入房间" onPress={onOpenScanner} />
+                <View style={styles.dividerRow}>
+                  <View style={[styles.dividerLine, { backgroundColor: colors.line }]} />
+                  <ThemedText style={[styles.dividerText, { color: colors.mutedText }]}>或输入房间码</ThemedText>
+                  <View style={[styles.dividerLine, { backgroundColor: colors.line }]} />
+                </View>
+              </>
+            ) : null}
             {!initialInvite ? (
               <ScoreField icon="numeric" keyboardType="number-pad" label="6 位房间码" maxLength={6} onChangeText={(value) => setCode(value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" value={code} />
             ) : null}
@@ -491,7 +551,7 @@ function WaitingRoom({ activeCount, busy, credential, host, onMutation, room }: 
           <PrimaryAction disabled={activeCount < 2} icon="play-circle-outline" label={activeCount < 2 ? '至少 2 人才能开始' : '开始牌局'} loading={busy} onPress={() => void onMutation(() => startScoreRoom(credential, room))} />
           <PrimaryAction icon="close-circle-outline" label="取消房间" onPress={() => void onMutation(() => cancelScoreRoom(credential, room))} tone="neutral" />
         </View>
-      ) : <FeedbackBanner message="房主开始后即可报分。" tone="info" />}
+      ) : <FeedbackBanner message="已加入，等待房主开始牌局。" tone="info" />}
     </>
   );
 }
@@ -504,7 +564,6 @@ function ActiveRoom({ busy, credential, host, onMutation, room, self }: {
   room: ScoreRoomSnapshot;
   self?: ScoreParticipant;
 }) {
-  const { colors } = useAppTheme();
   const ranking = sortedParticipants(room.participants);
   return (
     <>
@@ -676,6 +735,9 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', flex: 1, justifyContent: 'center', minHeight: 500 },
   copyButton: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: 16, flexDirection: 'row', gap: 7, minHeight: 42, paddingHorizontal: 13 },
   copyText: { fontSize: 12, fontWeight: '800' },
+  dividerLine: { flex: 1, height: 1 },
+  dividerRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  dividerText: { fontSize: 11, fontWeight: '700' },
   emptyPanel: { alignItems: 'center', gap: 9, padding: 28 },
   emptyText: { fontSize: 13 },
   emptyTitle: { fontSize: 19, fontWeight: '900' },
