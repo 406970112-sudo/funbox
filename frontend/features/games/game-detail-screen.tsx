@@ -8,6 +8,7 @@ import { BrickBreakerGameScreen } from '@/features/games/brick-breaker-game-scre
 import { GomokuGameScreen } from '@/features/games/gomoku-game-screen';
 import { SnakeGameScreen } from '@/features/games/snake-game-screen';
 import { TetrisGameScreen } from '@/features/games/tetris-game-screen';
+import { XiangqiGameScreen } from '@/features/games/xiangqi-game-screen';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { getGameById } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
@@ -66,6 +67,15 @@ export function GameDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <BrickBreakerGameScreen />
+      </>
+    );
+  }
+
+  if (game?.id === 'xiangqi') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <XiangqiGameScreen />
       </>
     );
   }

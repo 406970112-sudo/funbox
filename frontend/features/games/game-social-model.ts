@@ -5,6 +5,7 @@ const GAME_SOCIAL_CAPABILITIES: Record<string, GameSocialCapability> = {
   gomoku: { friendLeaderboard: false, friendMatch: true, requiresAuthentication: true },
   'snake-brawl': { friendLeaderboard: true, friendMatch: false, requiresAuthentication: true },
   tetris: { friendLeaderboard: true, friendMatch: false, requiresAuthentication: true },
+  xiangqi: { friendLeaderboard: false, friendMatch: true, requiresAuthentication: true },
 };
 
 export function getGameSocialCapability(gameId: string): GameSocialCapability | null {

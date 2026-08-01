@@ -43,7 +43,7 @@ type GameSocialContextValue = {
   respondMatch: (matchId: string, action: 'accept' | 'decline') => Promise<GameMatch>;
   submitMove: (
     matchId: string,
-    move: { clientMoveId: string; col: number; row: number },
+    move: { clientMoveId: string; col: number; fromCol?: number; fromRow?: number; row: number },
   ) => Promise<GameMatch>;
   submitScore: (gameId: string, score: number) => Promise<void>;
 };

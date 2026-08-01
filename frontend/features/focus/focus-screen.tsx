@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -1733,12 +1733,12 @@ function habitTone(color: string) {
   return { bg: '#f0edff' };
 }
 
-function habitIconName(icon: string) {
-  const known: Record<string, string> = {
+function habitIconName(icon: string): ComponentProps<typeof MaterialCommunityIcons>['name'] {
+  const known: Record<string, ComponentProps<typeof MaterialCommunityIcons>['name']> = {
     'book-open-variant': 'book-open-variant',
-    droplets: 'droplets',
+    droplets: 'water-outline',
     dumbbell: 'dumbbell',
-    moon: 'moon',
+    moon: 'weather-night',
   };
   return known[icon] ?? 'check-circle-outline';
 }

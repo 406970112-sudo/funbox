@@ -51,7 +51,7 @@ export async function respondGameMatch(
 export async function submitGameMove(
   token: string,
   matchId: string,
-  move: { clientMoveId: string; col: number; row: number },
+  move: { clientMoveId: string; col: number; fromCol?: number; fromRow?: number; row: number },
 ) {
   const response = await requestJSON<MatchResponse>(
     `/api/v1/game-matches/${encodeURIComponent(matchId)}/moves`,

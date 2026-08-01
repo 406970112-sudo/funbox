@@ -10,6 +10,7 @@ export type GameId =
   | 'gomoku'
   | 'tetris'
   | 'brick-breaker'
+  | 'xiangqi'
   | 'brain-challenge'
   | 'speed-racer';
 

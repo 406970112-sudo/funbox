@@ -68,6 +68,16 @@ export const popularGames: GameItem[] = [
     status: 'playable',
   },
   {
+    id: 'xiangqi',
+    name: '象棋',
+    genre: '传统棋类',
+    tag: '双模式',
+    description: '标准中国象棋，支持三档人机对战与好友实时对局，含悔棋、提示一手和棋谱记录。',
+    accentColor: '#d98a3d',
+    route: '/games/xiangqi',
+    status: 'playable',
+  },
+  {
     id: 'brain-challenge',
     name: '脑力挑战',
     genre: '益智闯关',

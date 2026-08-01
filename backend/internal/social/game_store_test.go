@@ -114,6 +114,86 @@ func TestGameMatchResignationAwardsTheOpponent(t *testing.T) {
 	}
 }
 
+func TestXiangqiFriendMatchValidatesMovesAndDeterminesWinner(t *testing.T) {
+	store, accounts := openGameTestStore(t, "Alice", "Bob")
+	alice := accounts[0]
+	bob := accounts[1]
+	makeGameTestFriends(t, store, alice.ID, bob.ID)
+	ctx := context.Background()
+
+	match, err := store.CreateGameMatch(ctx, alice.ID, bob.ID, "xiangqi")
+	if err != nil {
+		t.Fatalf("create xiangqi match: %v", err)
+	}
+	match, err = store.RespondGameMatch(ctx, match.ID, bob.ID, true)
+	if err != nil {
+		t.Fatalf("accept xiangqi match: %v", err)
+	}
+	if match.CurrentTurnUserID != alice.ID {
+		t.Fatalf("red should start, current turn = %s", match.CurrentTurnUserID)
+	}
+
+	// Red cannon slides from col 1 to col 5 on row 7, then black horse jumps.
+	moves := []struct {
+		clientMoveID string
+		fromCol      int
+		fromRow      int
+		toCol        int
+		toRow        int
+		userID       string
+	}{
+		{"alice-cannon", 1, 7, 5, 7, alice.ID},
+		{"bob-horse", 7, 0, 6, 2, bob.ID},
+	}
+	for _, move := range moves {
+		match, err = store.SubmitGameMove(ctx, match.ID, move.userID, GameMoveInput{
+			ClientMoveID: move.clientMoveID,
+			Col:          move.toCol,
+			FromCol:      move.fromCol,
+			FromRow:      move.fromRow,
+			Row:          move.toRow,
+		})
+		if err != nil {
+			t.Fatalf("submit %s: %v", move.clientMoveID, err)
+		}
+		t.Logf("after %s currentTurn=%s status=%s moves=%d", move.clientMoveID, match.CurrentTurnUserID, match.Status, len(match.Moves))
+	}
+	if len(match.Moves) != 2 {
+		t.Fatalf("expected 2 moves, got %d", len(match.Moves))
+	}
+	if match.Moves[0].FromCol != 1 || match.Moves[0].FromRow != 7 ||
+		match.Moves[0].Col != 7 || match.Moves[0].Row != 5 {
+		t.Fatalf("stored red move = %+v", match.Moves[0])
+	}
+
+	if _, err := store.SubmitGameMove(ctx, match.ID, bob.ID, GameMoveInput{
+		ClientMoveID: "alice-twice",
+		Col:          5,
+		FromCol:      7,
+		FromRow:      7,
+		Row:          7,
+	}); !errors.Is(err, ErrNotYourTurn) {
+		t.Fatalf("out-of-turn move error = %v, want ErrNotYourTurn", err)
+	}
+	if _, err := store.SubmitGameMove(ctx, match.ID, alice.ID, GameMoveInput{
+		ClientMoveID: "alice-illegal",
+		Col:          8,
+		FromCol:      0,
+		FromRow:      9,
+		Row:          6,
+	}); !errors.Is(err, ErrGameMove) {
+		t.Fatalf("illegal jump error = %v, want ErrGameMove", err)
+	}
+
+	match, err = store.ResignGameMatch(ctx, match.ID, bob.ID)
+	if err != nil {
+		t.Fatalf("resign xiangqi match: %v", err)
+	}
+	if match.Status != GameMatchFinished || match.WinnerUserID != alice.ID {
+		t.Fatalf("expected resignation win, match = %+v", match)
+	}
+}
+
 func TestGameGomokuWinDetectionCoversEveryDirection(t *testing.T) {
 	directions := []struct {
 		colDelta int

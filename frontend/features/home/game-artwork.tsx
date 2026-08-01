@@ -120,6 +120,39 @@ function BrickBreakerScene({ accentColor, contrastColor, mutedColor }: SceneProp
   );
 }
 
+function XiangqiScene({ accentColor, contrastColor }: SceneProps) {
+  return (
+    <G>
+      <G stroke={accentColor} strokeWidth={1.2} opacity={0.85}>
+        {[12, 20, 28, 36, 44, 52].map((x) => (
+          <Line key={`v${x}`} x1={x} x2={x} y1={8} y2={40} />
+        ))}
+        {[12, 20, 28, 36, 40].map((y) => (
+          <Line key={`h${y}`} x1={10} x2={54} y1={y} y2={y} />
+        ))}
+        <Line x1={10} x2={54} y1={24} y2={24} opacity={0.35} />
+        <Path d="M22 8 14 16 22 24 M42 8 50 16 42 24 M22 40 14 32 22 24 M42 40 50 32 42 24" fill="none" />
+      </G>
+      <G fill="#ffffff" stroke={accentColor} strokeWidth={1.2}>
+        <Circle cx={20} cy={12} r={4.2} />
+        <Circle cx={30} cy={20} r={4.2} />
+        <Circle cx={44} cy={12} r={4.2} />
+        <Circle cx={20} cy={36} r={4.2} />
+        <Circle cx={36} cy={28} r={4.2} />
+        <Circle cx={44} cy={36} r={4.2} />
+      </G>
+      <G fill={contrastColor} stroke={accentColor} strokeWidth={1.2}>
+        <Circle cx={36} cy={12} r={4.2} />
+        <Circle cx={20} cy={20} r={4.2} />
+        <Circle cx={44} cy={20} r={4.2} />
+        <Circle cx={30} cy={28} r={4.2} />
+        <Circle cx={30} cy={36} r={4.2} />
+        <Circle cx={50} cy={36} r={4.2} />
+      </G>
+    </G>
+  );
+}
+
 function FallbackScene({ contrastColor, mutedColor }: SceneProps) {
   return (
     <G fill="none" stroke={mutedColor} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
@@ -142,6 +175,7 @@ export function GameArtwork({ accentColor, contrastColor, gameId, mutedColor }: 
       {kind === 'gomoku' ? <GomokuScene {...sceneProps} /> : null}
       {kind === 'tetris' ? <TetrisScene {...sceneProps} /> : null}
       {kind === 'brick-breaker' ? <BrickBreakerScene {...sceneProps} /> : null}
+      {kind === 'xiangqi' ? <XiangqiScene {...sceneProps} /> : null}
       {kind === 'fallback' ? <FallbackScene {...sceneProps} /> : null}
     </Svg>
   );

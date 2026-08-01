@@ -7,6 +7,8 @@ export type GameMove = {
   clientMoveId: string;
   col: number;
   createdAt: string;
+  fromCol?: number;
+  fromRow?: number;
   row: number;
   sequence: number;
   userId: string;

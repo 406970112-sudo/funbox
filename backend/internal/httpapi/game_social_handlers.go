@@ -14,6 +14,8 @@ type gameMoveResponse struct {
 	ClientMoveID string `json:"clientMoveId"`
 	Col          int    `json:"col"`
 	CreatedAt    string `json:"createdAt"`
+	FromCol      int    `json:"fromCol,omitempty"`
+	FromRow      int    `json:"fromRow,omitempty"`
 	Row          int    `json:"row"`
 	Sequence     int    `json:"sequence"`
 	UserID       string `json:"userId"`
@@ -56,6 +58,8 @@ type createGameMatchBody struct {
 type createGameMoveBody struct {
 	ClientMoveID string `json:"clientMoveId"`
 	Col          int    `json:"col"`
+	FromCol      int    `json:"fromCol"`
+	FromRow      int    `json:"fromRow"`
 	Row          int    `json:"row"`
 }
 
@@ -147,6 +151,8 @@ func (s *Server) handleCreateGameMove(w http.ResponseWriter, r *http.Request) {
 		social.GameMoveInput{
 			ClientMoveID: strings.TrimSpace(body.ClientMoveID),
 			Col:          body.Col,
+			FromCol:      body.FromCol,
+			FromRow:      body.FromRow,
 			Row:          body.Row,
 		},
 	)
@@ -249,6 +255,8 @@ func (s *Server) gameMatch(match social.GameMatch) gameMatchResponse {
 			ClientMoveID: move.ClientMoveID,
 			Col:          move.Col,
 			CreatedAt:    formatSocialTime(move.CreatedAt),
+			FromCol:      move.FromCol,
+			FromRow:      move.FromRow,
 			Row:          move.Row,
 			Sequence:     move.Sequence,
 			UserID:       move.UserID,

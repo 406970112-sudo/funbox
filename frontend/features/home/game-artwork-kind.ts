@@ -3,6 +3,7 @@ export type GameArtworkKind =
   | 'gomoku'
   | 'tetris'
   | 'brick-breaker'
+  | 'xiangqi'
   | 'fallback';
 
 export function getGameArtworkKind(gameId: string): GameArtworkKind {
@@ -15,6 +16,8 @@ export function getGameArtworkKind(gameId: string): GameArtworkKind {
       return 'tetris';
     case 'brick-breaker':
       return 'brick-breaker';
+    case 'xiangqi':
+      return 'xiangqi';
     default:
       return 'fallback';
   }

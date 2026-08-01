@@ -181,7 +181,7 @@ export function HomeScreen() {
     const tool = availableTools.find((candidate) => candidate.id === toolId);
     return tool ? [tool] : [];
   });
-  const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 4);
+  const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 5);
   const availableToolCount = availableTools.length;
   const contentWidth = Math.min(windowWidth, appLayout.screenMaxWidth) - 32;
   const gameCardWidth = Math.round(contentWidth * GAME_CARD_WIDTH_RATIO);
@@ -264,7 +264,7 @@ export function HomeScreen() {
       {playableGames.length > 0 ? (
         <Reveal progress={reveals[3]}>
           <View style={styles.section}>
-            <SectionHeader title="放松一下" meta="四款小游戏，随时开一局" />
+            <SectionHeader title="放松一下" meta="五款小游戏，随时开一局" />
             <FlatList
               contentContainerStyle={styles.gameListContent}
               data={playableGames}

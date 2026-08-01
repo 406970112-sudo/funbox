@@ -41,6 +41,8 @@ type GameMove struct {
 	ClientMoveID string
 	Col          int
 	CreatedAt    time.Time
+	FromCol      int
+	FromRow      int
 	Row          int
 	Sequence     int
 	UserID       string
@@ -49,6 +51,8 @@ type GameMove struct {
 type GameMoveInput struct {
 	ClientMoveID string
 	Col          int
+	FromCol      int
+	FromRow      int
 	Row          int
 }
 
@@ -86,6 +90,7 @@ var gameCapabilities = map[string]GameCapability{
 	"gomoku":        {FriendMatch: true},
 	"snake-brawl":   {ScoreRule: "higher"},
 	"tetris":        {ScoreRule: "higher"},
+	"xiangqi":       {FriendMatch: true},
 }
 
 func GameCapabilityFor(gameID string) (GameCapability, bool) {
@@ -121,10 +126,11 @@ func gameSocialMigrationStatements() []string {
 			client_move_id TEXT NOT NULL,
 			row_index INTEGER NOT NULL,
 			col_index INTEGER NOT NULL,
+			from_row_index INTEGER NOT NULL DEFAULT -1,
+			from_col_index INTEGER NOT NULL DEFAULT -1,
 			created_at INTEGER NOT NULL,
 			PRIMARY KEY(match_id, sequence),
-			UNIQUE(match_id, user_id, client_move_id),
-			UNIQUE(match_id, row_index, col_index)
+			UNIQUE(match_id, user_id, client_move_id)
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_game_match_moves_match
 			ON game_match_moves(match_id, sequence)`,
@@ -138,6 +144,99 @@ func gameSocialMigrationStatements() []string {
 		`CREATE INDEX IF NOT EXISTS idx_game_scores_game_time
 			ON game_score_submissions(game_id, created_at DESC, user_id, score DESC)`,
 	}
+}
+
+func (s *Store) ensureGameMoveColumns() error {
+	rows, err := s.db.Query(`PRAGMA table_info(game_match_moves)`)
+	if err != nil {
+		return fmt.Errorf("inspect game move columns: %w", err)
+	}
+	columns := make(map[string]bool)
+	for rows.Next() {
+		var cid int
+		var name string
+		var columnType string
+		var notNull int
+		var defaultValue any
+		var pk int
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan game move column: %w", err)
+		}
+		columns[name] = true
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close game move columns: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate game move columns: %w", err)
+	}
+	if !columns["from_row_index"] {
+		if _, err := s.db.Exec(`ALTER TABLE game_match_moves ADD COLUMN from_row_index INTEGER NOT NULL DEFAULT -1`); err != nil {
+			return fmt.Errorf("add from_row_index column: %w", err)
+		}
+	}
+	if !columns["from_col_index"] {
+		if _, err := s.db.Exec(`ALTER TABLE game_match_moves ADD COLUMN from_col_index INTEGER NOT NULL DEFAULT -1`); err != nil {
+			return fmt.Errorf("add from_col_index column: %w", err)
+		}
+	}
+
+	var legacyIndex int
+	if err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM sqlite_master
+		 WHERE type = 'index' AND tbl_name = 'game_match_moves' AND name = 'sqlite_autoindex_game_match_moves_2'`,
+	).Scan(&legacyIndex); err != nil {
+		return fmt.Errorf("inspect legacy game move index: %w", err)
+	}
+	if legacyIndex > 0 {
+		if err := s.rebuildGameMatchMoves(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Store) rebuildGameMatchMoves() error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin game move table rebuild: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+	statements := []string{
+		`CREATE TABLE game_match_moves_new (
+			match_id TEXT NOT NULL REFERENCES game_matches(id) ON DELETE CASCADE,
+			sequence INTEGER NOT NULL,
+			user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			client_move_id TEXT NOT NULL,
+			row_index INTEGER NOT NULL,
+			col_index INTEGER NOT NULL,
+			from_row_index INTEGER NOT NULL DEFAULT -1,
+			from_col_index INTEGER NOT NULL DEFAULT -1,
+			created_at INTEGER NOT NULL,
+			PRIMARY KEY(match_id, sequence),
+			UNIQUE(match_id, user_id, client_move_id)
+		)`,
+		`INSERT INTO game_match_moves_new
+		 (match_id, sequence, user_id, client_move_id, row_index, col_index,
+		  from_row_index, from_col_index, created_at)
+		 SELECT match_id, sequence, user_id, client_move_id, row_index, col_index,
+		        from_row_index, from_col_index, created_at
+		 FROM game_match_moves`,
+		`DROP TABLE game_match_moves`,
+		`ALTER TABLE game_match_moves_new RENAME TO game_match_moves`,
+		`CREATE INDEX IF NOT EXISTS idx_game_match_moves_match
+			ON game_match_moves(match_id, sequence)`,
+	}
+	for _, statement := range statements {
+		if _, err := tx.Exec(statement); err != nil {
+			return fmt.Errorf("rebuild game move table: %w", err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit game move table rebuild: %w", err)
+	}
+	return nil
 }
 
 func (s *Store) CreateGameMatch(
@@ -304,6 +403,12 @@ func (s *Store) SubmitGameMove(
 	if !currentTurn.Valid || currentTurn.String != userID {
 		return GameMatch{}, ErrNotYourTurn
 	}
+	if gameID == "xiangqi" {
+		if err := tx.Commit(); err != nil {
+			return GameMatch{}, fmt.Errorf("release xiangqi move transaction: %w", err)
+		}
+		return s.submitXiangqiMove(ctx, matchID, userID, input)
+	}
 	if gameID != "gomoku" {
 		return GameMatch{}, ErrGameCapability
 	}
@@ -335,14 +440,17 @@ func (s *Store) SubmitGameMove(
 	if _, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO game_match_moves
-		 (match_id, sequence, user_id, client_move_id, row_index, col_index, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		 (match_id, sequence, user_id, client_move_id, row_index, col_index,
+		  from_row_index, from_col_index, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		matchID,
 		sequence,
 		userID,
 		input.ClientMoveID,
 		input.Row,
 		input.Col,
+		input.FromRow,
+		input.FromCol,
 		now.UnixMilli(),
 	); err != nil {
 		return GameMatch{}, fmt.Errorf("insert game move: %w", err)
@@ -381,6 +489,139 @@ func (s *Store) SubmitGameMove(
 	}
 	if err := tx.Commit(); err != nil {
 		return GameMatch{}, fmt.Errorf("commit game move: %w", err)
+	}
+	return s.GetGameMatch(ctx, matchID, userID)
+}
+
+func (s *Store) submitXiangqiMove(
+	ctx context.Context,
+	matchID string,
+	userID string,
+	input GameMoveInput,
+) (GameMatch, error) {
+	if strings.TrimSpace(input.ClientMoveID) == "" ||
+		!xiangqiInside(input.FromCol, input.FromRow) ||
+		!xiangqiInside(input.Col, input.Row) {
+		return GameMatch{}, ErrGameMove
+	}
+
+	var gameID string
+	var inviterID string
+	var opponentID string
+	var status string
+	var currentTurn sql.NullString
+	if err := s.db.QueryRowContext(
+		ctx,
+		`SELECT game_id, inviter_id, opponent_id, status, current_turn_user_id
+		 FROM game_matches WHERE id = ?`,
+		matchID,
+	).Scan(&gameID, &inviterID, &opponentID, &status, &currentTurn); errors.Is(err, sql.ErrNoRows) {
+		return GameMatch{}, ErrNotFound
+	} else if err != nil {
+		return GameMatch{}, fmt.Errorf("read xiangqi match: %w", err)
+	}
+	if gameID != "xiangqi" {
+		return GameMatch{}, ErrGameCapability
+	}
+	if userID != inviterID && userID != opponentID {
+		return GameMatch{}, ErrForbidden
+	}
+	if status != GameMatchActive {
+		return GameMatch{}, ErrMatchNotActive
+	}
+	if !currentTurn.Valid || currentTurn.String != userID {
+		return GameMatch{}, ErrNotYourTurn
+	}
+
+	board := xiangqiInitialBoard()
+	moves, err := listGameMoves(ctx, s.db, matchID)
+	if err != nil {
+		return GameMatch{}, err
+	}
+	for _, stored := range moves {
+		if stored.FromRow < 0 || stored.FromCol < 0 {
+			return GameMatch{}, ErrGameMove
+		}
+		board = xiangqiApply(board, xiangqiMove{
+			From: xiangqiPosition{Col: stored.FromCol, Row: stored.FromRow},
+			To:   xiangqiPosition{Col: stored.Col, Row: stored.Row},
+		})
+	}
+
+	move := xiangqiMove{
+		From: xiangqiPosition{Col: input.FromCol, Row: input.FromRow},
+		To:   xiangqiPosition{Col: input.Col, Row: input.Row},
+	}
+	piece := xiangqiPieceAt(board, input.FromCol, input.FromRow)
+	if piece == nil || piece.Color == "" {
+		return GameMatch{}, ErrGameMove
+	}
+	expectedColor := "red"
+	if len(moves)%2 == 1 {
+		expectedColor = "black"
+	}
+	if expectedColor != piece.Color {
+		return GameMatch{}, ErrGameMove
+	}
+	legal := false
+	for _, candidate := range xiangqiPseudoMoves(board, move.From) {
+		if candidate.To == move.To && !xiangqiInCheck(xiangqiApply(board, candidate), piece.Color) {
+			legal = true
+			break
+		}
+	}
+	if !legal {
+		return GameMatch{}, ErrGameMove
+	}
+
+	board = xiangqiApply(board, move)
+	winner, draw := xiangqiGameResult(board, xiangqiOpponent(piece.Color))
+	now := time.Now().UTC()
+	nextSequence := len(moves) + 1
+	if _, err := s.db.ExecContext(
+		ctx,
+		`INSERT INTO game_match_moves
+		 (match_id, sequence, user_id, client_move_id, row_index, col_index,
+		  from_row_index, from_col_index, created_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		matchID,
+		nextSequence,
+		userID,
+		input.ClientMoveID,
+		input.Col,
+		input.Row,
+		input.FromRow,
+		input.FromCol,
+		now.UnixMilli(),
+	); err != nil {
+		return GameMatch{}, fmt.Errorf("insert xiangqi move: %w", err)
+	}
+
+	nextStatus := GameMatchActive
+	nextTurn := opponentID
+	if userID == opponentID {
+		nextTurn = inviterID
+	}
+	if winner != "" || draw {
+		nextStatus = GameMatchFinished
+		nextTurn = ""
+	}
+	winnerUserID := ""
+	if winner != "" && winner != piece.Color {
+		winnerUserID = userID
+	}
+	if _, err := s.db.ExecContext(
+		ctx,
+		`UPDATE game_matches
+		 SET status = ?, current_turn_user_id = NULLIF(?, ''), winner_user_id = NULLIF(?, ''),
+		     updated_at = ? WHERE id = ?`,
+		nextStatus,
+		nextTurn,
+		winnerUserID,
+		now.UnixMilli(),
+		matchID,
+	); err != nil {
+		return GameMatch{}, fmt.Errorf("update xiangqi match: %w", err)
 	}
 	return s.GetGameMatch(ctx, matchID, userID)
 }
@@ -652,7 +893,8 @@ func getGameMatchFrom(
 func listGameMoves(ctx context.Context, queryer gameMatchQueryer, matchID string) ([]GameMove, error) {
 	rows, err := queryer.QueryContext(
 		ctx,
-		`SELECT sequence, user_id, client_move_id, row_index, col_index, created_at
+		`SELECT sequence, user_id, client_move_id, row_index, col_index,
+		        created_at, from_row_index, from_col_index
 		 FROM game_match_moves WHERE match_id = ? ORDER BY sequence`,
 		matchID,
 	)
@@ -671,6 +913,8 @@ func listGameMoves(ctx context.Context, queryer gameMatchQueryer, matchID string
 			&move.Row,
 			&move.Col,
 			&createdAt,
+			&move.FromRow,
+			&move.FromCol,
 		); err != nil {
 			return nil, fmt.Errorf("scan game move: %w", err)
 		}

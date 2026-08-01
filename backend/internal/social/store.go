@@ -164,6 +164,9 @@ func (s *Store) migrate() error {
 			return fmt.Errorf("run social database migration: %w", err)
 		}
 	}
+	if err := s.ensureGameMoveColumns(); err != nil {
+		return err
+	}
 	return nil
 }
 

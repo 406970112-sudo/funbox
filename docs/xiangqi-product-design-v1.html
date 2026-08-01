@@ -1,0 +1,1803 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox Xiangqi Product Design</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #1db991;
+        --canvas: #dce6f5;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+        --wood: #e7c58f;
+        --wood-deep: #caa268;
+        --red: #c43a34;
+        --black: #2d2b33;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 100vh;
+        overflow: hidden;
+        padding: 34px 42px 48px;
+        position: relative;
+        width: 1400px;
+      }
+
+      .board::before {
+        background: var(--navy);
+        content: "";
+        height: 8px;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 auto 26px;
+        max-width: 1400px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 48px;
+        justify-content: center;
+        width: 48px;
+      }
+
+      .board-mark svg {
+        height: 23px;
+        stroke-width: 2.3;
+        width: 23px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        color: #6b7892;
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .intro {
+        background: var(--navy);
+        border-radius: 18px;
+        color: var(--white);
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1.35fr 2fr;
+        margin: 0 auto 26px;
+        max-width: 1400px;
+        overflow: hidden;
+        padding: 24px 28px;
+        position: relative;
+      }
+
+      .intro::after {
+        background: rgba(201, 243, 106, 0.14);
+        content: "";
+        height: 180px;
+        position: absolute;
+        right: -52px;
+        top: -74px;
+        transform: rotate(18deg);
+        width: 150px;
+      }
+
+      .intro h2 {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.3;
+        margin: 0;
+        max-width: 520px;
+      }
+
+      .intro p {
+        color: #d9e1f5;
+        font-size: 12px;
+        line-height: 1.7;
+        margin: 10px 0 0;
+        max-width: 640px;
+      }
+
+      .intro-points {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, 1fr);
+        position: relative;
+        z-index: 1;
+      }
+
+      .intro-point {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 13px 14px;
+      }
+
+      .intro-point b {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 11px;
+        gap: 7px;
+        margin-bottom: 6px;
+      }
+
+      .intro-point b svg {
+        height: 14px;
+        stroke-width: 2.4;
+        width: 14px;
+      }
+
+      .intro-point span {
+        color: #d9e1f5;
+        font-size: 10px;
+        line-height: 1.55;
+      }
+
+      .stage {
+        align-items: flex-start;
+        display: flex;
+        gap: 26px;
+        justify-content: center;
+      }
+
+      .concept {
+        width: 310px;
+      }
+
+      .concept-label {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin: 0 0 12px 14px;
+      }
+
+      .concept-number {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .concept-name {
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #0e152b;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 42px;
+        box-shadow: 0 28px 54px rgba(45, 66, 105, 0.27), 0 4px 12px rgba(45, 66, 105, 0.14);
+        height: 762px;
+        padding: 9px;
+        position: relative;
+        width: 310px;
+      }
+
+      .speaker {
+        background: #05091a;
+        border-radius: 999px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 16px;
+        transform: translateX(-50%);
+        width: 84px;
+        z-index: 10;
+      }
+
+      .screen {
+        background: var(--screen);
+        border-radius: 34px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 32px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 7px 22px 0;
+        position: relative;
+        z-index: 5;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 11px;
+        stroke-width: 2.5;
+        width: 11px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 58px;
+        justify-content: space-between;
+        padding: 8px 20px 10px;
+      }
+
+      .page-title {
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .page-meta {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+
+      .top-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        height: 36px;
+        justify-content: center;
+        padding: 0;
+        width: 36px;
+      }
+
+      .icon-button.primary {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--lime);
+      }
+
+      .icon-button svg {
+        height: 17px;
+        stroke-width: 2.3;
+        width: 17px;
+      }
+
+      .body {
+        flex: 1;
+        min-height: 0;
+        padding: 0 16px 14px;
+      }
+
+      .mode-switch {
+        background: #e9eef8;
+        border-radius: 13px;
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+      }
+
+      .mode {
+        align-items: center;
+        border-radius: 10px;
+        color: var(--muted);
+        display: flex;
+        flex: 1;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 6px;
+        justify-content: center;
+        min-height: 38px;
+      }
+
+      .mode svg {
+        height: 15px;
+        stroke-width: 2.3;
+        width: 15px;
+      }
+
+      .mode.active {
+        background: var(--white);
+        box-shadow: 0 3px 10px rgba(38, 54, 90, 0.08);
+        color: var(--blue);
+      }
+
+      .mode.friend-active {
+        background: var(--navy);
+        color: var(--white);
+      }
+
+      .hero-card {
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--white);
+        margin-top: 13px;
+        overflow: hidden;
+        padding: 15px 15px 13px;
+        position: relative;
+      }
+
+      .hero-card::after {
+        border: 16px solid rgba(201, 243, 106, 0.16);
+        border-radius: 50%;
+        content: "";
+        height: 88px;
+        position: absolute;
+        right: -28px;
+        top: -32px;
+        width: 88px;
+      }
+
+      .hero-top {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .hero-tag {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+      }
+
+      .hero-tag svg {
+        height: 13px;
+        stroke-width: 2.4;
+        width: 13px;
+      }
+
+      .hero-mini-board {
+        display: grid;
+        gap: 2px;
+        grid-template-columns: repeat(9, 5px);
+        grid-template-rows: repeat(10, 5px);
+        opacity: 0.92;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-mini-board i {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 2px;
+      }
+
+      .hero-mini-board i.red {
+        background: var(--coral);
+      }
+
+      .hero-mini-board i.black {
+        background: rgba(255, 255, 255, 0.82);
+      }
+
+      .hero-title {
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.35;
+        margin: 9px 0 3px;
+      }
+
+      .hero-sub {
+        color: #cdd7ee;
+        font-size: 9px;
+        line-height: 1.55;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 14px 2px 8px;
+      }
+
+      .section-head b {
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .section-head span {
+        color: var(--blue);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .difficulty-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .difficulty {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 34px 1fr auto;
+        min-height: 58px;
+        padding: 8px 11px;
+      }
+
+      .difficulty.selected {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(75, 107, 255, 0.1);
+      }
+
+      .difficulty-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: var(--blue);
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .difficulty-icon svg {
+        height: 16px;
+        stroke-width: 2.2;
+        width: 16px;
+      }
+
+      .difficulty-name {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .difficulty-desc {
+        color: var(--muted);
+        font-size: 9px;
+        margin-top: 3px;
+      }
+
+      .difficulty-check {
+        align-items: center;
+        background: var(--blue);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .difficulty-check svg {
+        height: 11px;
+        stroke-width: 3;
+        width: 11px;
+      }
+
+      .primary-action {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 13px;
+        color: var(--white);
+        display: flex;
+        font-size: 12px;
+        font-weight: 800;
+        gap: 8px;
+        justify-content: center;
+        margin-top: 12px;
+        min-height: 44px;
+        padding: 0 14px;
+        width: 100%;
+      }
+
+      .primary-action svg {
+        height: 16px;
+        stroke-width: 2.4;
+        width: 16px;
+      }
+
+      .hint-row {
+        color: var(--muted);
+        font-size: 9px;
+        margin-top: 8px;
+        text-align: center;
+      }
+
+      .invite-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        margin-top: 12px;
+        overflow: hidden;
+        padding: 12px;
+      }
+
+      .invite-head {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 10px;
+      }
+
+      .avatar {
+        background: #dde5f3;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        object-fit: cover;
+      }
+
+      .avatar-wrap {
+        flex: 0 0 auto;
+        position: relative;
+      }
+
+      .online-dot {
+        background: var(--green);
+        border: 2px solid var(--white);
+        border-radius: 50%;
+        bottom: 0;
+        height: 10px;
+        position: absolute;
+        right: 0;
+        width: 10px;
+      }
+
+      .invite-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .invite-name {
+        font-size: 11px;
+        font-weight: 800;
+        margin: 0;
+      }
+
+      .invite-note {
+        color: var(--muted);
+        font-size: 9px;
+        margin: 3px 0 0;
+      }
+
+      .invite-actions {
+        display: flex;
+        gap: 7px;
+      }
+
+      .invite-action {
+        align-items: center;
+        border: 0;
+        border-radius: 9px;
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        height: 30px;
+        justify-content: center;
+        padding: 0 11px;
+      }
+
+      .invite-action.accept {
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      .invite-action.ignore {
+        background: #edf1f8;
+        color: var(--muted);
+      }
+
+      .friend-list {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        overflow: hidden;
+      }
+
+      .friend-row {
+        align-items: center;
+        border-bottom: 1px solid #edf1f8;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 38px 1fr auto;
+        min-height: 56px;
+        padding: 7px 11px;
+      }
+
+      .friend-row:last-child {
+        border-bottom: 0;
+      }
+
+      .friend-row .avatar {
+        height: 36px;
+        width: 36px;
+      }
+
+      .friend-name {
+        font-size: 11px;
+        font-weight: 800;
+        margin: 0;
+      }
+
+      .friend-status {
+        color: var(--green);
+        font-size: 9px;
+        margin: 3px 0 0;
+      }
+
+      .friend-status.offline {
+        color: var(--muted);
+      }
+
+      .invite-button {
+        align-items: center;
+        background: var(--blue-soft);
+        border: 0;
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        height: 28px;
+        padding: 0 10px;
+      }
+
+      .room-box {
+        background: var(--navy);
+        border-radius: 13px;
+        color: var(--white);
+        margin-top: 12px;
+        padding: 13px;
+      }
+
+      .room-code-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .room-code {
+        color: var(--lime);
+        font-family: "Manrope", sans-serif;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 4px;
+      }
+
+      .room-copy {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 9px;
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+        padding: 7px 10px;
+      }
+
+      .room-copy svg {
+        height: 13px;
+        stroke-width: 2.4;
+        width: 13px;
+      }
+
+      .room-note {
+        color: #cdd7ee;
+        font-size: 9px;
+        line-height: 1.5;
+        margin: 9px 0 0;
+      }
+
+      .tabbar {
+        align-items: center;
+        background: var(--white);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 62px;
+        justify-content: space-around;
+        padding: 7px 18px 9px;
+      }
+
+      .tab {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 700;
+        gap: 4px;
+        min-width: 48px;
+      }
+
+      .tab svg {
+        height: 18px;
+        stroke-width: 2.1;
+        width: 18px;
+      }
+
+      .tab.active {
+        color: var(--blue);
+      }
+
+      .game-hud {
+        align-items: center;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1.25fr 1fr;
+        margin-bottom: 10px;
+      }
+
+      .player {
+        align-items: center;
+        display: flex;
+        gap: 7px;
+      }
+
+      .player.right {
+        flex-direction: row-reverse;
+      }
+
+      .player .avatar {
+        height: 28px;
+        width: 28px;
+      }
+
+      .player-name {
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .player-meta {
+        color: var(--muted);
+        font-size: 8px;
+        margin-top: 2px;
+      }
+
+      .turn-center {
+        text-align: center;
+      }
+
+      .turn-label {
+        align-items: center;
+        color: var(--ink);
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 5px;
+        justify-content: center;
+      }
+
+      .turn-label i {
+        background: var(--green);
+        border-radius: 50%;
+        height: 6px;
+        width: 6px;
+      }
+
+      .turn-meta {
+        color: var(--muted);
+        font-size: 8px;
+        margin-top: 3px;
+      }
+
+      .board-shell {
+        align-items: center;
+        background: #f0e5d2;
+        border: 1px solid #e2cfa9;
+        border-radius: 14px;
+        display: flex;
+        justify-content: center;
+        padding: 7px;
+      }
+
+      .xiangqi {
+        aspect-ratio: 9 / 10;
+        background-color: var(--wood);
+        border: 2px solid #7d5c2f;
+        border-radius: 3px;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(10, 1fr);
+        max-height: 458px;
+        max-width: 412px;
+        overflow: hidden;
+        position: relative;
+        width: 100%;
+      }
+
+      .xiangqi-board-svg {
+        height: 100%;
+        left: 0;
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        width: 100%;
+        z-index: 1;
+      }
+
+      .xiangqi-board-svg line,
+      .xiangqi-board-svg path {
+        fill: none;
+        stroke: #7d5c2f;
+        stroke-linecap: square;
+        stroke-width: 1.3;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .river {
+        color: rgba(125, 92, 47, 0.78);
+        font-family: "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        left: 50%;
+        letter-spacing: 6px;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+      }
+
+      .intersection {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+        position: absolute;
+        z-index: 3;
+      }
+
+      .piece {
+        align-items: center;
+        background: radial-gradient(circle at 34% 28%, #ffe9bd 0%, var(--wood) 62%, var(--wood-deep) 100%);
+        border: 1px solid #8a6634;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(66, 46, 20, 0.28), inset 0 -1px 1px rgba(255, 255, 255, 0.5);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        line-height: 1;
+        padding-top: 1px;
+        width: 26px;
+      }
+
+      .piece.red {
+        color: var(--red);
+      }
+
+      .piece.black {
+        color: var(--black);
+      }
+
+      .last-move-mark {
+        background: var(--lime);
+        border: 1px solid rgba(75, 107, 255, 0.35);
+        border-radius: 50%;
+        height: 26px;
+        opacity: 0.75;
+        position: absolute;
+        width: 26px;
+      }
+
+      .selected-ring {
+        border: 2px solid var(--blue);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(75, 107, 255, 0.18);
+        height: 27px;
+        position: absolute;
+        width: 27px;
+      }
+
+      .move-dot {
+        background: var(--blue);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(75, 107, 255, 0.4);
+        height: 8px;
+        position: absolute;
+        width: 8px;
+      }
+
+      .game-actions {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 11px;
+      }
+
+      .game-action {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: var(--ink);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+        justify-content: center;
+        min-height: 38px;
+      }
+
+      .game-action.primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: var(--white);
+      }
+
+      .game-action svg {
+        height: 14px;
+        stroke-width: 2.4;
+        width: 14px;
+      }
+
+      .result-banner {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 11px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .result-icon {
+        align-items: center;
+        background: #e6f8f1;
+        border-radius: 12px;
+        color: var(--green);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .result-icon svg {
+        height: 19px;
+        stroke-width: 2.2;
+        width: 19px;
+      }
+
+      .result-title {
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .result-sub {
+        color: var(--muted);
+        font-size: 9px;
+        margin-top: 3px;
+      }
+
+      .stats-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 10px;
+      }
+
+      .stat {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 10px 8px;
+        text-align: center;
+      }
+
+      .stat b {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .stat span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        margin-top: 4px;
+      }
+
+      .replay {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        margin-top: 11px;
+        overflow: hidden;
+      }
+
+      .replay-head {
+        align-items: center;
+        border-bottom: 1px solid #edf1f8;
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 12px;
+      }
+
+      .replay-head b {
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .replay-controls {
+        display: flex;
+        gap: 5px;
+      }
+
+      .replay-controls span {
+        align-items: center;
+        background: #edf1f8;
+        border-radius: 7px;
+        color: var(--ink);
+        display: flex;
+        height: 22px;
+        justify-content: center;
+        width: 22px;
+      }
+
+      .replay-controls svg {
+        height: 12px;
+        stroke-width: 2.5;
+        width: 12px;
+      }
+
+      .move-list {
+        display: grid;
+        gap: 0;
+        grid-template-columns: 1fr 1fr;
+        padding: 3px 8px 8px;
+      }
+
+      .move-row {
+        align-items: center;
+        display: grid;
+        font-size: 9px;
+        gap: 6px;
+        grid-template-columns: 20px 1fr 1fr;
+        min-height: 27px;
+        padding: 3px 6px;
+      }
+
+      .move-row.current {
+        background: var(--blue-soft);
+        border-radius: 8px;
+      }
+
+      .move-no {
+        color: var(--muted);
+        font-family: "Manrope", sans-serif;
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .move-red {
+        color: var(--red);
+        font-weight: 800;
+      }
+
+      .move-black {
+        color: var(--black);
+        font-weight: 800;
+      }
+
+      .mini-row {
+        color: var(--muted);
+        font-size: 8px;
+        margin-top: 6px;
+        text-align: center;
+      }
+
+      .arch-strip {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, 1fr);
+        margin: 30px auto 0;
+        max-width: 1400px;
+      }
+
+      .arch-card {
+        background: var(--navy);
+        border-radius: 14px;
+        color: var(--white);
+        padding: 15px 16px;
+        position: relative;
+      }
+
+      .arch-card::before {
+        background: var(--lime);
+        content: "";
+        height: 4px;
+        left: 16px;
+        position: absolute;
+        top: 0;
+        width: 38px;
+      }
+
+      .arch-card b {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 11px;
+        gap: 7px;
+        margin-bottom: 7px;
+      }
+
+      .arch-card b svg {
+        height: 14px;
+        stroke-width: 2.4;
+        width: 14px;
+      }
+
+      .arch-card p {
+        color: #d7e0f2;
+        font-size: 10px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .arch-card code {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: #e8eefb;
+        display: block;
+        font-family: "Manrope", monospace;
+        font-size: 9px;
+        margin-top: 8px;
+        padding: 6px 8px;
+      }
+
+      @media (max-width: 1180px) {
+        .board {
+          overflow-x: auto;
+          width: auto;
+        }
+
+        .stage {
+          width: 1120px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="chess-king"></i></div>
+          <div>
+            <h1 class="board-title">FunBox Xiangqi</h1>
+            <p class="board-subtitle">人机对战 + 好友实时对战 · 移动端产品概念</p>
+          </div>
+        </div>
+        <div class="version">PRODUCT DESIGN · V1.0</div>
+      </header>
+
+      <section class="intro">
+        <div>
+          <h2>30 秒开始一局棋，输赢都留得下来</h2>
+          <p>
+            轻量双模式：人机三档难度随时练习，好友邀请与 6 位房号快速开黑。棋盘为绝对主角，
+            将死、困毙、认输和棋全部由服务端权威判定，断线重连后局面自动恢复。
+          </p>
+        </div>
+        <div class="intro-points">
+          <div class="intro-point">
+            <b><i data-lucide="brain-circuit"></i>三档 AI</b>
+            <span>新手、棋友、高手，支持悔棋和提示一手。</span>
+          </div>
+          <div class="intro-point">
+            <b><i data-lucide="users-round"></i>好友实时对战</b>
+            <span>邀请、房号、实时同步、断线恢复。</span>
+          </div>
+          <div class="intro-point">
+            <b><i data-lucide="scroll-text"></i>棋谱沉淀</b>
+            <span>自动保存对局，可回放、可分享战绩。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">01</span>
+            <span class="concept-name">象棋首页</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <div>
+                  <h2 class="page-title">象棋</h2>
+                  <div class="page-meta">3 位好友在线</div>
+                </div>
+                <div class="top-actions">
+                  <button class="icon-button" aria-label="战绩"><i data-lucide="trophy"></i></button>
+                  <button class="icon-button primary" aria-label="设置"><i data-lucide="settings"></i></button>
+                </div>
+              </header>
+
+              <div class="body">
+                <div class="mode-switch">
+                  <div class="mode active"><i data-lucide="bot"></i>人机对战</div>
+                  <div class="mode"><i data-lucide="users-round"></i>好友对战</div>
+                </div>
+
+                <div class="hero-card">
+                  <div class="hero-top">
+                    <span class="hero-tag"><i data-lucide="sparkles"></i>今日推荐</span>
+                    <span class="hero-tag">新手 · 轻松</span>
+                  </div>
+                  <div class="hero-mini-board" aria-hidden="true">
+                    <i class="black"></i><i class="black"></i><i class="black"></i><i class="black"></i><i class="black"></i><i class="black"></i><i class="black"></i><i class="black"></i><i class="black"></i>
+                    <i></i><i></i><i></i><i class="black"></i><i></i><i class="black"></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i></i><i class="black"></i><i></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i></i><i class="red"></i><i></i><i></i><i></i><i></i>
+                    <i></i><i></i><i></i><i class="red"></i><i></i><i class="red"></i><i></i><i></i><i></i>
+                    <i class="red"></i><i class="red"></i><i class="red"></i><i class="red"></i><i class="red"></i><i class="red"></i><i class="red"></i><i class="red"></i><i class="red"></i>
+                  </div>
+                  <div class="hero-title">今天和 AI 下一盘</div>
+                  <div class="hero-sub">选择难度后直接开局，未登录也可以玩。</div>
+                </div>
+
+                <div class="section-head">
+                  <b>选择 AI 难度</b>
+                  <span>随时可切换</span>
+                </div>
+                <div class="difficulty-list">
+                  <div class="difficulty selected">
+                    <div class="difficulty-icon"><i data-lucide="leaf"></i></div>
+                    <div>
+                      <div class="difficulty-name">新手</div>
+                      <div class="difficulty-desc">熟悉规则，会主动吃子但经常失误</div>
+                    </div>
+                    <span class="difficulty-check"><i data-lucide="check"></i></span>
+                  </div>
+                  <div class="difficulty">
+                    <div class="difficulty-icon"><i data-lucide="zap"></i></div>
+                    <div>
+                      <div class="difficulty-name">棋友</div>
+                      <div class="difficulty-desc">重视子力价值，攻守均衡</div>
+                    </div>
+                  </div>
+                  <div class="difficulty">
+                    <div class="difficulty-icon"><i data-lucide="flame"></i></div>
+                    <div>
+                      <div class="difficulty-name">高手</div>
+                      <div class="difficulty-desc">多层搜索，优先制造连续威胁</div>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="primary-action"><i data-lucide="play"></i>开始对局 · 红方先行</button>
+                <div class="hint-row">支持悔棋与提示一手 · 默认红方先行</div>
+              </div>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab active"><i data-lucide="grid-2x2"></i><span>游戏</span></div>
+                <div class="tab"><i data-lucide="message-circle"></i><span>消息</span></div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">02</span>
+            <span class="concept-name">好友大厅</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <div>
+                  <h2 class="page-title">好友对战</h2>
+                  <div class="page-meta">邀请制 · 房号加入</div>
+                </div>
+                <button class="icon-button primary" aria-label="创建房间"><i data-lucide="plus"></i></button>
+              </header>
+
+              <div class="body">
+                <div class="mode-switch">
+                  <div class="mode"><i data-lucide="bot"></i>人机对战</div>
+                  <div class="mode friend-active"><i data-lucide="users-round"></i>好友对战</div>
+                </div>
+
+                <div class="invite-card">
+                  <div class="invite-head">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                      <span class="online-dot"></span>
+                    </div>
+                    <div class="invite-copy">
+                      <p class="invite-name">林溪 邀请你下象棋</p>
+                      <p class="invite-note">红方先行 · 5 分钟内有效</p>
+                    </div>
+                  </div>
+                  <div class="invite-actions">
+                    <button class="invite-action ignore">拒绝</button>
+                    <button class="invite-action accept">接受</button>
+                  </div>
+                </div>
+
+                <div class="section-head">
+                  <b>在线好友</b>
+                  <span>3 / 8 在线</span>
+                </div>
+                <div class="friend-list">
+                  <div class="friend-row">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=12" alt="阿泽" />
+                      <span class="online-dot"></span>
+                    </div>
+                    <div>
+                      <p class="friend-name">阿泽</p>
+                      <p class="friend-status">在线 · 刚下完一局</p>
+                    </div>
+                    <button class="invite-button">邀请</button>
+                  </div>
+                  <div class="friend-row">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=32" alt="一楠" />
+                      <span class="online-dot"></span>
+                    </div>
+                    <div>
+                      <p class="friend-name">一楠</p>
+                      <p class="friend-status">在线 · 空闲</p>
+                    </div>
+                    <button class="invite-button">邀请</button>
+                  </div>
+                  <div class="friend-row">
+                    <div class="avatar-wrap">
+                      <img class="avatar" src="https://i.pravatar.cc/120?img=5" alt="周小满" />
+                      <span class="online-dot"></span>
+                    </div>
+                    <div>
+                      <p class="friend-name">周小满</p>
+                      <p class="friend-status">在线 · 空闲</p>
+                    </div>
+                    <button class="invite-button">邀请</button>
+                  </div>
+                  <div class="friend-row">
+                    <img class="avatar" src="https://i.pravatar.cc/120?img=15" alt="陈一" />
+                    <div>
+                      <p class="friend-name">陈一</p>
+                      <p class="friend-status offline">离线 · 最近 2 小时前</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="room-box">
+                  <div class="room-code-row">
+                    <span style="font-size:10px;font-weight:800;color:#cdd7ee">房间号</span>
+                    <span class="room-code">582 917</span>
+                    <button class="room-copy"><i data-lucide="copy"></i>复制</button>
+                  </div>
+                  <p class="room-note">把 6 位房号发给好友，对方输入后即可加入。房号 5 分钟内有效。</p>
+                </div>
+              </div>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab active"><i data-lucide="grid-2x2"></i><span>游戏</span></div>
+                <div class="tab"><i data-lucide="message-circle"></i><span>消息</span></div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">03</span>
+            <span class="concept-name">对局中</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar" style="flex-basis: 50px">
+                <button class="icon-button" aria-label="返回"><i data-lucide="arrow-left"></i></button>
+                <div style="text-align:center">
+                  <div class="page-title" style="font-size:16px">好友对战</div>
+                  <div class="page-meta" style="font-size:8px">第 2 局 · 实时同步</div>
+                </div>
+                <button class="icon-button" aria-label="更多"><i data-lucide="ellipsis"></i></button>
+              </header>
+
+              <div class="body" style="padding-bottom: 8px">
+                <div class="game-hud">
+                  <div class="player right">
+                    <img class="avatar" src="https://i.pravatar.cc/120?img=47" alt="林溪" />
+                    <div style="text-align:right">
+                      <div class="player-name">林溪</div>
+                      <div class="player-meta">黑方 · 思考中</div>
+                    </div>
+                  </div>
+                  <div class="turn-center">
+                    <div class="turn-label"><i></i>轮到你</div>
+                    <div class="turn-meta">红方第 14 手</div>
+                  </div>
+                  <div class="player">
+                    <img class="avatar" src="https://i.pravatar.cc/120?img=11" alt="我" />
+                    <div>
+                      <div class="player-name">我</div>
+                      <div class="player-meta">红方 · 帅 3 兵 1 炮 1</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="board-shell">
+                  <div class="xiangqi" id="demo-board"></div>
+                </div>
+
+                <div class="game-actions">
+                  <button class="game-action"><i data-lucide="undo-2"></i>悔棋</button>
+                  <button class="game-action primary"><i data-lucide="lightbulb"></i>提示一手</button>
+                  <button class="game-action"><i data-lucide="flag"></i>认输</button>
+                </div>
+                <div class="mini-row">好友对局不提供悔棋，认输后自动结算战绩</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="concept">
+          <div class="concept-label">
+            <span class="concept-number">04</span>
+            <span class="concept-name">结算与复盘</span>
+          </div>
+          <div class="phone">
+            <div class="speaker"></div>
+            <div class="screen">
+              <div class="status-bar">
+                <span>9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <header class="topbar">
+                <div>
+                  <h2 class="page-title">本局结束</h2>
+                  <div class="page-meta">对局已自动保存</div>
+                </div>
+                <button class="icon-button" aria-label="分享"><i data-lucide="share-2"></i></button>
+              </header>
+
+              <div class="body">
+                <div class="result-banner">
+                  <div class="result-icon"><i data-lucide="trophy"></i></div>
+                  <div>
+                    <div class="result-title">你赢了这局</div>
+                    <div class="result-sub">红方第 28 手将死 · 黑方认输未发生</div>
+                  </div>
+                </div>
+
+                <div class="stats-grid">
+                  <div class="stat"><b>32</b><span>总步数</span></div>
+                  <div class="stat"><b>6:42</b><span>本局用时</span></div>
+                  <div class="stat"><b>4</b><span>吃子</span></div>
+                </div>
+
+                <button class="primary-action"><i data-lucide="rotate-ccw"></i>再来一局 · 交换先后手</button>
+
+                <div class="replay">
+                  <div class="replay-head">
+                    <b>棋谱回放</b>
+                    <div class="replay-controls">
+                      <span><i data-lucide="skip-back"></i></span>
+                      <span><i data-lucide="play"></i></span>
+                      <span><i data-lucide="skip-forward"></i></span>
+                    </div>
+                  </div>
+                  <div class="move-list">
+                    <div class="move-row">
+                      <span class="move-no">1</span>
+                      <span class="move-red">炮二平五</span>
+                      <span class="move-black">馬8進7</span>
+                    </div>
+                    <div class="move-row">
+                      <span class="move-no">2</span>
+                      <span class="move-red">馬二進三</span>
+                      <span class="move-black">卒3進1</span>
+                    </div>
+                    <div class="move-row">
+                      <span class="move-no">3</span>
+                      <span class="move-red">車一平二</span>
+                      <span class="move-black">車9平8</span>
+                    </div>
+                    <div class="move-row current">
+                      <span class="move-no">4</span>
+                      <span class="move-red">炮八進四</span>
+                      <span class="move-black">炮2進4</span>
+                    </div>
+                    <div class="move-row">
+                      <span class="move-no">5</span>
+                      <span class="move-red">兵三進一</span>
+                      <span class="move-black">象3進5</span>
+                    </div>
+                    <div class="move-row">
+                      <span class="move-no">6</span>
+                      <span class="move-red">馬三進四</span>
+                      <span class="move-black">卒3進1</span>
+                    </div>
+                    <div class="move-row">
+                      <span class="move-no">7</span>
+                      <span class="move-red">兵七進一</span>
+                      <span class="move-black">卒3進1</span>
+                    </div>
+                    <div class="move-row">
+                      <span class="move-no">8</span>
+                      <span class="move-red">馬四進六</span>
+                      <span class="move-black">車1平4</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="mini-row">支持自动播放 · 点击任意一手回到对应局面</div>
+              </div>
+
+              <nav class="tabbar">
+                <div class="tab"><i data-lucide="house"></i><span>首页</span></div>
+                <div class="tab active"><i data-lucide="grid-2x2"></i><span>游戏</span></div>
+                <div class="tab"><i data-lucide="message-circle"></i><span>消息</span></div>
+                <div class="tab"><i data-lucide="circle-user-round"></i><span>我的</span></div>
+              </nav>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="arch-strip">
+        <div class="arch-card">
+          <b><i data-lucide="move-3d"></i>走法模型扩展</b>
+          <p>通用对局模型从“放置式”扩展为“走子式”，新增 from/to 坐标，五子棋旧数据保持兼容。</p>
+          <code>GameMoveInput{From, To}</code>
+        </div>
+        <div class="arch-card">
+          <b><i data-lucide="shield-check"></i>服务端权威校验</b>
+          <p>象棋适配器校验走法、将军、将死、困毙与自然限着；好友对局不信任客户端结果。</p>
+          <code>xiangqi-adapter</code>
+        </div>
+        <div class="arch-card">
+          <b><i data-lucide="gauge"></i>三档 AI</b>
+          <p>新手随机合法走法、棋友子力贪心、高手 alpha-beta 搜索；高手单步目标 2 秒内。</p>
+          <code>web-worker</code>
+        </div>
+        <div class="arch-card">
+          <b><i data-lucide="radio-tower"></i>实时与恢复</b>
+          <p>沿用 WebSocket 事件做即时刷新，REST 为权威状态；断线重连全量拉取局面。</p>
+          <code>game.match.*</code>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      lucide.createIcons();
+
+      (function buildDemoBoard() {
+        var board = document.getElementById('demo-board');
+        if (!board) return;
+
+        var red = [
+          ['車', 0, 9], ['馬', 1, 9], ['相', 2, 9], ['仕', 3, 9], ['帥', 4, 9],
+          ['仕', 5, 9], ['相', 6, 9], ['馬', 7, 9], ['車', 8, 9],
+          ['炮', 1, 7], ['炮', 7, 7],
+          ['兵', 0, 6], ['兵', 2, 6], ['兵', 4, 6], ['兵', 6, 6], ['兵', 8, 6],
+          ['炮', 5, 5]
+        ];
+        var black = [
+          ['車', 0, 0], ['馬', 1, 0], ['相', 2, 0], ['仕', 3, 0], ['將', 4, 0],
+          ['仕', 5, 0], ['相', 6, 0], ['馬', 7, 0], ['車', 8, 0],
+          ['砲', 1, 2], ['砲', 7, 2],
+          ['卒', 0, 3], ['卒', 2, 3], ['卒', 4, 3], ['卒', 6, 3], ['卒', 8, 3],
+          ['卒', 4, 4]
+        ];
+
+        var selected = { x: 4, y: 7 };
+        var lastMove = { x: 5, y: 6 };
+        var moveDots = [{ x: 4, y: 8 }, { x: 6, y: 8 }];
+
+        function xOf(c) {
+          return (c / 8) * 100;
+        }
+
+        function yOf(r) {
+          return (r / 9) * 100;
+        }
+
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 9 10');
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.setAttribute('class', 'xiangqi-board-svg');
+        svg.setAttribute('aria-hidden', 'true');
+
+        var paths = [];
+        var i;
+        var j;
+
+        for (i = 0; i < 10; i++) {
+          if (i === 4 || i === 5) continue;
+          paths.push('M0 ' + i + ' L9 ' + i);
+        }
+        for (j = 0; j < 9; j++) {
+          paths.push('M' + j + ' 0 L' + j + ' 10');
+        }
+        paths.push('M0 4 L9 4 M0 5 L9 5');
+        paths.push('M0.5 0.5 L3.5 2.5 L0.5 4.5 Z');
+        paths.push('M8.5 0.5 L5.5 2.5 L8.5 4.5 Z');
+        paths.push('M0.5 9.5 L3.5 7.5 L0.5 5.5 Z');
+        paths.push('M8.5 9.5 L5.5 7.5 L8.5 5.5 Z');
+
+        var pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathEl.setAttribute('d', paths.join(' '));
+        svg.appendChild(pathEl);
+        board.appendChild(svg);
+
+        var river = document.createElement('span');
+        river.className = 'river';
+        river.textContent = '楚 河 · 漢 界';
+        board.appendChild(river);
+
+        function addIntersection(x, y, marker) {
+          var el = document.createElement('div');
+          el.className = 'intersection';
+          el.style.left = xOf(x) + '%';
+          el.style.top = yOf(y) + '%';
+          el.style.transform = 'translate(-50%, -50%)';
+          if (marker) el.appendChild(marker);
+          board.appendChild(el);
+          return el;
+        }
+
+        function addPiece(character, color, x, y) {
+          var piece = document.createElement('span');
+          piece.className = 'piece ' + color;
+          piece.textContent = character;
+          addIntersection(x, y, piece);
+        }
+
+        red.forEach(function (item) {
+          addPiece(item[0], 'red', item[1], item[2]);
+        });
+        black.forEach(function (item) {
+          addPiece(item[0], 'black', item[1], item[2]);
+        });
+
+        var ring = document.createElement('span');
+        ring.className = 'selected-ring';
+        addIntersection(selected.x, selected.y, ring);
+
+        var lastMark = document.createElement('span');
+        lastMark.className = 'last-move-mark';
+        addIntersection(lastMove.x, lastMove.y, lastMark);
+
+        moveDots.forEach(function (dot) {
+          var dotEl = document.createElement('span');
+          dotEl.className = 'move-dot';
+          addIntersection(dot.x, dot.y, dotEl);
+        });
+      })();
+    </script>
+  </body>
+</html>
