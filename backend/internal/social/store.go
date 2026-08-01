@@ -28,6 +28,7 @@ var (
 
 type UserSummary struct {
 	ID          string
+	Role        string
 	Username    string
 	DisplayName string
 	AvatarFile  string
@@ -175,7 +176,7 @@ func (s *Store) SearchUsers(ctx context.Context, currentUserID string, query str
 
 	rows, err := s.db.QueryContext(
 		ctx,
-		`SELECT id, username, display_name, avatar_file
+		`SELECT id, username, display_name, avatar_file, role
 		 FROM users
 		 WHERE id <> ?
 		   AND (LOWER(username) LIKE ? ESCAPE '\' OR LOWER(display_name) LIKE ? ESCAPE '\')
@@ -195,7 +196,13 @@ func (s *Store) SearchUsers(ctx context.Context, currentUserID string, query str
 	result := make([]UserSummary, 0)
 	for rows.Next() {
 		var account UserSummary
-		if err := rows.Scan(&account.ID, &account.Username, &account.DisplayName, &account.AvatarFile); err != nil {
+		if err := rows.Scan(
+			&account.ID,
+			&account.Username,
+			&account.DisplayName,
+			&account.AvatarFile,
+			&account.Role,
+		); err != nil {
 			return nil, fmt.Errorf("scan searched user: %w", err)
 		}
 		result = append(result, account)
@@ -418,7 +425,7 @@ func (s *Store) RespondToFriendRequest(
 func (s *Store) ListFriends(ctx context.Context, userID string) ([]Friend, error) {
 	rows, err := s.db.QueryContext(
 		ctx,
-		`SELECT u.id, u.username, u.display_name, u.avatar_file, f.created_at
+		`SELECT u.id, u.username, u.display_name, u.avatar_file, u.role, f.created_at
 		 FROM friendships f
 		 JOIN users u ON u.id = CASE
 		   WHEN f.user_one_id = ? THEN f.user_two_id ELSE f.user_one_id END
@@ -442,6 +449,7 @@ func (s *Store) ListFriends(ctx context.Context, userID string) ([]Friend, error
 			&friend.User.Username,
 			&friend.User.DisplayName,
 			&friend.User.AvatarFile,
+			&friend.User.Role,
 			&createdAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan friend: %w", err)
@@ -469,7 +477,7 @@ func (s *Store) ListConversations(ctx context.Context, userID string) ([]Convers
 		ctx,
 		`SELECT
 		   c.id, c.updated_at,
-		   u.id, u.username, u.display_name, u.avatar_file,
+		   u.id, u.username, u.display_name, u.avatar_file, u.role,
 		   lm.id, lm.sender_id, lm.client_message_id, lm.body, lm.created_at,
 		   CASE WHEN lm.id IS NULL THEN 0 ELSE
 		     COALESCE((SELECT MAX(cr.last_read_at) >= lm.created_at
@@ -765,8 +773,8 @@ func conversationPeerFrom(row rowScanner, userID string) (string, error) {
 
 const friendRequestSelect = `SELECT
 	fr.id, fr.status, fr.created_at, fr.updated_at,
-	sender.id, sender.username, sender.display_name, sender.avatar_file,
-	recipient.id, recipient.username, recipient.display_name, recipient.avatar_file
+	sender.id, sender.username, sender.display_name, sender.avatar_file, sender.role,
+	recipient.id, recipient.username, recipient.display_name, recipient.avatar_file, recipient.role
 	FROM friend_requests fr
 	JOIN users sender ON sender.id = fr.sender_id
 	JOIN users recipient ON recipient.id = fr.recipient_id`
@@ -784,10 +792,12 @@ func scanFriendRequest(row rowScanner) (FriendRequest, error) {
 		&request.Sender.Username,
 		&request.Sender.DisplayName,
 		&request.Sender.AvatarFile,
+		&request.Sender.Role,
 		&request.Recipient.ID,
 		&request.Recipient.Username,
 		&request.Recipient.DisplayName,
 		&request.Recipient.AvatarFile,
+		&request.Recipient.Role,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return FriendRequest{}, ErrNotFound
@@ -816,6 +826,7 @@ func scanConversation(row rowScanner) (Conversation, error) {
 		&conversation.Peer.Username,
 		&conversation.Peer.DisplayName,
 		&conversation.Peer.AvatarFile,
+		&conversation.Peer.Role,
 		&messageID,
 		&senderID,
 		&clientMessageID,

@@ -2,6 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
+import { IdentityPill } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { SocialAvatar, SocialEmptyState } from '@/features/social/social-ui';
@@ -78,9 +79,14 @@ export function MessagesScreen() {
             {onlineFriends.map((friend) => (
               <View key={friend.user.id} style={styles.onlinePerson}>
                 <SocialAvatar showOnline size={42} user={friend.user} />
-                <ThemedText numberOfLines={1} style={styles.onlineName}>
-                  {friend.user.displayName}
-                </ThemedText>
+                <View style={styles.onlineNameRow}>
+                  <ThemedText numberOfLines={1} style={styles.onlineName}>
+                    {friend.user.displayName}
+                  </ThemedText>
+                  {isPublicMemberRole(friend.user.role) ? (
+                    <IdentityPill compact role={friend.user.role} />
+                  ) : null}
+                </View>
               </View>
             ))}
           </View>
@@ -146,9 +152,14 @@ function ConversationRow({ conversation, onPress }: { conversation: Conversation
       ]}>
       <SocialAvatar showOnline size={48} user={conversation.peer} />
       <View style={styles.conversationCopy}>
-        <ThemedText numberOfLines={1} style={styles.conversationName}>
-          {conversation.peer.displayName}
-        </ThemedText>
+        <View style={styles.conversationNameRow}>
+          <ThemedText numberOfLines={1} style={styles.conversationName}>
+            {conversation.peer.displayName}
+          </ThemedText>
+          {isPublicMemberRole(conversation.peer.role) ? (
+            <IdentityPill compact role={conversation.peer.role} />
+          ) : null}
+        </View>
         <ThemedText
           numberOfLines={1}
           style={[
@@ -186,6 +197,10 @@ function formatConversationTime(value: string) {
   return date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
 }
 
+function isPublicMemberRole(role: Conversation['peer']['role']): role is 'vip' | 'svip' {
+  return role === 'vip' || role === 'svip';
+}
+
 const styles = StyleSheet.create({
   addButton: {
     alignItems: 'center',
@@ -200,9 +215,16 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   conversationName: {
+    flexShrink: 1,
     fontSize: 14,
     fontWeight: '800',
     lineHeight: 20,
+  },
+  conversationNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+    minWidth: 0,
   },
   conversationPanel: {
     marginHorizontal: -16,
@@ -278,9 +300,17 @@ const styles = StyleSheet.create({
   },
   onlineName: {
     color: '#ffffff',
+    flexShrink: 1,
     fontSize: 10,
-    maxWidth: 52,
+    maxWidth: 36,
     textAlign: 'center',
+  },
+  onlineNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 3,
+    maxWidth: 66,
+    minWidth: 0,
   },
   onlinePeople: {
     flexDirection: 'row',
@@ -290,7 +320,7 @@ const styles = StyleSheet.create({
   onlinePerson: {
     alignItems: 'center',
     gap: 6,
-    width: 48,
+    width: 60,
   },
   onlinePulse: {
     backgroundColor: '#c9f36a',

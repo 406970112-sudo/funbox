@@ -35,7 +35,8 @@ type RecentUsageDisplayItem = {
 export function ProfileScreen() {
   const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
-  const { refreshUser, signOut, status, user } = useAuth();
+  const { clearIdentityChangeNotice, identityChangeNotice, refreshUser, signOut, status, user } =
+    useAuth();
   const { visibleTools } = useFeatureAccess();
   const [recentUsage, setRecentUsage] = useState<RecentUsageItem[]>([]);
   const isAuthenticated = status === 'authenticated' && user !== null;
@@ -173,6 +174,27 @@ export function ProfileScreen() {
           </>
         )}
       </View>
+
+      {isAuthenticated && identityChangeNotice ? (
+        <View
+          style={[
+            styles.identityNotice,
+            { backgroundColor: colors.primarySoft, borderColor: colors.primary },
+          ]}>
+          <MaterialCommunityIcons name="information-outline" size={18} color={colors.primary} />
+          <ThemedText style={[styles.identityNoticeText, { color: colors.primary }]}>
+            你的身份已更新为{identityChangeNotice}
+          </ThemedText>
+          <Pressable
+            accessibilityLabel="关闭身份变更提示"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={clearIdentityChangeNotice}
+            style={styles.identityNoticeClose}>
+            <MaterialCommunityIcons name="close" size={16} color={colors.mutedText} />
+          </Pressable>
+        </View>
+      ) : null}
 
       {isAuthenticated ? (
         <IdentityCard
@@ -356,6 +378,28 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: 22,
     position: 'relative',
+  },
+  identityNotice: {
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 9,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  identityNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
+  },
+  identityNoticeClose: {
+    alignItems: 'center',
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
   },
   heroAccentBack: {
     backgroundColor: 'rgba(75,107,255,0.32)',

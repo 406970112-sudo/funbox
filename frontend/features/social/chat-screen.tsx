@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { IdentityPill } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { SocialAvatar, SocialEmptyState } from '@/features/social/social-ui';
@@ -24,6 +25,7 @@ import {
   listMessages,
 } from '@/lib/social-api';
 import type { SocialMessage } from '@/types/social';
+import type { Conversation } from '@/types/social';
 
 export function ChatScreen() {
   const router = useRouter();
@@ -136,9 +138,14 @@ export function ChatScreen() {
           </Pressable>
           <SocialAvatar size={40} user={conversation.peer} />
           <View style={styles.headerCopy}>
-            <ThemedText numberOfLines={1} style={styles.chatName}>
-              {conversation.peer.displayName}
-            </ThemedText>
+            <View style={styles.headerNameRow}>
+              <ThemedText numberOfLines={1} style={styles.chatName}>
+                {conversation.peer.displayName}
+              </ThemedText>
+              {isPublicMemberRole(conversation.peer.role) ? (
+                <IdentityPill compact role={conversation.peer.role} />
+              ) : null}
+            </View>
             <View style={styles.presenceRow}>
               <View
                 style={[
@@ -291,6 +298,10 @@ function isSameDay(first: string, second: string) {
   return new Date(first).toDateString() === new Date(second).toDateString();
 }
 
+function isPublicMemberRole(role: Conversation['peer']['role']): role is 'vip' | 'svip' {
+  return role === 'vip' || role === 'svip';
+}
+
 const styles = StyleSheet.create({
   backButton: {
     alignItems: 'flex-start',
@@ -358,9 +369,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chatName: {
+    flexShrink: 1,
     fontSize: 14,
     fontWeight: '900',
     lineHeight: 19,
+  },
+  headerNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+    minWidth: 0,
   },
   composer: {
     alignItems: 'center',

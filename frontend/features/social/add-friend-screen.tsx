@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { IdentityPill } from '@/components/identity-ui';
 import { SocialAvatar } from '@/features/social/social-ui';
 import { useSocial } from '@/features/social/social-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -153,9 +154,14 @@ export function AddFriendScreen() {
                 <View pointerEvents="none" style={styles.resultAccent} />
                 <SocialAvatar showOnline size={48} user={user} />
                 <View style={styles.resultCopy}>
-                  <ThemedText numberOfLines={1} style={styles.resultName}>
-                    {user.displayName}
-                  </ThemedText>
+                  <View style={styles.resultNameRow}>
+                    <ThemedText numberOfLines={1} style={styles.resultName}>
+                      {user.displayName}
+                    </ThemedText>
+                    {isPublicMemberRole(user.role) ? (
+                      <IdentityPill compact role={user.role} />
+                    ) : null}
+                  </View>
                   <ThemedText numberOfLines={1} style={styles.resultUsername}>
                     @{user.username}
                   </ThemedText>
@@ -205,9 +211,14 @@ export function AddFriendScreen() {
               <View key={request.id} style={[styles.requestRow, { borderBottomColor: colors.line }]}>
                 <SocialAvatar showOnline size={44} user={request.sender} />
                 <View style={styles.requestCopy}>
-                  <ThemedText numberOfLines={1} style={styles.requestName}>
-                    {request.sender.displayName}
-                  </ThemedText>
+                  <View style={styles.requestNameRow}>
+                    <ThemedText numberOfLines={1} style={styles.requestName}>
+                      {request.sender.displayName}
+                    </ThemedText>
+                    {isPublicMemberRole(request.sender.role) ? (
+                      <IdentityPill compact role={request.sender.role} />
+                    ) : null}
+                  </View>
                   <ThemedText style={[styles.requestNote, { color: colors.mutedText }]}>
                     @{request.sender.username}
                   </ThemedText>
@@ -250,7 +261,12 @@ export function AddFriendScreen() {
             <View key={request.id} style={[styles.sentRow, { borderBottomColor: colors.line }]}>
               <SocialAvatar size={40} user={request.recipient} />
               <View style={styles.requestCopy}>
-                <ThemedText style={styles.requestName}>{request.recipient.displayName}</ThemedText>
+                <View style={styles.requestNameRow}>
+                  <ThemedText style={styles.requestName}>{request.recipient.displayName}</ThemedText>
+                  {isPublicMemberRole(request.recipient.role) ? (
+                    <IdentityPill compact role={request.recipient.role} />
+                  ) : null}
+                </View>
                 <ThemedText style={[styles.requestNote, { color: colors.mutedText }]}>
                   @{request.recipient.username}
                 </ThemedText>
@@ -264,6 +280,10 @@ export function AddFriendScreen() {
       </View>
     </MobileScreen>
   );
+}
+
+function isPublicMemberRole(role: SocialUser['role']): role is 'vip' | 'svip' {
+  return role === 'vip' || role === 'svip';
 }
 
 const styles = StyleSheet.create({
@@ -357,9 +377,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   requestName: {
+    flexShrink: 1,
     fontSize: 13,
     fontWeight: '800',
     lineHeight: 18,
+  },
+  requestNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+    minWidth: 0,
   },
   requestNote: {
     fontSize: 10,
@@ -408,9 +435,16 @@ const styles = StyleSheet.create({
   },
   resultName: {
     color: '#ffffff',
+    flexShrink: 1,
     fontSize: 14,
     fontWeight: '900',
     lineHeight: 19,
+  },
+  resultNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+    minWidth: 0,
   },
   results: {
     gap: 8,

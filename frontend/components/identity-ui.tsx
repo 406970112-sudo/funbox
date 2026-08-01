@@ -6,7 +6,15 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 import { identityPresentation } from '@/lib/identity';
 import type { UserRole } from '@/types/access';
 
-export function IdentityPill({ onDark = false, role }: { onDark?: boolean; role: UserRole }) {
+export function IdentityPill({
+  compact = false,
+  onDark = false,
+  role,
+}: {
+  compact?: boolean;
+  onDark?: boolean;
+  role: UserRole;
+}) {
   const { colorScheme } = useAppTheme();
   const item = identityPresentation(role, colorScheme);
   const solidAdmin = !onDark && role === 'admin';
@@ -18,9 +26,11 @@ export function IdentityPill({ onDark = false, role }: { onDark?: boolean; role:
   return (
     <View
       accessibilityLabel={`身份：${item.label}`}
-      style={[styles.pill, { backgroundColor, borderColor }]}>
-      <MaterialCommunityIcons name={item.icon} size={12} color={iconColor} />
-      <ThemedText style={[styles.pillText, { color: textColor }]}>{item.label}</ThemedText>
+      style={[styles.pill, compact && styles.pillCompact, { backgroundColor, borderColor }]}>
+      <MaterialCommunityIcons name={item.icon} size={compact ? 9 : 12} color={iconColor} />
+      <ThemedText style={[styles.pillText, compact && styles.pillTextCompact, { color: textColor }]}>
+        {item.label}
+      </ThemedText>
     </View>
   );
 }
@@ -177,6 +187,15 @@ const styles = StyleSheet.create({
   pillText: {
     fontSize: 10,
     fontWeight: '900',
+  },
+  pillCompact: {
+    borderRadius: 5,
+    gap: 3,
+    minHeight: 16,
+    paddingHorizontal: 5,
+  },
+  pillTextCompact: {
+    fontSize: 8,
   },
   avatarBadge: {
     alignItems: 'center',

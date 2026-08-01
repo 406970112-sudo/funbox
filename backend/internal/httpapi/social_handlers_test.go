@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,7 @@ import (
 
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/roles"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/user"
 )
@@ -67,6 +69,9 @@ func TestSocialHTTPFlow(t *testing.T) {
 		"",
 		http.StatusCreated,
 	)
+	if _, err := userStore.UpdateRoleByUsername(context.Background(), bob.User.Username, roles.VIP); err != nil {
+		t.Fatalf("promote bob to vip: %v", err)
+	}
 
 	search := requestJSON[map[string][]socialUserResponse](
 		t,
@@ -77,7 +82,9 @@ func TestSocialHTTPFlow(t *testing.T) {
 		alice.AccessToken,
 		http.StatusOK,
 	)
-	if len(search["users"]) != 1 || search["users"][0].ID != bob.User.ID {
+	if len(search["users"]) != 1 ||
+		search["users"][0].ID != bob.User.ID ||
+		search["users"][0].Role != string(roles.VIP) {
 		t.Fatalf("search users = %+v", search["users"])
 	}
 
@@ -122,7 +129,9 @@ func TestSocialHTTPFlow(t *testing.T) {
 		bob.AccessToken,
 		http.StatusOK,
 	)
-	if accepted.Request.Status != "accepted" || accepted.Conversation.Peer.ID != alice.User.ID {
+	if accepted.Request.Status != "accepted" ||
+		accepted.Conversation.Peer.ID != alice.User.ID ||
+		accepted.Conversation.Peer.Role != string(roles.Normal) {
 		t.Fatalf("accepted friend request = %+v", accepted)
 	}
 
@@ -138,7 +147,10 @@ func TestSocialHTTPFlow(t *testing.T) {
 		alice.AccessToken,
 		http.StatusOK,
 	)
-	if len(friends["friends"]) != 1 || friends["friends"][0].User.ID != bob.User.ID || !friends["friends"][0].User.Online {
+	if len(friends["friends"]) != 1 ||
+		friends["friends"][0].User.ID != bob.User.ID ||
+		friends["friends"][0].User.Role != string(roles.VIP) ||
+		!friends["friends"][0].User.Online {
 		t.Fatalf("friends = %+v", friends["friends"])
 	}
 

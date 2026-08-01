@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
@@ -21,12 +22,16 @@ import {
   setStoredAccessToken,
 } from '@/lib/auth-token-storage';
 import type { AuthUser, AvatarAsset } from '@/types/auth';
+import type { UserRole } from '@/types/access';
+import { identityPresentation } from '@/lib/identity';
 
 type AuthStatus = 'anonymous' | 'authenticated' | 'loading';
 
 type AuthContextValue = {
   accessToken: string | null;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  clearIdentityChangeNotice: () => void;
+  identityChangeNotice: string | null;
   refreshUser: () => Promise<void>;
   register: (
     username: string,
@@ -49,6 +54,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [identityChangeNotice, setIdentityChangeNotice] = useState<string | null>(null);
+  const previousRoleRef = useRef<UserRole | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -63,6 +70,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       try {
         const currentUser = await getCurrentUser(storedToken);
         if (!active) return;
+        previousRoleRef.current = currentUser.role;
         setToken(storedToken);
         setUser(currentUser);
         setStatus('authenticated');
@@ -79,6 +87,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   async function persistSession(nextToken: string, nextUser: AuthUser) {
     await setStoredAccessToken(nextToken);
+    previousRoleRef.current = nextUser.role;
+    setIdentityChangeNotice(null);
     setToken(nextToken);
     setUser(nextUser);
     setStatus('authenticated');
@@ -132,17 +142,28 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const refreshCurrentUser = useCallback(async () => {
     if (!token) return;
     try {
-      setUser(await getCurrentUser(token));
+      const nextUser = await getCurrentUser(token);
+      if (previousRoleRef.current && previousRoleRef.current !== nextUser.role) {
+        setIdentityChangeNotice(identityPresentation(nextUser.role).label);
+      }
+      previousRoleRef.current = nextUser.role;
+      setUser(nextUser);
     } catch {
       // 刷新失败时保留当前会话，避免页面加载被瞬时网络问题打断。
     }
   }, [token]);
+
+  const clearIdentityChange = useCallback(() => {
+    setIdentityChangeNotice(null);
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         accessToken: token,
         changePassword: savePassword,
+        clearIdentityChangeNotice: clearIdentityChange,
+        identityChangeNotice,
         refreshUser: refreshCurrentUser,
         register: registerAccount,
         signIn,

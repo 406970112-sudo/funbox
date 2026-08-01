@@ -17,6 +17,7 @@ type socialUserResponse struct {
 	DisplayName string `json:"displayName"`
 	ID          string `json:"id"`
 	Online      bool   `json:"online"`
+	Role        string `json:"role"`
 	Username    string `json:"username"`
 }
 
@@ -310,6 +311,7 @@ func (s *Server) socialUser(account social.UserSummary) socialUserResponse {
 		DisplayName: account.DisplayName,
 		ID:          account.ID,
 		Online:      s.realtimeHub.IsOnline(account.ID),
+		Role:        account.Role,
 		Username:    account.Username,
 	}
 }

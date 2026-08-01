@@ -1,8 +1,11 @@
+import type { UserRole } from './access';
+
 export type SocialUser = {
   avatarUrl: string;
   displayName: string;
   id: string;
   online: boolean;
+  role?: UserRole;
   username: string;
 };
 
