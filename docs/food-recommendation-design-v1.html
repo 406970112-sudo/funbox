@@ -1,0 +1,1717 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 本地美食推荐产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #e85d4a;
+        --green: #24b36b;
+        --purple: #7e5bef;
+        --amber: #f1a33b;
+        --canvas: #eef4ff;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+        --red: #e52e2e;
+        --orange: #ff6b2b;
+        --warm: #fff4ed;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 1360px;
+        padding: 30px 40px 40px;
+        width: 1600px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark svg {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--coral);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .stage {
+        display: grid;
+        gap: 26px;
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+
+      .strategy {
+        align-self: start;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 18px;
+        padding: 22px 20px;
+      }
+
+      .strategy-kicker {
+        color: var(--coral);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .strategy h2 {
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.24;
+        margin: 8px 0 8px;
+      }
+
+      .strategy-lead {
+        color: #5d6b86;
+        font-size: 11.5px;
+        line-height: 1.75;
+        margin: 0;
+      }
+
+      .strategy-section {
+        border-top: 1px solid var(--line);
+        margin-top: 15px;
+        padding-top: 13px;
+      }
+
+      .strategy-section h3 {
+        font-size: 12px;
+        font-weight: 900;
+        margin: 0 0 9px;
+      }
+
+      .problem-row {
+        align-items: flex-start;
+        display: flex;
+        gap: 8px;
+        margin: 0 0 8px;
+      }
+
+      .problem-dot {
+        background: var(--coral);
+        border-radius: 50%;
+        flex: 0 0 7px;
+        height: 7px;
+        margin-top: 5px;
+        width: 7px;
+      }
+
+      .problem-row p {
+        color: #4d5870;
+        font-size: 11px;
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .flow {
+        counter-reset: flow;
+      }
+
+      .flow-step {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        min-height: 26px;
+        position: relative;
+      }
+
+      .flow-step::before {
+        background: var(--navy);
+        border-radius: 50%;
+        color: var(--lime);
+        content: counter(flow);
+        counter-increment: flow;
+        display: grid;
+        flex: 0 0 20px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 20px;
+        place-items: center;
+        width: 20px;
+      }
+
+      .flow-step span {
+        color: #3e475d;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .flow-step:not(:last-child)::after {
+        border-left: 1px dashed #c6d1e8;
+        content: "";
+        height: 8px;
+        left: 9px;
+        position: absolute;
+        top: 24px;
+      }
+
+      .scope-list {
+        display: grid;
+        gap: 6px;
+      }
+
+      .scope-item {
+        align-items: center;
+        color: #4d5870;
+        display: flex;
+        font-size: 11px;
+        gap: 8px;
+      }
+
+      .scope-item i {
+        color: var(--blue);
+        height: 14px;
+        width: 14px;
+      }
+
+      .metric-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric {
+        background: #f3f6fc;
+        border-radius: 9px;
+        padding: 8px 9px;
+      }
+
+      .metric strong {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.15;
+      }
+
+      .metric span {
+        color: #7483a2;
+        display: block;
+        font-size: 9.5px;
+        margin-top: 4px;
+      }
+
+      .decision {
+        background: #f0edff;
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .decision.coral {
+        background: var(--warm);
+      }
+
+      .decision strong {
+        color: #4b3d8a;
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+
+      .decision.coral strong {
+        color: #8a3a22;
+      }
+
+      .decision p {
+        color: #615b86;
+        font-size: 10.5px;
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      .decision.coral p {
+        color: #81523f;
+      }
+
+      .screens {
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+      }
+
+      .screen-card {
+        margin: 0;
+        width: 392px;
+      }
+
+      .screen-label {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 10px;
+      }
+
+      .screen-label .index {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 7px;
+        color: var(--white);
+        display: inline-flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .screen-label strong {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .screen-label span {
+        color: #6b7892;
+        font-size: 10px;
+      }
+
+      .phone {
+        background: #101426;
+        border-radius: 38px;
+        box-shadow: 0 24px 46px rgba(21, 27, 59, 0.22);
+        height: 1060px;
+        padding: 11px;
+        position: relative;
+        width: 392px;
+      }
+
+      .phone-screen {
+        background: var(--screen);
+        border-radius: 29px;
+        height: 1038px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 40px;
+        justify-content: space-between;
+        padding: 0 24px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .dynamic-island {
+        background: #101426;
+        border-radius: 14px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 96px;
+      }
+
+      .screen-nav {
+        align-items: center;
+        display: flex;
+        height: 48px;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+
+      .nav-btn {
+        align-items: center;
+        background: #eef1f8;
+        border: 0;
+        border-radius: 50%;
+        display: inline-flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .nav-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .screen-title {
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .content {
+        height: calc(100% - 40px - 48px - 64px);
+        overflow: hidden;
+        padding: 0 18px;
+      }
+
+      .hero-title {
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 24px 0 6px;
+        text-align: center;
+      }
+
+      .hero-sub {
+        color: var(--muted);
+        font-size: 11.5px;
+        line-height: 1.6;
+        margin: 0 auto 18px;
+        text-align: center;
+        width: 88%;
+      }
+
+      .location-card {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 12px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+      }
+
+      .location-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: inline-flex;
+        flex: 0 0 32px;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .location-icon i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .location-text {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .location-text strong {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 800;
+      }
+
+      .location-text span {
+        color: #8a96ad;
+        display: block;
+        font-size: 9.5px;
+        margin-top: 2px;
+      }
+
+      .locate-again {
+        background: #f1f3f9;
+        border: 0;
+        border-radius: 7px;
+        color: #5d6b86;
+        font-size: 10px;
+        font-weight: 700;
+        height: 28px;
+        padding: 0 10px;
+      }
+
+      .address-search {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 14px;
+        box-shadow: 0 8px 18px rgba(75, 107, 255, 0.08);
+        display: flex;
+        gap: 10px;
+        height: 56px;
+        padding: 0 8px 0 15px;
+      }
+
+      .address-search > i {
+        color: #8a96ad;
+        flex: 0 0 18px;
+        height: 18px;
+        width: 18px;
+      }
+
+      .address-search input {
+        background: transparent;
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 13px;
+        min-width: 0;
+        outline: none;
+      }
+
+      .address-search input::placeholder {
+        color: #9aa5ba;
+      }
+
+      .mic-btn {
+        align-items: center;
+        background: #f1f3f9;
+        border: 0;
+        border-radius: 10px;
+        display: inline-flex;
+        height: 40px;
+        justify-content: center;
+        width: 40px;
+      }
+
+      .mic-btn i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .label-line {
+        color: #8a96ad;
+        font-size: 10px;
+        font-weight: 700;
+        margin: 15px 0 9px;
+        text-align: center;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        justify-content: center;
+      }
+
+      .example-chip {
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 999px;
+        color: #4d5870;
+        font-size: 10.5px;
+        font-weight: 700;
+        height: 32px;
+        padding: 0 13px;
+      }
+
+      .example-chip.active {
+        background: var(--blue-soft);
+        border-color: #b8c8ff;
+        color: var(--blue);
+        font-weight: 800;
+      }
+
+      .taste-chip {
+        background: var(--warm);
+        border: 1px solid #ffdcc8;
+        border-radius: 999px;
+        color: #a34b2a;
+        font-size: 10.5px;
+        font-weight: 700;
+        height: 32px;
+        padding: 0 13px;
+      }
+
+      .generate-btn {
+        align-items: center;
+        background: var(--navy);
+        border: 0;
+        border-radius: 14px;
+        color: var(--white);
+        display: flex;
+        gap: 8px;
+        height: 54px;
+        justify-content: center;
+        margin-top: 18px;
+        width: 100%;
+      }
+
+      .generate-btn i {
+        color: var(--lime);
+        height: 19px;
+        width: 19px;
+      }
+
+      .generate-hint {
+        color: #98a2b5;
+        font-size: 9.5px;
+        line-height: 1.5;
+        margin: 13px auto 0;
+        text-align: center;
+        width: 86%;
+      }
+
+      .bottom-nav {
+        background: rgba(255, 255, 255, 0.96);
+        border-top: 1px solid #e7ecf5;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        height: 64px;
+        left: 0;
+        position: absolute;
+        right: 0;
+      }
+
+      .nav-item {
+        align-items: center;
+        color: #9aa5ba;
+        display: flex;
+        flex-direction: column;
+        font-size: 9px;
+        gap: 3px;
+        justify-content: center;
+      }
+
+      .nav-item.active {
+        color: var(--blue);
+        font-weight: 800;
+      }
+
+      .nav-item i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .result-summary {
+        align-items: flex-start;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        margin: 6px 0 10px;
+      }
+
+      .result-summary strong {
+        display: block;
+        font-size: 17px;
+        font-weight: 900;
+        line-height: 24px;
+      }
+
+      .result-summary span {
+        color: var(--muted);
+        display: block;
+        font-size: 10px;
+        line-height: 15px;
+        margin-top: 3px;
+      }
+
+      .result-summary .ai-pill {
+        background: var(--blue-soft);
+        border-radius: 999px;
+        color: var(--blue);
+        flex: 0 0 auto;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 6px 10px;
+      }
+
+      .toolbar {
+        align-items: center;
+        display: flex;
+        gap: 7px;
+        margin-bottom: 10px;
+      }
+
+      .sort-row {
+        align-items: center;
+        background: #eef1f8;
+        border-radius: 9px;
+        display: flex;
+        flex: 1;
+        gap: 3px;
+        padding: 4px;
+      }
+
+      .sort-item {
+        background: transparent;
+        border: 0;
+        border-radius: 7px;
+        color: #7b859a;
+        flex: 1;
+        font-size: 10px;
+        font-weight: 700;
+        height: 30px;
+      }
+
+      .sort-item.active {
+        background: var(--white);
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .filter-btn {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 9px;
+        display: flex;
+        gap: 5px;
+        height: 38px;
+        justify-content: center;
+        padding: 0 11px;
+        position: relative;
+      }
+
+      .filter-btn i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .filter-btn .filter-count {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 999px;
+        color: var(--white);
+        display: inline-flex;
+        font-size: 9px;
+        font-weight: 900;
+        height: 18px;
+        justify-content: center;
+        min-width: 18px;
+        padding: 0 5px;
+      }
+
+      .filter-btn-text {
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .food-card {
+        background: var(--white);
+        border: 1px solid #dce5f4;
+        border-radius: 14px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        padding: 11px;
+      }
+
+      .food-card.top {
+        border-color: #ffd3bf;
+        box-shadow: 0 8px 18px rgba(232, 93, 74, 0.09);
+      }
+
+      .food-head {
+        align-items: flex-start;
+        display: flex;
+        gap: 11px;
+      }
+
+      .food-thumb {
+        background: #edf0f7;
+        border-radius: 10px;
+        flex: 0 0 104px;
+        height: 104px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .food-thumb img {
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .food-thumb .thumb-tag {
+        background: rgba(21, 27, 59, 0.78);
+        border-radius: 999px;
+        bottom: 6px;
+        color: var(--white);
+        font-size: 8.5px;
+        font-weight: 700;
+        left: 6px;
+        padding: 4px 7px;
+        position: absolute;
+      }
+
+      .food-main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .food-title-row {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        justify-content: space-between;
+      }
+
+      .food-name {
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .badge {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 6px;
+        color: var(--white);
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 9px;
+        font-weight: 800;
+        height: 21px;
+        padding: 0 8px;
+      }
+
+      .food-tags {
+        color: #b24a28;
+        font-size: 10px;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .food-tags.mild {
+        color: #3e7d3b;
+      }
+
+      .restaurant-line {
+        align-items: center;
+        color: #4d5870;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 700;
+        gap: 5px;
+        margin-top: 5px;
+      }
+
+      .restaurant-line i {
+        color: #8a96ad;
+        height: 13px;
+        width: 13px;
+      }
+
+      .food-meta {
+        align-items: center;
+        color: #66738c;
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 9.5px;
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .food-meta span {
+        align-items: center;
+        display: inline-flex;
+        gap: 3px;
+      }
+
+      .food-meta i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .food-meta .rate {
+        color: var(--green);
+        font-weight: 800;
+      }
+
+      .ingredient-line {
+        background: #f6f8fc;
+        border-radius: 8px;
+        color: #5d6b86;
+        font-size: 9.5px;
+        line-height: 1.5;
+        margin-top: 8px;
+        padding: 7px 9px;
+      }
+
+      .ingredient-line strong {
+        color: #3e475d;
+      }
+
+      .reason-line {
+        align-items: flex-start;
+        border-top: 1px solid #edf1f8;
+        color: #4d5870;
+        display: flex;
+        font-size: 10px;
+        gap: 6px;
+        line-height: 1.5;
+        margin-top: 8px;
+        padding-top: 8px;
+      }
+
+      .reason-line i {
+        color: var(--coral);
+        flex: 0 0 13px;
+        height: 13px;
+        margin-top: 1px;
+        width: 13px;
+      }
+
+      .result-actions {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 4px;
+      }
+
+      .result-action {
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 800;
+        height: 42px;
+      }
+
+      .result-action.secondary {
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+      }
+
+      .result-action.primary {
+        align-items: center;
+        background: var(--navy);
+        border: 0;
+        color: var(--white);
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+      }
+
+      .result-action.primary i {
+        color: var(--lime);
+        height: 15px;
+        width: 15px;
+      }
+
+      .detail-hero {
+        height: 260px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .detail-hero img {
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .detail-hero::after {
+        background: linear-gradient(180deg, rgba(16, 20, 38, 0.12), rgba(16, 20, 38, 0.68));
+        content: "";
+        inset: 0;
+        position: absolute;
+      }
+
+      .detail-nav {
+        display: flex;
+        gap: 8px;
+        left: 18px;
+        position: absolute;
+        right: 18px;
+        top: 48px;
+        z-index: 2;
+      }
+
+      .detail-nav .nav-btn {
+        background: rgba(255, 255, 255, 0.88);
+      }
+
+      .detail-nav .nav-btn.spacer {
+        flex: 1;
+        background: transparent;
+      }
+
+      .detail-hero-title {
+        bottom: 20px;
+        color: var(--white);
+        left: 20px;
+        position: absolute;
+        right: 20px;
+        z-index: 2;
+      }
+
+      .detail-hero-title strong {
+        display: block;
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.25;
+      }
+
+      .detail-hero-title span {
+        color: rgba(255, 255, 255, 0.86);
+        display: block;
+        font-size: 11px;
+        margin-top: 5px;
+      }
+
+      .detail-content {
+        height: calc(100% - 40px - 48px - 64px - 260px);
+        overflow: hidden;
+        padding: 14px 18px 0;
+      }
+
+      .detail-meta-row {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .score-pill {
+        align-items: center;
+        background: #eefaf0;
+        border-radius: 8px;
+        color: #27805a;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 4px;
+        height: 26px;
+        padding: 0 9px;
+      }
+
+      .score-pill i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .price-pill,
+      .spicy-pill {
+        background: #f1f3f9;
+        border-radius: 8px;
+        color: #4d5870;
+        font-size: 10px;
+        font-weight: 700;
+        height: 26px;
+        line-height: 26px;
+        padding: 0 9px;
+      }
+
+      .spicy-pill {
+        background: var(--warm);
+        color: #a34b2a;
+      }
+
+      .restaurant-card {
+        background: var(--white);
+        border: 1px solid #dce5f4;
+        border-radius: 12px;
+        margin-top: 10px;
+        padding: 10px 11px;
+      }
+
+      .restaurant-card-head {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .restaurant-card-head .store {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 8px;
+        color: var(--blue);
+        display: inline-flex;
+        flex: 0 0 28px;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .restaurant-card-head .store i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .restaurant-card-head strong {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 800;
+      }
+
+      .restaurant-card-head span {
+        color: #8a96ad;
+        display: block;
+        font-size: 9px;
+        margin-top: 2px;
+      }
+
+      .restaurant-card-foot {
+        color: #5d6b86;
+        display: flex;
+        font-size: 9.5px;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .restaurant-card-foot span {
+        align-items: center;
+        display: inline-flex;
+        gap: 4px;
+      }
+
+      .restaurant-card-foot i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .section-title {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 12px 0 8px;
+      }
+
+      .taste-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .taste-cell {
+        background: var(--white);
+        border: 1px solid #dce5f4;
+        border-radius: 10px;
+        padding: 9px 10px;
+      }
+
+      .taste-cell strong {
+        color: #a34b2a;
+        display: block;
+        font-size: 10.5px;
+        font-weight: 800;
+      }
+
+      .taste-cell p {
+        color: #5d6b86;
+        font-size: 9.5px;
+        line-height: 1.5;
+        margin: 4px 0 0;
+      }
+
+      .ingredient-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .ingredient-chip {
+        background: #f6f8fc;
+        border: 1px solid #e2e8f3;
+        border-radius: 7px;
+        color: #4d5870;
+        font-size: 9.5px;
+        font-weight: 700;
+        height: 26px;
+        line-height: 24px;
+        padding: 0 9px;
+      }
+
+      .ingredient-chip.warn {
+        background: var(--warm);
+        border-color: #ffdcc8;
+        color: #a34b2a;
+      }
+
+      .why-list {
+        display: grid;
+        gap: 7px;
+      }
+
+      .why-item {
+        align-items: flex-start;
+        background: var(--white);
+        border: 1px solid #dce5f4;
+        border-radius: 10px;
+        display: flex;
+        gap: 8px;
+        padding: 9px 10px;
+      }
+
+      .why-item .why-label {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 6px;
+        color: var(--blue);
+        display: inline-flex;
+        flex: 0 0 38px;
+        font-size: 9px;
+        font-weight: 800;
+        height: 20px;
+        justify-content: center;
+      }
+
+      .why-item.green .why-label {
+        background: #eefaf0;
+        color: #27805a;
+      }
+
+      .why-item.coral .why-label {
+        background: var(--warm);
+        color: #a34b2a;
+      }
+
+      .why-item p {
+        color: #3e475d;
+        font-size: 10px;
+        line-height: 1.45;
+        margin: 1px 0 0;
+      }
+
+      .follow-label {
+        color: #8a96ad;
+        font-size: 9.5px;
+        font-weight: 700;
+        margin: 12px 0 7px;
+      }
+
+      .follow-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .detail-actions {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 96px 1fr;
+        margin: 12px 0 0;
+      }
+
+      .detail-action {
+        border-radius: 11px;
+        font-size: 11px;
+        font-weight: 800;
+        height: 44px;
+      }
+
+      .detail-action.fav {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+      }
+
+      .detail-action.fav i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .detail-action.go {
+        align-items: center;
+        background: var(--navy);
+        border: 0;
+        color: var(--white);
+        display: flex;
+        gap: 7px;
+        justify-content: center;
+      }
+
+      .detail-action.go i {
+        color: var(--lime);
+        height: 16px;
+        width: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark">
+            <i data-lucide="utensils" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h1 class="brand-title">本地美食推荐 V1</h1>
+            <p class="brand-subtitle">FunBox 移动工具 · 输入地址，把附近的味道讲清楚</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>产品设计方案 V1</strong>
+          2026-08-01 · 待评审 · 地址优先
+        </div>
+      </header>
+
+      <div class="stage">
+        <aside class="strategy">
+          <div class="strategy-kicker">PRODUCT DESIGN V1</div>
+          <h2>输入一个地址，<br />把本地味道讲清楚</h2>
+          <p class="strategy-lead">
+            用户只需给地址，系统直接给出美食卡：图片、食材、口味、店名、距离和推荐理由；不满意再筛选或追问。
+          </p>
+
+          <div class="strategy-section">
+            <h3>要解决的问题</h3>
+            <div class="problem-row"><span class="problem-dot"></span><p>地图只推荐餐厅，不先回答"吃什么"</p></div>
+            <div class="problem-row"><span class="problem-dot"></span><p>口味、辣度、食材不透明，容易点错</p></div>
+            <div class="problem-row"><span class="problem-dot"></span><p>图片、距离、价格分散在不同页面</p></div>
+            <div class="problem-row"><span class="problem-dot"></span><p>推荐缺少"为什么适合我"的解释</p></div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>核心链路</h3>
+            <div class="flow">
+              <div class="flow-step"><span>自动定位或输入地址</span></div>
+              <div class="flow-step"><span>解析城市、区域、距离</span></div>
+              <div class="flow-step"><span>召回本地美食候选</span></div>
+              <div class="flow-step"><span>生成带理由的美食卡</span></div>
+              <div class="flow-step"><span>不满意再筛选或追问</span></div>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>功能范围</h3>
+            <div class="scope-list">
+              <div class="scope-item"><i data-lucide="map-pin" aria-hidden="true"></i>地址与当前位置</div>
+              <div class="scope-item"><i data-lucide="image" aria-hidden="true"></i>美食图片</div>
+              <div class="scope-item"><i data-lucide="salad" aria-hidden="true"></i>食材与忌口</div>
+              <div class="scope-item"><i data-lucide="flame" aria-hidden="true"></i>口味与辣度</div>
+              <div class="scope-item"><i data-lucide="list-filter" aria-hidden="true"></i>筛选、追问、收藏</div>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>成功指标</h3>
+            <div class="metric-grid">
+              <div class="metric"><strong>&lt; 3s</strong><span>输入到首屏结果 p90</span></div>
+              <div class="metric"><strong>&ge; 60%</strong><span>首用无需筛选完成选择</span></div>
+              <div class="metric"><strong>&ge; 40%</strong><span>结果卡到详情打开率</span></div>
+              <div class="metric"><strong>&ge; 70%</strong><span>推荐有帮助率</span></div>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>关键决策</h3>
+            <div class="decision coral">
+              <strong>地址唯一必填，偏好全部后置</strong>
+              <p>首屏只做定位和地址输入；菜系、辣度、人均、忌口都在结果页展开。</p>
+            </div>
+            <div class="decision" style="margin-top: 8px;">
+              <strong>AI 只写文案，不编造事实</strong>
+              <p>图片、食材、口味、距离全部来自结构化数据，DeepSeek 基于字段生成理由。</p>
+            </div>
+          </div>
+        </aside>
+
+        <main class="screens">
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">01</span>
+              <strong>地址与定位</strong>
+              <span>首屏零必填项之外</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">本地美食推荐</span>
+                  <button class="nav-btn" type="button" aria-label="历史"><i data-lucide="clock-3" aria-hidden="true"></i></button>
+                </div>
+                <div class="content">
+                  <h2 class="hero-title">今天想吃什么？</h2>
+                  <p class="hero-sub">输入地址或开启定位，推荐附近的地道本地味道</p>
+
+                  <div class="location-card">
+                    <span class="location-icon"><i data-lucide="locate-fixed" aria-hidden="true"></i></span>
+                    <div class="location-text">
+                      <strong>当前位置 · 玉林片区</strong>
+                      <span>定位精度约 100m · 武侯区</span>
+                    </div>
+                    <button class="locate-again" type="button">重新定位</button>
+                  </div>
+
+                  <div class="address-search">
+                    <i data-lucide="map-pin" aria-hidden="true"></i>
+                    <input value="成都市武侯区玉林西路 12 号" aria-label="输入地址" />
+                    <button class="mic-btn" type="button" aria-label="语音输入"><i data-lucide="mic" aria-hidden="true"></i></button>
+                  </div>
+
+                  <div class="label-line">不知道在哪吃？点地址试试</div>
+                  <div class="chip-row">
+                    <button class="example-chip active" type="button">武侯祠</button>
+                    <button class="example-chip" type="button">春熙路</button>
+                    <button class="example-chip" type="button">玉林生活广场</button>
+                  </div>
+
+                  <div class="label-line">顺便说说口味，也可以跳过</div>
+                  <div class="chip-row">
+                    <button class="taste-chip" type="button">不辣</button>
+                    <button class="taste-chip" type="button">人均 50 内</button>
+                    <button class="taste-chip" type="button">朋友聚餐</button>
+                    <button class="taste-chip" type="button">夜宵</button>
+                  </div>
+
+                  <button class="generate-btn" type="button"><i data-lucide="sparkles" aria-hidden="true"></i>AI 生成美食推荐</button>
+                  <p class="generate-hint">先看结果，不满意再筛选或追问，不用一开始就填满条件</p>
+                </div>
+                <div class="bottom-nav">
+                  <div class="nav-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="nav-item active"><i data-lucide="utensils" aria-hidden="true"></i>工具</div>
+                  <div class="nav-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">02</span>
+              <strong>推荐结果</strong>
+              <span>图片、食材、口味一次看清</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">推荐结果</span>
+                  <button class="nav-btn" type="button" aria-label="分享"><i data-lucide="share-2" aria-hidden="true"></i></button>
+                </div>
+                <div class="content">
+                  <div class="result-summary">
+                    <div>
+                      <strong>为你在武侯区找到 12 道本地美食</strong>
+                      <span>优先 2km 内 · 人均 60 左右 · 川味</span>
+                    </div>
+                    <span class="ai-pill">DeepSeek 分析</span>
+                  </div>
+
+                  <div class="toolbar">
+                    <div class="sort-row">
+                      <button class="sort-item active" type="button">综合</button>
+                      <button class="sort-item" type="button">距离</button>
+                      <button class="sort-item" type="button">人均</button>
+                    </div>
+                    <button class="filter-btn" type="button">
+                      <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+                      <span class="filter-count">1</span>
+                      <span class="filter-btn-text">筛选</span>
+                    </button>
+                  </div>
+
+                  <article class="food-card top">
+                    <div class="food-head">
+                      <div class="food-thumb">
+                        <img src="food-recommendation-assets/dish-chongqing-hotpot.jpg" alt="牛油九宫格火锅" />
+                        <span class="thumb-tag">本地必吃</span>
+                      </div>
+                      <div class="food-main">
+                        <div class="food-title-row">
+                          <span class="food-name">牛油九宫格火锅</span>
+                          <span class="badge">最推荐</span>
+                        </div>
+                        <div class="food-tags">火锅 · 重辣 · 鲜香</div>
+                        <div class="restaurant-line"><i data-lucide="store" aria-hidden="true"></i>玉林老灶火锅</div>
+                        <div class="food-meta">
+                          <span><i data-lucide="map-pin" aria-hidden="true"></i>1.2km · 步行15分钟</span>
+                          <span><i data-lucide="wallet" aria-hidden="true"></i>人均 ¥88</span>
+                          <span class="rate"><i data-lucide="star" aria-hidden="true"></i>4.7</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="ingredient-line"><strong>食材：</strong>牛油 · 花椒 · 辣椒 · 毛肚 · 鸭肠</div>
+                    <div class="reason-line"><i data-lucide="flame" aria-hidden="true"></i>本地人认证的牛油锅底，晚上夜宵氛围好，距你步行 15 分钟。</div>
+                  </article>
+
+                  <article class="food-card">
+                    <div class="food-head">
+                      <div class="food-thumb">
+                        <img src="food-recommendation-assets/dish-mapo-tofu.jpg" alt="麻婆豆腐" />
+                        <span class="thumb-tag">下饭</span>
+                      </div>
+                      <div class="food-main">
+                        <div class="food-title-row">
+                          <span class="food-name">麻婆豆腐</span>
+                        </div>
+                        <div class="food-tags mild">川菜 · 中辣 · 麻香</div>
+                        <div class="restaurant-line"><i data-lucide="store" aria-hidden="true"></i>陈麻婆豆腐（骡马市店）</div>
+                        <div class="food-meta">
+                          <span><i data-lucide="map-pin" aria-hidden="true"></i>1.8km</span>
+                          <span><i data-lucide="wallet" aria-hidden="true"></i>人均 ¥32</span>
+                          <span class="rate"><i data-lucide="star" aria-hidden="true"></i>4.6</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="ingredient-line"><strong>食材：</strong>豆腐 · 牛肉末 · 郫县豆瓣 · 花椒面</div>
+                    <div class="reason-line"><i data-lucide="check" aria-hidden="true"></i>经典川菜代表，人均低、上菜快，适合一个人也能点。</div>
+                  </article>
+
+                  <article class="food-card">
+                    <div class="food-head">
+                      <div class="food-thumb">
+                        <img src="food-recommendation-assets/dish-dandan-noodles.jpg" alt="担担面" />
+                        <span class="thumb-tag">小吃</span>
+                      </div>
+                      <div class="food-main">
+                        <div class="food-title-row">
+                          <span class="food-name">担担面</span>
+                        </div>
+                        <div class="food-tags mild">面食 · 中辣 · 干香</div>
+                        <div class="restaurant-line"><i data-lucide="store" aria-hidden="true"></i>甘记担担面</div>
+                        <div class="food-meta">
+                          <span><i data-lucide="map-pin" aria-hidden="true"></i>650m</span>
+                          <span><i data-lucide="wallet" aria-hidden="true"></i>人均 ¥18</span>
+                          <span class="rate"><i data-lucide="star" aria-hidden="true"></i>4.5</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="ingredient-line"><strong>食材：</strong>碱水面 · 碎肉臊 · 芝麻酱 · 红油</div>
+                    <div class="reason-line"><i data-lucide="check" aria-hidden="true"></i>距离最近、人均最低，适合快速解决一顿。</div>
+                  </article>
+
+                  <div class="result-actions">
+                    <button class="result-action secondary" type="button">查看全部 12 道</button>
+                    <button class="result-action primary" type="button"><i data-lucide="refresh-ccw" aria-hidden="true"></i>换一批</button>
+                  </div>
+                </div>
+                <div class="bottom-nav">
+                  <div class="nav-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="nav-item active"><i data-lucide="utensils" aria-hidden="true"></i>工具</div>
+                  <div class="nav-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">03</span>
+              <strong>美食详情</strong>
+              <span>口味、食材、适合谁</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="detail-hero">
+                  <img src="food-recommendation-assets/dish-chongqing-hotpot.jpg" alt="牛油九宫格火锅" />
+                  <div class="detail-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                    <span class="nav-btn spacer"></span>
+                    <button class="nav-btn" type="button" aria-label="分享"><i data-lucide="share-2" aria-hidden="true"></i></button>
+                    <button class="nav-btn" type="button" aria-label="收藏"><i data-lucide="heart" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="detail-hero-title">
+                    <strong>牛油九宫格火锅</strong>
+                    <span>玉林老灶火锅 · 距你 1.2km</span>
+                  </div>
+                </div>
+
+                <div class="detail-content">
+                  <div class="detail-meta-row">
+                    <span class="score-pill"><i data-lucide="star" aria-hidden="true"></i>4.7 分</span>
+                    <span class="price-pill">人均 ¥88</span>
+                    <span class="spicy-pill">重辣 · 麻辣鲜香</span>
+                  </div>
+
+                  <div class="restaurant-card">
+                    <div class="restaurant-card-head">
+                      <span class="store"><i data-lucide="store" aria-hidden="true"></i></span>
+                      <div>
+                        <strong>玉林老灶火锅</strong>
+                        <span>武侯区玉林西路 12 号</span>
+                      </div>
+                    </div>
+                    <div class="restaurant-card-foot">
+                      <span><i data-lucide="clock-3" aria-hidden="true"></i>11:00-02:00</span>
+                      <span><i data-lucide="map-pin" aria-hidden="true"></i>步行约 15 分钟</span>
+                      <span><i data-lucide="users" aria-hidden="true"></i>适合聚餐</span>
+                    </div>
+                  </div>
+
+                  <div class="section-title">这一口</div>
+                  <div class="taste-grid">
+                    <div class="taste-cell">
+                      <strong>味型 · 麻辣鲜香</strong>
+                      <p>牛油锅底厚重，辣味打底，花椒麻香收尾，回甜不明显。</p>
+                    </div>
+                    <div class="taste-cell">
+                      <strong>口感 · 重油弹韧</strong>
+                      <p>毛肚脆、鸭肠弹，适合喜欢口感丰富的食客。</p>
+                    </div>
+                  </div>
+
+                  <div class="section-title">主要食材</div>
+                  <div class="ingredient-chips">
+                    <span class="ingredient-chip">牛油</span>
+                    <span class="ingredient-chip">花椒</span>
+                    <span class="ingredient-chip">辣椒</span>
+                    <span class="ingredient-chip warn">毛肚</span>
+                    <span class="ingredient-chip warn">鸭肠</span>
+                  </div>
+
+                  <div class="section-title">为什么推荐</div>
+                  <div class="why-list">
+                    <div class="why-item coral">
+                      <span class="why-label">本地味</span>
+                      <p>牛油锅底本地认可度高，夜宵时段人气稳定。</p>
+                    </div>
+                    <div class="why-item green">
+                      <span class="why-label">距离</span>
+                      <p>距你 1.2km，步行约 15 分钟，饭后可逛玉林街区。</p>
+                    </div>
+                    <div class="why-item">
+                      <span class="why-label">均衡</span>
+                      <p>人均 ¥88、评分 4.7，在同类火锅里性价比均衡。</p>
+                    </div>
+                  </div>
+
+                  <div class="follow-label">还想调整？点一下继续追问</div>
+                  <div class="follow-chips">
+                    <button class="taste-chip" type="button">不要辣</button>
+                    <button class="taste-chip" type="button">人均 100 内</button>
+                    <button class="taste-chip" type="button">换评分更高</button>
+                  </div>
+
+                  <div class="detail-actions">
+                    <button class="detail-action fav" type="button"><i data-lucide="heart" aria-hidden="true"></i>收藏</button>
+                    <button class="detail-action go" type="button"><i data-lucide="navigation" aria-hidden="true"></i>去这里</button>
+                  </div>
+                </div>
+                <div class="bottom-nav">
+                  <div class="nav-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="nav-item active"><i data-lucide="utensils" aria-hidden="true"></i>工具</div>
+                  <div class="nav-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

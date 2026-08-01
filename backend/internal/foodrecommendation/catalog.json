@@ -1,0 +1,342 @@
+[
+  {
+    "id": "cd-hotpot-jiugongge",
+    "name": "牛油九宫格火锅",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "火锅",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": ["牛油", "花椒", "辣椒", "毛肚", "鸭肠"],
+    "flavorProfile": ["麻辣", "鲜香", "重油"],
+    "spiciness": "重辣",
+    "avgPrice": 88,
+    "rating": 4.7,
+    "restaurant": {
+      "name": "玉林老灶火锅",
+      "address": "武侯区玉林西路 12 号",
+      "openHours": "11:00-02:00",
+      "distanceKm": 1.2,
+      "rating": 4.7
+    },
+    "bestTime": "晚上",
+    "suitableFor": ["朋友聚餐", "夜宵"],
+    "reasons": [
+      { "label": "本地味", "text": "牛油锅底本地认可度高，夜宵时段人气稳定" },
+      { "label": "距离", "text": "距你 1.2km，步行约 15 分钟" },
+      { "label": "均衡", "text": "人均 ¥88、评分 4.7，性价比均衡" }
+    ],
+    "fitTags": ["聚餐", "夜宵", "重辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cd-mapo-tofu",
+    "name": "麻婆豆腐",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": ["豆腐", "牛肉末", "郫县豆瓣", "花椒面"],
+    "flavorProfile": ["麻辣", "麻香", "鲜咸"],
+    "spiciness": "中辣",
+    "avgPrice": 32,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "陈麻婆豆腐（骡马市店）",
+      "address": "武侯区西玉龙街 197 号",
+      "openHours": "10:30-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": ["一人食", "家常"],
+    "reasons": [
+      { "label": "经典", "text": "经典川菜代表，本地人日常也会点" },
+      { "label": "人均低", "text": "人均 ¥32，上菜快" },
+      { "label": "下饭", "text": "麻辣鲜香，适合配米饭" }
+    ],
+    "fitTags": ["下饭", "家常", "中辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cd-dandan-noodles",
+    "name": "担担面",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": ["碱水面", "碎肉臊", "芝麻酱", "红油"],
+    "flavorProfile": ["麻辣", "干香", "微甜"],
+    "spiciness": "中辣",
+    "avgPrice": 18,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "甘记担担面",
+      "address": "武侯区玉林北路 3 号",
+      "openHours": "07:00-20:30",
+      "distanceKm": 0.65,
+      "rating": 4.5
+    },
+    "bestTime": "早上/中午",
+    "suitableFor": ["一人食", "早餐"],
+    "reasons": [
+      { "label": "距离近", "text": "距你 650m，步行几分钟就到" },
+      { "label": "人均低", "text": "人均 ¥18，快速解决一餐" },
+      { "label": "出餐快", "text": "现拌现吃，翻台快" }
+    ],
+    "fitTags": ["小吃", "早餐", "中辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cd-zhong-dumpling",
+    "name": "钟水饺",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Chengdu_Zhong_Dumpling%28Zhong_Jiaozi%29.jpg/960px-Chengdu_Zhong_Dumpling%28Zhong_Jiaozi%29.jpg",
+      "source": "wikimedia",
+      "credit": "Chengdu Zhong Dumpling"
+    },
+    "ingredients": ["面皮", "猪肉馅", "红油", "蒜泥"],
+    "flavorProfile": ["微辣", "甜咸", "蒜香"],
+    "spiciness": "微辣",
+    "avgPrice": 24,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "龙抄手（春熙路总店）",
+      "address": "锦江区春熙路 6 号",
+      "openHours": "09:00-21:00",
+      "distanceKm": 2.1,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": ["一人食", "外地游客"],
+    "reasons": [
+      { "label": "名店", "text": "春熙路老字号，游客和本地人都常去" },
+      { "label": "口味温和", "text": "微辣甜咸，比火锅更容易接受" },
+      { "label": "位置好", "text": "逛街顺路就能吃到" }
+    ],
+    "fitTags": ["春熙路", "游客", "微辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cd-bobo-chicken",
+    "name": "钵钵鸡",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": ["鸡肉", "藕片", "土豆片", "红油"],
+    "flavorProfile": ["麻辣", "香辣", "回甜"],
+    "spiciness": "中辣",
+    "avgPrice": 40,
+    "rating": 4.7,
+    "restaurant": {
+      "name": "乐山鲜知味钵钵鸡",
+      "address": "锦江区下东大街 66 号",
+      "openHours": "10:00-23:00",
+      "distanceKm": 2.6,
+      "rating": 4.7
+    },
+    "bestTime": "晚上",
+    "suitableFor": ["朋友聚餐", "夜宵"],
+    "reasons": [
+      { "label": "评分高", "text": "评分 4.7，菜品选择多" },
+      { "label": "适合分享", "text": "一串一签，聚餐和夜宵都合适" },
+      { "label": "口味", "text": "红油香辣回甜，属于越吃越香的类型" }
+    ],
+    "fitTags": ["串串", "聚餐", "中辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cd-bingfen",
+    "name": "冰粉",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": ["冰粉籽", "红糖", "山楂", "葡萄干"],
+    "flavorProfile": ["清甜", "冰凉", "果香"],
+    "spiciness": "不辣",
+    "avgPrice": 10,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "玉林巷口冰粉",
+      "address": "武侯区玉林街 26 号",
+      "openHours": "11:00-23:30",
+      "distanceKm": 0.8,
+      "rating": 4.4
+    },
+    "bestTime": "下午/晚上",
+    "suitableFor": ["一人食", "解辣"],
+    "reasons": [
+      { "label": "解辣", "text": "红糖冰粉是川味大餐后的经典收尾" },
+      { "label": "距离近", "text": "距你 800m，饭后散步可达" },
+      { "label": "便宜", "text": "人均 ¥10，适合随手来一碗" }
+    ],
+    "fitTags": ["甜品", "解辣", "不辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cq-wanza-noodles",
+    "name": "豌杂面",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f8/%E8%B1%8C%E6%9D%82%E9%9D%A2.jpg",
+      "source": "wikimedia",
+      "credit": "重庆豌杂面"
+    },
+    "ingredients": ["碱水面", "豌豆", "杂酱", "红油"],
+    "flavorProfile": ["麻辣", "豌豆香", "软糯"],
+    "spiciness": "中辣",
+    "avgPrice": 15,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "花市豌杂面（解放碑店）",
+      "address": "渝中区民生路 85 号",
+      "openHours": "06:30-21:00",
+      "distanceKm": 0.9,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": ["一人食", "早餐"],
+    "reasons": [
+      { "label": "本地人气", "text": "豌杂面是重庆早餐里的经典" },
+      { "label": "出餐快", "text": "小面档口翻台快，不用久等" },
+      { "label": "人均低", "text": "人均 ¥15，适合一人食" }
+    ],
+    "fitTags": ["解放碑", "早餐", "中辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cq-suanlafen",
+    "name": "酸辣粉",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Suanlafen.jpg/960px-Suanlafen.jpg",
+      "source": "wikimedia",
+      "credit": "Suanlafen"
+    },
+    "ingredients": ["红薯粉", "花生", "榨菜", "辣椒油"],
+    "flavorProfile": ["酸辣", "鲜香", "爽滑"],
+    "spiciness": "中辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "好又来酸辣粉（八一路店）",
+      "address": "渝中区八一路 176 号",
+      "openHours": "08:30-22:30",
+      "distanceKm": 1.3,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": ["一人食", "逛街"],
+    "reasons": [
+      { "label": "口味经典", "text": "酸辣爽滑，是重庆街头代表小吃" },
+      { "label": "位置便利", "text": "靠近八一路好吃街，逛街顺路" },
+      { "label": "便宜", "text": "人均 ¥16，边走边吃" }
+    ],
+    "fitTags": ["小吃", "酸辣", "中辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cq-maoxuewang",
+    "name": "毛血旺",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Chongqing-style_boiled_blood_curd_%28Mao_Xuewang%29.jpg/960px-Chongqing-style_boiled_blood_curd_%28Mao_Xuewang%29.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing-style Mao Xuewang"
+    },
+    "ingredients": ["鸭血", "毛肚", "豆芽", "辣椒"],
+    "flavorProfile": ["麻辣", "重油", "鲜香"],
+    "spiciness": "重辣",
+    "avgPrice": 48,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "顺水鱼馆（解放碑店）",
+      "address": "渝中区五四路 39 号",
+      "openHours": "10:30-22:00",
+      "distanceKm": 1.6,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": ["朋友聚餐", "夜宵"],
+    "reasons": [
+      { "label": "本地重口味", "text": "鸭血毛肚配红油，是重庆江湖菜代表" },
+      { "label": "分量足", "text": "一锅足够两三人分享" },
+      { "label": "下饭", "text": "麻辣鲜香，配米饭很过瘾" }
+    ],
+    "fitTags": ["聚餐", "重辣", "下饭"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cq-tangyuan",
+    "name": "山城小汤圆",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Chinese_Sweet_Dumpling.JPG/960px-Chinese_Sweet_Dumpling.JPG",
+      "source": "wikimedia",
+      "credit": "Chinese sweet dumpling"
+    },
+    "ingredients": ["糯米粉", "芝麻馅", "红糖", "醪糟"],
+    "flavorProfile": ["清甜", "软糯", "酒香"],
+    "spiciness": "不辣",
+    "avgPrice": 12,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "山城汤圆（较场口店）",
+      "address": "渝中区较场口 90 号",
+      "openHours": "09:00-22:00",
+      "distanceKm": 1.1,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": ["一人食", "解辣"],
+    "reasons": [
+      { "label": "老字号", "text": "山城小汤圆是重庆甜品里的老味道" },
+      { "label": "解辣", "text": "红糖醪糟甜汤，适合吃完火锅来一碗" },
+      { "label": "距离近", "text": "距你 1.1km，步行可达" }
+    ],
+    "fitTags": ["甜品", "解辣", "不辣"],
+    "source": "curated:2026-08-01",
+    "updatedAt": "2026-08-01T10:00:00+08:00"
+  }
+]

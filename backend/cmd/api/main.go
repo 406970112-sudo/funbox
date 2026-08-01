@@ -17,6 +17,7 @@ import (
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
+	"my-first-expo-app/backend/internal/foodrecommendation"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
 	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/news"
@@ -82,6 +83,11 @@ func main() {
 		log.Fatalf("open recommendation database failed: %v", err)
 	}
 	defer recommendationStore.Close()
+	foodRecommendationStore, err := foodrecommendation.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open food recommendation database failed: %v", err)
+	}
+	defer foodRecommendationStore.Close()
 	registry, err := access.Registry()
 	if err != nil {
 		log.Fatalf("load feature registry failed: %v", err)
@@ -152,6 +158,7 @@ func main() {
 		log.Printf("translation disabled: missing DEEPSEEK_API_KEY")
 	}
 	recommendationService := recommendation.NewService(cfg.DeepSeek, recommendationStore)
+	foodRecommendationService := foodrecommendation.NewService(cfg.DeepSeek, foodRecommendationStore)
 
 	newsSource := news.NewRSSSource(
 		&http.Client{Timeout: cfg.News.RequestTimeout},
@@ -163,7 +170,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithMembershipAndRecommendation(
+	server := httpapi.NewServerWithMembershipRecommendationAndFood(
 		cfg,
 		ttsService,
 		translationService,
@@ -176,6 +183,7 @@ func main() {
 		focusStore,
 		membershipService,
 		recommendationService,
+		foodRecommendationService,
 		scoreService,
 	)
 

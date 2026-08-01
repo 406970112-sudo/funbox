@@ -32,6 +32,7 @@
     "test:reading": "node --test --experimental-strip-types tests/reading-local-import.test.mjs tests/reading-state.test.mjs",
     "test:market-radar": "node --test --experimental-strip-types tests/market-radar.test.mjs",
     "test:product-recommendation": "node --test --experimental-strip-types tests/product-recommendation.test.mjs",
+    "test:food-recommendation": "node --test --experimental-strip-types tests/food-recommendation.test.mjs",
     "test:ssq-lab": "node --test --experimental-strip-types tests/double-color-ball-lab.test.mjs",
     "test:ssq-lab-classic": "node --test --experimental-strip-types tests/double-color-ball-lab-classic.test.mjs"
   },

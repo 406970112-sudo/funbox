@@ -17,6 +17,7 @@ import (
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
+	"my-first-expo-app/backend/internal/foodrecommendation"
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/lotterylab"
 	"my-first-expo-app/backend/internal/marketradar"
@@ -33,26 +34,27 @@ import (
 )
 
 type Server struct {
-	accessStore           *access.Store
-	authService           *auth.Service
-	cfg                   config.Config
-	feedbackService       *feedback.Service
-	focusStore            *focus.Store
-	rateLimiter           *RateLimiter
-	realtimeHub           *realtime.Hub
-	lotteryService        lotteryHistoryService
-	lotteryLabService     lotteryLabHistoryService
-	marketRadarService    marketRadarSnapshotService
-	membershipService     *membership.Service
-	newsService           newsFeedService
-	readingService        *reading.Service
-	readingImporter       *reading.Importer
-	recommendationService *recommendation.Service
-	resourceSearchService resourceSearchService
-	scoreService          *score.Service
-	socialStore           *social.Store
-	translationService    *translation.Service
-	ttsService            *tts.Service
+	accessStore               *access.Store
+	authService               *auth.Service
+	cfg                       config.Config
+	feedbackService           *feedback.Service
+	foodRecommendationService *foodrecommendation.Service
+	focusStore                *focus.Store
+	rateLimiter               *RateLimiter
+	realtimeHub               *realtime.Hub
+	lotteryService            lotteryHistoryService
+	lotteryLabService         lotteryLabHistoryService
+	marketRadarService        marketRadarSnapshotService
+	membershipService         *membership.Service
+	newsService               newsFeedService
+	readingService            *reading.Service
+	readingImporter           *reading.Importer
+	recommendationService     *recommendation.Service
+	resourceSearchService     resourceSearchService
+	scoreService              *score.Service
+	socialStore               *social.Store
+	translationService        *translation.Service
+	ttsService                *tts.Service
 }
 
 func NewServer(
@@ -64,7 +66,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -77,7 +79,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -100,6 +102,7 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -133,6 +136,7 @@ func NewServerWithReadingNewsAndFeedback(
 		nil,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -161,6 +165,7 @@ func NewServerWithReadingNewsFeedbackAndFocus(
 		readingService,
 		feedbackService,
 		focusStore,
+		nil,
 		nil,
 		nil,
 		scoreServices...,
@@ -194,6 +199,7 @@ func NewServerWithMembership(
 		focusStore,
 		membershipService,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -226,6 +232,41 @@ func NewServerWithMembershipAndRecommendation(
 		focusStore,
 		membershipService,
 		recommendationService,
+		nil,
+		scoreServices...,
+	)
+}
+
+func NewServerWithMembershipRecommendationAndFood(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	feedbackService *feedback.Service,
+	focusStore *focus.Store,
+	membershipService *membership.Service,
+	recommendationService *recommendation.Service,
+	foodRecommendationService *foodrecommendation.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		feedbackService,
+		focusStore,
+		membershipService,
+		recommendationService,
+		foodRecommendationService,
 		scoreServices...,
 	)
 }
@@ -243,6 +284,7 @@ func newServer(
 	focusStore *focus.Store,
 	membershipService *membership.Service,
 	recommendationService *recommendation.Service,
+	foodRecommendationService *foodrecommendation.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
@@ -260,26 +302,27 @@ func newServer(
 		})
 	}
 	api := &Server{
-		accessStore:           accessStore,
-		authService:           authService,
-		cfg:                   cfg,
-		feedbackService:       feedbackService,
-		focusStore:            focusStore,
-		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
-		realtimeHub:           realtime.NewHub(),
-		lotteryService:        lottery.NewService(cfg.Lottery),
-		lotteryLabService:     lotterylab.NewService(lotterylab.Config{}),
-		marketRadarService:    marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
-		membershipService:     membershipService,
-		newsService:           newsService,
-		readingService:        readingService,
-		readingImporter:       readingImporter,
-		recommendationService: recommendationService,
-		resourceSearchService: resourcesearch.NewService(cfg.ResourceSearch),
-		scoreService:          scoreService,
-		socialStore:           socialStore,
-		translationService:    translationService,
-		ttsService:            ttsService,
+		accessStore:               accessStore,
+		authService:               authService,
+		cfg:                       cfg,
+		feedbackService:           feedbackService,
+		foodRecommendationService: foodRecommendationService,
+		focusStore:                focusStore,
+		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
+		realtimeHub:               realtime.NewHub(),
+		lotteryService:            lottery.NewService(cfg.Lottery),
+		lotteryLabService:         lotterylab.NewService(lotterylab.Config{}),
+		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
+		membershipService:         membershipService,
+		newsService:               newsService,
+		readingService:            readingService,
+		readingImporter:           readingImporter,
+		recommendationService:     recommendationService,
+		resourceSearchService:     resourcesearch.NewService(cfg.ResourceSearch),
+		scoreService:              scoreService,
+		socialStore:               socialStore,
+		translationService:        translationService,
+		ttsService:                ttsService,
 	}
 
 	mux := http.NewServeMux()
@@ -311,6 +354,7 @@ func newServer(
 	registerFeedbackRoutes(mux, api)
 	registerFocusRoutes(mux, api)
 	registerRecommendationRoutes(mux, api)
+	registerFoodRecommendationRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))

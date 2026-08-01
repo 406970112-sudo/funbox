@@ -289,6 +289,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "food-recommendation",
+    "name": "本地美食推荐",
+    "tagline": "按地址推荐附近本地味道",
+    "description": "输入地址或开启定位，推荐附近地道美食，展示图片、食材、口味、店名、距离与推荐理由。",
+    "icon": "food",
+    "category": "生活",
+    "route": "/tools/food-recommendation",
+    "accentColor": "#ff6b2b",
+    "badges": ["本地美食", "AI 分析"],
+    "usageLabel": "开始推荐",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "focus-plan",
     "name": "效率清单",
     "tagline": "任务、目标与打卡",
