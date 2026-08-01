@@ -76,6 +76,7 @@ export function DoubleColorBallLabScreen() {
   const [weight, setWeight] = useState(50);
   const [windowSize, setWindowSize] = useState<SSQLabWindowSize>(30);
   const requestRef = useRef<AbortController | null>(null);
+  const runCountRef = useRef(0);
   const snapshotRef = useRef<SSQLabHistorySnapshot | null>(null);
   const dark = colorScheme === 'dark';
   const pageSurface = dark ? colors.background : '#f7f9fe';
@@ -157,6 +158,13 @@ export function DoubleColorBallLabScreen() {
     } finally {
       setExporting(false);
     }
+  }
+
+  function handleRunBacktest(label: string) {
+    runCountRef.current += 1;
+    setHasRun(true);
+    setMessage(`${label}（第 ${runCountRef.current} 次）`);
+    setRunNonce((current) => current + 1);
   }
 
   const header = (
@@ -342,11 +350,7 @@ export function DoubleColorBallLabScreen() {
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => {
-            setHasRun(true);
-            setMessage('回测完成，已生成收益明细');
-            setRunNonce((current) => current + 1);
-          }}
+          onPress={() => handleRunBacktest('回测完成，已生成收益明细')}
           style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
           <MaterialCommunityIcons name="play-circle-outline" size={19} color="#ffffff" />
           <ThemedText style={styles.primaryButtonText}>运行回测</ThemedText>
@@ -387,10 +391,7 @@ export function DoubleColorBallLabScreen() {
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              onPress={() => {
-                setMessage('');
-                setRunNonce((current) => current + 1);
-              }}
+              onPress={() => handleRunBacktest('已重新回测，结果已更新')}
               style={({ pressed }) => [
                 styles.secondaryButton,
                 { backgroundColor: colors.primarySoft },
