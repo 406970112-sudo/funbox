@@ -45,6 +45,8 @@ LEGACY_DATABASE_FILE=""
 LEGACY_JWT_SECRET_FILE=""
 PAYMENT_QR_STORAGE_DIR=""
 LEGACY_PAYMENT_QR_STORAGE_DIR=""
+FEEDBACK_STORAGE_DIR=""
+LEGACY_FEEDBACK_STORAGE_DIR=""
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%F %T')" "$*"
@@ -262,6 +264,34 @@ prepare_membership_storage() {
   install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$PAYMENT_QR_STORAGE_DIR"
 }
 
+prepare_feedback_storage() {
+  local feedback_dir
+  local legacy_feedback_dir
+  local previous_env="$PREVIOUS_BACKEND_ROOT/.env"
+
+  feedback_dir="$(read_env_value "$BACKEND_ROOT/.env" "STORAGE_FEEDBACK_DIR")"
+  if [[ -f "$previous_env" ]]; then
+    legacy_feedback_dir="$(read_env_value "$previous_env" "STORAGE_FEEDBACK_DIR")"
+  else
+    legacy_feedback_dir="$feedback_dir"
+  fi
+
+  LEGACY_FEEDBACK_STORAGE_DIR="$(resolve_legacy_path "$legacy_feedback_dir" "data/feedback-images")"
+  FEEDBACK_STORAGE_DIR="$(resolve_persistent_path "$feedback_dir" "data/feedback-images")"
+
+  set_env_value "$BACKEND_ROOT/.env" "STORAGE_FEEDBACK_DIR" "$FEEDBACK_STORAGE_DIR"
+
+  case "$FEEDBACK_STORAGE_DIR" in
+    "$PERSISTENT_ROOT"/*) ;;
+    *)
+      echo "Feedback storage path must resolve inside $PERSISTENT_ROOT."
+      exit 1
+      ;;
+  esac
+
+  install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$FEEDBACK_STORAGE_DIR"
+}
+
 migrate_legacy_auth_storage() {
   if [[ ! -x "$BUILD_AUTH_STORAGE_MIGRATOR" ]]; then
     echo "Auth storage migrator not found: $BUILD_AUTH_STORAGE_MIGRATOR"
@@ -290,6 +320,21 @@ migrate_legacy_payment_qr() {
 
   cp -a "$LEGACY_PAYMENT_QR_STORAGE_DIR"/. "$PAYMENT_QR_STORAGE_DIR"/
   chown -R "$APP_USER:$APP_GROUP" "$PAYMENT_QR_STORAGE_DIR"
+}
+
+migrate_legacy_feedback() {
+  if [[ ! -d "$LEGACY_FEEDBACK_STORAGE_DIR" || "$LEGACY_FEEDBACK_STORAGE_DIR" == "$FEEDBACK_STORAGE_DIR" ]]; then
+    return
+  fi
+  if ! find "$LEGACY_FEEDBACK_STORAGE_DIR" -mindepth 1 -maxdepth 1 -type f -print -quit | grep -q .; then
+    return
+  fi
+  if find "$FEEDBACK_STORAGE_DIR" -mindepth 1 -print -quit | grep -q .; then
+    return
+  fi
+
+  cp -a "$LEGACY_FEEDBACK_STORAGE_DIR"/. "$FEEDBACK_STORAGE_DIR"/
+  chown -R "$APP_USER:$APP_GROUP" "$FEEDBACK_STORAGE_DIR"
 }
 
 retry() {
@@ -532,10 +577,12 @@ configure_nginx_api_proxies() {
         }
       }
     ' "$stripped" >"$tmp"
-    if ! grep -Fq "client_max_body_size" "$tmp"; then
-      awk '/^[[:space:]]*server[[:space:]]*\{/ { print; print "  client_max_body_size 3m;"; next } { print }' "$tmp" >"$tmp.partial"
-      mv "$tmp.partial" "$tmp"
-    fi
+    awk '
+      /^[[:space:]]*client_max_body_size[[:space:]]/ { next }
+      /^[[:space:]]*server[[:space:]]*\{/ { print; print "  client_max_body_size 16m;"; next }
+      { print }
+    ' "$tmp" >"$tmp.partial"
+    mv "$tmp.partial" "$tmp"
     cat "$tmp" >"$conf"
     rm -f "$tmp" "$stripped"
     configured=true
@@ -612,6 +659,8 @@ prepare_auth_storage
 log "Prepared backend account storage"
 prepare_membership_storage
 log "Prepared backend membership storage"
+prepare_feedback_storage
+log "Prepared backend feedback storage"
 
 cd "$APP_ROOT"
 
@@ -650,6 +699,7 @@ popd >/dev/null
 log "Migrating legacy account storage when shared storage is empty"
 migrate_legacy_auth_storage
 migrate_legacy_payment_qr
+migrate_legacy_feedback
 
 log "Building email agent"
 pushd "$EMAIL_AGENT_ROOT" >/dev/null
@@ -698,6 +748,7 @@ systemctl is-active --quiet nginx
 runuser -u "$APP_USER" -- test -w "$AUDIO_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$AVATAR_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$PAYMENT_QR_STORAGE_DIR"
+runuser -u "$APP_USER" -- test -w "$FEEDBACK_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$(dirname "$DATABASE_FILE")"
 runuser -u "$APP_USER" -- test -w "$(dirname "$JWT_SECRET_FILE")"
 curl --fail --silent --show-error http://127.0.0.1:3000/healthz

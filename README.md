@@ -109,4 +109,4 @@ npm run dev
 - `deploy/alicloud/ubuntu-22.04/bootstrap-server.sh`
 - `deploy/alicloud/ubuntu-22.04/deploy-project.sh`
 
-生产环境会把数据库、头像、JWT 密钥和收款码重定向到固定的共享数据目录，切换 release 时不会丢失数据；`AUTH_JWT_SECRET` 或密钥文件一旦更换，现有登录令牌会全部失效。
+生产环境会把数据库、头像、反馈图片、JWT 密钥和收款码重定向到固定的共享数据目录，切换 release 时不会丢失数据；`AUTH_JWT_SECRET` 或密钥文件一旦更换，现有登录令牌会全部失效。
