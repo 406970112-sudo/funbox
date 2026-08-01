@@ -36,7 +36,7 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
     let frame = 0;
     let lastScan = 0;
 
-    function tick() {
+    async function tick() {
       if (disposed) return;
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -55,7 +55,7 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
         if (context) {
           context.drawImage(video, 0, 0, width, height);
           try {
-            const value = decodeQr(context.getImageData(0, 0, width, height));
+            const value = await detectFromCanvas(canvas);
             if (value && !disposed) {
               detectedRef.current(value);
               return;
@@ -65,7 +65,7 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
           }
         }
       }
-      frame = requestAnimationFrame(tick);
+      frame = requestAnimationFrame(() => void tick());
     }
 
     async function startCamera() {
@@ -74,13 +74,22 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
         return;
       }
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-        });
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          });
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          });
+        }
         if (disposed) {
           stream.getTracks().forEach((track) => track.stop());
           return;
@@ -88,10 +97,11 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
         const video = videoRef.current;
         if (!video) return;
         video.srcObject = stream;
-        await video.play();
-        if (disposed) return;
+        video.muted = true;
         setCameraState('ready');
-        frame = requestAnimationFrame(tick);
+        await video.play().catch(() => undefined);
+        if (disposed) return;
+        frame = requestAnimationFrame(() => void tick());
       } catch {
         if (!disposed) setCameraState('denied');
       }
@@ -136,18 +146,33 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
       const bitmap = await loadBitmap(file);
       const canvas = canvasRef.current;
       if (!canvas) return;
-      canvas.width = bitmap.width || (bitmap as HTMLImageElement).naturalWidth || 1;
-      canvas.height = bitmap.height || (bitmap as HTMLImageElement).naturalHeight || 1;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      if (!context) return;
-      context.drawImage(bitmap, 0, 0);
-      const image = context.getImageData(0, 0, canvas.width, canvas.height);
-      const value = decodeQr(image);
-      if (value) {
-        onDetected(value);
-        return;
+      const sourceWidth = (bitmap as HTMLImageElement).naturalWidth || bitmap.width || 1;
+      const sourceHeight = (bitmap as HTMLImageElement).naturalHeight || bitmap.height || 1;
+      const maxSource = Math.max(sourceWidth, sourceHeight);
+      const scale = maxSource < 256 ? Math.min(4, Math.ceil(256 / maxSource)) : 1;
+      const attempts: { height: number; smoothing: boolean; width: number }[] = [];
+      if (scale > 1) {
+        attempts.push({ height: sourceHeight * scale, smoothing: false, width: sourceWidth * scale });
+        attempts.push({ height: sourceHeight * scale, smoothing: true, width: sourceWidth * scale });
       }
-      setMessage('没有在图片中识别到牌局二维码，请换一张清晰的二维码图片。');
+      attempts.push({ height: sourceHeight, smoothing: false, width: sourceWidth });
+
+      for (const attempt of attempts) {
+        canvas.width = attempt.width;
+        canvas.height = attempt.height;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        if (!context) continue;
+        context.imageSmoothingEnabled = attempt.smoothing;
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, attempt.width, attempt.height);
+        context.drawImage(bitmap, 0, 0, attempt.width, attempt.height);
+        const value = await detectFromCanvas(canvas);
+        if (value) {
+          onDetected(value);
+          return;
+        }
+      }
+      setMessage('没有在图片中识别到牌局二维码，请确认二维码完整清晰后重试。');
     } catch {
       setMessage('图片读取失败，请重试。');
     } finally {
@@ -175,21 +200,19 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
       </View>
 
       <View style={styles.cameraShell}>
+        {createElement('video', {
+          autoPlay: true,
+          muted: true,
+          playsInline: true,
+          ref: videoRef,
+          style: styles.video,
+        })}
         {cameraState === 'starting' ? (
           <View style={styles.centerState}>
             <ActivityIndicator color="#c9f36a" />
             <ThemedText style={styles.stateText}>正在打开相机</ThemedText>
           </View>
         ) : null}
-        {cameraState === 'ready'
-          ? createElement('video', {
-              autoPlay: true,
-              muted: true,
-              playsInline: true,
-              ref: videoRef,
-              style: styles.video,
-            })
-          : null}
         {cameraState === 'denied' ? (
           <View style={styles.centerState}>
             <MaterialCommunityIcons name="camera-off-outline" color="#ffffff" size={34} />
@@ -234,8 +257,39 @@ export function CardScoreScanner({ onClose, onDetected, onManualEntry }: Scanner
   );
 }
 
-function decodeQr(image: ImageData) {
+type BarcodeDetectorLike = {
+  detect(source: HTMLCanvasElement): Promise<{ rawValue: string }[]>;
+};
+
+function getBarcodeDetector(): BarcodeDetectorLike | null {
+  if (typeof window === 'undefined') return null;
+  const constructor = (
+    window as unknown as {
+      BarcodeDetector?: new (options?: { formats?: string[] }) => BarcodeDetectorLike;
+    }
+  ).BarcodeDetector;
+  if (!constructor) return null;
   try {
+    return new constructor({ formats: ['qr_code'] });
+  } catch {
+    return null;
+  }
+}
+
+async function detectFromCanvas(canvas: HTMLCanvasElement) {
+  const detector = getBarcodeDetector();
+  if (detector) {
+    try {
+      const codes = await detector.detect(canvas);
+      if (codes[0]?.rawValue) return codes[0].rawValue;
+    } catch {
+      // Fall through to the pure JS decoder.
+    }
+  }
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) return null;
+  try {
+    const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const result = jsQR(image.data, image.width, image.height);
     return result?.data ?? null;
   } catch {
@@ -274,8 +328,14 @@ const styles = StyleSheet.create({
   },
   centerState: {
     alignItems: 'center',
+    bottom: 0,
     gap: 12,
+    justifyContent: 'center',
+    left: 0,
     paddingHorizontal: 28,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   corner: {
     borderColor: '#c9f36a',

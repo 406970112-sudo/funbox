@@ -212,7 +212,11 @@ export function CardScoreScreen() {
 
   async function enterScanRoom(credential: ScoreCredential, roomId: string) {
     setGuestToken(null);
-    const next = await getScoreRoom(credential, roomId);
+    let next = await getScoreRoom(credential, roomId);
+    if (next.status === 'waiting') {
+      const inviteToken = await issueScoreInviteToken(credential, next.id);
+      next = { ...next, inviteToken };
+    }
     applyRoom(next);
     setScanOpen(false);
   }
@@ -522,7 +526,7 @@ function WaitingRoom({ activeCount, busy, credential, host, onMutation, room }: 
             <ThemedText style={[styles.kicker, { color: colors.accent }]}>等待玩家加入</ThemedText>
             <ThemedText style={styles.roomCode}>{room.code}</ThemedText>
           </View>
-          {inviteURL ? <View style={styles.qrShell}><QRCode backgroundColor="#ffffff" color="#18233d" quietZone={4} size={92} value={inviteURL} /></View> : null}
+          {inviteURL ? <View style={styles.qrShell}><QRCode backgroundColor="#ffffff" color="#18233d" quietZone={4} size={148} value={inviteURL} /></View> : null}
         </View>
         <ThemedText style={[styles.ruleText, { color: colors.mutedText }]}>每分 {formatCNY(room.centsPerPoint)} · {activeCount}/{room.maxPlayers} 人</ThemedText>
         <Pressable accessibilityRole="button" onPress={() => void Clipboard.setStringAsync(room.code)} style={({ pressed }) => [styles.copyButton, { backgroundColor: colors.surfaceMuted }, pressed && styles.pressed]}>
