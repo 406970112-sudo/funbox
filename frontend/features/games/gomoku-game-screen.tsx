@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
 import { Stack, useRouter } from 'expo-router';
-import { startTransition, useEffect, useState, type ComponentProps } from 'react';
+import { startTransition, useEffect, useRef, useState, type ComponentProps } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -458,6 +458,7 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
     error,
     loading,
     matches,
+    refreshMatches,
     resignMatch,
     respondMatch,
     submitMove,
@@ -470,6 +471,19 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
   const loginRequired = Boolean(
     getGameSocialCapability('gomoku')?.requiresAuthentication && !authenticated,
   );
+  const refreshMatchesRef = useRef(refreshMatches);
+  refreshMatchesRef.current = refreshMatches;
+
+  useEffect(() => {
+    if (!selectedMatchId) return;
+
+    void refreshMatchesRef.current();
+    const timer = setInterval(() => {
+      void refreshMatchesRef.current();
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, [selectedMatchId]);
 
   async function runAction(action: () => Promise<GameMatch>, selectResult = true) {
     setBusy(true);
@@ -481,6 +495,18 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
     } catch {
       setLocalError('操作没有完成，请稍后再试。');
       return null;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshCurrentMatch() {
+    setBusy(true);
+    setLocalError('');
+    try {
+      await refreshMatchesRef.current();
+    } catch {
+      setLocalError('刷新对局失败，请稍后再试。');
     } finally {
       setBusy(false);
     }
@@ -686,6 +712,7 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
   return (
     <GomokuOnlineMatch
       busy={busy}
+      errorText={error || localError}
       match={selectedMatch}
       onAccept={() => void runAction(() => respondMatch(selectedMatch.id, 'accept'))}
       onBack={() => setSelectedMatchId(null)}
@@ -699,6 +726,7 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
           }),
         )
       }
+      onRefresh={() => void refreshCurrentMatch()}
       onResign={() => void runAction(() => resignMatch(selectedMatch.id))}
       userId={user?.id ?? ''}
     />
@@ -707,20 +735,24 @@ function GomokuFriendGameScreen({ onExit }: { onExit: () => void }) {
 
 function GomokuOnlineMatch({
   busy,
+  errorText,
   match,
   onAccept,
   onBack,
   onDecline,
   onMove,
+  onRefresh,
   onResign,
   userId,
 }: {
   busy: boolean;
+  errorText: string;
   match: GameMatch;
   onAccept: () => void;
   onBack: () => void;
   onDecline: () => void;
   onMove: (row: number, col: number) => void;
+  onRefresh: () => void;
   onResign: () => void;
   userId: string;
 }) {
@@ -814,6 +846,15 @@ function GomokuOnlineMatch({
           </View>
         </View>
 
+        {errorText ? (
+          <View style={[styles.onlineErrorBanner, { backgroundColor: colors.surfaceMuted }]}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={18} color={colors.accent} />
+            <ThemedText style={[styles.onlineErrorText, { color: colors.mutedText }]}>
+              {errorText}
+            </ThemedText>
+          </View>
+        ) : null}
+
         {incoming ? (
           <View style={styles.actionRow}>
             <GameActionButton disabled={busy} icon="close" label="拒绝" onPress={onDecline} />
@@ -828,6 +869,7 @@ function GomokuOnlineMatch({
           </View>
         ) : match.status === 'active' ? (
           <View style={styles.actionRow}>
+            <GameActionButton disabled={busy} icon="refresh" label="刷新" onPress={onRefresh} />
             <GameActionButton icon="arrow-left" label="稍后继续" onPress={onBack} />
             <GameActionButton
               disabled={busy}
@@ -1392,6 +1434,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     paddingHorizontal: 12,
     paddingVertical: 11,
+  },
+  onlineErrorBanner: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 8,
+    marginHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  onlineErrorText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 18,
   },
   resultCopy: {
     flex: 1,
