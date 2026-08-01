@@ -3,6 +3,7 @@ package user_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -90,4 +91,153 @@ func TestOpenStoreMigratesExistingUsersTable(t *testing.T) {
 	if updated.Role != roles.Admin {
 		t.Fatalf("updated role = %q, want admin", updated.Role)
 	}
+}
+
+func TestStoreListUsersFiltersAndPaginates(t *testing.T) {
+	store := openTestStore(t)
+	ctx := context.Background()
+
+	createTestUser(t, store, "13800138001", "林小满")
+	vip := createTestUser(t, store, "13800138002", "张玲")
+	createTestUser(t, store, "13800138003", "陈野")
+	if _, err := store.UpdateRoleByUsername(ctx, vip.Username, roles.VIP); err != nil {
+		t.Fatalf("promote vip fixture: %v", err)
+	}
+
+	filtered, err := store.List(ctx, user.ListOptions{
+		Limit: 20,
+		Query: "玲",
+		Role:  roles.VIP,
+	})
+	if err != nil {
+		t.Fatalf("list filtered users: %v", err)
+	}
+	if filtered.Total != 1 || len(filtered.Users) != 1 {
+		t.Fatalf("filtered result = %+v, want one user", filtered)
+	}
+	if filtered.Users[0].ID != vip.ID || filtered.Users[0].Role != roles.VIP {
+		t.Fatalf("filtered user = %+v, want vip fixture", filtered.Users[0])
+	}
+
+	page, err := store.List(ctx, user.ListOptions{Limit: 2, Offset: 1})
+	if err != nil {
+		t.Fatalf("list paginated users: %v", err)
+	}
+	if page.Total != 3 || len(page.Users) != 2 {
+		t.Fatalf("paginated result = %+v, want total 3 and two rows", page)
+	}
+}
+
+func TestStoreUpdateRoleWritesOneAuditEntryAndRetriesIdempotently(t *testing.T) {
+	store := openTestStore(t)
+	ctx := context.Background()
+	admin := createTestUser(t, store, "13800138101", "管理员")
+	member := createTestUser(t, store, "13800138102", "林小满")
+	if _, err := store.UpdateRoleByUsername(ctx, admin.Username, roles.Admin); err != nil {
+		t.Fatalf("promote admin fixture: %v", err)
+	}
+
+	updated, changed, err := store.UpdateRole(
+		ctx,
+		member.ID,
+		admin.ID,
+		roles.Normal,
+		roles.VIP,
+		"活动赠送",
+	)
+	if err != nil || !changed || updated.Role != roles.VIP {
+		t.Fatalf("updated = %+v, changed = %v, err = %v", updated, changed, err)
+	}
+
+	retried, changed, err := store.UpdateRole(
+		ctx,
+		member.ID,
+		admin.ID,
+		roles.Normal,
+		roles.VIP,
+		"重复请求",
+	)
+	if err != nil || changed || retried.Role != roles.VIP {
+		t.Fatalf("retried = %+v, changed = %v, err = %v", retried, changed, err)
+	}
+
+	history, err := store.ListRoleChangesByUserID(ctx, member.ID, 10, 0)
+	if err != nil {
+		t.Fatalf("list role changes: %v", err)
+	}
+	if history.Total != 1 || len(history.Changes) != 1 {
+		t.Fatalf("role change history = %+v, want one entry", history)
+	}
+	change := history.Changes[0]
+	if change.TargetUserID != member.ID || change.OperatorUserID != admin.ID ||
+		change.FromRole != roles.Normal || change.ToRole != roles.VIP ||
+		change.Reason != "活动赠送" || change.OperatorDisplayName != "管理员" {
+		t.Fatalf("role change = %+v", change)
+	}
+}
+
+func TestStoreUpdateRoleRejectsProtectedAdminAndStaleRole(t *testing.T) {
+	store := openTestStore(t)
+	ctx := context.Background()
+	admin := createTestUser(t, store, "13800138201", "管理员")
+	member := createTestUser(t, store, "13800138202", "陈野")
+	if _, err := store.UpdateRoleByUsername(ctx, admin.Username, roles.Admin); err != nil {
+		t.Fatalf("promote admin fixture: %v", err)
+	}
+
+	if _, _, err := store.UpdateRole(
+		ctx,
+		admin.ID,
+		admin.ID,
+		roles.Admin,
+		roles.VIP,
+		"错误降级",
+	); !errors.Is(err, user.ErrProtectedAdminRole) {
+		t.Fatalf("protected admin error = %v", err)
+	}
+
+	if _, _, err := store.UpdateRole(
+		ctx,
+		member.ID,
+		admin.ID,
+		roles.VIP,
+		roles.SVIP,
+		"覆盖他人修改",
+	); !errors.Is(err, user.ErrRoleChanged) {
+		t.Fatalf("stale role error = %v", err)
+	}
+
+	history, err := store.ListRoleChangesByUserID(ctx, member.ID, 10, 0)
+	if err != nil {
+		t.Fatalf("list role changes: %v", err)
+	}
+	if history.Total != 0 || len(history.Changes) != 0 {
+		t.Fatalf("unexpected role changes = %+v", history)
+	}
+}
+
+func openTestStore(t *testing.T) *user.Store {
+	t.Helper()
+	store, err := user.OpenStore(filepath.Join(t.TempDir(), "users.db"))
+	if err != nil {
+		t.Fatalf("open test store: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	return store
+}
+
+func createTestUser(t *testing.T, store *user.Store, username string, displayName string) user.User {
+	t.Helper()
+	created, err := store.Create(
+		context.Background(),
+		username,
+		"password-hash",
+		displayName,
+		"你小时候最喜欢的书是什么？",
+		"answer-hash",
+	)
+	if err != nil {
+		t.Fatalf("create user %s: %v", username, err)
+	}
+	return created
 }

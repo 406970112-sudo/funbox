@@ -17,8 +17,10 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("user not found")
-	ErrUsernameTaken = errors.New("username already exists")
+	ErrNotFound           = errors.New("user not found")
+	ErrProtectedAdminRole = errors.New("administrator role is protected")
+	ErrRoleChanged        = errors.New("user role changed")
+	ErrUsernameTaken      = errors.New("username already exists")
 )
 
 type User struct {
@@ -39,6 +41,35 @@ type User struct {
 
 type Store struct {
 	db *sql.DB
+}
+
+type ListOptions struct {
+	Limit  int
+	Offset int
+	Query  string
+	Role   roles.Role
+}
+
+type ListResult struct {
+	Total int
+	Users []User
+}
+
+type RoleChange struct {
+	CreatedAt           time.Time
+	FromRole            roles.Role
+	ID                  string
+	OperatorDisplayName string
+	OperatorUserID      string
+	OperatorUsername    string
+	Reason              string
+	TargetUserID        string
+	ToRole              roles.Role
+}
+
+type RoleChangeListResult struct {
+	Changes []RoleChange
+	Total   int
 }
 
 func OpenStore(databasePath string) (*Store, error) {
@@ -91,6 +122,19 @@ func (s *Store) migrate() error {
 			created_at INTEGER NOT NULL,
 			updated_at INTEGER NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS user_role_changes (
+			id TEXT PRIMARY KEY,
+			target_user_id TEXT NOT NULL,
+			operator_user_id TEXT NOT NULL,
+			from_role TEXT NOT NULL,
+			to_role TEXT NOT NULL,
+			reason TEXT NOT NULL DEFAULT '',
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY(target_user_id) REFERENCES users(id) ON DELETE CASCADE,
+			FOREIGN KEY(operator_user_id) REFERENCES users(id) ON DELETE RESTRICT
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_user_role_changes_target_created
+			ON user_role_changes(target_user_id, created_at DESC)`,
 	}
 
 	for _, statement := range statements {
@@ -222,6 +266,217 @@ func (s *Store) GetByUsername(ctx context.Context, username string) (User, error
 	return scanUser(s.db.QueryRowContext(ctx, userSelect+` WHERE username = ?`, username))
 }
 
+func (s *Store) List(ctx context.Context, options ListOptions) (ListResult, error) {
+	limit := options.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	offset := options.Offset
+	if offset < 0 {
+		offset = 0
+	}
+
+	clauses := make([]string, 0, 2)
+	args := make([]any, 0, 4)
+	if query := strings.TrimSpace(options.Query); query != "" {
+		clauses = append(clauses, `(username LIKE ? COLLATE NOCASE OR display_name LIKE ? COLLATE NOCASE)`)
+		pattern := "%" + query + "%"
+		args = append(args, pattern, pattern)
+	}
+	if options.Role != "" {
+		if !roles.IsValid(options.Role) {
+			return ListResult{}, fmt.Errorf("invalid role %q", options.Role)
+		}
+		clauses = append(clauses, `role = ?`)
+		args = append(args, options.Role)
+	}
+
+	where := ""
+	if len(clauses) > 0 {
+		where = " WHERE " + strings.Join(clauses, " AND ")
+	}
+
+	var total int
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM users`+where, args...).Scan(&total); err != nil {
+		return ListResult{}, fmt.Errorf("count users: %w", err)
+	}
+
+	queryArgs := append(append([]any{}, args...), limit, offset)
+	rows, err := s.db.QueryContext(
+		ctx,
+		userSelect+where+` ORDER BY created_at DESC, rowid DESC LIMIT ? OFFSET ?`,
+		queryArgs...,
+	)
+	if err != nil {
+		return ListResult{}, fmt.Errorf("list users: %w", err)
+	}
+	defer rows.Close()
+
+	users := make([]User, 0, limit)
+	for rows.Next() {
+		account, err := scanUser(rows)
+		if err != nil {
+			return ListResult{}, err
+		}
+		users = append(users, account)
+	}
+	if err := rows.Err(); err != nil {
+		return ListResult{}, fmt.Errorf("iterate users: %w", err)
+	}
+
+	return ListResult{Total: total, Users: users}, nil
+}
+
+func (s *Store) UpdateRole(
+	ctx context.Context,
+	targetUserID string,
+	operatorUserID string,
+	expectedRole roles.Role,
+	nextRole roles.Role,
+	reason string,
+) (User, bool, error) {
+	if !roles.IsValid(expectedRole) || !roles.IsValid(nextRole) {
+		return User{}, false, fmt.Errorf("invalid role transition %q to %q", expectedRole, nextRole)
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return User{}, false, fmt.Errorf("begin role update: %w", err)
+	}
+	defer tx.Rollback()
+
+	current, err := scanUser(tx.QueryRowContext(ctx, userSelect+` WHERE id = ?`, targetUserID))
+	if err != nil {
+		return User{}, false, err
+	}
+	if current.Role == roles.Admin {
+		return User{}, false, ErrProtectedAdminRole
+	}
+	if current.Role == nextRole {
+		return current, false, nil
+	}
+	if current.Role != expectedRole {
+		return User{}, false, ErrRoleChanged
+	}
+
+	now := time.Now().UTC()
+	result, err := tx.ExecContext(
+		ctx,
+		`UPDATE users SET role = ?, updated_at = ? WHERE id = ? AND role = ?`,
+		nextRole,
+		now.Unix(),
+		targetUserID,
+		expectedRole,
+	)
+	if err != nil {
+		return User{}, false, fmt.Errorf("update user role: %w", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return User{}, false, fmt.Errorf("read role update result: %w", err)
+	}
+	if rowsAffected != 1 {
+		return User{}, false, ErrRoleChanged
+	}
+
+	if _, err := tx.ExecContext(
+		ctx,
+		`INSERT INTO user_role_changes (
+			id, target_user_id, operator_user_id, from_role, to_role, reason, created_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		uuid.NewString(),
+		targetUserID,
+		operatorUserID,
+		expectedRole,
+		nextRole,
+		strings.TrimSpace(reason),
+		now.Unix(),
+	); err != nil {
+		return User{}, false, fmt.Errorf("create user role change: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return User{}, false, fmt.Errorf("commit role update: %w", err)
+	}
+	current.Role = nextRole
+	current.UpdatedAt = now
+	return current, true, nil
+}
+
+func (s *Store) ListRoleChangesByUserID(
+	ctx context.Context,
+	targetUserID string,
+	limit int,
+	offset int,
+) (RoleChangeListResult, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	var total int
+	if err := s.db.QueryRowContext(
+		ctx,
+		`SELECT COUNT(*) FROM user_role_changes WHERE target_user_id = ?`,
+		targetUserID,
+	).Scan(&total); err != nil {
+		return RoleChangeListResult{}, fmt.Errorf("count user role changes: %w", err)
+	}
+
+	rows, err := s.db.QueryContext(
+		ctx,
+		`SELECT changes.id, changes.target_user_id, changes.operator_user_id,
+			changes.from_role, changes.to_role, changes.reason, changes.created_at,
+			operators.display_name, operators.username
+		 FROM user_role_changes AS changes
+		 JOIN users AS operators ON operators.id = changes.operator_user_id
+		 WHERE changes.target_user_id = ?
+		 ORDER BY changes.created_at DESC, changes.rowid DESC
+		 LIMIT ? OFFSET ?`,
+		targetUserID,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return RoleChangeListResult{}, fmt.Errorf("list user role changes: %w", err)
+	}
+	defer rows.Close()
+
+	changes := make([]RoleChange, 0, limit)
+	for rows.Next() {
+		var change RoleChange
+		var createdAt int64
+		if err := rows.Scan(
+			&change.ID,
+			&change.TargetUserID,
+			&change.OperatorUserID,
+			&change.FromRole,
+			&change.ToRole,
+			&change.Reason,
+			&createdAt,
+			&change.OperatorDisplayName,
+			&change.OperatorUsername,
+		); err != nil {
+			return RoleChangeListResult{}, fmt.Errorf("scan user role change: %w", err)
+		}
+		change.CreatedAt = time.Unix(createdAt, 0).UTC()
+		changes = append(changes, change)
+	}
+	if err := rows.Err(); err != nil {
+		return RoleChangeListResult{}, fmt.Errorf("iterate user role changes: %w", err)
+	}
+
+	return RoleChangeListResult{Changes: changes, Total: total}, nil
+}
+
 func (s *Store) UpdateRoleByUsername(
 	ctx context.Context,
 	username string,
@@ -340,7 +595,11 @@ const userSelect = `SELECT
 	token_version, created_at, updated_at
 	FROM users`
 
-func scanUser(row *sql.Row) (User, error) {
+type rowScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanUser(row rowScanner) (User, error) {
 	var result User
 	var createdAt int64
 	var recoveryLockedUntil int64
