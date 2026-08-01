@@ -51,10 +51,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tools"
         options={{
+          href: null,
           title: '工具',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'grid' : 'grid-outline'} size={24} color={color} />
-          ),
         }}
       />
       <Tabs.Screen
