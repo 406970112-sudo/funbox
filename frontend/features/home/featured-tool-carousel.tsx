@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   AppState,
@@ -15,13 +15,9 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { appLayout } from '@/constants/app-theme';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { getToolById } from '@/mocks/app-data';
 import type { AppIconName, AppTool, ToolId } from '@/types/app';
 
-import {
-  getNextCarouselStep,
-  type CarouselDirection,
-} from './featured-carousel-sequence';
+import { getNextCarouselIndex } from './featured-carousel-sequence';
 
 const AUTO_PLAY_INTERVAL_MS = 5200;
 const CARD_GAP = 10;
@@ -29,7 +25,7 @@ const NEXT_CARD_PEEK = 30;
 const PAGE_HORIZONTAL_PADDING = 32;
 const WAVEFORM_HEIGHTS = [20, 34, 50, 29, 66, 39, 54, 25];
 
-type ArtworkKind = 'waveform' | 'image' | 'qr' | 'translate';
+type ArtworkKind = 'waveform' | 'image' | 'qr' | 'translate' | 'tool';
 
 type FeaturedSlideConfig = {
   toolId: ToolId;
@@ -42,6 +38,11 @@ type FeaturedSlideConfig = {
 
 type FeaturedSlide = FeaturedSlideConfig & {
   tool: AppTool;
+};
+
+type RenderedFeaturedSlide = {
+  key: string;
+  slide: FeaturedSlide;
 };
 
 type FeaturedToolCarouselProps = {
@@ -84,10 +85,24 @@ const FEATURED_SLIDE_CONFIGS: FeaturedSlideConfig[] = [
   },
 ];
 
-const FEATURED_SLIDES = FEATURED_SLIDE_CONFIGS.flatMap<FeaturedSlide>((config) => {
-  const tool = getToolById(config.toolId);
-  return tool ? [{ ...config, tool }] : [];
-});
+const FEATURED_CONFIG_BY_TOOL_ID = new Map(
+  FEATURED_SLIDE_CONFIGS.map((config) => [config.toolId, config] as const),
+);
+
+function createFeaturedSlide(tool: AppTool): FeaturedSlide {
+  const config = FEATURED_CONFIG_BY_TOOL_ID.get(tool.id);
+  if (config) return { ...config, tool };
+
+  return {
+    artwork: 'tool',
+    artworkIcon: tool.icon,
+    backgroundColor: tool.accentColor,
+    description: tool.tagline,
+    title: tool.name,
+    tool,
+    toolId: tool.id,
+  };
+}
 
 function FeatureArtwork({ kind, icon }: { kind: ArtworkKind; icon: AppIconName }) {
   if (kind === 'waveform') {
@@ -122,10 +137,12 @@ function FeatureArtwork({ kind, icon }: { kind: ArtworkKind; icon: AppIconName }
 
 function FeaturedCard({
   slide,
+  testID,
   width,
   onPress,
 }: {
   slide: FeaturedSlide;
+  testID: string;
   width: number;
   onPress: () => void;
 }) {
@@ -140,7 +157,7 @@ function FeaturedCard({
         { backgroundColor: slide.backgroundColor, width },
         pressed ? styles.cardPressed : null,
       ]}
-      testID={`featured-card-${slide.toolId}`}>
+      testID={testID}>
       <View style={styles.cardTexture}>
         <View style={styles.textureLine} />
         <View style={[styles.textureLine, styles.textureLineMiddle]} />
@@ -179,17 +196,41 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
   const viewportWidth = Math.min(windowWidth, appLayout.screenMaxWidth) - PAGE_HORIZONTAL_PADDING;
   const cardWidth = Math.max(260, viewportWidth - CARD_GAP - NEXT_CARD_PEEK);
   const cardStep = cardWidth + CARD_GAP;
-  const listRef = useRef<FlatList<FeaturedSlide>>(null);
+  const featuredSlides = useMemo(() => tools.map(createFeaturedSlide), [tools]);
+  const renderedSlides = useMemo<RenderedFeaturedSlide[]>(() => {
+    if (featuredSlides.length < 2) {
+      return featuredSlides.map((slide) => ({ key: slide.toolId, slide }));
+    }
+
+    const lastIndex = featuredSlides.length - 1;
+    return [
+      {
+        key: `clone-last-${featuredSlides[lastIndex].toolId}`,
+        slide: featuredSlides[lastIndex],
+      },
+      ...featuredSlides.map((slide) => ({
+        key: slide.toolId,
+        slide,
+      })),
+      {
+        key: `clone-first-${featuredSlides[0].toolId}`,
+        slide: featuredSlides[0],
+      },
+      {
+        key: `clone-second-${featuredSlides[1].toolId}`,
+        slide: featuredSlides[1],
+      },
+    ];
+  }, [featuredSlides]);
+  const slideKey = featuredSlides.map((slide) => slide.toolId).join('|');
+  const listRef = useRef<FlatList<RenderedFeaturedSlide>>(null);
   const activeIndexRef = useRef(0);
-  const autoPlayDirectionRef = useRef<CarouselDirection>(1);
+  const physicalIndexRef = useRef(featuredSlides.length > 1 ? 1 : 0);
   const isInteractingRef = useRef(false);
   const lastInteractionAtRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [appIsActive, setAppIsActive] = useState(AppState.currentState !== 'background');
   const [reduceMotion, setReduceMotion] = useState(false);
-  const visibleToolIDs = new Set(tools.map((tool) => tool.id));
-  const featuredSlides = FEATURED_SLIDES.filter((slide) => visibleToolIDs.has(slide.toolId));
-
   useEffect(() => {
     void AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
     const subscription = AccessibilityInfo.addEventListener(
@@ -209,11 +250,15 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
   }, []);
 
   useEffect(() => {
+    const firstPhysicalIndex = featuredSlides.length > 1 ? 1 : 0;
+    physicalIndexRef.current = firstPhysicalIndex;
+    activeIndexRef.current = 0;
+    setActiveIndex(0);
     listRef.current?.scrollToOffset({
       animated: false,
-      offset: activeIndexRef.current * cardStep,
+      offset: firstPhysicalIndex * cardStep,
     });
-  }, [cardStep]);
+  }, [cardStep, featuredSlides.length, slideKey]);
 
   useEffect(() => {
     if (reduceMotion || !appIsActive || featuredSlides.length < 2) {
@@ -226,17 +271,21 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
         return;
       }
 
-      const nextStep = getNextCarouselStep(
-        activeIndexRef.current,
-        autoPlayDirectionRef.current,
-        featuredSlides.length,
-      );
-      autoPlayDirectionRef.current = nextStep.direction;
-      activeIndexRef.current = nextStep.index;
-      setActiveIndex(nextStep.index);
+      let currentPhysicalIndex = physicalIndexRef.current;
+      if (currentPhysicalIndex >= featuredSlides.length + 1) {
+        currentPhysicalIndex = 1;
+        physicalIndexRef.current = currentPhysicalIndex;
+        listRef.current?.scrollToOffset({ animated: false, offset: cardStep });
+      }
+
+      const nextPhysicalIndex = currentPhysicalIndex + 1;
+      const nextIndex = getNextCarouselIndex(activeIndexRef.current, featuredSlides.length);
+      physicalIndexRef.current = nextPhysicalIndex;
+      activeIndexRef.current = nextIndex;
+      setActiveIndex(nextIndex);
       listRef.current?.scrollToOffset({
         animated: true,
-        offset: nextStep.index * cardStep,
+        offset: nextPhysicalIndex * cardStep,
       });
     }, AUTO_PLAY_INTERVAL_MS);
 
@@ -245,18 +294,39 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
 
   function setCurrentSlide(index: number, animated: boolean) {
     const normalizedIndex = Math.max(0, Math.min(index, featuredSlides.length - 1));
+    const physicalIndex = featuredSlides.length > 1 ? normalizedIndex + 1 : normalizedIndex;
     lastInteractionAtRef.current = Date.now();
+    physicalIndexRef.current = physicalIndex;
     activeIndexRef.current = normalizedIndex;
     setActiveIndex(normalizedIndex);
     listRef.current?.scrollToOffset({
       animated: animated && !reduceMotion,
-      offset: normalizedIndex * cardStep,
+      offset: physicalIndex * cardStep,
     });
   }
 
   function updateIndexFromScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / cardStep);
-    const normalizedIndex = Math.max(0, Math.min(nextIndex, featuredSlides.length - 1));
+    const physicalIndex = Math.round(event.nativeEvent.contentOffset.x / cardStep);
+    let normalizedPhysicalIndex = physicalIndex;
+
+    if (featuredSlides.length > 1 && physicalIndex <= 0) {
+      normalizedPhysicalIndex = featuredSlides.length;
+      listRef.current?.scrollToOffset({
+        animated: false,
+        offset: normalizedPhysicalIndex * cardStep,
+      });
+    } else if (
+      featuredSlides.length > 1 &&
+      physicalIndex >= featuredSlides.length + 1
+    ) {
+      normalizedPhysicalIndex = 1;
+      listRef.current?.scrollToOffset({ animated: false, offset: cardStep });
+    }
+
+    const normalizedIndex = featuredSlides.length > 1
+      ? normalizedPhysicalIndex - 1
+      : 0;
+    physicalIndexRef.current = normalizedPhysicalIndex;
     activeIndexRef.current = normalizedIndex;
     setActiveIndex(normalizedIndex);
     isInteractingRef.current = false;
@@ -269,7 +339,7 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
   return (
     <View style={styles.carouselSection}>
       <View style={styles.carouselHeader}>
-        <ThemedText style={styles.carouselTitle}>精选功能</ThemedText>
+        <ThemedText style={styles.carouselTitle}>常用功能</ThemedText>
         <ThemedText style={[styles.carouselCount, { color: colors.mutedText }]}>
           {String(Math.min(activeIndex + 1, featuredSlides.length)).padStart(2, '0')} /{' '}
           {String(featuredSlides.length).padStart(2, '0')}
@@ -278,9 +348,9 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
 
       <FlatList
         ref={listRef}
-        accessibilityLabel="精选功能轮播"
+        accessibilityLabel="常用功能轮播"
         contentContainerStyle={styles.carouselContent}
-        data={featuredSlides}
+        data={renderedSlides}
         decelerationRate="fast"
         disableIntervalMomentum
         extraData={cardWidth}
@@ -290,7 +360,8 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
           offset: cardStep * index,
         })}
         horizontal
-        keyExtractor={(slide) => slide.toolId}
+        initialScrollIndex={featuredSlides.length > 1 ? 1 : 0}
+        keyExtractor={(item) => item.key}
         nestedScrollEnabled
         onMomentumScrollBegin={() => {
           isInteractingRef.current = true;
@@ -308,14 +379,19 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
             style={[
               styles.cardSlot,
               {
-                marginRight: index === featuredSlides.length - 1 ? 0 : CARD_GAP,
+                marginRight: index === renderedSlides.length - 1 ? 0 : CARD_GAP,
                 width: cardWidth,
               },
             ]}>
             <FeaturedCard
-              slide={item}
+              slide={item.slide}
+              testID={
+                item.key.startsWith('clone-')
+                  ? `featured-card-${item.slide.toolId}-${item.key}`
+                  : `featured-card-${item.slide.toolId}`
+              }
               width={cardWidth}
-              onPress={() => onToolPress(item.tool)}
+              onPress={() => onToolPress(item.slide.tool)}
             />
           </View>
         )}
@@ -325,13 +401,13 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
         testID="featured-carousel"
       />
 
-      <View accessibilityLabel="轮播分页" style={styles.pagination}>
+      <View accessibilityLabel="常用功能轮播分页" style={styles.pagination}>
         {featuredSlides.map((slide, index) => {
           const selected = index === activeIndex;
           return (
             <Pressable
               key={slide.toolId}
-              accessibilityLabel={`显示第 ${index + 1} 个精选功能：${slide.tool.name}`}
+              accessibilityLabel={`显示第 ${index + 1} 个常用功能：${slide.tool.name}`}
               accessibilityRole="button"
               accessibilityState={{ selected }}
               hitSlop={5}

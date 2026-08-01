@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-screen';
@@ -28,6 +28,7 @@ import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 import { recordStoredRecentUsage } from '@/lib/recent-usage-storage';
+import { recordStoredToolUsage } from '@/lib/tool-usage-storage';
 import type { ToolId } from '@/types/app';
 
 export function ToolDetailScreen() {
@@ -39,15 +40,25 @@ export function ToolDetailScreen() {
   const toolId = tool?.id;
   const toolStatus = tool?.status;
   const toolIsAccessible = toolId ? canAccessTool(toolId) : false;
+  const recordedToolIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!toolId || toolStatus !== 'available' || !toolIsAccessible) return;
+    if (
+      !toolId ||
+      toolStatus !== 'available' ||
+      !toolIsAccessible ||
+      recordedToolIdRef.current === toolId
+    ) return;
+
+    recordedToolIdRef.current = toolId;
+    const usedAt = Date.now();
 
     void recordStoredRecentUsage({
       itemId: toolId,
       kind: 'tool',
-      usedAt: Date.now(),
+      usedAt,
     });
+    void recordStoredToolUsage(toolId, usedAt);
   }, [toolId, toolIsAccessible, toolStatus]);
 
   if (status === 'loading') {

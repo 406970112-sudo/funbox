@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { type PropsWithChildren, useRef } from 'react';
+import { type PropsWithChildren, useCallback, useRef, useState } from 'react';
 import {
   Animated,
   Platform,
@@ -12,6 +13,8 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { getStoredToolUsage } from '@/lib/tool-usage-storage';
+import { getCommonToolIds, type ToolUsageStat } from '@/lib/tool-usage';
 import { popularGames } from '@/mocks/app-data';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
@@ -20,6 +23,12 @@ import { FeaturedToolCarousel } from './featured-tool-carousel';
 import { GameArtwork } from './game-artwork';
 
 const HOME_TOOL_LIMIT = 6;
+const DEFAULT_COMMON_TOOL_IDS: AppTool['id'][] = [
+  'text-to-speech',
+  'image-compressor',
+  'qr-code',
+  'smart-translation',
+];
 const HOME_TOOL_EXCLUSIONS = new Set<AppTool['id']>([
   'release-email-assistant',
   'live-stream-capture',
@@ -146,11 +155,42 @@ export function HomeScreen() {
   const { colors, colorScheme } = useAppTheme();
   const { visibleTools } = useFeatureAccess();
   const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(1))).current;
+  const [toolUsage, setToolUsage] = useState<ToolUsageStat[]>([]);
+  const availableTools = visibleTools.filter((tool) => tool.status === 'available');
+  const commonToolIDs = getCommonToolIds(
+    availableTools.map((tool) => tool.id),
+    toolUsage,
+    DEFAULT_COMMON_TOOL_IDS,
+  );
+  const commonToolIDSet = new Set(commonToolIDs);
+  const commonTools = commonToolIDs.flatMap((toolId) => {
+    const tool = availableTools.find((candidate) => candidate.id === toolId);
+    return tool ? [tool] : [];
+  });
   const quickTools = visibleTools
-    .filter((tool) => tool.status === 'available' && !HOME_TOOL_EXCLUSIONS.has(tool.id))
+    .filter(
+      (tool) =>
+        tool.status === 'available' &&
+        !HOME_TOOL_EXCLUSIONS.has(tool.id) &&
+        !commonToolIDSet.has(tool.id),
+    )
     .slice(0, HOME_TOOL_LIMIT);
   const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 4);
   const availableToolCount = visibleTools.filter((tool) => tool.status === 'available').length;
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      void getStoredToolUsage().then((items) => {
+        if (active) setToolUsage(items);
+      });
+
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
@@ -188,7 +228,7 @@ export function HomeScreen() {
 
       <Reveal progress={reveals[1]}>
         <FeaturedToolCarousel
-          tools={visibleTools}
+          tools={commonTools}
           onToolPress={(tool) => router.push(tool.route)}
         />
       </Reveal>
@@ -196,8 +236,8 @@ export function HomeScreen() {
       <Reveal progress={reveals[2]}>
         <View style={styles.section}>
           <SectionHeader
-            title="常用工具"
-            meta="高频能力，一步直达"
+            title="更多工具"
+            meta="更多能力，按需取用"
             onPress={() => router.push('/tools')}
           />
           <View style={styles.toolGrid}>
