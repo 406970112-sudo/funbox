@@ -1,0 +1,1581 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 效率清单产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #1db991;
+        --purple: #7e5bef;
+        --purple-soft: #f0edff;
+        --amber: #f1a33b;
+        --canvas: #dce6f5;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 100vh;
+        padding: 30px 44px 46px;
+        width: 1600px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 auto 24px;
+        max-width: 1512px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 52px;
+        justify-content: center;
+        width: 52px;
+      }
+
+      .brand-mark svg {
+        height: 26px;
+        stroke-width: 2.3;
+        width: 26px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 27px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--purple);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .stage {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: 300px minmax(0, 1fr);
+        margin: 0 auto;
+        max-width: 1512px;
+      }
+
+      .strategy {
+        align-self: start;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.92);
+        border-radius: 18px;
+        padding: 24px 22px;
+      }
+
+      .strategy-kicker {
+        color: var(--purple);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .strategy h2 {
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 8px 0 10px;
+      }
+
+      .strategy-lead {
+        color: #5d6b86;
+        font-size: 12px;
+        line-height: 1.8;
+        margin: 0;
+      }
+
+      .strategy-section {
+        border-top: 1px solid var(--line);
+        margin-top: 20px;
+        padding-top: 18px;
+      }
+
+      .strategy-section h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0 0 11px;
+      }
+
+      .principle-list,
+      .scope-list {
+        display: grid;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .principle-list li,
+      .scope-list li {
+        align-items: flex-start;
+        color: #4d5a75;
+        display: flex;
+        font-size: 11px;
+        gap: 9px;
+        line-height: 1.55;
+      }
+
+      .principle-list i,
+      .scope-list i {
+        color: var(--purple);
+        flex: 0 0 auto;
+        height: 15px;
+        margin-top: 2px;
+        width: 15px;
+      }
+
+      .scope-list i {
+        color: var(--green);
+      }
+
+      .scope-list.muted i {
+        color: #9aa5bb;
+      }
+
+      .entry-chip {
+        align-items: center;
+        background: var(--purple-soft);
+        border-radius: 12px;
+        color: #4a3e8a;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        margin-top: 18px;
+        min-height: 42px;
+        padding: 9px 11px;
+      }
+
+      .entry-chip svg {
+        height: 15px;
+        stroke-width: 2.4;
+        width: 15px;
+      }
+
+      .entry-chip span {
+        color: #8a80b8;
+        font-weight: 600;
+      }
+
+      .screens {
+        display: grid;
+        gap: 30px 24px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .screen-item {
+        min-width: 0;
+      }
+
+      .screen-label {
+        align-items: baseline;
+        display: flex;
+        gap: 9px;
+        justify-content: center;
+        margin: 0 0 10px;
+      }
+
+      .screen-label b {
+        color: var(--navy);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .screen-label span {
+        color: #6d7a94;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .phone {
+        background: #0e152b;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 42px;
+        box-shadow: 0 28px 54px rgba(45, 66, 105, 0.27), 0 4px 12px rgba(45, 66, 105, 0.14);
+        height: 742px;
+        margin: 0 auto;
+        padding: 10px;
+        position: relative;
+        width: 330px;
+      }
+
+      .speaker {
+        background: #05091a;
+        border-radius: 999px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 18px;
+        transform: translateX(-50%);
+        width: 88px;
+        z-index: 10;
+      }
+
+      .screen {
+        background: var(--screen);
+        border-radius: 34px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 30px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 6px 22px 0;
+        position: relative;
+        z-index: 5;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 11px;
+        stroke-width: 2.4;
+        width: 11px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 54px;
+        justify-content: space-between;
+        padding: 6px 18px 8px;
+      }
+
+      .page-title {
+        font-size: 21px;
+        font-weight: 900;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .page-meta {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .top-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        padding: 0;
+        width: 34px;
+      }
+
+      .icon-button.primary {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--lime);
+      }
+
+      .icon-button svg {
+        height: 16px;
+        stroke-width: 2.3;
+        width: 16px;
+      }
+
+      .tabs {
+        background: #e9eef8;
+        border-radius: 13px;
+        display: flex;
+        flex: 0 0 42px;
+        gap: 4px;
+        margin: 0 14px;
+        padding: 4px;
+      }
+
+      .tab {
+        align-items: center;
+        border-radius: 10px;
+        color: var(--muted);
+        display: flex;
+        flex: 1;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 4px;
+        justify-content: center;
+      }
+
+      .tab svg {
+        height: 13px;
+        stroke-width: 2.3;
+        width: 13px;
+      }
+
+      .tab.active {
+        background: var(--white);
+        box-shadow: 0 3px 10px rgba(38, 54, 90, 0.08);
+        color: var(--purple);
+      }
+
+      .body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+        padding: 12px 14px 14px;
+      }
+
+      .hero {
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--white);
+        overflow: hidden;
+        padding: 14px 15px 12px;
+        position: relative;
+      }
+
+      .hero::after {
+        border: 15px solid rgba(126, 91, 239, 0.24);
+        border-radius: 50%;
+        content: "";
+        height: 86px;
+        position: absolute;
+        right: -30px;
+        top: -34px;
+        width: 86px;
+      }
+
+      .hero-top {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-date {
+        color: #c3cde7;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .hero-tag {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+      }
+
+      .hero-tag svg {
+        height: 13px;
+        stroke-width: 2.4;
+        width: 13px;
+      }
+
+      .hero-count {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 27px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 8px 0 8px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-count small {
+        color: #aab6d6;
+        font-size: 12px;
+        font-weight: 700;
+        margin-left: 4px;
+      }
+
+      .progress-track {
+        background: #30395f;
+        border-radius: 999px;
+        height: 7px;
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+      }
+
+      .progress-fill {
+        background: linear-gradient(90deg, var(--lime), #9df36a);
+        border-radius: 999px;
+        height: 100%;
+        width: 50%;
+      }
+
+      .hero-stats {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 10px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-stat {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        font-size: 9px;
+        padding: 8px 9px;
+      }
+
+      .hero-stat b {
+        color: var(--white);
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+
+      .hero-stat span {
+        color: #aab6d6;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+        justify-content: space-between;
+        margin: 13px 2px 7px;
+      }
+
+      .section-head b {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .section-head span {
+        color: var(--purple);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .goal-row,
+      .task-row,
+      .habit-row {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: grid;
+        gap: 9px;
+        min-height: 44px;
+        padding: 7px 10px;
+      }
+
+      .goal-row {
+        grid-template-columns: 22px 1fr;
+        margin-bottom: 6px;
+        min-height: 38px;
+      }
+
+      .task-row {
+        grid-template-columns: 22px 1fr auto;
+        margin-bottom: 6px;
+        min-height: 46px;
+      }
+
+      .habit-row {
+        grid-template-columns: 32px 1fr auto;
+        margin-bottom: 6px;
+        min-height: 48px;
+      }
+
+      .check-circle {
+        align-items: center;
+        background: var(--white);
+        border: 1.6px solid #c4cde2;
+        border-radius: 50%;
+        display: flex;
+        height: 22px;
+        justify-content: center;
+        width: 22px;
+      }
+
+      .check-circle.done {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: var(--white);
+      }
+
+      .check-circle svg {
+        height: 12px;
+        stroke-width: 3;
+        width: 12px;
+      }
+
+      .row-title {
+        font-size: 11.5px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
+      .row-title.done {
+        color: #9aa5bb;
+        text-decoration: line-through;
+      }
+
+      .row-meta {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .priority-pill {
+        border-radius: 6px;
+        font-size: 8px;
+        font-weight: 800;
+        padding: 3px 6px;
+      }
+
+      .priority-pill.high {
+        background: #ffe9ee;
+        color: #e2576f;
+      }
+
+      .priority-pill.mid {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .priority-pill.low {
+        background: #eef5ef;
+        color: var(--green);
+      }
+
+      .priority-pill.overdue {
+        background: #fdf1e1;
+        color: var(--amber);
+      }
+
+      .date-text {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8.5px;
+        gap: 4px;
+        font-weight: 700;
+      }
+
+      .date-text svg {
+        height: 11px;
+        stroke-width: 2.3;
+        width: 11px;
+      }
+
+      .habit-icon {
+        align-items: center;
+        background: var(--purple-soft);
+        border-radius: 10px;
+        color: var(--purple);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .habit-icon.green {
+        background: #e8f6f0;
+        color: var(--green);
+      }
+
+      .habit-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .habit-icon.amber {
+        background: #fff2e0;
+        color: var(--amber);
+      }
+
+      .habit-icon svg {
+        height: 15px;
+        stroke-width: 2.2;
+        width: 15px;
+      }
+
+      .streak {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8.5px;
+        gap: 3px;
+        font-weight: 800;
+      }
+
+      .streak svg {
+        color: #ff8b6b;
+        height: 12px;
+        stroke-width: 2.3;
+        width: 12px;
+      }
+
+      .fab {
+        align-items: center;
+        background: var(--purple);
+        border: 0;
+        border-radius: 50%;
+        bottom: 16px;
+        box-shadow: 0 10px 22px rgba(126, 91, 239, 0.34);
+        color: var(--white);
+        display: flex;
+        height: 48px;
+        justify-content: center;
+        position: absolute;
+        right: 16px;
+        width: 48px;
+        z-index: 8;
+      }
+
+      .fab svg {
+        height: 21px;
+        stroke-width: 2.4;
+        width: 21px;
+      }
+
+      .list-dot {
+        border-radius: 4px;
+        height: 9px;
+        width: 9px;
+      }
+
+      .list-dot.purple {
+        background: var(--purple);
+      }
+
+      .list-dot.blue {
+        background: var(--blue);
+      }
+
+      .list-dot.green {
+        background: var(--green);
+      }
+
+      .list-dot.amber {
+        background: var(--amber);
+      }
+
+      .filter-chips {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 7px;
+        margin: 10px 0 10px;
+        overflow: hidden;
+      }
+
+      .chip {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        padding: 6px 11px;
+        white-space: nowrap;
+      }
+
+      .chip.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--white);
+      }
+
+      .summary-strip {
+        display: grid;
+        flex: 0 0 auto;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 11px 0;
+      }
+
+      .summary-cell {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 9px 10px;
+      }
+
+      .summary-cell b {
+        color: var(--navy);
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+
+      .summary-cell span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .heatmap {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin-top: 9px;
+        padding: 10px;
+      }
+
+      .heatmap-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .heatmap-head b {
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .heatmap-head span {
+        color: var(--purple);
+        font-size: 8.5px;
+        font-weight: 800;
+      }
+
+      .heat-grid {
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(7, 1fr);
+      }
+
+      .heat-cell {
+        aspect-ratio: 1;
+        background: #e9eef8;
+        border-radius: 4px;
+      }
+
+      .heat-cell.h1 {
+        background: #e0dcff;
+      }
+
+      .heat-cell.h2 {
+        background: #c3b7ff;
+      }
+
+      .heat-cell.h3 {
+        background: #9b83ff;
+      }
+
+      .heat-cell.h4 {
+        background: var(--purple);
+      }
+
+      .heat-weekday {
+        color: #9aa5bb;
+        display: grid;
+        font-size: 7px;
+        font-weight: 700;
+        gap: 3px;
+        grid-template-columns: repeat(7, 1fr);
+        margin-top: 6px;
+        text-align: center;
+      }
+
+      .stat-grid {
+        display: grid;
+        flex: 0 0 auto;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stat-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 11px 11px 9px;
+      }
+
+      .stat-card .stat-icon {
+        align-items: center;
+        background: var(--purple-soft);
+        border-radius: 9px;
+        color: var(--purple);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        margin-bottom: 7px;
+        width: 28px;
+      }
+
+      .stat-card .stat-icon.green {
+        background: #e8f6f0;
+        color: var(--green);
+      }
+
+      .stat-card .stat-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .stat-card .stat-icon.amber {
+        background: #fff2e0;
+        color: var(--amber);
+      }
+
+      .stat-card .stat-icon svg {
+        height: 14px;
+        stroke-width: 2.2;
+        width: 14px;
+      }
+
+      .stat-card b {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+
+      .stat-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .range-switch {
+        background: #e9eef8;
+        border-radius: 11px;
+        display: flex;
+        flex: 0 0 30px;
+        gap: 3px;
+        margin: 10px 0 10px;
+        padding: 3px;
+      }
+
+      .range {
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        padding: 6px 0;
+        text-align: center;
+        width: 50%;
+      }
+
+      .range.active {
+        background: var(--white);
+        box-shadow: 0 2px 8px rgba(38, 54, 90, 0.08);
+        color: var(--purple);
+      }
+
+      .chart-panel {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin-top: 10px;
+        padding: 11px 12px 9px;
+      }
+
+      .chart-panel-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .chart-panel-head b {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .chart-panel-head span {
+        color: var(--green);
+        font-size: 8.5px;
+        font-weight: 800;
+      }
+
+      .bar-chart {
+        align-items: flex-end;
+        display: flex;
+        gap: 7px;
+        height: 74px;
+      }
+
+      .bar-col {
+        align-items: center;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 5px;
+        height: 100%;
+        justify-content: flex-end;
+      }
+
+      .bar {
+        background: linear-gradient(180deg, #9b83ff, var(--purple));
+        border-radius: 5px 5px 2px 2px;
+        min-height: 6px;
+        width: 100%;
+      }
+
+      .bar-col:nth-child(1) .bar { height: 44%; }
+      .bar-col:nth-child(2) .bar { height: 62%; }
+      .bar-col:nth-child(3) .bar { height: 36%; }
+      .bar-col:nth-child(4) .bar { height: 78%; }
+      .bar-col:nth-child(5) .bar { height: 58%; }
+      .bar-col:nth-child(6) .bar { height: 86%; }
+      .bar-col:nth-child(7) .bar { height: 68%; }
+
+      .bar-col:nth-child(4) .bar,
+      .bar-col:nth-child(6) .bar {
+        background: linear-gradient(180deg, #8be3bd, var(--green));
+      }
+
+      .bar-label {
+        color: #9aa5bb;
+        font-size: 7.5px;
+        font-weight: 700;
+      }
+
+      .dist-row {
+        align-items: center;
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .dist-name {
+        color: var(--muted);
+        width: 34px;
+      }
+
+      .dist-track {
+        background: #e9eef8;
+        border-radius: 999px;
+        flex: 1;
+        height: 6px;
+        overflow: hidden;
+      }
+
+      .dist-fill {
+        background: var(--purple);
+        border-radius: 999px;
+        height: 100%;
+      }
+
+      .dist-fill.green {
+        background: var(--green);
+      }
+
+      .dist-fill.blue {
+        background: var(--blue);
+      }
+
+      .dist-value {
+        color: var(--ink);
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        width: 28px;
+        text-align: right;
+      }
+
+      .bottom-note {
+        color: #9aa5bb;
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: auto;
+        padding: 8px 2px 0;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="clipboard-check"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox 效率清单</h1>
+            <p class="brand-subtitle">任务编排 · 每日目标 · 持续打卡，收敛成一个轻量个人效率工作台</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>产品设计方案 V1</strong>
+          2026-08-01 · 待评审
+        </div>
+      </header>
+
+      <div class="stage">
+        <aside class="strategy">
+          <div class="strategy-kicker">PRODUCT DESIGN · V1</div>
+          <h2>效率清单</h2>
+          <p class="strategy-lead">
+            把零散事项放进清单，把当天最重要的 1-3 件事立为目标，把想坚持的小习惯做成打卡，今日页一屏完成查看、打勾与记录。
+          </p>
+
+          <div class="strategy-section">
+            <h3>核心原则</h3>
+            <ul class="principle-list">
+              <li><i data-lucide="sun"></i>今日优先：首屏聚合目标、任务与打卡</li>
+              <li><i data-lucide="zap"></i>30 秒闭环：新增、打勾、打卡全程轻量</li>
+              <li><i data-lucide="feather"></i>轻量克制：不协作、不复杂、低压力</li>
+            </ul>
+          </div>
+
+          <div class="strategy-section">
+            <h3>V1 范围</h3>
+            <ul class="scope-list">
+              <li><i data-lucide="list-todo"></i>清单与任务编排，支持优先级、日期与重复</li>
+              <li><i data-lucide="target"></i>每日目标，每天最多 3 条，可引用任务</li>
+              <li><i data-lucide="flame"></i>习惯打卡、连续天数与月历热力图</li>
+              <li><i data-lucide="bar-chart-3"></i>周/月统计：完成率、目标达成、打卡汇总</li>
+              <li><i data-lucide="bell"></i>移动端本地提醒，Web 应用内提醒</li>
+            </ul>
+          </div>
+
+          <div class="strategy-section">
+            <h3>V2 候选</h3>
+            <ul class="scope-list muted">
+              <li><i data-lucide="timer"></i>番茄钟与专注统计</li>
+              <li><i data-lucide="layout-grid"></i>看板 / 四象限视图</li>
+              <li><i data-lucide="send"></i>服务端跨设备推送</li>
+              <li><i data-lucide="file-down"></i>数据导入导出</li>
+            </ul>
+          </div>
+
+          <div class="entry-chip">
+            <i data-lucide="route"></i>
+            /tools/focus-plan · 效率
+            <span>coming-soon → available</span>
+          </div>
+        </aside>
+
+        <section class="screens">
+          <div class="screen-item">
+            <div class="screen-label"><b>01 今日页</b><span>一屏完成查看与打勾</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">效率清单</h2>
+                    <div class="page-meta">把今天安排清楚</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="search"></i></button>
+                    <button class="icon-button"><i data-lucide="bell"></i></button>
+                  </div>
+                </div>
+
+                <div class="body">
+                  <div class="hero">
+                    <div class="hero-top">
+                      <span class="hero-date">8月1日 · 周六</span>
+                      <span class="hero-tag"><i data-lucide="sparkles"></i>今日 3/6</span>
+                    </div>
+                    <div class="hero-count">保持节奏<small>3 项已完成</small></div>
+                    <div class="progress-track"><div class="progress-fill"></div></div>
+                    <div class="hero-stats">
+                      <div class="hero-stat"><b>2/3</b><span>每日目标</span></div>
+                      <div class="hero-stat"><b>2/2</b><span>今日打卡</span></div>
+                    </div>
+                  </div>
+
+                  <div class="section-head"><b>每日目标</b><span>最多 3 条</span></div>
+                  <div class="goal-row">
+                    <div class="check-circle done"><i data-lucide="check"></i></div>
+                    <div>
+                      <div class="row-title">完成市场雷达 2.0 文档</div>
+                    </div>
+                  </div>
+                  <div class="goal-row">
+                    <div class="check-circle done"><i data-lucide="check"></i></div>
+                    <div>
+                      <div class="row-title">整理本周任务</div>
+                    </div>
+                  </div>
+                  <div class="goal-row">
+                    <div class="check-circle"></div>
+                    <div>
+                      <div class="row-title">睡前阅读 20 分钟</div>
+                    </div>
+                  </div>
+
+                  <div class="section-head"><b>今日清单</b><span>3 项待完成</span></div>
+                  <div class="task-row">
+                    <div class="check-circle"></div>
+                    <div>
+                      <div class="row-title">评审效率清单设计稿</div>
+                      <div class="row-meta">工作 · 高优先级</div>
+                    </div>
+                    <div class="date-text"><i data-lucide="clock"></i>09:30</div>
+                  </div>
+                  <div class="task-row">
+                    <div class="check-circle"></div>
+                    <div>
+                      <div class="row-title">写产品文档</div>
+                      <div class="row-meta">工作 · 中优先级</div>
+                    </div>
+                    <div class="date-text"><i data-lucide="clock"></i>14:00</div>
+                  </div>
+                  <div class="task-row">
+                    <div class="check-circle done"><i data-lucide="check"></i></div>
+                    <div>
+                      <div class="row-title done">早间拉伸</div>
+                      <div class="row-meta">生活 · 已完成</div>
+                    </div>
+                    <div class="date-text"><i data-lucide="check"></i></div>
+                  </div>
+
+                  <div class="section-head"><b>今日打卡</b><span>连续 5 天</span></div>
+                  <div class="habit-row">
+                    <div class="habit-icon"><i data-lucide="droplets"></i></div>
+                    <div>
+                      <div class="row-title">喝水 8 杯</div>
+                      <div class="row-meta">每天 · 已打卡</div>
+                    </div>
+                    <div class="check-circle done"><i data-lucide="check"></i></div>
+                  </div>
+                  <div class="habit-row">
+                    <div class="habit-icon blue"><i data-lucide="book-open"></i></div>
+                    <div>
+                      <div class="row-title">阅读 20 分钟</div>
+                      <div class="row-meta">每天 · 待打卡</div>
+                    </div>
+                    <div class="check-circle"></div>
+                  </div>
+                </div>
+                <button class="fab"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-item">
+            <div class="screen-label"><b>02 清单页</b><span>任务编排与搜索</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">清单</h2>
+                    <div class="page-meta">共 18 项任务</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="search"></i></button>
+                    <button class="icon-button primary"><i data-lucide="plus"></i></button>
+                  </div>
+                </div>
+
+                <div class="tabs">
+                  <div class="tab"><i data-lucide="sun"></i>今日</div>
+                  <div class="tab active"><i data-lucide="list-todo"></i>清单</div>
+                  <div class="tab"><i data-lucide="flame"></i>习惯</div>
+                  <div class="tab"><i data-lucide="bar-chart-3"></i>统计</div>
+                </div>
+
+                <div class="body">
+                  <div class="filter-chips">
+                    <span class="chip active">全部</span>
+                    <span class="chip">工作</span>
+                    <span class="chip">生活</span>
+                    <span class="chip">收集箱</span>
+                  </div>
+
+                  <div class="task-row">
+                    <div class="list-dot purple"></div>
+                    <div>
+                      <div class="row-title">评审效率清单设计稿</div>
+                      <div class="row-meta">工作 · 高优先级</div>
+                    </div>
+                    <div class="priority-pill high">高</div>
+                  </div>
+                  <div class="task-row">
+                    <div class="list-dot purple"></div>
+                    <div>
+                      <div class="row-title">写产品文档</div>
+                      <div class="row-meta">工作 · 中优先级</div>
+                    </div>
+                    <div class="priority-pill mid">中</div>
+                  </div>
+                  <div class="task-row">
+                    <div class="list-dot blue"></div>
+                    <div>
+                      <div class="row-title">回复好友消息</div>
+                      <div class="row-meta">生活 · 低优先级 · 8月2日</div>
+                    </div>
+                    <div class="priority-pill low">低</div>
+                  </div>
+                  <div class="task-row">
+                    <div class="list-dot blue"></div>
+                    <div>
+                      <div class="row-title">桌面文件归档</div>
+                      <div class="row-meta">生活 · 中优先级 · 已逾期</div>
+                    </div>
+                    <div class="priority-pill overdue">逾期</div>
+                  </div>
+                  <div class="task-row">
+                    <div class="list-dot green"></div>
+                    <div>
+                      <div class="row-title">预约牙医</div>
+                      <div class="row-meta">收集箱 · 低优先级 · 8月5日</div>
+                    </div>
+                    <div class="date-text"><i data-lucide="calendar-days"></i>8.5</div>
+                  </div>
+                  <div class="task-row">
+                    <div class="list-dot purple"></div>
+                    <div>
+                      <div class="row-title">整理会议纪要</div>
+                      <div class="row-meta">工作 · 中优先级 · 8月3日</div>
+                    </div>
+                    <div class="date-text"><i data-lucide="calendar-days"></i>8.3</div>
+                  </div>
+
+                  <div class="section-head"><b>已归档</b><span>6 项已完成</span></div>
+                  <div class="task-row">
+                    <div class="check-circle done"><i data-lucide="check"></i></div>
+                    <div>
+                      <div class="row-title done">市场雷达数据核对</div>
+                      <div class="row-meta">工作 · 7月31日</div>
+                    </div>
+                    <div class="date-text"><i data-lucide="check"></i></div>
+                  </div>
+                </div>
+                <button class="fab"><i data-lucide="plus"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-item">
+            <div class="screen-label"><b>03 习惯页</b><span>打卡与连续纪录</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">习惯</h2>
+                    <div class="page-meta">把坚持变成看得见的记录</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="settings"></i></button>
+                    <button class="icon-button primary"><i data-lucide="plus"></i></button>
+                  </div>
+                </div>
+
+                <div class="tabs">
+                  <div class="tab"><i data-lucide="sun"></i>今日</div>
+                  <div class="tab"><i data-lucide="list-todo"></i>清单</div>
+                  <div class="tab active"><i data-lucide="flame"></i>习惯</div>
+                  <div class="tab"><i data-lucide="bar-chart-3"></i>统计</div>
+                </div>
+
+                <div class="body">
+                  <div class="summary-strip">
+                    <div class="summary-cell"><b>9/12</b><span>本周打卡</span></div>
+                    <div class="summary-cell"><b>5 天</b><span>当前连续</span></div>
+                  </div>
+
+                  <div class="habit-row">
+                    <div class="habit-icon"><i data-lucide="droplets"></i></div>
+                    <div>
+                      <div class="row-title">喝水 8 杯</div>
+                      <div class="row-meta">每天 · 连续 5 天</div>
+                    </div>
+                    <div class="check-circle done"><i data-lucide="check"></i></div>
+                  </div>
+                  <div class="habit-row">
+                    <div class="habit-icon blue"><i data-lucide="book-open"></i></div>
+                    <div>
+                      <div class="row-title">阅读 20 分钟</div>
+                      <div class="row-meta">每天 · 连续 3 天</div>
+                    </div>
+                    <div class="check-circle"></div>
+                  </div>
+                  <div class="habit-row">
+                    <div class="habit-icon green"><i data-lucide="dumbbell"></i></div>
+                    <div>
+                      <div class="row-title">运动 15 分钟</div>
+                      <div class="row-meta">周一/三/五 · 连续 2 天</div>
+                    </div>
+                    <div class="check-circle done"><i data-lucide="check"></i></div>
+                  </div>
+                  <div class="habit-row">
+                    <div class="habit-icon amber"><i data-lucide="moon"></i></div>
+                    <div>
+                      <div class="row-title">早睡 23:30</div>
+                      <div class="row-meta">每天 · 连续 1 天</div>
+                    </div>
+                    <div class="check-circle"></div>
+                  </div>
+
+                  <div class="heatmap">
+                    <div class="heatmap-head"><b>八月打卡热力图</b><span>12 天有记录</span></div>
+                    <div class="heat-grid">
+                      <span class="heat-cell h1"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell"></span>
+                      <span class="heat-cell h1"></span>
+                      <span class="heat-cell h3"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell h4"></span>
+                      <span class="heat-cell h4"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell h1"></span>
+                      <span class="heat-cell"></span>
+                      <span class="heat-cell h3"></span>
+                      <span class="heat-cell h1"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell h3"></span>
+                      <span class="heat-cell h4"></span>
+                      <span class="heat-cell h4"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell h1"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell"></span>
+                      <span class="heat-cell h1"></span>
+                      <span class="heat-cell h3"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell h4"></span>
+                      <span class="heat-cell h1"></span>
+                      <span class="heat-cell h2"></span>
+                      <span class="heat-cell"></span>
+                    </div>
+                    <div class="heat-weekday">
+                      <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-item">
+            <div class="screen-label"><b>04 统计页</b><span>完成率与热力图</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">统计</h2>
+                    <div class="page-meta">只呈现事实，不给压力</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="share-2"></i></button>
+                  </div>
+                </div>
+
+                <div class="tabs">
+                  <div class="tab"><i data-lucide="sun"></i>今日</div>
+                  <div class="tab"><i data-lucide="list-todo"></i>清单</div>
+                  <div class="tab"><i data-lucide="flame"></i>习惯</div>
+                  <div class="tab active"><i data-lucide="bar-chart-3"></i>统计</div>
+                </div>
+
+                <div class="body">
+                  <div class="range-switch">
+                    <span class="range">本周</span>
+                    <span class="range active">本月</span>
+                  </div>
+
+                  <div class="stat-grid">
+                    <div class="stat-card">
+                      <div class="stat-icon"><i data-lucide="list-checks"></i></div>
+                      <b>76%</b>
+                      <span>任务完成率</span>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-icon green"><i data-lucide="target"></i></div>
+                      <b>18/24</b>
+                      <span>目标达成</span>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-icon amber"><i data-lucide="flame"></i></div>
+                      <b>5 天</b>
+                      <span>最长连续</span>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-icon blue"><i data-lucide="calendar-check"></i></div>
+                      <b>42 次</b>
+                      <span>累计打卡</span>
+                    </div>
+                  </div>
+
+                  <div class="chart-panel">
+                    <div class="chart-panel-head"><b>近 7 天完成任务</b><span>+12%</span></div>
+                    <div class="bar-chart">
+                      <div class="bar-col"><span class="bar"></span><span class="bar-label">一</span></div>
+                      <div class="bar-col"><span class="bar"></span><span class="bar-label">二</span></div>
+                      <div class="bar-col"><span class="bar"></span><span class="bar-label">三</span></div>
+                      <div class="bar-col"><span class="bar"></span><span class="bar-label">四</span></div>
+                      <div class="bar-col"><span class="bar"></span><span class="bar-label">五</span></div>
+                      <div class="bar-col"><span class="bar"></span><span class="bar-label">六</span></div>
+                      <div class="bar-col"><span class="bar"></span><span class="bar-label">日</span></div>
+                    </div>
+                  </div>
+
+                  <div class="chart-panel">
+                    <div class="chart-panel-head"><b>完成分布</b><span>按清单</span></div>
+                    <div class="dist-row">
+                      <span class="dist-name">工作</span>
+                      <div class="dist-track"><div class="dist-fill" style="width: 62%"></div></div>
+                      <span class="dist-value">12 项</span>
+                    </div>
+                    <div class="dist-row">
+                      <span class="dist-name">生活</span>
+                      <div class="dist-track"><div class="dist-fill green" style="width: 42%"></div></div>
+                      <span class="dist-value">8 项</span>
+                    </div>
+                    <div class="dist-row">
+                      <span class="dist-name">收集箱</span>
+                      <div class="dist-track"><div class="dist-fill blue" style="width: 22%"></div></div>
+                      <span class="dist-value">4 项</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

@@ -276,15 +276,15 @@
   {
     "id": "focus-plan",
     "name": "效率清单",
-    "tagline": "任务管理",
-    "description": "用于承接任务编排、每日目标和持续打卡等效率能力。",
+    "tagline": "任务、目标与打卡",
+    "description": "清单任务编排、每日目标与习惯打卡，今日页一屏完成查看、打勾与记录。",
     "icon": "clipboard-check-outline",
     "category": "效率",
     "route": "/tools/focus-plan",
     "accentColor": "#7e5bef",
-    "badges": ["效率"],
-    "usageLabel": "查看规划",
-    "status": "coming-soon",
+    "badges": ["任务", "打卡"],
+    "usageLabel": "开始使用",
+    "status": "available",
     "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]

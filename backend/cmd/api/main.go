@@ -16,6 +16,7 @@ import (
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/feedback"
+	"my-first-expo-app/backend/internal/focus"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
@@ -64,6 +65,11 @@ func main() {
 		log.Fatalf("open score database failed: %v", err)
 	}
 	defer scoreStore.Close()
+	focusStore, err := focus.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open focus database failed: %v", err)
+	}
+	defer focusStore.Close()
 	registry, err := access.Registry()
 	if err != nil {
 		log.Fatalf("load feature registry failed: %v", err)
@@ -139,7 +145,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithReadingNewsAndFeedback(
+	server := httpapi.NewServerWithReadingNewsFeedbackAndFocus(
 		cfg,
 		ttsService,
 		translationService,
@@ -149,6 +155,7 @@ func main() {
 		newsService,
 		readingService,
 		feedbackService,
+		focusStore,
 		scoreService,
 	)
 
