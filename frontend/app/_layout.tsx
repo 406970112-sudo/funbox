@@ -88,6 +88,7 @@ export default function RootLayout() {
             <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/feedback" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="admin/index" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="admin/users" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="admin/permissions" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="admin/feedback" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="admin/reading" options={{ animation: 'slide_from_right' }} />

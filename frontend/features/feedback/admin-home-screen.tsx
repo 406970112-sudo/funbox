@@ -58,6 +58,13 @@ export function AdminHomeScreen() {
 
       <View style={styles.entryList}>
         <AdminEntry
+          description="查询用户并调整普通用户、VIP 或 SVIP 身份"
+          icon="account-key-outline"
+          label="用户身份"
+          onPress={() => router.push('/admin/users')}
+          tone="#1db991"
+        />
+        <AdminEntry
           description="管理功能入口的角色与用户特批"
           icon="key-outline"
           label="入口权限"
