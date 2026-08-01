@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -14,6 +14,7 @@ import { FeatureAccessProvider } from '@/features/access/feature-access-provider
 import { GameSocialProvider } from '@/features/games/game-social-provider';
 import { SocialProvider } from '@/features/social/social-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { installSafeRouterBack, trackBackContext } from '@/lib/router-back';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 
 export const unstable_settings = {
@@ -24,12 +25,19 @@ const MOBILE_WEB_INPUT_STYLE_ID = 'mobile-web-input-zoom-guard';
 
 void SplashScreen.preventAutoHideAsync();
 
+installSafeRouterBack();
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const pathname = usePathname();
   const [fontsLoaded, fontError] = useFonts({
     ...Ionicons.font,
     ...MaterialCommunityIcons.font,
   });
+
+  useEffect(() => {
+    trackBackContext(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
