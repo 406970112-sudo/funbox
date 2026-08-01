@@ -82,6 +82,7 @@ export type MarketSector = {
   methodology: string;
   name: string;
   series: readonly number[];
+  volumeRatio?: number;
 };
 
 export type MarketRelatedSector = {

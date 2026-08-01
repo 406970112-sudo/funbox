@@ -2,6 +2,7 @@ package marketradar
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,10 +18,7 @@ func TestSnapshotBuildsRealBoardMetrics(t *testing.T) {
 	upstream := newMarketRadarUpstream(t)
 	service := NewService(testMarketRadarConfig(upstream.URL()))
 
-	snapshot, err := service.Snapshot(context.Background(), false)
-	if err != nil {
-		t.Fatal(err)
-	}
+	snapshot := waitForEnrichedSectors(t, service)
 	if snapshot.Source != "eastmoney" || snapshot.Stale {
 		t.Fatalf("snapshot = %#v", snapshot)
 	}
@@ -31,11 +29,30 @@ func TestSnapshotBuildsRealBoardMetrics(t *testing.T) {
 	if len(sector.Series) != trendPoints || sector.Series[0] != 100 {
 		t.Fatalf("series = %#v", sector.Series)
 	}
-	if totalWeight(sector.Constituents) != 100 {
+	if len(sector.Constituents) != 0 {
 		t.Fatalf("constituents = %#v", sector.Constituents)
 	}
 	if len(snapshot.Sectors) != len(boardDefinitions) {
 		t.Fatalf("sector count = %d", len(snapshot.Sectors))
+	}
+}
+
+func TestSnapshotSucceedsWithoutKlineHistory(t *testing.T) {
+	upstream := newMarketRadarUpstream(t)
+	upstream.FailHistory()
+	service := NewService(testMarketRadarConfig(upstream.URL()))
+
+	snapshot, err := service.Snapshot(context.Background(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Coverage.Loaded != len(boardDefinitions) {
+		t.Fatalf("coverage = %#v", snapshot.Coverage)
+	}
+	for _, sector := range snapshot.Sectors {
+		if len(sector.Series) != 0 {
+			t.Fatalf("sector %s series = %#v", sector.ID, sector.Series)
+		}
 	}
 }
 
@@ -49,6 +66,7 @@ func TestSnapshotCachesFreshDataAndServesStaleLastSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	first = waitForEnrichedSectors(t, service)
 	calls := upstream.Calls()
 	second, err := service.Snapshot(context.Background(), false)
 	if err != nil || second.Stale || upstream.Calls() != calls {
@@ -96,6 +114,7 @@ func TestSectorDetailIncludesFullConstituentsAndRelated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	snapshot = waitForEnrichedSectors(t, service)
 	detail, err := service.SectorDetail(context.Background(), snapshot.Sectors[0].ID)
 	if err != nil {
 		t.Fatal(err)
@@ -135,6 +154,7 @@ func TestSnapshotReturnsTypedErrorsWithoutCache(t *testing.T) {
 type marketRadarUpstream struct {
 	calls             atomic.Int32
 	fail              atomic.Bool
+	failHistory       atomic.Bool
 	invalidCategories map[string]bool
 	server            *httptest.Server
 }
@@ -161,6 +181,10 @@ func (u *marketRadarUpstream) Fail() {
 	u.fail.Store(true)
 }
 
+func (u *marketRadarUpstream) FailHistory() {
+	u.failHistory.Store(true)
+}
+
 func (u *marketRadarUpstream) InvalidateCategory(category string) {
 	u.invalidCategories[category] = true
 }
@@ -171,13 +195,22 @@ func (u *marketRadarUpstream) handle(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/api/qt/stock/kline/get":
 		boardID := strings.TrimPrefix(query.Get("secid"), "90.")
-		if u.fail.Load() || u.invalid(boardID) {
+		if u.fail.Load() || u.failHistory.Load() || u.invalid(boardID) {
 			_, _ = io.WriteString(w, `{"rc":1,"data":null}`)
 			return
 		}
 		_, _ = io.WriteString(w, klineFixture(boardID))
 	case "/api/qt/clist/get":
-		boardID := boardIDFromFS(query.Get("fs"))
+		fs := query.Get("fs")
+		if strings.HasPrefix(fs, "m:90+t:2") || strings.HasPrefix(fs, "m:90+t:3") {
+			if u.fail.Load() {
+				_, _ = io.WriteString(w, `{"rc":1,"data":null}`)
+				return
+			}
+			_, _ = io.WriteString(w, boardListFixture(u))
+			return
+		}
+		boardID := boardIDFromFS(fs)
 		if u.fail.Load() || u.invalid(boardID) {
 			_, _ = io.WriteString(w, `{"rc":1,"data":null}`)
 			return
@@ -209,6 +242,52 @@ func boardIDFromFS(fs string) string {
 		value = value[:index]
 	}
 	return value
+}
+
+type boardListFixtureRow struct {
+	F2   float64 `json:"f2"`
+	F3   float64 `json:"f3"`
+	F6   float64 `json:"f6"`
+	F8   float64 `json:"f8"`
+	F10  float64 `json:"f10"`
+	F12  string  `json:"f12"`
+	F14  string  `json:"f14"`
+	F104 int     `json:"f104"`
+	F105 int     `json:"f105"`
+	F109 float64 `json:"f109"`
+	F110 float64 `json:"f110"`
+	F134 int     `json:"f134"`
+}
+
+func boardListFixture(upstream *marketRadarUpstream) string {
+	rows := make([]boardListFixtureRow, 0, len(boardDefinitions))
+	for index, board := range boardDefinitions {
+		if upstream.invalidCategories[board.Category] {
+			continue
+		}
+		rows = append(rows, boardListFixtureRow{
+			F2:   1000 + float64(index),
+			F3:   float64(1 + index%6),
+			F6:   100_000_000 + float64(index)*1_000_000,
+			F8:   1.0 + float64(index%4),
+			F10:  1.0 + float64(index%3)*0.5,
+			F12:  board.ID,
+			F14:  board.Name,
+			F104: 12 + index%5,
+			F105: 2 + index%3,
+			F109: float64(3 + index%4),
+			F110: float64(2 + index%3),
+			F134: 16 + index%4,
+		})
+	}
+	payload, _ := json.Marshal(map[string]any{
+		"rc": 0,
+		"data": map[string]any{
+			"total": len(rows),
+			"diff":  rows,
+		},
+	})
+	return string(payload)
 }
 
 func klineFixture(boardID string) string {
@@ -263,10 +342,20 @@ func testMarketRadarConfig(baseURL string) Config {
 	}
 }
 
-func totalWeight(constituents []Constituent) float64 {
-	total := 0.0
-	for _, constituent := range constituents {
-		total += constituent.Weight
+func waitForEnrichedSectors(t *testing.T, service *Service) Snapshot {
+	t.Helper()
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		snapshot, err := service.Snapshot(context.Background(), false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(snapshot.Sectors) > 0 && len(snapshot.Sectors[0].Series) == trendPoints {
+			return snapshot
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("history enrichment did not finish: series=%d", len(snapshot.Sectors[0].Series))
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
-	return total
 }

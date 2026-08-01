@@ -166,6 +166,24 @@ test('requests a forced backend refresh', async () => {
   }
 });
 
+test('accepts snapshot sectors without trend series or constituents', async () => {
+  const snapshot = makeSnapshot({
+    sectors: [
+      { ...aiSector, series: [], constituents: [] },
+      { ...manufacturingSector, series: [], constituents: [] },
+    ],
+  });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify(snapshot), { status: 200 });
+  try {
+    const result = await fetchMarketRadarSnapshot(undefined, false, 'http://127.0.0.1:3000');
+    assert.equal(result.sectors[0].series.length, 0);
+    assert.equal(result.sectors[0].constituents.length, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('requests sector detail with a real news list', async () => {
   const snapshot = makeSnapshot();
   const originalFetch = globalThis.fetch;

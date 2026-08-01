@@ -20,16 +20,19 @@ import (
 const (
 	historyLines         = 30
 	trendPoints          = 21
-	constituentLimit     = 3
 	quotePageSize        = 100
 	maxQuotePages        = 8
-	boardWorkers         = 6
 	requestRetries       = 1
 	minCategoryBoards    = 3
 	volumeRatioThreshold = 1.5
 	reversalThreshold    = 3.0
 	breadthThreshold     = 0.7
 	signalLeaderCount    = 5
+	boardListPageSize    = 100
+	maxBoardListPages    = 8
+	historyWorkers       = 2
+	historyCacheTTL      = 15 * time.Minute
+	historyEnrichTimeout = 8 * time.Second
 )
 
 var (
@@ -89,6 +92,7 @@ type Sector struct {
 	Methodology  string             `json:"methodology"`
 	Name         string             `json:"name"`
 	Series       []float64          `json:"series"`
+	VolumeRatio  float64            `json:"volumeRatio,omitempty"`
 }
 
 type Index struct {
@@ -253,6 +257,46 @@ type quoteResponse struct {
 	Rc int `json:"rc"`
 }
 
+type flexFloat float64
+
+func (f *flexFloat) UnmarshalJSON(data []byte) error {
+	text := strings.TrimSpace(string(data))
+	text = strings.Trim(text, `"`)
+	if text == "" || text == "-" || text == "null" {
+		*f = 0
+		return nil
+	}
+	value, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return err
+	}
+	*f = flexFloat(value)
+	return nil
+}
+
+type boardQuote struct {
+	F2   flexFloat `json:"f2"`
+	F3   flexFloat `json:"f3"`
+	F6   flexFloat `json:"f6"`
+	F8   flexFloat `json:"f8"`
+	F10  flexFloat `json:"f10"`
+	F12  string    `json:"f12"`
+	F14  string    `json:"f14"`
+	F104 flexFloat `json:"f104"`
+	F105 flexFloat `json:"f105"`
+	F109 flexFloat `json:"f109"`
+	F110 flexFloat `json:"f110"`
+	F134 flexFloat `json:"f134"`
+}
+
+type boardQuoteResponse struct {
+	Data *struct {
+		Diff  []boardQuote `json:"diff"`
+		Total int          `json:"total"`
+	} `json:"data"`
+	Rc int `json:"rc"`
+}
+
 type indexRow struct {
 	F2  float64 `json:"f2"`
 	F3  float64 `json:"f3"`
@@ -267,9 +311,13 @@ type indexResponse struct {
 	Rc int `json:"rc"`
 }
 
-type boardResult struct {
-	err    error
-	sector Sector
+type historyCacheEntry struct {
+	fetchedAt      time.Time
+	closes         []float64
+	amountTotal    float64
+	turnoverTotal  float64
+	latestAmount   float64
+	latestTurnover float64
 }
 
 type Config struct {
@@ -280,13 +328,17 @@ type Config struct {
 }
 
 type Service struct {
-	cacheTTL    time.Duration
-	client      *http.Client
-	config      Config
-	hasSnapshot bool
-	mu          sync.Mutex
-	now         func() time.Time
-	snapshot    Snapshot
+	cacheTTL         time.Duration
+	client           *http.Client
+	config           Config
+	hasSnapshot      bool
+	historyMu        sync.Mutex
+	historyCache     map[string]historyCacheEntry
+	historyDownUntil time.Time
+	historyRunning   bool
+	mu               sync.Mutex
+	now              func() time.Time
+	snapshot         Snapshot
 }
 
 func NewService(cfg Config) *Service {
@@ -309,11 +361,13 @@ func NewService(cfg Config) *Service {
 			Timeout: cfg.RequestTimeout,
 			Transport: &http.Transport{
 				ForceAttemptHTTP2: false,
+				Proxy:             http.ProxyFromEnvironment,
 				TLSNextProto:      map[string]func(string, *tls.Conn) http.RoundTripper{},
 			},
 		},
-		config: cfg,
-		now:    time.Now,
+		config:       cfg,
+		historyCache: make(map[string]historyCacheEntry),
+		now:          time.Now,
 	}
 }
 
@@ -333,6 +387,7 @@ func (s *Service) Snapshot(ctx context.Context, force bool) (Snapshot, error) {
 		s.snapshot = cloneSnapshot(snapshot)
 		s.hasSnapshot = true
 		s.mu.Unlock()
+		s.refreshHistoryInBackground()
 		return snapshot, nil
 	}
 
@@ -347,39 +402,30 @@ func (s *Service) Snapshot(ctx context.Context, force bool) (Snapshot, error) {
 }
 
 func (s *Service) fetch(ctx context.Context, fetchedAt time.Time) (Snapshot, error) {
-	results := make([]boardResult, len(boardDefinitions))
-	work := make(chan struct{}, boardWorkers)
-	var wg sync.WaitGroup
-	for index, board := range boardDefinitions {
-		wg.Add(1)
-		go func(index int, board boardDefinition) {
-			defer wg.Done()
-			work <- struct{}{}
-			defer func() { <-work }()
-			sector, err := s.fetchBoard(ctx, board)
-			results[index] = boardResult{err: err, sector: sector}
-		}(index, board)
+	quotes, err := s.fetchBoardQuotes(ctx)
+	if err != nil {
+		return Snapshot{}, err
 	}
-	wg.Wait()
 
 	sectors := make([]Sector, 0, len(boardDefinitions))
 	loadedByCategory := make(map[string]int)
 	var firstErr error
-	for _, result := range results {
-		if result.err != nil {
+	for _, board := range boardDefinitions {
+		quote, exists := quotes[board.ID]
+		if !exists {
 			if firstErr == nil {
-				firstErr = result.err
+				firstErr = fmt.Errorf("%w: board %s missing from list", ErrSourceInvalid, board.ID)
 			}
 			continue
 		}
-		sectors = append(sectors, result.sector)
-		loadedByCategory[primaryCategory(result.sector)]++
+		sectors = append(sectors, buildSector(board, quote))
+		loadedByCategory[primaryCategory(sectors[len(sectors)-1])]++
 	}
 	if len(sectors) == 0 {
 		if firstErr != nil {
-			return Snapshot{}, firstErr
+			return Snapshot{}, fmt.Errorf("%w: %v", ErrInsufficientCoverage, firstErr)
 		}
-		return Snapshot{}, fmt.Errorf("%w: no board data loaded: %v", ErrInsufficientCoverage, firstErr)
+		return Snapshot{}, fmt.Errorf("%w: no board data loaded", ErrInsufficientCoverage)
 	}
 	for _, category := range categories {
 		if category.ID == "market" {
@@ -420,16 +466,249 @@ func (s *Service) fetch(ctx context.Context, fetchedAt time.Time) (Snapshot, err
 	}, nil
 }
 
-func (s *Service) fetchBoard(ctx context.Context, board boardDefinition) (Sector, error) {
-	history, err := s.fetchHistory(ctx, board.ID)
-	if err != nil {
-		return Sector{}, err
+func (s *Service) fetchBoardQuotes(ctx context.Context) (map[string]boardQuote, error) {
+	result := make(map[string]boardQuote, len(boardDefinitions))
+	filters := []string{"m:90+t:2+f:!50", "m:90+t:3+f:!50"}
+
+	type firstPage struct {
+		rows  []boardQuote
+		total int
+		err   error
 	}
-	quotes, err := s.fetchQuotes(ctx, board.ID)
-	if err != nil {
-		return Sector{}, err
+	firstPages := make([]firstPage, len(filters))
+	var firstWG sync.WaitGroup
+	for index, fs := range filters {
+		firstWG.Add(1)
+		go func(index int, fs string) {
+			defer firstWG.Done()
+			firstPages[index].rows, firstPages[index].total, firstPages[index].err = s.fetchBoardListPage(ctx, fs, 1)
+		}(index, fs)
 	}
-	return buildSector(board, history, quotes)
+	firstWG.Wait()
+
+	type pageSpec struct {
+		fs   string
+		page int
+	}
+	var firstErr error
+	pages := make([]pageSpec, 0, maxBoardListPages*len(filters))
+	for index, fs := range filters {
+		first := firstPages[index]
+		if first.err != nil {
+			firstErr = first.err
+			continue
+		}
+		for _, row := range first.rows {
+			result[row.F12] = row
+		}
+		pageCount := (first.total + boardListPageSize - 1) / boardListPageSize
+		for page := 2; page <= pageCount && page <= maxBoardListPages; page++ {
+			pages = append(pages, pageSpec{fs: fs, page: page})
+		}
+	}
+	if len(result) == 0 && len(pages) == 0 {
+		if firstErr != nil {
+			return nil, firstErr
+		}
+		return nil, fmt.Errorf("%w: board list empty", ErrSourceInvalid)
+	}
+
+	work := make(chan pageSpec)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	for worker := 0; worker < 6; worker++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for spec := range work {
+				rows, _, err := s.fetchBoardListPage(ctx, spec.fs, spec.page)
+				if err != nil {
+					continue
+				}
+				mu.Lock()
+				for _, row := range rows {
+					result[row.F12] = row
+				}
+				mu.Unlock()
+			}
+		}()
+	}
+	for _, spec := range pages {
+		work <- spec
+	}
+	close(work)
+	wg.Wait()
+	return result, nil
+}
+
+func (s *Service) fetchBoardListPage(ctx context.Context, fs string, page int) ([]boardQuote, int, error) {
+	query := url.Values{}
+	query.Set("ut", "fa5fd1943c7b386f172d6893dbfba10b")
+	query.Set("pn", strconv.Itoa(page))
+	query.Set("pz", strconv.Itoa(boardListPageSize))
+	query.Set("po", "1")
+	query.Set("np", "1")
+	query.Set("fltt", "2")
+	query.Set("invt", "2")
+	query.Set("fid", "f3")
+	query.Set("fs", fs)
+	query.Set("fields", "f2,f3,f6,f8,f10,f12,f14,f104,f105,f109,f110,f134")
+	endpoint := strings.TrimRight(s.config.QuoteBaseURL, "/") + "/api/qt/clist/get?" + query.Encode()
+
+	var response boardQuoteResponse
+	if err := s.getJSON(ctx, endpoint, &response); err != nil {
+		return nil, 0, err
+	}
+	if response.Rc != 0 || response.Data == nil {
+		return nil, 0, fmt.Errorf("%w: board list rc=%d", ErrSourceInvalid, response.Rc)
+	}
+	return response.Data.Diff, response.Data.Total, nil
+}
+
+func (s *Service) enrichSeries(ctx context.Context, sectors []Sector) int {
+	historyCtx, cancel := context.WithTimeout(ctx, historyEnrichTimeout)
+	defer cancel()
+
+	work := make(chan struct{}, historyWorkers)
+	var wg sync.WaitGroup
+	var enriched int
+	var enrichedMu sync.Mutex
+	for index := range sectors {
+		wg.Add(1)
+		go func(index int) {
+			defer wg.Done()
+			work <- struct{}{}
+			defer func() { <-work }()
+
+			history, ok := s.cachedHistory(historyCtx, sectors[index].ID)
+			if !ok || len(history.closes) < trendPoints {
+				return
+			}
+			enrichedMu.Lock()
+			enriched++
+			enrichedMu.Unlock()
+			sectors[index].Series = normalizedSeries(history.closes)
+			sectors[index].Indicator.AverageAmount = history.amountTotal / float64(len(history.closes))
+			sectors[index].Indicator.AverageTurnover = history.turnoverTotal / float64(len(history.closes))
+			if history.latestAmount > 0 {
+				sectors[index].Indicator.Amount = history.latestAmount
+			}
+			if history.latestTurnover > 0 {
+				sectors[index].Indicator.Turnover = history.latestTurnover
+			}
+		}(index)
+	}
+	wg.Wait()
+	return enriched
+}
+
+func (s *Service) refreshHistoryInBackground() {
+	s.historyMu.Lock()
+	if s.historyRunning || s.now().Before(s.historyDownUntil) {
+		s.historyMu.Unlock()
+		return
+	}
+	s.historyRunning = true
+	s.historyMu.Unlock()
+
+	go func() {
+		defer func() {
+			s.historyMu.Lock()
+			s.historyRunning = false
+			s.historyMu.Unlock()
+		}()
+
+		ctx, cancel := context.WithTimeout(context.Background(), historyEnrichTimeout)
+		defer cancel()
+
+		s.mu.Lock()
+		sectors := cloneSnapshot(s.snapshot).Sectors
+		startedAt := s.snapshot.FetchedAt
+		s.mu.Unlock()
+		enriched := s.enrichSeries(ctx, sectors)
+		if enriched == 0 {
+			s.historyMu.Lock()
+			s.historyDownUntil = s.now().Add(5 * time.Minute)
+			s.historyMu.Unlock()
+		}
+
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if !s.hasSnapshot || !s.snapshot.FetchedAt.Equal(startedAt) {
+			return
+		}
+		byID := make(map[string]Sector, len(sectors))
+		for _, sector := range sectors {
+			byID[sector.ID] = sector
+		}
+		for index := range s.snapshot.Sectors {
+			if sector, exists := byID[s.snapshot.Sectors[index].ID]; exists {
+				s.snapshot.Sectors[index] = sector
+			}
+		}
+	}()
+}
+
+func (s *Service) cachedHistory(ctx context.Context, boardID string) (historyCacheEntry, bool) {
+	now := s.now()
+	s.historyMu.Lock()
+	entry, exists := s.historyCache[boardID]
+	if exists && now.Sub(entry.fetchedAt) < historyCacheTTL {
+		s.historyMu.Unlock()
+		return entry, true
+	}
+	s.historyMu.Unlock()
+
+	history, err := s.fetchHistory(ctx, boardID)
+	if err != nil {
+		s.historyMu.Lock()
+		entry, exists = s.historyCache[boardID]
+		s.historyMu.Unlock()
+		if exists && len(entry.closes) >= trendPoints {
+			return entry, true
+		}
+		return historyCacheEntry{}, false
+	}
+	parsed, ok := parseKlines(history.Data.Klines)
+	if !ok || len(parsed.closes) < trendPoints {
+		return historyCacheEntry{}, false
+	}
+	parsed.fetchedAt = now
+	s.historyMu.Lock()
+	s.historyCache[boardID] = parsed
+	s.historyMu.Unlock()
+	return parsed, true
+}
+
+func parseKlines(lines []string) (historyCacheEntry, bool) {
+	var result historyCacheEntry
+	for _, line := range lines {
+		parts := strings.Split(line, ",")
+		if len(parts) < 11 {
+			return historyCacheEntry{}, false
+		}
+		closePrice, err := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
+		if err != nil {
+			return historyCacheEntry{}, false
+		}
+		result.closes = append(result.closes, closePrice)
+		if amount, err := strconv.ParseFloat(strings.TrimSpace(parts[6]), 64); err == nil {
+			result.amountTotal += amount
+		}
+		if turnover, err := strconv.ParseFloat(strings.TrimSpace(parts[10]), 64); err == nil {
+			result.turnoverTotal += turnover
+		}
+	}
+	if len(result.closes) == 0 {
+		return historyCacheEntry{}, false
+	}
+	if amount, err := strconv.ParseFloat(strings.TrimSpace(strings.Split(lines[len(lines)-1], ",")[6]), 64); err == nil {
+		result.latestAmount = amount
+	}
+	if turnover, err := strconv.ParseFloat(strings.TrimSpace(strings.Split(lines[len(lines)-1], ",")[10]), 64); err == nil {
+		result.latestTurnover = turnover
+	}
+	return result, true
 }
 
 func (s *Service) fetchHistory(ctx context.Context, boardID string) (historyResponse, error) {
@@ -598,87 +877,43 @@ func (s *Service) getJSONAttempt(ctx context.Context, endpoint string, target an
 	return nil
 }
 
-func buildSector(board boardDefinition, history historyResponse, quotes []quoteRow) (Sector, error) {
-	closes := make([]float64, 0, len(history.Data.Klines))
-	latestAmount := 0.0
-	latestTurnover := 0.0
-	amountTotal := 0.0
-	turnoverTotal := 0.0
-	for _, line := range history.Data.Klines {
-		parts := strings.Split(line, ",")
-		if len(parts) < 11 {
-			return Sector{}, fmt.Errorf("%w: malformed kline for %s", ErrSourceInvalid, board.ID)
-		}
-		closePrice, err := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
-		if err != nil {
-			return Sector{}, fmt.Errorf("%w: kline close for %s", ErrSourceInvalid, board.ID)
-		}
-		closes = append(closes, closePrice)
-		if amount, err := strconv.ParseFloat(strings.TrimSpace(parts[6]), 64); err == nil {
-			amountTotal += amount
-		}
-		if turnover, err := strconv.ParseFloat(strings.TrimSpace(parts[10]), 64); err == nil {
-			turnoverTotal += turnover
-		}
-	}
-	if len(closes) < trendPoints {
-		return Sector{}, fmt.Errorf("%w: board %s only has %d closes", ErrSourceInvalid, board.ID, len(closes))
-	}
-	if amount, err := strconv.ParseFloat(strings.TrimSpace(strings.Split(history.Data.Klines[len(history.Data.Klines)-1], ",")[6]), 64); err == nil {
-		latestAmount = amount
-	}
-	if turnover, err := strconv.ParseFloat(strings.TrimSpace(strings.Split(history.Data.Klines[len(history.Data.Klines)-1], ",")[10]), 64); err == nil {
-		latestTurnover = turnover
-	}
-
-	constituents, advancing, declining, coverage, err := buildConstituents(quotes)
-	if err != nil {
-		return Sector{}, err
-	}
-
-	name := strings.TrimSpace(history.Data.Name)
+func buildSector(board boardDefinition, quote boardQuote) Sector {
+	name := strings.TrimSpace(quote.F14)
 	if name == "" {
 		name = board.Name
 	}
+	coverage := int(quote.F134)
+	if coverage <= 0 {
+		coverage = int(quote.F104) + int(quote.F105)
+	}
 	return Sector{
-		CategoryIDs:  categoryIDs(board.Category),
-		Changes:      intervalReturns(closes),
-		Constituents: constituents,
+		CategoryIDs: categoryIDs(board.Category),
+		Changes: map[string]float64{
+			"1d":  float64(quote.F3),
+			"5d":  float64(quote.F109),
+			"20d": float64(quote.F110),
+		},
+		Constituents: []Constituent{},
 		ID:           board.ID,
 		Indicator: Indicator{
-			Advancing:       advancing,
-			Amount:          latestAmount,
-			AverageAmount:   amountTotal / float64(len(closes)),
-			AverageTurnover: turnoverTotal / float64(len(closes)),
-			Close:           closes[len(closes)-1],
+			Advancing:       int(quote.F104),
+			Amount:          float64(quote.F6),
+			AverageAmount:   0,
+			AverageTurnover: 0,
+			Close:           float64(quote.F2),
 			Coverage:        coverage,
-			Declining:       declining,
-			Turnover:        latestTurnover,
+			Declining:       int(quote.F105),
+			Turnover:        float64(quote.F8),
 		},
-		Methodology: "东方财富公开板块行情 · 日K收盘价区间收益 · 成分按流通市值权重",
+		Methodology: "东方财富公开板块行情 · 板块指数区间涨跌幅 · 成分按流通市值权重",
 		Name:        name,
-		Series:      normalizedSeries(closes),
-	}, nil
+		Series:      []float64{},
+		VolumeRatio: float64(quote.F10),
+	}
 }
 
 func categoryIDs(category string) []string {
 	return []string{"market", category}
-}
-
-func intervalReturns(closes []float64) map[string]float64 {
-	latest := closes[len(closes)-1]
-	return map[string]float64{
-		"1d":  percentChange(latest, closes[len(closes)-2]),
-		"5d":  percentChange(latest, closes[len(closes)-6]),
-		"20d": percentChange(latest, closes[len(closes)-21]),
-	}
-}
-
-func percentChange(current float64, previous float64) float64 {
-	if previous == 0 {
-		return 0
-	}
-	return (current - previous) / previous * 100
 }
 
 func normalizedSeries(closes []float64) []float64 {
@@ -689,57 +924,6 @@ func normalizedSeries(closes []float64) []float64 {
 		series[index] = closes[start+index] / base * 100
 	}
 	return series
-}
-
-func buildConstituents(rows []quoteRow) ([]Constituent, int, int, int, error) {
-	valid := make([]quoteRow, 0, len(rows))
-	advancing := 0
-	declining := 0
-	for _, row := range rows {
-		if strings.TrimSpace(row.F12) == "" || strings.TrimSpace(row.F14) == "" {
-			continue
-		}
-		valid = append(valid, row)
-		if row.F3 > 0 {
-			advancing++
-		} else if row.F3 < 0 {
-			declining++
-		}
-	}
-	if len(valid) == 0 {
-		return nil, 0, 0, 0, fmt.Errorf("%w: no valid constituents", ErrSourceInvalid)
-	}
-
-	sorted := append([]quoteRow(nil), valid...)
-	sort.SliceStable(sorted, func(left int, right int) bool {
-		return sorted[left].F21 > sorted[right].F21
-	})
-	top := make([]quoteRow, 0, constituentLimit)
-	for _, row := range sorted {
-		if row.F21 <= 0 {
-			continue
-		}
-		top = append(top, row)
-		if len(top) == constituentLimit {
-			break
-		}
-	}
-	if len(top) == 0 {
-		return nil, 0, 0, 0, fmt.Errorf("%w: no weighted constituents", ErrSourceInvalid)
-	}
-
-	weights := normalizeWeights(top)
-	constituents := make([]Constituent, 0, len(top))
-	for index, row := range top {
-		constituents = append(constituents, Constituent{
-			Change: row.F3,
-			Code:   row.F12,
-			Name:   row.F14,
-			Weight: weights[index],
-			Amount: row.F6,
-		})
-	}
-	return constituents, advancing, declining, len(valid), nil
 }
 
 func buildFullConstituents(rows []quoteRow) ([]Constituent, error) {
@@ -995,6 +1179,9 @@ func sortedSectorsByChange(sectors []Sector, periodID string, ascending bool) []
 }
 
 func volumeRatio(sector Sector) float64 {
+	if sector.VolumeRatio > 0 {
+		return sector.VolumeRatio
+	}
 	amountRatio := 0.0
 	turnoverRatio := 0.0
 	if sector.Indicator.AverageAmount > 0 {

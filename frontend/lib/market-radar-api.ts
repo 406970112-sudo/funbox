@@ -115,8 +115,8 @@ function isValidSector(value: unknown): boolean {
   if (typeof sector.id !== 'string' || typeof sector.name !== 'string') return false;
   if (!Array.isArray(sector.categoryIds) || sector.categoryIds.length === 0) return false;
   if (!sector.changes || typeof sector.changes !== 'object') return false;
-  if (!Array.isArray(sector.series) || sector.series.length < 2) return false;
-  if (!Array.isArray(sector.constituents) || sector.constituents.length === 0) return false;
+  if (!Array.isArray(sector.series)) return false;
+  if (!Array.isArray(sector.constituents)) return false;
   if (!sector.indicator || typeof sector.indicator !== 'object') return false;
 
   const changes = sector.changes as Record<string, unknown>;
