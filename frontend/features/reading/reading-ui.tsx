@@ -115,7 +115,7 @@ export function ReadingEmpty({ icon, title, body, action }: { action?: ReactNode
       <View style={styles.emptyIcon}><MaterialCommunityIcons name={icon} size={28} color={readingColors.blue} /></View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyBody}>{body}</Text>
-      {action}
+      {action ? <View style={styles.emptyAction}>{action}</View> : null}
     </View>
   );
 }
@@ -149,6 +149,7 @@ const styles = StyleSheet.create({
   coverTitleCompact: { fontSize: 12, lineHeight: 16 },
   disabled: { opacity: 0.5 },
   empty: { alignItems: 'center', gap: 10, justifyContent: 'center', paddingHorizontal: 30, paddingVertical: 44 },
+  emptyAction: { alignSelf: 'center' },
   emptyBody: { color: readingColors.muted, fontSize: 13, lineHeight: 20, maxWidth: 340, textAlign: 'center' },
   emptyIcon: { alignItems: 'center', backgroundColor: readingColors.blueSoft, borderRadius: 8, height: 54, justifyContent: 'center', width: 54 },
   emptyTitle: { color: readingColors.ink, fontSize: 17, fontWeight: '900' },
