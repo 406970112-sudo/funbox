@@ -1,4 +1,11 @@
-import { createContext, type PropsWithChildren, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 import {
   changePassword as changePasswordRequest,
@@ -20,6 +27,7 @@ type AuthStatus = 'anonymous' | 'authenticated' | 'loading';
 type AuthContextValue = {
   accessToken: string | null;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   register: (
     username: string,
     password: string,
@@ -121,11 +129,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
     await persistSession(session.accessToken, session.user);
   }
 
+  const refreshCurrentUser = useCallback(async () => {
+    if (!token) return;
+    try {
+      setUser(await getCurrentUser(token));
+    } catch {
+      // 刷新失败时保留当前会话，避免页面加载被瞬时网络问题打断。
+    }
+  }, [token]);
+
   return (
     <AuthContext.Provider
       value={{
         accessToken: token,
         changePassword: savePassword,
+        refreshUser: refreshCurrentUser,
         register: registerAccount,
         signIn,
         signOut,

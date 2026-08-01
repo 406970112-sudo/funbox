@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -29,10 +30,18 @@ import {
   updateManagedFeatureRoles,
 } from '@/lib/access-api';
 import { isValidPhoneAccount, normalizePhoneInput } from '@/lib/auth-validation';
+import { identityPresentation } from '@/lib/identity';
 import { getToolById } from '@/mocks/app-data';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { ManagedFeature, UserRole } from '@/types/access';
+
+const roleDescriptions: Record<UserRole, string> = {
+  admin: '始终可以访问',
+  normal: '基础注册用户',
+  svip: '高级会员用户',
+  vip: 'VIP 身份用户',
+};
 
 const configurableRoles: Array<{
   color: string;
@@ -40,12 +49,16 @@ const configurableRoles: Array<{
   label: string;
   description: string;
   role: UserRole;
-}> = [
-  { color: '#7483a2', description: '基础注册用户', icon: 'account-outline', label: '普通会员', role: 'normal' },
-  { color: '#4b6bff', description: 'VIP 身份用户', icon: 'diamond-stone', label: 'VIP', role: 'vip' },
-  { color: '#e8667a', description: '高级会员用户', icon: 'crown-outline', label: 'SVIP', role: 'svip' },
-  { color: '#151b3b', description: '始终可以访问', icon: 'shield-check-outline', label: '管理员', role: 'admin' },
-];
+}> = (['normal', 'vip', 'svip', 'admin'] as const).map((role) => {
+  const item = identityPresentation(role);
+  return {
+    color: item.color,
+    description: roleDescriptions[role],
+    icon: item.icon,
+    label: item.label,
+    role,
+  };
+});
 
 const PERMISSIONS_DESKTOP_BREAKPOINT = 900;
 
@@ -179,9 +192,7 @@ export function AdminPermissionsScreen() {
               <ThemedText style={styles.pageTitle}>入口权限</ThemedText>
               <ThemedText style={[styles.pageSubtitle, { color: colors.mutedText }]}>管理后台 · 功能入口可见性</ThemedText>
             </View>
-            <View style={[styles.adminMark, { backgroundColor: colors.hero }]}>
-              <MaterialCommunityIcons name="shield-crown-outline" size={19} color="#c9f36a" />
-            </View>
+            <AdminIdentityChip username={user.username} />
           </View>
 
           <View style={[styles.summaryBand, styles.desktopSummaryBand, { backgroundColor: colors.hero }]}>
@@ -285,9 +296,7 @@ export function AdminPermissionsScreen() {
           <ThemedText style={styles.pageTitle}>入口权限</ThemedText>
           <ThemedText style={[styles.pageSubtitle, { color: colors.mutedText }]}>管理后台</ThemedText>
         </View>
-        <View style={[styles.adminMark, { backgroundColor: colors.hero }]}>
-          <MaterialCommunityIcons name="shield-crown-outline" size={19} color="#c9f36a" />
-        </View>
+        <AdminIdentityChip username={user.username} />
       </View>
 
       <View style={[styles.summaryBand, { backgroundColor: colors.hero }]}>

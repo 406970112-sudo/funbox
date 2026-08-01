@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -108,9 +109,7 @@ export function AdminFeedbackScreen() {
             用户提交的文字与图片
           </ThemedText>
         </View>
-        <View style={[styles.adminMark, { backgroundColor: colors.hero }]}>
-          <MaterialCommunityIcons name="message-alert-outline" size={18} color="#c9f36a" />
-        </View>
+        <AdminIdentityChip username={user.username} />
       </View>
 
       {loading ? (

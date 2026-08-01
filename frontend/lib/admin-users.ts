@@ -1,4 +1,5 @@
 import type { UserRole } from '../types/access.ts';
+import { identityPresentation } from './identity.ts';
 
 export type AdminUsersQuery = {
   limit: number;
@@ -6,13 +7,6 @@ export type AdminUsersQuery = {
   query?: string;
   role?: UserRole | '';
 };
-
-const rolePresentations = {
-  admin: { color: '#151b3b', icon: 'shield-check-outline', label: '管理员' },
-  normal: { color: '#7483a2', icon: 'account-outline', label: '普通用户' },
-  svip: { color: '#e8667a', icon: 'crown-outline', label: 'SVIP' },
-  vip: { color: '#4b6bff', icon: 'diamond-stone', label: 'VIP' },
-} as const;
 
 export function buildAdminUsersQuery(options: AdminUsersQuery) {
   const params = new URLSearchParams();
@@ -34,8 +28,6 @@ export function maskUsername(username: string) {
 }
 
 export function rolePresentation(role: UserRole, colorScheme: 'dark' | 'light' = 'light') {
-  if (role === 'admin' && colorScheme === 'dark') {
-    return { ...rolePresentations.admin, color: '#c9f36a' as const };
-  }
-  return rolePresentations[role];
+  const item = identityPresentation(role, colorScheme);
+  return { color: item.color, icon: item.icon, label: item.label };
 }

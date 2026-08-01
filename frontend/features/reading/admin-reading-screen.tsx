@@ -14,6 +14,7 @@ import {
   View,
 } from 'react-native';
 
+import { AdminIdentityChip } from '@/components/identity-ui';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
   changeAdminReadingStatus,
@@ -238,7 +239,7 @@ export function AdminReadingScreen() {
         <View style={styles.workspace}>
           <View style={styles.workspaceTop}>
             {compact ? <ReadingBrand compact /> : <View><Text style={styles.breadcrumb}>工作台 / 内容管理</Text><Text style={styles.workspaceTitle}>内容管理</Text></View>}
-            <View style={styles.headerActions}><PrimaryButton secondary icon="sync" disabled={busy} onPress={() => void runProviderSync()}>同步正版 API</PrimaryButton><PrimaryButton icon="upload-outline" disabled={busy} onPress={() => void chooseUpload()}>上传新书</PrimaryButton>{compact ? <IconButton accessibilityLabel="关闭后台" icon="close" onPress={() => router.back()} /> : null}</View>
+            <View style={styles.headerActions}>{!compact && user ? <AdminIdentityChip username={user.username} /> : null}<PrimaryButton secondary icon="sync" disabled={busy} onPress={() => void runProviderSync()}>同步正版 API</PrimaryButton><PrimaryButton icon="upload-outline" disabled={busy} onPress={() => void chooseUpload()}>上传新书</PrimaryButton>{compact ? <IconButton accessibilityLabel="关闭后台" icon="close" onPress={() => router.back()} /> : null}</View>
           </View>
           <ScrollView contentContainerStyle={styles.workspaceScroll}>
             <View style={styles.pageHeading}><View><Text style={styles.pageTitle}>内容概览</Text><Text style={styles.pageSubtitle}>上传、审核与发布免费阅读内容</Text></View><Text style={styles.updatedAt}>数据库实时状态</Text></View>

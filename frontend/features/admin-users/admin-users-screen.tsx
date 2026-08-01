@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -218,10 +219,7 @@ export function AdminUsersScreen() {
               <ThemedText style={styles.headerEyebrow}>管理后台 / 用户管理</ThemedText>
               <ThemedText style={styles.headerTitle}>用户身份</ThemedText>
             </View>
-            <View style={[styles.adminBadge, { backgroundColor: colors.hero }]}>
-              <MaterialCommunityIcons name="shield-crown-outline" size={18} color="#c9f36a" />
-              {isDesktop ? <ThemedText style={styles.adminBadgeText}>管理员</ThemedText> : null}
-            </View>
+            <AdminIdentityChip compact={!isDesktop} username={user.username} />
           </View>
 
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

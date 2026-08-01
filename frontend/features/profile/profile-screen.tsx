@@ -5,10 +5,16 @@ import { type Href, useRouter } from 'expo-router';
 import { type ComponentProps, useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
+import {
+  AvatarIdentityBadge,
+  IdentityCard,
+  IdentityPill,
+} from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { hasIdentityBadge, identityPresentation, identityRoute } from '@/lib/identity';
 import { getGameById, getToolById, popularGames } from '@/mocks/app-data';
 import { getStoredRecentUsage } from '@/lib/recent-usage-storage';
 import type { RecentUsageItem } from '@/lib/recent-usage';
@@ -28,8 +34,8 @@ type RecentUsageDisplayItem = {
 
 export function ProfileScreen() {
   const router = useRouter();
-  const { colors } = useAppTheme();
-  const { signOut, status, user } = useAuth();
+  const { colorScheme, colors } = useAppTheme();
+  const { refreshUser, signOut, status, user } = useAuth();
   const { visibleTools } = useFeatureAccess();
   const [recentUsage, setRecentUsage] = useState<RecentUsageItem[]>([]);
   const isAuthenticated = status === 'authenticated' && user !== null;
@@ -40,6 +46,7 @@ export function ProfileScreen() {
     useCallback(() => {
       let active = true;
 
+      void refreshUser();
       void getStoredRecentUsage().then((items) => {
         if (active) setRecentUsage(items);
       });
@@ -47,7 +54,7 @@ export function ProfileScreen() {
       return () => {
         active = false;
       };
-    }, []),
+    }, [refreshUser]),
   );
 
   const recentItems = recentUsage.flatMap<RecentUsageDisplayItem>((item) => {
@@ -104,23 +111,33 @@ export function ProfileScreen() {
             <ThemedText style={styles.profileLoadingText}>正在读取账户</ThemedText>
           </View>
         ) : (
-          <>
-            <View style={styles.profileHeaderRow}>
-              <View style={styles.avatarWrap}>
-                {isAuthenticated && user.avatarUrl ? (
-                  <Image
-                    contentFit="cover"
-                    source={{ uri: user.avatarUrl }}
-                    style={styles.avatarImage}
-                  />
-                ) : (
-                  <MaterialCommunityIcons name="account" size={28} color="#ffffff" />
-                )}
+        <>
+          <View style={styles.profileHeaderRow}>
+              <View style={styles.avatarShell}>
+                <View style={styles.avatarWrap}>
+                  {isAuthenticated && user.avatarUrl ? (
+                    <Image
+                      contentFit="cover"
+                      source={{ uri: user.avatarUrl }}
+                      style={styles.avatarImage}
+                    />
+                  ) : (
+                    <MaterialCommunityIcons name="account" size={28} color="#ffffff" />
+                  )}
+                </View>
+                {isAuthenticated && hasIdentityBadge(user.role) ? (
+                  <AvatarIdentityBadge role={user.role} />
+                ) : null}
               </View>
               <View style={styles.profileCopy}>
-                <ThemedText style={styles.profileName}>
-                  {isAuthenticated ? user.displayName : '登录 FunBox'}
-                </ThemedText>
+                <View style={styles.profileNameRow}>
+                  <ThemedText numberOfLines={1} style={styles.profileName}>
+                    {isAuthenticated ? user.displayName : '登录 FunBox'}
+                  </ThemedText>
+                  {isAuthenticated && hasIdentityBadge(user.role) ? (
+                    <IdentityPill onDark role={user.role} />
+                  ) : null}
+                </View>
                 <ThemedText style={styles.profileMeta}>
                   {isAuthenticated ? `@${user.username}` : '建立你的个人空间'}
                 </ThemedText>
@@ -138,7 +155,7 @@ export function ProfileScreen() {
 
             <ThemedText style={styles.profileSignature}>
               {isAuthenticated
-                ? '欢迎回来，继续使用你的轻量工具箱。'
+                ? identityPresentation(user.role, colorScheme).signature
                 : '登录后即可修改昵称、头像和账户密码。'}
             </ThemedText>
 
@@ -156,6 +173,13 @@ export function ProfileScreen() {
           </>
         )}
       </View>
+
+      {isAuthenticated ? (
+        <IdentityCard
+          onPress={() => router.push(identityRoute(user.role) as Href)}
+          role={user.role}
+        />
+      ) : null}
 
       {isAuthenticated ? (
         <View style={styles.section}>
@@ -176,13 +200,6 @@ export function ProfileScreen() {
               label="问题反馈"
               onPress={() => router.push('/profile/feedback' as Href)}
             />
-            {user.role === 'admin' ? (
-              <AccountAction
-                icon="shield-crown-outline"
-                label="管理后台"
-                onPress={() => router.push('/admin' as Href)}
-              />
-            ) : null}
             <AccountAction
               destructive
               icon="logout"
@@ -365,6 +382,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 14,
   },
+  avatarShell: {
+    height: 60,
+    position: 'relative',
+    width: 60,
+  },
   avatarWrap: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.18)',
@@ -382,9 +404,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
+  profileNameRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    minWidth: 0,
+  },
   profileName: {
     color: '#ffffff',
-    fontSize: 22,
+    flexShrink: 1,
+    fontSize: 20,
     fontWeight: '800',
   },
   profileMeta: {

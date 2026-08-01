@@ -3,6 +3,7 @@ import { Redirect, useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AdminIdentityChip } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -45,9 +46,7 @@ export function AdminHomeScreen() {
             FunBox 管理
           </ThemedText>
         </View>
-        <View style={[styles.adminMark, { backgroundColor: colors.hero }]}>
-          <MaterialCommunityIcons name="shield-crown-outline" size={19} color="#c9f36a" />
-        </View>
+        <AdminIdentityChip username={user.username} />
       </View>
 
       <View style={[styles.heroBand, { backgroundColor: colors.hero }]}>

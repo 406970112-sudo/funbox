@@ -1,0 +1,1971 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 用户身份展示 - 产品设计</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce4f2;
+        --line-strong: #cdd8ea;
+        --canvas: #edf2fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --primary: #4568f2;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --gold: #e8a33d;
+        --gold-dark: #c47f1f;
+        --rose: #e8667a;
+        --rose-dark: #b34f61;
+        --gray: #7483a2;
+        --teal: #18a78f;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        margin: 0 auto;
+        max-width: 1520px;
+        padding: 36px 24px 54px;
+        width: min(1520px, calc(100vw - 24px));
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 24px;
+        width: 24px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .section {
+        background: var(--surface);
+        border: 1px solid rgba(205, 216, 234, 0.82);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        margin: 0 0 22px;
+        padding: 24px 26px 26px;
+      }
+
+      .section-head {
+        align-items: baseline;
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .section-kicker {
+        color: var(--primary);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin: 5px 0 0;
+      }
+
+      .section-note {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        max-width: 520px;
+        text-align: right;
+      }
+
+      .tokens {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .token-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .token-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 13px;
+      }
+
+      .token-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .token-icon svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .token-name {
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .token-code {
+        color: var(--muted);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .token-row {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .token-row-label {
+        color: var(--muted);
+        flex: 0 0 52px;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .name-badge {
+        align-items: center;
+        border-radius: 7px;
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 4px;
+        height: 18px;
+        padding: 0 7px;
+      }
+
+      .name-badge svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .name-badge.normal {
+        background: #eef1f6;
+        border: 1px solid #d5dce8;
+        color: var(--gray);
+      }
+
+      .name-badge.vip {
+        background: #fdf2dd;
+        border: 1px solid #f0c77d;
+        color: var(--gold-dark);
+      }
+
+      .name-badge.svip {
+        background: #fde9ed;
+        border: 1px solid #f0a6b1;
+        color: var(--rose-dark);
+      }
+
+      .name-badge.admin {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .name-badge.admin.dark {
+        background: #1f2a21;
+        color: var(--lime);
+      }
+
+      .avatar-badge {
+        align-items: center;
+        background: var(--surface);
+        border: 2px solid var(--surface);
+        border-radius: 50%;
+        display: flex;
+        height: 18px;
+        justify-content: center;
+        width: 18px;
+      }
+
+      .avatar-badge svg {
+        height: 9px;
+        width: 9px;
+      }
+
+      .avatar-badge.vip {
+        background: var(--gold);
+        color: #5b3a08;
+      }
+
+      .avatar-badge.svip {
+        background: var(--rose);
+        color: #ffffff;
+      }
+
+      .avatar-badge.admin {
+        background: var(--lime);
+        color: var(--navy);
+      }
+
+      .mini-card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        margin-top: 10px;
+        overflow: hidden;
+        padding: 9px 11px;
+      }
+
+      .mini-card .mini-title {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .mini-card .mini-sub {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .mini-card.vip {
+        background: linear-gradient(135deg, #fff7e8, #fbe7bd);
+        border-color: #edc989;
+      }
+
+      .mini-card.svip {
+        background: linear-gradient(135deg, #fff1f3, #fbd9df);
+        border-color: #efaeb9;
+      }
+
+      .mini-card.admin {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: #ffffff;
+      }
+
+      .mini-card.admin .mini-sub {
+        color: rgba(255, 255, 255, 0.58);
+      }
+
+      .phones {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+      }
+
+      .phone-wrap {
+        width: 312px;
+      }
+
+      .phone-label {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding-top: 13px;
+      }
+
+      .phone-label .dot {
+        border-radius: 50%;
+        height: 8px;
+        width: 8px;
+      }
+
+      .phone-label span {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #f4f7fd;
+        border: 1px solid #c8d4e8;
+        border-radius: 42px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.22);
+        height: 716px;
+        overflow: hidden;
+        position: relative;
+        width: 312px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 42px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        padding: 10px 16px 0;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        color: #18233d;
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 0 5px;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        min-height: 46px;
+        padding: 4px 2px 8px;
+      }
+
+      .topbar-title {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .topbar-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .brand-mark-mini {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 32px;
+        padding: 0 9px;
+      }
+
+      .brand-mark-mini svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #151b3b, #28315f);
+        border-radius: 18px;
+        color: #ffffff;
+        padding: 18px 16px 14px;
+        position: relative;
+      }
+
+      .hero.vip {
+        background: linear-gradient(135deg, #1d2447, #3a3c58 55%, #6b5223);
+      }
+
+      .hero.svip {
+        background: linear-gradient(135deg, #221a2b, #4a2436 58%, #71303f);
+      }
+
+      .hero.admin {
+        background: linear-gradient(135deg, #10142b, #232b52);
+      }
+
+      .hero-glow {
+        border-radius: 50%;
+        filter: blur(26px);
+        height: 120px;
+        opacity: 0.34;
+        position: absolute;
+        right: -30px;
+        top: -46px;
+        width: 150px;
+      }
+
+      .hero.vip .hero-glow {
+        background: #e8a33d;
+      }
+
+      .hero.svip .hero-glow {
+        background: #e8667a;
+      }
+
+      .hero.admin .hero-glow {
+        background: #c9f36a;
+      }
+
+      .profile-row {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        position: relative;
+      }
+
+      .avatar-wrap {
+        border-radius: 50%;
+        height: 64px;
+        position: relative;
+        width: 64px;
+      }
+
+      .avatar {
+        align-items: center;
+        background: linear-gradient(135deg, #4b6bff, #8f7cff);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        display: flex;
+        font-size: 23px;
+        font-weight: 900;
+        height: 64px;
+        justify-content: center;
+        width: 64px;
+      }
+
+      .avatar.normal {
+        background: linear-gradient(135deg, #9aa8c2, #6d7c9c);
+      }
+
+      .avatar-badge-abs {
+        align-items: center;
+        border: 2px solid rgba(255, 255, 255, 0.92);
+        border-radius: 50%;
+        bottom: -3px;
+        display: flex;
+        height: 21px;
+        justify-content: center;
+        position: absolute;
+        right: -3px;
+        width: 21px;
+      }
+
+      .avatar-badge-abs svg {
+        height: 10px;
+        width: 10px;
+      }
+
+      .avatar-badge-abs.vip {
+        background: var(--gold);
+        color: #5b3a08;
+      }
+
+      .avatar-badge-abs.svip {
+        background: var(--rose);
+        color: #ffffff;
+      }
+
+      .avatar-badge-abs.admin {
+        background: var(--lime);
+        color: var(--navy);
+      }
+
+      .profile-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .name-line {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .name-line .name {
+        font-size: 15px;
+        font-weight: 900;
+        max-width: 148px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .profile-meta {
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+
+      .profile-sign {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 13px;
+        position: relative;
+      }
+
+      .hero-chips {
+        display: flex;
+        gap: 7px;
+        margin-top: 12px;
+        position: relative;
+      }
+
+      .hero-chip {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.88);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 5px;
+        min-height: 26px;
+        padding: 0 9px;
+      }
+
+      .hero-chip svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .identity-card {
+        align-items: center;
+        border-radius: 14px;
+        display: flex;
+        gap: 12px;
+        margin-top: 14px;
+        min-height: 74px;
+        padding: 13px 14px;
+      }
+
+      .identity-card.normal {
+        background: #ffffff;
+        border: 1px solid var(--line);
+      }
+
+      .identity-card.vip {
+        background: linear-gradient(135deg, #fff7e8, #fbe7bd);
+        border: 1px solid #edc989;
+      }
+
+      .identity-card.svip {
+        background: linear-gradient(135deg, #fff1f3, #fbd9df);
+        border: 1px solid #efaeb9;
+      }
+
+      .identity-card.admin {
+        background: var(--navy);
+        border: 1px solid var(--navy);
+      }
+
+      .identity-icon {
+        align-items: center;
+        border-radius: 11px;
+        display: flex;
+        flex: 0 0 42px;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .identity-icon svg {
+        height: 20px;
+        width: 20px;
+      }
+
+      .identity-card.normal .identity-icon {
+        background: #eef1f6;
+        color: var(--gray);
+      }
+
+      .identity-card.vip .identity-icon {
+        background: #f6d999;
+        color: #7a5112;
+      }
+
+      .identity-card.svip .identity-icon {
+        background: #f3aebb;
+        color: #6e2634;
+      }
+
+      .identity-card.admin .identity-icon {
+        background: rgba(201, 243, 106, 0.14);
+        color: var(--lime);
+      }
+
+      .identity-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .identity-title {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .identity-title .live {
+        align-items: center;
+        background: rgba(24, 23, 22, 0.07);
+        border-radius: 5px;
+        font-size: 8px;
+        font-weight: 800;
+        padding: 2px 5px;
+      }
+
+      .identity-card.admin .identity-title .live {
+        background: rgba(201, 243, 106, 0.16);
+        color: var(--lime);
+      }
+
+      .identity-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 14px;
+        margin-top: 4px;
+      }
+
+      .identity-card.admin .identity-sub {
+        color: rgba(255, 255, 255, 0.56);
+      }
+
+      .identity-cta {
+        align-items: center;
+        border-radius: 8px;
+        display: flex;
+        flex: 0 0 auto;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 4px;
+        height: 30px;
+        justify-content: center;
+        padding: 0 10px;
+      }
+
+      .identity-cta svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .identity-card.normal .identity-cta {
+        background: #eef1f6;
+        color: var(--muted);
+      }
+
+      .identity-card.vip .identity-cta {
+        background: #d99a31;
+        color: #ffffff;
+      }
+
+      .identity-card.svip .identity-cta {
+        background: #d95b6f;
+        color: #ffffff;
+      }
+
+      .identity-card.admin .identity-cta {
+        background: var(--lime);
+        color: var(--navy);
+      }
+
+      .panel {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px;
+      }
+
+      .panel-title {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+        min-height: 34px;
+      }
+
+      .panel-title .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .account-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 44px;
+      }
+
+      .account-row .row-icon {
+        align-items: center;
+        border-radius: 8px;
+        color: var(--primary);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .account-row .row-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .account-row .row-text {
+        flex: 1;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .account-row .row-arrow {
+        color: #b7c2d6;
+      }
+
+      .account-row .row-arrow svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .usage {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px;
+      }
+
+      .usage-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 54px;
+      }
+
+      .usage-row:first-child {
+        border-top: 0;
+      }
+
+      .usage-icon {
+        align-items: center;
+        border-radius: 9px;
+        display: flex;
+        flex: 0 0 32px;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .usage-icon svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .usage-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .usage-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .usage-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .usage-arrow {
+        color: #b7c2d6;
+      }
+
+      .usage-arrow svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .member-hero {
+        background: linear-gradient(135deg, #7a2c3c, #c25467);
+        border-radius: 18px;
+        color: #ffffff;
+        margin-top: 8px;
+        overflow: hidden;
+        padding: 18px 16px 16px;
+        position: relative;
+      }
+
+      .member-hero .crown-wrap {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 12px;
+        display: flex;
+        height: 46px;
+        justify-content: center;
+        width: 46px;
+      }
+
+      .member-hero .crown-wrap svg {
+        height: 22px;
+        width: 22px;
+      }
+
+      .member-hero .member-title {
+        font-size: 17px;
+        font-weight: 900;
+        margin-top: 12px;
+      }
+
+      .member-hero .member-sub {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 10px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+
+      .member-hero .member-meta {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .member-meta-item {
+        background: rgba(255, 255, 255, 0.13);
+        border-radius: 8px;
+        flex: 1;
+        padding: 8px 10px;
+      }
+
+      .member-meta-item .label {
+        color: rgba(255, 255, 255, 0.66);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .member-meta-item .value {
+        font-size: 11px;
+        font-weight: 900;
+        margin-top: 4px;
+      }
+
+      .benefits {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px;
+      }
+
+      .benefit-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 52px;
+      }
+
+      .benefit-row:first-child {
+        border-top: 0;
+      }
+
+      .benefit-icon {
+        align-items: center;
+        border-radius: 9px;
+        display: flex;
+        flex: 0 0 32px;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .benefit-icon svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .benefit-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .benefit-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .benefit-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .benefit-check {
+        color: var(--teal);
+      }
+
+      .benefit-check svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .compare {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        overflow: hidden;
+      }
+
+      .compare-head {
+        display: grid;
+        font-size: 9px;
+        font-weight: 900;
+        grid-template-columns: 1.5fr 0.85fr 0.85fr 0.85fr;
+        padding: 10px 12px;
+      }
+
+      .compare-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: grid;
+        font-size: 8px;
+        font-weight: 700;
+        grid-template-columns: 1.5fr 0.85fr 0.85fr 0.85fr;
+        min-height: 34px;
+        padding: 0 12px;
+      }
+
+      .compare-row .cell {
+        color: var(--muted);
+      }
+
+      .compare-row .cell.svip-col {
+        color: var(--rose-dark);
+        font-weight: 900;
+      }
+
+      .messages-hero {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 8px;
+        padding: 12px;
+      }
+
+      .online-title {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 7px;
+      }
+
+      .online-dot {
+        background: var(--teal);
+        border-radius: 50%;
+        box-shadow: 0 0 0 4px rgba(24, 167, 143, 0.12);
+        height: 7px;
+        width: 7px;
+      }
+
+      .online-people {
+        display: flex;
+        gap: 12px;
+        margin-top: 11px;
+      }
+
+      .online-person {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        width: 52px;
+      }
+
+      .online-avatar {
+        align-items: center;
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        height: 44px;
+        justify-content: center;
+        position: relative;
+        width: 44px;
+      }
+
+      .online-avatar .mini-badge {
+        align-items: center;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        bottom: -2px;
+        display: flex;
+        height: 16px;
+        justify-content: center;
+        position: absolute;
+        right: -3px;
+        width: 16px;
+      }
+
+      .online-avatar .mini-badge svg {
+        height: 8px;
+        width: 8px;
+      }
+
+      .online-name {
+        font-size: 8px;
+        font-weight: 700;
+        max-width: 52px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .conv {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px;
+      }
+
+      .conv-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 62px;
+      }
+
+      .conv-row:first-child {
+        border-top: 0;
+      }
+
+      .conv-avatar {
+        align-items: center;
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 42px;
+        font-size: 11px;
+        font-weight: 900;
+        height: 42px;
+        justify-content: center;
+        position: relative;
+        width: 42px;
+      }
+
+      .conv-avatar .mini-badge {
+        align-items: center;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        bottom: -2px;
+        display: flex;
+        height: 16px;
+        justify-content: center;
+        position: absolute;
+        right: -3px;
+        width: 16px;
+      }
+
+      .conv-avatar .mini-badge svg {
+        height: 8px;
+        width: 8px;
+      }
+
+      .conv-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .conv-name-line {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .conv-name {
+        font-size: 11px;
+        font-weight: 800;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .conv-preview {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 4px;
+        max-width: 210px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .conv-time {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+
+      .matrix {
+        overflow-x: auto;
+      }
+
+      table {
+        border-collapse: collapse;
+        min-width: 760px;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        font-size: 11px;
+        padding: 12px 13px;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      th {
+        background: var(--soft);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      td:first-child {
+        font-weight: 800;
+      }
+
+      .tag {
+        border-radius: 6px;
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 800;
+        min-height: 22px;
+        padding: 4px 8px;
+      }
+
+      .tag.on {
+        background: #e8f5f0;
+        color: #0d7c66;
+      }
+
+      .tag.off {
+        background: #eef1f6;
+        color: #9aa6ba;
+      }
+
+      .tag.partial {
+        background: #fdf2dd;
+        color: var(--gold-dark);
+      }
+
+      .principles {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .principle {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-width: 0;
+        padding: 15px;
+      }
+
+      .principle-num {
+        color: var(--primary);
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .principle-title {
+        font-size: 12px;
+        font-weight: 900;
+        margin-top: 8px;
+      }
+
+      .principle-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 7px;
+      }
+
+      .footnote {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        margin: 0 auto;
+        max-width: 900px;
+        text-align: center;
+      }
+
+      @media (max-width: 1180px) {
+        .tokens {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .principles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .section-head {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .section-note {
+          text-align: left;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .board {
+          padding: 20px 10px 36px;
+          width: 100%;
+        }
+
+        .board-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .board-meta {
+          text-align: left;
+        }
+
+        .tokens,
+        .principles {
+          grid-template-columns: 1fr;
+        }
+
+        .phone-wrap {
+          width: min(312px, calc(100vw - 40px));
+        }
+
+        .phone {
+          height: 690px;
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="box"></i></div>
+          <div>
+            <h1 class="board-title">FunBox 用户身份展示</h1>
+            <p class="board-subtitle">让每位用户一眼知道自己的身份，并能随时查看自己的权益。</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          产品方案 V1.0 · 待评审
+          <strong>普通 / VIP / SVIP / 管理员 四态对照</strong>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Identity Tokens</div>
+            <h2 class="section-title">身份视觉系统：一套令牌，全端统一</h2>
+          </div>
+          <p class="section-note">用户端与管理后台共用同一套颜色、图标与徽标形态，避免两套色值各自漂移。</p>
+        </div>
+        <div class="tokens">
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #eef1f6; color: var(--gray)">
+                <i data-lucide="user"></i>
+              </div>
+              <div>
+                <div class="token-name">普通用户</div>
+                <div class="token-code">normal</div>
+              </div>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">昵称徽标</div>
+              <span class="name-badge normal"><i data-lucide="user"></i>普通用户</span>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">头像角</div>
+              <span class="avatar-badge" style="background: #eef1f6; color: var(--gray)">
+                <i data-lucide="user"></i>
+              </span>
+              <span style="color: var(--muted); font-size: 9px; font-weight: 600">不常驻</span>
+            </div>
+            <div class="mini-card">
+              <div class="mini-title">普通用户</div>
+              <div class="mini-sub">了解 VIP 与 SVIP 权益</div>
+            </div>
+          </div>
+
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #fdf2dd; color: var(--gold-dark)">
+                <i data-lucide="gem"></i>
+              </div>
+              <div>
+                <div class="token-name">VIP 会员</div>
+                <div class="token-code">vip · #e8a33d</div>
+              </div>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">昵称徽标</div>
+              <span class="name-badge vip"><i data-lucide="gem"></i>VIP</span>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">头像角</div>
+              <span class="avatar-badge vip"><i data-lucide="gem"></i></span>
+            </div>
+            <div class="mini-card vip">
+              <div class="mini-title">VIP 会员 · 已生效</div>
+              <div class="mini-sub">专属工具已解锁</div>
+            </div>
+          </div>
+
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #fde9ed; color: var(--rose-dark)">
+                <i data-lucide="crown"></i>
+              </div>
+              <div>
+                <div class="token-name">SVIP 会员</div>
+                <div class="token-code">svip · #e8667a</div>
+              </div>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">昵称徽标</div>
+              <span class="name-badge svip"><i data-lucide="crown"></i>SVIP</span>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">头像角</div>
+              <span class="avatar-badge svip"><i data-lucide="crown"></i></span>
+            </div>
+            <div class="mini-card svip">
+              <div class="mini-title">SVIP 会员 · 已生效</div>
+              <div class="mini-sub">全部会员权益可用</div>
+            </div>
+          </div>
+
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: var(--navy); color: var(--lime)">
+                <i data-lucide="shield-check"></i>
+              </div>
+              <div>
+                <div class="token-name">管理员</div>
+                <div class="token-code">admin · 后台角色</div>
+              </div>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">昵称徽标</div>
+              <span class="name-badge admin"><i data-lucide="shield-check"></i>管理员</span>
+              <span class="name-badge admin dark"><i data-lucide="shield-check"></i>管理员</span>
+            </div>
+            <div class="token-row">
+              <div class="token-row-label">头像角</div>
+              <span class="avatar-badge admin"><i data-lucide="shield-check"></i></span>
+            </div>
+            <div class="mini-card admin">
+              <div class="mini-title">管理员账号</div>
+              <div class="mini-sub">可进入管理后台</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Profile Comparison</div>
+            <h2 class="section-title">「我的」页：四种身份一眼可辨</h2>
+          </div>
+          <p class="section-note">昵称旁徽标 + 头像角徽章 + 身份权益卡，三处同时出现，不依赖颜色也能识别。</p>
+        </div>
+        <div class="phones">
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gray)"></span><span>普通用户</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">我的</div>
+                    <div class="topbar-sub">个人工作台</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+                <div class="hero">
+                  <div class="hero-glow"></div>
+                  <div class="profile-row">
+                    <div class="avatar-wrap"><div class="avatar normal">林</div></div>
+                    <div class="profile-copy">
+                      <div class="name-line"><span class="name">林小满</span></div>
+                      <div class="profile-meta">@linxiaoman</div>
+                    </div>
+                  </div>
+                  <div class="profile-sign">欢迎回来，继续使用你的轻量工具箱。</div>
+                  <div class="hero-chips">
+                    <div class="hero-chip"><i data-lucide="wrench"></i>可用工具 8</div>
+                    <div class="hero-chip"><i data-lucide="gamepad-2"></i>可用游戏 4</div>
+                  </div>
+                </div>
+                <div class="identity-card normal">
+                  <div class="identity-icon"><i data-lucide="user"></i></div>
+                  <div class="identity-copy">
+                    <div class="identity-title">普通用户</div>
+                    <div class="identity-sub">了解 VIP 与 SVIP 权益</div>
+                  </div>
+                  <div class="identity-cta">查看 <i data-lucide="chevron-right"></i></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>账户</span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="pencil"></i></div><span class="row-text">编辑资料</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="key-round"></i></div><span class="row-text">修改密码</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="message-square"></i></div><span class="row-text">问题反馈</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="log-out"></i></div><span class="row-text">退出登录</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+                <div class="usage">
+                  <div class="panel-title"><span>最近使用</span><span class="count">2 项记录</span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radar"></i></div><div class="usage-copy"><div class="usage-name">市场雷达</div><div class="usage-desc">行情快照与提醒</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #fff1e4; color: #d9822b"><i data-lucide="sparkles"></i></div><div class="usage-copy"><div class="usage-name">AI 导航</div><div class="usage-desc">智能能力直达</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gold)"></span><span>VIP 会员</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">我的</div>
+                    <div class="topbar-sub">个人工作台</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+                <div class="hero vip">
+                  <div class="hero-glow"></div>
+                  <div class="profile-row">
+                    <div class="avatar-wrap">
+                      <div class="avatar">林</div>
+                      <div class="avatar-badge-abs vip"><i data-lucide="gem"></i></div>
+                    </div>
+                    <div class="profile-copy">
+                      <div class="name-line"><span class="name">林小满</span><span class="name-badge vip"><i data-lucide="gem"></i>VIP</span></div>
+                      <div class="profile-meta">@linxiaoman</div>
+                    </div>
+                  </div>
+                  <div class="profile-sign">VIP 权益已生效，专属工具已为你解锁。</div>
+                  <div class="hero-chips">
+                    <div class="hero-chip"><i data-lucide="wrench"></i>可用工具 12</div>
+                    <div class="hero-chip"><i data-lucide="gamepad-2"></i>可用游戏 6</div>
+                  </div>
+                </div>
+                <div class="identity-card vip">
+                  <div class="identity-icon"><i data-lucide="gem"></i></div>
+                  <div class="identity-copy">
+                    <div class="identity-title">VIP 会员 <span class="live">已生效</span></div>
+                    <div class="identity-sub">专属工具已解锁，点击查看全部权益</div>
+                  </div>
+                  <div class="identity-cta">查看权益 <i data-lucide="chevron-right"></i></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>账户</span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="pencil"></i></div><span class="row-text">编辑资料</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="key-round"></i></div><span class="row-text">修改密码</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="message-square"></i></div><span class="row-text">问题反馈</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="log-out"></i></div><span class="row-text">退出登录</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+                <div class="usage">
+                  <div class="panel-title"><span>最近使用</span><span class="count">2 项记录</span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radar"></i></div><div class="usage-copy"><div class="usage-name">市场雷达</div><div class="usage-desc">行情快照与提醒</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #fff1e4; color: #d9822b"><i data-lucide="sparkles"></i></div><div class="usage-copy"><div class="usage-name">AI 导航</div><div class="usage-desc">智能能力直达</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--rose)"></span><span>SVIP 会员</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">我的</div>
+                    <div class="topbar-sub">个人工作台</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+                <div class="hero svip">
+                  <div class="hero-glow"></div>
+                  <div class="profile-row">
+                    <div class="avatar-wrap">
+                      <div class="avatar">林</div>
+                      <div class="avatar-badge-abs svip"><i data-lucide="crown"></i></div>
+                    </div>
+                    <div class="profile-copy">
+                      <div class="name-line"><span class="name">林小满</span><span class="name-badge svip"><i data-lucide="crown"></i>SVIP</span></div>
+                      <div class="profile-meta">@linxiaoman</div>
+                    </div>
+                  </div>
+                  <div class="profile-sign">SVIP 全权益生效，所有会员能力已解锁。</div>
+                  <div class="hero-chips">
+                    <div class="hero-chip"><i data-lucide="wrench"></i>可用工具 14</div>
+                    <div class="hero-chip"><i data-lucide="gamepad-2"></i>可用游戏 8</div>
+                  </div>
+                </div>
+                <div class="identity-card svip">
+                  <div class="identity-icon"><i data-lucide="crown"></i></div>
+                  <div class="identity-copy">
+                    <div class="identity-title">SVIP 会员 <span class="live">已生效</span></div>
+                    <div class="identity-sub">全部会员权益可用，查看完整权益列表</div>
+                  </div>
+                  <div class="identity-cta">查看权益 <i data-lucide="chevron-right"></i></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>账户</span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="pencil"></i></div><span class="row-text">编辑资料</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="key-round"></i></div><span class="row-text">修改密码</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="message-square"></i></div><span class="row-text">问题反馈</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="log-out"></i></div><span class="row-text">退出登录</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+                <div class="usage">
+                  <div class="panel-title"><span>最近使用</span><span class="count">2 项记录</span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radar"></i></div><div class="usage-copy"><div class="usage-name">市场雷达</div><div class="usage-desc">行情快照与提醒</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #fff1e4; color: #d9822b"><i data-lucide="sparkles"></i></div><div class="usage-copy"><div class="usage-name">AI 导航</div><div class="usage-desc">智能能力直达</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--navy)"></span><span>管理员</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">我的</div>
+                    <div class="topbar-sub">个人工作台</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+                <div class="hero admin">
+                  <div class="hero-glow"></div>
+                  <div class="profile-row">
+                    <div class="avatar-wrap">
+                      <div class="avatar">林</div>
+                      <div class="avatar-badge-abs admin"><i data-lucide="shield-check"></i></div>
+                    </div>
+                    <div class="profile-copy">
+                      <div class="name-line"><span class="name">林小满</span><span class="name-badge admin"><i data-lucide="shield-check"></i>管理员</span></div>
+                      <div class="profile-meta">@linxiaoman · 后台角色</div>
+                    </div>
+                  </div>
+                  <div class="profile-sign">你拥有后台管理权限，可管理用户身份与入口权限。</div>
+                  <div class="hero-chips">
+                    <div class="hero-chip"><i data-lucide="shield-check"></i>管理员已登录</div>
+                    <div class="hero-chip"><i data-lucide="wrench"></i>全部功能可见</div>
+                  </div>
+                </div>
+                <div class="identity-card admin">
+                  <div class="identity-icon"><i data-lucide="shield-check"></i></div>
+                  <div class="identity-copy">
+                    <div class="identity-title">管理员账号 <span class="live">受保护</span></div>
+                    <div class="identity-sub">可管理入口权限、用户身份与内容</div>
+                  </div>
+                  <div class="identity-cta">进入后台 <i data-lucide="chevron-right"></i></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>账户</span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="pencil"></i></div><span class="row-text">编辑资料</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="key-round"></i></div><span class="row-text">修改密码</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="shield-cog"></i></div><span class="row-text">管理后台</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="account-row"><div class="row-icon" style="background: #e8edff"><i data-lucide="log-out"></i></div><span class="row-text">退出登录</span><span class="row-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+                <div class="usage">
+                  <div class="panel-title"><span>最近使用</span><span class="count">2 项记录</span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radar"></i></div><div class="usage-copy"><div class="usage-name">市场雷达</div><div class="usage-desc">行情快照与提醒</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                  <div class="usage-row"><div class="usage-icon" style="background: #fff1e4; color: #d9822b"><i data-lucide="sparkles"></i></div><div class="usage-copy"><div class="usage-name">AI 导航</div><div class="usage-desc">智能能力直达</div></div><span class="usage-arrow"><i data-lucide="chevron-right"></i></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Member Center & Social</div>
+            <h2 class="section-title">会员中心与社交触点：身份从「看得到」到「用得上」</h2>
+          </div>
+          <p class="section-note">会员中心回答「我是什么、我能用什么、升级差在哪」；社交场景只公开会员等级，不公开管理员。</p>
+        </div>
+        <div class="phones">
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--rose)"></span><span>会员中心 · SVIP</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">会员中心</div>
+                    <div class="topbar-sub">我的身份与全部权益</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+                <div class="member-hero">
+                  <div class="crown-wrap"><i data-lucide="crown"></i></div>
+                  <div class="member-title">SVIP 会员</div>
+                  <div class="member-sub">已生效 · 全部会员权益可用</div>
+                  <div class="member-meta">
+                    <div class="member-meta-item"><div class="label">可用工具</div><div class="value">14 个</div></div>
+                    <div class="member-meta-item"><div class="label">可用游戏</div><div class="value">8 个</div></div>
+                    <div class="member-meta-item"><div class="label">到期时间</div><div class="value">暂无</div></div>
+                  </div>
+                </div>
+                <div class="benefits">
+                  <div class="panel-title"><span>我的权益</span><span class="count">5 项</span></div>
+                  <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radar"></i></div><div class="benefit-copy"><div class="benefit-name">市场雷达</div><div class="benefit-desc">行情快照与提醒</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                  <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="sparkles"></i></div><div class="benefit-copy"><div class="benefit-name">AI 导航</div><div class="benefit-desc">智能能力直达</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                  <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="languages"></i></div><div class="benefit-copy"><div class="benefit-name">智能翻译</div><div class="benefit-desc">多语言文本翻译</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                  <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="search"></i></div><div class="benefit-copy"><div class="benefit-name">资源搜索</div><div class="benefit-desc">多源内容聚合</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                </div>
+                <div class="compare">
+                  <div class="compare-head"><span>权益对比</span><span>普通</span><span>VIP</span><span style="color: var(--rose-dark)">SVIP</span></div>
+                  <div class="compare-row"><span>市场雷达</span><span class="cell">基础</span><span class="cell">完整</span><span class="cell svip-col">完整</span></div>
+                  <div class="compare-row"><span>AI 导航</span><span class="cell">限次</span><span class="cell">完整</span><span class="cell svip-col">完整</span></div>
+                  <div class="compare-row"><span>智能翻译</span><span class="cell">—</span><span class="cell">完整</span><span class="cell svip-col">完整</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--teal)"></span><span>消息 · 社交身份</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">消息</div>
+                    <div class="topbar-sub">3 位好友在线</div>
+                  </div>
+                  <div style="display: flex; gap: 8px">
+                    <div class="brand-mark-mini"><i data-lucide="search"></i>搜索</div>
+                    <div class="brand-mark-mini" style="background: var(--navy); border-color: var(--navy); color: var(--lime)"><i data-lucide="user-plus"></i></div>
+                  </div>
+                </div>
+                <div class="messages-hero">
+                  <div class="online-title"><span class="online-dot"></span>现在在线</div>
+                  <div class="online-people">
+                    <div class="online-person">
+                      <div class="online-avatar" style="background: linear-gradient(135deg, #4b6bff, #8f7cff)">
+                        <span>顾</span>
+                        <span class="mini-badge" style="background: var(--gold); color: #5b3a08"><i data-lucide="gem"></i></span>
+                      </div>
+                      <span class="online-name">顾之遥</span>
+                    </div>
+                    <div class="online-person">
+                      <div class="online-avatar" style="background: linear-gradient(135deg, #e8667a, #c25467)">
+                        <span>苏</span>
+                        <span class="mini-badge" style="background: var(--rose); color: #ffffff"><i data-lucide="crown"></i></span>
+                      </div>
+                      <span class="online-name">苏远</span>
+                    </div>
+                    <div class="online-person">
+                      <div class="online-avatar" style="background: linear-gradient(135deg, #18a78f, #4cc3a4)">
+                        <span>周</span>
+                      </div>
+                      <span class="online-name">周棠</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="conv">
+                  <div class="panel-title"><span>最近消息</span><span class="count">全部已同步</span></div>
+                  <div class="conv-row">
+                    <div class="conv-avatar" style="background: linear-gradient(135deg, #4b6bff, #8f7cff)">
+                      <span>顾</span>
+                      <span class="mini-badge" style="background: var(--gold); color: #5b3a08"><i data-lucide="gem"></i></span>
+                    </div>
+                    <div class="conv-copy">
+                      <div class="conv-name-line"><span class="conv-name">顾之遥</span><span class="name-badge vip"><i data-lucide="gem"></i>VIP</span></div>
+                      <div class="conv-preview">市场雷达那个提醒你看到了吗？</div>
+                    </div>
+                    <div class="conv-time">09:32</div>
+                  </div>
+                  <div class="conv-row">
+                    <div class="conv-avatar" style="background: linear-gradient(135deg, #e8667a, #c25467)">
+                      <span>苏</span>
+                      <span class="mini-badge" style="background: var(--rose); color: #ffffff"><i data-lucide="crown"></i></span>
+                    </div>
+                    <div class="conv-copy">
+                      <div class="conv-name-line"><span class="conv-name">苏远</span><span class="name-badge svip"><i data-lucide="crown"></i>SVIP</span></div>
+                      <div class="conv-preview">今晚一起玩五子棋？</div>
+                    </div>
+                    <div class="conv-time">08:47</div>
+                  </div>
+                  <div class="conv-row">
+                    <div class="conv-avatar" style="background: linear-gradient(135deg, #18a78f, #4cc3a4)"><span>周</span></div>
+                    <div class="conv-copy">
+                      <div class="conv-name-line"><span class="conv-name">周棠</span></div>
+                      <div class="conv-preview">新书章节已经导入好啦</div>
+                    </div>
+                    <div class="conv-time">昨天</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Touchpoint Matrix</div>
+            <h2 class="section-title">触点矩阵：身份标识放在哪些地方</h2>
+          </div>
+          <p class="section-note">本期聚焦「我的」页 + 会员中心 + 后台顶栏；社交与 403 提示进入二期。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 32%">触点</th>
+                <th>普通用户</th>
+                <th>VIP</th>
+                <th>SVIP</th>
+                <th>管理员</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>我的页 · 昵称旁徽标</td>
+                <td><span class="tag off">不显示</span></td>
+                <td><span class="tag on">常驻</span></td>
+                <td><span class="tag on">常驻</span></td>
+                <td><span class="tag on">常驻</span></td>
+              </tr>
+              <tr>
+                <td>我的页 · 头像角徽章</td>
+                <td><span class="tag off">不显示</span></td>
+                <td><span class="tag on">常驻</span></td>
+                <td><span class="tag on">常驻</span></td>
+                <td><span class="tag on">常驻</span></td>
+              </tr>
+              <tr>
+                <td>我的页 · 身份权益卡</td>
+                <td><span class="tag partial">介绍入口</span></td>
+                <td><span class="tag on">查看权益</span></td>
+                <td><span class="tag on">查看权益</span></td>
+                <td><span class="tag on">进入后台</span></td>
+              </tr>
+              <tr>
+                <td>会员中心 / 身份页</td>
+                <td><span class="tag on">可见</span></td>
+                <td><span class="tag on">可见</span></td>
+                <td><span class="tag on">可见</span></td>
+                <td><span class="tag on">可见</span></td>
+              </tr>
+              <tr>
+                <td>社交 · 好友 / 会话徽标</td>
+                <td><span class="tag off">无</span></td>
+                <td><span class="tag on">公开会员</span></td>
+                <td><span class="tag on">公开会员</span></td>
+                <td><span class="tag off">不公开</span></td>
+              </tr>
+              <tr>
+                <td>聊天页 · 对方身份</td>
+                <td><span class="tag off">无</span></td>
+                <td><span class="tag on">公开会员</span></td>
+                <td><span class="tag on">公开会员</span></td>
+                <td><span class="tag off">不公开</span></td>
+              </tr>
+              <tr>
+                <td>管理后台 · 顶栏徽章</td>
+                <td><span class="tag off">不可见</span></td>
+                <td><span class="tag off">不可见</span></td>
+                <td><span class="tag off">不可见</span></td>
+                <td><span class="tag on">常驻</span></td>
+              </tr>
+              <tr>
+                <td>权限不足 · 403 提示</td>
+                <td><span class="tag partial">查看权益</span></td>
+                <td><span class="tag partial">查看权益</span></td>
+                <td><span class="tag partial">查看权益</span></td>
+                <td><span class="tag off">不会触发</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Design Principles</div>
+            <h2 class="section-title">方案要点</h2>
+          </div>
+          <p class="section-note">五条原则约束所有身份触点，避免「为了展示而展示」。</p>
+        </div>
+        <div class="principles">
+          <div class="principle">
+            <div class="principle-num">01</div>
+            <div class="principle-title">身份是状态</div>
+            <div class="principle-desc">展示与权限严格一致，身份变更后立即刷新，不允许出现「显示 VIP 却没有权益」。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">02</div>
+            <div class="principle-title">分层表达</div>
+            <div class="principle-desc">常驻徽标负责认出来，身份卡负责看得懂，403 与社交触点负责用得上。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">03</div>
+            <div class="principle-title">统一令牌</div>
+            <div class="principle-desc">用户端与后台共用 identity.ts，颜色、图标、文案只维护一份。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">04</div>
+            <div class="principle-title">克制展示</div>
+            <div class="principle-desc">普通用户不常驻徽标；管理员不在社交场景公开；避免身份感泛滥。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">05</div>
+            <div class="principle-title">变更可感知</div>
+            <div class="principle-desc">管理员调整身份后，用户端用一次性提示告知变化，并刷新权限状态。</div>
+          </div>
+        </div>
+      </section>
+
+      <p class="footnote">FunBox 用户身份展示产品方案 V1.0 · 配套文档：docs/user-identity-display-prd.md</p>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
