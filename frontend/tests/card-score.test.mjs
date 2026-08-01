@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   formatCNY,
   formatScore,
+  extractScoreInviteToken,
   roundProgress,
   scoreDifference,
   sortedParticipants,
@@ -34,4 +35,13 @@ test('round progress counts roster states', () => {
     { submitted: true, confirmed: false },
     { submitted: false, confirmed: false },
   ]), { confirmed: 1, submitted: 2, total: 3 });
+});
+
+test('invite token extraction supports deep links and raw tokens', () => {
+  const raw = 'abc.def.ghi';
+  assert.equal(extractScoreInviteToken(`myfirstexpoapp://tools/card-score?invite=${raw}`), raw);
+  assert.equal(extractScoreInviteToken(`https://funbox.example/tools/card-score?invite=${encodeURIComponent(raw)}`), raw);
+  assert.equal(extractScoreInviteToken(raw), raw);
+  assert.equal(extractScoreInviteToken('not an invite'), null);
+  assert.equal(extractScoreInviteToken(''), null);
 });

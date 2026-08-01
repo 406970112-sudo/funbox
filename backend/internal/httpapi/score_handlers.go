@@ -31,6 +31,7 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	}
 	mux.HandleFunc("POST /api/v1/score-rooms", api.withAuth(api.withAPIPipeline(api.handleCreateScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/join", api.withRateLimitedAPIPipeline("score-join", api.handleJoinScoreRoom))
+	mux.HandleFunc("POST /api/v1/score-rooms/invite-preview", api.withOptionalAuth(api.withRateLimitedAPIPipeline("score-join", api.handlePreviewScoreInvite)))
 	mux.HandleFunc("GET /api/v1/score-rooms/history", api.withAuth(api.withAPIPipeline(api.handleScoreRoomHistory)))
 	mux.HandleFunc("GET /api/v1/score-rooms/{roomID}", api.withScoreActor(api.withAPIPipeline(api.handleGetScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/start", api.withScoreActor(api.withAPIPipeline(api.handleStartScoreRoom)))
@@ -108,6 +109,24 @@ func (s *Server) handleJoinScoreRoom(w http.ResponseWriter, r *http.Request) {
 	}
 	s.publishScoreInvalidation(result.Room)
 	writeJSON(w, http.StatusCreated, result)
+}
+
+func (s *Server) handlePreviewScoreInvite(w http.ResponseWriter, r *http.Request) {
+	var input score.InvitePreviewInput
+	if err := decodeJSONBody(r, &input); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	userID := ""
+	if account, ok := authenticatedUserFromContext(r.Context()); ok {
+		userID = account.ID
+	}
+	result, err := s.scoreService.PreviewInvite(r.Context(), userID, input)
+	if err != nil {
+		s.writeScoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
 
 func (s *Server) handleScoreRoomHistory(w http.ResponseWriter, r *http.Request) {
@@ -254,6 +273,8 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
 	case errors.Is(err, score.ErrForbidden):
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": "score_action_forbidden"})
+	case errors.Is(err, score.ErrInviteInvalid):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invite_invalid"})
 	case errors.Is(err, score.ErrRoomNotFound), errors.Is(err, score.ErrRoundNotFound), errors.Is(err, score.ErrParticipantMissing):
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "score_not_found"})
 	case errors.Is(err, score.ErrRoomFull):

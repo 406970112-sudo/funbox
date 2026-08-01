@@ -2,6 +2,7 @@ import { getAPIBaseUrl } from '@/lib/auth-api';
 import type {
   CreateScoreRoomInput,
   CreateScoreRoomResult,
+  InvitePreviewResult,
   JoinScoreRoomInput,
   JoinScoreRoomResult,
   ScoreCredential,
@@ -44,6 +45,17 @@ export function joinScoreRoom(input: JoinScoreRoomInput) {
     body: JSON.stringify(input),
     method: 'POST',
   });
+}
+
+export function previewScoreInvite(inviteToken: string, accountToken?: string) {
+  return requestJSON<InvitePreviewResult>(
+    '/api/v1/score-rooms/invite-preview',
+    accountToken ? { kind: 'account', token: accountToken } : undefined,
+    {
+      body: JSON.stringify({ inviteToken }),
+      method: 'POST',
+    },
+  );
 }
 
 export async function getScoreRoom(credential: ScoreCredential, roomId: string) {
@@ -191,6 +203,7 @@ export function getCardScoreErrorMessage(error: unknown) {
     score_action_forbidden: '当前身份不能执行这个操作。',
     score_action_id_reused: '操作标识已失效，请刷新后重试。',
     score_balances_not_zero: '所有玩家的本局分数合计必须为 0。',
+    score_invite_invalid: '二维码不是有效的牌局邀请码，请让房主重新展示。',
     score_invalid_input: '请检查房间设置或分数输入。',
     score_invalid_state: '房间状态已经变化，请刷新后重试。',
     score_nickname_conflict: '这个昵称已被房间内其他玩家使用。',

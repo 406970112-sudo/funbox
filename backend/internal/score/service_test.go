@@ -107,6 +107,49 @@ func TestServiceConfirmsZeroSumRoundAndSettles(t *testing.T) {
 	}
 }
 
+func TestServicePreviewInvite(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+
+	created, err := service.CreateRoom(ctx, "host-user", "Host", CreateRoomInput{
+		Name: "Friday game", MaxPlayers: 2, CentsPerPoint: 50,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	anonymous, err := service.PreviewInvite(ctx, "", InvitePreviewInput{InviteToken: created.InviteToken})
+	if err != nil {
+		t.Fatalf("anonymous preview error = %v", err)
+	}
+	if anonymous.Room.Code != created.Room.Code || anonymous.SelfParticipantID != "" {
+		t.Fatalf("anonymous preview = %+v", anonymous)
+	}
+
+	hostPreview, err := service.PreviewInvite(ctx, "host-user", InvitePreviewInput{InviteToken: created.InviteToken})
+	if err != nil {
+		t.Fatalf("host preview error = %v", err)
+	}
+	if hostPreview.SelfParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("host preview self id = %q, want %q", hostPreview.SelfParticipantID, created.Actor.ParticipantID)
+	}
+
+	guest, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if guest.Room.Status != RoomWaiting {
+		t.Fatalf("room status = %q", guest.Room.Status)
+	}
+	if _, err := service.PreviewInvite(ctx, "", InvitePreviewInput{InviteToken: created.InviteToken}); !errors.Is(err, ErrRoomFull) {
+		t.Fatalf("full room preview error = %v", err)
+	}
+
+	if _, err := service.PreviewInvite(ctx, "", InvitePreviewInput{InviteToken: "not-a-real-token"}); !errors.Is(err, ErrInviteInvalid) {
+		t.Fatalf("invalid invite error = %v", err)
+	}
+}
+
 func TestServiceCommandIdempotencyAndVersionConflict(t *testing.T) {
 	service := newTestService(t)
 	ctx := context.Background()

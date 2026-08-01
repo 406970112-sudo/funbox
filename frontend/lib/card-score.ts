@@ -51,3 +51,18 @@ export function roundProgress(entries: ProgressEntry[]) {
   }
   return { confirmed, submitted, total: entries.length };
 }
+
+export function extractScoreInviteToken(value: string) {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  const queryMatch = text.match(/[?&]invite=([^&#]+)/i);
+  if (queryMatch) {
+    try {
+      return decodeURIComponent(queryMatch[1]);
+    } catch {
+      return queryMatch[1];
+    }
+  }
+  if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(text)) return text;
+  return null;
+}

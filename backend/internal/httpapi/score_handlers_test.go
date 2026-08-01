@@ -59,6 +59,18 @@ func TestScoreHTTPFlow(t *testing.T) {
 	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
 		"name": "Friday game", "maxPlayers": 4, "centsPerPoint": 50,
 	}, registered.AccessToken, http.StatusCreated)
+	preview := scoreRequestJSON[score.InvitePreviewResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/invite-preview", map[string]any{
+		"inviteToken": created.InviteToken,
+	}, "", http.StatusOK)
+	if preview.Room.Code != created.Room.Code || preview.SelfParticipantID != "" {
+		t.Fatalf("anonymous invite preview = %+v", preview)
+	}
+	hostPreview := scoreRequestJSON[score.InvitePreviewResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/invite-preview", map[string]any{
+		"inviteToken": created.InviteToken,
+	}, registered.AccessToken, http.StatusOK)
+	if hostPreview.SelfParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("host invite preview self id = %q, want %q", hostPreview.SelfParticipantID, created.Actor.ParticipantID)
+	}
 	joined := scoreRequestJSON[score.JoinRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
 		"code": created.Room.Code, "displayName": "Guest",
 	}, "", http.StatusCreated)

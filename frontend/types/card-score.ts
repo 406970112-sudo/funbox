@@ -129,4 +129,9 @@ export type JoinScoreRoomResult = {
   guestToken: string;
 };
 
+export type InvitePreviewResult = {
+  room: ScoreRoomSnapshot;
+  selfParticipantId?: string;
+};
+
 export type ScoreRealtimeStatus = 'connecting' | 'online' | 'offline';

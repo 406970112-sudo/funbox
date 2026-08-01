@@ -20,6 +20,7 @@ import (
 var (
 	ErrUnauthorized       = errors.New("score authentication required")
 	ErrForbidden          = errors.New("score action forbidden")
+	ErrInviteInvalid      = errors.New("score invite token is invalid")
 	ErrInvalidInput       = errors.New("invalid score input")
 	ErrRoomFull           = errors.New("score room is full")
 	ErrNicknameConflict   = errors.New("score nickname is already in use")
@@ -64,6 +65,15 @@ type JoinRoomResult struct {
 	Room       RoomSnapshot `json:"room"`
 	Actor      Actor        `json:"actor"`
 	GuestToken string       `json:"guestToken"`
+}
+
+type InvitePreviewInput struct {
+	InviteToken string `json:"inviteToken"`
+}
+
+type InvitePreviewResult struct {
+	Room              RoomSnapshot `json:"room"`
+	SelfParticipantID string       `json:"selfParticipantId,omitempty"`
 }
 
 type StartRoundInput struct {
@@ -188,7 +198,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if strings.TrimSpace(input.InviteToken) != "" {
 		claims, err := s.parseToken(input.InviteToken, "score_invite")
 		if err != nil {
-			return JoinRoomResult{}, err
+			return JoinRoomResult{}, ErrInviteInvalid
 		}
 		code = claims.Code
 	}
@@ -253,6 +263,45 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	}
 	room.SelfParticipantID = participantID
 	return JoinRoomResult{Room: room, Actor: actor, GuestToken: guestToken}, nil
+}
+
+func (s *Service) PreviewInvite(ctx context.Context, userID string, input InvitePreviewInput) (InvitePreviewResult, error) {
+	token := strings.TrimSpace(input.InviteToken)
+	if token == "" {
+		return InvitePreviewResult{}, fmt.Errorf("invite token: %w", ErrInvalidInput)
+	}
+	claims, err := s.parseToken(token, "score_invite")
+	if err != nil {
+		return InvitePreviewResult{}, ErrInviteInvalid
+	}
+	room, err := s.store.loadRoomSnapshot(ctx, s.store.db, claims.RoomID)
+	if err != nil {
+		return InvitePreviewResult{}, err
+	}
+	if room.Code != claims.Code {
+		return InvitePreviewResult{}, ErrInviteInvalid
+	}
+	result := InvitePreviewResult{Room: room}
+	if userID != "" {
+		var participantID string
+		err := s.store.db.QueryRowContext(ctx, `
+			SELECT id FROM score_participants
+			WHERE room_id = ? AND user_id = ? AND status = 'active'
+		`, claims.RoomID, userID).Scan(&participantID)
+		if err == nil {
+			result.SelfParticipantID = participantID
+			room.SelfParticipantID = participantID
+			result.Room = room
+			return result, nil
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return InvitePreviewResult{}, err
+		}
+	}
+	if len(activeParticipants(room.Participants)) >= room.MaxPlayers {
+		return InvitePreviewResult{}, ErrRoomFull
+	}
+	return result, nil
 }
 
 func (s *Service) StartRoom(ctx context.Context, actor Actor, meta CommandMeta) (RoomSnapshot, error) {
