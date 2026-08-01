@@ -25,3 +25,7 @@ test('presents SVIP with the premium crown treatment', () => {
     label: 'SVIP',
   });
 });
+
+test('keeps the administrator badge readable in dark mode', () => {
+  assert.equal(rolePresentation('admin', 'dark').color, '#c9f36a');
+});

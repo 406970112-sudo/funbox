@@ -291,7 +291,7 @@ export function AdminUsersScreen() {
       {!isDesktop ? (
         <Modal animationType="slide" transparent visible={Boolean(selectedUserId)} onRequestClose={() => setSelectedUserId(null)}>
           <View style={styles.modalRoot}>
-            <Pressable accessibilityLabel="关闭身份编辑" onPress={() => setSelectedUserId(null)} style={styles.modalBackdrop} />
+            <View style={styles.modalBackdrop} />
             <View style={[styles.mobileSheet, { backgroundColor: colors.surface }]}>{editor}</View>
           </View>
         </Modal>
@@ -340,8 +340,8 @@ function SummaryItem({ icon, label, value }: { icon: keyof typeof MaterialCommun
 }
 
 function FilterButton({ onPress, role, selected }: { onPress: () => void; role: UserRole | ''; selected: boolean }) {
-  const { colors } = useAppTheme();
-  const item = role ? rolePresentation(role) : { color: colors.primary, icon: 'account-multiple-outline' as const, label: '全部' };
+  const { colorScheme, colors } = useAppTheme();
+  const item = role ? rolePresentation(role, colorScheme) : { color: colors.primary, icon: 'account-multiple-outline' as const, label: '全部' };
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={[styles.filterButton, { backgroundColor: selected ? `${item.color}18` : colors.surface, borderColor: selected ? item.color : colors.line }]}>
       <MaterialCommunityIcons name={item.icon} size={15} color={selected ? item.color : colors.mutedText} />
@@ -382,7 +382,8 @@ function UserAvatar({ account }: { account: Pick<AdminUserSummary, 'avatarUrl' |
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
-  const item = rolePresentation(role);
+  const { colorScheme } = useAppTheme();
+  const item = rolePresentation(role, colorScheme);
   return <View style={[styles.roleBadge, { backgroundColor: `${item.color}16` }]}><MaterialCommunityIcons name={item.icon} size={14} color={item.color} /><ThemedText style={[styles.roleBadgeText, { color: item.color }]}>{item.label}</ThemedText></View>;
 }
 
@@ -417,8 +418,8 @@ function UserEditor({ changes, confirming, detail, draftRole, loading, message, 
 }
 
 function MetaItem({ label, value }: { label: string; value: string }) { const { colors } = useAppTheme(); return <View style={styles.metaItem}><ThemedText style={[styles.metaLabel, { color: colors.mutedText }]}>{label}</ThemedText><ThemedText numberOfLines={1} style={styles.metaValue}>{value}</ThemedText></View>; }
-function RoleOption({ onPress, role, selected }: { onPress: () => void; role: AssignableRole; selected: boolean }) { const { colors } = useAppTheme(); const item = rolePresentation(role); return <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected }} onPress={onPress} style={[styles.roleOption, { backgroundColor: selected ? `${item.color}16` : colors.surface, borderColor: selected ? item.color : colors.line }]}><MaterialCommunityIcons name={item.icon} size={18} color={item.color} /><ThemedText style={[styles.roleOptionText, { color: selected ? item.color : colors.text }]}>{item.label}</ThemedText><MaterialCommunityIcons name={selected ? 'radiobox-marked' : 'radiobox-blank'} size={17} color={selected ? item.color : colors.mutedText} /></Pressable>; }
-function AuditRow({ change }: { change: AdminUserRoleChange }) { const { colors } = useAppTheme(); return <View style={[styles.auditRow, { borderTopColor: colors.line }]}><View style={[styles.auditDot, { backgroundColor: rolePresentation(change.toRole).color }]} /><View style={styles.auditCopy}><View style={styles.auditRoles}><ThemedText style={styles.auditRoleText}>{rolePresentation(change.fromRole).label}</ThemedText><MaterialCommunityIcons name="arrow-right" size={14} color={colors.mutedText} /><ThemedText style={styles.auditRoleText}>{rolePresentation(change.toRole).label}</ThemedText></View><ThemedText style={[styles.auditMeta, { color: colors.mutedText }]}>{change.operatorDisplayName} · {formatDateTime(change.createdAt)}</ThemedText>{change.reason ? <ThemedText style={[styles.auditReason, { color: colors.mutedText }]}>原因：{change.reason}</ThemedText> : null}</View></View>; }
+function RoleOption({ onPress, role, selected }: { onPress: () => void; role: AssignableRole; selected: boolean }) { const { colorScheme, colors } = useAppTheme(); const item = rolePresentation(role, colorScheme); return <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected }} onPress={onPress} style={[styles.roleOption, { backgroundColor: selected ? `${item.color}16` : colors.surface, borderColor: selected ? item.color : colors.line }]}><MaterialCommunityIcons name={item.icon} size={18} color={item.color} /><ThemedText style={[styles.roleOptionText, { color: selected ? item.color : colors.text }]}>{item.label}</ThemedText><MaterialCommunityIcons name={selected ? 'radiobox-marked' : 'radiobox-blank'} size={17} color={selected ? item.color : colors.mutedText} /></Pressable>; }
+function AuditRow({ change }: { change: AdminUserRoleChange }) { const { colorScheme, colors } = useAppTheme(); return <View style={[styles.auditRow, { borderTopColor: colors.line }]}><View style={[styles.auditDot, { backgroundColor: rolePresentation(change.toRole, colorScheme).color }]} /><View style={styles.auditCopy}><View style={styles.auditRoles}><ThemedText style={styles.auditRoleText}>{rolePresentation(change.fromRole, colorScheme).label}</ThemedText><MaterialCommunityIcons name="arrow-right" size={14} color={colors.mutedText} /><ThemedText style={styles.auditRoleText}>{rolePresentation(change.toRole, colorScheme).label}</ThemedText></View><ThemedText style={[styles.auditMeta, { color: colors.mutedText }]}>{change.operatorDisplayName} · {formatDateTime(change.createdAt)}</ThemedText>{change.reason ? <ThemedText style={[styles.auditReason, { color: colors.mutedText }]}>原因：{change.reason}</ThemedText> : null}</View></View>; }
 function MessageBar({ message }: { message: FormMessage }) { const { colors } = useAppTheme(); const tone = message.tone === 'success' ? colors.success : '#d86f5b'; return <View style={[styles.messageBar, { backgroundColor: `${tone}14` }]}><MaterialCommunityIcons name={message.tone === 'success' ? 'check-circle-outline' : 'alert-circle-outline'} size={17} color={tone} /><ThemedText style={[styles.messageText, { color: tone }]}>{message.text}</ThemedText></View>; }
 function roleRank(role: UserRole) { return ({ admin: 3, normal: 0, svip: 2, vip: 1 } as const)[role]; }
 function formatDate(value: string) { return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(new Date(value)); }

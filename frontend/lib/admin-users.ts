@@ -33,6 +33,9 @@ export function maskUsername(username: string) {
   return `${normalized.slice(0, 1)}${'*'.repeat(normalized.length - 2)}${normalized.slice(-1)}`;
 }
 
-export function rolePresentation(role: UserRole) {
+export function rolePresentation(role: UserRole, colorScheme: 'dark' | 'light' = 'light') {
+  if (role === 'admin' && colorScheme === 'dark') {
+    return { ...rolePresentations.admin, color: '#c9f36a' as const };
+  }
   return rolePresentations[role];
 }
