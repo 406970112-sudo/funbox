@@ -1,0 +1,1332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Funbox 免费阅读产品设计图</title>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --bg: #eef4ff;
+      --surface: #ffffff;
+      --surface-muted: #edf2ff;
+      --text: #18233d;
+      --muted: #7483a2;
+      --line: #dde6fb;
+      --primary: #4b6bff;
+      --primary-soft: #e3e9ff;
+      --accent: #ff6b8f;
+      --success: #1db991;
+      --navy: #151b3b;
+      --paper: #f8f4e9;
+      --paper-text: #332f2a;
+      --shadow: 0 26px 70px rgba(58, 86, 152, .16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-width: 2200px;
+      min-height: 1400px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input { font: inherit; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .board {
+      position: relative;
+      width: 2200px;
+      height: 1400px;
+      overflow: hidden;
+      padding: 58px 66px 48px;
+      background:
+        linear-gradient(rgba(75, 107, 255, .055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(75, 107, 255, .055) 1px, transparent 1px),
+        var(--bg);
+      background-size: 44px 44px;
+    }
+
+    .board::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 130px rgba(53, 74, 132, .05);
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 1;
+      height: 126px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(116, 131, 162, .23);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--navy);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: white;
+      background: var(--primary);
+      box-shadow: 0 10px 22px rgba(75, 107, 255, .28);
+    }
+
+    .brand-mark i { width: 24px; height: 24px; }
+
+    .top-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: #566685;
+      background: rgba(255,255,255,.66);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .meta-item i { width: 17px; height: 17px; color: var(--primary); }
+
+    .layout {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 302px 1046px 570px;
+      gap: 36px;
+      padding-top: 44px;
+    }
+
+    .intro {
+      padding-top: 16px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--primary);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 3px;
+      background: var(--accent);
+    }
+
+    .intro h1 {
+      margin: 18px 0 16px;
+      color: var(--navy);
+      font-size: 58px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .intro-lead {
+      margin: 0;
+      color: #566685;
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .principles {
+      margin-top: 58px;
+    }
+
+    .section-label {
+      margin-bottom: 20px;
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .principle {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      padding: 18px 0;
+      border-top: 1px solid rgba(116, 131, 162, .2);
+    }
+
+    .principle:last-child { border-bottom: 1px solid rgba(116, 131, 162, .2); }
+
+    .principle-no {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .principle strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--navy);
+      font-size: 16px;
+    }
+
+    .principle span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .flow {
+      margin-top: 44px;
+    }
+
+    .flow-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .flow-node {
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: #405173;
+      background: rgba(255,255,255,.72);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .flow-arrow { color: var(--primary); font-weight: 900; }
+
+    .source-note {
+      margin-top: 40px;
+      padding-left: 14px;
+      border-left: 3px solid var(--success);
+      color: #647393;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(3, 332px);
+      gap: 25px;
+    }
+
+    .phone-wrap { position: relative; }
+
+    .screen-index {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px 14px;
+      color: #637392;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .screen-index strong {
+      color: var(--navy);
+      font-size: 15px;
+    }
+
+    .phone {
+      position: relative;
+      width: 332px;
+      height: 984px;
+      padding: 8px;
+      border-radius: 42px;
+      background: #10162d;
+      box-shadow: var(--shadow);
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      z-index: 4;
+      top: 15px;
+      left: 50%;
+      width: 86px;
+      height: 22px;
+      transform: translateX(-50%);
+      border-radius: 16px;
+      background: #10162d;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 34px;
+      background: #f8faff;
+    }
+
+    .statusbar {
+      height: 38px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 18px 6px;
+      color: #24304b;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .status-icons { display: flex; gap: 5px; }
+    .status-icons i { width: 12px; height: 12px; }
+
+    .mobile-content {
+      padding: 14px 17px 80px;
+    }
+
+    .mobile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .mobile-head h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 25px;
+      letter-spacing: 0;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: #53617e;
+      background: white;
+    }
+
+    .icon-btn i { width: 17px; height: 17px; }
+
+    .searchbox {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 13px;
+      margin-bottom: 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #8a97b2;
+      background: white;
+      font-size: 12px;
+    }
+
+    .searchbox i { width: 16px; height: 16px; }
+
+    .feature-book {
+      position: relative;
+      height: 208px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      color: white;
+      background: var(--navy);
+    }
+
+    .feature-book img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .feature-book::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(15,24,55,.94) 0%, rgba(15,24,55,.6) 60%, rgba(15,24,55,.16) 100%);
+    }
+
+    .feature-copy {
+      position: relative;
+      z-index: 1;
+      width: 72%;
+      padding: 22px 18px;
+    }
+
+    .tiny-label {
+      color: #bac7ff;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .feature-copy h3 {
+      margin: 10px 0 7px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .feature-copy p {
+      margin: 0 0 18px;
+      color: #d5dcf4;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .primary-btn {
+      min-height: 34px;
+      padding: 0 14px;
+      border-radius: 7px;
+      color: white;
+      background: var(--primary);
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 10px 22px rgba(75,107,255,.25);
+    }
+
+    .category-row {
+      display: flex;
+      gap: 7px;
+      overflow: hidden;
+      margin-bottom: 19px;
+    }
+
+    .chip {
+      flex: 0 0 auto;
+      min-height: 31px;
+      padding: 0 12px;
+      border-radius: 7px;
+      color: #657493;
+      background: white;
+      border: 1px solid var(--line);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .chip.active {
+      color: white;
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-head strong { font-size: 15px; color: var(--navy); }
+    .section-head span { color: var(--primary); font-size: 10px; font-weight: 800; }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .book-cover {
+      position: relative;
+      height: 136px;
+      overflow: hidden;
+      border-radius: 6px;
+      box-shadow: 0 11px 22px rgba(43, 58, 95, .16);
+      background: #c9d5ee;
+    }
+
+    .book-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+    .book-cover::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 35%, rgba(15,21,45,.88));
+    }
+
+    .cover-copy {
+      position: absolute;
+      z-index: 1;
+      left: 8px;
+      right: 8px;
+      bottom: 9px;
+      color: white;
+    }
+
+    .cover-copy strong { display: block; font-size: 11px; line-height: 1.25; }
+    .cover-copy span { display: block; margin-top: 3px; color: rgba(255,255,255,.72); font-size: 8px; }
+
+    .mini-caption {
+      margin-top: 7px;
+      color: #8692aa;
+      font-size: 9px;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      z-index: 3;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 68px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--line);
+      background: rgba(255,255,255,.96);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #8a96ae;
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .nav-item i { width: 17px; height: 17px; }
+    .nav-item.active { color: var(--primary); }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      background: var(--surface-muted);
+    }
+
+    .segment {
+      min-height: 32px;
+      border-radius: 6px;
+      color: #7a88a4;
+      background: transparent;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .segment.active {
+      color: var(--navy);
+      background: white;
+      box-shadow: 0 4px 10px rgba(49,72,126,.09);
+    }
+
+    .continue-card {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      gap: 13px;
+      padding-bottom: 20px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .continue-cover {
+      width: 78px;
+      height: 108px;
+      overflow: hidden;
+      border-radius: 6px;
+      box-shadow: 0 10px 20px rgba(43,58,95,.16);
+    }
+
+    .continue-cover img { width: 100%; height: 100%; object-fit: cover; }
+
+    .continue-info { min-width: 0; padding-top: 2px; }
+    .continue-info strong { display: block; color: var(--navy); font-size: 15px; }
+    .continue-info p { margin: 7px 0 12px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+
+    .progress-track {
+      height: 4px;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #e4eaf7;
+    }
+
+    .progress-track span { display: block; width: 64%; height: 100%; background: var(--accent); }
+
+    .progress-caption {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      color: #8a96ac;
+      font-size: 8px;
+    }
+
+    .shelf-title { margin: 0 0 12px; color: var(--navy); font-size: 14px; }
+
+    .shelf-list { display: grid; gap: 0; }
+
+    .shelf-row {
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .shelf-thumb {
+      width: 48px;
+      height: 64px;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #d8e0f0;
+    }
+
+    .shelf-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .shelf-meta strong { display: block; color: var(--navy); font-size: 12px; }
+    .shelf-meta span { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; }
+
+    .source-tag {
+      min-width: 36px;
+      padding: 5px 6px;
+      border-radius: 5px;
+      color: var(--primary);
+      background: var(--primary-soft);
+      text-align: center;
+      font-size: 8px;
+      font-weight: 900;
+    }
+
+    .source-tag.local { color: #0e8e70; background: #dff6ee; }
+
+    .import-entry {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      margin-top: 18px;
+      border: 1px dashed #b9c7e8;
+      border-radius: 8px;
+      color: #566786;
+      background: rgba(237,242,255,.72);
+    }
+
+    .import-icon {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      color: white;
+      background: var(--primary);
+    }
+
+    .import-icon i { width: 18px; height: 18px; }
+    .import-entry strong { display: block; color: var(--navy); font-size: 11px; }
+    .import-entry span { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; }
+
+    .reader-screen { background: var(--paper); }
+
+    .reader-screen .statusbar { color: #5d574f; }
+
+    .reader-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 50px;
+      padding: 0 16px;
+      color: #625e57;
+      border-bottom: 1px solid rgba(94,86,75,.1);
+    }
+
+    .reader-top button {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      color: #625e57;
+      background: transparent;
+    }
+
+    .reader-top i { width: 18px; height: 18px; }
+    .reader-top span { font-size: 10px; font-weight: 800; }
+
+    .reader-body {
+      height: calc(100% - 157px);
+      overflow: hidden;
+      padding: 34px 24px 20px;
+      transition: font-size .2s ease;
+    }
+
+    .reader-body h2 {
+      margin: 0 0 28px;
+      color: #2e2a25;
+      font-family: "STSong", "SimSun", serif;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .reader-body p {
+      margin: 0 0 17px;
+      color: var(--paper-text);
+      font-family: "STSong", "SimSun", serif;
+      font-size: 15px;
+      line-height: 1.95;
+      text-align: justify;
+    }
+
+    .reader-screen.large .reader-body p { font-size: 17px; line-height: 2; }
+
+    .reader-footer {
+      position: absolute;
+      z-index: 3;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 69px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid rgba(94,86,75,.12);
+      background: rgba(248,244,233,.97);
+    }
+
+    .reader-tool {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #686159;
+      background: transparent;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .reader-tool i { width: 17px; height: 17px; }
+    .reader-tool.active { color: var(--accent); }
+
+    .reader-progress {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 80px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #8c857c;
+      font-size: 8px;
+    }
+
+    .reader-progress .progress-track { flex: 1; background: rgba(116,104,90,.13); }
+    .reader-progress .progress-track span { width: 36%; background: var(--accent); }
+
+    .admin-wrap { position: relative; }
+
+    .admin-window {
+      width: 570px;
+      height: 1036px;
+      overflow: hidden;
+      border: 1px solid rgba(99,116,156,.18);
+      border-radius: 10px;
+      background: white;
+      box-shadow: var(--shadow);
+    }
+
+    .window-bar {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      color: #7887a3;
+      background: #f7f9fe;
+      border-bottom: 1px solid var(--line);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .window-dots { display: flex; gap: 6px; }
+    .window-dots span { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e9; }
+    .window-dots span:first-child { background: var(--accent); }
+    .window-dots span:nth-child(2) { background: #f7be55; }
+    .window-dots span:last-child { background: var(--success); }
+
+    .admin-shell {
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      height: calc(100% - 44px);
+    }
+
+    .sidebar {
+      padding: 22px 13px;
+      color: #95a0c3;
+      background: var(--navy);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px 20px;
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .sidebar-brand .brand-mark { width: 27px; height: 27px; border-radius: 6px; box-shadow: none; }
+    .sidebar-brand .brand-mark i { width: 15px; height: 15px; }
+
+    .side-label {
+      padding: 12px 9px 7px;
+      color: #5f6b94;
+      font-size: 8px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .side-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 0 9px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      color: #aeb8d8;
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .side-item i { width: 14px; height: 14px; }
+    .side-item.active { color: white; background: rgba(75,107,255,.25); }
+
+    .admin-main { background: #f5f8fe; }
+
+    .admin-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 23px 23px 17px;
+      background: white;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .admin-head h2 { margin: 0; color: var(--navy); font-size: 19px; }
+    .admin-head p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
+
+    .upload-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 6px;
+      color: white;
+      background: var(--primary);
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .upload-btn i { width: 14px; height: 14px; }
+
+    .admin-body { padding: 17px 18px; }
+
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: white;
+    }
+
+    .stat span { color: var(--muted); font-size: 8px; font-weight: 800; }
+    .stat strong { display: block; margin-top: 5px; color: var(--navy); font-size: 20px; }
+    .stat em { color: var(--success); font-size: 8px; font-style: normal; }
+
+    .admin-tabs {
+      display: flex;
+      gap: 18px;
+      height: 38px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .admin-tab {
+      position: relative;
+      color: #7a88a3;
+      background: transparent;
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .admin-tab.active { color: var(--primary); }
+    .admin-tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--primary); }
+
+    .content-table {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: white;
+    }
+
+    .table-head, .table-row {
+      display: grid;
+      grid-template-columns: 1.6fr .8fr .65fr .5fr;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 12px;
+    }
+
+    .table-head { color: #8491aa; background: #f8faff; font-size: 8px; font-weight: 900; }
+    .table-row { color: #566481; border-top: 1px solid var(--line); font-size: 8px; }
+    .table-row strong { color: var(--navy); font-size: 9px; }
+
+    .status {
+      justify-self: start;
+      padding: 4px 6px;
+      border-radius: 5px;
+      color: #0b896c;
+      background: #ddf7ef;
+      font-size: 7px;
+      font-weight: 900;
+    }
+
+    .status.draft { color: #9a6a13; background: #fff1d6; }
+
+    .upload-panel {
+      margin-top: 18px;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .panel-head strong { color: var(--navy); font-size: 13px; }
+    .panel-head span { color: var(--success); font-size: 8px; font-weight: 900; }
+
+    .file-card {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 11px;
+      padding: 12px;
+      border-radius: 7px;
+      background: var(--surface-muted);
+    }
+
+    .file-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      color: white;
+      background: var(--navy);
+    }
+
+    .file-icon i { width: 19px; height: 19px; }
+    .file-meta strong { display: block; color: var(--navy); font-size: 10px; }
+    .file-meta span { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; }
+    .file-check { color: var(--success); }
+    .file-check i { width: 20px; height: 20px; }
+
+    .parse-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 13px 0;
+    }
+
+    .parse-item {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .parse-item span { display: block; color: var(--muted); font-size: 7px; }
+    .parse-item strong { display: block; margin-top: 4px; color: var(--navy); font-size: 10px; }
+
+    .rights-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 13px;
+    }
+
+    .field {
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: #52617f;
+      background: #fbfcff;
+      font-size: 8px;
+    }
+
+    .field span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 7px; }
+
+    .publish-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .publish-note { color: var(--muted); font-size: 8px; line-height: 1.5; }
+    .publish-btn {
+      min-width: 86px;
+      height: 34px;
+      border-radius: 6px;
+      color: white;
+      background: var(--primary);
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .publish-btn.published { background: var(--success); }
+
+    .admin-footer-note {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #73819c;
+      font-size: 8px;
+      line-height: 1.5;
+    }
+
+    .admin-footer-note i { width: 14px; height: 14px; color: var(--primary); }
+
+    .review-tag {
+      position: absolute;
+      right: 0;
+      top: -31px;
+      color: #7d89a2;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .footer {
+      position: absolute;
+      z-index: 1;
+      left: 66px;
+      right: 66px;
+      bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #8895ad;
+      font-size: 10px;
+    }
+
+    .footer strong { color: #657493; }
+
+    @media (max-width: 2199px) {
+      html, body {
+        min-width: 0;
+        min-height: 0;
+        width: 1664px;
+        height: 1060px;
+        overflow: hidden;
+      }
+
+      .board {
+        transform: scale(.75636);
+        transform-origin: top left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <header class="topbar">
+      <div class="brand-row">
+        <span class="brand-mark"><i data-lucide="library-big"></i></span>
+        <span>Funbox · Product Design</span>
+      </div>
+      <div class="top-meta">
+        <div class="meta-item"><i data-lucide="badge-check"></i>正版内容 API</div>
+        <div class="meta-item"><i data-lucide="file-up"></i>TXT / EPUB 导入</div>
+        <div class="meta-item"><i data-lucide="shield-check"></i>免费无广告</div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="intro">
+        <div class="eyebrow">FREE READING</div>
+        <h1>免费<br />阅读</h1>
+        <p class="intro-lead">把正版书库和管理员上传内容收进同一个安静、顺手的阅读体验。</p>
+
+        <div class="principles">
+          <div class="section-label">产品原则</div>
+          <div class="principle">
+            <div class="principle-no">01</div>
+            <div><strong>先读起来</strong><span>首页直接承接上次进度，减少寻找和跳转。</span></div>
+          </div>
+          <div class="principle">
+            <div class="principle-no">02</div>
+            <div><strong>内容同源管理</strong><span>API 与上传书籍统一检索、上架、下架和版权标记。</span></div>
+          </div>
+          <div class="principle">
+            <div class="principle-no">03</div>
+            <div><strong>阅读保持克制</strong><span>正文优先，设置轻量，不用广告打断章节节奏。</span></div>
+          </div>
+        </div>
+
+        <div class="flow">
+          <div class="section-label">内容链路</div>
+          <div class="flow-line">
+            <span class="flow-node">内容接入</span><span class="flow-arrow">→</span>
+            <span class="flow-node">解析校验</span><span class="flow-arrow">→</span>
+            <span class="flow-node">审核上架</span><span class="flow-arrow">→</span>
+            <span class="flow-node">免费阅读</span>
+          </div>
+        </div>
+
+        <div class="source-note">第一期支持中文网文与出版读物；账号同步阅读进度，本地导入内容默认仅自己可见。</div>
+      </aside>
+
+      <div class="phones">
+        <div class="phone-wrap">
+          <div class="screen-index"><strong>01 · 书城</strong><span>发现与续读</span></div>
+          <div class="phone">
+            <div class="screen">
+              <div class="statusbar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+              <div class="mobile-content">
+                <div class="mobile-head"><h2>书城</h2><button class="icon-btn" title="搜索"><i data-lucide="search"></i></button></div>
+                <div class="searchbox"><i data-lucide="search"></i><span>搜书名、作者或分类</span></div>
+                <div class="feature-book">
+                  <img src="assets/mountain.jpg" alt="雾中山峦" />
+                  <div class="feature-copy">
+                    <span class="tiny-label">编辑精选 · 今日免费</span>
+                    <h3>雾隐山河</h3>
+                    <p>一封旧信，把江湖与朝堂重新牵在了一起。</p>
+                    <button class="primary-btn">继续阅读</button>
+                  </div>
+                </div>
+                <div class="category-row">
+                  <button class="chip active">精选</button><button class="chip">都市</button><button class="chip">悬疑</button><button class="chip">科幻</button>
+                </div>
+                <div class="section-head"><strong>本周热门</strong><span>查看榜单</span></div>
+                <div class="book-grid">
+                  <div><div class="book-cover"><img src="assets/bookstore.jpg" alt="书店" /><div class="cover-copy"><strong>晚风书店</strong><span>林木 · 都市</span></div></div><div class="mini-caption">9.2 分</div></div>
+                  <div><div class="book-cover"><img src="assets/corridor.jpg" alt="红墙长廊" /><div class="cover-copy"><strong>长安旧雨</strong><span>季白 · 古言</span></div></div><div class="mini-caption">32.8 万人读过</div></div>
+                  <div><div class="book-cover"><img src="assets/observatory.jpg" alt="星空观测站" /><div class="cover-copy"><strong>星海观测者</strong><span>陆洲 · 科幻</span></div></div><div class="mini-caption">完结</div></div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <button class="nav-item active"><i data-lucide="compass"></i><span>书城</span></button>
+                <button class="nav-item"><i data-lucide="library"></i><span>书架</span></button>
+                <button class="nav-item"><i data-lucide="user-round"></i><span>我的</span></button>
+              </nav>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="screen-index"><strong>02 · 书架</strong><span>在线与本地</span></div>
+          <div class="phone">
+            <div class="screen">
+              <div class="statusbar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+              <div class="mobile-content">
+                <div class="mobile-head"><h2>我的书架</h2><button class="icon-btn" title="管理书架"><i data-lucide="sliders-horizontal"></i></button></div>
+                <div class="segmented">
+                  <button class="segment active" data-source="全部书籍 · 6 本">全部</button>
+                  <button class="segment" data-source="正版在线 · 4 本">在线</button>
+                  <button class="segment" data-source="本地导入 · 2 本">本地</button>
+                </div>
+                <div class="section-head"><strong>继续阅读</strong><span id="shelf-count">全部书籍 · 6 本</span></div>
+                <div class="continue-card">
+                  <div class="continue-cover"><img src="assets/mountain.jpg" alt="雾隐山河封面" /></div>
+                  <div class="continue-info">
+                    <strong>雾隐山河</strong>
+                    <p>第 12 章 · 山雨将至<br />昨天 22:18 阅读</p>
+                    <div class="progress-track"><span></span></div>
+                    <div class="progress-caption"><span>已读 36%</span><span>继续</span></div>
+                  </div>
+                </div>
+                <h3 class="shelf-title">最近加入</h3>
+                <div class="shelf-list">
+                  <div class="shelf-row"><div class="shelf-thumb"><img src="assets/corridor.jpg" alt="长安旧雨封面" /></div><div class="shelf-meta"><strong>长安旧雨</strong><span>更新至 86 章 · 季白</span></div><span class="source-tag">正版</span></div>
+                  <div class="shelf-row"><div class="shelf-thumb"><img src="assets/observatory.jpg" alt="星海观测者封面" /></div><div class="shelf-meta"><strong>星海观测者</strong><span>全 52 章 · 陆洲</span></div><span class="source-tag">正版</span></div>
+                  <div class="shelf-row"><div class="shelf-thumb"><img src="assets/bookstore.jpg" alt="晚风书店封面" /></div><div class="shelf-meta"><strong>晚风书店</strong><span>本地文件 · 28.4 万字</span></div><span class="source-tag local">本地</span></div>
+                </div>
+                <button class="import-entry" title="导入本地书籍">
+                  <span class="import-icon"><i data-lucide="file-up"></i></span>
+                  <span><strong>导入本地书籍</strong><span>支持 TXT、EPUB，自动识别章节</span></span>
+                </button>
+              </div>
+              <nav class="bottom-nav">
+                <button class="nav-item"><i data-lucide="compass"></i><span>书城</span></button>
+                <button class="nav-item active"><i data-lucide="library"></i><span>书架</span></button>
+                <button class="nav-item"><i data-lucide="user-round"></i><span>我的</span></button>
+              </nav>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="screen-index"><strong>03 · 阅读器</strong><span>沉浸正文</span></div>
+          <div class="phone">
+            <div class="screen reader-screen" id="reader-screen">
+              <div class="statusbar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+              <div class="reader-top"><button title="返回"><i data-lucide="chevron-left"></i></button><span>雾隐山河</span><button title="更多"><i data-lucide="more-horizontal"></i></button></div>
+              <article class="reader-body">
+                <h2>第十二章　山雨将至</h2>
+                <p>暮色落下时，山中的雾又深了一层。远处灯火隔着细雨，像有人把碎金撒在旧城的屋脊上。</p>
+                <p>沈砚收起那封没有落款的信，指腹在纸角停了一瞬。墨迹已经干透，唯独最后一句仍像刚写下。</p>
+                <p>“今夜子时，听雨楼见。”</p>
+                <p>院门被风推开半扇。檐下的铜铃没有响，来人却已经站在了廊前。</p>
+                <p>他抬眼望去，只看见一把湿透的青伞，以及伞下那双熟悉又陌生的眼睛。</p>
+              </article>
+              <div class="reader-progress"><span>12 / 128</span><div class="progress-track"><span></span></div><span>36%</span></div>
+              <nav class="reader-footer">
+                <button class="reader-tool"><i data-lucide="list"></i><span>目录</span></button>
+                <button class="reader-tool" id="font-toggle"><i data-lucide="letter-text"></i><span>字号</span></button>
+                <button class="reader-tool"><i data-lucide="sun-medium"></i><span>亮度</span></button>
+                <button class="reader-tool"><i data-lucide="bookmark"></i><span>书签</span></button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="admin-wrap">
+        <div class="review-tag">04 · 管理后台 / 内容工作台</div>
+        <div class="admin-window">
+          <div class="window-bar"><div class="window-dots"><span></span><span></span><span></span></div><span>admin.funbox.local / content</span><i data-lucide="lock-keyhole" style="width:12px;height:12px"></i></div>
+          <div class="admin-shell">
+            <nav class="sidebar">
+              <div class="sidebar-brand"><span class="brand-mark"><i data-lucide="library-big"></i></span><span>Funbox</span></div>
+              <div class="side-label">工作台</div>
+              <div class="side-item"><i data-lucide="layout-dashboard"></i>概览</div>
+              <div class="side-item active"><i data-lucide="book-open-text"></i>内容管理</div>
+              <div class="side-item"><i data-lucide="plug-zap"></i>供应商 API</div>
+              <div class="side-item"><i data-lucide="clipboard-check"></i>审核任务</div>
+              <div class="side-label">系统</div>
+              <div class="side-item"><i data-lucide="users"></i>用户与权限</div>
+              <div class="side-item"><i data-lucide="chart-no-axes-combined"></i>阅读数据</div>
+              <div class="side-item"><i data-lucide="settings"></i>系统设置</div>
+            </nav>
+            <div class="admin-main">
+              <header class="admin-head">
+                <div><h2>内容管理</h2><p>统一管理授权书库与自有内容</p></div>
+                <button class="upload-btn"><i data-lucide="upload"></i>上传书籍</button>
+              </header>
+              <div class="admin-body">
+                <div class="admin-stats">
+                  <div class="stat"><span>已上架</span><strong>2,486</strong><em>本周 +42</em></div>
+                  <div class="stat"><span>待审核</span><strong>18</strong><em style="color:#9a6a13">需处理</em></div>
+                  <div class="stat"><span>解析失败</span><strong>3</strong><em style="color:#d85a73">查看原因</em></div>
+                </div>
+                <div class="admin-tabs"><button class="admin-tab active">全部书籍</button><button class="admin-tab">导入任务</button><button class="admin-tab">版权到期</button></div>
+                <div class="content-table">
+                  <div class="table-head"><span>书名</span><span>来源</span><span>状态</span><span>章节</span></div>
+                  <div class="table-row"><strong>雾隐山河</strong><span>管理员上传</span><span class="status draft">待发布</span><span>128</span></div>
+                  <div class="table-row"><strong>长安旧雨</strong><span>云书 API</span><span class="status">已上架</span><span>86</span></div>
+                  <div class="table-row"><strong>星海观测者</strong><span>云书 API</span><span class="status">已上架</span><span>52</span></div>
+                </div>
+
+                <section class="upload-panel">
+                  <div class="panel-head"><strong>上传与解析</strong><span>解析完成</span></div>
+                  <div class="file-card">
+                    <span class="file-icon"><i data-lucide="book-copy"></i></span>
+                    <div class="file-meta"><strong>雾隐山河.epub</strong><span>4.8 MB · UTF-8 · EPUB 3.0</span></div>
+                    <span class="file-check"><i data-lucide="circle-check-big"></i></span>
+                  </div>
+                  <div class="parse-grid">
+                    <div class="parse-item"><span>识别章节</span><strong>128 章</strong></div>
+                    <div class="parse-item"><span>正文字符</span><strong>86.4 万</strong></div>
+                    <div class="parse-item"><span>封面状态</span><strong>已提取</strong></div>
+                  </div>
+                  <div class="rights-row">
+                    <div class="field"><span>内容来源</span>签约作者 / 自有版权</div>
+                    <div class="field"><span>免费期限</span>长期免费</div>
+                  </div>
+                  <div class="rights-row">
+                    <div class="field"><span>分类</span>武侠 · 历史</div>
+                    <div class="field"><span>可见范围</span>全量用户</div>
+                  </div>
+                  <div class="publish-row">
+                    <span class="publish-note">内容审核通过后<br />立即进入书城检索</span>
+                    <button class="publish-btn" id="publish-btn">确认上架</button>
+                  </div>
+                </section>
+                <div class="admin-footer-note"><i data-lucide="shield-check"></i><span>所有内容保留来源、授权范围与操作记录，支持一键下架。</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="footer"><span><strong>Concept v1.0</strong> · Mobile Reader + Admin Console</span><span>Funbox 免费阅读产品设计提案 · 2026.07</span></footer>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    document.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach((item) => item.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('.segment').forEach((segment) => {
+      segment.addEventListener('click', () => {
+        document.querySelectorAll('.segment').forEach((item) => item.classList.remove('active'));
+        segment.classList.add('active');
+        document.querySelector('#shelf-count').textContent = segment.dataset.source;
+      });
+    });
+
+    document.querySelector('#font-toggle').addEventListener('click', (event) => {
+      document.querySelector('#reader-screen').classList.toggle('large');
+      event.currentTarget.classList.toggle('active');
+    });
+
+    document.querySelector('#publish-btn').addEventListener('click', (event) => {
+      event.currentTarget.textContent = '已上架';
+      event.currentTarget.classList.add('published');
+    });
+  </script>
+</body>
+</html>

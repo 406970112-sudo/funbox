@@ -18,6 +18,7 @@ type Config struct {
 	Lottery        LotteryConfig
 	News           NewsConfig
 	ResourceSearch ResourceSearchConfig
+	MarketRadar    MarketRadarConfig
 	Reading        ReadingConfig
 	TinyPNG        TinyPNGConfig
 	TTS            TTSConfig
@@ -52,6 +53,13 @@ type SecurityConfig struct {
 type ResourceSearchConfig struct {
 	CacheTTL       time.Duration
 	MaxResults     int
+	RequestTimeout time.Duration
+}
+
+type MarketRadarConfig struct {
+	CacheTTL       time.Duration
+	HistoryBaseURL string
+	QuoteBaseURL   string
 	RequestTimeout time.Duration
 }
 
@@ -202,6 +210,12 @@ func Load() (Config, error) {
 			CacheTTL:       durationFromMs("RESOURCE_SEARCH_CACHE_TTL_MS", "", "120000"),
 			MaxResults:     intFirst("RESOURCE_SEARCH_MAX_RESULTS", "", "20"),
 			RequestTimeout: durationFromMs("RESOURCE_SEARCH_REQUEST_TIMEOUT_MS", "", "12000"),
+		},
+		MarketRadar: MarketRadarConfig{
+			CacheTTL:       durationFromMs("MARKET_RADAR_CACHE_TTL_MS", "", "120000"),
+			HistoryBaseURL: envFirst("MARKET_RADAR_HISTORY_BASE_URL", "https://push2his.eastmoney.com"),
+			QuoteBaseURL:   envFirst("MARKET_RADAR_QUOTE_BASE_URL", "https://push2delay.eastmoney.com"),
+			RequestTimeout: durationFromMs("MARKET_RADAR_REQUEST_TIMEOUT_MS", "", "12000"),
 		},
 		TinyPNG: TinyPNGConfig{
 			APIKey:         envFirst("TINYPNG_API_KEY", ""),

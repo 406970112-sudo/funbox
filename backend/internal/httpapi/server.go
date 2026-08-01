@@ -160,7 +160,7 @@ func newServer(
 		realtimeHub:           realtime.NewHub(),
 		lotteryService:        lottery.NewService(cfg.Lottery),
 		lotteryLabService:     lotterylab.NewService(lotterylab.Config{}),
-		marketRadarService:    marketradar.NewService(marketradar.Config{}),
+		marketRadarService:    marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
 		newsService:           newsService,
 		readingService:        readingService,
 		readingImporter:       readingImporter,

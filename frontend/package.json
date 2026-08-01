@@ -25,7 +25,9 @@
     "test:featured-carousel": "node --test --experimental-strip-types tests/featured-carousel-sequence.test.mjs",
     "test:recent-usage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/recent-usage.test.mjs",
     "test:reading": "node --test --experimental-strip-types tests/reading-local-import.test.mjs tests/reading-state.test.mjs",
-    "test:ssq-lab": "node --test --experimental-strip-types tests/double-color-ball-lab.test.mjs"
+    "test:market-radar": "node --test --experimental-strip-types tests/market-radar.test.mjs",
+    "test:ssq-lab": "node --test --experimental-strip-types tests/double-color-ball-lab.test.mjs",
+    "test:ssq-lab-classic": "node --test --experimental-strip-types tests/double-color-ball-lab-classic.test.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",

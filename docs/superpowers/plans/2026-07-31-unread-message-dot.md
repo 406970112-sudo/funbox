@@ -330,7 +330,135 @@ git commit -m "feat: show unread message dot on tab"
 
 ---
 
-### Task 4: Final Regression Verification
+### Task 4: Conversation Refresh Ordering
+
+**Files:**
+- Create: `frontend/features/social/latest-request-gate.ts`
+- Create: `frontend/tests/latest-request-gate.test.mjs`
+- Modify: `frontend/features/social/social-provider.tsx`
+- Modify: `frontend/package.json`
+
+**Interfaces:**
+- Produces: `createLatestRequestGate(): { run<T>(load: () => Promise<T>): Promise<T | undefined>; invalidate(): void }`.
+- Consumes: every `refreshForToken(...)` call in `SocialProvider`.
+- Guarantees: only the most recently started refresh can commit a state snapshot; logout and Provider cleanup invalidate outstanding requests.
+
+- [ ] **Step 1: Write the failing request-order tests**
+
+Create `frontend/tests/latest-request-gate.test.mjs`:
+
+```js
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { createLatestRequestGate } from '../features/social/latest-request-gate.ts';
+
+test('drops an older result that resolves after a newer refresh', async () => {
+  const gate = createLatestRequestGate();
+  let resolveOlder;
+  let resolveNewer;
+  const older = gate.run(() => new Promise((resolve) => {
+    resolveOlder = resolve;
+  }));
+  const newer = gate.run(() => new Promise((resolve) => {
+    resolveNewer = resolve;
+  }));
+
+  resolveNewer('one unread message');
+  assert.equal(await newer, 'one unread message');
+
+  resolveOlder('zero unread messages');
+  assert.equal(await older, undefined);
+});
+
+test('invalidates an outstanding refresh', async () => {
+  const gate = createLatestRequestGate();
+  let resolveRequest;
+  const result = gate.run(() => new Promise((resolve) => {
+    resolveRequest = resolve;
+  }));
+
+  gate.invalidate();
+  resolveRequest('stale account state');
+
+  assert.equal(await result, undefined);
+});
+```
+
+- [ ] **Step 2: Run the test and verify the missing module failure**
+
+Run from `frontend/`:
+
+```bash
+node --test --experimental-strip-types tests/latest-request-gate.test.mjs
+```
+
+Expected: FAIL because `features/social/latest-request-gate.ts` does not exist.
+
+- [ ] **Step 3: Implement the minimal latest-request gate**
+
+Create `frontend/features/social/latest-request-gate.ts`:
+
+```ts
+export function createLatestRequestGate() {
+  let latestRequestId = 0;
+
+  return {
+    invalidate() {
+      latestRequestId += 1;
+    },
+    async run<T>(load: () => Promise<T>) {
+      const requestId = ++latestRequestId;
+      try {
+        const result = await load();
+        return requestId === latestRequestId ? result : undefined;
+      } catch (error) {
+        if (requestId === latestRequestId) throw error;
+        return undefined;
+      }
+    },
+  };
+}
+```
+
+- [ ] **Step 4: Run the focused test and verify it passes**
+
+Run from `frontend/`:
+
+```bash
+node --test --experimental-strip-types tests/latest-request-gate.test.mjs
+```
+
+Expected: both request-order tests PASS.
+
+- [ ] **Step 5: Guard asynchronous refresh results in `SocialProvider`**
+
+Create one gate for the Provider lifetime with `useRef`. Wrap the existing `Promise.all` request in `gate.run(...)`. If it returns `undefined`, exit without updating state; otherwise apply the returned friends, requests, and conversations snapshot. A stale rejection is ignored by the gate, while an error from the latest request still reaches the existing error handler.
+
+In the authentication effect cleanup, call `invalidate()` before closing the socket. This prevents responses belonging to an earlier token or an unmounted Provider from writing state.
+
+- [ ] **Step 6: Add the test script and run focused verification**
+
+Add to `frontend/package.json`:
+
+```json
+"test:social-refresh": "node --test --experimental-strip-types tests/latest-request-gate.test.mjs"
+```
+
+Run from `frontend/`:
+
+```bash
+npm run test:social-refresh
+npm run test:social-unread
+npx expo lint
+npx tsc --noEmit
+```
+
+Expected: both social test suites pass, lint has no errors, and TypeScript exits successfully.
+
+---
+
+### Task 5: Final Regression Verification
 
 **Files:**
 - Verify only; no planned source changes.
