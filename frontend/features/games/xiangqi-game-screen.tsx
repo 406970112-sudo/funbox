@@ -206,8 +206,8 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
   const statusCopy = getStatusCopy(status, isAiTurn, difficulty, humanInCheck);
   const boardPalette =
     colorScheme === 'dark'
-      ? { board: '#a97c45', grid: 'rgba(40,24,15,0.62)', shell: '#241d16' }
-      : { board: '#e7c58f', grid: 'rgba(125,92,47,0.85)', shell: '#f0e5d2' };
+      ? { board: '#a97c45', boardLine: '#6b4c22', grid: 'rgba(40,24,15,0.62)', shell: '#241d16' }
+      : { board: '#e7c58f', boardLine: '#8a6634', grid: 'rgba(125,92,47,0.85)', shell: '#f0e5d2' };
 
   return (
     <>
@@ -261,6 +261,7 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
         <View style={[styles.boardStage, { backgroundColor: boardPalette.shell, borderColor: colors.line }]}>
           <XiangqiBoardView
             board={state.board}
+            boardLineColor={boardPalette.boardLine}
             boardColor={boardPalette.board}
             gridColor={boardPalette.grid}
             lastMove={state.lastMove}
@@ -532,7 +533,10 @@ function XiangqiFriendGameScreen({ onExit }: { onExit: () => void }) {
     );
   }
 
-  const boardPalette = colorScheme === 'dark' ? { board: '#a97c45', grid: 'rgba(40,24,15,0.62)', shell: '#241d16' } : { board: '#e7c58f', grid: 'rgba(125,92,47,0.85)', shell: '#f0e5d2' };
+  const boardPalette =
+    colorScheme === 'dark'
+      ? { board: '#a97c45', boardLine: '#6b4c22', grid: 'rgba(40,24,15,0.62)', shell: '#241d16' }
+      : { board: '#e7c58f', boardLine: '#8a6634', grid: 'rgba(125,92,47,0.85)', shell: '#f0e5d2' };
   const pendingForMe = selectedMatch.status === 'pending' && selectedMatch.opponent.id === user?.id;
 
   return (
@@ -602,6 +606,7 @@ function XiangqiFriendGameScreen({ onExit }: { onExit: () => void }) {
         <View style={[styles.boardStage, { backgroundColor: boardPalette.shell, borderColor: colors.line }]}>
           <XiangqiBoardView
             board={board}
+            boardLineColor={boardPalette.boardLine}
             boardColor={boardPalette.board}
             gridColor={boardPalette.grid}
             lastMove={selectedMatch.moves.length > 0 ? toEngineMove(selectedMatch.moves[selectedMatch.moves.length - 1]) : null}
@@ -626,6 +631,7 @@ function XiangqiFriendGameScreen({ onExit }: { onExit: () => void }) {
 
 function XiangqiBoardView({
   board,
+  boardLineColor,
   boardColor,
   gridColor,
   lastMove,
@@ -634,6 +640,7 @@ function XiangqiBoardView({
   selected,
 }: {
   board: ReturnType<typeof createXiangqiState>['board'];
+  boardLineColor: string;
   boardColor: string;
   gridColor: string;
   lastMove: XiangqiMove | null;
@@ -657,7 +664,9 @@ function XiangqiBoardView({
   const legalTargets = new Set(legalMoves.map((move) => `${move.col}:${move.row}`));
 
   return (
-    <View accessibilityLabel="九乘十象棋棋盘" style={[styles.board, { backgroundColor: boardColor, height: boardHeight, width: boardWidth }]}>
+    <View
+      accessibilityLabel="九乘十象棋棋盘"
+      style={[styles.board, { backgroundColor: boardColor, borderColor: boardLineColor, height: boardHeight, width: boardWidth }]}>
       <XiangqiGrid gridColor={gridColor} padding={boardPadding} />
       <View style={[styles.riverLabel, { left: boardPadding, right: boardPadding }]} pointerEvents="none">
         <ThemedText style={[styles.riverText, { color: gridColor }]}>楚河 · 汉界</ThemedText>
@@ -738,12 +747,15 @@ function XiangqiGrid({ gridColor, padding }: { gridColor: string; padding: numbe
           <Line key={`h${row}`} stroke={gridColor} strokeWidth={1.2} x1={0} x2={9} y1={row} y2={row} vectorEffect="non-scaling-stroke" />
         ),
       )}
-      <Path d="M0.5 0.5 L3.5 2.5 L0.5 4.5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      <Path d="M8.5 0.5 L5.5 2.5 L8.5 4.5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      <Path d="M0.5 9.5 L3.5 7.5 L0.5 5.5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      <Path d="M8.5 9.5 L5.5 7.5 L8.5 5.5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      <Line stroke={gridColor} strokeWidth={1.2} x1={0} x2={9} y1={4} y2={4} vectorEffect="non-scaling-stroke" />
-      <Line stroke={gridColor} strokeWidth={1.2} x1={0} x2={9} y1={5} y2={5} vectorEffect="non-scaling-stroke" />
+      <Path d="M0 0 L0 10 L9 10 L9 0 Z" fill="none" stroke={gridColor} strokeWidth={2} vectorEffect="non-scaling-stroke" />
+      <Line stroke={gridColor} strokeWidth={1.2} x1={0} x2={3} y1={4} y2={4} vectorEffect="non-scaling-stroke" />
+      <Line stroke={gridColor} strokeWidth={1.2} x1={6} x2={9} y1={4} y2={4} vectorEffect="non-scaling-stroke" />
+      <Line stroke={gridColor} strokeWidth={1.2} x1={0} x2={3} y1={5} y2={5} vectorEffect="non-scaling-stroke" />
+      <Line stroke={gridColor} strokeWidth={1.2} x1={6} x2={9} y1={5} y2={5} vectorEffect="non-scaling-stroke" />
+      <Path d="M0 0 L3.5 2.5 L0 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+      <Path d="M9 0 L5.5 2.5 L9 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+      <Path d="M0 10 L3.5 7.5 L0 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+      <Path d="M9 10 L5.5 7.5 L9 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
     </Svg>
   );
 }
@@ -922,7 +934,7 @@ const styles = StyleSheet.create({
   turnLabel: { fontSize: 13, fontWeight: '800', lineHeight: 18 },
   turnMeta: { fontSize: 10, fontWeight: '600', lineHeight: 14 },
   boardStage: { alignItems: 'center', alignSelf: 'center', borderRadius: 14, borderWidth: 1, padding: 4 },
-  board: { borderRadius: 9, overflow: 'hidden', position: 'relative' },
+  board: { borderWidth: 2, borderRadius: 9, overflow: 'hidden', position: 'relative' },
   riverLabel: { alignItems: 'center', bottom: '46%', justifyContent: 'center', position: 'absolute', top: '46%' },
   riverText: { fontSize: 11, fontWeight: '800', letterSpacing: 4 },
   squarePressable: { alignItems: 'center', justifyContent: 'center', position: 'absolute' },
