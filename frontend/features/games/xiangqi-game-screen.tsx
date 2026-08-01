@@ -642,8 +642,11 @@ function XiangqiBoardView({
   selected: XiangqiPosition | null;
 }) {
   const { width } = useWindowDimensions();
-  const boardSize = Math.min(width - 56, 408);
-  const cellSize = boardSize / 8;
+  const gridWidth = Math.min(width - 96, 360);
+  const cellSize = gridWidth / 8;
+  const boardPadding = Math.round(cellSize * 0.56);
+  const boardWidth = Math.round(gridWidth + boardPadding * 2);
+  const boardHeight = Math.round(gridWidth * (10 / 9) + boardPadding * 2);
   const pieces: { position: XiangqiPosition; piece: XiangqiPiece }[] = [];
   for (let row = 0; row < XIANGQI_ROWS; row += 1) {
     for (let col = 0; col < XIANGQI_COLS; col += 1) {
@@ -654,9 +657,9 @@ function XiangqiBoardView({
   const legalTargets = new Set(legalMoves.map((move) => `${move.col}:${move.row}`));
 
   return (
-    <View accessibilityLabel="九乘十象棋棋盘" style={[styles.board, { backgroundColor: boardColor, height: boardSize * (10 / 9), width: boardSize }]}>
-      <XiangqiGrid gridColor={gridColor} />
-      <View style={styles.riverLabel} pointerEvents="none">
+    <View accessibilityLabel="九乘十象棋棋盘" style={[styles.board, { backgroundColor: boardColor, height: boardHeight, width: boardWidth }]}>
+      <XiangqiGrid gridColor={gridColor} padding={boardPadding} />
+      <View style={[styles.riverLabel, { left: boardPadding, right: boardPadding }]} pointerEvents="none">
         <ThemedText style={[styles.riverText, { color: gridColor }]}>楚河 · 汉界</ThemedText>
       </View>
       {pieces.map(({ piece, position }) => {
@@ -670,7 +673,7 @@ function XiangqiBoardView({
             onPress={() => onSquarePress(position)}
             style={[
               styles.squarePressable,
-              { height: cellSize * 0.92, left: position.col * cellSize - cellSize / 2, top: position.row * (boardSize / 9) - (cellSize * 0.92) / 2, width: cellSize * 0.92 },
+              { height: cellSize * 0.92, left: boardPadding + position.col * cellSize - cellSize / 2, top: boardPadding + position.row * (gridWidth / 9) - (cellSize * 0.92) / 2, width: cellSize * 0.92 },
             ]}>
             {isSelected ? <View style={[styles.selectedRing, { borderColor: '#4b6bff' }]} /> : null}
             {isLast ? <View style={[styles.lastMoveMark, { backgroundColor: '#c9f36a' }]} /> : null}
@@ -701,7 +704,7 @@ function XiangqiBoardView({
                 accessibilityLabel="落子位置"
                 accessibilityRole="button"
                 onPress={() => onSquarePress({ col, row })}
-                style={[styles.squarePressable, { height: cellSize * 0.92, left: col * cellSize - cellSize / 2, top: row * (boardSize / 9) - (cellSize * 0.92) / 2, width: cellSize * 0.92 }]}>
+                style={[styles.squarePressable, { height: cellSize * 0.92, left: boardPadding + col * cellSize - cellSize / 2, top: boardPadding + row * (gridWidth / 9) - (cellSize * 0.92) / 2, width: cellSize * 0.92 }]}>
                 <View
                   style={[
                     captured ? styles.captureTarget : styles.moveDot,
@@ -718,16 +721,20 @@ function XiangqiBoardView({
   );
 }
 
-function XiangqiGrid({ gridColor }: { gridColor: string }) {
+function XiangqiGrid({ gridColor, padding }: { gridColor: string; padding: number }) {
   return (
-    <Svg height="100%" pointerEvents="none" preserveAspectRatio="none" style={StyleSheet.absoluteFill} viewBox="0 0 9 10" width="100%">
+    <Svg
+      height={`calc(100% - ${padding * 2}px)`}
+      pointerEvents="none"
+      preserveAspectRatio="none"
+      style={{ left: padding, position: 'absolute', top: padding }}
+      viewBox="0 0 9 10"
+      width={`calc(100% - ${padding * 2}px)`}>
       {Array.from({ length: 9 }, (_, col) => (
         <Line key={`v${col}`} stroke={gridColor} strokeWidth={1.2} x1={col} x2={col} y1={0} y2={10} vectorEffect="non-scaling-stroke" />
       ))}
       {Array.from({ length: 10 }, (_, row) =>
-        row === 4 || row === 5 ? (
-          <Line key={`h${row}`} stroke={gridColor} strokeWidth={1.2} x1={0} x2={9} y1={row} y2={row} vectorEffect="non-scaling-stroke" />
-        ) : (
+        row === 4 || row === 5 ? null : (
           <Line key={`h${row}`} stroke={gridColor} strokeWidth={1.2} x1={0} x2={9} y1={row} y2={row} vectorEffect="non-scaling-stroke" />
         ),
       )}
@@ -916,7 +923,7 @@ const styles = StyleSheet.create({
   turnMeta: { fontSize: 10, fontWeight: '600', lineHeight: 14 },
   boardStage: { alignItems: 'center', alignSelf: 'center', borderRadius: 14, borderWidth: 1, padding: 4 },
   board: { borderRadius: 9, overflow: 'hidden', position: 'relative' },
-  riverLabel: { alignItems: 'center', bottom: '47%', justifyContent: 'center', left: 0, position: 'absolute', right: 0, top: '47%' },
+  riverLabel: { alignItems: 'center', bottom: '46%', justifyContent: 'center', position: 'absolute', top: '46%' },
   riverText: { fontSize: 11, fontWeight: '800', letterSpacing: 4 },
   squarePressable: { alignItems: 'center', justifyContent: 'center', position: 'absolute' },
   piece: { alignItems: 'center', borderRadius: 999, borderWidth: 1.5, justifyContent: 'center' },
