@@ -16,6 +16,7 @@ import (
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/lottery"
+	"my-first-expo-app/backend/internal/marketradar"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/resourcesearch"
@@ -32,6 +33,7 @@ type Server struct {
 	rateLimiter           *RateLimiter
 	realtimeHub           *realtime.Hub
 	lotteryService        lotteryHistoryService
+	marketRadarService    marketRadarSnapshotService
 	newsService           newsFeedService
 	resourceSearchService resourceSearchService
 	scoreService          *score.Service
@@ -86,6 +88,7 @@ func newServer(
 		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:           realtime.NewHub(),
 		lotteryService:        lottery.NewService(cfg.Lottery),
+		marketRadarService:    marketradar.NewService(marketradar.Config{}),
 		newsService:           newsService,
 		resourceSearchService: resourcesearch.NewService(cfg.ResourceSearch),
 		scoreService:          scoreService,
@@ -103,6 +106,7 @@ func newServer(
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/grants", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureGrant))))
 	registerImageCompressionRoutes(mux, api)
 	registerLotteryRoutes(mux, api)
+	registerMarketRadarRoutes(mux, api)
 	registerNewsRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))

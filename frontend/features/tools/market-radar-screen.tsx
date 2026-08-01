@@ -2,23 +2,24 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { appLayout } from '@/constants/app-theme';
 import { MarketSparkline, MarketTrendChart } from '@/features/tools/market-radar-chart';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { getMarketPulse, getMarketSector, getRankedMarketSectors } from '@/lib/market-radar';
 import {
-  MARKET_CATEGORIES,
-  MARKET_PERIODS,
-  getMarketPulse,
-  getMarketSector,
-  getRankedMarketSectors,
-  type MarketCategoryId,
-  type MarketPeriodId,
-  type MarketSector,
-} from '@/lib/market-radar';
+  fetchMarketRadarSnapshot,
+  getMarketRadarErrorMessage,
+} from '@/lib/market-radar-api';
+import type {
+  MarketCategoryId,
+  MarketPeriodId,
+  MarketRadarSnapshot,
+  MarketSector,
+} from '@/types/market-radar';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -29,36 +30,48 @@ const CORAL = '#ff5d6c';
 const GREEN = '#24b36b';
 
 const SECTOR_ICONS: Record<string, IconName> = {
-  'ai-compute': 'brain',
-  aluminum: 'circle-multiple-outline',
-  biomed: 'pill',
-  cloud: 'cloud-outline',
-  copper: 'circle-outline',
-  cpo: 'lightbulb-on-outline',
-  gold: 'medal-outline',
-  'rare-earth': 'magnet-on',
-  semiconductor: 'memory',
-  steel: 'shield-outline',
-  storage: 'database-outline',
+  BK1134: 'brain',
+  BK1128: 'lightbulb-on-outline',
+  BK1127: 'memory',
+  BK0800: 'robot-outline',
+  BK0579: 'cloud-outline',
+  BK0732: 'medal-outline',
+  BK1615: 'circle-outline',
+  BK1613: 'circle-multiple-outline',
+  BK1626: 'magnet-on',
+  BK0479: 'shield-outline',
 };
 
 export function MarketRadarScreen() {
-  const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
   const [categoryId, setCategoryId] = useState<MarketCategoryId>('global');
   const [periodId, setPeriodId] = useState<MarketPeriodId>('1d');
   const [selectedSectorId, setSelectedSectorId] = useState<string | null>(null);
   const [watchedSectorIds, setWatchedSectorIds] = useState<Set<string>>(() => new Set());
-  const [snapshotStatus, setSnapshotStatus] = useState('演示快照');
+  const [snapshot, setSnapshot] = useState<MarketRadarSnapshot | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const detailScrollRef = useRef<ScrollView>(null);
   const overviewScrollRef = useRef<ScrollView>(null);
-  const selectedSector = selectedSectorId ? getMarketSector(selectedSectorId) : undefined;
-  const rankedSectors = getRankedMarketSectors(categoryId, periodId);
-  const pulse = getMarketPulse(categoryId, periodId);
-  const strongestSector = getMarketSector(pulse.strongestSectorId);
-  const selectedPeriod = MARKET_PERIODS.find((period) => period.id === periodId) ?? MARKET_PERIODS[0];
-  const isDark = colorScheme === 'dark';
-  const pageSurface = isDark ? colors.surface : '#f8faff';
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const next = await fetchMarketRadarSnapshot(controller.signal);
+        setSnapshot(next);
+        setLoadError(null);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setLoadError(getMarketRadarErrorMessage(error));
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    }
+    load();
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const activeScrollView = selectedSectorId ? detailScrollRef.current : overviewScrollRef.current;
@@ -75,10 +88,100 @@ export function MarketRadarScreen() {
     });
   }
 
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    setLoadError(null);
+    try {
+      const next = await fetchMarketRadarSnapshot(undefined, true);
+      setSnapshot(next);
+    } catch (error) {
+      setLoadError(getMarketRadarErrorMessage(error));
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
+  function retry() {
+    setIsLoading(true);
+    setLoadError(null);
+    fetchMarketRadarSnapshot(undefined, true)
+      .then((next) => setSnapshot(next))
+      .catch((error) => setLoadError(getMarketRadarErrorMessage(error)))
+      .finally(() => setIsLoading(false));
+  }
+
+  if (!snapshot) {
+    const isDark = colorScheme === 'dark';
+    const pageSurface = isDark ? colors.surface : '#f8faff';
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <View style={[styles.screenShell, { backgroundColor: pageSurface }]}>
+          <View style={styles.stateContainer}>
+            {isLoading ? (
+              <>
+                <ActivityIndicator color={BLUE} size="large" />
+                <ThemedText style={[styles.stateText, { color: colors.mutedText }]}>
+                  正在加载行情
+                </ThemedText>
+              </>
+            ) : (
+              <>
+                <MaterialCommunityIcons name="database-alert-outline" size={38} color={CORAL} />
+                <ThemedText style={styles.stateTitle}>行情加载失败</ThemedText>
+                <ThemedText style={[styles.stateText, { color: colors.mutedText }]}>
+                  {loadError}
+                </ThemedText>
+                <Pressable
+                  accessibilityLabel="重试加载市场雷达"
+                  accessibilityRole="button"
+                  onPress={retry}
+                  style={({ pressed }) => [
+                    styles.retryButton,
+                    { backgroundColor: BLUE },
+                    pressed && styles.pressed,
+                  ]}>
+                  <MaterialCommunityIcons name="refresh" size={18} color="#ffffff" />
+                  <ThemedText style={styles.retryButtonText}>重试</ThemedText>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const selectedSector = selectedSectorId ? getMarketSector(snapshot, selectedSectorId) : undefined;
+  const rankedSectors = getRankedMarketSectors(snapshot, categoryId, periodId);
+  const pulse = getMarketPulse(snapshot, categoryId, periodId);
+  const strongestSector = pulse.strongestSectorId
+    ? getMarketSector(snapshot, pulse.strongestSectorId)
+    : undefined;
+  const selectedPeriod =
+    snapshot.periods.find((period) => period.id === periodId) ?? snapshot.periods[0];
+  const isDark = colorScheme === 'dark';
+  const pageSurface = isDark ? colors.surface : '#f8faff';
+  const snapshotStatus = isRefreshing
+    ? '正在刷新'
+    : snapshot.stale
+      ? '缓存行情'
+      : `${formatFetchedAt(snapshot.fetchedAt)} 更新`;
+
   if (selectedSector) {
     const watched = watchedSectorIds.has(selectedSector.id);
     const change = selectedSector.changes[periodId];
     const trendColor = change >= 0 ? BLUE : GREEN;
+    const indicatorRows = [
+      { label: '最新收盘', value: selectedSector.indicator.close.toFixed(2) },
+      { label: '成交额', value: formatAmount(selectedSector.indicator.amount) },
+      { label: '换手率', value: `${selectedSector.indicator.turnover.toFixed(2)}%` },
+      {
+        label: '上涨 / 下跌',
+        value: `${selectedSector.indicator.advancing} / ${selectedSector.indicator.declining}`,
+      },
+      { label: '成分覆盖', value: `${selectedSector.indicator.coverage} 只` },
+    ];
 
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -133,7 +236,7 @@ export function MarketRadarScreen() {
                   {formatChange(change)}
                 </ThemedText>
                 <ThemedText style={[styles.detailMetricCaption, { color: colors.mutedText }]}>
-                  演示数据 · 非实时行情
+                  东方财富公开行情 · 延迟数据
                 </ThemedText>
               </View>
               <View style={[styles.periodPill, { backgroundColor: colors.primarySoft }]}>
@@ -152,21 +255,16 @@ export function MarketRadarScreen() {
             </View>
 
             <View style={styles.sectionBlock}>
-              <ThemedText style={styles.sectionTitle}>为什么上涨</ThemedText>
-              <View style={styles.driverList}>
-                {selectedSector.drivers.map((driver) => {
-                  const tone = getDriverTone(driver.tone, isDark);
-                  return (
-                    <View key={driver.label} style={styles.driverRow}>
-                      <View style={[styles.driverLabel, { backgroundColor: tone.background }]}>
-                        <ThemedText style={[styles.driverLabelText, { color: tone.foreground }]}>
-                          {driver.label}
-                        </ThemedText>
-                      </View>
-                      <ThemedText style={styles.driverValue}>{driver.value}</ThemedText>
-                    </View>
-                  );
-                })}
+              <ThemedText style={styles.sectionTitle}>行情指标</ThemedText>
+              <View style={styles.indicatorList}>
+                {indicatorRows.map((row) => (
+                  <View key={row.label} style={styles.indicatorRow}>
+                    <ThemedText style={[styles.indicatorLabel, { color: colors.mutedText }]}>
+                      {row.label}
+                    </ThemedText>
+                    <ThemedText style={styles.indicatorValue}>{row.value}</ThemedText>
+                  </View>
+                ))}
               </View>
             </View>
 
@@ -179,9 +277,14 @@ export function MarketRadarScreen() {
               </View>
               {selectedSector.constituents.map((constituent) => (
                 <View
-                  key={constituent.name}
+                  key={`${constituent.code}-${constituent.name}`}
                   style={[styles.constituentRow, { borderBottomColor: colors.line }]}>
-                  <ThemedText style={styles.constituentName}>{constituent.name}</ThemedText>
+                  <View style={styles.constituentIdentity}>
+                    <ThemedText style={styles.constituentName}>{constituent.name}</ThemedText>
+                    <ThemedText style={[styles.constituentCode, { color: colors.mutedText }]}>
+                      {constituent.code}
+                    </ThemedText>
+                  </View>
                   <ThemedText style={[styles.constituentNumber, { color: colors.mutedText }]}>
                     {constituent.weight}%
                   </ThemedText>
@@ -224,6 +327,12 @@ export function MarketRadarScreen() {
                 {watched ? '已加入关注' : '加入关注'}
               </ThemedText>
             </Pressable>
+            <View style={styles.sourceLine}>
+              <MaterialCommunityIcons name="database-clock-outline" size={15} color={colors.mutedText} />
+              <ThemedText style={[styles.sourceText, { color: colors.mutedText }]}>
+                东方财富公开行情 · 延迟数据 · 覆盖 {snapshot.coverage.loaded}/{snapshot.coverage.requested} 个板块
+              </ThemedText>
+            </View>
             <ThemedText style={[styles.disclaimer, { color: colors.mutedText }]}>
               仅作信息展示，不构成投资建议
             </ThemedText>
@@ -236,7 +345,9 @@ export function MarketRadarScreen() {
   }
 
   const anomalySector = rankedSectors.find((sector) => sector.anomaly) ?? rankedSectors[0];
-  const anomalyText = anomalySector.anomaly ?? `${anomalySector.name}在当前周期保持领先`;
+  const anomalyText = anomalySector
+    ? anomalySector.anomaly ?? `${anomalySector.name}在当前周期排名第 1`
+    : '暂无异动信号';
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -252,7 +363,7 @@ export function MarketRadarScreen() {
           <Pressable
             accessibilityLabel="刷新市场快照状态"
             accessibilityRole="button"
-            onPress={() => setSnapshotStatus('刚刚校验')}
+            onPress={handleRefresh}
             style={({ pressed }) => [
               styles.refreshButton,
               { backgroundColor: colors.surface, borderColor: colors.line },
@@ -267,6 +378,14 @@ export function MarketRadarScreen() {
           key="market-radar-overview"
           ref={overviewScrollRef}
           showsVerticalScrollIndicator={false}>
+          {loadError ? (
+            <View style={[styles.errorBanner, { backgroundColor: isDark ? '#3b242c' : '#fff1f4' }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={16} color={CORAL} />
+              <ThemedText style={[styles.errorBannerText, { color: colors.mutedText }]}>
+                {loadError}
+              </ThemedText>
+            </View>
+          ) : null}
           <View style={styles.pulseHero}>
             <View style={styles.pulseTopRow}>
               <View>
@@ -298,7 +417,7 @@ export function MarketRadarScreen() {
           </View>
 
           <View style={[styles.segmentedControl, { backgroundColor: colors.surfaceMuted }]}>
-            {MARKET_CATEGORIES.map((category) => {
+            {snapshot.categories.map((category) => {
               const selected = category.id === categoryId;
               return (
                 <Pressable
@@ -331,7 +450,7 @@ export function MarketRadarScreen() {
               </ThemedText>
             </View>
             <View style={[styles.periodControl, { backgroundColor: colors.surfaceMuted }]}>
-              {MARKET_PERIODS.map((period) => {
+              {snapshot.periods.map((period) => {
                 const selected = period.id === periodId;
                 return (
                   <Pressable
@@ -371,32 +490,34 @@ export function MarketRadarScreen() {
 
           <View style={styles.sectionBlock}>
             <ThemedText style={styles.sectionTitle}>异动信号</ThemedText>
-            <Pressable
-              accessibilityLabel={`查看${anomalySector.name}详情`}
-              accessibilityRole="button"
-              onPress={() => setSelectedSectorId(anomalySector.id)}
-              style={({ pressed }) => [
-                styles.signalBlock,
-                { backgroundColor: isDark ? '#33212b' : '#fff1f4' },
-                pressed && styles.pressed,
-              ]}>
-              <View style={styles.signalIcon}>
-                <MaterialCommunityIcons name="pulse" size={20} color="#ffffff" />
-              </View>
-              <View style={styles.signalCopy}>
-                <ThemedText style={styles.signalTitle}>{anomalySector.name}</ThemedText>
-                <ThemedText style={[styles.signalText, { color: colors.mutedText }]}>
-                  {anomalyText}
-                </ThemedText>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.mutedText} />
-            </Pressable>
+            {anomalySector ? (
+              <Pressable
+                accessibilityLabel={`查看${anomalySector.name}详情`}
+                accessibilityRole="button"
+                onPress={() => setSelectedSectorId(anomalySector.id)}
+                style={({ pressed }) => [
+                  styles.signalBlock,
+                  { backgroundColor: isDark ? '#33212b' : '#fff1f4' },
+                  pressed && styles.pressed,
+                ]}>
+                <View style={styles.signalIcon}>
+                  <MaterialCommunityIcons name="pulse" size={20} color="#ffffff" />
+                </View>
+                <View style={styles.signalCopy}>
+                  <ThemedText style={styles.signalTitle}>{anomalySector.name}</ThemedText>
+                  <ThemedText style={[styles.signalText, { color: colors.mutedText }]}>
+                    {anomalyText}
+                  </ThemedText>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.mutedText} />
+              </Pressable>
+            ) : null}
           </View>
 
           <View style={styles.sourceLine}>
             <MaterialCommunityIcons name="database-clock-outline" size={15} color={colors.mutedText} />
             <ThemedText style={[styles.sourceText, { color: colors.mutedText }]}>
-              演示数据 · 本地快照 · 非实时行情
+              东方财富公开行情 · 延迟数据 · 覆盖 {snapshot.coverage.loaded}/{snapshot.coverage.requested} 个板块
             </ThemedText>
           </View>
           <ThemedText style={[styles.disclaimer, { color: colors.mutedText }]}>
@@ -490,18 +611,42 @@ function formatChange(value: number) {
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
-function getDriverTone(tone: 'blue' | 'green' | 'coral', dark: boolean) {
-  if (tone === 'green') {
-    return { background: dark ? '#203a2d' : '#eefae6', foreground: dark ? '#9ee6b6' : '#3e8b38' };
-  }
-  if (tone === 'coral') {
-    return { background: dark ? '#3b242c' : '#fff1f4', foreground: dark ? '#ff9cb3' : '#d84d71' };
-  }
-  return { background: dark ? '#202c4b' : '#eaf0ff', foreground: dark ? '#9bb0ff' : BLUE };
+function formatAmount(value: number) {
+  if (value >= 1000000000000) return `${(value / 1000000000000).toFixed(2)}万亿`;
+  if (value >= 100000000) return `${(value / 100000000).toFixed(2)}亿`;
+  if (value >= 10000) return `${(value / 10000).toFixed(2)}万`;
+  return value.toFixed(0);
+}
+
+function formatFetchedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '刚刚';
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
+  stateContainer: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  stateTitle: { fontSize: 18, fontWeight: '900', lineHeight: 26 },
+  stateText: { fontSize: 12, fontWeight: '600', lineHeight: 18, textAlign: 'center' },
+  retryButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 4,
+    minHeight: 44,
+    paddingHorizontal: 18,
+  },
+  retryButtonText: { color: '#ffffff', fontSize: 13, fontWeight: '900', lineHeight: 18 },
   screenShell: {
     alignSelf: 'center',
     flex: 1,
@@ -528,6 +673,15 @@ const styles = StyleSheet.create({
     width: 40,
   },
   overviewContent: { gap: 18, paddingBottom: 24, paddingHorizontal: 16 },
+  errorBanner: {
+    alignItems: 'center',
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  errorBannerText: { flex: 1, fontSize: 11, fontWeight: '700', lineHeight: 17 },
   pulseHero: { backgroundColor: HERO, borderRadius: 16, gap: 12, padding: 18 },
   pulseTopRow: { flexDirection: 'row', justifyContent: 'space-between' },
   heroEyebrow: { color: '#aeb8d5', fontSize: 11, fontWeight: '700', lineHeight: 16 },
@@ -593,6 +747,15 @@ const styles = StyleSheet.create({
   trendBlock: { gap: 5 },
   chartAxisLabels: { flexDirection: 'row', justifyContent: 'space-between' },
   axisText: { fontSize: 9, fontWeight: '600', lineHeight: 13 },
+  indicatorList: { gap: 12 },
+  indicatorRow: {
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    minHeight: 34,
+  },
+  indicatorLabel: { flex: 1, fontSize: 12, fontWeight: '700', lineHeight: 18 },
+  indicatorValue: { fontSize: 13, fontWeight: '900', lineHeight: 18, textAlign: 'right' },
   driverList: { gap: 12 },
   driverRow: { alignItems: 'center', flexDirection: 'row', gap: 12, minHeight: 34 },
   driverLabel: { alignItems: 'center', borderRadius: 6, justifyContent: 'center', minHeight: 27, width: 54 },
@@ -602,7 +765,9 @@ const styles = StyleSheet.create({
   tableHeaderText: { flex: 1, fontSize: 10, fontWeight: '700', lineHeight: 14 },
   tableNumber: { textAlign: 'right' },
   constituentRow: { alignItems: 'center', borderBottomWidth: 1, flexDirection: 'row', minHeight: 43 },
-  constituentName: { flex: 1, fontSize: 12, fontWeight: '800', lineHeight: 18 },
+  constituentIdentity: { flex: 1 },
+  constituentName: { fontSize: 12, fontWeight: '800', lineHeight: 18 },
+  constituentCode: { fontSize: 9, fontWeight: '600', lineHeight: 13, marginTop: 1 },
   constituentNumber: { flex: 1, fontSize: 12, fontWeight: '800', lineHeight: 18, textAlign: 'right' },
   methodBlock: { gap: 7 },
   methodHeading: { alignItems: 'center', flexDirection: 'row', gap: 7 },
