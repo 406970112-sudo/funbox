@@ -14,6 +14,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"my-first-expo-app/backend/internal/roles"
 	"my-first-expo-app/backend/internal/user"
 )
 
@@ -26,6 +27,7 @@ var (
 	ErrRecoveryLocked          = errors.New("password recovery is locked")
 	ErrRecoveryTokenInvalid    = errors.New("recovery token is invalid")
 	ErrRecoveryUnavailable     = errors.New("password recovery is unavailable")
+	ErrRoleInvalid             = errors.New("role is invalid")
 	ErrSecurityAnswerInvalid   = errors.New("security answer is invalid")
 	ErrSecurityQuestionInvalid = errors.New("security question is invalid")
 	ErrTokenInvalid            = errors.New("token is invalid")
@@ -46,10 +48,13 @@ type Store interface {
 	Create(context.Context, string, string, string, string, string) (user.User, error)
 	GetByID(context.Context, string) (user.User, error)
 	GetByUsername(context.Context, string) (user.User, error)
+	List(context.Context, user.ListOptions) (user.ListResult, error)
+	ListRoleChangesByUserID(context.Context, string, int, int) (user.RoleChangeListResult, error)
 	UpdateAvatar(context.Context, string, string) (user.User, string, error)
 	UpdateDisplayName(context.Context, string, string) (user.User, error)
 	UpdatePasswordHash(context.Context, string, string) (user.User, error)
 	UpdateRecoveryState(context.Context, string, int, time.Time) error
+	UpdateRole(context.Context, string, string, roles.Role, roles.Role, string) (user.User, bool, error)
 }
 
 type Service struct {
@@ -271,6 +276,44 @@ func (s *Service) AuthenticateToken(ctx context.Context, rawToken string) (user.
 	return found, nil
 }
 
+func (s *Service) ListUsers(ctx context.Context, options user.ListOptions) (user.ListResult, error) {
+	return s.store.List(ctx, options)
+}
+
+func (s *Service) GetUserByID(ctx context.Context, userID string) (user.User, error) {
+	return s.store.GetByID(ctx, userID)
+}
+
+func (s *Service) UpdateUserRole(
+	ctx context.Context,
+	targetUserID string,
+	operatorUserID string,
+	expectedRole roles.Role,
+	nextRole roles.Role,
+	reason string,
+) (user.User, bool, error) {
+	if !roles.IsValid(expectedRole) || !isAssignableUserRole(nextRole) {
+		return user.User{}, false, ErrRoleInvalid
+	}
+	return s.store.UpdateRole(
+		ctx,
+		targetUserID,
+		operatorUserID,
+		expectedRole,
+		nextRole,
+		strings.TrimSpace(reason),
+	)
+}
+
+func (s *Service) ListUserRoleChanges(
+	ctx context.Context,
+	targetUserID string,
+	limit int,
+	offset int,
+) (user.RoleChangeListResult, error) {
+	return s.store.ListRoleChangesByUserID(ctx, targetUserID, limit, offset)
+}
+
 func (s *Service) UpdateDisplayName(
 	ctx context.Context,
 	userID string,
@@ -461,4 +504,8 @@ func securityAnswerMatches(answerHash string, normalizedAnswer string) bool {
 	}
 	// Accounts created before answers were pre-hashed stored the normalized answer directly.
 	return bcrypt.CompareHashAndPassword(hash, []byte(normalizedAnswer)) == nil
+}
+
+func isAssignableUserRole(role roles.Role) bool {
+	return role == roles.Normal || role == roles.VIP || role == roles.SVIP
 }
