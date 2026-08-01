@@ -1,5 +1,20 @@
 [
   {
+    "id": "free-reading",
+    "name": "免费阅读",
+    "tagline": "正版书城与本地阅读",
+    "description": "浏览正版免费小说，管理个人书架，也可从当前设备导入 TXT 或 EPUB 并沉浸阅读。",
+    "icon": "book-open-page-variant-outline",
+    "category": "阅读",
+    "route": "/tools/free-reading",
+    "accentColor": "#e85d4a",
+    "badges": ["正版内容", "本地导入"],
+    "usageLabel": "进入书城",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "card-score",
     "name": "打牌记分",
     "tagline": "多人记分，散场结算",

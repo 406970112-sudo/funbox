@@ -17,6 +17,7 @@ import (
 	"my-first-expo-app/backend/internal/config"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
 	"my-first-expo-app/backend/internal/news"
+	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
@@ -47,6 +48,11 @@ func main() {
 		log.Fatalf("open access database failed: %v", err)
 	}
 	defer accessStore.Close()
+	readingStore, err := reading.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open reading database failed: %v", err)
+	}
+	defer readingStore.Close()
 	scoreStore, err := score.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("open score database failed: %v", err)
@@ -67,6 +73,34 @@ func main() {
 	authService := auth.NewService(userStore, signingKey, cfg.Auth.TokenTTL)
 	scoreService := score.NewService(scoreStore, signingKey, 7*24*time.Hour)
 
+	var readingProvider reading.Provider
+	switch cfg.Reading.ProviderMode {
+	case "mock":
+		readingProvider = reading.NewMockProvider()
+	case "yuewen":
+		if cfg.Reading.YuewenAppFlag == "" || cfg.Reading.YuewenAppSecret == "" {
+			log.Printf("reading provider disabled: missing READING_YUEWEN_APPFLAG or READING_YUEWEN_APPSECRET")
+		} else {
+			readingProvider = reading.NewYuewenProvider(reading.YuewenConfig{
+				BaseURL:   cfg.Reading.YuewenBaseURL,
+				AppFlag:   cfg.Reading.YuewenAppFlag,
+				AppSecret: cfg.Reading.YuewenAppSecret,
+			})
+		}
+	case "", "disabled":
+		log.Printf("online reading provider disabled")
+	default:
+		log.Printf("reading provider disabled: unsupported mode %q", cfg.Reading.ProviderMode)
+	}
+	readingService := reading.NewService(readingStore, readingProvider, reading.ServiceOptions{
+		LibraryEnabled: cfg.Reading.LibraryEnabled,
+		StorageDir:     cfg.Storage.ReadingDir,
+	})
+	if readingProvider != nil && readingProvider.Key() == "mock-yuewen" && cfg.Reading.LibraryEnabled {
+		if _, err := readingService.SyncProvider(context.Background(), "startup"); err != nil {
+			log.Printf("seed mock reading provider failed: %v", err)
+		}
+	}
 	var ttsService *tts.Service
 	if cfg.Volc.AppID != "" && cfg.Volc.AccessToken != "" {
 		ttsProvider := tts.NewVolcEngineProvider(cfg.Volc)
@@ -92,7 +126,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithNews(
+	server := httpapi.NewServerWithReadingAndNews(
 		cfg,
 		ttsService,
 		translationService,
@@ -100,6 +134,7 @@ func main() {
 		socialStore,
 		accessStore,
 		newsService,
+		readingService,
 		scoreService,
 	)
 

@@ -87,6 +87,10 @@ export default function RootLayout() {
             <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="admin/permissions" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="admin/reading" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="reading/import" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="reading/books/[bookId]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="reading/books/[bookId]/chapters/[chapterId]" options={{ animation: 'fade' }} />
             <Stack.Screen name="social/add-friend" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="social/chat/[conversationId]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen

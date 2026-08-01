@@ -18,6 +18,7 @@ type Config struct {
 	Lottery        LotteryConfig
 	News           NewsConfig
 	ResourceSearch ResourceSearchConfig
+	Reading        ReadingConfig
 	TinyPNG        TinyPNGConfig
 	TTS            TTSConfig
 	Volc           VolcConfig
@@ -74,9 +75,20 @@ type NewsConfig struct {
 }
 
 type StorageConfig struct {
-	AudioDir       string
-	AvatarDir      string
-	MaxAvatarBytes int64
+	AudioDir                 string
+	AvatarDir                string
+	ReadingDir               string
+	MaxAvatarBytes           int64
+	MaxReadingUploadBytes    int64
+	MaxReadingExtractedBytes int64
+}
+
+type ReadingConfig struct {
+	LibraryEnabled  bool
+	ProviderMode    string
+	YuewenBaseURL   string
+	YuewenAppFlag   string
+	YuewenAppSecret string
 }
 
 type TTSConfig struct {
@@ -108,8 +120,15 @@ type VolcConfig struct {
 }
 
 func Load() (Config, error) {
+	appEnv := envFirst("APP_ENV", "NODE_ENV", "development")
+	providerDefault := "mock"
+	libraryDefault := "true"
+	if strings.EqualFold(appEnv, "production") {
+		providerDefault = "disabled"
+		libraryDefault = "false"
+	}
 	cfg := Config{
-		AppEnv: envFirst("APP_ENV", "NODE_ENV", "development"),
+		AppEnv: appEnv,
 		Auth: AuthConfig{
 			JWTSecret:     envFirst("AUTH_JWT_SECRET", ""),
 			JWTSecretFile: envFirst("AUTH_JWT_SECRET_FILE", "data/jwt-secret"),
@@ -132,9 +151,19 @@ func Load() (Config, error) {
 			RateLimitWindow:     durationFromMs("RATE_LIMIT_WINDOW_MS", "VOICE_RATE_LIMIT_WINDOW_MS", "900000"),
 		},
 		Storage: StorageConfig{
-			AudioDir:       envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
-			AvatarDir:      envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
-			MaxAvatarBytes: int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
+			AudioDir:                 envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
+			AvatarDir:                envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
+			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
+			MaxAvatarBytes:           int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
+			MaxReadingUploadBytes:    int64(intFirst("STORAGE_MAX_READING_UPLOAD_BYTES", "", "52428800")),
+			MaxReadingExtractedBytes: int64(intFirst("STORAGE_MAX_READING_EXTRACTED_BYTES", "", "209715200")),
+		},
+		Reading: ReadingConfig{
+			LibraryEnabled:  boolFirst("READING_LIBRARY_ENABLED", libraryDefault),
+			ProviderMode:    strings.ToLower(envFirst("READING_PROVIDER_MODE", providerDefault)),
+			YuewenBaseURL:   envFirst("READING_YUEWEN_BASE_URL", "https://cpapi-i.yuewen.com"),
+			YuewenAppFlag:   envFirst("READING_YUEWEN_APPFLAG", ""),
+			YuewenAppSecret: envFirst("READING_YUEWEN_APPSECRET", ""),
 		},
 		DeepSeek: DeepSeekConfig{
 			APIKey:         envFirst("DEEPSEEK_API_KEY", ""),
@@ -191,6 +220,11 @@ func Load() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func boolFirst(key string, defaultValue string) bool {
+	value := strings.ToLower(strings.TrimSpace(envFirst(key, defaultValue)))
+	return value == "1" || value == "true" || value == "yes" || value == "on"
 }
 
 func envFirst(keys ...string) string {

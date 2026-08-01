@@ -18,6 +18,7 @@ import (
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/marketradar"
 	"my-first-expo-app/backend/internal/news"
+	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/score"
@@ -35,6 +36,8 @@ type Server struct {
 	lotteryService        lotteryHistoryService
 	marketRadarService    marketRadarSnapshotService
 	newsService           newsFeedService
+	readingService        *reading.Service
+	readingImporter       *reading.Importer
 	resourceSearchService resourceSearchService
 	scoreService          *score.Service
 	socialStore           *social.Store
@@ -51,7 +54,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -64,7 +67,31 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, scoreServices...)
+}
+
+func NewServerWithReadingAndNews(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		scoreServices...,
+	)
 }
 
 func newServer(
@@ -75,11 +102,22 @@ func newServer(
 	socialStore *social.Store,
 	accessStore *access.Store,
 	newsService *news.Service,
+	readingService *reading.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
 	if len(scoreServices) > 0 {
 		scoreService = scoreServices[0]
+	}
+	var readingImporter *reading.Importer
+	if readingService != nil {
+		readingImporter = reading.NewImporter(readingService.Store(), reading.ImporterOptions{
+			StorageDir:          cfg.Storage.ReadingDir,
+			MaxUploadBytes:      cfg.Storage.MaxReadingUploadBytes,
+			MaxExtractedBytes:   cfg.Storage.MaxReadingExtractedBytes,
+			MaxEntries:          2000,
+			MaxCompressionRatio: 1000,
+		})
 	}
 	api := &Server{
 		accessStore:           accessStore,
@@ -90,6 +128,8 @@ func newServer(
 		lotteryService:        lottery.NewService(cfg.Lottery),
 		marketRadarService:    marketradar.NewService(marketradar.Config{}),
 		newsService:           newsService,
+		readingService:        readingService,
+		readingImporter:       readingImporter,
 		resourceSearchService: resourcesearch.NewService(cfg.ResourceSearch),
 		scoreService:          scoreService,
 		socialStore:           socialStore,
@@ -109,6 +149,8 @@ func newServer(
 	registerMarketRadarRoutes(mux, api)
 	registerNewsRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
+	registerReadingRoutes(mux, api)
+	registerAdminReadingRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))
@@ -196,6 +238,24 @@ func (s *Server) withAvatarPipeline(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		next.ServeHTTP(w, r)
+	}
+}
+
+func (s *Server) withReadingUploadPipeline(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !s.allowOrigin(r) {
+			writeJSON(w, http.StatusForbidden, map[string]any{"error": "origin_not_allowed"})
+			return
+		}
+		if !s.allowRateLimitedRequest(w, r, "reading-upload") {
+			return
+		}
+		limit := s.cfg.Storage.MaxReadingUploadBytes
+		if limit <= 0 {
+			limit = 50 << 20
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, limit+(1<<20))
 		next.ServeHTTP(w, r)
 	}
 }
