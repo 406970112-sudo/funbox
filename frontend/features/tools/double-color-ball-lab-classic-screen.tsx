@@ -64,6 +64,7 @@ export function DoubleColorBallLabClassicScreen() {
   const [error, setError] = useState<unknown>(null);
   const [exporting, setExporting] = useState(false);
   const [fetchCount, setFetchCount] = useState<SSQLabClassicFetchCount>(400);
+  const [hasRun, setHasRun] = useState(false);
   const [infoVisible, setInfoVisible] = useState(false);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [message, setMessage] = useState('');
@@ -118,14 +119,14 @@ export function DoubleColorBallLabClassicScreen() {
   }
 
   const summary = useMemo(() => {
-    if (!snapshot || snapshot.draws.length < windowSize) return null;
+    if (!hasRun || !snapshot || snapshot.draws.length < windowSize) return null;
     return runLabBacktest(snapshot.draws, {
       algorithm,
       decay,
       targetCount,
       windowSize,
     });
-  }, [algorithm, decay, runNonce, snapshot, targetCount, windowSize]);
+  }, [algorithm, decay, hasRun, runNonce, snapshot, targetCount, windowSize]);
 
   async function handleExport() {
     if (!summary || exporting) return;
@@ -341,7 +342,8 @@ export function DoubleColorBallLabClassicScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={() => {
-            setMessage('');
+            setHasRun(true);
+            setMessage('回测完成，已生成收益明细');
             setRunNonce((current) => current + 1);
           }}
           style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}>
@@ -355,9 +357,13 @@ export function DoubleColorBallLabClassicScreen() {
         {summary ? <LabResults summary={summary} /> : (
           <View style={styles.emptyResult}>
             <MaterialCommunityIcons name="chart-bell-curve" size={28} color={BLUE} />
-            <ThemedText style={styles.emptyTitle}>数据不足，无法回测</ThemedText>
+            <ThemedText style={styles.emptyTitle}>
+              {hasRun ? '数据不足，无法回测' : '尚未运行回测'}
+            </ThemedText>
             <ThemedText style={[styles.emptyText, { color: colors.mutedText }]}>
-              当前数据期数少于统计窗口，请切换更小窗口或抓取更多历史期数。
+              {hasRun
+                ? '当前数据期数少于统计窗口，请切换更小窗口或抓取更多历史期数。'
+                : '设置参数后点击运行回测，生成收益明细与命中分布。'}
             </ThemedText>
           </View>
         )}
