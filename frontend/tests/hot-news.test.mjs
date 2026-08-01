@@ -81,6 +81,20 @@ test('builds bounded feed URLs and validates response structure', () => {
   assert.equal(parsed.events[0].id, 'evt-1');
 });
 
+test('accepts a pending summary while DeepSeek finishes in the background', () => {
+  const event = makeEvent({ id: 'evt-pending', category: 'technology', hotScore: 70, title: '生成中的热点' });
+  event.summary.status = 'pending';
+
+  const parsed = parseNewsFeed({
+    generatedAt: '2026-07-31T02:00:00Z',
+    stale: false,
+    dailyBrief: { title: '今日热点', keyPoints: ['重点'], eventCount: 1 },
+    events: [event],
+  });
+
+  assert.equal(parsed.events[0].summary.status, 'pending');
+});
+
 test('registers hot news as an available tool for every role', async () => {
   const registryURL = new URL('../../backend/internal/access/feature_registry.json', import.meta.url);
   const registry = JSON.parse(await readFile(registryURL, 'utf8'));

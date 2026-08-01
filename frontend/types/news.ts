@@ -16,7 +16,7 @@ export type NewsSummary = {
   oneSentence: string;
   keyPoints: NewsKeyPoint[];
   uncertainty?: string;
-  status: 'generated' | 'fallback';
+  status: 'pending' | 'generated' | 'fallback';
   model?: string;
 };
 

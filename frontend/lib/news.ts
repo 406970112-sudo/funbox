@@ -190,7 +190,7 @@ function isNewsEvent(value: unknown) {
 function isSummary(value: unknown) {
   return isRecord(value)
     && typeof value.oneSentence === 'string'
-    && (value.status === 'generated' || value.status === 'fallback')
+    && (value.status === 'pending' || value.status === 'generated' || value.status === 'fallback')
     && Array.isArray(value.keyPoints)
     && value.keyPoints.every((point) => isRecord(point)
       && typeof point.text === 'string'

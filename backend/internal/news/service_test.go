@@ -65,7 +65,7 @@ func (s *blockingSummarizer) Summarize(ctx context.Context, event Event) (Summar
 	}
 }
 
-func TestServicePublishesFallbackBeforeSlowSummary(t *testing.T) {
+func TestServicePublishesPendingBeforeSlowSummary(t *testing.T) {
 	now := time.Now().UTC()
 	source := &sequentialSource{results: []sourceResult{{articles: []Article{{
 		Source:      "测试来源",
@@ -101,7 +101,7 @@ func TestServicePublishesFallbackBeforeSlowSummary(t *testing.T) {
 		if got.err != nil {
 			t.Fatalf("Feed: %v", got.err)
 		}
-		if len(got.snapshot.Events) != 1 || got.snapshot.Events[0].Summary.Status != "fallback" {
+		if len(got.snapshot.Events) != 1 || got.snapshot.Events[0].Summary.Status != "pending" {
 			t.Fatalf("initial snapshot = %#v", got.snapshot)
 		}
 	case <-time.After(250 * time.Millisecond):
@@ -113,6 +113,21 @@ func TestServicePublishesFallbackBeforeSlowSummary(t *testing.T) {
 	<-summarizer.started
 	close(summarizer.release)
 	<-summarizer.done
+
+	deadline := time.Now().Add(time.Second)
+	for {
+		snapshot, err := service.Feed(context.Background())
+		if err != nil {
+			t.Fatalf("Feed after summary: %v", err)
+		}
+		if snapshot.Events[0].Summary.Status == "generated" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("final snapshot = %#v", snapshot)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func TestServiceCachesSummariesByContentHash(t *testing.T) {

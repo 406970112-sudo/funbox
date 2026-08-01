@@ -40,6 +40,7 @@ type NewsView = 'home' | 'hot' | 'saved' | 'profile';
 const LIME = '#c9f36a';
 const CORAL = '#ff6b8f';
 const WHITE = '#ffffff';
+const SUMMARY_POLL_INTERVAL_MS = 1500;
 const CATEGORY_ICONS: Record<NewsCategory, IconName> = {
   ai: 'creation-outline',
   technology: 'chip',
@@ -97,6 +98,35 @@ export function HotNewsScreen() {
       });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!snapshot?.events.some((event) => event.summary.status === 'pending')) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void fetchNewsFeed({ signal: controller.signal })
+        .then((nextSnapshot) => {
+          setSnapshot(nextSnapshot);
+          setError('');
+        })
+        .catch(() => {
+          // The visible snapshot remains usable while a background refresh retries.
+        });
+    }, SUMMARY_POLL_INTERVAL_MS);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [snapshot]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    setSelectedEvent((current) => {
+      if (!current) return null;
+      return snapshot.events.find((event) => event.id === current.id) ?? current;
+    });
+  }, [snapshot]);
 
   const refresh = useCallback(async () => {
     if (refreshing) return;
@@ -496,7 +526,11 @@ function NewsDetail({
             <ThemedText style={styles.detailSectionTitle}>摘要与关键事实</ThemedText>
           </View>
           <ThemedText style={[styles.summaryStatus, { color: colors.mutedText }]}>
-            {event.summary.status === 'generated' ? 'DeepSeek 生成' : '来源提取'}
+            {event.summary.status === 'pending'
+              ? 'DeepSeek 生成中'
+              : event.summary.status === 'generated'
+                ? 'DeepSeek 生成'
+                : '来源提取'}
           </ThemedText>
         </View>
         <ThemedText style={styles.detailLead}>{event.summary.oneSentence}</ThemedText>
@@ -513,7 +547,7 @@ function NewsDetail({
             </View>
           ))}
         </View>
-        {event.summary.uncertainty ? (
+        {event.summary.status !== 'pending' && event.summary.uncertainty ? (
           <View style={[styles.uncertainty, { backgroundColor: colors.surfaceMuted, borderLeftColor: CORAL }]}>
             <MaterialCommunityIcons name="alert-circle-outline" size={16} color={CORAL} />
             <ThemedText style={[styles.uncertaintyText, { color: colors.mutedText }]}>

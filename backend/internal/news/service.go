@@ -104,6 +104,10 @@ func (s *Service) Refresh(ctx context.Context) error {
 			continue
 		}
 		event.Summary = ExtractiveSummary(*event)
+		if index < s.cfg.SummaryLimit && s.summarizer != nil {
+			event.Summary.Status = "pending"
+			event.Summary.Uncertainty = ""
+		}
 	}
 
 	s.publishSnapshot(FeedSnapshot{
@@ -115,17 +119,16 @@ func (s *Service) Refresh(ctx context.Context) error {
 
 	for index := range events {
 		event := &events[index]
-		if event.Summary.Status == "generated" {
+		if event.Summary.Status != "pending" {
 			continue
 		}
-		if index < s.cfg.SummaryLimit && s.summarizer != nil {
-			summary, summarizeErr := s.summarizer.Summarize(ctx, *event)
-			if summarizeErr == nil {
-				event.Summary = summary
-				s.storeSummary(event.ContentHash, summary)
-				continue
-			}
+		summary, summarizeErr := s.summarizer.Summarize(ctx, *event)
+		if summarizeErr == nil {
+			event.Summary = summary
+			s.storeSummary(event.ContentHash, summary)
+			continue
 		}
+		event.Summary = ExtractiveSummary(*event)
 	}
 
 	s.publishSnapshot(FeedSnapshot{
