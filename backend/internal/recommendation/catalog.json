@@ -1,0 +1,696 @@
+[
+  {
+    "id": "redmi-k80",
+    "category": "phone",
+    "name": "Redmi K80",
+    "brand": "Redmi",
+    "tagline": "骁龙 8 Gen 3 · 2K 直屏 · 6550mAh",
+    "referencePrice": 2499,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.67 英寸 2K 直屏",
+      "chip": "骁龙 8 Gen 3",
+      "battery": "6550mAh",
+      "camera": "50MP OIS",
+      "weight": "约 206g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=Redmi%20K80" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=Redmi%20K80" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=Redmi%20K80" }
+    ],
+    "fitTags": ["续航", "游戏", "高性价比"]
+  },
+  {
+    "id": "oneplus-13t",
+    "category": "phone",
+    "name": "一加 13T",
+    "brand": "一加",
+    "tagline": "骁龙 8 Elite · 冰川电池 · 轻薄机身",
+    "referencePrice": 3099,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.32 英寸 1.5K 直屏",
+      "chip": "骁龙 8 Elite",
+      "battery": "6000mAh",
+      "camera": "50MP OIS",
+      "weight": "约 185g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E4%B8%80%E5%8A%A013T" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E4%B8%80%E5%8A%A013T" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E4%B8%80%E5%8A%A013T" }
+    ],
+    "fitTags": ["性能", "游戏", "轻薄"]
+  },
+  {
+    "id": "iqoo-neo10-pro",
+    "category": "phone",
+    "name": "iQOO Neo10 Pro",
+    "brand": "iQOO",
+    "tagline": "天玑 9400+ · 电竞直屏 · 大电池",
+    "referencePrice": 2899,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.78 英寸 1.5K 直屏",
+      "chip": "天玑 9400+",
+      "battery": "6100mAh",
+      "camera": "50MP OIS",
+      "weight": "约 206g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=iQOO%20Neo10%20Pro" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=iQOO%20Neo10%20Pro" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=iQOO%20Neo10%20Pro" }
+    ],
+    "fitTags": ["性能", "游戏", "高性价比"]
+  },
+  {
+    "id": "honor-400",
+    "category": "phone",
+    "name": "荣耀 400",
+    "brand": "荣耀",
+    "tagline": "等深微曲屏 · 雅顾影像 · 轻薄",
+    "referencePrice": 2299,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.7 英寸 1.5K 等深微曲屏",
+      "chip": "骁龙 8s Gen 3",
+      "battery": "5200mAh",
+      "camera": "50MP OIS",
+      "weight": "约 183g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E8%8D%A3%E8%80%80400" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E8%8D%A3%E8%80%80400" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E8%8D%A3%E8%80%80400" }
+    ],
+    "fitTags": ["影像", "轻薄", "续航"]
+  },
+  {
+    "id": "vivo-x200s",
+    "category": "phone",
+    "name": "vivo X200s",
+    "brand": "vivo",
+    "tagline": "天玑 9400+ · 蔡司影像 · 大电池",
+    "referencePrice": 4199,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.67 英寸 1.5K 直屏",
+      "chip": "天玑 9400+",
+      "battery": "6200mAh",
+      "camera": "蔡司 50MP 三摄",
+      "weight": "约 203g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=vivo%20X200s" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=vivo%20X200s" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=vivo%20X200s" }
+    ],
+    "fitTags": ["影像", "旗舰", "续航"]
+  },
+  {
+    "id": "oppo-find-x8s",
+    "category": "phone",
+    "name": "OPPO Find X8s",
+    "brand": "OPPO",
+    "tagline": "小直屏旗舰 · 天玑 9400+ · 双潜望",
+    "referencePrice": 4199,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.3 英寸 1.5K 小直屏",
+      "chip": "天玑 9400+",
+      "battery": "5700mAh",
+      "camera": "50MP 双潜望三摄",
+      "weight": "约 179g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=OPPO%20Find%20X8s" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=OPPO%20Find%20X8s" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=OPPO%20Find%20X8s" }
+    ],
+    "fitTags": ["影像", "轻薄", "小屏"]
+  },
+  {
+    "id": "huawei-nova-14",
+    "category": "phone",
+    "name": "华为 nova 14",
+    "brand": "华为",
+    "tagline": "RYYB 影像 · 轻薄机身 · 鸿蒙",
+    "referencePrice": 2599,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.7 英寸 1.5K OLED",
+      "chip": "麒麟 8000",
+      "battery": "5000mAh",
+      "camera": "50MP RYYB OIS",
+      "weight": "约 190g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%8D%8E%E4%B8%BAnova%2014" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%8D%8E%E4%B8%BAnova%2014" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%8D%8E%E4%B8%BAnova%2014" }
+    ],
+    "fitTags": ["影像", "轻薄", "日常"]
+  },
+  {
+    "id": "huawei-pura-70",
+    "category": "phone",
+    "name": "华为 Pura 70",
+    "brand": "华为",
+    "tagline": "麒麟 9010 · 可变光圈 · 卫星通信",
+    "referencePrice": 4999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.6 英寸 1.5K OLED",
+      "chip": "麒麟 9010",
+      "battery": "4900mAh",
+      "camera": "50MP 可变光圈",
+      "weight": "约 207g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%8D%8E%E4%B8%BAPura%2070" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%8D%8E%E4%B8%BAPura%2070" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%8D%8E%E4%B8%BAPura%2070" }
+    ],
+    "fitTags": ["旗舰", "影像", "续航"]
+  },
+  {
+    "id": "iphone-16",
+    "category": "phone",
+    "name": "苹果 iPhone 16",
+    "brand": "苹果",
+    "tagline": "A18 · 轻巧机身 · 48MP 双摄",
+    "referencePrice": 5999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.1 英寸 OLED",
+      "chip": "A18",
+      "battery": "3561mAh",
+      "camera": "48MP 双摄",
+      "weight": "约 170g",
+      "storage": "128GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=iPhone%2016" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=iPhone%2016" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=iPhone%2016" }
+    ],
+    "fitTags": ["旗舰", "轻巧", "影像"]
+  },
+  {
+    "id": "iphone-16-pro",
+    "category": "phone",
+    "name": "苹果 iPhone 16 Pro",
+    "brand": "苹果",
+    "tagline": "A18 Pro · 120Hz · 48MP 三摄",
+    "referencePrice": 7999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.3 英寸 OLED 120Hz",
+      "chip": "A18 Pro",
+      "battery": "3582mAh",
+      "camera": "48MP 三摄",
+      "weight": "约 199g",
+      "storage": "256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=iPhone%2016%20Pro" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=iPhone%2016%20Pro" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=iPhone%2016%20Pro" }
+    ],
+    "fitTags": ["旗舰", "性能", "影像"]
+  },
+  {
+    "id": "samsung-s25",
+    "category": "phone",
+    "name": "三星 Galaxy S25",
+    "brand": "三星",
+    "tagline": "骁龙 8 Elite · 6.2 英寸 · 轻巧",
+    "referencePrice": 4999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.2 英寸 OLED 120Hz",
+      "chip": "骁龙 8 Elite for Galaxy",
+      "battery": "4000mAh",
+      "camera": "50MP 三摄",
+      "weight": "约 162g",
+      "storage": "256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=Galaxy%20S25" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=Galaxy%20S25" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=Galaxy%20S25" }
+    ],
+    "fitTags": ["旗舰", "轻巧", "日常"]
+  },
+  {
+    "id": "redmi-note-14-pro-plus",
+    "category": "phone",
+    "name": "Redmi Note 14 Pro+",
+    "brand": "Redmi",
+    "tagline": "6200mAh · 200MP · 千元影像",
+    "referencePrice": 1899,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.67 英寸 1.5K 曲面屏",
+      "chip": "骁龙 7s Gen 3",
+      "battery": "6200mAh",
+      "camera": "200MP OIS",
+      "weight": "约 210g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=Redmi%20Note%2014%20Pro%2B" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=Redmi%20Note%2014%20Pro%2B" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=Redmi%20Note%2014%20Pro%2B" }
+    ],
+    "fitTags": ["续航", "影像", "高性价比"]
+  },
+  {
+    "id": "realme-gt7",
+    "category": "phone",
+    "name": "真我 GT7",
+    "brand": "realme",
+    "tagline": "天玑 9400+ · 7000mAh · 电竞屏",
+    "referencePrice": 2599,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "6.78 英寸 1.5K 直屏",
+      "chip": "天玑 9400+",
+      "battery": "7000mAh",
+      "camera": "50MP OIS",
+      "weight": "约 203g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E7%9C%9F%E6%88%91%20GT7" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E7%9C%9F%E6%88%91%20GT7" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E7%9C%9F%E6%88%91%20GT7" }
+    ],
+    "fitTags": ["续航", "性能", "游戏"]
+  },
+  {
+    "id": "ipad-air-11",
+    "category": "tablet",
+    "name": "iPad Air 11",
+    "brand": "苹果",
+    "tagline": "M3 · 11 英寸 · 办公学习",
+    "referencePrice": 4799,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "11 英寸 Liquid Retina",
+      "chip": "M3",
+      "battery": "约 10 小时续航",
+      "camera": "12MP 后摄",
+      "weight": "约 462g",
+      "storage": "128GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=iPad%20Air%2011" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=iPad%20Air%2011" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=iPad%20Air%2011" }
+    ],
+    "fitTags": ["办公", "学习", "轻便"]
+  },
+  {
+    "id": "ipad-11",
+    "category": "tablet",
+    "name": "iPad 11",
+    "brand": "苹果",
+    "tagline": "A16 · 11 英寸 · 入门性价比",
+    "referencePrice": 3499,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "11 英寸 Liquid Retina",
+      "chip": "A16",
+      "battery": "约 10 小时续航",
+      "camera": "12MP 后摄",
+      "weight": "约 477g",
+      "storage": "128GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=iPad%2011" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=iPad%2011" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=iPad%2011" }
+    ],
+    "fitTags": ["学习", "性价比", "影音"]
+  },
+  {
+    "id": "xiaomi-pad-7-pro",
+    "category": "tablet",
+    "name": "小米平板 7 Pro",
+    "brand": "小米",
+    "tagline": "3.2K 屏 · 骁龙 8s Gen 3",
+    "referencePrice": 2699,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "11.2 英寸 3.2K",
+      "chip": "骁龙 8s Gen 3",
+      "battery": "8850mAh",
+      "camera": "50MP 后摄",
+      "weight": "约 500g",
+      "storage": "8+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%B0%8F%E7%B1%B3%E5%B9%B3%E6%9D%BF7%20Pro" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%B0%8F%E7%B1%B3%E5%B9%B3%E6%9D%BF7%20Pro" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%B0%8F%E7%B1%B3%E5%B9%B3%E6%9D%BF7%20Pro" }
+    ],
+    "fitTags": ["影音", "办公", "性价比"]
+  },
+  {
+    "id": "huawei-matepad-pro-13-2",
+    "category": "tablet",
+    "name": "华为 MatePad Pro 13.2",
+    "brand": "华为",
+    "tagline": "13.2 英寸 · 柔性 OLED · 鸿蒙办公",
+    "referencePrice": 5199,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "screen": "13.2 英寸 柔性 OLED",
+      "chip": "麒麟 9010",
+      "battery": "10100mAh",
+      "camera": "13MP 后摄",
+      "weight": "约 580g",
+      "storage": "12+256GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=MatePad%20Pro%2013.2" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=MatePad%20Pro%2013.2" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=MatePad%20Pro%2013.2" }
+    ],
+    "fitTags": ["办公", "影音", "旗舰"]
+  },
+  {
+    "id": "airpods-pro-3",
+    "category": "earbuds",
+    "name": "AirPods Pro 3",
+    "brand": "苹果",
+    "tagline": "主动降噪 · 空间音频 · 苹果生态",
+    "referencePrice": 1899,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "noise": "主动降噪",
+      "sound": "空间音频",
+      "battery": "单次 8 小时",
+      "weight": "单耳约 5g",
+      "storage": "USB-C 充电盒"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=AirPods%20Pro%203" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=AirPods%20Pro%203" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=AirPods%20Pro%203" }
+    ],
+    "fitTags": ["降噪", "音质", "苹果生态"]
+  },
+  {
+    "id": "huawei-freebuds-pro-4",
+    "category": "earbuds",
+    "name": "华为 FreeBuds Pro 4",
+    "brand": "华为",
+    "tagline": "智慧降噪 · 通话清晰 · 鸿蒙",
+    "referencePrice": 1499,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "noise": "智慧动态降噪",
+      "sound": "星闪连接",
+      "battery": "单次 6.5 小时",
+      "weight": "单耳约 5.4g",
+      "storage": "无线充电盒"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=FreeBuds%20Pro%204" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=FreeBuds%20Pro%204" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=FreeBuds%20Pro%204" }
+    ],
+    "fitTags": ["降噪", "通话", "鸿蒙生态"]
+  },
+  {
+    "id": "xiaomi-buds-5-pro",
+    "category": "earbuds",
+    "name": "小米 Buds 5 Pro",
+    "brand": "小米",
+    "tagline": "旗舰降噪 · 无损音质",
+    "referencePrice": 999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "noise": "55dB 主动降噪",
+      "sound": "无损音质",
+      "battery": "单次 8 小时",
+      "weight": "单耳约 4.8g",
+      "storage": "无线充电盒"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%B0%8F%E7%B1%B3%20Buds%205%20Pro" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%B0%8F%E7%B1%B3%20Buds%205%20Pro" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%B0%8F%E7%B1%B3%20Buds%205%20Pro" }
+    ],
+    "fitTags": ["降噪", "性价比", "音质"]
+  },
+  {
+    "id": "oppo-enco-x3",
+    "category": "earbuds",
+    "name": "OPPO Enco X3",
+    "brand": "OPPO",
+    "tagline": "丹拿调音 · 深度降噪",
+    "referencePrice": 899,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "noise": "50dB 主动降噪",
+      "sound": "丹拿联合调音",
+      "battery": "单次 7 小时",
+      "weight": "单耳约 4.7g",
+      "storage": "无线充电盒"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=OPPO%20Enco%20X3" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=OPPO%20Enco%20X3" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=OPPO%20Enco%20X3" }
+    ],
+    "fitTags": ["降噪", "音质", "性价比"]
+  },
+  {
+    "id": "xiaomi-tv-s-mini-led-75",
+    "category": "tv",
+    "name": "小米电视 S Mini LED 75",
+    "brand": "小米",
+    "tagline": "Mini LED · 144Hz · 75 英寸",
+    "referencePrice": 5999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "display": "75 英寸 Mini LED",
+      "chip": "四核 A73",
+      "refresh": "144Hz",
+      "size": "75 英寸",
+      "storage": "4+64GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%B0%8F%E7%B1%B3%E7%94%B5%E8%A7%86S%20Mini%20LED%2075" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%B0%8F%E7%B1%B3%E7%94%B5%E8%A7%86S%20Mini%20LED%2075" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%B0%8F%E7%B1%B3%E7%94%B5%E8%A7%86S%20Mini%20LED%2075" }
+    ],
+    "fitTags": ["画质", "性价比", "游戏"]
+  },
+  {
+    "id": "tcl-q10k-85",
+    "category": "tv",
+    "name": "TCL Q10K 85",
+    "brand": "TCL",
+    "tagline": "QD-Mini LED · 85 英寸",
+    "referencePrice": 9999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "display": "85 英寸 QD-Mini LED",
+      "chip": "M2 芯片",
+      "refresh": "144Hz",
+      "size": "85 英寸",
+      "storage": "4+128GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=TCL%20Q10K%2085" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=TCL%20Q10K%2085" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=TCL%20Q10K%2085" }
+    ],
+    "fitTags": ["画质", "大屏", "旗舰"]
+  },
+  {
+    "id": "hisense-e7n-65",
+    "category": "tv",
+    "name": "海信 E7N 65",
+    "brand": "海信",
+    "tagline": "ULED 高画质 · 游戏电视",
+    "referencePrice": 3499,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "display": "65 英寸 ULED",
+      "chip": "四核 A73",
+      "refresh": "144Hz",
+      "size": "65 英寸",
+      "storage": "4+64GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E6%B5%B7%E4%BF%A1E7N%2065" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E6%B5%B7%E4%BF%A1E7N%2065" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E6%B5%B7%E4%BF%A1E7N%2065" }
+    ],
+    "fitTags": ["画质", "游戏", "性价比"]
+  },
+  {
+    "id": "sony-x90l-65",
+    "category": "tv",
+    "name": "索尼 X90L 65",
+    "brand": "索尼",
+    "tagline": "XR 认知芯片 · 游戏电视",
+    "referencePrice": 6999,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "display": "65 英寸 Full Array LED",
+      "chip": "XR 认知芯片",
+      "refresh": "120Hz",
+      "size": "65 英寸",
+      "storage": "4+32GB"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E7%B4%A2%E5%B0%BCX90L%2065" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E7%B4%A2%E5%B0%BCX90L%2065" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E7%B4%A2%E5%B0%BCX90L%2065" }
+    ],
+    "fitTags": ["画质", "游戏", "旗舰"]
+  },
+  {
+    "id": "mijia-air-purifier-5-pro",
+    "category": "small-appliance",
+    "name": "米家空气净化器 5 Pro",
+    "brand": "米家",
+    "tagline": "除醛除菌 · 大洁净量",
+    "referencePrice": 1599,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "filter": "除醛除菌滤芯",
+      "noise": "睡眠档 33dB",
+      "clean": "CADR 600m³/h",
+      "size": "适合 45-80㎡",
+      "storage": "米家 App 联动"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E7%B1%B3%E5%AE%B6%E7%A9%BA%E6%B0%94%E5%87%80%E5%8C%96%E5%99%A85%20Pro" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E7%B1%B3%E5%AE%B6%E7%A9%BA%E6%B0%94%E5%87%80%E5%8C%96%E5%99%A85%20Pro" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E7%B1%B3%E5%AE%B6%E7%A9%BA%E6%B0%94%E5%87%80%E5%8C%96%E5%99%A85%20Pro" }
+    ],
+    "fitTags": ["净化", "静音", "性价比"]
+  },
+  {
+    "id": "mijia-air-fryer",
+    "category": "small-appliance",
+    "name": "米家空气炸锅",
+    "brand": "米家",
+    "tagline": "可视大屏 · 易清洗",
+    "referencePrice": 399,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "size": "5L 大容量",
+      "clean": "不粘涂层易清洗",
+      "storage": "24 小时预约",
+      "camera": "可视窗设计"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E7%B1%B3%E5%AE%B6%E7%A9%BA%E6%B0%94%E7%82%B8%E9%94%85" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E7%B1%B3%E5%AE%B6%E7%A9%BA%E6%B0%94%E7%82%B8%E9%94%85" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E7%B1%B3%E5%AE%B6%E7%A9%BA%E6%B0%94%E7%82%B8%E9%94%85" }
+    ],
+    "fitTags": ["性价比", "易清洗", "日常"]
+  },
+  {
+    "id": "joyoung-zero-coating-rice-cooker",
+    "category": "small-appliance",
+    "name": "九阳 0 涂层电饭煲",
+    "brand": "九阳",
+    "tagline": "0 涂层 · 316L 不锈钢",
+    "referencePrice": 299,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "safe": "0 涂层内胆",
+      "size": "4L",
+      "clean": "316L 不锈钢易清洗",
+      "storage": "智能预约"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E4%B9%9D%E9%98%B30%E6%B6%82%E5%B1%82%E7%94%B5%E9%A5%AD%E7%85%B2" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E4%B9%9D%E9%98%B30%E6%B6%82%E5%B1%82%E7%94%B5%E9%A5%AD%E7%85%B2" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E4%B9%9D%E9%98%B30%E6%B6%82%E5%B1%82%E7%94%B5%E9%A5%AD%E7%85%B2" }
+    ],
+    "fitTags": ["健康", "性价比", "日常"]
+  },
+  {
+    "id": "anker-65w-gan-charger",
+    "category": "accessory",
+    "name": "安克 65W 氮化镓充电器",
+    "brand": "安克",
+    "tagline": "双口快充 · 小巧便携",
+    "referencePrice": 159,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "fastCharge": "65W 双口",
+      "size": "约 42g 小巧",
+      "storage": "USB-C + USB-A",
+      "safe": "氮化镓温控"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%AE%89%E5%85%8B65W%E6%B0%AE%E5%8C%96%E9%95%93%E5%85%85%E7%94%B5%E5%99%A8" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%AE%89%E5%85%8B65W%E6%B0%AE%E5%8C%96%E9%95%93%E5%85%85%E7%94%B5%E5%99%A8" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%AE%89%E5%85%8B65W%E6%B0%AE%E5%8C%96%E9%95%93%E5%85%85%E7%94%B5%E5%99%A8" }
+    ],
+    "fitTags": ["便携", "快充", "性价比"]
+  },
+  {
+    "id": "xiaomi-power-bank-20000",
+    "category": "accessory",
+    "name": "小米移动电源 20000mAh 50W",
+    "brand": "小米",
+    "tagline": "大容量 · 50W 快充",
+    "referencePrice": 199,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "fastCharge": "50W 双向快充",
+      "size": "20000mAh",
+      "storage": "USB-C + USB-A",
+      "safe": "多协议兼容"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%B0%8F%E7%B1%B320000mAh%E7%A7%BB%E5%8A%A8%E7%94%B5%E6%BA%90%2050W" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%B0%8F%E7%B1%B320000mAh%E7%A7%BB%E5%8A%A8%E7%94%B5%E6%BA%90%2050W" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%B0%8F%E7%B1%B320000mAh%E7%A7%BB%E5%8A%A8%E7%94%B5%E6%BA%90%2050W" }
+    ],
+    "fitTags": ["大容量", "快充", "性价比"]
+  },
+  {
+    "id": "baseus-100w-braided-cable",
+    "category": "accessory",
+    "name": "倍思 100W 编织数据线",
+    "brand": "倍思",
+    "tagline": "100W 快充 · 耐磨编织",
+    "referencePrice": 49,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "fastCharge": "100W PD 快充",
+      "size": "1.5 米",
+      "safe": "尼龙编织耐磨",
+      "storage": "USB-C to USB-C"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%80%8D%E6%80%9D100W%E7%BC%96%E7%BB%87%E6%95%B0%E6%8D%AE%E7%BA%BF" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%80%8D%E6%80%9D100W%E7%BC%96%E7%BB%87%E6%95%B0%E6%8D%AE%E7%BA%BF" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%80%8D%E6%80%9D100W%E7%BC%96%E7%BB%87%E6%95%B0%E6%8D%AE%E7%BA%BF" }
+    ],
+    "fitTags": ["快充", "耐用", "性价比"]
+  }
+]

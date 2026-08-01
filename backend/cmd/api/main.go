@@ -21,6 +21,7 @@ import (
 	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
+	"my-first-expo-app/backend/internal/recommendation"
 	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
@@ -76,6 +77,11 @@ func main() {
 		log.Fatalf("open focus database failed: %v", err)
 	}
 	defer focusStore.Close()
+	recommendationStore, err := recommendation.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open recommendation database failed: %v", err)
+	}
+	defer recommendationStore.Close()
 	registry, err := access.Registry()
 	if err != nil {
 		log.Fatalf("load feature registry failed: %v", err)
@@ -145,6 +151,7 @@ func main() {
 	} else {
 		log.Printf("translation disabled: missing DEEPSEEK_API_KEY")
 	}
+	recommendationService := recommendation.NewService(cfg.DeepSeek, recommendationStore)
 
 	newsSource := news.NewRSSSource(
 		&http.Client{Timeout: cfg.News.RequestTimeout},
@@ -156,7 +163,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithMembership(
+	server := httpapi.NewServerWithMembershipAndRecommendation(
 		cfg,
 		ttsService,
 		translationService,
@@ -168,6 +175,7 @@ func main() {
 		feedbackService,
 		focusStore,
 		membershipService,
+		recommendationService,
 		scoreService,
 	)
 

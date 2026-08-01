@@ -274,6 +274,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "product-recommendation",
+    "name": "智能商品推荐",
+    "tagline": "AI 分析值得买与去哪买",
+    "description": "一句话描述购买需求，DeepSeek 分析推荐理由，聚合京东、淘宝、拼多多参考价与购买链接。",
+    "icon": "shopping-search",
+    "category": "生活",
+    "route": "/tools/product-recommendation",
+    "accentColor": "#e85d4a",
+    "badges": ["AI 分析", "多平台比价"],
+    "usageLabel": "开始推荐",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "focus-plan",
     "name": "效率清单",
     "tagline": "任务、目标与打卡",

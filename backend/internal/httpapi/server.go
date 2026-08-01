@@ -24,6 +24,7 @@ import (
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
+	"my-first-expo-app/backend/internal/recommendation"
 	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
@@ -46,6 +47,7 @@ type Server struct {
 	newsService           newsFeedService
 	readingService        *reading.Service
 	readingImporter       *reading.Importer
+	recommendationService *recommendation.Service
 	resourceSearchService resourceSearchService
 	scoreService          *score.Service
 	socialStore           *social.Store
@@ -62,7 +64,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -75,7 +77,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -98,6 +100,7 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -129,6 +132,7 @@ func NewServerWithReadingNewsAndFeedback(
 		feedbackService,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -157,6 +161,7 @@ func NewServerWithReadingNewsFeedbackAndFocus(
 		readingService,
 		feedbackService,
 		focusStore,
+		nil,
 		nil,
 		scoreServices...,
 	)
@@ -188,6 +193,39 @@ func NewServerWithMembership(
 		feedbackService,
 		focusStore,
 		membershipService,
+		nil,
+		scoreServices...,
+	)
+}
+
+func NewServerWithMembershipAndRecommendation(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	feedbackService *feedback.Service,
+	focusStore *focus.Store,
+	membershipService *membership.Service,
+	recommendationService *recommendation.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		feedbackService,
+		focusStore,
+		membershipService,
+		recommendationService,
 		scoreServices...,
 	)
 }
@@ -204,6 +242,7 @@ func newServer(
 	feedbackService *feedback.Service,
 	focusStore *focus.Store,
 	membershipService *membership.Service,
+	recommendationService *recommendation.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
@@ -235,6 +274,7 @@ func newServer(
 		newsService:           newsService,
 		readingService:        readingService,
 		readingImporter:       readingImporter,
+		recommendationService: recommendationService,
 		resourceSearchService: resourcesearch.NewService(cfg.ResourceSearch),
 		scoreService:          scoreService,
 		socialStore:           socialStore,
@@ -270,6 +310,7 @@ func newServer(
 	registerAdminReadingRoutes(mux, api)
 	registerFeedbackRoutes(mux, api)
 	registerFocusRoutes(mux, api)
+	registerRecommendationRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))

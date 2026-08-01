@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-screen';
+import { ProductRecommendationScreen } from '@/features/tools/product-recommendation-screen';
 import { AiNavigationScreen } from '@/features/tools/ai-navigation-screen';
 import { TextToSpeechToolScreen } from '@/features/tools/tts-tool-screen';
 import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
@@ -200,6 +201,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SmartTranslationToolScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'product-recommendation') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ProductRecommendationScreen />
       </>
     );
   }
