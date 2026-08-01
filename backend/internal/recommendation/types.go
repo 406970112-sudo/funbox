@@ -56,16 +56,30 @@ type Budget struct {
 	Max int `json:"max"`
 }
 
+type FilterOption struct {
+	Min   *int   `json:"min,omitempty"`
+	Max   *int   `json:"max,omitempty"`
+	Label string `json:"label"`
+}
+
+type AvailableFilters struct {
+	BudgetRanges []FilterOption `json:"budgetRanges"`
+	Brands       []string       `json:"brands"`
+	Scenarios    []string       `json:"scenarios"`
+	Platforms    []string       `json:"platforms"`
+}
+
 type Response struct {
-	QueryID     string   `json:"queryId"`
-	Category    string   `json:"category"`
-	Budget      *Budget  `json:"budget,omitempty"`
-	Preferences []string `json:"preferences,omitempty"`
-	Summary     string   `json:"summary"`
-	Items       []Item   `json:"items"`
-	AI          string   `json:"ai"`
-	Disclaimer  string   `json:"disclaimer"`
-	GeneratedAt string   `json:"generatedAt"`
+	QueryID          string           `json:"queryId"`
+	Category         string           `json:"category"`
+	Budget           *Budget          `json:"budget,omitempty"`
+	Preferences      []string         `json:"preferences,omitempty"`
+	Summary          string           `json:"summary"`
+	Items            []Item           `json:"items"`
+	AvailableFilters AvailableFilters `json:"availableFilters"`
+	AI               string           `json:"ai"`
+	Disclaimer       string           `json:"disclaimer"`
+	GeneratedAt      string           `json:"generatedAt"`
 }
 
 type CatalogResponse struct {

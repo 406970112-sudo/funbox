@@ -1,7 +1,9 @@
 import type {
+  FilterOption,
   PlatformLink,
   ProductRecommendationRequest,
   RecommendationCategory,
+  RecommendationItem,
   RecommendationPlatform,
 } from '@/types/product-recommendation';
 
@@ -93,4 +95,77 @@ export function summarizeRequest(input: ProductRecommendationRequest) {
   }
   if ((input.scenarios ?? []).length > 0) parts.push(`优先${(input.scenarios ?? []).join('、')}`);
   return parts.join(' · ') || '智能商品推荐';
+}
+
+export type RecommendationFilter = {
+  budgetRange?: FilterOption;
+  brands: string[];
+  scenarios: string[];
+  platforms: RecommendationPlatform[];
+};
+
+export type RecommendationSortKey = 'fit' | 'price-asc' | 'price-desc';
+
+export function filterRecommendationItems(items: RecommendationItem[], filter: RecommendationFilter) {
+  return items.filter((item) => {
+    if (filter.budgetRange) {
+      const min = filter.budgetRange.min ?? 0;
+      const max = filter.budgetRange.max ?? Number.POSITIVE_INFINITY;
+      if (item.referencePrice < min || item.referencePrice > max) return false;
+    }
+    if (filter.brands.length > 0 && !filter.brands.includes(item.brand)) return false;
+    if (
+      filter.scenarios.length > 0
+      && !filter.scenarios.some((scenario) => matchesScenario(item, scenario))
+    ) {
+      return false;
+    }
+    if (filter.platforms.length > 0) {
+      const available = new Set(item.links.map((link) => link.platform));
+      if (!filter.platforms.some((platform) => available.has(platform))) return false;
+    }
+    return true;
+  });
+}
+
+export function sortRecommendationItems(items: RecommendationItem[], sortKey: RecommendationSortKey) {
+  const sorted = [...items];
+  sorted.sort((left, right) => {
+    if (sortKey === 'price-asc') return left.referencePrice - right.referencePrice;
+    if (sortKey === 'price-desc') return right.referencePrice - left.referencePrice;
+    return right.fitScore - left.fitScore;
+  });
+  return sorted;
+}
+
+export function countActiveFilters(filter: RecommendationFilter) {
+  return (
+    (filter.budgetRange ? 1 : 0)
+    + filter.brands.length
+    + filter.scenarios.length
+    + filter.platforms.length
+  );
+}
+
+export function emptyFilter(): RecommendationFilter {
+  return { brands: [], scenarios: [], platforms: [] };
+}
+
+export function matchesScenario(item: RecommendationItem, scenario: string) {
+  const text = [
+    item.suitableFor,
+    ...Object.values(item.specs ?? {}),
+    ...item.reasons.map((reason) => `${reason.label} ${reason.text}`),
+  ]
+    .join(' ')
+    .toLowerCase();
+  const keywords: Record<string, string[]> = {
+    游戏: ['游戏', '电竞', 'elite', '天玑 9400', '144hz'],
+    影像: ['影像', '拍照', '摄影', '相机', '蔡司', '潜望', '50mp', '200mp'],
+    续航: ['续航', '电池', 'mah'],
+    画质: ['画质', '屏幕', '2k', 'oled', 'mini led'],
+    办公: ['办公', '学习'],
+    轻便: ['轻便', '轻薄', '手感', '便携', '约 18'],
+  };
+  return (keywords[scenario] ?? []).some((keyword) => text.includes(keyword));
 }

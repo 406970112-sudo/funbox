@@ -112,12 +112,118 @@ func (s *Service) Query(ctx context.Context, request Request, userID string) (Re
 			response.Items = mergeAnalysisItems(ranked, analysis, parsed)
 		}
 	}
+	response.AvailableFilters = buildAvailableFilters(response.Items)
 
 	if s.store != nil {
 		responseJSON, _ := json.Marshal(response)
 		_ = s.store.SaveQuery(ctx, userID, response.QueryID, request.Query, response.Category, string(responseJSON))
 	}
 	return response, nil
+}
+
+func buildAvailableFilters(items []Item) AvailableFilters {
+	filters := AvailableFilters{
+		BudgetRanges: []FilterOption{},
+		Brands:       []string{},
+		Scenarios:    []string{},
+		Platforms:    []string{},
+	}
+	seenBrands := map[string]bool{}
+	seenScenarios := map[string]bool{}
+	seenPlatforms := map[string]bool{}
+
+	for _, item := range items {
+		if brand := strings.TrimSpace(item.Brand); brand != "" && !seenBrands[brand] {
+			seenBrands[brand] = true
+			filters.Brands = append(filters.Brands, brand)
+		}
+		for _, link := range item.Links {
+			if platform := strings.TrimSpace(link.Platform); platform != "" && !seenPlatforms[platform] {
+				seenPlatforms[platform] = true
+				filters.Platforms = append(filters.Platforms, platform)
+			}
+		}
+		for _, scenario := range inferItemScenarios(item) {
+			if !seenScenarios[scenario] {
+				seenScenarios[scenario] = true
+				filters.Scenarios = append(filters.Scenarios, scenario)
+			}
+		}
+	}
+
+	ranges := []struct {
+		min   *int
+		max   *int
+		label string
+	}{
+		{min: nil, max: intPtr(1000), label: "1000以内"},
+		{min: intPtr(1000), max: intPtr(2000), label: "1000-2000"},
+		{min: intPtr(2000), max: intPtr(3000), label: "2000-3000"},
+		{min: intPtr(3000), max: intPtr(5000), label: "3000-5000"},
+		{min: intPtr(5000), max: nil, label: "5000+"},
+	}
+	for _, option := range ranges {
+		if hasItemInPriceRange(items, option.min, option.max) {
+			filters.BudgetRanges = append(filters.BudgetRanges, FilterOption{
+				Min:   option.min,
+				Max:   option.max,
+				Label: option.label,
+			})
+		}
+	}
+	return filters
+}
+
+func hasItemInPriceRange(items []Item, min, max *int) bool {
+	for _, item := range items {
+		if min != nil && item.ReferencePrice < *min {
+			continue
+		}
+		if max != nil && item.ReferencePrice > *max {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+func inferItemScenarios(item Item) []string {
+	text := strings.ToLower(
+		item.SuitableFor + " " + strings.Join(mapValues(item.Specs), " ") + " " + reasonTexts(item.Reasons),
+	)
+	scenarios := []string{}
+	preferred := []struct {
+		id      string
+		matches []string
+	}{
+		{id: "游戏", matches: []string{"游戏", "电竞", "elite", "天玑 9400", "144hz"}},
+		{id: "影像", matches: []string{"影像", "拍照", "摄影", "相机", "蔡司", "潜望", "50mp", "200mp"}},
+		{id: "续航", matches: []string{"续航", "电池", "mah"}},
+		{id: "画质", matches: []string{"画质", "屏幕", "2k", "oled", "mini led"}},
+		{id: "办公", matches: []string{"办公", "学习"}},
+		{id: "轻便", matches: []string{"轻便", "轻薄", "手感", "便携", "约 18"}},
+	}
+	for _, entry := range preferred {
+		for _, match := range entry.matches {
+			if strings.Contains(text, match) {
+				scenarios = append(scenarios, entry.id)
+				break
+			}
+		}
+	}
+	return scenarios
+}
+
+func reasonTexts(reasons []Reason) string {
+	parts := make([]string, 0, len(reasons))
+	for _, reason := range reasons {
+		parts = append(parts, reason.Label+" "+reason.Text)
+	}
+	return strings.Join(parts, " ")
+}
+
+func intPtr(value int) *int {
+	return &value
 }
 
 func (s *Service) History(ctx context.Context, userID string, limit int) ([]HistoryItem, error) {

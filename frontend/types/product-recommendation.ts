@@ -43,9 +43,23 @@ export type ProductRecommendationResponse = {
   preferences?: string[];
   summary: string;
   items: RecommendationItem[];
+  availableFilters: AvailableFilters;
   ai: 'deepseek' | 'fallback';
   disclaimer: string;
   generatedAt: string;
+};
+
+export type FilterOption = {
+  min?: number;
+  max?: number;
+  label: string;
+};
+
+export type AvailableFilters = {
+  budgetRanges: FilterOption[];
+  brands: string[];
+  scenarios: string[];
+  platforms: RecommendationPlatform[];
 };
 
 export type ProductCatalogItem = {

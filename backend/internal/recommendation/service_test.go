@@ -99,3 +99,25 @@ func TestQueryRejectsInvalidBudget(t *testing.T) {
 		t.Fatal("expected invalid budget error")
 	}
 }
+
+func TestQueryReturnsAvailableFilters(t *testing.T) {
+	service := NewService(config.DeepSeekConfig{}, nil)
+	result, err := service.Query(context.Background(), Request{
+		Query: "想买手机，预算 3000 左右，主要打游戏和续航",
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if len(result.AvailableFilters.Brands) == 0 {
+		t.Fatal("expected available brand filters")
+	}
+	if len(result.AvailableFilters.BudgetRanges) == 0 {
+		t.Fatal("expected available budget ranges")
+	}
+	if len(result.AvailableFilters.Platforms) == 0 {
+		t.Fatal("expected available platform filters")
+	}
+	if len(result.AvailableFilters.Scenarios) == 0 {
+		t.Fatal("expected available scenario filters")
+	}
+}

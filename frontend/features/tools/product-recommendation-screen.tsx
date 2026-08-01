@@ -17,14 +17,18 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import {
   buildRecommendationRequest,
-  BRAND_OPTIONS,
-  CATEGORY_OPTIONS,
-  formatPriceSource,
+  countActiveFilters,
+  emptyFilter,
+  filterRecommendationItems,
   formatPrice,
+  formatPriceSource,
   getPlatformLabel,
   PLATFORM_OPTIONS,
   SCENARIO_OPTIONS,
+  sortRecommendationItems,
   summarizeRequest,
+  type RecommendationFilter,
+  type RecommendationSortKey,
 } from '@/lib/product-recommendation';
 import {
   fetchProductRecommendationHistory,
@@ -37,10 +41,11 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
 import type {
+  AvailableFilters,
+  FilterOption,
   PlatformLink,
   ProductRecommendationRequest,
   ProductRecommendationResponse,
-  RecommendationCategory,
   RecommendationHistoryItem,
   RecommendationItem,
   RecommendationPlatform,
@@ -55,11 +60,12 @@ const CORAL = '#e85d4a';
 const GREEN = '#24b36b';
 const AMBER = '#f1a33b';
 
-const BUDGET_OPTIONS: { label: string; min?: number; max?: number }[] = [
-  { label: '2000以内', max: 2000 },
-  { label: '2000-3000', min: 2000, max: 3000 },
-  { label: '3000-5000', min: 3000, max: 5000 },
-  { label: '5000+', min: 5000 },
+const QUICK_EXAMPLES = ['手机', '耳机', '平板', '3000左右手机', '拍照手机'];
+
+const SORT_OPTIONS: { id: RecommendationSortKey; label: string }[] = [
+  { id: 'fit', label: '综合' },
+  { id: 'price-asc', label: '价格' },
+  { id: 'fit', label: '匹配度' },
 ];
 
 const FOLLOW_UP_ACTIONS: { label: string; icon: IconName; apply: (input: ProductRecommendationRequest) => ProductRecommendationRequest }[] = [
@@ -95,19 +101,17 @@ export function ProductRecommendationScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
   const { accessToken, status: authStatus } = useAuth();
-  const [queryText, setQueryText] = useState('想买手机，预算 3000 左右，主要打游戏和续航');
-  const [category, setCategory] = useState<RecommendationCategory | ''>('phone');
-  const [budgetMin, setBudgetMin] = useState<number | undefined>(2000);
-  const [budgetMax, setBudgetMax] = useState<number | undefined>(3000);
-  const [brands, setBrands] = useState<string[]>([]);
-  const [scenarios, setScenarios] = useState<string[]>(['游戏', '续航']);
-  const [platforms, setPlatforms] = useState<RecommendationPlatform[]>([]);
-  const [editing, setEditing] = useState(false);
+  const [queryText, setQueryText] = useState('想买手机，3000 左右');
   const [submitting, setSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('输入购买需求，AI 会给出推荐理由与平台链接。');
+  const [statusMessage, setStatusMessage] = useState('直接说想买什么，结果不满意再筛选。');
   const [result, setResult] = useState<ProductRecommendationResponse | null>(null);
+  const [showInput, setShowInput] = useState(true);
   const [selectedItem, setSelectedItem] = useState<RecommendationItem | null>(null);
   const [comparing, setComparing] = useState(false);
+  const [sortKey, setSortKey] = useState<RecommendationSortKey>('fit');
+  const [filterApplied, setFilterApplied] = useState<RecommendationFilter>(emptyFilter());
+  const [filterDraft, setFilterDraft] = useState<RecommendationFilter>(emptyFilter());
+  const [showFilter, setShowFilter] = useState(false);
   const [history, setHistory] = useState<RecommendationHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [feedback, setFeedback] = useState<Record<string, 'helpful' | 'not' | undefined>>({});
@@ -125,16 +129,14 @@ export function ProductRecommendationScreen() {
   async function runQuery(overrides?: Partial<ProductRecommendationRequest>) {
     const request = buildRecommendationRequest({
       query: queryText,
-      category,
-      budgetMin,
-      budgetMax,
-      brands,
-      scenarios,
-      platforms,
+      category: '',
+      brands: [],
+      scenarios: [],
+      platforms: [],
     });
     const payload = { ...request, ...overrides };
-    if (!payload.query.trim() && !payload.category) {
-      setStatusMessage('请先输入购买需求或选择品类。');
+    if (!payload.query.trim()) {
+      setStatusMessage('先告诉我想买什么，例如：想买手机。');
       return;
     }
 
@@ -145,7 +147,10 @@ export function ProductRecommendationScreen() {
       setResult(next);
       setSelectedItem(null);
       setComparing(false);
-      setEditing(false);
+      setShowInput(false);
+      setSortKey('fit');
+      setFilterApplied(emptyFilter());
+      setFilterDraft(emptyFilter());
       setStatusMessage(
         next.ai === 'deepseek'
           ? `已生成 ${next.items.length} 款推荐，理由来自 DeepSeek 分析。`
@@ -168,29 +173,6 @@ export function ProductRecommendationScreen() {
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function toggleBrand(brand: string) {
-    setBrands((current) =>
-      current.includes(brand) ? current.filter((item) => item !== brand) : [...current, brand],
-    );
-  }
-
-  function toggleScenario(scenario: string) {
-    setScenarios((current) =>
-      current.includes(scenario) ? current.filter((item) => item !== scenario) : [...current, scenario],
-    );
-  }
-
-  function togglePlatform(platform: RecommendationPlatform) {
-    setPlatforms((current) =>
-      current.includes(platform) ? current.filter((item) => item !== platform) : [...current, platform],
-    );
-  }
-
-  function selectBudget(option: (typeof BUDGET_OPTIONS)[number]) {
-    setBudgetMin(option.min);
-    setBudgetMax(option.max);
   }
 
   async function submitFeedback(item: RecommendationItem, helpful: boolean) {
@@ -222,7 +204,9 @@ export function ProductRecommendationScreen() {
       setResult(next);
       setSelectedItem(null);
       setComparing(false);
-      setEditing(false);
+      setShowInput(false);
+      setSortKey('fit');
+      setFilterApplied(emptyFilter());
       setStatusMessage(`已加载 ${next.items.length} 款历史推荐结果。`);
     } catch (error) {
       setStatusMessage(getProductRecommendationErrorMessage(error));
@@ -231,14 +215,38 @@ export function ProductRecommendationScreen() {
     }
   }
 
-  const visibleItems = result?.items ?? [];
+  function openFilterPanel() {
+    setFilterDraft({
+      budgetRange: filterApplied.budgetRange,
+      brands: [...filterApplied.brands],
+      scenarios: [...filterApplied.scenarios],
+      platforms: [...filterApplied.platforms],
+    });
+    setShowFilter(true);
+  }
+
+  function applyFilter() {
+    setFilterApplied({
+      budgetRange: filterDraft.budgetRange,
+      brands: [...filterDraft.brands],
+      scenarios: [...filterDraft.scenarios],
+      platforms: [...filterDraft.platforms],
+    });
+    setShowFilter(false);
+    setStatusMessage('筛选已应用到当前结果。');
+  }
+
+  const filteredItems = result
+    ? sortRecommendationItems(filterRecommendationItems(result.items, filterApplied), sortKey)
+    : [];
+  const filterCount = countActiveFilters(filterApplied);
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
       <PageHeader
         eyebrow="AI Shopping"
         title="智能商品推荐"
-        subtitle="一句话说清需求，帮你回答买什么、为什么、去哪买"
+        subtitle="先说想买什么，结果不满意再筛选"
         rightSlot={
           <View style={styles.headerActions}>
             <HeaderIconButton
@@ -270,124 +278,67 @@ export function ProductRecommendationScreen() {
       ) : comparing ? (
         <CompareView
           colors={colors}
-          items={visibleItems.slice(0, 4)}
+          items={filteredItems.slice(0, 4)}
           onBack={() => setComparing(false)}
           onOpenLink={openLink}
         />
+      ) : showInput || !result ? (
+        <InputHero
+          colors={colors}
+          onExamplePress={setQueryText}
+          onQueryChange={setQueryText}
+          onStart={() => void runQuery()}
+          queryText={queryText}
+          submitting={submitting}
+        />
       ) : (
-        <>
-          {!result || editing ? (
-            <InputCard
-              brandOptions={brands}
-              budgetMax={budgetMax}
-              budgetMin={budgetMin}
-              category={category}
-              colors={colors}
-              onBudgetSelect={selectBudget}
-              onBrandToggle={toggleBrand}
-              onCategoryChange={setCategory}
-              onPlatformToggle={togglePlatform}
-              onQueryChange={setQueryText}
-              onScenarioToggle={toggleScenario}
-              onStart={() => void runQuery()}
-              platformOptions={platforms}
-              queryText={queryText}
-              scenarioOptions={scenarios}
-              submitting={submitting}
-            />
-          ) : null}
-
-          {result && !editing ? (
-            <View style={styles.resultsBlock}>
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryCopy}>
-                  <ThemedText style={styles.summaryTitle}>{result.summary}</ThemedText>
-                  <ThemedText style={[styles.summaryMeta, { color: colors.mutedText }]}>
-                    {result.ai === 'deepseek' ? 'DeepSeek 分析' : '规则匹配'} · {result.items.length} 款
-                  </ThemedText>
-                </View>
-                <Pressable
-                  accessibilityLabel="调整推荐条件"
-                  accessibilityRole="button"
-                  onPress={() => setEditing(true)}
-                  style={[styles.editButton, { borderColor: colors.line }]}>
-                  <MaterialCommunityIcons name="tune-variant" size={16} color={BLUE} />
-                  <ThemedText style={[styles.editButtonText, { color: BLUE }]}>调整条件</ThemedText>
-                </Pressable>
-              </View>
-
-              <ScrollView
-                contentContainerStyle={styles.followUpRow}
-                horizontal
-                showsHorizontalScrollIndicator={false}>
-                {FOLLOW_UP_ACTIONS.map((action) => (
-                  <Pressable
-                    accessibilityLabel={action.label}
-                    accessibilityRole="button"
-                    key={action.label}
-                    onPress={() => {
-                      const request = buildRecommendationRequest({
-                        query: queryText,
-                        category,
-                        budgetMin,
-                        budgetMax,
-                        brands,
-                        scenarios,
-                        platforms,
-                      });
-                      const adjusted = action.apply(request);
-                      setQueryText(adjusted.query);
-                      setCategory(adjusted.category ?? '');
-                      setBudgetMin(adjusted.budgetMin);
-                      setBudgetMax(adjusted.budgetMax);
-                      setBrands(adjusted.brands ?? []);
-                      setScenarios(adjusted.scenarios ?? []);
-                      setPlatforms(adjusted.platforms ?? []);
-                      void runQuery(adjusted);
-                    }}
-                    style={[styles.followUpChip, { borderColor: colors.line }]}>
-                    <MaterialCommunityIcons name={action.icon} size={15} color={BLUE} />
-                    <ThemedText style={[styles.followUpText, { color: colors.text }]}>{action.label}</ThemedText>
-                  </Pressable>
-                ))}
-              </ScrollView>
-
-              <View style={styles.itemList}>
-                {visibleItems.map((item, index) => (
-                  <RecommendationCard
-                    colors={colors}
-                    feedback={feedback[item.productId]}
-                    index={index}
-                    item={item}
-                    key={item.productId}
-                    onFeedback={(helpful) => void submitFeedback(item, helpful)}
-                    onOpen={() => setSelectedItem(item)}
-                    onOpenLink={openLink}
-                  />
-                ))}
-              </View>
-
-              {visibleItems.length >= 2 ? (
-                <Pressable
-                  accessibilityLabel="开始对比推荐商品"
-                  accessibilityRole="button"
-                  onPress={() => setComparing(true)}
-                  style={[styles.compareButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-                  <MaterialCommunityIcons name="scale-balance" size={18} color={BLUE} />
-                  <ThemedText style={[styles.compareButtonText, { color: colors.text }]}>
-                    对比前 {Math.min(visibleItems.length, 4)} 款
-                  </ThemedText>
-                  <MaterialCommunityIcons name="chevron-right" size={18} color={colors.mutedText} />
-                </Pressable>
-              ) : null}
-
-              <ThemedText style={[styles.disclaimer, { color: colors.mutedText }]}>
-                {result.disclaimer}
-              </ThemedText>
-            </View>
-          ) : null}
-        </>
+        <ResultsView
+          colors={colors}
+          feedback={feedback}
+          filterCount={filterCount}
+          items={filteredItems}
+          onCompare={() => setComparing(true)}
+          onFeedback={(item, helpful) => void submitFeedback(item, helpful)}
+          onFilterOpen={openFilterPanel}
+          onFollowUp={(action) => {
+            const request = buildRecommendationRequest({
+              query: queryText,
+              category: '',
+              brands: [],
+              scenarios: [],
+              platforms: [],
+            });
+            const adjusted = action.apply(request);
+            setQueryText(adjusted.query);
+            void runQuery(adjusted);
+          }}
+          onOpenDetail={setSelectedItem}
+          onOpenLink={openLink}
+          onResetInput={() => {
+            setResult(null);
+            setShowInput(true);
+            setStatusMessage('换个需求试试，只输入一句话就行。');
+          }}
+          onResetFilter={() => setFilterApplied(emptyFilter())}
+          onSort={setSortKey}
+          result={result}
+          sortKey={sortKey}
+        />
       )}
+
+      <FilterSheet
+        availableFilters={result?.availableFilters ?? emptyAvailableFilters()}
+        colors={colors}
+        draft={filterDraft}
+        onApply={applyFilter}
+        onBudgetSelect={(option) => setFilterDraft((current) => ({ ...current, budgetRange: option }))}
+        onBrandToggle={(brand) => toggleDraftValue('brands', brand)}
+        onClose={() => setShowFilter(false)}
+        onPlatformToggle={(platform) => toggleDraftValue('platforms', platform)}
+        onReset={() => setFilterDraft(emptyFilter())}
+        onScenarioToggle={(scenario) => toggleDraftValue('scenarios', scenario)}
+        visible={showFilter}
+      />
 
       <HistoryModal
         colors={colors}
@@ -398,126 +349,81 @@ export function ProductRecommendationScreen() {
       />
     </MobileScreen>
   );
+
+  function toggleDraftValue(key: 'brands' | 'scenarios' | 'platforms', value: string) {
+    setFilterDraft((current) => {
+      const values = current[key] as string[];
+      return {
+        ...current,
+        [key]: values.includes(value) ? values.filter((item) => item !== value) : [...values, value],
+      };
+    });
+  }
 }
 
-function InputCard({
-  brandOptions,
-  budgetMax,
-  budgetMin,
-  category,
+function InputHero({
   colors,
-  onBudgetSelect,
-  onBrandToggle,
-  onCategoryChange,
-  onPlatformToggle,
+  onExamplePress,
   onQueryChange,
-  onScenarioToggle,
   onStart,
-  platformOptions,
   queryText,
-  scenarioOptions,
   submitting,
 }: {
-  brandOptions: string[];
-  budgetMax?: number;
-  budgetMin?: number;
-  category: RecommendationCategory | '';
   colors: ReturnType<typeof useAppTheme>['colors'];
-  onBudgetSelect: (option: (typeof BUDGET_OPTIONS)[number]) => void;
-  onBrandToggle: (brand: string) => void;
-  onCategoryChange: (category: RecommendationCategory | '') => void;
-  onPlatformToggle: (platform: RecommendationPlatform) => void;
+  onExamplePress: (text: string) => void;
   onQueryChange: (text: string) => void;
-  onScenarioToggle: (scenario: string) => void;
   onStart: () => void;
-  platformOptions: RecommendationPlatform[];
   queryText: string;
-  scenarioOptions: string[];
   submitting: boolean;
 }) {
   return (
-    <SurfaceCard style={[styles.inputCard, { borderTopColor: BLUE }]}>
-      <View style={styles.inputHeader}>
-        <View style={[styles.panelIcon, { backgroundColor: colors.primarySoft }]}>
-          <MaterialCommunityIcons name="shopping-search" size={20} color={BLUE} />
-        </View>
-        <View style={styles.inputHeaderCopy}>
-          <ThemedText style={styles.inputTitle}>想买什么？</ThemedText>
-          <ThemedText style={[styles.inputHint, { color: colors.mutedText }]}>
-            直接描述需求，也可以点选下面的条件
-          </ThemedText>
-        </View>
-      </View>
+    <View style={styles.heroBlock}>
+      <ThemedText style={styles.heroTitle}>想买什么？</ThemedText>
+      <ThemedText style={[styles.heroSub, { color: colors.mutedText }]}>
+        直接说就行，品类、预算、品牌都可以先不选
+      </ThemedText>
 
-      <View style={[styles.searchBox, { backgroundColor: colors.background, borderColor: colors.line }]}>
-        <MaterialCommunityIcons name="magnify" size={19} color={colors.mutedText} />
+      <View style={[styles.heroSearch, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+        <MaterialCommunityIcons name="magnify" size={20} color={colors.mutedText} />
         <TextInput
           accessibilityLabel="购买需求"
           onChangeText={onQueryChange}
-          placeholder="例如：想买手机，预算 3000 左右，主要打游戏"
+          placeholder="想买什么？直接说，例如：想买手机"
           placeholderTextColor={colors.mutedText}
-          style={[styles.searchInput, { color: colors.text }]}
+          style={[styles.heroInput, { color: colors.text }]}
           value={queryText}
         />
+        <Pressable
+          accessibilityLabel="语音输入"
+          accessibilityRole="button"
+          style={[styles.heroMic, { backgroundColor: colors.surfaceMuted }]}>
+          <MaterialCommunityIcons name="microphone-outline" size={18} color={colors.primary} />
+        </Pressable>
       </View>
 
-      <OptionSection
-        colors={colors}
-        label="品类"
-        onToggle={(value) => onCategoryChange(value as RecommendationCategory | '')}
-        options={CATEGORY_OPTIONS.map((option) => ({ id: option.id, label: option.label }))}
-        selected={category}
-      />
-
-      <ThemedText style={[styles.optionLabel, { color: colors.mutedText }]}>预算</ThemedText>
-      <View style={styles.budgetRow}>
-        {BUDGET_OPTIONS.map((option) => {
-          const selected = budgetMin === option.min && budgetMax === option.max;
-          return (
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              key={option.label}
-              onPress={() => onBudgetSelect(option)}
-              style={[
-                styles.budgetOption,
-                { backgroundColor: selected ? HERO : colors.surfaceMuted, borderColor: selected ? HERO : colors.line },
-              ]}>
-              <ThemedText
-                style={[styles.budgetOptionText, { color: selected ? '#ffffff' : colors.text }]}>
-                {option.label}
-              </ThemedText>
-            </Pressable>
-          );
-        })}
+      <ThemedText style={[styles.exampleLabel, { color: colors.mutedText }]}>
+        不知道怎么描述？点一下试试
+      </ThemedText>
+      <View style={styles.exampleRow}>
+        {QUICK_EXAMPLES.map((example) => (
+          <Pressable
+            accessibilityRole="button"
+            key={example}
+            onPress={() => onExamplePress(example)}
+            style={[
+              styles.exampleChip,
+              {
+                backgroundColor: queryText === example ? colors.primarySoft : colors.surface,
+                borderColor: queryText === example ? BLUE : colors.line,
+              },
+            ]}>
+            <ThemedText
+              style={[styles.exampleChipText, { color: queryText === example ? BLUE : colors.text }]}>
+              {example}
+            </ThemedText>
+          </Pressable>
+        ))}
       </View>
-
-      <OptionSection
-        colors={colors}
-        label="品牌偏好"
-        multi
-        onToggle={onBrandToggle}
-        options={BRAND_OPTIONS.map((option) => ({ id: option.id, label: option.label }))}
-        selected={brandOptions}
-      />
-
-      <OptionSection
-        colors={colors}
-        label="使用场景"
-        multi
-        onToggle={onScenarioToggle}
-        options={SCENARIO_OPTIONS.map((option) => ({ id: option.id, label: option.label }))}
-        selected={scenarioOptions}
-      />
-
-      <OptionSection
-        colors={colors}
-        label="平台偏好"
-        multi
-        onToggle={(value) => onPlatformToggle(value as RecommendationPlatform)}
-        options={PLATFORM_OPTIONS.map((option) => ({ id: option.id, label: option.label }))}
-        selected={platformOptions}
-      />
 
       <Pressable
         accessibilityLabel="AI 生成推荐"
@@ -534,55 +440,163 @@ function InputCard({
           </>
         )}
       </Pressable>
-      <ThemedText style={[styles.disclaimer, { color: colors.mutedText }]}>
-        参考价来自商品库快照，实际价格与库存以平台页面为准
+      <ThemedText style={[styles.heroHint, { color: colors.mutedText }]}>
+        先看结果，不满意再展开筛选，就像京东购物一样
       </ThemedText>
-    </SurfaceCard>
+    </View>
   );
 }
 
-function OptionSection({
+function ResultsView({
   colors,
-  label,
-  multi = false,
-  onToggle,
-  options,
-  selected,
+  feedback,
+  filterCount,
+  items,
+  onCompare,
+  onFeedback,
+  onFilterOpen,
+  onFollowUp,
+  onOpenDetail,
+  onOpenLink,
+  onResetInput,
+  onResetFilter,
+  onSort,
+  result,
+  sortKey,
 }: {
   colors: ReturnType<typeof useAppTheme>['colors'];
-  label: string;
-  multi?: boolean;
-  onToggle: (value: string) => void;
-  options: { id: string; label: string }[];
-  selected: string | string[];
+  feedback: Record<string, 'helpful' | 'not' | undefined>;
+  filterCount: number;
+  items: RecommendationItem[];
+  onCompare: () => void;
+  onFeedback: (item: RecommendationItem, helpful: boolean) => void;
+  onFilterOpen: () => void;
+  onFollowUp: (action: (typeof FOLLOW_UP_ACTIONS)[number]) => void;
+  onOpenDetail: (item: RecommendationItem) => void;
+  onOpenLink: (link: PlatformLink) => void;
+  onResetInput: () => void;
+  onResetFilter: () => void;
+  onSort: (sortKey: RecommendationSortKey) => void;
+  result: ProductRecommendationResponse;
+  sortKey: RecommendationSortKey;
 }) {
   return (
-    <View style={styles.optionSection}>
-      <ThemedText style={[styles.optionLabel, { color: colors.mutedText }]}>{label}</ThemedText>
-      <View style={styles.chipRow}>
-        {options.map((option) => {
-          const isSelected = Array.isArray(selected) ? selected.includes(option.id) : selected === option.id;
-          return (
-            <Pressable
-              accessibilityRole={multi ? 'checkbox' : 'tab'}
-              accessibilityState={{ checked: multi ? isSelected : undefined, selected: multi ? undefined : isSelected }}
-              key={option.id}
-              onPress={() => onToggle(option.id)}
-              style={[
-                styles.optionChip,
-                {
-                  backgroundColor: isSelected ? colors.primarySoft : colors.surfaceMuted,
-                  borderColor: isSelected ? BLUE : colors.line,
-                },
-              ]}>
-              <ThemedText
-                style={[styles.optionChipText, { color: isSelected ? BLUE : colors.text }]}>
-                {option.label}
-              </ThemedText>
-            </Pressable>
-          );
-        })}
+    <View style={styles.resultsBlock}>
+      <View style={styles.summaryRow}>
+        <View style={styles.summaryCopy}>
+          <ThemedText style={styles.summaryTitle}>为你找到 {items.length} 款{categoryText(result.category)}</ThemedText>
+          <ThemedText style={[styles.summaryMeta, { color: colors.mutedText }]}>
+            {result.ai === 'deepseek' ? 'DeepSeek 分析' : '规则匹配'} · 参考价以平台为准
+          </ThemedText>
+        </View>
+        <View style={[styles.aiPill, { backgroundColor: colors.primarySoft }]}>
+          <ThemedText style={[styles.aiPillText, { color: BLUE }]}>AI 分析</ThemedText>
+        </View>
       </View>
+
+      <View style={styles.toolbar}>
+        <View style={[styles.sortRow, { backgroundColor: colors.surfaceMuted }]}>
+          {SORT_OPTIONS.map((option, index) => {
+            const active = option.label === '价格' ? sortKey === 'price-asc' : sortKey === 'fit';
+            return (
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                key={`${option.label}-${index}`}
+                onPress={() => onSort(option.id)}
+                style={[styles.sortItem, active && { backgroundColor: colors.surface }]}>
+                <ThemedText style={[styles.sortItemText, { color: active ? colors.text : colors.mutedText }]}>
+                  {option.label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Pressable
+          accessibilityLabel="打开筛选"
+          accessibilityRole="button"
+          onPress={onFilterOpen}
+          style={[styles.filterButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="tune-variant" size={16} color={BLUE} />
+          <ThemedText style={[styles.filterButtonText, { color: colors.text }]}>筛选</ThemedText>
+          {filterCount > 0 ? (
+            <View style={styles.filterBadge}>
+              <ThemedText style={styles.filterBadgeText}>{filterCount}</ThemedText>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={styles.followUpRow}
+        horizontal
+        showsHorizontalScrollIndicator={false}>
+        {FOLLOW_UP_ACTIONS.map((action) => (
+          <Pressable
+            accessibilityRole="button"
+            key={action.label}
+            onPress={() => onFollowUp(action)}
+            style={[styles.followUpChip, { borderColor: colors.line }]}>
+            <MaterialCommunityIcons name={action.icon} size={15} color={BLUE} />
+            <ThemedText style={[styles.followUpText, { color: colors.text }]}>{action.label}</ThemedText>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      {items.length === 0 ? (
+        <SurfaceCard style={[styles.emptyCard, { borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="filter-off-outline" size={30} color={colors.mutedText} />
+          <ThemedText style={styles.emptyTitle}>没有符合条件的商品</ThemedText>
+          <ThemedText style={[styles.emptyText, { color: colors.mutedText }]}>
+            试试重置筛选，或换一句需求重新生成
+          </ThemedText>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onResetFilter}
+            style={[styles.emptyResetButton, { borderColor: colors.line }]}>
+            <ThemedText style={[styles.emptyResetText, { color: BLUE }]}>重置筛选</ThemedText>
+          </Pressable>
+        </SurfaceCard>
+      ) : (
+        <View style={styles.itemList}>
+          {items.map((item, index) => (
+            <RecommendationCard
+              colors={colors}
+              feedback={feedback[item.productId]}
+              index={index}
+              item={item}
+              key={item.productId}
+              onFeedback={(helpful) => onFeedback(item, helpful)}
+              onOpen={() => onOpenDetail(item)}
+              onOpenLink={onOpenLink}
+            />
+          ))}
+        </View>
+      )}
+
+      {items.length >= 2 ? (
+        <Pressable
+          accessibilityLabel="开始对比推荐商品"
+          accessibilityRole="button"
+          onPress={onCompare}
+          style={[styles.compareButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="scale-balance" size={18} color={BLUE} />
+          <ThemedText style={[styles.compareButtonText, { color: colors.text }]}>
+            对比前 {Math.min(items.length, 4)} 款
+          </ThemedText>
+          <MaterialCommunityIcons name="chevron-right" size={18} color={colors.mutedText} />
+        </Pressable>
+      ) : null}
+
+      <Pressable
+        accessibilityLabel="换个需求重新输入"
+        accessibilityRole="button"
+        onPress={onResetInput}
+        style={[styles.resetInputButton, { borderColor: colors.line }]}>
+        <MaterialCommunityIcons name="pencil-outline" size={16} color={colors.mutedText} />
+        <ThemedText style={[styles.resetInputText, { color: colors.mutedText }]}>换个需求</ThemedText>
+      </Pressable>
+      <ThemedText style={[styles.disclaimer, { color: colors.mutedText }]}>{result.disclaimer}</ThemedText>
     </View>
   );
 }
@@ -607,18 +621,16 @@ function RecommendationCard({
   return (
     <SurfaceCard style={[styles.recommendationCard, { borderTopColor: BLUE }]}>
       <View style={styles.cardHeader}>
-        <View style={[styles.productIcon, { backgroundColor: `${item.brand === '苹果' ? '#232c4d' : '#eef1f8'}` }]}>
-          <MaterialCommunityIcons
-            name={productIcon(item)}
-            size={22}
-            color={item.brand === '苹果' ? LIME : BLUE}
-          />
+        <View style={[styles.productIcon, { backgroundColor: item.brand === '苹果' ? '#232c4d' : colors.surfaceMuted }]}>
+          <MaterialCommunityIcons name={productIcon(item)} size={22} color={item.brand === '苹果' ? LIME : BLUE} />
         </View>
-        <Pressable accessibilityLabel={`查看${item.name}详情`} accessibilityRole="button" onPress={onOpen} style={styles.cardMain}>
+        <Pressable
+          accessibilityLabel={`查看${item.name}详情`}
+          accessibilityRole="button"
+          onPress={onOpen}
+          style={styles.cardMain}>
           <View style={styles.cardTitleRow}>
-            <ThemedText numberOfLines={1} style={styles.cardTitle}>
-              {item.name}
-            </ThemedText>
+            <ThemedText numberOfLines={1} style={styles.cardTitle}>{item.name}</ThemedText>
             <View style={[styles.scorePill, { backgroundColor: colors.surfaceMuted }]}>
               <ThemedText style={[styles.scoreText, { color: BLUE }]}>{item.fitScore} 分</ThemedText>
             </View>
@@ -635,16 +647,14 @@ function RecommendationCard({
             <View style={[styles.reasonPill, { backgroundColor: reasonColor(reason.label) }]}>
               <ThemedText style={styles.reasonPillText}>{reason.label}</ThemedText>
             </View>
-            <ThemedText style={[styles.reasonText, { color: colors.text }]} numberOfLines={2}>
+            <ThemedText numberOfLines={2} style={[styles.reasonText, { color: colors.text }]}>
               {reason.text}
             </ThemedText>
           </View>
         ))}
       </View>
 
-      <ThemedText style={[styles.suitableLine, { color: colors.mutedText }]}>
-        {item.suitableFor}
-      </ThemedText>
+      <ThemedText style={[styles.suitableLine, { color: colors.mutedText }]}>{item.suitableFor}</ThemedText>
 
       <View style={styles.platformRow}>
         {item.links.map((link) => (
@@ -695,6 +705,161 @@ function RecommendationCard({
   );
 }
 
+function FilterSheet({
+  availableFilters,
+  colors,
+  draft,
+  onApply,
+  onBudgetSelect,
+  onBrandToggle,
+  onClose,
+  onPlatformToggle,
+  onReset,
+  onScenarioToggle,
+  visible,
+}: {
+  availableFilters: AvailableFilters;
+  colors: ReturnType<typeof useAppTheme>['colors'];
+  draft: RecommendationFilter;
+  onApply: () => void;
+  onBudgetSelect: (option: FilterOption) => void;
+  onBrandToggle: (brand: string) => void;
+  onClose: () => void;
+  onPlatformToggle: (platform: string) => void;
+  onReset: () => void;
+  onScenarioToggle: (scenario: string) => void;
+  visible: boolean;
+}) {
+  const selectedCount = countActiveFilters(draft);
+  const platformOptions = PLATFORM_OPTIONS.filter((option) => availableFilters.platforms.includes(option.id));
+  const scenarioOptions = SCENARIO_OPTIONS.filter((option) => availableFilters.scenarios.includes(option.id));
+
+  return (
+    <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
+      <View style={styles.modalRoot}>
+        <Pressable accessibilityLabel="关闭筛选" accessibilityRole="button" onPress={onClose} style={styles.modalBackdrop} />
+        <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <View style={styles.filterHeader}>
+            <ThemedText style={styles.filterTitle}>筛选</ThemedText>
+            <View style={styles.filterHeaderActions}>
+              {selectedCount > 0 ? (
+                <ThemedText style={[styles.filterSelected, { color: CORAL }]}>已选 {selectedCount} 项</ThemedText>
+              ) : null}
+              <Pressable accessibilityRole="button" onPress={onReset} style={styles.filterResetButton}>
+                <ThemedText style={[styles.filterResetText, { color: colors.mutedText }]}>重置</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {availableFilters.budgetRanges.length > 0 ? (
+              <FilterGroup
+                colors={colors}
+                label="价格"
+                onToggle={(value) => {
+                  const option = availableFilters.budgetRanges.find((item) => item.label === value);
+                  if (option) onBudgetSelect(option);
+                }}
+                options={availableFilters.budgetRanges.map((option) => ({
+                  id: option.label,
+                  label: option.label,
+                }))}
+                selected={draft.budgetRange?.label ?? ''}
+              />
+            ) : null}
+
+            {availableFilters.brands.length > 0 ? (
+              <FilterGroup
+                colors={colors}
+                label="品牌"
+                multi
+                onToggle={onBrandToggle}
+                options={availableFilters.brands.map((brand) => ({ id: brand, label: brand }))}
+                selected={draft.brands}
+              />
+            ) : null}
+
+            {scenarioOptions.length > 0 ? (
+              <FilterGroup
+                colors={colors}
+                label="场景"
+                multi
+                onToggle={onScenarioToggle}
+                options={scenarioOptions.map((option) => ({ id: option.id, label: option.label }))}
+                selected={draft.scenarios}
+              />
+            ) : null}
+
+            {platformOptions.length > 0 ? (
+              <FilterGroup
+                colors={colors}
+                label="平台"
+                multi
+                onToggle={onPlatformToggle}
+                options={platformOptions.map((option) => ({ id: option.id, label: option.label }))}
+                selected={draft.platforms}
+              />
+            ) : null}
+          </ScrollView>
+
+          <Pressable
+            accessibilityLabel="应用筛选"
+            accessibilityRole="button"
+            onPress={onApply}
+            style={[styles.filterApply, { backgroundColor: HERO }]}>
+            <ThemedText style={styles.filterApplyText}>应用筛选</ThemedText>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function FilterGroup({
+  colors,
+  label,
+  multi = false,
+  onToggle,
+  options,
+  selected,
+}: {
+  colors: ReturnType<typeof useAppTheme>['colors'];
+  label: string;
+  multi?: boolean;
+  onToggle: (value: string) => void;
+  options: { id: string; label: string }[];
+  selected: string | string[];
+}) {
+  return (
+    <View style={styles.filterGroup}>
+      <ThemedText style={[styles.filterGroupTitle, { color: colors.mutedText }]}>{label}</ThemedText>
+      <View style={styles.filterChips}>
+        {options.map((option) => {
+          const isSelected = Array.isArray(selected) ? selected.includes(option.id) : selected === option.id;
+          return (
+            <Pressable
+              accessibilityRole={multi ? 'checkbox' : 'tab'}
+              accessibilityState={{ checked: multi ? isSelected : undefined, selected: multi ? undefined : isSelected }}
+              key={option.id}
+              onPress={() => onToggle(option.id)}
+              style={[
+                styles.filterChip,
+                {
+                  backgroundColor: isSelected ? colors.primarySoft : colors.surfaceMuted,
+                  borderColor: isSelected ? BLUE : colors.line,
+                },
+              ]}>
+              <ThemedText style={[styles.filterChipText, { color: isSelected ? BLUE : colors.text }]}>
+                {option.label}
+              </ThemedText>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 function DetailView({
   colors,
   item,
@@ -722,7 +887,7 @@ function DetailView({
       </View>
 
       <SurfaceCard style={[styles.detailHero, { borderTopColor: HERO }]}>
-        <View style={[styles.detailProductIcon, { backgroundColor: '#232c4d' }]}>
+        <View style={styles.detailProductIcon}>
           <MaterialCommunityIcons name={productIcon(item)} size={30} color={LIME} />
         </View>
         <View style={styles.detailHeroCopy}>
@@ -756,7 +921,9 @@ function DetailView({
       <ThemedText style={styles.sectionTitle}>为什么值得买</ThemedText>
       <View style={styles.whyList}>
         {item.reasons.slice(0, 3).map((reason) => (
-          <View key={`${reason.label}-${reason.text}`} style={[styles.whyRow, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <View
+            key={`${reason.label}-${reason.text}`}
+            style={[styles.whyRow, { backgroundColor: colors.surface, borderColor: colors.line }]}>
             <View style={[styles.whyIcon, { backgroundColor: reasonColor(reason.label) }]}>
               <MaterialCommunityIcons name={reasonIcon(reason.label)} size={16} color="#ffffff" />
             </View>
@@ -940,9 +1107,7 @@ function StatusLine({ color, icon, message }: { color: string; icon: IconName; m
   return (
     <View style={styles.statusLine}>
       <MaterialCommunityIcons name={icon} size={16} color={color} />
-      <ThemedText style={[styles.statusText, { color: color }]} numberOfLines={2}>
-        {message}
-      </ThemedText>
+      <ThemedText numberOfLines={2} style={[styles.statusText, { color }]}>{message}</ThemedText>
     </View>
   );
 }
@@ -1041,6 +1206,29 @@ function formatHistoryTime(value: string) {
   return `${month}-${day} ${hours}:${minutes}`;
 }
 
+function categoryText(category: string) {
+  switch (category) {
+    case 'phone':
+      return '手机';
+    case 'tablet':
+      return '平板';
+    case 'earbuds':
+      return '耳机';
+    case 'tv':
+      return '电视';
+    case 'small-appliance':
+      return '小家电';
+    case 'accessory':
+      return '数码配件';
+    default:
+      return '商品';
+  }
+}
+
+function emptyAvailableFilters(): AvailableFilters {
+  return { budgetRanges: [], brands: [], scenarios: [], platforms: [] };
+}
+
 const styles = StyleSheet.create({
   pageContent: {
     gap: 14,
@@ -1072,112 +1260,89 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
-  inputCard: {
-    borderTopWidth: 3,
+  heroBlock: {
     gap: 14,
-    padding: 18,
+    paddingTop: 26,
   },
-  inputHeader: {
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    lineHeight: 36,
+    textAlign: 'center',
+  },
+  heroSub: {
+    fontSize: 12,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  heroSearch: {
     alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: 10,
+    minHeight: 58,
+    paddingHorizontal: 15,
   },
-  panelIcon: {
+  heroInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20,
+    minHeight: 56,
+    paddingVertical: 10,
+  },
+  heroMic: {
     alignItems: 'center',
-    borderRadius: 9,
+    borderRadius: 10,
     height: 40,
     justifyContent: 'center',
     width: 40,
   },
-  inputHeaderCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  inputTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    lineHeight: 24,
-  },
-  inputHint: {
+  exampleLabel: {
     fontSize: 11,
     lineHeight: 16,
+    textAlign: 'center',
   },
-  searchBox: {
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    minHeight: 48,
-    paddingHorizontal: 13,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
-    minHeight: 46,
-    paddingVertical: 10,
-  },
-  optionSection: {
-    gap: 8,
-  },
-  optionLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    lineHeight: 16,
-  },
-  chipRow: {
+  exampleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 7,
+    gap: 8,
+    justifyContent: 'center',
   },
-  optionChip: {
+  exampleChip: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 999,
     borderWidth: 1,
     justifyContent: 'center',
     minHeight: 34,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
-  optionChipText: {
+  exampleChipText: {
     fontSize: 12,
     fontWeight: '700',
     lineHeight: 16,
   },
-  budgetRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 7,
-  },
-  budgetOption: {
-    alignItems: 'center',
-    borderRadius: 8,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 34,
-    paddingHorizontal: 12,
-  },
-  budgetOptionText: {
-    fontSize: 12,
-    fontWeight: '800',
-    lineHeight: 16,
-  },
   primaryButton: {
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 14,
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
-    minHeight: 50,
+    minHeight: 54,
     paddingHorizontal: 18,
-    paddingVertical: 13,
+    paddingVertical: 14,
   },
   primaryButtonText: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '900',
-    lineHeight: 20,
+    lineHeight: 22,
+  },
+  heroHint: {
+    fontSize: 10,
+    lineHeight: 16,
+    textAlign: 'center',
   },
   resultsBlock: {
     gap: 12,
@@ -1194,26 +1359,74 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   summaryTitle: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '900',
-    lineHeight: 22,
+    lineHeight: 24,
   },
   summaryMeta: {
     fontSize: 11,
     lineHeight: 16,
   },
-  editButton: {
+  aiPill: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 999,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+  },
+  aiPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  toolbar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sortRow: {
+    borderRadius: 9,
+    flex: 1,
+    flexDirection: 'row',
+    padding: 4,
+  },
+  sortItem: {
+    alignItems: 'center',
+    borderRadius: 7,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 34,
+  },
+  sortItemText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  filterButton: {
+    alignItems: 'center',
+    borderRadius: 9,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 5,
-    minHeight: 36,
-    paddingHorizontal: 10,
+    height: 42,
+    justifyContent: 'center',
+    paddingHorizontal: 11,
+    position: 'relative',
   },
-  editButtonText: {
-    fontSize: 11,
+  filterButtonText: {
+    fontSize: 12,
     fontWeight: '800',
+  },
+  filterBadge: {
+    alignItems: 'center',
+    backgroundColor: CORAL,
+    borderRadius: 999,
+    height: 18,
+    justifyContent: 'center',
+    minWidth: 18,
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '900',
   },
   followUpRow: {
     gap: 8,
@@ -1373,6 +1586,182 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
+  resetInputButton: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    minHeight: 34,
+    paddingHorizontal: 12,
+  },
+  resetInputText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  emptyCard: {
+    alignItems: 'center',
+    borderWidth: 1,
+    gap: 8,
+    padding: 24,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  emptyText: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  emptyResetButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 36,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  emptyResetText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  modalRoot: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.58)',
+  },
+  sheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 1,
+    gap: 14,
+    maxHeight: '88%',
+    maxWidth: 720,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    width: '100%',
+  },
+  filterHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  filterTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    lineHeight: 27,
+  },
+  filterHeaderActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  filterSelected: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  filterResetButton: {
+    minHeight: 32,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+  },
+  filterResetText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  filterGroup: {
+    gap: 8,
+    marginBottom: 14,
+  },
+  filterGroupTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  filterChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+  },
+  filterChip: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 34,
+    paddingHorizontal: 12,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  filterApply: {
+    alignItems: 'center',
+    borderRadius: 12,
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  filterApplyText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  sheetHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  sheetHeaderCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    lineHeight: 27,
+  },
+  sheetMeta: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  emptyHistory: {
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 28,
+  },
+  emptyHistoryText: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  historyRow: {
+    alignItems: 'center',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    minHeight: 64,
+    paddingVertical: 10,
+  },
+  historyCopy: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
+  },
+  historyTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  historyMeta: {
+    fontSize: 10,
+    lineHeight: 15,
+  },
   detailBlock: {
     gap: 12,
   },
@@ -1409,6 +1798,7 @@ const styles = StyleSheet.create({
   },
   detailProductIcon: {
     alignItems: 'center',
+    backgroundColor: '#232c4d',
     borderRadius: 12,
     height: 64,
     justifyContent: 'center',
@@ -1602,76 +1992,5 @@ const styles = StyleSheet.create({
   compareLinkButtonText: {
     fontSize: 11,
     fontWeight: '800',
-  },
-  modalRoot: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.58)',
-  },
-  sheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderWidth: 1,
-    gap: 14,
-    maxHeight: '88%',
-    maxWidth: 720,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    width: '100%',
-  },
-  sheetHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-  },
-  sheetHeaderCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  sheetTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    lineHeight: 27,
-  },
-  sheetMeta: {
-    fontSize: 11,
-    lineHeight: 16,
-  },
-  emptyHistory: {
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 28,
-  },
-  emptyHistoryText: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  historyRow: {
-    alignItems: 'center',
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    minHeight: 64,
-    paddingVertical: 10,
-  },
-  historyCopy: {
-    flex: 1,
-    gap: 3,
-    minWidth: 0,
-  },
-  historyTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    lineHeight: 18,
-  },
-  historyMeta: {
-    fontSize: 10,
-    lineHeight: 15,
   },
 });
