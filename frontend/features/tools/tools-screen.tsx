@@ -31,7 +31,9 @@ export function ToolsScreen() {
             {visibleTools.length} 个模块
           </ThemedText>
         </View>
-        <ThemedText style={[styles.summaryBody, { color: colors.mutedText }]}>
+        <ThemedText
+          numberOfLines={2}
+          style={[styles.summaryBody, { color: colors.mutedText }]}>
           工具页负责承接热门能力、沉淀详情路由，并让后续能力接入保持同一套视觉和交互结构。
         </ThemedText>
         <View style={styles.categoryRow}>
@@ -66,8 +68,9 @@ export function ToolsScreen() {
 
 const styles = StyleSheet.create({
   summaryCard: {
-    gap: 14,
-    padding: 18,
+    borderRadius: 20,
+    gap: 10,
+    padding: 14,
   },
   summaryHeader: {
     alignItems: 'center',
@@ -83,18 +86,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   summaryBody: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 13,
+    lineHeight: 20,
   },
   categoryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   categoryChip: {
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   categoryText: {
     fontSize: 12,
@@ -104,6 +107,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   toolList: {
-    gap: 12,
+    gap: 10,
   },
 });

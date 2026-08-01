@@ -26,8 +26,18 @@ export function ToolCard({ tool, compact = false, onPress }: ToolCardProps) {
     </View>
   ) : (
     <View style={styles.featureContent}>
-      <View style={styles.featureTopRow}>
+      <View style={styles.featureHeader}>
         <IconBadge icon={tool.icon} color={tool.accentColor} />
+        <View style={styles.featureHeading}>
+          <ThemedText numberOfLines={1} style={styles.featureTitle}>
+            {tool.name}
+          </ThemedText>
+          <ThemedText
+            numberOfLines={1}
+            style={[styles.featureTagline, { color: colors.mutedText }]}>
+            {tool.tagline}
+          </ThemedText>
+        </View>
         <View style={styles.badgeRow}>
           {tool.badges.map((badge) => (
             <View
@@ -43,11 +53,9 @@ export function ToolCard({ tool, compact = false, onPress }: ToolCardProps) {
           ))}
         </View>
       </View>
-      <ThemedText style={styles.featureTitle}>{tool.name}</ThemedText>
-      <ThemedText style={[styles.featureTagline, { color: colors.mutedText }]}>
-        {tool.tagline}
-      </ThemedText>
-      <ThemedText style={[styles.featureDescription, { color: colors.mutedText }]}>
+      <ThemedText
+        numberOfLines={2}
+        style={[styles.featureDescription, { color: colors.mutedText }]}>
         {tool.description}
       </ThemedText>
       <ThemedText style={[styles.featureAction, { color: tool.accentColor }]}>
@@ -79,47 +87,52 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   featureCard: {
-    padding: 16,
+    borderRadius: 20,
+    padding: 14,
   },
   featureContent: {
-    gap: 8,
+    gap: 10,
   },
-  featureTopRow: {
+  featureHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
+  },
+  featureHeading: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
   },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 4,
     justifyContent: 'flex-end',
-    marginLeft: 12,
+    maxWidth: '43%',
   },
   badge: {
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
   featureTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
   },
   featureTagline: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   featureDescription: {
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 19,
   },
   featureAction: {
     fontSize: 13,
     fontWeight: '700',
-    marginTop: 4,
   },
 });
