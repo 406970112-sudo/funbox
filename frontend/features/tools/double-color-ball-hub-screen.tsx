@@ -8,16 +8,18 @@ import { ThemedText } from '@/components/themed-text';
 import { appLayout } from '@/constants/app-theme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
+import { getDoubleColorBallHubPalette } from './double-color-ball-hub-theme';
+
 const BLUE = '#3785ff';
 const CORAL = '#ff5f72';
 const INDIGO = '#151b3b';
-const LIME = '#c9f36a';
 
 export function DoubleColorBallHubScreen() {
   const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
   const dark = colorScheme === 'dark';
   const pageSurface = dark ? colors.background : '#f7f9fe';
+  const cardPalette = getDoubleColorBallHubPalette(colorScheme);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -52,22 +54,24 @@ export function DoubleColorBallHubScreen() {
             onPress={() => router.push('/tools/double-color-ball')}
             style={({ pressed }) => [
               styles.choiceCard,
-              { backgroundColor: colors.surface, borderColor: colors.line },
+              {
+                backgroundColor: cardPalette.reference.background,
+                borderColor: cardPalette.reference.border,
+              },
               pressed && styles.pressed,
             ]}>
             <View style={styles.choiceHead}>
-              <View style={[styles.choiceIcon, { backgroundColor: '#fff0f3' }]}>
+              <View
+                style={[
+                  styles.choiceIcon,
+                  { backgroundColor: cardPalette.reference.iconBackground },
+                ]}>
                 <MaterialCommunityIcons name="chart-bell-curve-cumulative" size={22} color={CORAL} />
               </View>
               <View style={styles.choiceCopy}>
                 <ThemedText style={styles.choiceTitle}>双色球概率参考</ThemedText>
                 <ThemedText style={[styles.choiceSubtitle, { color: colors.mutedText }]}>
                   历史冷热、结构与五组参考号
-                </ThemedText>
-              </View>
-              <View style={[styles.badge, { backgroundColor: '#eef1f8' }]}>
-                <ThemedText style={[styles.badgeText, { color: colors.mutedText }]}>
-                  已有功能
                 </ThemedText>
               </View>
             </View>
@@ -84,11 +88,18 @@ export function DoubleColorBallHubScreen() {
             onPress={() => router.push('/tools/double-color-ball-lab')}
             style={({ pressed }) => [
               styles.choiceCard,
-              styles.choiceCardNew,
+              {
+                backgroundColor: cardPalette.labV2.background,
+                borderColor: cardPalette.labV2.border,
+              },
               pressed && styles.pressed,
             ]}>
             <View style={styles.choiceHead}>
-              <View style={[styles.choiceIcon, { backgroundColor: '#e8edff' }]}>
+              <View
+                style={[
+                  styles.choiceIcon,
+                  { backgroundColor: cardPalette.labV2.iconBackground },
+                ]}>
                 <MaterialCommunityIcons name="flask-outline" size={22} color={BLUE} />
               </View>
               <View style={styles.choiceCopy}>
@@ -96,9 +107,6 @@ export function DoubleColorBallHubScreen() {
                 <ThemedText style={[styles.choiceSubtitle, { color: colors.mutedText }]}>
                   随机 / 概率 / 概率权重 · 1000 期
                 </ThemedText>
-              </View>
-              <View style={[styles.badge, { backgroundColor: LIME }]}>
-                <ThemedText style={[styles.badgeText, { color: '#26320b' }]}>新功能</ThemedText>
               </View>
             </View>
             <View style={[styles.choiceAction, styles.choiceActionNew]}>
@@ -114,11 +122,18 @@ export function DoubleColorBallHubScreen() {
             onPress={() => router.push('/tools/double-color-ball-lab-classic')}
             style={({ pressed }) => [
               styles.choiceCard,
-              styles.choiceCardClassic,
+              {
+                backgroundColor: cardPalette.labV1.background,
+                borderColor: cardPalette.labV1.border,
+              },
               pressed && styles.pressed,
             ]}>
             <View style={styles.choiceHead}>
-              <View style={[styles.choiceIcon, { backgroundColor: '#fff7e8' }]}>
+              <View
+                style={[
+                  styles.choiceIcon,
+                  { backgroundColor: cardPalette.labV1.iconBackground },
+                ]}>
                 <MaterialCommunityIcons name="flask-outline" size={22} color="#a76a00" />
               </View>
               <View style={styles.choiceCopy}>
@@ -126,9 +141,6 @@ export function DoubleColorBallHubScreen() {
                 <ThemedText style={[styles.choiceSubtitle, { color: colors.mutedText }]}>
                   低频优先 / 时间加权 / 正态拟合
                 </ThemedText>
-              </View>
-              <View style={[styles.badge, { backgroundColor: '#fff0e1' }]}>
-                <ThemedText style={[styles.badgeText, { color: '#a76a00' }]}>经典版</ThemedText>
               </View>
             </View>
             <View style={[styles.choiceAction, styles.choiceActionClassic]}>
@@ -152,15 +164,11 @@ export function DoubleColorBallHubScreen() {
 }
 
 const styles = StyleSheet.create({
-  badge: { alignItems: 'center', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 5 },
-  badgeText: { fontSize: 8, fontWeight: '900', lineHeight: 12 },
   choiceAction: { alignItems: 'center', borderRadius: 8, flexDirection: 'row', gap: 6, height: 36, justifyContent: 'center', marginTop: 12 },
   choiceActionClassic: { backgroundColor: '#a76a00' },
   choiceActionNew: { backgroundColor: '#4b6bff' },
   choiceActionText: { fontSize: 10, fontWeight: '900', lineHeight: 15 },
   choiceCard: { borderRadius: 12, borderWidth: 1, marginTop: 12, padding: 14 },
-  choiceCardClassic: { backgroundColor: '#fffaf0', borderColor: '#f0d9b0' },
-  choiceCardNew: { backgroundColor: '#f5f8ff', borderColor: '#c7d6ff' },
   choiceCopy: { flex: 1, minWidth: 0 },
   choiceHead: { alignItems: 'center', flexDirection: 'row', gap: 11 },
   choiceIcon: { alignItems: 'center', borderRadius: 10, height: 42, justifyContent: 'center', width: 42 },
