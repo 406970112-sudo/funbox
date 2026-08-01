@@ -30,6 +30,7 @@ export type AppTool = {
   usageLabel: string;
   status: ToolStatus;
   featured?: boolean;
+  hiddenFromList?: boolean;
 };
 
 export type GameItem = {

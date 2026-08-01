@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FunBox · 双色球计划实验室产品设计 V1</title>
+  <style>
+    :root {
+      --board: #eef4ff;
+      --paper: #ffffff;
+      --surface: #f6f8fd;
+      --ink: #151b3b;
+      --text: #18233d;
+      --muted: #7483a2;
+      --line: #dde6fb;
+      --primary: #4b6bff;
+      --primary-soft: #e8edff;
+      --red: #ff5f72;
+      --red-soft: #fff0f3;
+      --blue: #3785ff;
+      --blue-soft: #eaf3ff;
+      --lime: #c9f36a;
+      --green: #20ad78;
+      --amber: #f2aa3b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--board);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    body { min-width: 1800px; }
+
+    .board {
+      width: 1800px;
+      height: 1080px;
+      padding: 30px 34px;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(255,255,255,.42) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.42) 1px, transparent 1px),
+        var(--board);
+      background-size: 40px 40px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 320px 440px 440px 440px;
+      gap: 24px;
+      height: 1020px;
+    }
+
+    .strategy {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 26px 24px 18px;
+      background: rgba(255,255,255,.94);
+      border: 1px solid rgba(212,222,242,.95);
+      border-radius: 22px;
+      box-shadow: 0 16px 40px rgba(45,70,130,.09);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: var(--ink);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 19px;
+      width: 20px;
+      height: 4px;
+      border-radius: 4px;
+      background: var(--lime);
+    }
+
+    .brand-mark::after { transform: rotate(90deg); }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 12px;
+      color: var(--ink);
+    }
+
+    .brand-copy span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .strategy h1 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 28px;
+      line-height: 1.16;
+      font-weight: 900;
+    }
+
+    .strategy-lead {
+      margin: 10px 0 0;
+      color: #5f6d89;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .strategy-section {
+      margin-top: 19px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .strategy-section h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .issue-list,
+    .scope-list,
+    .success-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .issue-list li,
+    .scope-list li,
+    .success-list li {
+      display: grid;
+      grid-template-columns: 10px 1fr;
+      align-items: start;
+      gap: 8px;
+      color: #56647f;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .scope-list .dot { background: var(--primary); }
+    .success-list .dot { background: var(--lime); }
+
+    .approaches {
+      display: grid;
+      gap: 8px;
+    }
+
+    .approach {
+      display: grid;
+      grid-template-columns: 25px 1fr;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .approach-index {
+      display: grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 7px;
+      background: #e9edf6;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .approach strong {
+      display: block;
+      font-size: 10px;
+      line-height: 1.3;
+    }
+
+    .approach span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.35;
+    }
+
+    .approach.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      box-shadow: 0 9px 22px rgba(75,107,255,.20);
+    }
+
+    .approach.selected .approach-index {
+      background: var(--lime);
+      color: var(--ink);
+    }
+
+    .approach.selected strong { color: #fff; }
+    .approach.selected span { color: #dfe5ff; }
+
+    .entry {
+      margin-top: auto;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .choice-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .choice-card {
+      position: relative;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+    }
+
+    .choice-card.new {
+      border-color: #c7d6ff;
+      background: linear-gradient(180deg, #f5f8ff 0%, var(--paper) 70%);
+    }
+
+    .choice-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .choice-icon {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--red-soft);
+      color: var(--red);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .choice-card.new .choice-icon {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .choice-card strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .choice-card p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 8px;
+      line-height: 1.5;
+    }
+
+    .choice-badge {
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      margin-left: auto;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: #eef1f8;
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 800;
+    }
+
+    .choice-card.new .choice-badge {
+      background: var(--lime);
+      color: var(--ink);
+    }
+
+    .choice-action {
+      display: grid;
+      place-items: center;
+      height: 34px;
+      margin-top: 11px;
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+    }
+
+    .choice-card.new .choice-action {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .choice-note {
+      margin-top: 13px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fff7e8;
+      color: #7c590d;
+      font-size: 8px;
+      line-height: 1.6;
+    }
+
+    .phone {
+      position: relative;
+      width: 440px;
+      min-width: 0;
+      border-radius: 34px;
+      background: #101426;
+      padding: 10px;
+      box-shadow: 0 22px 54px rgba(35,54,100,.22);
+    }
+
+    .screen {
+      position: relative;
+      height: 1000px;
+      overflow: hidden;
+      border-radius: 26px;
+      background: var(--paper);
+    }
+
+    .notch {
+      position: absolute;
+      z-index: 3;
+      top: 10px;
+      left: 50%;
+      width: 116px;
+      height: 24px;
+      transform: translateX(-50%);
+      border-radius: 0 0 14px 14px;
+      background: #101426;
+    }
+
+    .statusbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 34px;
+      padding: 0 18px;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-icons i {
+      display: block;
+      width: 15px;
+      height: 8px;
+      border: 1px solid var(--ink);
+      border-radius: 2px;
+    }
+
+    .status-icons i::after {
+      content: "";
+      display: block;
+      width: 9px;
+      height: 4px;
+      margin: 1px;
+      border-radius: 1px;
+      background: var(--ink);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 34px 1fr 34px;
+      align-items: center;
+      height: 54px;
+      padding: 0 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .icon-button {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .icon-button.info {
+      color: var(--blue);
+      font-family: Georgia, serif;
+      font-size: 14px;
+      font-weight: 700;
+      font-style: italic;
+    }
+
+    .scroll {
+      height: 912px;
+      padding: 12px 14px 20px;
+      overflow: hidden;
+    }
+
+    .sync-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .source-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #effbe9;
+      color: #168b70;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .source-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--lime);
+    }
+
+    .hero {
+      margin-top: 10px;
+      padding: 15px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .hero-meta {
+      color: #aab5d6;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .hero-title {
+      margin-top: 5px;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .hero-sub {
+      margin-top: 4px;
+      color: #b7c2df;
+      font-size: 8px;
+      line-height: 1.5;
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .hero-metric {
+      min-width: 0;
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(255,255,255,.08);
+    }
+
+    .hero-metric span {
+      display: block;
+      color: #93a0c5;
+      font-size: 7px;
+      font-weight: 700;
+    }
+
+    .hero-metric strong {
+      display: block;
+      margin-top: 3px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .panel {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .panel-head strong {
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .panel-head span {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+      padding: 3px;
+      border-radius: 8px;
+      background: #e8edf7;
+    }
+
+    .segmented.two { grid-template-columns: repeat(2, 1fr); }
+    .segmented.three { grid-template-columns: repeat(3, 1fr); }
+    .segmented.four { grid-template-columns: repeat(4, 1fr); }
+
+    .segment {
+      display: grid;
+      place-items: center;
+      height: 29px;
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .segment.active {
+      background: var(--paper);
+      color: var(--primary);
+      box-shadow: 0 2px 7px rgba(45,70,130,.09);
+    }
+
+    .algorithm-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .algorithm {
+      display: grid;
+      grid-template-columns: 18px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+    }
+
+    .algorithm.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .algorithm-index {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      background: #e9edf6;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+    }
+
+    .algorithm.active .algorithm-index {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .algorithm strong {
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .algorithm span {
+      color: var(--muted);
+      font-size: 7px;
+    }
+
+    .algorithm .check {
+      display: grid;
+      place-items: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 8px;
+      font-weight: 900;
+    }
+
+    .primary-button {
+      display: grid;
+      place-items: center;
+      height: 46px;
+      margin-top: 12px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      box-shadow: 0 9px 20px rgba(75,107,255,.22);
+    }
+
+    .note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 7px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .result-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .metric.loss strong { color: var(--red); }
+    .metric.win strong { color: var(--green); }
+    .metric.accent { background: var(--ink); }
+    .metric.accent span { color: #93a0c5; }
+    .metric.accent strong { color: var(--lime); }
+
+    .distribution {
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+
+    .distribution-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+
+    .distribution-title strong {
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .distribution-title span {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    .dist-row {
+      display: grid;
+      grid-template-columns: 76px 1fr 30px;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .dist-row span {
+      font-size: 8px;
+      font-weight: 700;
+    }
+
+    .dist-bar {
+      height: 6px;
+      border-radius: 999px;
+      background: #e8edf7;
+      overflow: hidden;
+    }
+
+    .dist-bar i {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      background: var(--primary);
+    }
+
+    .dist-row.red .dist-bar i { background: var(--red); }
+    .dist-row.lime .dist-bar i { background: var(--green); }
+
+    .dist-row b {
+      font-size: 9px;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .table {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .table-head,
+    .table-row {
+      display: grid;
+      grid-template-columns: 52px 1fr 1fr 38px 46px 34px;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 9px;
+      font-size: 7px;
+    }
+
+    .table-head {
+      background: var(--surface);
+      color: var(--muted);
+      font-weight: 800;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .table-row {
+      border-bottom: 1px solid #eef2fa;
+    }
+
+    .table-row:last-child { border-bottom: 0; }
+    .table-row b { font-weight: 900; }
+    .table-row .loss { color: var(--red); }
+    .table-row .win { color: var(--green); }
+    .balls {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .ball {
+      display: grid;
+      place-items: center;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--red-soft);
+      color: var(--red);
+      font-size: 6px;
+      font-weight: 900;
+    }
+
+    .ball.blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .secondary-button {
+      display: grid;
+      place-items: center;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .dark-button {
+      display: grid;
+      place-items: center;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+    }
+
+    .disclaimer {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 7px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .source-footer {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 7px;
+      text-align: center;
+    }
+
+    .bottom-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      height: 62px;
+      border-top: 1px solid var(--line);
+      background: var(--paper);
+    }
+
+    .nav-item {
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      color: #a1abc2;
+      font-size: 7px;
+      font-weight: 700;
+    }
+
+    .nav-item.active { color: var(--primary); }
+    .nav-symbol {
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid currentColor;
+      border-radius: 5px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 18px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: var(--red-soft);
+      color: var(--red);
+      font-size: 7px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <div class="stage">
+      <aside class="strategy">
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <div class="brand-copy"><strong>FunBox</strong><span>工具 · 数据 · 新功能</span></div>
+        </div>
+        <h1>双色球计划<br />实验室</h1>
+        <p class="strategy-lead">把文档里的“选期数、三套算法、n-1 期推 n 期、逐期奖金对比、Excel 导出”做成独立工具，不修改现有概率参考。</p>
+
+        <section class="strategy-section">
+          <h2>产品目标</h2>
+          <ul class="issue-list">
+            <li><i class="dot"></i>首页 / 工具列表只保留一个“双色球”入口</li>
+            <li><i class="dot"></i>点击后进入二级页，选择概率参考或计划实验室</li>
+            <li><i class="dot"></i>可选 100 / 200 / 400 / 1000 期官方历史数据</li>
+            <li><i class="dot"></i>低频优先、时间加权、正态拟合三套算法</li>
+            <li><i class="dot"></i>回测每期中奖金额与买入成本，计算数学期望</li>
+            <li><i class="dot"></i>一、二等奖浮动金额用官方数据，固定奖按规则</li>
+            <li><i class="dot"></i>一键导出 Excel 可打开的 CSV 明细</li>
+          </ul>
+        </section>
+
+        <section class="strategy-section">
+          <h2>关键原则</h2>
+          <ul class="scope-list">
+            <li><i class="dot"></i>回测只用目标期之前的数据，避免未来数据泄漏</li>
+            <li><i class="dot"></i>单独展示“剔除头奖后收益”，防止单期大奖误导判断</li>
+            <li><i class="dot"></i>始终提示开奖为随机事件，不出现“必中 / 稳赢”</li>
+          </ul>
+        </section>
+
+        <section class="strategy-section">
+          <h2>设计方向</h2>
+          <div class="approaches">
+            <div class="approach selected">
+              <div class="approach-index">A</div>
+              <div><strong>参数优先</strong><span>设置区在最上方，结果区紧随其后</span></div>
+            </div>
+            <div class="approach">
+              <div class="approach-index">B</div>
+              <div><strong>收益导向</strong><span>先看总投入 / 总奖金 / 每注期望</span></div>
+            </div>
+            <div class="approach">
+              <div class="approach-index">C</div>
+              <div><strong>明细可查</strong><span>逐期预测、开奖、奖金和盈亏都可导出</span></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="entry">统一入口：首页 / 工具列表 ＞ 双色球 ＞ 二级页选择</div>
+      </aside>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><div class="status-icons"><i></i><i></i></div></div>
+          <header class="topbar">
+            <button class="icon-button">‹</button>
+            <h2>双色球</h2>
+            <button class="icon-button info">i</button>
+          </header>
+          <div class="scroll">
+            <div class="sync-line">
+              <span>统一入口 · 二级选择</span>
+              <span class="source-state"><i class="source-dot"></i>两个功能</span>
+            </div>
+
+            <div class="hero">
+              <div class="hero-meta">首页 / 工具列表 · 一个入口</div>
+              <div class="hero-title">选择要进入的功能</div>
+              <div class="hero-sub">点击统一的双色球入口后，在这里选择现有概率参考或新的计划实验室。</div>
+            </div>
+
+            <div class="choice-list">
+              <div class="choice-card">
+                <div class="choice-card-head">
+                  <span class="choice-icon">概</span>
+                  <div><strong>双色球概率参考</strong><p>历史冷热、结构与五组参考号</p></div>
+                  <span class="choice-badge">已有功能</span>
+                </div>
+                <div class="choice-action">进入概率参考</div>
+              </div>
+              <div class="choice-card new">
+                <div class="choice-card-head">
+                  <span class="choice-icon">验</span>
+                  <div><strong>双色球计划实验室</strong><p>三套算法、收益回测与导出</p></div>
+                  <span class="choice-badge">新功能</span>
+                </div>
+                <div class="choice-action">进入计划实验室</div>
+              </div>
+            </div>
+
+            <div class="choice-note">后续新增双色球相关功能时，也统一从这里进入，不用在首页堆更多入口。</div>
+            <div class="disclaimer">开奖为独立随机事件，两个功能都只做数据统计与模型行为研究。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><div class="status-icons"><i></i><i></i></div></div>
+          <header class="topbar">
+            <button class="icon-button">‹</button>
+            <h2>双色球计划实验室</h2>
+            <button class="icon-button info">i</button>
+          </header>
+          <div class="scroll">
+            <div class="sync-line">
+              <span>已同步至 2026087 期 · 400 期</span>
+              <span class="source-state"><i class="source-dot"></i>官方数据</span>
+            </div>
+
+            <div class="hero">
+              <div class="hero-meta">参数回测 · 收益期望</div>
+              <div class="hero-title">先跑回测，再看结论</div>
+              <div class="hero-sub">用前 N 期推算第 N 期，按官方浮动奖金与固定奖规则计算每期奖金。</div>
+              <div class="hero-metrics">
+                <div class="hero-metric"><span>最新期</span><strong>2026087</strong></div>
+                <div class="hero-metric"><span>数据范围</span><strong>400 期</strong></div>
+                <div class="hero-metric"><span>每注成本</span><strong>2 元</strong></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><strong>历史期数</strong><span>官方开奖可抓取</span></div>
+              <div class="segmented four">
+                <span class="segment">100</span><span class="segment">200</span><span class="segment active">400</span><span class="segment">1000</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><strong>统计窗口</strong><span>用于算法训练</span></div>
+              <div class="segmented three">
+                <span class="segment">30 期</span><span class="segment active">100 期</span><span class="segment">300 期</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><strong>预测算法</strong><span>三套可切换</span></div>
+              <div class="algorithm-list">
+                <div class="algorithm active">
+                  <span class="algorithm-index">1</span>
+                  <div><strong>低频优先</strong><span>出现频次最低的红球与蓝球</span></div>
+                  <span class="check">✓</span>
+                </div>
+                <div class="algorithm">
+                  <span class="algorithm-index">2</span>
+                  <div><strong>时间加权</strong><span>按 0.999^n 给近期出现加权</span></div>
+                </div>
+                <div class="algorithm">
+                  <span class="algorithm-index">3</span>
+                  <div><strong>正态拟合</strong><span>各位置拟合正态分布取顶点</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><strong>时间衰减</strong><span>参数可调</span></div>
+              <div class="segmented three">
+                <span class="segment active">0.999</span><span class="segment">0.995</span><span class="segment">0.990</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head"><strong>回测期数</strong><span>最近 N 个目标期</span></div>
+              <div class="segmented three">
+                <span class="segment">20 期</span><span class="segment active">50 期</span><span class="segment">100 期</span>
+              </div>
+            </div>
+
+            <div class="primary-button">运行回测</div>
+            <div class="note">固定奖：三 3000 / 四 200 / 五 10 / 六 5；一、二等奖取当期官方每注奖金。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><div class="status-icons"><i></i><i></i></div></div>
+          <header class="topbar">
+            <button class="icon-button">‹</button>
+            <h2>收益回测结果</h2>
+            <span class="tag">低频优先</span>
+          </header>
+          <div class="scroll">
+            <div class="sync-line">
+              <span>50 个目标期 · 每期 1 注</span>
+              <span class="source-state"><i class="source-dot"></i>2026087 前数据</span>
+            </div>
+
+            <div class="result-metrics">
+              <div class="metric"><span>总投入</span><strong>100 元</strong></div>
+              <div class="metric loss"><span>总奖金</span><strong>96 元</strong></div>
+              <div class="metric loss"><span>净收益</span><strong>-4 元</strong></div>
+              <div class="metric"><span>每注期望</span><strong>0.96 元</strong></div>
+              <div class="metric accent"><span>剔除头奖后净收益</span><strong>-16 元</strong></div>
+              <div class="metric"><span>中奖率</span><strong>22%</strong></div>
+            </div>
+
+            <div class="distribution">
+              <div class="distribution-title"><strong>命中分布</strong><span>仅描述模型行为</span></div>
+              <div class="dist-row"><span>红球 0—1</span><div class="dist-bar"><i style="width:86%"></i></div><b>86%</b></div>
+              <div class="dist-row red"><span>红球 2—3</span><div class="dist-bar"><i style="width:13%"></i></div><b>13%</b></div>
+              <div class="dist-row lime"><span>红球 4+</span><div class="dist-bar"><i style="width:1%"></i></div><b>1%</b></div>
+              <div class="dist-row"><span>蓝球命中</span><div class="dist-bar"><i style="width:18%"></i></div><b>9 次</b></div>
+            </div>
+
+            <div class="table">
+              <div class="table-head">
+                <span>期号</span><span>预测号</span><span>开奖号</span><span>红球</span><span>奖金</span><span>盈亏</span>
+              </div>
+              <div class="table-row">
+                <b>2026079</b>
+                <span class="balls"><i class="ball">02</i><i class="ball">08</i><i class="ball">15</i><i class="ball">21</i><i class="ball">28</i><i class="ball blue">05</i></span>
+                <span class="balls"><i class="ball">03</i><i class="ball">08</i><i class="ball">16</i><i class="ball">22</i><i class="ball">29</i><i class="ball blue">11</i></span>
+                <b>1</b><span>0 元</span><span class="loss">-2</span>
+              </div>
+              <div class="table-row">
+                <b>2026080</b>
+                <span class="balls"><i class="ball">02</i><i class="ball">08</i><i class="ball">15</i><i class="ball">21</i><i class="ball">28</i><i class="ball blue">05</i></span>
+                <span class="balls"><i class="ball">02</i><i class="ball">10</i><i class="ball">17</i><i class="ball">24</i><i class="ball">30</i><i class="ball blue">05</i></span>
+                <b>1</b><span>5 元</span><span class="win">+3</span>
+              </div>
+              <div class="table-row">
+                <b>2026081</b>
+                <span class="balls"><i class="ball">02</i><i class="ball">08</i><i class="ball">15</i><i class="ball">21</i><i class="ball">28</i><i class="ball blue">05</i></span>
+                <span class="balls"><i class="ball">04</i><i class="ball">09</i><i class="ball">18</i><i class="ball">23</i><i class="ball">31</i><i class="ball blue">07</i></span>
+                <b>0</b><span>0 元</span><span class="loss">-2</span>
+              </div>
+              <div class="table-row">
+                <b>2026082</b>
+                <span class="balls"><i class="ball">02</i><i class="ball">08</i><i class="ball">15</i><i class="ball">21</i><i class="ball">28</i><i class="ball blue">05</i></span>
+                <span class="balls"><i class="ball">02</i><i class="ball">08</i><i class="ball">11</i><i class="ball">19</i><i class="ball">26</i><i class="ball blue">12</i></span>
+                <b>2</b><span>0 元</span><span class="loss">-2</span>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <div class="secondary-button">换参数重跑</div>
+              <div class="dark-button">导出 Excel（CSV）</div>
+            </div>
+            <div class="disclaimer">回测只用于检验算法行为，开奖是独立随机事件，任何组合理论中奖概率相同。</div>
+            <div class="source-footer">中国福彩网历史开奖 · 更新于 07-31 12:30</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" style="display:none"></div>
+    </div>
+  </main>
+</body>
+</html>

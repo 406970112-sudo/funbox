@@ -12,6 +12,8 @@ import { HotNewsScreen } from '@/features/tools/hot-news-screen';
 import { ResourceSearchScreen } from '@/features/tools/resource-search-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
+import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
+import { DoubleColorBallLabScreen } from '@/features/tools/double-color-ball-lab-screen';
 import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
@@ -166,6 +168,24 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <DoubleColorBallScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'double-color-ball-hub') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DoubleColorBallHubScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'double-color-ball-lab') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DoubleColorBallLabScreen />
       </>
     );
   }

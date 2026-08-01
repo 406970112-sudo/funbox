@@ -48,7 +48,9 @@ export function FeatureAccessProvider({ children }: PropsWithChildren) {
     };
   }, [accessToken, authStatus, reloadKey, user?.role]);
 
-  const visibleTools = appTools.filter((tool) => visibleIDs.has(tool.id));
+  const visibleTools = appTools.filter(
+    (tool) => visibleIDs.has(tool.id) && !tool.hiddenFromList,
+  );
 
   return (
     <FeatureAccessContext.Provider

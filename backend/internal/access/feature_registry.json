@@ -90,6 +90,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "double-color-ball-hub",
+    "name": "双色球",
+    "tagline": "概率参考与计划实验室统一入口",
+    "description": "首页和工具列表只保留一个双色球入口，点击后选择进入现有概率参考或新的计划实验室。",
+    "icon": "chart-bell-curve",
+    "category": "数据",
+    "route": "/tools/double-color-ball-hub",
+    "accentColor": "#4b6bff",
+    "badges": ["统一入口", "概率参考", "计划实验室"],
+    "usageLabel": "选择功能",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "double-color-ball",
     "name": "双色球概率参考",
     "tagline": "历史数据与结构化参考号",
@@ -102,6 +117,23 @@
     "usageLabel": "查看概率分析",
     "status": "available",
     "featured": true,
+    "hiddenFromList": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "double-color-ball-lab",
+    "name": "双色球计划实验室",
+    "tagline": "多算法回测与收益期望",
+    "description": "选择历史期数、统计窗口和预测算法，用 n-1 期推算第 n 期，对比每期中奖金额与买入成本，并导出回测明细。",
+    "icon": "flask-outline",
+    "category": "数据",
+    "route": "/tools/double-color-ball-lab",
+    "accentColor": "#20ad78",
+    "badges": ["多算法", "收益回测"],
+    "usageLabel": "进入计划实验室",
+    "status": "available",
+    "featured": true,
+    "hiddenFromList": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {

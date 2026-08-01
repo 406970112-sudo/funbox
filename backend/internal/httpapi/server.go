@@ -17,6 +17,7 @@ import (
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/lottery"
+	"my-first-expo-app/backend/internal/lotterylab"
 	"my-first-expo-app/backend/internal/marketradar"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
@@ -36,6 +37,7 @@ type Server struct {
 	rateLimiter           *RateLimiter
 	realtimeHub           *realtime.Hub
 	lotteryService        lotteryHistoryService
+	lotteryLabService     lotteryLabHistoryService
 	marketRadarService    marketRadarSnapshotService
 	newsService           newsFeedService
 	readingService        *reading.Service
@@ -157,6 +159,7 @@ func newServer(
 		rateLimiter:           NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:           realtime.NewHub(),
 		lotteryService:        lottery.NewService(cfg.Lottery),
+		lotteryLabService:     lotterylab.NewService(lotterylab.Config{}),
 		marketRadarService:    marketradar.NewService(marketradar.Config{}),
 		newsService:           newsService,
 		readingService:        readingService,
@@ -177,6 +180,7 @@ func newServer(
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/grants", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureGrant))))
 	registerImageCompressionRoutes(mux, api)
 	registerLotteryRoutes(mux, api)
+	registerLotteryLabRoutes(mux, api)
 	registerMarketRadarRoutes(mux, api)
 	registerNewsRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
