@@ -60,13 +60,13 @@ go mod tidy
 go run ./cmd/api
 ```
 
-服务会自动读取 `backend/.env`、当前工作目录下的 `.env`，以及 `email-agent/backend/.env`，所以既可以在 `backend/` 内启动，也可以从仓库根目录启动。首次启动会自动创建 SQLite 数据库、头像目录、反馈图片目录和 JWT 密钥。
+服务会自动读取 `backend/.env`、当前工作目录下的 `.env`，以及 `email-agent/backend/.env`，所以既可以在 `backend/` 内启动，也可以从仓库根目录启动。首次启动会自动创建 SQLite 数据库、头像目录、反馈图片目录、收款码目录和 JWT 密钥。
 
 核心配置项：
 
 - 服务：`SERVER_HOST`、`SERVER_PORT`、`SERVER_PUBLIC_BASE_URL`、`CORS_ALLOWED_ORIGINS`
 - 第三方：`VOLC_APP_ID`、`VOLC_ACCESS_TOKEN`（火山引擎 TTS）、`DEEPSEEK_API_KEY`（翻译/摘要/邮件代理）
-- 存储：`STORAGE_AUDIO_DIR`、`STORAGE_AVATAR_DIR`、`STORAGE_FEEDBACK_DIR`、`DATABASE_PATH`
+- 存储：`STORAGE_AUDIO_DIR`、`STORAGE_AVATAR_DIR`、`STORAGE_FEEDBACK_DIR`、`STORAGE_PAYMENT_QR_DIR`、`DATABASE_PATH`
 - 认证：`AUTH_JWT_SECRET` / `AUTH_JWT_SECRET_FILE`、`AUTH_TOKEN_TTL_MS`
 - 限流：`RATE_LIMIT_WINDOW_MS`、`RATE_LIMIT_MAX_REQUESTS`
 
@@ -109,4 +109,4 @@ npm run dev
 - `deploy/alicloud/ubuntu-22.04/bootstrap-server.sh`
 - `deploy/alicloud/ubuntu-22.04/deploy-project.sh`
 
-生产环境会把数据库、头像和 JWT 密钥重定向到固定的共享数据目录，切换 release 时不会丢失数据；`AUTH_JWT_SECRET` 或密钥文件一旦更换，现有登录令牌会全部失效。
+生产环境会把数据库、头像、JWT 密钥和收款码重定向到固定的共享数据目录，切换 release 时不会丢失数据；`AUTH_JWT_SECRET` 或密钥文件一旦更换，现有登录令牌会全部失效。

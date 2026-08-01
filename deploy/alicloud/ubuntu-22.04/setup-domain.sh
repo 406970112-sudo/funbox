@@ -40,6 +40,7 @@ server {
 
   root $WEB_ROOT;
   index index.html;
+  client_max_body_size 3m;
 
   add_header Permissions-Policy "camera=(self), microphone=(self)" always;
 

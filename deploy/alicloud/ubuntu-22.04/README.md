@@ -61,14 +61,15 @@ bash deploy/alicloud/ubuntu-22.04/deploy-project.sh
 - `TTS_MAX_CONTEXT_LENGTH`
 - `TTS_REQUEST_TIMEOUT_MS`
 - `STORAGE_AUDIO_DIR`
+- `STORAGE_PAYMENT_QR_DIR`
 - `PERSISTENT_ROOT`
 - `APP_USER`
 - `APP_GROUP`
 - `GOPROXY`
 
-`PERSISTENT_ROOT` 必须是位于应用和 release 目录之外的绝对路径。部署脚本会把 SQLite 数据库、用户头像和 JWT 密钥保存到该目录；旧 `.env` 中的相对路径会自动改写为共享目录中的绝对路径。默认值为 `/srv/my-first-expo-app-shared`。
+`PERSISTENT_ROOT` 必须是位于应用和 release 目录之外的绝对路径。部署脚本会把 SQLite 数据库、用户头像、JWT 密钥和收款码保存到该目录；旧 `.env` 中的相对路径会自动改写为共享目录中的绝对路径。默认值为 `/srv/my-first-expo-app-shared`。
 
-首次从 release 内的数据目录切换到共享目录时，更新脚本会通过 SQLite 在线备份迁移上一版数据库，并只复制数据库当前引用的头像与 JWT 密钥。迁移仅在共享数据库尚不存在时执行，后续发布不会覆盖已有共享数据。GitHub Actions 通过 `PREVIOUS_APP_ROOT=/srv/my-first-expo-app-current` 指定上一版应用目录。
+首次从 release 内的数据目录切换到共享目录时，更新脚本会通过 SQLite 在线备份迁移上一版数据库，并复制数据库当前引用的头像、JWT 密钥与收款码。迁移仅在共享数据库尚不存在时执行，后续发布不会覆盖已有共享数据。GitHub Actions 通过 `PREVIOUS_APP_ROOT=/srv/my-first-expo-app-current` 指定上一版应用目录。
 
 ### 3. 开 HTTPS
 
