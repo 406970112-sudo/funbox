@@ -400,6 +400,7 @@ configure_nginx_api_proxies() {
   local has_api
   local has_voice
   local has_avatars
+  local has_payment_qr
   local has_health
 
   shopt -s nullglob
@@ -454,6 +455,11 @@ configure_nginx_api_proxies() {
     else
       has_avatars=0
     fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]+/payment-qr/[[:space:]]*\{' "$stripped"; then
+      has_payment_qr=1
+    else
+      has_payment_qr=0
+    fi
     if grep -Eq '^[[:space:]]*location[[:space:]]*=[[:space:]]*/healthz[[:space:]]*\{' "$stripped"; then
       has_health=1
     else
@@ -470,6 +476,7 @@ configure_nginx_api_proxies() {
       -v has_api="$has_api" \
       -v has_voice="$has_voice" \
       -v has_avatars="$has_avatars" \
+      -v has_payment_qr="$has_payment_qr" \
       -v has_health="$has_health" '
       BEGIN {
         block = ""
@@ -546,6 +553,16 @@ configure_nginx_api_proxies() {
           block = block \
                   "  location /avatars/ {\n" \
                   "    proxy_pass http://127.0.0.1:" backend_port "/avatars/;\n" \
+                  "    proxy_http_version 1.1;\n" \
+                  "    proxy_set_header Host $host;\n" \
+                  "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n" \
+                  "    proxy_set_header X-Forwarded-Proto $scheme;\n" \
+                  "  }\n\n"
+        }
+        if (has_payment_qr != 1) {
+          block = block \
+                  "  location /payment-qr/ {\n" \
+                  "    proxy_pass http://127.0.0.1:" backend_port "/payment-qr/;\n" \
                   "    proxy_http_version 1.1;\n" \
                   "    proxy_set_header Host $host;\n" \
                   "    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n" \
