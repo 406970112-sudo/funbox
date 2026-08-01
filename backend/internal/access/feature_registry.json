@@ -105,6 +105,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "double-color-ball-history",
+    "name": "双色球历史开奖记录",
+    "tagline": "近期开奖与期号查询",
+    "description": "按期号或日期查询中国福彩网官方历史开奖号码，核对近期开奖事实与数据同步状态。",
+    "icon": "calendar-search",
+    "category": "数据",
+    "route": "/tools/double-color-ball-history",
+    "accentColor": "#20ad78",
+    "badges": ["官方数据", "历史查询"],
+    "usageLabel": "查看历史开奖",
+    "status": "available",
+    "featured": true,
+    "hiddenFromList": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "double-color-ball",
     "name": "双色球概率参考",
     "tagline": "历史数据与结构化参考号",

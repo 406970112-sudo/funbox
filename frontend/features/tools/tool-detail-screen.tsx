@@ -13,6 +13,7 @@ import { ResourceSearchScreen } from '@/features/tools/resource-search-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
 import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
+import { DoubleColorBallHistoryScreen } from '@/features/tools/double-color-ball-history-screen';
 import { DoubleColorBallLabScreen } from '@/features/tools/double-color-ball-lab-screen';
 import { DoubleColorBallLabClassicScreen } from '@/features/tools/double-color-ball-lab-classic-screen';
 import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen';
@@ -189,6 +190,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <DoubleColorBallHubScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'double-color-ball-history') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DoubleColorBallHistoryScreen />
       </>
     );
   }

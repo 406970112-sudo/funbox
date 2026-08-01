@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { appLayout } from '@/constants/app-theme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
+import { DoubleColorBallHistoryEntryCard } from './double-color-ball-history-entry-card';
 import { getDoubleColorBallHubPalette } from './double-color-ball-hub-theme';
 
 const BLUE = '#3785ff';
@@ -48,6 +49,10 @@ export function DoubleColorBallHubScreen() {
               首页和工具列表只保留一个双色球入口，后续新功能也从这里进入。
             </ThemedText>
           </View>
+
+          <DoubleColorBallHistoryEntryCard
+            onPress={() => router.push('/tools/double-color-ball-history')}
+          />
 
           <Pressable
             accessibilityRole="button"
@@ -154,7 +159,7 @@ export function DoubleColorBallHubScreen() {
           <View style={[styles.notePanel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
             <MaterialCommunityIcons name="information-outline" size={16} color={BLUE} />
             <ThemedText style={[styles.noteText, { color: colors.mutedText }]}>
-              三个功能都使用中国福彩网官方历史开奖，开奖是独立随机事件，均不提供中奖保证。
+              四个功能都使用中国福彩网官方历史开奖，开奖是独立随机事件，均不提供中奖保证。
             </ThemedText>
           </View>
         </ScrollView>
