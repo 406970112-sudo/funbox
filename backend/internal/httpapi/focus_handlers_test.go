@@ -247,6 +247,16 @@ func TestFocusHTTPFlow(t *testing.T) {
 		http.StatusConflict,
 	)
 
+	requestJSON[focusTaskResponse](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/focus/tasks",
+		`{"title":"无日期任务","priority":"low"}`,
+		token,
+		http.StatusCreated,
+	)
+
 	todaySnapshot := requestJSON[focusTodayResponse](
 		t,
 		testServer.Client(),
@@ -256,6 +266,16 @@ func TestFocusHTTPFlow(t *testing.T) {
 		token,
 		http.StatusOK,
 	)
+	foundNoDateTask := false
+	for _, task := range todaySnapshot.Tasks {
+		if task.Title == "无日期任务" {
+			foundNoDateTask = true
+			break
+		}
+	}
+	if !foundNoDateTask {
+		t.Fatalf("today snapshot missing no-date task: %+v", todaySnapshot.Tasks)
+	}
 	if todaySnapshot.Progress.TaskCompleted != 1 {
 		t.Fatalf("today task progress = %+v", todaySnapshot.Progress)
 	}

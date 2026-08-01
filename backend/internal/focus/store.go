@@ -1197,7 +1197,7 @@ func (s *Store) Today(ctx context.Context, userID, date string) (TodaySnapshot, 
 	if date == "" {
 		date = time.Now().Format("2006-01-02")
 	}
-	tasks, err := s.ListTasks(ctx, userID, TaskFilter{Date: date, IncludeAll: true})
+	tasks, err := s.ListTasks(ctx, userID, TaskFilter{IncludeAll: true})
 	if err != nil {
 		return TodaySnapshot{}, err
 	}
