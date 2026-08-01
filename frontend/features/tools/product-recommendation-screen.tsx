@@ -60,7 +60,7 @@ const CORAL = '#e85d4a';
 const GREEN = '#24b36b';
 const AMBER = '#f1a33b';
 
-const QUICK_EXAMPLES = ['手机', '耳机', '平板', '3000左右手机', '拍照手机'];
+const QUICK_EXAMPLES = ['手机', '耳机', '平板', '洗衣机', '3000左右手机', '拍照手机'];
 
 const SORT_OPTIONS: { id: RecommendationSortKey; label: string }[] = [
   { id: 'fit', label: '综合' },
@@ -1192,6 +1192,11 @@ function productIcon(item: RecommendationItem): IconName {
   if (name.includes('airpods') || name.includes('buds') || name.includes('耳机')) return 'headphones';
   if (name.includes('电视')) return 'television';
   if (name.includes('净化') || name.includes('炸锅') || name.includes('电饭煲')) return 'toaster-oven';
+  if (name.includes('洗衣机')) return 'washing-machine';
+  if (name.includes('冰箱')) return 'fridge-outline';
+  if (name.includes('空调')) return 'air-conditioner';
+  if (name.includes('洗碗机')) return 'dishwasher';
+  if (name.includes('微波炉')) return 'microwave';
   if (name.includes('充电') || name.includes('数据线') || name.includes('移动电源')) return 'battery-charging';
   return 'cellphone';
 }
@@ -1218,6 +1223,8 @@ function categoryText(category: string) {
       return '电视';
     case 'small-appliance':
       return '小家电';
+    case 'large-appliance':
+      return '大家电';
     case 'accessory':
       return '数码配件';
     default:

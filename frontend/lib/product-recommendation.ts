@@ -14,6 +14,7 @@ export const CATEGORY_OPTIONS: { id: RecommendationCategory | ''; label: string 
   { id: 'earbuds', label: '耳机' },
   { id: 'tv', label: '电视' },
   { id: 'small-appliance', label: '小家电' },
+  { id: 'large-appliance', label: '大家电' },
   { id: 'accessory', label: '数码配件' },
 ];
 

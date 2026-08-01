@@ -148,3 +148,73 @@ func TestDeepSeekReasonsAreSanitized(t *testing.T) {
 		t.Fatal("expected sanitized fallback reasons")
 	}
 }
+
+func TestQueryUsesDeepSeekParseForUnrecognizedProduct(t *testing.T) {
+	parseCalled := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		messages := body["messages"].([]any)
+		userContent, _ := messages[1].(map[string]any)["content"].(string)
+		if strings.Contains(userContent, "knownCategories") {
+			parseCalled = true
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"choices": []map[string]any{
+					{
+						"message": map[string]any{
+							"content": `{"category":"large-appliance","budgetMin":null,"budgetMax":null,"brands":[],"preferences":[],"platforms":[]}`,
+						},
+					},
+				},
+			})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"choices": []map[string]any{
+				{
+					"message": map[string]any{
+						"content": `{
+							"summary": "根据滚筒洗衣需求推荐",
+							"items": [
+								{
+									"productId": "mijia-washing-machine-pro-10kg",
+									"fitScore": 92,
+									"suitableFor": "适合需要 10kg 滚筒洗衣机的用户",
+									"reasons": [
+										{"label": "容量", "text": "10kg 大容量"},
+										{"label": "健康", "text": "活氧除菌 0 添加 0 残留"}
+									]
+								}
+							]
+						}`,
+					},
+				},
+			},
+		})
+	}))
+	defer server.Close()
+
+	service := NewService(config.DeepSeekConfig{
+		APIKey:         "test-key",
+		BaseURL:        server.URL,
+		Model:          "deepseek-chat",
+		RequestTimeout: 5_000_000_000,
+	}, nil)
+	result, err := service.Query(context.Background(), Request{
+		Query: "想买 10 公斤滚筒",
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if !parseCalled {
+		t.Fatal("expected deepseek parse call")
+	}
+	if result.Category != "large-appliance" {
+		t.Fatalf("expected large-appliance category, got %q", result.Category)
+	}
+	if len(result.Items) == 0 {
+		t.Fatal("expected washing machine recommendations")
+	}
+}

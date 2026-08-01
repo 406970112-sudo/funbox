@@ -692,5 +692,69 @@
       { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%80%8D%E6%80%9D100W%E7%BC%96%E7%BB%87%E6%95%B0%E6%8D%AE%E7%BA%BF" }
     ],
     "fitTags": ["快充", "耐用", "性价比"]
+  },
+  {
+    "id": "mijia-washing-machine-pro-10kg",
+    "category": "large-appliance",
+    "name": "米家洗衣机 Pro 超电解智投滚筒 10kg",
+    "brand": "米家",
+    "tagline": "10kg · 超电解智投 · 活氧除菌",
+    "referencePrice": 2699,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "capacity": "10kg",
+      "wash": "超电解智投",
+      "safe": "活氧除菌 0 添加 0 残留",
+      "noise": "变频电机"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E7%B1%B3%E5%AE%B6%E6%B4%97%E8%A1%A3%E6%9C%BA%20Pro" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E7%B1%B3%E5%AE%B6%E6%B4%97%E8%A1%A3%E6%9C%BA%20Pro" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E7%B1%B3%E5%AE%B6%E6%B4%97%E8%A1%A3%E6%9C%BA%20Pro" }
+    ],
+    "fitTags": ["大容量", "除菌", "性价比"]
+  },
+  {
+    "id": "haier-chuse-10kg-washer",
+    "category": "large-appliance",
+    "name": "海尔 初色 10kg 滚筒洗衣机",
+    "brand": "海尔",
+    "tagline": "10kg · 桶自洁 · 低噪变频",
+    "referencePrice": 1565,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "capacity": "10kg",
+      "wash": "多种洗涤程序",
+      "clean": "桶自洁",
+      "noise": "低噪变频"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E6%B5%B7%E5%B0%94%20%E5%88%9D%E8%89%B2%20%E6%BB%9A%E7%AD%92%E6%B4%97%E8%A1%A3%E6%9C%BA" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E6%B5%B7%E5%B0%94%20%E5%88%9D%E8%89%B2%20%E6%BB%9A%E7%AD%92%E6%B4%97%E8%A1%A3%E6%9C%BA" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E6%B5%B7%E5%B0%94%20%E5%88%9D%E8%89%B2%20%E6%BB%9A%E7%AD%92%E6%B4%97%E8%A1%A3%E6%9C%BA" }
+    ],
+    "fitTags": ["大容量", "静音", "性价比"]
+  },
+  {
+    "id": "little-swan-tg10v628plus",
+    "category": "large-appliance",
+    "name": "小天鹅 水魔方 TG10V628PLUS 滚筒洗衣机",
+    "brand": "小天鹅",
+    "tagline": "10kg · 水魔方冷水洗 · BLDC 变频",
+    "referencePrice": 2975,
+    "priceSource": "curated:2026-08-01",
+    "specs": {
+      "capacity": "10kg",
+      "wash": "水魔方冷水洗",
+      "clean": "桶自洁",
+      "noise": "BLDC 变频静音",
+      "energy": "一级能效"
+    },
+    "links": [
+      { "platform": "jd", "label": "京东", "url": "https://search.jd.com/Search?keyword=%E5%B0%8F%E5%A4%A9%E9%B9%85%20TG10V628PLUS%20%E6%BB%9A%E7%AD%92%E6%B4%97%E8%A1%A3%E6%9C%BA" },
+      { "platform": "taobao", "label": "淘宝", "url": "https://s.taobao.com/search?q=%E5%B0%8F%E5%A4%A9%E9%B9%85%20TG10V628PLUS%20%E6%BB%9A%E7%AD%92%E6%B4%97%E8%A1%A3%E6%9C%BA" },
+      { "platform": "pdd", "label": "拼多多", "url": "https://mobile.yangkeduo.com/search_result.html?search_key=%E5%B0%8F%E5%A4%A9%E9%B9%85%20TG10V628PLUS%20%E6%BB%9A%E7%AD%92%E6%B4%97%E8%A1%A3%E6%9C%BA" }
+    ],
+    "fitTags": ["大容量", "静音", "节能"]
   }
 ]

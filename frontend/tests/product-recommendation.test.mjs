@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   buildRecommendationRequest,
+  CATEGORY_OPTIONS,
   countActiveFilters,
   emptyFilter,
   filterRecommendationItems,
@@ -13,6 +14,10 @@ import {
   sortRecommendationItems,
   summarizeRequest,
 } from '../lib/product-recommendation.ts';
+
+test('CATEGORY_OPTIONS includes large appliances', () => {
+  assert.equal(CATEGORY_OPTIONS.find((option) => option.id === 'large-appliance')?.label, '大家电');
+});
 
 test('buildRecommendationRequest maps selection to API payload', () => {
   const request = buildRecommendationRequest({

@@ -1,4 +1,11 @@
-export type RecommendationCategory = 'phone' | 'tablet' | 'earbuds' | 'tv' | 'small-appliance' | 'accessory';
+export type RecommendationCategory =
+  | 'phone'
+  | 'tablet'
+  | 'earbuds'
+  | 'tv'
+  | 'small-appliance'
+  | 'large-appliance'
+  | 'accessory';
 
 export type RecommendationPlatform = 'jd' | 'taobao' | 'pdd';
 
@@ -38,7 +45,7 @@ export type RecommendationItem = {
 
 export type ProductRecommendationResponse = {
   queryId: string;
-  category: RecommendationCategory;
+  category: RecommendationCategory | '';
   budget?: { min: number; max: number };
   preferences?: string[];
   summary: string;

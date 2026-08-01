@@ -48,6 +48,15 @@ type deepSeekAnalysis struct {
 	} `json:"items"`
 }
 
+type deepSeekParse struct {
+	Category    string   `json:"category"`
+	BudgetMin   *int     `json:"budgetMin"`
+	BudgetMax   *int     `json:"budgetMax"`
+	Brands      []string `json:"brands"`
+	Preferences []string `json:"preferences"`
+	Platforms   []string `json:"platforms"`
+}
+
 func NewService(cfg config.DeepSeekConfig, store *Store) *Service {
 	catalog, err := LoadCatalog()
 	if err != nil {
@@ -75,6 +84,14 @@ func (s *Service) Query(ctx context.Context, request Request, userID string) (Re
 	}
 
 	parsed := parseRequest(request)
+	if parsed.Category == "" {
+		parsed.Category = inferCategoryFromCatalog(request.Query, s.catalog)
+	}
+	if s.cfg.APIKey != "" && (parsed.Category == "" || len(s.recall(parsed)) == 0) {
+		if llmParsed, err := s.parseWithDeepSeek(ctx, request); err == nil {
+			parsed = mergeLLMParse(parsed, llmParsed)
+		}
+	}
 	candidates := s.recall(parsed)
 	ranked := s.rankCandidates(candidates, parsed)
 	if len(ranked) > 6 {
@@ -306,16 +323,15 @@ func parseRequest(request Request) parsedRequest {
 	if len(parsed.Platforms) == 0 {
 		parsed.Platforms = inferPlatforms(text)
 	}
-	if parsed.Category == "" {
-		parsed.Category = "phone"
-	}
+	// Leave the category empty when no product word is recognized so recall
+	// spans the whole catalog instead of silently falling back to phones.
 	return parsed
 }
 
 func (s *Service) recall(parsed parsedRequest) []Product {
 	products := make([]Product, 0, len(s.catalog))
 	for _, product := range s.catalog {
-		if product.Category != parsed.Category {
+		if parsed.Category != "" && product.Category != parsed.Category {
 			continue
 		}
 		if !matchesBudget(product.ReferencePrice, parsed.Budget) {
@@ -494,6 +510,14 @@ func specReasonLabel(key string) (string, bool) {
 		return "净化", true
 	case "safe":
 		return "健康", true
+	case "capacity":
+		return "容量", true
+	case "wash":
+		return "洗涤", true
+	case "dry":
+		return "烘干", true
+	case "energy":
+		return "能效", true
 	default:
 		return "", false
 	}
@@ -501,7 +525,7 @@ func specReasonLabel(key string) (string, bool) {
 
 func tagReasonLabel(tag string) (string, bool) {
 	switch tag {
-	case "续航", "游戏", "影像", "性能", "轻薄", "轻巧", "性价比", "高性价比", "降噪", "音质", "画质", "办公", "学习", "便携", "快充":
+	case "续航", "游戏", "影像", "性能", "轻薄", "轻巧", "性价比", "高性价比", "降噪", "音质", "画质", "办公", "学习", "便携", "快充", "大容量", "除菌", "节能", "静音":
 		return tag, true
 	default:
 		return "", false
@@ -581,6 +605,14 @@ func sanitizeReasons(reasons []Reason, product Product) []Reason {
 	allowed["降噪"] = true
 	allowed["音质"] = true
 	allowed["画质"] = true
+	allowed["容量"] = true
+	allowed["洗涤"] = true
+	allowed["烘干"] = true
+	allowed["能效"] = true
+	allowed["大容量"] = true
+	allowed["除菌"] = true
+	allowed["节能"] = true
+	allowed["静音"] = true
 
 	result := []Reason{}
 	for _, reason := range reasons {
@@ -612,50 +644,9 @@ func clampScore(score int) int {
 }
 
 func (s *Service) analyzeWithDeepSeek(ctx context.Context, parsed parsedRequest, products []Product) (deepSeekAnalysis, error) {
-	payload := map[string]any{
-		"model": s.cfg.Model,
-		"messages": []map[string]any{
-			{"role": "system", "content": buildSystemPrompt()},
-			{"role": "user", "content": buildUserPrompt(parsed, products)},
-		},
-		"response_format": map[string]any{"type": "json_object"},
-	}
-	bodyBytes, err := json.Marshal(payload)
+	rawText, err := s.callDeepSeek(ctx, buildSystemPrompt(), buildUserPrompt(parsed, products))
 	if err != nil {
-		return deepSeekAnalysis{}, fmt.Errorf("marshal deepseek request failed: %w", err)
-	}
-
-	endpoint := strings.TrimRight(s.cfg.BaseURL, "/") + "/chat/completions"
-	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(bodyBytes))
-	if err != nil {
-		return deepSeekAnalysis{}, fmt.Errorf("build deepseek request failed: %w", err)
-	}
-	httpRequest.Header.Set("Authorization", "Bearer "+s.cfg.APIKey)
-	httpRequest.Header.Set("Content-Type", "application/json")
-
-	httpResponse, err := s.client.Do(httpRequest)
-	if err != nil {
-		return deepSeekAnalysis{}, fmt.Errorf("request deepseek failed: %w", err)
-	}
-	defer httpResponse.Body.Close()
-
-	if httpResponse.StatusCode >= 400 {
-		return deepSeekAnalysis{}, fmt.Errorf("deepseek request failed with status %d", httpResponse.StatusCode)
-	}
-
-	var responsePayload deepSeekResponsePayload
-	if err := json.NewDecoder(httpResponse.Body).Decode(&responsePayload); err != nil {
-		return deepSeekAnalysis{}, fmt.Errorf("decode deepseek response failed: %w", err)
-	}
-	rawText := ""
-	for _, choice := range responsePayload.Choices {
-		if content := strings.TrimSpace(choice.Message.Content); content != "" {
-			rawText = content
-			break
-		}
-	}
-	if rawText == "" {
-		return deepSeekAnalysis{}, fmt.Errorf("deepseek returned empty analysis")
+		return deepSeekAnalysis{}, err
 	}
 
 	var analysis deepSeekAnalysis
@@ -666,6 +657,94 @@ func (s *Service) analyzeWithDeepSeek(ctx context.Context, parsed parsedRequest,
 		return deepSeekAnalysis{}, fmt.Errorf("deepseek analysis is incomplete")
 	}
 	return analysis, nil
+}
+
+func (s *Service) callDeepSeek(ctx context.Context, systemPrompt, userPrompt string) (string, error) {
+	payload := map[string]any{
+		"model": s.cfg.Model,
+		"messages": []map[string]any{
+			{"role": "system", "content": systemPrompt},
+			{"role": "user", "content": userPrompt},
+		},
+		"response_format": map[string]any{"type": "json_object"},
+	}
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal deepseek request failed: %w", err)
+	}
+
+	endpoint := strings.TrimRight(s.cfg.BaseURL, "/") + "/chat/completions"
+	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return "", fmt.Errorf("build deepseek request failed: %w", err)
+	}
+	httpRequest.Header.Set("Authorization", "Bearer "+s.cfg.APIKey)
+	httpRequest.Header.Set("Content-Type", "application/json")
+
+	httpResponse, err := s.client.Do(httpRequest)
+	if err != nil {
+		return "", fmt.Errorf("request deepseek failed: %w", err)
+	}
+	defer httpResponse.Body.Close()
+
+	if httpResponse.StatusCode >= 400 {
+		return "", fmt.Errorf("deepseek request failed with status %d", httpResponse.StatusCode)
+	}
+
+	var responsePayload deepSeekResponsePayload
+	if err := json.NewDecoder(httpResponse.Body).Decode(&responsePayload); err != nil {
+		return "", fmt.Errorf("decode deepseek response failed: %w", err)
+	}
+	for _, choice := range responsePayload.Choices {
+		if content := strings.TrimSpace(choice.Message.Content); content != "" {
+			return content, nil
+		}
+	}
+	return "", fmt.Errorf("deepseek returned empty response")
+}
+
+func (s *Service) parseWithDeepSeek(ctx context.Context, request Request) (deepSeekParse, error) {
+	rawText, err := s.callDeepSeek(ctx, buildParseSystemPrompt(), buildParseUserPrompt(request))
+	if err != nil {
+		return deepSeekParse{}, err
+	}
+	var parsed deepSeekParse
+	if err := json.Unmarshal([]byte(normalizeJSON(rawText)), &parsed); err != nil {
+		return deepSeekParse{}, fmt.Errorf("parse deepseek request fields failed: %w", err)
+	}
+	category := normalizeCategory(parsed.Category)
+	if strings.TrimSpace(parsed.Category) != "" && category == "" {
+		return deepSeekParse{}, fmt.Errorf("deepseek returned unknown category %q", parsed.Category)
+	}
+	parsed.Category = category
+	return parsed, nil
+}
+
+func mergeLLMParse(parsed parsedRequest, llm deepSeekParse) parsedRequest {
+	if parsed.Category == "" {
+		parsed.Category = llm.Category
+	}
+	if parsed.Budget == nil {
+		minBudget := llm.BudgetMin
+		maxBudget := llm.BudgetMax
+		if minBudget != nil && *minBudget <= 0 {
+			minBudget = nil
+		}
+		if maxBudget != nil && *maxBudget <= 0 {
+			maxBudget = nil
+		}
+		parsed.Budget = budgetFromFields(minBudget, maxBudget)
+	}
+	if len(parsed.Brands) == 0 {
+		parsed.Brands = normalizeTokens(llm.Brands)
+	}
+	if len(parsed.Preferences) == 0 {
+		parsed.Preferences = normalizeTokens(llm.Preferences)
+	}
+	if len(parsed.Platforms) == 0 {
+		parsed.Platforms = normalizeTokens(llm.Platforms)
+	}
+	return parsed
 }
 
 func buildSystemPrompt() string {
@@ -704,6 +783,60 @@ func buildUserPrompt(parsed parsedRequest, products []Product) string {
 	}
 	body, _ := json.Marshal(payload)
 	return string(body)
+}
+
+func buildParseSystemPrompt() string {
+	schema, _ := json.Marshal(parseSchema())
+	return strings.Join([]string{
+		"You are a shopping request parser for Chinese consumers.",
+		"Extract structured fields from the user's natural language request.",
+		"category must be one of: phone, tablet, earbuds, tv, small-appliance, large-appliance, accessory. Use an empty string when the request does not clearly name one of these categories.",
+		"budgetMin and budgetMax are integer CNY prices; use null when the user does not mention a budget.",
+		"brands can include any of the known brands or an empty array.",
+		"preferences can include any of: 游戏, 影像, 续航, 办公, 轻便, 画质, or an empty array.",
+		"platforms can include any of: jd, taobao, pdd, or an empty array.",
+		"Return exactly one valid JSON object with no markdown fences or commentary.",
+		"The JSON object must match this schema: " + string(schema),
+	}, " ")
+}
+
+func buildParseUserPrompt(request Request) string {
+	payload := map[string]any{
+		"query":           request.Query,
+		"knownCategories": []string{"phone", "tablet", "earbuds", "tv", "small-appliance", "large-appliance", "accessory"},
+		"knownBrands":     []string{"小米", "华为", "苹果", "OPPO", "vivo", "荣耀", "一加", "三星", "Redmi", "realme", "真我", "米家", "海尔", "小天鹅", "美的", "TCL", "海信", "索尼"},
+	}
+	body, _ := json.Marshal(payload)
+	return string(body)
+}
+
+func parseSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"category": map[string]any{"type": "string"},
+			"budgetMin": map[string]any{
+				"type": []string{"integer", "null"},
+			},
+			"budgetMax": map[string]any{
+				"type": []string{"integer", "null"},
+			},
+			"brands": map[string]any{
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+			},
+			"preferences": map[string]any{
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+			},
+			"platforms": map[string]any{
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+			},
+		},
+		"required":             []string{"category", "budgetMin", "budgetMax", "brands", "preferences", "platforms"},
+		"additionalProperties": false,
+	}
 }
 
 func analysisSchema() map[string]any {
@@ -800,11 +933,32 @@ func inferBudget(text string) *Budget {
 }
 
 func inferCategory(text string) string {
+	// Generic product words take priority so a brand cannot shadow the product
+	// type, e.g. "小米洗衣机" must be a washing machine, not a phone.
 	for _, entry := range categoryAliases {
 		for _, alias := range entry.aliases {
 			if strings.Contains(text, alias) {
 				return entry.id
 			}
+		}
+	}
+	for _, brand := range phoneBrandAliases {
+		if strings.Contains(text, brand) {
+			return "phone"
+		}
+	}
+	return ""
+}
+
+func inferCategoryFromCatalog(text string, catalog Catalog) string {
+	lowered := strings.ToLower(text)
+	for _, product := range catalog {
+		brand := strings.ToLower(strings.TrimSpace(product.Brand))
+		if brand == "" {
+			continue
+		}
+		if strings.Contains(lowered, brand) {
+			return product.Category
 		}
 	}
 	return ""
@@ -814,13 +968,16 @@ var categoryAliases = []struct {
 	id      string
 	aliases []string
 }{
-	{id: "phone", aliases: []string{"手机", "phone", "iphone", "小米", "华为", "一加", "oppo", "vivo", "荣耀", "红米", "iqoo"}},
-	{id: "tablet", aliases: []string{"平板", "ipad", "matepad", "tablet"}},
-	{id: "earbuds", aliases: []string{"耳机", "airpods", "buds", "earbuds", "降噪耳机"}},
-	{id: "tv", aliases: []string{"电视", "tv", "大屏"}},
-	{id: "small-appliance", aliases: []string{"空气炸锅", "电饭煲", "净化器", "小家电", "家电", "吸尘器"}},
+	{id: "phone", aliases: []string{"手机", "智能手机", "phone", "iphone"}},
+	{id: "tablet", aliases: []string{"平板", "平板电脑", "ipad", "matepad", "tablet"}},
+	{id: "earbuds", aliases: []string{"耳机", "蓝牙耳机", "airpods", "buds", "earbuds", "降噪耳机"}},
+	{id: "tv", aliases: []string{"电视", "电视机", "tv", "大屏"}},
+	{id: "small-appliance", aliases: []string{"空气炸锅", "电饭煲", "电饭锅", "净化器", "吸尘器", "扫地机器人", "微波炉", "烤箱", "小家电"}},
+	{id: "large-appliance", aliases: []string{"洗衣机", "滚筒洗衣机", "波轮洗衣机", "洗烘一体", "烘干机", "干衣机", "冰箱", "冰柜", "空调", "洗碗机", "热水器", "油烟机", "大家电"}},
 	{id: "accessory", aliases: []string{"充电器", "数据线", "移动电源", "充电宝", "数码配件", "配件"}},
 }
+
+var phoneBrandAliases = []string{"小米", "华为", "一加", "oppo", "vivo", "荣耀", "红米", "iqoo"}
 
 func normalizeCategory(value string) string {
 	value = strings.ToLower(strings.TrimSpace(value))
@@ -835,6 +992,8 @@ func normalizeCategory(value string) string {
 		return "tv"
 	case "小家电", "家电", "small-appliance", "appliance":
 		return "small-appliance"
+	case "大家电", "large-appliance":
+		return "large-appliance"
 	case "数码配件", "配件", "accessory", "accessories":
 		return "accessory"
 	default:
@@ -854,6 +1013,8 @@ func categoryLabel(category string) string {
 		return "电视"
 	case "small-appliance":
 		return "小家电"
+	case "large-appliance":
+		return "大家电"
 	case "accessory":
 		return "数码配件"
 	default:
@@ -863,7 +1024,7 @@ func categoryLabel(category string) string {
 
 func inferBrands(text string) []string {
 	brands := []string{}
-	for _, brand := range []string{"小米", "华为", "苹果", "oppo", "vivo", "荣耀", "一加", "三星", "iqoo", "redmi", "realme", "真我"} {
+	for _, brand := range []string{"小米", "华为", "苹果", "oppo", "vivo", "荣耀", "一加", "三星", "iqoo", "redmi", "realme", "真我", "米家", "海尔", "小天鹅", "美的", "TCL", "海信", "索尼"} {
 		if strings.Contains(text, strings.ToLower(brand)) {
 			brands = append(brands, brand)
 		}

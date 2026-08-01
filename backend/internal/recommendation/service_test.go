@@ -63,6 +63,74 @@ func TestQueryParsesNaturalLanguage(t *testing.T) {
 	}
 }
 
+func TestQueryParsesWashingMachineCategory(t *testing.T) {
+	service := NewService(config.DeepSeekConfig{}, nil)
+	result, err := service.Query(context.Background(), Request{
+		Query: "想买洗衣机",
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if result.Category != "large-appliance" {
+		t.Fatalf("expected large-appliance category, got %q", result.Category)
+	}
+	if len(result.Items) == 0 {
+		t.Fatal("expected washing machine recommendations")
+	}
+}
+
+func TestQueryInfersCategoryFromCatalogBrand(t *testing.T) {
+	service := NewService(config.DeepSeekConfig{}, nil)
+	result, err := service.Query(context.Background(), Request{
+		Query: "想买海尔滚筒",
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if result.Category != "large-appliance" {
+		t.Fatalf("expected large-appliance category, got %q", result.Category)
+	}
+	for _, item := range result.Items {
+		if item.Brand != "海尔" {
+			t.Fatalf("unexpected brand %q", item.Brand)
+		}
+	}
+}
+
+func TestQueryPrefersProductWordOverPhoneBrand(t *testing.T) {
+	service := NewService(config.DeepSeekConfig{}, nil)
+	result, err := service.Query(context.Background(), Request{
+		Query: "想买海尔洗衣机",
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if result.Category != "large-appliance" {
+		t.Fatalf("expected large-appliance category, got %q", result.Category)
+	}
+	for _, item := range result.Items {
+		if item.Brand != "海尔" {
+			t.Fatalf("unexpected brand %q", item.Brand)
+		}
+	}
+}
+
+func TestQueryWithoutRecognizedCategoryDoesNotDefaultToPhone(t *testing.T) {
+	service := NewService(config.DeepSeekConfig{}, nil)
+	result, err := service.Query(context.Background(), Request{
+		Query: "想买点东西",
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if result.Category != "" {
+		t.Fatalf("expected empty category, got %q", result.Category)
+	}
+	if len(result.Items) == 0 {
+		t.Fatal("expected cross-category recommendations")
+	}
+}
+
 func TestQueryRespectsBrandFilter(t *testing.T) {
 	service := NewService(config.DeepSeekConfig{}, nil)
 	minBudget := 5000
