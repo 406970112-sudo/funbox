@@ -5,6 +5,16 @@ type VisibleFeaturesResponse = {
   featureIds: string[];
 };
 
+export type MembershipFeatureMatrix = {
+  id: string;
+  name: string;
+  roles: UserRole[];
+};
+
+type MembershipMatrixResponse = {
+  features: MembershipFeatureMatrix[];
+};
+
 type ManagedFeaturesResponse = {
   features: ManagedFeature[];
 };
@@ -27,6 +37,14 @@ export async function getVisibleFeatureIDs(token: string | null) {
     withOptionalToken(token),
   );
   return response.featureIds;
+}
+
+export async function getMembershipFeatureMatrix(token: string) {
+  const response = await requestAccessJSON<MembershipMatrixResponse>(
+    '/api/v1/membership/features',
+    withToken(token),
+  );
+  return response.features;
 }
 
 export async function getManagedFeatures(token: string) {

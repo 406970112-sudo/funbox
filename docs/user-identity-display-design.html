@@ -1013,6 +1013,47 @@
         width: 14px;
       }
 
+      .benefit-more[hidden] {
+        display: none;
+      }
+
+      .compare-note {
+        align-items: flex-start;
+        background: var(--soft);
+        border-radius: 8px;
+        color: var(--muted);
+        display: flex;
+        font-size: 8px;
+        font-weight: 600;
+        gap: 6px;
+        line-height: 13px;
+        margin-top: 10px;
+        padding: 8px 9px;
+      }
+
+      .compare-note svg {
+        flex: 0 0 auto;
+        height: 12px;
+        margin-top: 1px;
+        width: 12px;
+      }
+
+      .expand-button {
+        background: var(--soft);
+        border: 1px dashed var(--line-strong);
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        margin-top: 10px;
+        min-height: 34px;
+        width: 100%;
+      }
+
+      .phone-screen.scrollable {
+        overflow-y: auto;
+      }
+
       .compare {
         background: #ffffff;
         border: 1px solid var(--line);
@@ -1728,7 +1769,7 @@
           <div class="phone-wrap">
             <div class="phone-label"><span class="dot" style="background: var(--rose)"></span><span>会员中心 · SVIP</span></div>
             <div class="phone">
-              <div class="phone-screen">
+              <div class="phone-screen scrollable">
                 <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
                 <div class="topbar">
                   <div>
@@ -1748,17 +1789,29 @@
                   </div>
                 </div>
                 <div class="benefits">
-                  <div class="panel-title"><span>我的权益</span><span class="count">5 项</span></div>
+                  <div class="panel-title"><span>我的权益</span><span class="count">12 项</span></div>
                   <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radar"></i></div><div class="benefit-copy"><div class="benefit-name">市场雷达</div><div class="benefit-desc">行情快照与提醒</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
                   <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="sparkles"></i></div><div class="benefit-copy"><div class="benefit-name">AI 导航</div><div class="benefit-desc">智能能力直达</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
                   <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="languages"></i></div><div class="benefit-copy"><div class="benefit-name">智能翻译</div><div class="benefit-desc">多语言文本翻译</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
                   <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="search"></i></div><div class="benefit-copy"><div class="benefit-name">资源搜索</div><div class="benefit-desc">多源内容聚合</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                  <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="book-open"></i></div><div class="benefit-copy"><div class="benefit-name">免费阅读</div><div class="benefit-desc">正版书城与本地阅读</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                  <div class="benefit-more" id="benefitMore" hidden>
+                    <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="cards"></i></div><div class="benefit-copy"><div class="benefit-name">打牌记分</div><div class="benefit-desc">多人记分，散场结算</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                    <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="newspaper"></i></div><div class="benefit-copy"><div class="benefit-name">热点速览</div><div class="benefit-desc">每日 AI 简报与多源追踪</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                    <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="chart-bell-curve"></i></div><div class="benefit-copy"><div class="benefit-name">双色球</div><div class="benefit-desc">概率参考与计划实验室</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                    <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="radio"></i></div><div class="benefit-copy"><div class="benefit-name">音视频推流</div><div class="benefit-desc">LiveKit 本地采集</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                    <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="audio-waveform"></i></div><div class="benefit-copy"><div class="benefit-name">文字转语音</div><div class="benefit-desc">文本生成可预览语音</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                    <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="qrcode"></i></div><div class="benefit-copy"><div class="benefit-name">二维码生成器</div><div class="benefit-desc">实时生成与导出</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                    <div class="benefit-row"><div class="benefit-icon" style="background: #e8edff; color: var(--primary)"><i data-lucide="image-down"></i></div><div class="benefit-copy"><div class="benefit-name">图片压缩</div><div class="benefit-desc">TinyPNG 批量压缩</div></div><span class="benefit-check"><i data-lucide="check-circle-2"></i></span></div>
+                  </div>
+                  <button class="expand-button" id="benefitExpandButton" type="button">展开更多 · 7 项</button>
                 </div>
                 <div class="compare">
                   <div class="compare-head"><span>权益对比</span><span>普通</span><span>VIP</span><span style="color: var(--rose-dark)">SVIP</span></div>
                   <div class="compare-row"><span>市场雷达</span><span class="cell">基础</span><span class="cell">完整</span><span class="cell svip-col">完整</span></div>
-                  <div class="compare-row"><span>AI 导航</span><span class="cell">限次</span><span class="cell">完整</span><span class="cell svip-col">完整</span></div>
                   <div class="compare-row"><span>智能翻译</span><span class="cell">—</span><span class="cell">完整</span><span class="cell svip-col">完整</span></div>
+                  <div class="compare-row"><span>资源搜索</span><span class="cell">—</span><span class="cell">完整</span><span class="cell svip-col">完整</span></div>
+                  <div class="compare-note"><i data-lucide="info"></i><span>发版邮件助手为管理员专属，不纳入会员权益；全员可用功能不展示。</span></div>
                 </div>
               </div>
             </div>
@@ -1965,6 +2018,15 @@
     </div>
 
     <script>
+      const benefitExpandButton = document.getElementById("benefitExpandButton");
+      if (benefitExpandButton) {
+        benefitExpandButton.addEventListener("click", () => {
+          const more = document.getElementById("benefitMore");
+          const expanded = more.hidden;
+          more.hidden = !expanded;
+          benefitExpandButton.textContent = expanded ? "收起" : "展开更多 · 7 项";
+        });
+      }
       lucide.createIcons();
     </script>
   </body>

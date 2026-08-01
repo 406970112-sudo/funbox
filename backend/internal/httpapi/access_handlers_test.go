@@ -138,6 +138,27 @@ func TestFeatureAccessHTTPFlow(t *testing.T) {
 		"",
 		http.StatusCreated,
 	)
+	matrix := requestJSON[struct {
+		Features []struct {
+			ID    string   `json:"id"`
+			Roles []string `json:"roles"`
+		} `json:"features"`
+	}](
+		t,
+		testServer.Client(),
+		http.MethodGet,
+		testServer.URL+"/api/v1/membership/features",
+		"",
+		memberSession.AccessToken,
+		http.StatusOK,
+	)
+	if len(matrix.Features) != 1 ||
+		matrix.Features[0].ID != "admin-only" ||
+		len(matrix.Features[0].Roles) != 1 ||
+		matrix.Features[0].Roles[0] != "admin" {
+		t.Fatalf("membership matrix = %+v", matrix.Features)
+	}
+
 	visible := requestJSON[map[string][]string](
 		t,
 		testServer.Client(),

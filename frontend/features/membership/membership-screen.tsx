@@ -1,13 +1,17 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Redirect, useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import {
+  getMembershipFeatureMatrix,
+  type MembershipFeatureMatrix,
+} from '@/lib/access-api';
 import { identityPresentation } from '@/lib/identity';
 import { appTools, initialToolRoles, popularGames } from '@/mocks/app-data';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
@@ -15,18 +19,33 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { UserRole } from '@/types/access';
 
 const playableGameCount = popularGames.filter((game) => game.status === 'playable').length;
-const comparisonTools = appTools.filter((tool) => !tool.hiddenFromList).slice(0, 5);
 
 export function MembershipScreen() {
   const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
-  const { refreshUser, status, user } = useAuth();
+  const { accessToken, refreshUser, status, user } = useAuth();
   const { visibleTools } = useFeatureAccess();
+  const [benefitsExpanded, setBenefitsExpanded] = useState(false);
+  const [featureMatrix, setFeatureMatrix] = useState<MembershipFeatureMatrix[]>([]);
 
   useFocusEffect(
     useCallback(() => {
+      let active = true;
       void refreshUser();
-    }, [refreshUser]),
+      if (accessToken) {
+        void getMembershipFeatureMatrix(accessToken)
+          .then((features) => {
+            if (!active) return;
+            setFeatureMatrix(features);
+          })
+          .catch(() => {
+            if (active) setFeatureMatrix([]);
+          });
+      }
+      return () => {
+        active = false;
+      };
+    }, [accessToken, refreshUser]),
   );
 
   if (status === 'loading') {
@@ -40,6 +59,29 @@ export function MembershipScreen() {
   const item = identityPresentation(role, colorScheme);
   const palette = membershipPalette(role, colorScheme === 'dark');
   const availableTools = visibleTools.filter((tool) => tool.status === 'available');
+  const matrixByID = useMemo(
+    () => new Map(featureMatrix.map((feature) => [feature.id, feature.roles])),
+    [featureMatrix],
+  );
+  const rolesForTool = (toolID: string): UserRole[] => {
+    const roles = matrixByID.get(toolID);
+    const fallback = initialToolRoles.get(toolID) as UserRole[] | undefined;
+    return roles && roles.length > 0 ? roles : fallback ?? ['admin'];
+  };
+  const benefitTools = availableTools.filter((tool) =>
+    rolesForTool(tool.id).some(
+      (candidate) => candidate === 'normal' || candidate === 'vip' || candidate === 'svip',
+    ),
+  );
+  const visibleBenefitTools = benefitTools.slice(0, benefitsExpanded ? benefitTools.length : 5);
+  const compareTools = appTools.filter((tool) => {
+    if (tool.hiddenFromList || tool.status !== 'available') return false;
+    const roles = rolesForTool(tool.id);
+    const memberAccess = (['normal', 'vip', 'svip'] as const).map((candidate) =>
+      roles.includes(candidate),
+    );
+    return new Set(memberAccess).size > 1;
+  });
   const upgradeTools = appTools.filter((tool) => {
     if (tool.hiddenFromList) return false;
     const roles = initialToolRoles.get(tool.id) ?? [];
@@ -90,12 +132,12 @@ export function MembershipScreen() {
         <View style={styles.panelHead}>
           <ThemedText style={styles.panelTitle}>我的权益</ThemedText>
           <ThemedText style={[styles.panelMeta, { color: colors.mutedText }]}>
-            {availableTools.length} 项
+            {benefitTools.length} 项
           </ThemedText>
         </View>
-        {availableTools.length > 0 ? (
+        {benefitTools.length > 0 ? (
           <View>
-            {availableTools.slice(0, 6).map((tool) => (
+            {visibleBenefitTools.map((tool) => (
               <View key={tool.id} style={[styles.benefitRow, { borderTopColor: colors.line }]}>
                 <View style={[styles.benefitIcon, { backgroundColor: `${tool.accentColor}18` }]}>
                   <MaterialCommunityIcons name={tool.icon} size={16} color={tool.accentColor} />
@@ -109,6 +151,21 @@ export function MembershipScreen() {
                 <MaterialCommunityIcons name="check-circle" size={17} color={colors.success} />
               </View>
             ))}
+            {benefitTools.length > 5 ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setBenefitsExpanded((expanded) => !expanded)}
+                style={[styles.expandButton, { borderColor: colors.line }]}>
+                <ThemedText style={[styles.expandButtonText, { color: colors.primary }]}>
+                  {benefitsExpanded ? '收起' : `展开更多 · ${benefitTools.length - 5} 项`}
+                </ThemedText>
+                <MaterialCommunityIcons
+                  name={benefitsExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color={colors.primary}
+                />
+              </Pressable>
+            ) : null}
           </View>
         ) : (
           <View style={styles.emptyState}>
@@ -161,19 +218,36 @@ export function MembershipScreen() {
             按入口权限配置展示
           </ThemedText>
         </View>
-        <View style={[styles.compareHead, { borderTopColor: colors.line }]}>
-          <ThemedText style={styles.compareHeadText}>功能</ThemedText>
-          <ThemedText style={styles.compareHeadText}>普通</ThemedText>
-          <ThemedText style={styles.compareHeadText}>VIP</ThemedText>
-          <ThemedText style={styles.compareHeadText}>SVIP</ThemedText>
-        </View>
-        {comparisonTools.map((tool) => (
-          <CompareRow
-            key={tool.id}
-            name={tool.name}
-            roles={(initialToolRoles.get(tool.id) ?? []) as UserRole[]}
-          />
-        ))}
+        {compareTools.length > 0 ? (
+          <>
+            <View style={[styles.compareHead, { borderTopColor: colors.line }]}>
+              <ThemedText style={styles.compareHeadText}>功能</ThemedText>
+              <ThemedText style={styles.compareHeadText}>普通</ThemedText>
+              <ThemedText style={styles.compareHeadText}>VIP</ThemedText>
+              <ThemedText style={styles.compareHeadText}>SVIP</ThemedText>
+            </View>
+            {compareTools.map((tool) => (
+              <CompareRow
+                key={tool.id}
+                name={tool.name}
+                roles={rolesForTool(tool.id)}
+              />
+            ))}
+            <View style={[styles.compareNote, { borderTopColor: colors.line }]}>
+              <MaterialCommunityIcons name="information-outline" size={14} color={colors.mutedText} />
+              <ThemedText style={[styles.compareNoteText, { color: colors.mutedText }]}>
+                管理员专属功能不计入会员权益；全员可用功能不展示。
+              </ThemedText>
+            </View>
+          </>
+        ) : (
+          <View style={styles.emptyState}>
+            <MaterialCommunityIcons name="table-off" size={24} color={colors.mutedText} />
+            <ThemedText style={[styles.emptyText, { color: colors.mutedText }]}>
+              当前没有需要对比的会员功能
+            </ThemedText>
+          </View>
+        )}
       </View>
     </MobileScreen>
   );
@@ -419,6 +493,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     minHeight: 42,
   },
+  compareNote: {
+    alignItems: 'flex-start',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    minHeight: 38,
+    paddingTop: 10,
+  },
+  compareNoteText: {
+    flex: 1,
+    fontSize: 9,
+    lineHeight: 14,
+  },
   compareName: {
     flex: 1,
     fontSize: 11,
@@ -428,5 +515,17 @@ const styles = StyleSheet.create({
   compareMarkCell: {
     alignItems: 'center',
     flex: 1,
+  },
+  expandButton: {
+    alignItems: 'center',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 5,
+    justifyContent: 'center',
+    minHeight: 40,
+  },
+  expandButtonText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

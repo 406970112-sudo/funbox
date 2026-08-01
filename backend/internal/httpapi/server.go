@@ -209,6 +209,7 @@ func newServer(
 	mux.HandleFunc("GET /healthz", api.handleHealthz)
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
 	mux.HandleFunc("GET /api/v1/features", api.withOptionalAuth(api.withAPIPipeline(api.handleVisibleFeatures)))
+	mux.HandleFunc("GET /api/v1/membership/features", api.withAuth(api.withAPIPipeline(api.handleMembershipFeatureMatrix)))
 	mux.HandleFunc("GET /api/v1/admin/features", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleAdminFeatures))))
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/roles", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureRoles))))
 	mux.HandleFunc("PUT /api/v1/admin/features/{featureID}/grants", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleUpdateFeatureGrant))))

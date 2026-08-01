@@ -38,6 +38,32 @@ func (s *Server) handleVisibleFeatures(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"featureIds": ids})
 }
 
+func (s *Server) handleMembershipFeatureMatrix(w http.ResponseWriter, r *http.Request) {
+	if s.accessStore == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "access_store_unavailable"})
+		return
+	}
+	features, err := s.accessStore.ListFeatures(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "list_features_failed"})
+		return
+	}
+	type matrixFeature struct {
+		ID    string       `json:"id"`
+		Name  string       `json:"name"`
+		Roles []roles.Role `json:"roles"`
+	}
+	matrix := make([]matrixFeature, 0, len(features))
+	for _, feature := range features {
+		matrix = append(matrix, matrixFeature{
+			ID:    feature.ID,
+			Name:  feature.Name,
+			Roles: feature.Roles,
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"features": matrix})
+}
+
 func (s *Server) handleAdminFeatures(w http.ResponseWriter, r *http.Request) {
 	features, err := s.accessStore.ListFeatures(r.Context())
 	if err != nil {
