@@ -4,15 +4,25 @@ import { useRouter } from 'expo-router';
 import { type PropsWithChildren, useCallback, useRef, useState } from 'react';
 import {
   Animated,
+  FlatList,
   Platform,
   Pressable,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { appLayout } from '@/constants/app-theme';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import {
+  DEFAULT_COMMON_TOOL_IDS,
+  FEATURED_CANDIDATE_TOOL_IDS,
+  HOME_COMMON_TOOL_LIMIT,
+  getFeaturedToolIds,
+} from '@/lib/home-tool-selection';
 import { getStoredToolUsage } from '@/lib/tool-usage-storage';
 import { getCommonToolIds, type ToolUsageStat } from '@/lib/tool-usage';
 import { popularGames } from '@/mocks/app-data';
@@ -22,17 +32,10 @@ import type { AppTool, GameItem } from '@/types/app';
 import { FeaturedToolCarousel } from './featured-tool-carousel';
 import { GameArtwork } from './game-artwork';
 
-const HOME_TOOL_LIMIT = 6;
-const DEFAULT_COMMON_TOOL_IDS: AppTool['id'][] = [
-  'text-to-speech',
-  'image-compressor',
-  'qr-code',
-  'smart-translation',
-];
-const HOME_TOOL_EXCLUSIONS = new Set<AppTool['id']>([
-  'release-email-assistant',
-  'live-stream-capture',
-]);
+const GAME_LIST_GAP = 10;
+const GAME_CARD_WIDTH_RATIO = 0.29;
+const BOTTOM_EXTRA_PADDING = 16;
+
 type SectionHeaderProps = {
   title: string;
   meta: string;
@@ -69,6 +72,7 @@ function SectionHeader({ title, meta, onPress }: SectionHeaderProps) {
       </View>
       {onPress ? (
         <Pressable
+          accessibilityLabel="打开全部工具"
           accessibilityRole="button"
           hitSlop={10}
           onPress={onPress}
@@ -86,7 +90,7 @@ function ToolTile({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
 
   return (
     <Pressable
-      accessibilityHint={`打开${tool.name}`}
+      accessibilityLabel={`打开${tool.name}`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
@@ -97,37 +101,35 @@ function ToolTile({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
         },
         pressed && styles.pressed,
       ]}>
-      <View style={styles.toolTileTop}>
-        <View style={[styles.toolIcon, { backgroundColor: `${tool.accentColor}18` }]}>
-          <MaterialCommunityIcons name={tool.icon} size={22} color={tool.accentColor} />
-        </View>
-        <MaterialCommunityIcons name="arrow-top-right" size={17} color={colors.mutedText} />
+      <View style={[styles.toolIcon, { backgroundColor: `${tool.accentColor}18` }]}>
+        <MaterialCommunityIcons name={tool.icon} size={22} color={tool.accentColor} />
       </View>
-      <View>
-        <ThemedText numberOfLines={2} style={styles.toolTitle}>
-          {tool.name}
-        </ThemedText>
-        <ThemedText
-          numberOfLines={1}
-          style={[styles.toolTagline, { color: colors.mutedText }]}>
-          {tool.tagline}
-        </ThemedText>
-      </View>
+      <ThemedText numberOfLines={2} style={styles.toolTitle}>
+        {tool.name}
+      </ThemedText>
     </Pressable>
   );
 }
 
-function GameTile({ game, onPress }: { game: GameItem; onPress: () => void }) {
+function GameTile({
+  game,
+  onPress,
+  width,
+}: {
+  game: GameItem;
+  onPress: () => void;
+  width: number;
+}) {
   const { colors } = useAppTheme();
 
   return (
     <Pressable
-      accessibilityHint={`开始${game.name}`}
+      accessibilityLabel={`打开${game.name}`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
         styles.gameTile,
-        { backgroundColor: colors.surface, borderColor: colors.line },
+        { backgroundColor: colors.surface, borderColor: colors.line, width },
         pressed && styles.pressed,
       ]}>
       <View style={[styles.gameVisual, { backgroundColor: `${game.accentColor}1c` }]}>
@@ -153,30 +155,37 @@ function GameTile({ game, onPress }: { game: GameItem; onPress: () => void }) {
 export function HomeScreen() {
   const router = useRouter();
   const { colors, colorScheme } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const { visibleTools } = useFeatureAccess();
   const reveals = useRef(Array.from({ length: 4 }, () => new Animated.Value(1))).current;
   const [toolUsage, setToolUsage] = useState<ToolUsageStat[]>([]);
   const availableTools = visibleTools.filter((tool) => tool.status === 'available');
+  const availableToolIDs = availableTools.map((tool) => tool.id);
   const commonToolIDs = getCommonToolIds(
-    availableTools.map((tool) => tool.id),
+    availableToolIDs,
     toolUsage,
     DEFAULT_COMMON_TOOL_IDS,
+    HOME_COMMON_TOOL_LIMIT,
   );
-  const commonToolIDSet = new Set(commonToolIDs);
   const commonTools = commonToolIDs.flatMap((toolId) => {
     const tool = availableTools.find((candidate) => candidate.id === toolId);
     return tool ? [tool] : [];
   });
-  const quickTools = visibleTools
-    .filter(
-      (tool) =>
-        tool.status === 'available' &&
-        !HOME_TOOL_EXCLUSIONS.has(tool.id) &&
-        !commonToolIDSet.has(tool.id),
-    )
-    .slice(0, HOME_TOOL_LIMIT);
+  const featuredToolIDs = getFeaturedToolIds(
+    availableToolIDs,
+    commonToolIDs,
+    FEATURED_CANDIDATE_TOOL_IDS,
+  );
+  const featuredTools = featuredToolIDs.flatMap((toolId) => {
+    const tool = availableTools.find((candidate) => candidate.id === toolId);
+    return tool ? [tool] : [];
+  });
   const playableGames = popularGames.filter((game) => game.status === 'playable').slice(0, 4);
-  const availableToolCount = visibleTools.filter((tool) => tool.status === 'available').length;
+  const availableToolCount = availableTools.length;
+  const contentWidth = Math.min(windowWidth, appLayout.screenMaxWidth) - 32;
+  const gameCardWidth = Math.round(contentWidth * GAME_CARD_WIDTH_RATIO);
+  const bottomPadding = appLayout.tabBarHeight + insets.bottom + BOTTOM_EXTRA_PADDING;
 
   useFocusEffect(
     useCallback(() => {
@@ -193,7 +202,9 @@ export function HomeScreen() {
   );
 
   return (
-    <MobileScreen contentContainerStyle={styles.pageContent}>
+    <MobileScreen
+      contentContainerStyle={styles.pageContent}
+      scrollContentStyle={{ paddingBottom: bottomPadding }}>
       <View style={styles.backgroundPattern}>
         <View style={[styles.patternBand, { borderColor: colors.line }]} />
         <View style={[styles.patternBand, styles.patternBandOffset, { borderColor: colors.line }]} />
@@ -227,75 +238,91 @@ export function HomeScreen() {
       </Reveal>
 
       <Reveal progress={reveals[1]}>
-        <FeaturedToolCarousel
-          tools={commonTools}
-          onToolPress={(tool) => router.push(tool.route)}
-        />
-      </Reveal>
-
-      <Reveal progress={reveals[2]}>
         <View style={styles.section}>
           <SectionHeader
-            title="更多工具"
-            meta="更多能力，按需取用"
+            title="常用工具"
+            meta="高频能力，一步直达"
             onPress={() => router.push('/tools')}
           />
           <View style={styles.toolGrid}>
-            {quickTools.map((tool) => (
+            {commonTools.map((tool) => (
               <ToolTile key={tool.id} tool={tool} onPress={() => router.push(tool.route)} />
             ))}
           </View>
         </View>
       </Reveal>
 
-      <Reveal progress={reveals[3]}>
-        <View style={styles.section}>
-          <SectionHeader title="放松一下" meta="四款小游戏，随时开一局" />
-          <View style={styles.gameGrid}>
-            {playableGames.map((game) => (
-              <GameTile key={game.id} game={game} onPress={() => router.push(game.route)} />
-            ))}
+      {featuredTools.length > 0 ? (
+        <Reveal progress={reveals[2]}>
+          <FeaturedToolCarousel
+            tools={featuredTools}
+            onToolPress={(tool) => router.push(tool.route)}
+          />
+        </Reveal>
+      ) : null}
+
+      {playableGames.length > 0 ? (
+        <Reveal progress={reveals[3]}>
+          <View style={styles.section}>
+            <SectionHeader title="放松一下" meta="四款小游戏，随时开一局" />
+            <FlatList
+              contentContainerStyle={styles.gameListContent}
+              data={playableGames}
+              horizontal
+              ItemSeparatorComponent={() => <View style={styles.gameSeparator} />}
+              keyExtractor={(game) => game.id}
+              nestedScrollEnabled
+              renderItem={({ item }) => (
+                <GameTile
+                  game={item}
+                  width={gameCardWidth}
+                  onPress={() => router.push(item.route)}
+                />
+              )}
+              showsHorizontalScrollIndicator={false}
+              style={styles.gameList}
+            />
           </View>
-        </View>
-      </Reveal>
+        </Reveal>
+      ) : null}
     </MobileScreen>
   );
 }
 
 const styles = StyleSheet.create({
   pageContent: {
-    gap: 18,
+    gap: 26,
     paddingTop: 16,
   },
   backgroundPattern: {
-    height: 170,
+    height: 104,
     overflow: 'hidden',
-    position: 'absolute',
     pointerEvents: 'none',
+    position: 'absolute',
     right: -16,
-    top: -12,
-    width: 180,
+    top: -8,
+    width: 170,
   },
   patternBand: {
     borderRadius: 8,
     borderWidth: 1,
-    height: 52,
-    opacity: 0.6,
+    height: 48,
+    opacity: 0.5,
     position: 'absolute',
-    right: -32,
-    top: 22,
+    right: -34,
+    top: 6,
     transform: [{ rotate: '-16deg' }],
-    width: 190,
+    width: 184,
   },
   patternBandOffset: {
-    right: -54,
-    top: 78,
+    right: -58,
+    top: 52,
   },
   topBar: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 44,
+    minHeight: 48,
   },
   brandLockup: {
     alignItems: 'center',
@@ -340,14 +367,14 @@ const styles = StyleSheet.create({
   sectionMeta: {
     fontSize: 11,
     lineHeight: 16,
-    marginTop: 1,
+    marginTop: 4,
   },
   sectionAction: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 5,
-    minHeight: 32,
-    paddingLeft: 10,
+    minHeight: 44,
+    paddingLeft: 12,
   },
   sectionActionText: {
     fontSize: 12,
@@ -363,67 +390,58 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     flexBasis: '31%',
-    flexGrow: 1,
-    justifyContent: 'space-between',
-    minHeight: 130,
+    gap: 8,
+    minHeight: 96,
     minWidth: 0,
-    padding: 12,
-  },
-  toolTileTop: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    padding: 10,
   },
   toolIcon: {
     alignItems: 'center',
     borderRadius: 12,
-    height: 40,
+    height: 36,
     justifyContent: 'center',
-    width: 40,
+    width: 36,
   },
   toolTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '900',
-    lineHeight: 19,
-    minHeight: 19,
+    lineHeight: 18,
   },
-  toolTagline: {
-    fontSize: 10,
-    lineHeight: 14,
-    marginTop: 2,
+  gameList: {
+    flexGrow: 0,
   },
-  gameGrid: {
-    flexDirection: 'row',
-    gap: 10,
+  gameListContent: {
+    paddingRight: 8,
+  },
+  gameSeparator: {
+    width: GAME_LIST_GAP,
   },
   gameTile: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    flex: 1,
-    minWidth: 0,
-    padding: 12,
+    gap: 6,
+    padding: 10,
   },
   gameVisual: {
     alignItems: 'center',
-    borderRadius: 13,
-    height: 58,
+    borderRadius: 12,
+    height: 64,
     justifyContent: 'center',
-    marginBottom: 10,
     overflow: 'hidden',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
   },
   gameArtwork: {
     height: 48,
-    width: 64,
+    width: '100%',
   },
   gameTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '900',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   gameGenre: {
     fontSize: 11,
-    lineHeight: 16,
+    lineHeight: 15,
     marginTop: 2,
   },
   pressed: {

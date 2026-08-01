@@ -8,16 +8,21 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 
 type MobileScreenProps = PropsWithChildren<{
   contentContainerStyle?: StyleProp<ViewStyle>;
+  scrollContentStyle?: StyleProp<ViewStyle>;
 }>;
 
-export function MobileScreen({ children, contentContainerStyle }: MobileScreenProps) {
+export function MobileScreen({
+  children,
+  contentContainerStyle,
+  scrollContentStyle,
+}: MobileScreenProps) {
   const { colors } = useAppTheme();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+        contentContainerStyle={[styles.scrollContent, scrollContentStyle]}>
         <View
           style={[
             styles.content,

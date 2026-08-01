@@ -1,4 +1,4 @@
-export const COMMON_TOOL_LIMIT = 4;
+export const COMMON_TOOL_LIMIT = 6;
 
 export type ToolUsageStat = {
   clickCount: number;

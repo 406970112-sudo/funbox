@@ -28,7 +28,7 @@ export default function TabLayout() {
           alignSelf: 'center',
           backgroundColor: colors.card,
           borderTopColor: colors.line,
-          height: 72,
+          height: appLayout.tabBarHeight,
           maxWidth: appLayout.screenMaxWidth,
           paddingBottom: 10,
           paddingTop: 10,

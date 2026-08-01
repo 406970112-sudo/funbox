@@ -35,6 +35,7 @@ export const appTheme = {
 
 export const appLayout = {
   screenMaxWidth: 430,
+  tabBarHeight: 72,
   radius: {
     sm: 16,
     md: 24,

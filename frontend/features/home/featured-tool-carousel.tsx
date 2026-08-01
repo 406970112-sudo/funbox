@@ -17,11 +17,14 @@ import { appLayout } from '@/constants/app-theme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import type { AppIconName, AppTool, ToolId } from '@/types/app';
 
-import { getNextCarouselIndex } from './featured-carousel-sequence';
+import {
+  getNextCarouselStep,
+  type CarouselDirection,
+} from './featured-carousel-sequence';
 
 const AUTO_PLAY_INTERVAL_MS = 5200;
 const CARD_GAP = 10;
-const NEXT_CARD_PEEK = 30;
+const NEXT_CARD_PEEK = 16;
 const PAGE_HORIZONTAL_PADDING = 32;
 const WAVEFORM_HEIGHTS = [20, 34, 50, 29, 66, 39, 54, 25];
 
@@ -38,11 +41,6 @@ type FeaturedSlideConfig = {
 
 type FeaturedSlide = FeaturedSlideConfig & {
   tool: AppTool;
-};
-
-type RenderedFeaturedSlide = {
-  key: string;
-  slide: FeaturedSlide;
 };
 
 type FeaturedToolCarouselProps = {
@@ -197,35 +195,10 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
   const cardWidth = Math.max(260, viewportWidth - CARD_GAP - NEXT_CARD_PEEK);
   const cardStep = cardWidth + CARD_GAP;
   const featuredSlides = useMemo(() => tools.map(createFeaturedSlide), [tools]);
-  const renderedSlides = useMemo<RenderedFeaturedSlide[]>(() => {
-    if (featuredSlides.length < 2) {
-      return featuredSlides.map((slide) => ({ key: slide.toolId, slide }));
-    }
-
-    const lastIndex = featuredSlides.length - 1;
-    return [
-      {
-        key: `clone-last-${featuredSlides[lastIndex].toolId}`,
-        slide: featuredSlides[lastIndex],
-      },
-      ...featuredSlides.map((slide) => ({
-        key: slide.toolId,
-        slide,
-      })),
-      {
-        key: `clone-first-${featuredSlides[0].toolId}`,
-        slide: featuredSlides[0],
-      },
-      {
-        key: `clone-second-${featuredSlides[1].toolId}`,
-        slide: featuredSlides[1],
-      },
-    ];
-  }, [featuredSlides]);
   const slideKey = featuredSlides.map((slide) => slide.toolId).join('|');
-  const listRef = useRef<FlatList<RenderedFeaturedSlide>>(null);
+  const listRef = useRef<FlatList<FeaturedSlide>>(null);
   const activeIndexRef = useRef(0);
-  const physicalIndexRef = useRef(featuredSlides.length > 1 ? 1 : 0);
+  const autoPlayDirectionRef = useRef<CarouselDirection>(1);
   const isInteractingRef = useRef(false);
   const lastInteractionAtRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -250,13 +223,12 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
   }, []);
 
   useEffect(() => {
-    const firstPhysicalIndex = featuredSlides.length > 1 ? 1 : 0;
-    physicalIndexRef.current = firstPhysicalIndex;
+    autoPlayDirectionRef.current = 1;
     activeIndexRef.current = 0;
     setActiveIndex(0);
     listRef.current?.scrollToOffset({
       animated: false,
-      offset: firstPhysicalIndex * cardStep,
+      offset: 0,
     });
   }, [cardStep, featuredSlides.length, slideKey]);
 
@@ -271,21 +243,17 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
         return;
       }
 
-      let currentPhysicalIndex = physicalIndexRef.current;
-      if (currentPhysicalIndex >= featuredSlides.length + 1) {
-        currentPhysicalIndex = 1;
-        physicalIndexRef.current = currentPhysicalIndex;
-        listRef.current?.scrollToOffset({ animated: false, offset: cardStep });
-      }
-
-      const nextPhysicalIndex = currentPhysicalIndex + 1;
-      const nextIndex = getNextCarouselIndex(activeIndexRef.current, featuredSlides.length);
-      physicalIndexRef.current = nextPhysicalIndex;
-      activeIndexRef.current = nextIndex;
-      setActiveIndex(nextIndex);
+      const nextStep = getNextCarouselStep(
+        activeIndexRef.current,
+        autoPlayDirectionRef.current,
+        featuredSlides.length,
+      );
+      autoPlayDirectionRef.current = nextStep.direction;
+      activeIndexRef.current = nextStep.index;
+      setActiveIndex(nextStep.index);
       listRef.current?.scrollToOffset({
-        animated: true,
-        offset: nextPhysicalIndex * cardStep,
+        animated: !reduceMotion,
+        offset: nextStep.index * cardStep,
       });
     }, AUTO_PLAY_INTERVAL_MS);
 
@@ -294,39 +262,25 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
 
   function setCurrentSlide(index: number, animated: boolean) {
     const normalizedIndex = Math.max(0, Math.min(index, featuredSlides.length - 1));
-    const physicalIndex = featuredSlides.length > 1 ? normalizedIndex + 1 : normalizedIndex;
     lastInteractionAtRef.current = Date.now();
-    physicalIndexRef.current = physicalIndex;
+    if (normalizedIndex === 0) {
+      autoPlayDirectionRef.current = 1;
+    } else if (normalizedIndex === featuredSlides.length - 1) {
+      autoPlayDirectionRef.current = -1;
+    }
     activeIndexRef.current = normalizedIndex;
     setActiveIndex(normalizedIndex);
     listRef.current?.scrollToOffset({
       animated: animated && !reduceMotion,
-      offset: physicalIndex * cardStep,
+      offset: normalizedIndex * cardStep,
     });
   }
 
   function updateIndexFromScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const physicalIndex = Math.round(event.nativeEvent.contentOffset.x / cardStep);
-    let normalizedPhysicalIndex = physicalIndex;
-
-    if (featuredSlides.length > 1 && physicalIndex <= 0) {
-      normalizedPhysicalIndex = featuredSlides.length;
-      listRef.current?.scrollToOffset({
-        animated: false,
-        offset: normalizedPhysicalIndex * cardStep,
-      });
-    } else if (
-      featuredSlides.length > 1 &&
-      physicalIndex >= featuredSlides.length + 1
-    ) {
-      normalizedPhysicalIndex = 1;
-      listRef.current?.scrollToOffset({ animated: false, offset: cardStep });
-    }
-
-    const normalizedIndex = featuredSlides.length > 1
-      ? normalizedPhysicalIndex - 1
-      : 0;
-    physicalIndexRef.current = normalizedPhysicalIndex;
+    const normalizedIndex = Math.max(
+      0,
+      Math.min(featuredSlides.length - 1, Math.round(event.nativeEvent.contentOffset.x / cardStep)),
+    );
     activeIndexRef.current = normalizedIndex;
     setActiveIndex(normalizedIndex);
     isInteractingRef.current = false;
@@ -339,7 +293,7 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
   return (
     <View style={styles.carouselSection}>
       <View style={styles.carouselHeader}>
-        <ThemedText style={styles.carouselTitle}>常用功能</ThemedText>
+        <ThemedText style={styles.carouselTitle}>精选功能</ThemedText>
         <ThemedText style={[styles.carouselCount, { color: colors.mutedText }]}>
           {String(Math.min(activeIndex + 1, featuredSlides.length)).padStart(2, '0')} /{' '}
           {String(featuredSlides.length).padStart(2, '0')}
@@ -348,9 +302,9 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
 
       <FlatList
         ref={listRef}
-        accessibilityLabel="常用功能轮播"
+        accessibilityLabel="精选功能轮播"
         contentContainerStyle={styles.carouselContent}
-        data={renderedSlides}
+        data={featuredSlides}
         decelerationRate="fast"
         disableIntervalMomentum
         extraData={cardWidth}
@@ -360,8 +314,8 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
           offset: cardStep * index,
         })}
         horizontal
-        initialScrollIndex={featuredSlides.length > 1 ? 1 : 0}
-        keyExtractor={(item) => item.key}
+        initialScrollIndex={0}
+        keyExtractor={(item) => item.toolId}
         nestedScrollEnabled
         onMomentumScrollBegin={() => {
           isInteractingRef.current = true;
@@ -379,19 +333,15 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
             style={[
               styles.cardSlot,
               {
-                marginRight: index === renderedSlides.length - 1 ? 0 : CARD_GAP,
+                marginRight: index === featuredSlides.length - 1 ? 0 : CARD_GAP,
                 width: cardWidth,
               },
             ]}>
             <FeaturedCard
-              slide={item.slide}
-              testID={
-                item.key.startsWith('clone-')
-                  ? `featured-card-${item.slide.toolId}-${item.key}`
-                  : `featured-card-${item.slide.toolId}`
-              }
+              slide={item}
+              testID={`featured-card-${item.toolId}`}
               width={cardWidth}
-              onPress={() => onToolPress(item.slide.tool)}
+              onPress={() => onToolPress(item.tool)}
             />
           </View>
         )}
@@ -401,30 +351,32 @@ export function FeaturedToolCarousel({ onToolPress, tools }: FeaturedToolCarouse
         testID="featured-carousel"
       />
 
-      <View accessibilityLabel="常用功能轮播分页" style={styles.pagination}>
-        {featuredSlides.map((slide, index) => {
-          const selected = index === activeIndex;
-          return (
-            <Pressable
-              key={slide.toolId}
-              accessibilityLabel={`显示第 ${index + 1} 个常用功能：${slide.tool.name}`}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              hitSlop={5}
-              onPress={() => setCurrentSlide(index, true)}
-              style={styles.paginationButton}
-              testID={`featured-carousel-dot-${index + 1}`}>
-              <View
-                style={[
-                  styles.paginationDot,
-                  { backgroundColor: selected ? '#1f4e43' : colors.line },
-                  selected ? styles.paginationDotActive : null,
-                ]}
-              />
-            </Pressable>
-          );
-        })}
-      </View>
+      {featuredSlides.length > 1 ? (
+        <View accessibilityLabel="精选功能轮播分页" style={styles.pagination}>
+          {featuredSlides.map((slide, index) => {
+            const selected = index === activeIndex;
+            return (
+              <Pressable
+                key={slide.toolId}
+                accessibilityLabel={`显示第 ${index + 1} 个精选功能：${slide.tool.name}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                hitSlop={8}
+                onPress={() => setCurrentSlide(index, true)}
+                style={styles.paginationButton}
+                testID={`featured-carousel-dot-${index + 1}`}>
+                <View
+                  style={[
+                    styles.paginationDot,
+                    { backgroundColor: selected ? '#1f4e43' : colors.line },
+                    selected ? styles.paginationDotActive : null,
+                  ]}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -453,11 +405,11 @@ const styles = StyleSheet.create({
     paddingRight: NEXT_CARD_PEEK + CARD_GAP,
   },
   cardSlot: {
-    height: 190,
+    height: 172,
   },
   featureCard: {
     borderRadius: 21,
-    height: 190,
+    height: 172,
     overflow: 'hidden',
     padding: 18,
     position: 'relative',

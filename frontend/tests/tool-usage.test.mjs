@@ -8,25 +8,27 @@ import {
 } from '../lib/tool-usage.ts';
 import { createToolUsageStore } from '../lib/tool-usage-store.ts';
 
-const defaults = ['one', 'two', 'three', 'four'];
-const eligible = [...defaults, 'five', 'six'];
+const defaults = ['one', 'two', 'three', 'four', 'five', 'six'];
+const eligible = [...defaults, 'seven', 'eight'];
 
-test('uses four defaults before the user opens any tools', () => {
+test('uses six defaults before the user opens any tools', () => {
   assert.deepEqual(getCommonToolIds(eligible, [], defaults), defaults);
 });
 
 test('ranks clicked tools by count and then by most recent click', () => {
   const usage = [
-    { toolId: 'five', clickCount: 3, lastClickedAt: 10 },
-    { toolId: 'six', clickCount: 3, lastClickedAt: 20 },
+    { toolId: 'seven', clickCount: 3, lastClickedAt: 10 },
+    { toolId: 'eight', clickCount: 3, lastClickedAt: 20 },
     { toolId: 'two', clickCount: 1, lastClickedAt: 30 },
   ];
 
   assert.deepEqual(getCommonToolIds(eligible, usage, defaults), [
-    'six',
-    'five',
+    'eight',
+    'seven',
     'two',
     'one',
+    'three',
+    'four',
   ]);
 });
 
