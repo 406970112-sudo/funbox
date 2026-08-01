@@ -279,7 +279,7 @@ export function FocusScreen() {
         <View style={[styles.tabs, { backgroundColor: dark ? colors.surfaceMuted : '#e9eef8' }]}>
           <TabButton
             active={activeTab === 'today'}
-            icon="sun"
+            icon="weather-sunny"
             label="今日"
             onPress={() => setActiveTab('today')}
           />
