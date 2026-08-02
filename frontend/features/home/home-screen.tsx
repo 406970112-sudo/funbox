@@ -1029,6 +1029,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 10,
+    marginTop: 16,
     padding: 12,
   },
   membershipIcon: {
