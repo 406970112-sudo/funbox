@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-screen';
 import { ProductRecommendationScreen } from '@/features/tools/product-recommendation-screen';
 import { FoodRecommendationScreen } from '@/features/tools/food-recommendation-screen';
+import { CookingGuideScreen } from '@/features/tools/cooking-guide-screen';
 import { AiNavigationScreen } from '@/features/tools/ai-navigation-screen';
 import { TextToSpeechToolScreen } from '@/features/tools/tts-tool-screen';
 import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
@@ -231,6 +232,15 @@ export function ToolDetailScreen() {
     );
   }
 
+  if (tool?.id === 'cooking-guide') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <CookingGuideScreen />
+      </>
+    );
+  }
+
   if (tool?.id === 'live-stream-capture') {
     return (
       <>
@@ -284,6 +294,7 @@ export function ToolDetailScreen() {
       </>
     );
   }
+
   if (tool?.id === 'double-color-ball') {
     return (
       <>

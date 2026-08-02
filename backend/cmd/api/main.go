@@ -15,6 +15,7 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/cookingguide"
 	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
@@ -100,6 +101,11 @@ func main() {
 		log.Fatalf("open food recommendation database failed: %v", err)
 	}
 	defer foodRecommendationStore.Close()
+	cookingGuideStore, err := cookingguide.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open cooking guide database failed: %v", err)
+	}
+	defer cookingGuideStore.Close()
 	registry, err := access.Registry()
 	if err != nil {
 		log.Fatalf("load feature registry failed: %v", err)
@@ -178,6 +184,7 @@ func main() {
 		Timeout:         cfg.FoodRecommendation.POITimeout,
 	})
 	foodRecommendationService := foodrecommendation.NewServiceWithPOI(cfg.DeepSeek, foodRecommendationStore, foodPOIProvider)
+	cookingGuideService := cookingguide.NewService(cookingGuideStore)
 	momentsService := moments.NewService(
 		momentsStore,
 		cfg.Storage.MomentDir,
@@ -215,6 +222,7 @@ func main() {
 		membershipService,
 		recommendationService,
 		foodRecommendationService,
+		cookingGuideService,
 		momentsService,
 		diaryService,
 		scoreService,

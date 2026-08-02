@@ -15,6 +15,7 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/cookingguide"
 	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
@@ -39,6 +40,7 @@ type Server struct {
 	accessStore               *access.Store
 	authService               *auth.Service
 	cfg                       config.Config
+	cookingGuideService       *cookingguide.Service
 	feedbackService           *feedback.Service
 	foodRecommendationService *foodrecommendation.Service
 	focusStore                *focus.Store
@@ -70,7 +72,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -83,7 +85,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -106,6 +108,7 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -145,6 +148,7 @@ func NewServerWithReadingNewsAndFeedback(
 		nil,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -173,6 +177,7 @@ func NewServerWithReadingNewsFeedbackAndFocus(
 		readingService,
 		feedbackService,
 		focusStore,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -212,6 +217,7 @@ func NewServerWithMembership(
 		nil,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -244,6 +250,7 @@ func NewServerWithMembershipAndRecommendation(
 		focusStore,
 		membershipService,
 		recommendationService,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -283,6 +290,7 @@ func NewServerWithMembershipRecommendationAndFood(
 		foodRecommendationService,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -318,6 +326,7 @@ func NewServerWithMoments(
 		membershipService,
 		recommendationService,
 		foodRecommendationService,
+		nil,
 		momentsService,
 		nil,
 		scoreServices...,
@@ -338,6 +347,7 @@ func NewServerWithDiary(
 	membershipService *membership.Service,
 	recommendationService *recommendation.Service,
 	foodRecommendationService *foodrecommendation.Service,
+	cookingGuideService *cookingguide.Service,
 	momentsService *moments.Service,
 	diaryService *diary.Service,
 	scoreServices ...*score.Service,
@@ -356,6 +366,7 @@ func NewServerWithDiary(
 		membershipService,
 		recommendationService,
 		foodRecommendationService,
+		cookingGuideService,
 		momentsService,
 		diaryService,
 		scoreServices...,
@@ -376,6 +387,7 @@ func newServer(
 	membershipService *membership.Service,
 	recommendationService *recommendation.Service,
 	foodRecommendationService *foodrecommendation.Service,
+	cookingGuideService *cookingguide.Service,
 	momentsService *moments.Service,
 	diaryService *diary.Service,
 	scoreServices ...*score.Service,
@@ -398,6 +410,7 @@ func newServer(
 		accessStore:               accessStore,
 		authService:               authService,
 		cfg:                       cfg,
+		cookingGuideService:       cookingGuideService,
 		feedbackService:           feedbackService,
 		foodRecommendationService: foodRecommendationService,
 		focusStore:                focusStore,
@@ -450,6 +463,7 @@ func newServer(
 	registerFocusRoutes(mux, api)
 	registerRecommendationRoutes(mux, api)
 	registerFoodRecommendationRoutes(mux, api)
+	registerCookingGuideRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))

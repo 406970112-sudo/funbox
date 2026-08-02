@@ -406,8 +406,6 @@
     "status": "playable",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
-  }
-]
   },
   {
     "id": "json-workbench",
@@ -435,6 +433,21 @@
     "accentColor": "#4b6bff",
     "badges": ["日记本", "私密记录"],
     "usageLabel": "开始写日记",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "cooking-guide",
+    "name": "跟做菜谱",
+    "tagline": "搜菜系、看真实菜谱、一步步跟做",
+    "description": "按菜系或菜名搜索真实菜谱，查看图片、食材与步骤，生成购物清单，并在跟做模式下一步步完成。",
+    "icon": "chef-hat",
+    "category": "生活",
+    "route": "/tools/cooking-guide",
+    "accentColor": "#e85d4a",
+    "badges": ["真实菜谱", "跟做模式"],
+    "usageLabel": "开始跟做",
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]

@@ -1,0 +1,2051 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 跟做菜谱产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script src="cooking-guide-assets/themealdb-snapshot.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #e85d4a;
+        --green: #24b36b;
+        --amber: #f1a33b;
+        --canvas: #eef4ff;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+        --warm: #fff4ed;
+        --dark: #101426;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 1220px;
+        padding: 28px 34px 34px;
+        width: 1500px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark svg {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--coral);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .flow-strip {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .flow-step {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        gap: 9px;
+        min-height: 46px;
+        padding: 0 14px;
+      }
+
+      .flow-step .num {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 8px;
+        color: var(--blue);
+        display: inline-flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-step strong {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .flow-step small {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .flow-step.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--white);
+      }
+
+      .flow-step.active .num {
+        background: var(--lime);
+        color: var(--navy);
+      }
+
+      .flow-step.active small {
+        color: #aab3c8;
+      }
+
+      .flow-arrow {
+        color: #9aa7c0;
+        height: 16px;
+        width: 16px;
+      }
+
+      .stage {
+        display: grid;
+        gap: 22px;
+        grid-template-columns: 310px 424px 380px;
+      }
+
+      .panel {
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 18px;
+        padding: 20px;
+      }
+
+      .kicker {
+        color: var(--coral);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .strategy h2 {
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 8px 0 10px;
+      }
+
+      .strategy-lead {
+        color: #5f6c86;
+        font-size: 11.5px;
+        line-height: 1.75;
+        margin: 0 0 16px;
+      }
+
+      .strategy-section {
+        border-top: 1px solid #e6ecf8;
+        margin-top: 14px;
+        padding-top: 14px;
+      }
+
+      .strategy-section h3 {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 7px;
+        margin: 0 0 9px;
+      }
+
+      .strategy-section h3 i {
+        color: var(--blue);
+        height: 15px;
+        width: 15px;
+      }
+
+      .rule-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .rule-list li {
+        color: #4d5a75;
+        font-size: 11px;
+        line-height: 1.6;
+        list-style: none;
+        padding-left: 18px;
+        position: relative;
+      }
+
+      .rule-list li::before {
+        background: var(--lime);
+        border-radius: 50%;
+        content: "";
+        height: 7px;
+        left: 2px;
+        position: absolute;
+        top: 6px;
+        width: 7px;
+      }
+
+      .mini-flow {
+        background: var(--navy);
+        border-radius: 12px;
+        color: #cfd6e6;
+        display: grid;
+        font-size: 10.5px;
+        gap: 6px;
+        line-height: 1.5;
+        padding: 13px 14px;
+      }
+
+      .mini-flow strong {
+        color: var(--lime);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .data-badge {
+        align-items: center;
+        background: var(--warm);
+        border: 1px solid #ffdcc8;
+        border-radius: 10px;
+        color: #a34b2a;
+        display: inline-flex;
+        font-size: 9.5px;
+        font-weight: 800;
+        gap: 6px;
+        margin-top: 12px;
+        padding: 7px 9px;
+      }
+
+      .data-badge i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .phone-stage {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 42px;
+        box-shadow: 0 26px 52px rgba(21, 27, 59, 0.24);
+        height: 1080px;
+        padding: 11px;
+        position: relative;
+        width: 424px;
+      }
+
+      .phone-screen {
+        background: var(--screen);
+        border-radius: 32px;
+        height: 1058px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 42px;
+        justify-content: space-between;
+        padding: 0 26px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 9px;
+        transform: translateX(-50%);
+        width: 96px;
+      }
+
+      .screen {
+        display: none;
+        height: 100%;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+
+      .screen.is-active {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .screen-nav {
+        align-items: center;
+        display: flex;
+        flex: 0 0 48px;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+
+      .nav-btn {
+        align-items: center;
+        background: #eef1f8;
+        border: 0;
+        border-radius: 50%;
+        display: inline-flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .nav-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .screen-title {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .screen-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: 0 18px;
+      }
+
+      .screen-foot {
+        align-items: center;
+        border-top: 1px solid #e3e9f5;
+        display: flex;
+        flex: 0 0 62px;
+        gap: 10px;
+        padding: 0 18px;
+      }
+
+      .foot-item {
+        align-items: center;
+        color: #8490a8;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        font-size: 9px;
+        gap: 3px;
+        justify-content: center;
+      }
+
+      .foot-item.active {
+        color: var(--blue);
+        font-weight: 800;
+      }
+
+      .foot-item i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .search-hero {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 15px;
+        display: flex;
+        gap: 9px;
+        margin-top: 20px;
+        min-height: 54px;
+        padding: 0 13px;
+      }
+
+      .search-hero > i {
+        color: var(--blue);
+        flex: 0 0 auto;
+        height: 18px;
+        width: 18px;
+      }
+
+      .search-hero input {
+        background: transparent;
+        border: 0;
+        flex: 1;
+        font-size: 13px;
+        font-weight: 700;
+        min-width: 0;
+        outline: none;
+      }
+
+      .search-go {
+        align-items: center;
+        background: var(--navy);
+        border: 0;
+        border-radius: 9px;
+        color: var(--white);
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 5px;
+        min-height: 34px;
+        padding: 0 12px;
+      }
+
+      .search-go i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 18px 0 9px;
+      }
+
+      .section-head strong {
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 9.5px;
+        font-weight: 700;
+      }
+
+      .area-row {
+        display: flex;
+        gap: 8px;
+        overflow: hidden;
+        padding-bottom: 4px;
+      }
+
+      .area-chip {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 999px;
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 10.5px;
+        font-weight: 800;
+        gap: 5px;
+        min-height: 32px;
+        padding: 0 12px;
+      }
+
+      .area-chip small {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .area-chip.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--white);
+      }
+
+      .dish-list {
+        display: grid;
+        gap: 11px;
+      }
+
+      .dish-card {
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 14px;
+        cursor: pointer;
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .dish-card img {
+        border-radius: 11px;
+        flex: 0 0 104px;
+        height: 96px;
+        object-fit: cover;
+        width: 104px;
+      }
+
+      .dish-main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .dish-title-row {
+        align-items: baseline;
+        display: flex;
+        gap: 7px;
+      }
+
+      .dish-zh {
+        font-size: 15px;
+        font-weight: 900;
+        line-height: 1.35;
+      }
+
+      .dish-en {
+        color: var(--muted);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .dish-meta {
+        color: var(--muted);
+        font-size: 9.5px;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .dish-stats {
+        color: #5f6c86;
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 9.5px;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .stat-pill {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 7px;
+        display: inline-flex;
+        font-weight: 800;
+        gap: 4px;
+        padding: 3px 7px;
+      }
+
+      .stat-pill i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .dish-source {
+        align-items: center;
+        color: #8a96ac;
+        display: flex;
+        font-size: 8.5px;
+        gap: 4px;
+        margin-top: 6px;
+      }
+
+      .dish-source i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .real-pill {
+        align-items: center;
+        background: var(--warm);
+        border-radius: 999px;
+        color: #a34b2a;
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 900;
+        gap: 4px;
+        padding: 3px 8px;
+      }
+
+      .real-pill i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .summary-card {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 13px;
+        color: var(--white);
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+        padding: 13px 14px;
+      }
+
+      .summary-card strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .summary-card span {
+        color: #aab3c8;
+        font-size: 9px;
+        margin-top: 3px;
+      }
+
+      .ai-pill {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.14);
+        border: 1px solid rgba(201, 243, 106, 0.4);
+        border-radius: 999px;
+        color: var(--lime);
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 900;
+        gap: 4px;
+        padding: 5px 9px;
+      }
+
+      .ai-pill i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .filter-row {
+        display: flex;
+        gap: 7px;
+        margin: 12px 0;
+        overflow: hidden;
+        padding-bottom: 3px;
+      }
+
+      .filter-chip {
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 999px;
+        cursor: pointer;
+        flex: 0 0 auto;
+        font-size: 10px;
+        font-weight: 800;
+        min-height: 30px;
+        padding: 0 12px;
+      }
+
+      .filter-chip.active {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: var(--white);
+      }
+
+      .detail-hero {
+        background: #d8dfec;
+        height: 224px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .detail-hero img {
+        height: 100%;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .detail-nav {
+        display: flex;
+        gap: 9px;
+        left: 16px;
+        position: absolute;
+        top: 16px;
+      }
+
+      .detail-nav .nav-btn {
+        background: rgba(255, 255, 255, 0.92);
+      }
+
+      .detail-nav .spacer {
+        background: transparent;
+        width: 130px;
+      }
+
+      .detail-title-wrap {
+        bottom: 14px;
+        color: var(--white);
+        left: 18px;
+        position: absolute;
+        right: 18px;
+      }
+
+      .detail-title-wrap strong {
+        display: block;
+        font-size: 22px;
+        font-weight: 900;
+        text-shadow: 0 2px 8px rgba(16, 20, 38, 0.55);
+      }
+
+      .detail-title-wrap span {
+        display: block;
+        font-size: 10px;
+        margin-top: 4px;
+        opacity: 0.92;
+      }
+
+      .detail-body {
+        height: 560px;
+        overflow: hidden;
+        padding: 14px 18px;
+      }
+
+      .detail-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      .meta-pill {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        border-radius: 8px;
+        display: inline-flex;
+        font-size: 9.5px;
+        font-weight: 800;
+        gap: 5px;
+        padding: 6px 9px;
+      }
+
+      .meta-pill i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .meta-pill.coral {
+        background: var(--warm);
+        border-color: #ffdcc8;
+        color: #a34b2a;
+      }
+
+      .meta-pill.green {
+        background: #eafaf1;
+        border-color: #bfe9d2;
+        color: #147a47;
+      }
+
+      .block-title {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 15px 0 8px;
+      }
+
+      .ingredient-grid {
+        display: grid;
+        gap: 6px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .ingredient-cell {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #e4eaf6;
+        border-radius: 9px;
+        display: flex;
+        font-size: 9.5px;
+        gap: 7px;
+        min-height: 32px;
+        padding: 0 9px;
+      }
+
+      .ingredient-cell i {
+        color: var(--green);
+        height: 13px;
+        width: 13px;
+      }
+
+      .ingredient-cell strong {
+        flex: 1;
+        font-size: 9.5px;
+        font-weight: 800;
+        line-height: 1.35;
+      }
+
+      .ingredient-cell span {
+        color: var(--muted);
+        font-size: 8.5px;
+      }
+
+      .step-preview {
+        background: var(--white);
+        border: 1px solid #e4eaf6;
+        border-radius: 10px;
+        display: grid;
+        gap: 8px;
+        padding: 11px;
+      }
+
+      .step-line {
+        display: flex;
+        font-size: 10px;
+        gap: 8px;
+        line-height: 1.6;
+      }
+
+      .step-num {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 7px;
+        color: var(--blue);
+        display: inline-flex;
+        flex: 0 0 22px;
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 900;
+        height: 22px;
+        justify-content: center;
+      }
+
+      .source-card {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 11px;
+        color: var(--white);
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 11px 12px;
+      }
+
+      .source-card i {
+        color: var(--lime);
+        height: 16px;
+        width: 16px;
+      }
+
+      .source-card strong {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .source-card span {
+        color: #aab3c8;
+        font-size: 8.5px;
+      }
+
+      .detail-actions {
+        display: flex;
+        gap: 9px;
+        margin-top: 14px;
+      }
+
+      .detail-action {
+        align-items: center;
+        border: 0;
+        border-radius: 11px;
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0 14px;
+      }
+
+      .detail-action.secondary {
+        background: var(--white);
+        border: 1px solid #dbe4f4;
+        color: var(--ink);
+      }
+
+      .detail-action.primary {
+        background: var(--coral);
+        color: var(--white);
+        flex: 1;
+      }
+
+      .detail-action i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .cook-screen {
+        background: var(--dark);
+        color: var(--white);
+      }
+
+      .cook-nav {
+        align-items: center;
+        display: flex;
+        flex: 0 0 48px;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+
+      .cook-nav .nav-btn {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--white);
+      }
+
+      .cook-dish {
+        color: #aab3c8;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .cook-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: 18px 20px 0;
+      }
+
+      .cook-progress-head {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .cook-progress-head strong {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .cook-progress-head span {
+        color: var(--lime);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .progress-track {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        height: 6px;
+        margin-bottom: 16px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: var(--lime);
+        border-radius: 999px;
+        height: 100%;
+        width: 33%;
+      }
+
+      .step-card {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        min-height: 460px;
+        padding: 22px;
+      }
+
+      .step-card .step-tag {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .step-card .step-tag i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .step-card p {
+        color: #f1f4fb;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.85;
+        margin: 14px 0 0;
+      }
+
+      .cook-actions {
+        align-items: center;
+        display: flex;
+        flex: 0 0 86px;
+        gap: 10px;
+        padding: 14px 18px;
+      }
+
+      .cook-btn {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        color: var(--white);
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 6px;
+        justify-content: center;
+        min-height: 48px;
+        padding: 0 12px;
+      }
+
+      .cook-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .cook-btn.next {
+        background: var(--coral);
+        border-color: var(--coral);
+        flex: 1;
+        font-size: 13px;
+      }
+
+      .shopping-head {
+        align-items: center;
+        background: var(--warm);
+        border: 1px solid #ffdcc8;
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+        padding: 12px;
+      }
+
+      .shopping-head i {
+        color: var(--coral);
+        height: 20px;
+        width: 20px;
+      }
+
+      .shopping-head strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .shopping-head span {
+        color: #a34b2a;
+        font-size: 9px;
+      }
+
+      .shopping-list {
+        display: grid;
+        gap: 7px;
+        margin-top: 14px;
+      }
+
+      .shopping-row {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #e4eaf6;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        font-size: 11px;
+        gap: 10px;
+        min-height: 40px;
+        padding: 0 12px;
+      }
+
+      .shopping-row .check {
+        align-items: center;
+        border: 1.5px solid #c3cede;
+        border-radius: 7px;
+        color: transparent;
+        display: inline-flex;
+        flex: 0 0 20px;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .shopping-row .check i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .shopping-row.done .check {
+        background: var(--green);
+        border-color: var(--green);
+        color: var(--white);
+      }
+
+      .shopping-row.done .ing-name {
+        color: #9aa7c0;
+        text-decoration: line-through;
+      }
+
+      .shopping-row strong {
+        flex: 1;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .shopping-row span {
+        color: var(--muted);
+        font-size: 9.5px;
+      }
+
+      .shopping-actions {
+        display: flex;
+        gap: 9px;
+        margin-top: 16px;
+      }
+
+      .annotation {
+        display: none;
+      }
+
+      .annotation.is-active {
+        display: block;
+      }
+
+      .annotation h2 {
+        font-size: 21px;
+        font-weight: 900;
+        margin: 8px 0 4px;
+      }
+
+      .annotation .anno-sub {
+        color: var(--muted);
+        font-size: 10.5px;
+        margin: 0 0 14px;
+      }
+
+      .anno-section {
+        border-top: 1px solid #e6ecf8;
+        margin-top: 14px;
+        padding-top: 13px;
+      }
+
+      .anno-section h3 {
+        font-size: 11px;
+        font-weight: 900;
+        margin: 0 0 9px;
+      }
+
+      .anno-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .anno-list li {
+        color: #4d5a75;
+        font-size: 10.5px;
+        line-height: 1.65;
+        list-style: none;
+        padding-left: 16px;
+        position: relative;
+      }
+
+      .anno-list li::before {
+        color: var(--blue);
+        content: "›";
+        font-weight: 900;
+        left: 2px;
+        position: absolute;
+        top: 0;
+      }
+
+      .field-grid {
+        display: grid;
+        gap: 7px;
+      }
+
+      .field-row {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        display: flex;
+        font-size: 9.5px;
+        justify-content: space-between;
+        padding: 8px 10px;
+      }
+
+      .field-row span {
+        color: #5f6c86;
+        font-weight: 700;
+      }
+
+      .field-row code {
+        background: rgba(75, 107, 255, 0.12);
+        border-radius: 6px;
+        color: var(--blue);
+        font-family: "Manrope", "Consolas", monospace;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 3px 6px;
+      }
+
+      .anno-note {
+        background: var(--warm);
+        border: 1px solid #ffdcc8;
+        border-radius: 10px;
+        color: #8a4a2d;
+        font-size: 9.5px;
+        line-height: 1.65;
+        margin-top: 14px;
+        padding: 10px 11px;
+      }
+
+      .board-note {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        color: #5f6c86;
+        display: flex;
+        font-size: 10.5px;
+        gap: 10px;
+        line-height: 1.7;
+        margin-top: 20px;
+        padding: 13px 16px;
+      }
+
+      .board-note i {
+        color: var(--green);
+        flex: 0 0 auto;
+        height: 17px;
+        margin-top: 2px;
+        width: 17px;
+      }
+
+      .board-note strong {
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="chef-hat" aria-hidden="true"></i></div>
+          <div>
+            <h1 class="brand-title">跟做菜谱 · 教做菜</h1>
+            <p class="brand-subtitle">搜菜系，找喜欢的菜，看真实图片，按真实步骤炒出来</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>产品设计 V1</strong>
+          真实数据闭环 · 2026-08-02
+        </div>
+      </header>
+
+      <div class="flow-strip">
+        <button class="flow-step active" type="button" data-target="0">
+          <span class="num">01</span>
+          <span><strong>菜系发现</strong><br /><small>真实菜系与菜卡</small></span>
+        </button>
+        <i class="flow-arrow" data-lucide="arrow-right" aria-hidden="true"></i>
+        <button class="flow-step" type="button" data-target="1">
+          <span class="num">02</span>
+          <span><strong>搜索筛选</strong><br /><small>真实结果列表</small></span>
+        </button>
+        <i class="flow-arrow" data-lucide="arrow-right" aria-hidden="true"></i>
+        <button class="flow-step" type="button" data-target="2">
+          <span class="num">03</span>
+          <span><strong>菜谱详情</strong><br /><small>食材与步骤预览</small></span>
+        </button>
+        <i class="flow-arrow" data-lucide="arrow-right" aria-hidden="true"></i>
+        <button class="flow-step" type="button" data-target="3">
+          <span class="num">04</span>
+          <span><strong>跟做模式</strong><br /><small>一步步照着做</small></span>
+        </button>
+        <i class="flow-arrow" data-lucide="arrow-right" aria-hidden="true"></i>
+        <button class="flow-step" type="button" data-target="4">
+          <span class="num">05</span>
+          <span><strong>购物清单</strong><br /><small>备菜一次买齐</small></span>
+        </button>
+      </div>
+
+      <div class="stage">
+        <aside class="panel strategy">
+          <span class="kicker">STRATEGY</span>
+          <h2>把"看美食"变成"做出来"</h2>
+          <p class="strategy-lead">
+            V1 解决一件事：用户从菜系或菜名进入，看到真实图片和食材，再按真实步骤完成一道菜。全程不出现编造内容。
+          </p>
+
+          <div class="strategy-section">
+            <h3><i data-lucide="shield-check" aria-hidden="true"></i>真实数据原则</h3>
+            <ul class="rule-list">
+              <li>图片、食材、步骤只来自真实数据源</li>
+              <li>每条数据带来源、抓取时间与许可</li>
+              <li>缺字段显示"暂无"，禁止 AI 补造</li>
+              <li>AI 只做搜索理解与文案摘要，不生成菜谱</li>
+            </ul>
+          </div>
+
+          <div class="strategy-section">
+            <h3><i data-lucide="git-branch" aria-hidden="true"></i>核心闭环</h3>
+            <div class="mini-flow">
+              <strong>搜索菜系 / 菜名</strong>
+              <span>→ 真实结果列表（图片 + 字段）</span>
+              <span>→ 详情页（食材 + 步骤 + 来源）</span>
+              <span>→ 购物清单勾选备菜</span>
+              <span>→ 跟做模式逐条完成</span>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3><i data-lucide="layout-grid" aria-hidden="true"></i>页面范围</h3>
+            <ul class="rule-list">
+              <li>发现、搜索、详情、跟做、购物清单</li>
+              <li>我的厨房：收藏、做过、历史、偏好</li>
+              <li>来源弹层、反馈、用户审核、离线缓存</li>
+              <li>一期一次交付，不分期上线</li>
+            </ul>
+          </div>
+
+          <div class="data-badge">
+            <i data-lucide="database" aria-hidden="true"></i>
+            演示数据 = TheMealDB 开放接口 08-02 快照
+          </div>
+        </aside>
+
+        <div class="phone-stage">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="dynamic-island"></span>
+                <span class="status-time">9:41</span>
+                <span class="status-icons">
+                  <i data-lucide="signal" aria-hidden="true"></i>
+                  <i data-lucide="wifi" aria-hidden="true"></i>
+                  <i data-lucide="battery-full" aria-hidden="true"></i>
+                </span>
+              </div>
+
+              <section class="screen is-active" data-screen="0">
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">跟做菜谱</span>
+                  <button class="nav-btn" type="button" aria-label="收藏"><i data-lucide="heart" aria-hidden="true"></i></button>
+                </div>
+                <div class="screen-body">
+                  <div class="search-hero">
+                    <i data-lucide="search" aria-hidden="true"></i>
+                    <input id="search-input" value="Kung" aria-label="搜索菜名或菜系" />
+                    <button class="search-go" id="search-go" type="button"><i data-lucide="arrow-right" aria-hidden="true"></i>搜索</button>
+                  </div>
+
+                  <div class="section-head">
+                    <strong>菜系</strong>
+                    <span>来自真实数据源 · 数量实时统计</span>
+                  </div>
+                  <div class="area-row" id="area-row"></div>
+
+                  <div class="section-head">
+                    <strong>今日精选</strong>
+                    <span>图片与菜谱均可溯源</span>
+                  </div>
+                  <div class="dish-list" id="home-list"></div>
+                </div>
+                <div class="screen-foot">
+                  <div class="foot-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="foot-item active"><i data-lucide="chef-hat" aria-hidden="true"></i>工具</div>
+                  <div class="foot-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="foot-item"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="1">
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" data-back aria-label="返回"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">搜索结果</span>
+                  <button class="nav-btn" type="button" aria-label="筛选"><i data-lucide="sliders-horizontal" aria-hidden="true"></i></button>
+                </div>
+                <div class="screen-body">
+                  <div class="summary-card">
+                    <div>
+                      <strong id="result-summary">找到真实菜谱</strong>
+                      <span id="result-sub">字段来自开放数据，未做改写</span>
+                    </div>
+                    <span class="ai-pill"><i data-lucide="database" aria-hidden="true"></i>真实数据</span>
+                  </div>
+                  <div class="filter-row" id="filter-row"></div>
+                  <div class="dish-list" id="result-list"></div>
+                </div>
+                <div class="screen-foot">
+                  <div class="foot-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="foot-item active"><i data-lucide="chef-hat" aria-hidden="true"></i>工具</div>
+                  <div class="foot-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="foot-item"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="2">
+                <div class="detail-hero">
+                  <img id="detail-img" alt="菜谱主图" />
+                  <div class="detail-nav">
+                    <button class="nav-btn" type="button" data-back aria-label="返回"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                    <button class="nav-btn spacer" type="button" aria-hidden="true" tabindex="-1"></button>
+                    <button class="nav-btn" type="button" aria-label="分享"><i data-lucide="share-2" aria-hidden="true"></i></button>
+                    <button class="nav-btn" type="button" aria-label="收藏"><i data-lucide="heart" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="detail-title-wrap">
+                    <strong id="detail-title"></strong>
+                    <span id="detail-subtitle"></span>
+                  </div>
+                </div>
+                <div class="detail-body">
+                  <div class="detail-meta-row" id="detail-meta"></div>
+                  <div class="block-title">食材清单</div>
+                  <div class="ingredient-grid" id="ingredient-grid"></div>
+                  <div class="block-title">步骤预览</div>
+                  <div class="step-preview" id="step-preview"></div>
+                  <div class="source-card">
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                    <div>
+                      <strong id="source-name">原菜谱来源</strong>
+                      <span id="source-meta">来源与抓取时间</span>
+                    </div>
+                  </div>
+                  <div class="detail-actions">
+                    <button class="detail-action secondary" id="go-shopping" type="button"><i data-lucide="shopping-basket" aria-hidden="true"></i>购物清单</button>
+                    <button class="detail-action primary" id="start-cook" type="button"><i data-lucide="play" aria-hidden="true"></i>开始跟做</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen cook-screen" data-screen="3">
+                <div class="cook-nav">
+                  <button class="nav-btn" type="button" data-back aria-label="退出跟做"><i data-lucide="x" aria-hidden="true"></i></button>
+                  <span class="cook-dish" id="cook-dish">麻婆豆腐 · 跟做中</span>
+                  <button class="nav-btn" type="button" aria-label="朗读"><i data-lucide="volume-2" aria-hidden="true"></i></button>
+                </div>
+                <div class="cook-body">
+                  <div class="cook-progress-head">
+                    <strong id="cook-step-label">第 3 步</strong>
+                    <span id="cook-step-total">共 9 步</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" id="cook-progress"></div>
+                  </div>
+                  <div class="step-card">
+                    <span class="step-tag"><i data-lucide="utensils-crossed" aria-hidden="true"></i>当前步骤 · 真实原文</span>
+                    <p id="cook-step-text"></p>
+                  </div>
+                </div>
+                <div class="cook-actions">
+                  <button class="cook-btn" id="cook-prev" type="button"><i data-lucide="arrow-left" aria-hidden="true"></i>上一步</button>
+                  <button class="cook-btn" type="button"><i data-lucide="volume-2" aria-hidden="true"></i>朗读</button>
+                  <button class="cook-btn next" id="cook-next" type="button">下一步<i data-lucide="arrow-right" aria-hidden="true"></i></button>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="4">
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" data-back aria-label="返回"><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">购物清单</span>
+                  <button class="nav-btn" type="button" aria-label="复制清单"><i data-lucide="copy" aria-hidden="true"></i></button>
+                </div>
+                <div class="screen-body">
+                  <div class="shopping-head">
+                    <i data-lucide="shopping-basket" aria-hidden="true"></i>
+                    <div>
+                      <strong id="shopping-title">麻婆豆腐 · 备菜清单</strong>
+                      <span>由菜谱真实食材字段自动生成</span>
+                    </div>
+                  </div>
+                  <div class="shopping-list" id="shopping-list"></div>
+                  <div class="shopping-actions">
+                    <button class="detail-action secondary" type="button"><i data-lucide="copy" aria-hidden="true"></i>复制清单</button>
+                    <button class="detail-action primary" id="shopping-go-cook" type="button"><i data-lucide="play" aria-hidden="true"></i>开始跟做</button>
+                  </div>
+                </div>
+                <div class="screen-foot">
+                  <div class="foot-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="foot-item active"><i data-lucide="chef-hat" aria-hidden="true"></i>工具</div>
+                  <div class="foot-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="foot-item"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <div class="annotation is-active" data-anno="0">
+            <span class="kicker">SCREEN 01</span>
+            <h2>菜系发现</h2>
+            <p class="anno-sub">菜系是入口，也是内容组织方式。</p>
+            <div class="anno-section">
+              <h3>设计要点</h3>
+              <ul class="anno-list">
+                <li>菜系横滑来自真实数据源，带真实菜谱数量</li>
+                <li>菜卡展示真实图片、中文名、英文原名</li>
+                <li>食材数、步骤数由真实字段计算</li>
+                <li>每张菜卡带数据徽标，可点开查看来源</li>
+              </ul>
+            </div>
+            <div class="anno-section">
+              <h3>真实字段</h3>
+              <div class="field-grid">
+                <div class="field-row"><span>菜系</span><code>area</code></div>
+                <div class="field-row"><span>图片</span><code>image.url</code></div>
+                <div class="field-row"><span>食材数</span><code>ingredients.length</code></div>
+                <div class="field-row"><span>步骤数</span><code>steps.length</code></div>
+              </div>
+            </div>
+            <div class="anno-section">
+              <h3>交互说明</h3>
+              <ul class="anno-list">
+                <li>输入菜名或食材，按搜索进入结果页</li>
+                <li>点击菜卡进入详情页</li>
+                <li>菜系点击后可按该菜系过滤</li>
+              </ul>
+            </div>
+            <div class="anno-note">中文名来自人工映射词表 V1，菜谱正文、图片、食材以真实数据源原文为准。</div>
+          </div>
+
+          <div class="annotation" data-anno="1">
+            <span class="kicker">SCREEN 02</span>
+            <h2>搜索筛选</h2>
+            <p class="anno-sub">只返回真实数据池中的结果。</p>
+            <div class="anno-section">
+              <h3>设计要点</h3>
+              <ul class="anno-list">
+                <li>搜索在真实数据池执行，不调用 AI 生成结果</li>
+                <li>筛选字段：菜系、分类、标签，全部来自真实字段</li>
+                <li>排序含"步骤少""食材少"，由真实字段计算</li>
+                <li>空态提示真实可尝试词，不填充假菜谱</li>
+              </ul>
+            </div>
+            <div class="anno-section">
+              <h3>真实字段</h3>
+              <div class="field-grid">
+                <div class="field-row"><span>搜索</span><code>q</code></div>
+                <div class="field-row"><span>菜系</span><code>area</code></div>
+                <div class="field-row"><span>分类</span><code>category</code></div>
+                <div class="field-row"><span>来源</span><code>source</code></div>
+              </div>
+            </div>
+            <div class="anno-section">
+              <h3>交互说明</h3>
+              <ul class="anno-list">
+                <li>筛选只在当前结果池内生效</li>
+                <li>点击结果卡进入详情页</li>
+                <li>筛选后可重置</li>
+              </ul>
+            </div>
+            <div class="anno-note">搜索结果数量与列表内容全部来自 08-02 数据快照，未手工增删。</div>
+          </div>
+
+          <div class="annotation" data-anno="2">
+            <span class="kicker">SCREEN 03</span>
+            <h2>菜谱详情</h2>
+            <p class="anno-sub">先确认可做性，再决定要不要动手。</p>
+            <div class="anno-section">
+              <h3>设计要点</h3>
+              <ul class="anno-list">
+                <li>大图来自真实图片来源，缺图显示占位</li>
+                <li>食材名称与用量来自菜谱原文</li>
+                <li>步骤预览展示前两步，完整步骤进入跟做</li>
+                <li>来源卡片可打开原菜谱与视频</li>
+              </ul>
+            </div>
+            <div class="anno-section">
+              <h3>真实字段</h3>
+              <div class="field-grid">
+                <div class="field-row"><span>食材</span><code>ingredients[]</code></div>
+                <div class="field-row"><span>步骤</span><code>steps[]</code></div>
+                <div class="field-row"><span>原菜谱</span><code>recipeSource</code></div>
+                <div class="field-row"><span>视频</span><code>videoUrl</code></div>
+              </div>
+            </div>
+            <div class="anno-section">
+              <h3>交互说明</h3>
+              <ul class="anno-list">
+                <li>开始跟做进入全屏步骤模式</li>
+                <li>购物清单由真实食材自动生成</li>
+                <li>信息有误可反馈，进入后台审核队列</li>
+              </ul>
+            </div>
+            <div class="anno-note">一期不展示编造难度、时长、价格；缺字段显示"暂无"。</div>
+          </div>
+
+          <div class="annotation" data-anno="3">
+            <span class="kicker">SCREEN 04</span>
+            <h2>跟做模式</h2>
+            <p class="anno-sub">按做菜场景设计，手脏也能继续。</p>
+            <div class="anno-section">
+              <h3>设计要点</h3>
+              <ul class="anno-list">
+                <li>大字号步骤，每屏只放当前一步</li>
+                <li>进度条与第 N 步 / 共 M 步明确</li>
+                <li>上一步、下一步、朗读、退出并保存进度</li>
+                <li>进入后请求屏幕常亮</li>
+              </ul>
+            </div>
+            <div class="anno-section">
+              <h3>真实字段</h3>
+              <div class="field-grid">
+                <div class="field-row"><span>步骤原文</span><code>steps[i]</code></div>
+                <div class="field-row"><span>进度</span><code>session.stepIndex</code></div>
+                <div class="field-row"><span>朗读</span><code>TTS 复用</code></div>
+              </div>
+            </div>
+            <div class="anno-section">
+              <h3>交互说明</h3>
+              <ul class="anno-list">
+                <li>步骤正文不做改写，仅按原文分段</li>
+                <li>TTS 失败时提示后继续</li>
+                <li>原文含时间信息时照原文展示</li>
+              </ul>
+            </div>
+            <div class="anno-note">一期不做没有真实来源的精确计时器和难度评分。</div>
+          </div>
+
+          <div class="annotation" data-anno="4">
+            <span class="kicker">SCREEN 05</span>
+            <h2>购物清单</h2>
+            <p class="anno-sub">备菜一次看清，少跑一趟。</p>
+            <div class="anno-section">
+              <h3>设计要点</h3>
+              <ul class="anno-list">
+                <li>清单由菜谱真实食材字段自动生成</li>
+                <li>食材与用量一一对应，缺失用量只显示名称</li>
+                <li>支持勾选已备、复制清单、分享文本</li>
+                <li>不展示价格、商家与购买链接</li>
+              </ul>
+            </div>
+            <div class="anno-section">
+              <h3>真实字段</h3>
+              <div class="field-grid">
+                <div class="field-row"><span>食材</span><code>ingredients[].name</code></div>
+                <div class="field-row"><span>用量</span><code>ingredients[].measure</code></div>
+                <div class="field-row"><span>菜谱</span><code>dishId</code></div>
+              </div>
+            </div>
+            <div class="anno-section">
+              <h3>交互说明</h3>
+              <ul class="anno-list">
+                <li>勾选状态仅保存在本地会话</li>
+                <li>复制为纯文本，便于发到任何聊天工具</li>
+              </ul>
+            </div>
+            <div class="anno-note">清单内容与详情页食材完全一致，来源可追溯。</div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="board-note">
+        <i data-lucide="badge-check" aria-hidden="true"></i>
+        <span>
+          <strong>本设计稿无假数据。</strong>
+          演示内容来自 TheMealDB 开放接口 2026-08-02 快照（docs/cooking-guide-assets/themealdb-snapshot.js），
+          菜系、菜式、图片、食材、步骤均未改写；中文菜名为人工映射词表 V1。生产环境按 PRD 的字段级来源与校验机制接入。
+        </span>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var S = window.THEMEALDB_SNAPSHOT || { dishes: [], areaCounts: [] };
+        var ZH = {
+          Chinese: "中式",
+          Italian: "意式",
+          Mexican: "墨西哥",
+          Japanese: "日式",
+          Thai: "泰式",
+          French: "法式",
+          Indian: "印式",
+          American: "美式"
+        };
+        var ZH_DISH = {
+          "52945": "宫保鸡丁",
+          "52946": "宫保虾球",
+          "52947": "麻婆豆腐",
+          "52948": "炸云吞",
+          "52949": "糖醋里脊",
+          "52950": "川式牛肉",
+          "52951": "左宗棠鸡",
+          "52953": "虾仁炒河粉",
+          "52956": "鸡丝粥",
+          "53374": "川味茄子"
+        };
+        var dishes = S.dishes || [];
+        function byId(id) {
+          return dishes.find(function (d) { return d.id === id; }) || null;
+        }
+        function areaZh(name) {
+          return ZH[name] || name;
+        }
+        function dishTitle(d) {
+          return ZH_DISH[d.id] || d.name;
+        }
+        function esc(text) {
+          return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+        function sourceHost(url) {
+          try {
+            return new URL(url).hostname.replace(/^www\./, "");
+          } catch (e) {
+            return "原菜谱";
+          }
+        }
+        function tagList(d) {
+          if (Array.isArray(d.tags)) return d.tags;
+          if (d.tags) return String(d.tags).split(",").map(function (s) { return s.trim(); });
+          return [];
+        }
+        function dishCard(d, extraClass) {
+          var zh = esc(dishTitle(d));
+          var en = esc(d.name);
+          var area = esc(areaZh(d.area));
+          var cat = esc(d.category || "未分类");
+          return (
+            '<article class="dish-card ' + (extraClass || "") + '" data-dish="' + d.id + '">' +
+            '<img src="' + esc(d.image) + '" alt="' + zh + '" loading="lazy" />' +
+            '<div class="dish-main">' +
+            '<div class="dish-title-row"><span class="dish-zh">' + zh + '</span><span class="dish-en">' + en + "</span></div>" +
+            '<div class="dish-meta">' + area + " · " + cat + "</div>" +
+            '<div class="dish-stats">' +
+            '<span class="stat-pill"><i data-lucide="shopping-basket"></i>' + d.ingredients.length + " 种食材</span>" +
+            '<span class="stat-pill"><i data-lucide="list-ordered"></i>' + d.steps.length + " 步</span>" +
+            "</div>" +
+            '<div class="dish-source"><i data-lucide="database"></i>TheMealDB 08-02 快照</div>' +
+            "</div>" +
+            "</article>"
+          );
+        }
+
+        function renderAreas() {
+          var row = document.getElementById("area-row");
+          var list = (S.areaCounts || []).filter(function (a) { return ZH[a.name]; }).slice(0, 8);
+          row.innerHTML = list.map(function (a, i) {
+            return '<button class="area-chip' + (i === 0 ? " active" : "") + '" type="button" data-area="' + esc(a.name) + '">' +
+              esc(areaZh(a.name)) + "<small>" + a.count + " 道</small></button>";
+          }).join("");
+        }
+
+        function renderHome() {
+          var list = document.getElementById("home-list");
+          var ids = ["52947", "52945", "52949"];
+          list.innerHTML = ids.map(function (id) {
+            var d = byId(id);
+            return d ? dishCard(d) : "";
+          }).join("");
+        }
+
+        var currentQuery = "Kung";
+        var currentFilters = {};
+        var resultDishes = [];
+
+        function applyFilters(list) {
+          var keys = Object.keys(currentFilters).filter(function (k) { return currentFilters[k]; });
+          if (keys.length === 0) return list;
+          return list.filter(function (d) {
+            return keys.every(function (key) {
+              var tag = key.toLowerCase();
+              var hay = (d.area + " " + d.category + " " + tagList(d).join(" ") + " " + d.name).toLowerCase();
+              return hay.indexOf(tag) >= 0;
+            });
+          });
+        }
+
+        function renderResults() {
+          var q = currentQuery.trim().toLowerCase();
+          var base = dishes.filter(function (d) {
+            if (!q) return true;
+            return (d.name + " " + areaZh(d.area) + " " + d.category + " " + tagList(d).join(" ")).toLowerCase().indexOf(q) >= 0;
+          });
+          resultDishes = applyFilters(base);
+          document.getElementById("result-summary").textContent = "找到 " + resultDishes.length + " 道真实菜谱";
+          document.getElementById("result-sub").textContent = q ? "搜索词：" + currentQuery + " · 字段未改写" : "当前为该菜系全部真实菜谱";
+          document.getElementById("result-list").innerHTML = resultDishes.map(function (d) { return dishCard(d); }).join("");
+          if (resultDishes.length === 0) {
+            document.getElementById("result-list").innerHTML =
+              '<div style="background:#fff;border:1px solid #dbe4f4;border-radius:14px;padding:26px 18px;text-align:center;">' +
+              '<p style="font-size:13px;font-weight:900;margin:0 0 6px;">暂无匹配菜谱</p>' +
+              '<p style="color:#7483a2;font-size:10px;line-height:1.7;margin:0;">已展示全部真实数据，可尝试"中式"或"chicken"。</p></div>';
+          }
+        }
+
+        function renderFilters() {
+          var row = document.getElementById("filter-row");
+          var options = [
+            { key: "chinese", label: "中式" },
+            { key: "chicken", label: "鸡肉" },
+            { key: "vegetarian", label: "素食" },
+            { key: "pork", label: "猪肉" }
+          ];
+          row.innerHTML = options.map(function (o) {
+            return '<button class="filter-chip' + (currentFilters[o.key] ? " active" : "") + '" type="button" data-filter="' + o.key + '">' + o.label + "</button>";
+          }).join("");
+        }
+
+        function renderDetail() {
+          var d = byId("52947");
+          if (!d) return;
+          document.getElementById("detail-img").src = d.image;
+          document.getElementById("detail-title").textContent = dishTitle(d);
+          document.getElementById("detail-subtitle").textContent = d.name + " · " + areaZh(d.area) + " · " + d.category;
+          var meta = document.getElementById("detail-meta");
+          meta.innerHTML =
+            '<span class="meta-pill coral"><i data-lucide="flame"></i>' + areaZh(d.area) + "</span>" +
+            '<span class="meta-pill"><i data-lucide="tag"></i>' + esc(d.category) + "</span>" +
+            '<span class="meta-pill"><i data-lucide="shopping-basket"></i>' + d.ingredients.length + ' 种食材</span>' +
+            '<span class="meta-pill green"><i data-lucide="list-ordered"></i>' + d.steps.length + ' 步</span>';
+          var grid = document.getElementById("ingredient-grid");
+          grid.innerHTML = d.ingredients.slice(0, 8).map(function (ing) {
+            return '<div class="ingredient-cell"><i data-lucide="circle-check"></i><strong>' + esc(ing.name) + '</strong><span>' + esc(ing.measure || "适量") + "</span></div>";
+          }).join("");
+          var preview = document.getElementById("step-preview");
+          preview.innerHTML = d.steps.slice(0, 2).map(function (step, i) {
+            return '<div class="step-line"><span class="step-num">' + (i + 1) + "</span><span>" + esc(step) + "</span></div>";
+          }).join("");
+          document.getElementById("source-name").textContent = "来源：" + sourceHost(d.source);
+          document.getElementById("source-meta").textContent = "TheMealDB 抓取于 2026-08-02 · " + d.steps.length + " 步原文";
+        }
+
+        var cookStep = 2;
+        function renderCook() {
+          var d = byId("52947");
+          if (!d) return;
+          var total = d.steps.length;
+          if (cookStep >= total) cookStep = total - 1;
+          if (cookStep < 0) cookStep = 0;
+          document.getElementById("cook-dish").textContent = dishTitle(d) + " · 跟做中";
+          document.getElementById("cook-step-label").textContent = "第 " + (cookStep + 1) + " 步";
+          document.getElementById("cook-step-total").textContent = "共 " + total + " 步";
+          document.getElementById("cook-progress").style.width = Math.round(((cookStep + 1) / total) * 100) + "%";
+          document.getElementById("cook-step-text").textContent = d.steps[cookStep];
+        }
+
+        function renderShopping() {
+          var d = byId("52947");
+          if (!d) return;
+          document.getElementById("shopping-title").textContent = dishTitle(d) + " · 备菜清单";
+          document.getElementById("shopping-list").innerHTML = d.ingredients.map(function (ing, i) {
+            return '<div class="shopping-row" data-index="' + i + '"><span class="check"><i data-lucide="check"></i></span>' +
+              '<strong class="ing-name">' + esc(ing.name) + "</strong><span>" + esc(ing.measure || "适量") + "</span></div>";
+          }).join("");
+        }
+
+        function selectScreen(index) {
+          var screens = document.querySelectorAll(".screen");
+          var annotations = document.querySelectorAll(".annotation");
+          var steps = document.querySelectorAll(".flow-step");
+          screens.forEach(function (s, i) {
+            s.classList.toggle("is-active", i === index);
+          });
+          annotations.forEach(function (a, i) {
+            a.classList.toggle("is-active", i === index);
+          });
+          steps.forEach(function (s, i) {
+            s.classList.toggle("active", i === index);
+          });
+          if (window.lucide) lucide.createIcons();
+        }
+
+        function rebindCards(root) {
+          var cards = root.querySelectorAll(".dish-card");
+          cards.forEach(function (card) {
+            card.addEventListener("click", function () {
+              selectScreen(2);
+            });
+          });
+        }
+
+        document.querySelectorAll(".flow-step").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            selectScreen(Number(btn.getAttribute("data-target")));
+          });
+        });
+
+        document.querySelectorAll("[data-back]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            selectScreen(0);
+          });
+        });
+
+        document.getElementById("search-go").addEventListener("click", function () {
+          currentQuery = document.getElementById("search-input").value;
+          renderFilters();
+          renderResults();
+          selectScreen(1);
+        });
+
+        document.getElementById("search-input").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            currentQuery = document.getElementById("search-input").value;
+            renderFilters();
+            renderResults();
+            selectScreen(1);
+          }
+        });
+
+        document.getElementById("area-row").addEventListener("click", function (e) {
+          var chip = e.target.closest(".area-chip");
+          if (!chip) return;
+          document.querySelectorAll(".area-chip").forEach(function (c) { c.classList.remove("active"); });
+          chip.classList.add("active");
+          currentQuery = "";
+          currentFilters = { chinese: true };
+          renderFilters();
+          renderResults();
+          selectScreen(1);
+        });
+
+        document.getElementById("filter-row").addEventListener("click", function (e) {
+          var chip = e.target.closest(".filter-chip");
+          if (!chip) return;
+          var key = chip.getAttribute("data-filter");
+          currentFilters[key] = !currentFilters[key];
+          renderFilters();
+          renderResults();
+          rebindCards(document.getElementById("result-list"));
+        });
+
+        document.getElementById("result-list").addEventListener("click", function (e) {
+          if (e.target.closest(".dish-card")) selectScreen(2);
+        });
+
+        document.getElementById("home-list").addEventListener("click", function (e) {
+          if (e.target.closest(".dish-card")) selectScreen(2);
+        });
+
+        document.getElementById("start-cook").addEventListener("click", function () {
+          cookStep = 2;
+          renderCook();
+          selectScreen(3);
+        });
+
+        document.getElementById("shopping-go-cook").addEventListener("click", function () {
+          cookStep = 2;
+          renderCook();
+          selectScreen(3);
+        });
+
+        document.getElementById("go-shopping").addEventListener("click", function () {
+          renderShopping();
+          selectScreen(4);
+        });
+
+        document.getElementById("cook-prev").addEventListener("click", function () {
+          cookStep = Math.max(0, cookStep - 1);
+          renderCook();
+        });
+
+        document.getElementById("cook-next").addEventListener("click", function () {
+          cookStep = Math.min(byId("52947").steps.length - 1, cookStep + 1);
+          renderCook();
+        });
+
+        document.getElementById("shopping-list").addEventListener("click", function (e) {
+          var row = e.target.closest(".shopping-row");
+          if (!row) return;
+          row.classList.toggle("done");
+          if (window.lucide) lucide.createIcons();
+        });
+
+        renderAreas();
+        renderHome();
+        renderFilters();
+        renderResults();
+        renderDetail();
+        renderCook();
+        renderShopping();
+        rebindCards(document.getElementById("home-list"));
+        rebindCards(document.getElementById("result-list"));
+        if (window.lucide) lucide.createIcons();
+      })();
+    </script>
+  </body>
+</html>
