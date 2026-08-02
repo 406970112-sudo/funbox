@@ -1,5 +1,20 @@
 [
   {
+    "id": "moments",
+    "name": "朋友圈",
+    "tagline": "好友动态 · 点赞评论",
+    "description": "发布真实图文动态，好友可见并点赞评论，互动通知实时同步。",
+    "icon": "account-group-outline",
+    "category": "社交",
+    "route": "/tools/moments",
+    "accentColor": "#4b6bff",
+    "badges": ["好友动态"],
+    "usageLabel": "查看动态",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "free-reading",
     "name": "免费阅读",
     "tagline": "正版书城与本地阅读",

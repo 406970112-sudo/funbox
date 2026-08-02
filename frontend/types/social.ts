@@ -53,5 +53,12 @@ export type RealtimeEvent = {
     | 'game.match.updated'
     | 'game.score.updated'
     | 'message.created'
+    | 'moment.comment.created'
+    | 'moment.comment.removed'
+    | 'moment.created'
+    | 'moment.deleted'
+    | 'moment.like.created'
+    | 'moment.like.removed'
+    | 'moment.notification.read'
     | 'presence.changed';
 };

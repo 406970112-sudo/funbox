@@ -1,14 +1,17 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { IdentityPill } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useMoments } from '@/features/moments/moments-provider';
 import { SocialAvatar, SocialEmptyState } from '@/features/social/social-ui';
 import { useSocial } from '@/features/social/social-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
+import type { MomentNotification } from '@/types/moments';
 import type { Conversation } from '@/types/social';
 
 export function MessagesScreen() {
@@ -16,7 +19,26 @@ export function MessagesScreen() {
   const { colors } = useAppTheme();
   const { status } = useAuth();
   const { connectionStatus, conversations, error, friends, loading } = useSocial();
+  const {
+    error: momentsError,
+    loading: momentsLoading,
+    markRead,
+    notifications: momentNotifications,
+    refreshNotifications,
+    unreadCount: momentUnreadCount,
+  } = useMoments();
+  const [activeTab, setActiveTab] = useState<'chat' | 'notifications'>('chat');
   const onlineFriends = friends.filter((friend) => friend.user.online).slice(0, 5);
+  const chatUnreadCount = conversations.reduce(
+    (total, conversation) => total + Math.max(0, conversation.unreadCount || 0),
+    0,
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshNotifications();
+    }, [refreshNotifications]),
+  );
 
   if (status !== 'authenticated') {
     return (
@@ -68,6 +90,23 @@ export function MessagesScreen() {
         </View>
       </View>
 
+      <View style={[styles.tabs, { backgroundColor: colors.surfaceMuted }]}>
+        <TabButton
+          active={activeTab === 'chat'}
+          badge={chatUnreadCount}
+          label="聊天"
+          onPress={() => setActiveTab('chat')}
+        />
+        <TabButton
+          active={activeTab === 'notifications'}
+          badge={momentUnreadCount}
+          label="互动通知"
+          onPress={() => setActiveTab('notifications')}
+        />
+      </View>
+
+      {activeTab === 'chat' ? (
+        <>
       <View style={styles.onlineStrip}>
         <View pointerEvents="none" style={styles.onlineAccent} />
         <View style={styles.onlineHeading}>
@@ -134,6 +173,52 @@ export function MessagesScreen() {
         )}
         {error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
       </View>
+        </>
+      ) : (
+        <View style={[styles.conversationPanel, { backgroundColor: colors.surface }]}>
+          <View style={styles.sectionHeading}>
+            <ThemedText style={styles.sectionTitle}>互动通知</ThemedText>
+            <Pressable
+              accessibilityRole="button"
+              disabled={momentUnreadCount === 0}
+              onPress={() => void markRead()}
+              style={styles.markReadButton}>
+              <MaterialCommunityIcons name="check-all" size={15} color={colors.primary} />
+              <ThemedText style={styles.markReadText}>全部已读</ThemedText>
+            </Pressable>
+          </View>
+          {momentsLoading ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : momentNotifications.length > 0 ? (
+            <View>
+              {momentNotifications.map((notification) => (
+                <MomentNoticeRow
+                  key={notification.id}
+                  notification={notification}
+                  onPress={() => {
+                    void markRead(notification.momentId);
+                    if (notification.momentId) {
+                      router.push({
+                        pathname: '/moments/[momentId]',
+                        params: { momentId: notification.momentId },
+                      });
+                    }
+                  }}
+                />
+              ))}
+            </View>
+          ) : (
+            <SocialEmptyState
+              description="好友赞了你的动态、评论或回复你时，会显示在这里。"
+              icon="bell-outline"
+              title="还没有互动通知"
+            />
+          )}
+          {momentsError ? <ThemedText style={styles.errorText}>{momentsError}</ThemedText> : null}
+        </View>
+      )}
     </MobileScreen>
   );
 }
@@ -186,6 +271,102 @@ function ConversationRow({ conversation, onPress }: { conversation: Conversation
       </View>
     </Pressable>
   );
+}
+
+function TabButton({
+  active,
+  badge,
+  label,
+  onPress,
+}: {
+  active: boolean;
+  badge: number;
+  label: string;
+  onPress: () => void;
+}) {
+  const { colors } = useAppTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      onPress={onPress}
+      style={[styles.tabButton, active && { backgroundColor: colors.surface }]}>
+      <ThemedText style={[styles.tabText, active && { color: colors.text, fontWeight: '800' }]}>
+        {label}
+      </ThemedText>
+      {badge > 0 ? (
+        <View style={styles.tabBadge}>
+          <ThemedText style={styles.tabBadgeText}>{Math.min(badge, 99)}</ThemedText>
+        </View>
+      ) : null}
+    </Pressable>
+  );
+}
+
+function MomentNoticeRow({
+  notification,
+  onPress,
+}: {
+  notification: MomentNotification;
+  onPress: () => void;
+}) {
+  const { colors } = useAppTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.noticeRow,
+        {
+          borderBottomColor: colors.line,
+          opacity: pressed ? 0.68 : 1,
+        },
+      ]}>
+      <SocialAvatar size={40} user={notification.actor} />
+      <View style={styles.conversationCopy}>
+        <ThemedText numberOfLines={1} style={styles.noticeTitle}>
+          {momentNotificationTitle(notification)}
+        </ThemedText>
+        {notification.preview ? (
+          <ThemedText
+            numberOfLines={1}
+            style={[styles.conversationPreview, { color: colors.mutedText }]}>
+            {notification.preview}
+          </ThemedText>
+        ) : null}
+      </View>
+      <View style={styles.noticeSide}>
+        <ThemedText style={[styles.conversationTime, { color: colors.mutedText }]}>
+          {formatMomentNoticeTime(notification.createdAt)}
+        </ThemedText>
+        {!notification.read ? <View style={styles.noticeDot} /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+function momentNotificationTitle(notification: MomentNotification) {
+  switch (notification.type) {
+    case 'like':
+      return `${notification.actor.displayName} 赞了你的动态`;
+    case 'comment':
+      return `${notification.actor.displayName} 评论了你的动态`;
+    case 'reply':
+      return `${notification.actor.displayName} 回复了你`;
+    case 'mention':
+      return `${notification.actor.displayName} 提到了你`;
+    default:
+      return `${notification.actor.displayName} 与你互动`;
+  }
+}
+
+function formatMomentNoticeTime(value: string) {
+  const date = new Date(value);
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60_000);
+  if (minutes < 1) return '刚刚';
+  if (minutes < 60) return `${minutes} 分钟前`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)} 小时前`;
+  return date.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
 }
 
 function formatConversationTime(value: string) {
@@ -420,6 +601,74 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '900',
     lineHeight: 12,
+  },
+  markReadButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+    minHeight: 32,
+  },
+  markReadText: {
+    color: '#4b6bff',
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  noticeDot: {
+    backgroundColor: '#ff6b8f',
+    borderRadius: 4,
+    height: 8,
+    width: 8,
+  },
+  noticeRow: {
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 10,
+    minHeight: 64,
+    paddingVertical: 10,
+  },
+  noticeSide: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  noticeTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  tabBadge: {
+    alignItems: 'center',
+    backgroundColor: '#ff6b8f',
+    borderRadius: 9,
+    height: 18,
+    justifyContent: 'center',
+    minWidth: 18,
+    paddingHorizontal: 5,
+  },
+  tabBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  tabButton: {
+    alignItems: 'center',
+    borderRadius: 9,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    height: 34,
+    justifyContent: 'center',
+  },
+  tabText: {
+    color: '#7483a2',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tabs: {
+    borderRadius: 11,
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 4,
+    padding: 4,
   },
   unreadPreview: {
     fontWeight: '700',

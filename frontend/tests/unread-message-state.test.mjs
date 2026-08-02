@@ -24,6 +24,14 @@ test('sums unread chat messages for the tab state', () => {
   );
 });
 
+test('adds moments interaction unread count to the tab state', () => {
+  assert.deepEqual(
+    getUnreadMessageState([conversation('a', 2)], 3),
+    { accessibilityLabel: '消息，5 条未读', hasUnread: true, unreadCount: 5 },
+  );
+  assert.equal(getUnreadMessageState([], -2).unreadCount, 0);
+});
+
 test('ignores invalid unread counts', () => {
   const state = getUnreadMessageState([
     conversation('a', -2),

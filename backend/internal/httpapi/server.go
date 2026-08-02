@@ -22,6 +22,7 @@ import (
 	"my-first-expo-app/backend/internal/lotterylab"
 	"my-first-expo-app/backend/internal/marketradar"
 	"my-first-expo-app/backend/internal/membership"
+	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
@@ -46,6 +47,7 @@ type Server struct {
 	lotteryLabService         lotteryLabHistoryService
 	marketRadarService        marketRadarSnapshotService
 	membershipService         *membership.Service
+	momentsService            *moments.Service
 	newsService               newsFeedService
 	readingService            *reading.Service
 	readingImporter           *reading.Importer
@@ -66,7 +68,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -79,7 +81,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -102,6 +104,7 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -137,6 +140,7 @@ func NewServerWithReadingNewsAndFeedback(
 		nil,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -165,6 +169,7 @@ func NewServerWithReadingNewsFeedbackAndFocus(
 		readingService,
 		feedbackService,
 		focusStore,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -200,6 +205,7 @@ func NewServerWithMembership(
 		membershipService,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -232,6 +238,7 @@ func NewServerWithMembershipAndRecommendation(
 		focusStore,
 		membershipService,
 		recommendationService,
+		nil,
 		nil,
 		scoreServices...,
 	)
@@ -267,6 +274,43 @@ func NewServerWithMembershipRecommendationAndFood(
 		membershipService,
 		recommendationService,
 		foodRecommendationService,
+		nil,
+		scoreServices...,
+	)
+}
+
+func NewServerWithMoments(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	feedbackService *feedback.Service,
+	focusStore *focus.Store,
+	membershipService *membership.Service,
+	recommendationService *recommendation.Service,
+	foodRecommendationService *foodrecommendation.Service,
+	momentsService *moments.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		feedbackService,
+		focusStore,
+		membershipService,
+		recommendationService,
+		foodRecommendationService,
+		momentsService,
 		scoreServices...,
 	)
 }
@@ -285,6 +329,7 @@ func newServer(
 	membershipService *membership.Service,
 	recommendationService *recommendation.Service,
 	foodRecommendationService *foodrecommendation.Service,
+	momentsService *moments.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
@@ -314,6 +359,7 @@ func newServer(
 		lotteryLabService:         lotterylab.NewService(lotterylab.Config{}),
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
 		membershipService:         membershipService,
+		momentsService:            momentsService,
 		newsService:               newsService,
 		readingService:            readingService,
 		readingImporter:           readingImporter,
@@ -376,6 +422,7 @@ func newServer(
 	mux.HandleFunc("POST /api/v1/conversations/{conversationID}/read", api.withAuth(api.withAPIPipeline(api.handleMarkConversationRead)))
 	mux.HandleFunc("POST /api/v1/realtime/ticket", api.withAuth(api.withAPIPipeline(api.handleCreateRealtimeTicket)))
 	mux.HandleFunc("GET /api/v1/realtime/ws", api.handleRealtime)
+	registerMomentsRoutes(mux, api)
 	registerScoreRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/game-matches", api.withAuth(api.withRateLimitedAPIPipeline("game-match", api.handleCreateGameMatch)))
 	mux.HandleFunc("GET /api/v1/game-matches", api.withAuth(api.withAPIPipeline(api.handleListGameMatches)))
@@ -392,6 +439,7 @@ func newServer(
 	mux.HandleFunc("POST /api/synthesize", api.withTTSPipeline(api.handleSynthesize))
 	mux.HandleFunc("GET /voice/", api.handleServeAudio)
 	mux.HandleFunc("GET /avatars/", api.handleServeAvatar)
+	mux.HandleFunc("GET /moment-media/", api.handleServeMomentMedia)
 
 	handler := api.withGlobalMiddleware(mux)
 

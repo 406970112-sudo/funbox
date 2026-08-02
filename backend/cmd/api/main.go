@@ -20,6 +20,7 @@ import (
 	"my-first-expo-app/backend/internal/foodrecommendation"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
 	"my-first-expo-app/backend/internal/membership"
+	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/recommendation"
@@ -48,6 +49,11 @@ func main() {
 		log.Fatalf("open social database failed: %v", err)
 	}
 	defer socialStore.Close()
+	momentsStore, err := moments.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open moments database failed: %v", err)
+	}
+	defer momentsStore.Close()
 	accessStore, err := access.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("open access database failed: %v", err)
@@ -166,6 +172,12 @@ func main() {
 		Timeout:         cfg.FoodRecommendation.POITimeout,
 	})
 	foodRecommendationService := foodrecommendation.NewServiceWithPOI(cfg.DeepSeek, foodRecommendationStore, foodPOIProvider)
+	momentsService := moments.NewService(
+		momentsStore,
+		cfg.Storage.MomentDir,
+		cfg.Storage.MaxMomentImageBytes,
+		cfg.Storage.MaxMomentImages,
+	)
 
 	newsSource := news.NewRSSSource(
 		&http.Client{Timeout: cfg.News.RequestTimeout},
@@ -177,7 +189,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithMembershipRecommendationAndFood(
+	server := httpapi.NewServerWithMoments(
 		cfg,
 		ttsService,
 		translationService,
@@ -191,6 +203,7 @@ func main() {
 		membershipService,
 		recommendationService,
 		foodRecommendationService,
+		momentsService,
 		scoreService,
 	)
 

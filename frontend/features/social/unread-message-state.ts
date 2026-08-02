@@ -2,11 +2,14 @@ import type { Conversation } from '../../types/social';
 
 type UnreadConversation = Pick<Conversation, 'id' | 'unreadCount'>;
 
-export function getUnreadMessageState(conversations: readonly UnreadConversation[]) {
+export function getUnreadMessageState(
+  conversations: readonly UnreadConversation[],
+  extraUnread = 0,
+) {
   const unreadCount = conversations.reduce(
     (total, conversation) => total + normalizeUnreadCount(conversation.unreadCount),
     0,
-  );
+  ) + normalizeUnreadCount(extraUnread);
 
   return {
     accessibilityLabel: unreadCount > 0 ? `消息，${unreadCount} 条未读` : '消息',

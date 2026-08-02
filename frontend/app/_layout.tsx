@@ -12,6 +12,7 @@ import 'react-native-reanimated';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { FeatureAccessProvider } from '@/features/access/feature-access-provider';
 import { GameSocialProvider } from '@/features/games/game-social-provider';
+import { MomentsProvider } from '@/features/moments/moments-provider';
 import { SocialProvider } from '@/features/social/social-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { installSafeRouterBack, trackBackContext } from '@/lib/router-back';
@@ -88,8 +89,9 @@ export default function RootLayout() {
       <AuthProvider>
         <FeatureAccessProvider>
           <SocialProvider>
-            <GameSocialProvider>
-              <Stack screenOptions={{ headerShown: false }}>
+            <MomentsProvider>
+              <GameSocialProvider>
+                <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
@@ -101,8 +103,11 @@ export default function RootLayout() {
             <Stack.Screen name="reading/import" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="reading/books/[bookId]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="reading/books/[bookId]/chapters/[chapterId]" options={{ animation: 'fade' }} />
-            <Stack.Screen name="social/add-friend" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="social/chat/[conversationId]" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="social/add-friend" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="social/chat/[conversationId]" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="moments/create" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="moments/[momentId]" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="moments/notifications" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen
               name="tools/[toolId]"
               options={{
@@ -115,9 +120,10 @@ export default function RootLayout() {
                 animation: 'slide_from_right',
               }}
             />
-              </Stack>
-              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            </GameSocialProvider>
+                </Stack>
+                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              </GameSocialProvider>
+            </MomentsProvider>
           </SocialProvider>
         </FeatureAccessProvider>
       </AuthProvider>

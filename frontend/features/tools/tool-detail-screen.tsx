@@ -23,6 +23,7 @@ import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assi
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
+import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
 import { ReadingHomeScreen } from '@/features/reading/reading-home-screen';
 import { useAuth } from '@/features/auth/auth-provider';
 import { ThemedText } from '@/components/themed-text';
@@ -205,6 +206,10 @@ export function ToolDetailScreen() {
         <SmartTranslationToolScreen />
       </>
     );
+  }
+
+  if (tool?.id === 'moments') {
+    return <MomentsFeedScreen />;
   }
 
   if (tool?.id === 'product-recommendation') {

@@ -13,6 +13,7 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useMoments } from '@/features/moments/moments-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { hasIdentityBadge, identityPresentation, identityRoute } from '@/lib/identity';
 import { getGameById, getToolById, popularGames } from '@/mocks/app-data';
@@ -38,6 +39,7 @@ export function ProfileScreen() {
   const { clearIdentityChangeNotice, identityChangeNotice, refreshUser, signOut, status, user } =
     useAuth();
   const { visibleGames, visibleTools } = useFeatureAccess();
+  const { unreadCount } = useMoments();
   const [recentUsage, setRecentUsage] = useState<RecentUsageItem[]>([]);
   const isAuthenticated = status === 'authenticated' && user !== null;
   const visibleToolIDs = new Set(visibleTools.map((tool) => tool.id));
@@ -202,6 +204,42 @@ export function ProfileScreen() {
           onPress={() => router.push(identityRoute(user.role) as Href)}
           role={user.role}
         />
+      ) : null}
+
+      {isAuthenticated ? (
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>社交</ThemedText>
+          <Pressable
+            accessibilityLabel="打开朋友圈"
+            accessibilityRole="button"
+            onPress={() => router.push('/tools/moments' as Href)}
+            style={({ pressed }) => [
+              styles.socialRow,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.line,
+                opacity: pressed ? 0.72 : 1,
+              },
+            ]}>
+            <View style={styles.socialIcon}>
+              <MaterialCommunityIcons name="account-group-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.socialCopy}>
+              <ThemedText style={styles.socialTitle}>朋友圈</ThemedText>
+              <ThemedText style={[styles.socialSubtitle, { color: colors.mutedText }]}>
+                好友动态 · 点赞评论
+              </ThemedText>
+            </View>
+            {unreadCount > 0 ? (
+              <View style={styles.socialBadge}>
+                <ThemedText style={styles.socialBadgeText}>
+                  {Math.min(unreadCount, 99)}
+                </ThemedText>
+              </View>
+            ) : null}
+            <MaterialCommunityIcons name="chevron-right" size={21} color={colors.mutedText} />
+          </Pressable>
+        </View>
       ) : null}
 
       {isAuthenticated ? (
@@ -546,6 +584,49 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
+    fontWeight: '800',
+  },
+  socialBadge: {
+    alignItems: 'center',
+    backgroundColor: '#ff6b8f',
+    borderRadius: 11,
+    height: 22,
+    justifyContent: 'center',
+    minWidth: 22,
+    paddingHorizontal: 6,
+  },
+  socialBadgeText: {
+    color: '#ffffff',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  socialCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  socialIcon: {
+    alignItems: 'center',
+    backgroundColor: '#e7ecff',
+    borderRadius: 12,
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+  },
+  socialRow: {
+    alignItems: 'center',
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 64,
+    paddingHorizontal: 13,
+  },
+  socialSubtitle: {
+    fontSize: 11,
+  },
+  socialTitle: {
+    fontSize: 14,
     fontWeight: '800',
   },
   sectionMeta: {

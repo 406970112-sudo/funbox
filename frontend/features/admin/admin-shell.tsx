@@ -11,7 +11,14 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 
 const ADMIN_DESKTOP_BREAKPOINT = 900;
 
-type AdminPageKey = 'index' | 'users' | 'permissions' | 'feedback' | 'membership' | 'reading';
+type AdminPageKey =
+  | 'feedback'
+  | 'index'
+  | 'membership'
+  | 'moments'
+  | 'permissions'
+  | 'reading'
+  | 'users';
 
 type AdminNavItem = {
   icon: ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -33,6 +40,7 @@ const NAV_SECTIONS: Array<{ items: AdminNavItem[]; title: string }> = [
   {
     title: '内容运营',
     items: [
+      { key: 'moments', icon: 'account-group-outline', label: '朋友圈管理', path: '/admin/moments' },
       { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读管理', path: '/admin/reading' },
     ],
   },
@@ -49,6 +57,7 @@ const MOBILE_NAV_ITEMS: AdminNavItem[] = [
   { key: 'users', icon: 'account-key-outline', label: '用户', path: '/admin/users' },
   { key: 'permissions', icon: 'key-outline', label: '权限', path: '/admin/permissions' },
   { key: 'feedback', icon: 'message-alert-outline', label: '反馈', path: '/admin/feedback' },
+  { key: 'moments', icon: 'account-group-outline', label: '朋友圈', path: '/admin/moments' },
   { key: 'membership', icon: 'qrcode', label: '收款', path: '/admin/membership' },
   { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读', path: '/admin/reading' },
 ];
@@ -73,6 +82,11 @@ const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; ti
     breadcrumb: '内容运营',
     subtitle: '查看用户提交的文字与图片',
     title: '问题反馈',
+  },
+  moments: {
+    breadcrumb: '内容运营',
+    subtitle: '查看真实动态、举报记录并下架违规内容',
+    title: '朋友圈管理',
   },
   membership: {
     breadcrumb: '会员运营',

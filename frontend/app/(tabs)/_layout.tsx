@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { appLayout } from '@/constants/app-theme';
+import { useMoments } from '@/features/moments/moments-provider';
 import { useSocial } from '@/features/social/social-provider';
 import { getUnreadMessageState } from '@/features/social/unread-message-state';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -12,7 +13,8 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 export default function TabLayout() {
   const { colors } = useAppTheme();
   const { conversations } = useSocial();
-  const unreadState = getUnreadMessageState(conversations);
+  const { unreadCount: momentUnreadCount } = useMoments();
+  const unreadState = getUnreadMessageState(conversations, momentUnreadCount);
 
   return (
     <Tabs

@@ -71,6 +71,14 @@ export function AdminHomeScreen() {
             tone="#e8667a"
           />
           <AdminEntry
+            description="查看真实动态、举报记录并下架违规内容"
+            desktop={isDesktop}
+            icon="account-group-outline"
+            label="朋友圈管理"
+            onPress={() => router.push('/admin/moments')}
+            tone="#4b6bff"
+          />
+          <AdminEntry
             description="上传收款码并维护会员支付说明"
             desktop={isDesktop}
             icon="qrcode"
