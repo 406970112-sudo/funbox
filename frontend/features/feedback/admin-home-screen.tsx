@@ -79,6 +79,14 @@ export function AdminHomeScreen() {
             tone="#4b6bff"
           />
           <AdminEntry
+            description="配置资源搜索站点、真实健康检测与试搜验证"
+            desktop={isDesktop}
+            icon="database-search-outline"
+            label="资源搜索"
+            onPress={() => router.push('/admin/resource-search')}
+            tone="#6b5adb"
+          />
+          <AdminEntry
             description="上传收款码并维护会员支付说明"
             desktop={isDesktop}
             icon="qrcode"

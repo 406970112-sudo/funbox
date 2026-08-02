@@ -18,21 +18,25 @@ import { ThemedText } from '@/components/themed-text';
 import { appLayout } from '@/constants/app-theme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import {
+  listResourceSearchSources,
   getResourceSearchErrorMessage,
   resolveResourceResult,
   searchResourceSource,
 } from '@/lib/resource-search-api';
 import {
-  DEFAULT_RESOURCE_SEARCH_SOURCE_IDS,
+  addResourceSearchHistory,
+  loadResourceSearchHistory,
+  saveResourceSearchHistory,
+} from '@/lib/resource-search-history';
+import {
+  getDefaultResourceSearchSourceIds,
   getResourceSearchQueue,
   normalizeResourceSearchQuery,
-  RESOURCE_SEARCH_SOURCES,
-  type ResourceSearchSource,
-  type ResourceSearchSourceId,
 } from '@/lib/resource-search';
 import type {
   ResourceResultCategory,
   ResourceSearchResult,
+  ResourceSearchSource,
   ResourceSearchSourceResponse,
   ResourceSearchSourceStatus,
 } from '@/types/resource-search';
@@ -45,7 +49,6 @@ const HERO_COLOR = '#151b3b';
 const BRAND_BLUE = '#4b6bff';
 const LIME = '#c9f36a';
 const CORAL = '#ff6b8f';
-const INITIAL_HISTORY = ['流浪地球 2', 'Figma 插件'];
 
 const CATEGORY_OPTIONS: { id: ResourceResultCategory; label: string }[] = [
   { id: 'all', label: '全部' },
@@ -60,17 +63,18 @@ export function ResourceSearchScreen() {
   const [phase, setPhase] = useState<SearchPhase>('search');
   const [query, setQuery] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
-  const [selectedSourceIds, setSelectedSourceIds] = useState<ResourceSearchSourceId[]>([
-    ...DEFAULT_RESOURCE_SEARCH_SOURCE_IDS,
-  ]);
-  const [history, setHistory] = useState(INITIAL_HISTORY);
+  const [sources, setSources] = useState<ResourceSearchSource[]>([]);
+  const [sourcesLoading, setSourcesLoading] = useState(true);
+  const [sourcesError, setSourcesError] = useState('');
+  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [sourceOptionsVisible, setSourceOptionsVisible] = useState(false);
   const [sourceStatusVisible, setSourceStatusVisible] = useState(false);
-  const [responses, setResponses] = useState<Partial<Record<ResourceSearchSourceId, ResourceSearchSourceResponse>>>({});
-  const [pendingSourceIds, setPendingSourceIds] = useState<ResourceSearchSourceId[]>([]);
+  const [responses, setResponses] = useState<Partial<Record<string, ResourceSearchSourceResponse>>>({});
+  const [pendingSourceIds, setPendingSourceIds] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<ResourceResultCategory>('all');
-  const [sourceFilter, setSourceFilter] = useState<ResourceSearchSourceId | 'all'>('all');
+  const [sourceFilter, setSourceFilter] = useState<string | 'all'>('all');
   const [sortMode, setSortMode] = useState<SortMode>('relevance');
   const [selectedResult, setSelectedResult] = useState<ResourceSearchResult | null>(null);
   const [resolvedTargets, setResolvedTargets] = useState<Record<string, string>>({});
@@ -80,8 +84,8 @@ export function ResourceSearchScreen() {
   const requestControllerRef = useRef<AbortController | null>(null);
   const searchRunRef = useRef(0);
 
-  const selectedSources = getResourceSearchQueue(selectedSourceIds);
-  const allSourcesSelected = selectedSourceIds.length === RESOURCE_SEARCH_SOURCES.length;
+  const selectedSources = getResourceSearchQueue(sources, selectedSourceIds);
+  const allSourcesSelected = sources.length > 0 && selectedSourceIds.length === sources.length;
   const pageBackground = colorScheme === 'dark' ? colors.background : '#eef4ff';
   const completedResponses = Object.values(responses).filter(
     (response): response is ResourceSearchSourceResponse => Boolean(response),
@@ -89,7 +93,7 @@ export function ResourceSearchScreen() {
   const allResults = completedResponses.flatMap((response) => response.results);
   const availableSourceFilters = selectedSources.filter((source) => (responses[source.id]?.count || 0) > 0);
   const failedSourceCount = completedResponses.filter((response) =>
-    ['error', 'restricted', 'timeout', 'unavailable'].includes(response.status),
+    ['direct', 'error', 'restricted', 'timeout', 'unavailable'].includes(response.status),
   ).length;
   const visibleResults = sortResults(
     allResults.filter((result) => {
@@ -101,7 +105,27 @@ export function ResourceSearchScreen() {
     sortMode,
   );
 
-  useEffect(() => () => requestControllerRef.current?.abort(), []);
+  useEffect(() => {
+    let active = true;
+    setSourcesLoading(true);
+    void Promise.all([listResourceSearchSources(), loadResourceSearchHistory()])
+      .then(([loadedSources, loadedHistory]) => {
+        if (!active) return;
+        setSources(loadedSources);
+        setSelectedSourceIds(getDefaultResourceSearchSourceIds(loadedSources));
+        setHistory(loadedHistory);
+      })
+      .catch((error) => {
+        if (active) setSourcesError(getResourceSearchErrorMessage(error));
+      })
+      .finally(() => {
+        if (active) setSourcesLoading(false);
+      });
+    return () => {
+      active = false;
+      requestControllerRef.current?.abort();
+    };
+  }, []);
 
   function goBack() {
     if (phase === 'loading') {
@@ -116,7 +140,7 @@ export function ResourceSearchScreen() {
     router.back();
   }
 
-  function toggleSource(sourceId: ResourceSearchSourceId) {
+  function toggleSource(sourceId: string) {
     setFeedback('');
     setSelectedSourceIds((current) =>
       current.includes(sourceId)
@@ -127,24 +151,24 @@ export function ResourceSearchScreen() {
 
   function toggleAllSources() {
     setSelectedSourceIds(
-      allSourcesSelected ? [] : RESOURCE_SEARCH_SOURCES.map((source) => source.id),
+      allSourcesSelected ? [] : sources.map((source) => source.id),
     );
     setFeedback('');
   }
 
   function restoreDefaultSources() {
-    setSelectedSourceIds([...DEFAULT_RESOURCE_SEARCH_SOURCE_IDS]);
+    setSelectedSourceIds(getDefaultResourceSearchSourceIds(sources));
     setFeedback('已恢复默认搜索源。');
   }
 
   async function runSearch(value = query) {
     const nextQuery = normalizeResourceSearchQuery(value);
-    const sources = getResourceSearchQueue(selectedSourceIds);
+    const queue = getResourceSearchQueue(sources, selectedSourceIds);
     if (!nextQuery) {
       setFeedback('先输入想找的电影、剧集、软件或资料。');
       return;
     }
-    if (!sources.length) {
+    if (!queue.length) {
       setFeedback('至少选择一个搜索站点。');
       return;
     }
@@ -156,9 +180,9 @@ export function ResourceSearchScreen() {
     searchRunRef.current = runID;
     setQuery(nextQuery);
     setActiveQuery(nextQuery);
-    setHistory((current) => [nextQuery, ...current.filter((item) => item !== nextQuery)].slice(0, 6));
+    void addResourceSearchHistory(nextQuery).then(setHistory);
     setResponses({});
-    setPendingSourceIds(sources.map((source) => source.id));
+    setPendingSourceIds(queue.map((source) => source.id));
     setCategoryFilter('all');
     setSourceFilter('all');
     setSelectedResult(null);
@@ -167,7 +191,7 @@ export function ResourceSearchScreen() {
     startTransition(() => setPhase('loading'));
 
     await Promise.all(
-      sources.map(async (source) => {
+      queue.map(async (source) => {
         let response: ResourceSearchSourceResponse;
         try {
           response = await searchResourceSource(nextQuery, source.id, controller.signal);
@@ -289,14 +313,28 @@ export function ResourceSearchScreen() {
             <SearchLanding
               allSelected={allSourcesSelected}
               feedback={feedback}
+              loading={sourcesLoading}
+              error={sourcesError}
               onQueryChange={(value) => {
                 setQuery(value);
                 if (feedback) setFeedback('');
               }}
               onSearch={() => void runSearch()}
+              onRetrySources={() => {
+                setSourcesLoading(true);
+                setSourcesError('');
+                void listResourceSearchSources()
+                  .then((loadedSources) => {
+                    setSources(loadedSources);
+                    setSelectedSourceIds(getDefaultResourceSearchSourceIds(loadedSources));
+                  })
+                  .catch((loadError) => setSourcesError(getResourceSearchErrorMessage(loadError)))
+                  .finally(() => setSourcesLoading(false));
+              }}
               onToggleAll={toggleAllSources}
               onToggleSource={toggleSource}
               query={query}
+              sources={sources}
               selectedSourceIds={selectedSourceIds}
             />
           ) : null}
@@ -331,6 +369,7 @@ export function ResourceSearchScreen() {
               sortMode={sortMode}
               sourceFilter={sourceFilter}
               sourceFilters={availableSourceFilters}
+              sources={sources}
             />
           ) : null}
         </View>
@@ -340,7 +379,10 @@ export function ResourceSearchScreen() {
 
       <HistorySheet
         history={history}
-        onClear={() => setHistory([])}
+        onClear={() => {
+          setHistory([]);
+          void saveResourceSearchHistory([]);
+        }}
         onClose={() => setHistoryVisible(false)}
         onSelect={useHistoryItem}
         visible={historyVisible}
@@ -353,6 +395,7 @@ export function ResourceSearchScreen() {
         onToggleAll={toggleAllSources}
         onToggleSource={toggleSource}
         selectedSourceIds={selectedSourceIds}
+        sources={sources}
         visible={sourceOptionsVisible}
       />
       <SourceStatusSheet
@@ -374,6 +417,7 @@ export function ResourceSearchScreen() {
         resolving={Boolean(selectedResult && resolvingResultId === selectedResult.id)}
         result={selectedResult}
         resolvedURL={selectedResult ? resolvedTargets[selectedResult.id] : undefined}
+        sources={sources}
       />
     </SafeAreaView>
   );
@@ -381,23 +425,31 @@ export function ResourceSearchScreen() {
 
 type SearchLandingProps = {
   allSelected: boolean;
+  error: string;
   feedback: string;
+  loading: boolean;
   onQueryChange: (value: string) => void;
+  onRetrySources: () => void;
   onSearch: () => void;
   onToggleAll: () => void;
-  onToggleSource: (sourceId: ResourceSearchSourceId) => void;
+  onToggleSource: (sourceId: string) => void;
   query: string;
-  selectedSourceIds: ResourceSearchSourceId[];
+  selectedSourceIds: string[];
+  sources: ResourceSearchSource[];
 };
 
 function SearchLanding({
   allSelected,
+  error,
   feedback,
+  loading,
   onQueryChange,
+  onRetrySources,
   onSearch,
   onToggleAll,
   onToggleSource,
   query,
+  sources,
   selectedSourceIds,
 }: SearchLandingProps) {
   const { colors } = useAppTheme();
@@ -410,7 +462,7 @@ function SearchLanding({
         <View style={styles.heroMeta}>
           <MaterialCommunityIcons name="radar" size={18} color={LIME} />
           <ThemedText style={styles.heroMetaText}>
-            聚合 {RESOURCE_SEARCH_SOURCES.length} 个搜索站点
+            聚合 {sources.length} 个搜索站点
           </ThemedText>
         </View>
         <ThemedText style={styles.heroTitle}>一次输入{`\n`}直接查看多源结果</ThemedText>
@@ -433,6 +485,26 @@ function SearchLanding({
         {feedback ? <ThemedText style={styles.heroFeedback}>{feedback}</ThemedText> : null}
       </View>
 
+      {loading ? (
+        <View style={[styles.sourceState, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <ActivityIndicator color={colors.primary} size="small" />
+          <ThemedText style={[styles.sourceStateText, { color: colors.mutedText }]}>正在加载真实站点配置…</ThemedText>
+        </View>
+      ) : null}
+      {!loading && error ? (
+        <Pressable accessibilityRole="button" onPress={onRetrySources} style={[styles.sourceState, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={18} color={CORAL} />
+          <ThemedText style={[styles.sourceStateText, { color: colors.mutedText }]}>{error}</ThemedText>
+          <ThemedText style={[styles.sourceStateAction, { color: colors.primary }]}>重试</ThemedText>
+        </Pressable>
+      ) : null}
+      {!loading && !error && sources.length === 0 ? (
+        <View style={[styles.sourceState, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="database-off-outline" size={18} color={colors.mutedText} />
+          <ThemedText style={[styles.sourceStateText, { color: colors.mutedText }]}>管理员尚未配置可用搜索站点。</ThemedText>
+        </View>
+      ) : null}
+
       <View style={styles.sectionHeader}>
         <View>
           <ThemedText style={styles.sectionTitle}>搜索站点</ThemedText>
@@ -444,7 +516,7 @@ function SearchLanding({
       </View>
 
       <View style={[styles.sourceList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-        {RESOURCE_SEARCH_SOURCES.map((source, index) => {
+        {sources.map((source, index) => {
           const selected = selectedSourceIds.includes(source.id);
           return (
             <Pressable
@@ -478,8 +550,8 @@ function SearchLanding({
 type LoadingPanelProps = {
   activeQuery: string;
   onCancel: () => void;
-  pendingSourceIds: ResourceSearchSourceId[];
-  responses: Partial<Record<ResourceSearchSourceId, ResourceSearchSourceResponse>>;
+  pendingSourceIds: string[];
+  responses: Partial<Record<string, ResourceSearchSourceResponse>>;
   selectedSources: ResourceSearchSource[];
 };
 
@@ -561,13 +633,14 @@ type ResultsPanelProps = {
   onResultPress: (result: ResourceSearchResult) => void;
   onSearch: () => void;
   onSortChange: () => void;
-  onSourceChange: (sourceId: ResourceSearchSourceId | 'all') => void;
+  onSourceChange: (sourceId: string | 'all') => void;
   query: string;
   resultCount: number;
   results: ResourceSearchResult[];
   sortMode: SortMode;
-  sourceFilter: ResourceSearchSourceId | 'all';
+  sourceFilter: string | 'all';
   sourceFilters: ResourceSearchSource[];
+  sources: ResourceSearchSource[];
 };
 
 function ResultsPanel({
@@ -588,6 +661,7 @@ function ResultsPanel({
   sortMode,
   sourceFilter,
   sourceFilters,
+  sources,
 }: ResultsPanelProps) {
   const { colors } = useAppTheme();
 
@@ -625,7 +699,7 @@ function ResultsPanel({
           onPress={onOpenSourceStatus}
           style={[styles.partialNotice, { backgroundColor: colors.surface, borderColor: colors.line }]}>
           <MaterialCommunityIcons name="information-outline" size={18} color={colors.primary} />
-          <ThemedText style={styles.partialNoticeText}>{failedSourceCount} 个来源暂不可聚合</ThemedText>
+          <ThemedText style={styles.partialNoticeText}>{failedSourceCount} 个来源需原站/暂不可聚合</ThemedText>
           <ThemedText style={[styles.partialNoticeAction, { color: colors.primary }]}>查看</ThemedText>
         </Pressable>
       ) : null}
@@ -672,6 +746,7 @@ function ResultsPanel({
               key={result.id}
               onPress={() => onResultPress(result)}
               result={result}
+              source={sources.find((item) => item.id === result.sourceId) ?? null}
             />
           ))}
         </View>
@@ -702,9 +777,8 @@ function CompactSearchBar({ query }: { query: string }) {
   );
 }
 
-function ResultRow({ index, onPress, result }: { index: number; onPress: () => void; result: ResourceSearchResult }) {
+function ResultRow({ index, onPress, result, source }: { index: number; onPress: () => void; result: ResourceSearchResult; source: ResourceSearchSource | null }) {
   const { colors } = useAppTheme();
-  const source = RESOURCE_SEARCH_SOURCES.find((item) => item.id === result.sourceId) || RESOURCE_SEARCH_SOURCES[0];
   const meta = [result.diskType || result.category, result.size, result.updatedAt].filter(Boolean).join(' · ');
   return (
     <Pressable
@@ -718,7 +792,7 @@ function ResultRow({ index, onPress, result }: { index: number; onPress: () => v
       <SourceLogo source={source} compact />
       <View style={styles.resultCopy}>
         <ThemedText numberOfLines={2} style={styles.resultTitle}>{result.title}</ThemedText>
-        <ThemedText numberOfLines={1} style={[styles.resultMeta, { color: colors.mutedText }]}>{meta || source.name}</ThemedText>
+        <ThemedText numberOfLines={1} style={[styles.resultMeta, { color: colors.mutedText }]}>{meta || source?.name || '第三方来源'}</ThemedText>
         {index === 0 ? (
           <View style={styles.matchLine}>
             <MaterialCommunityIcons name="creation-outline" size={12} color={colors.primary} />
@@ -752,12 +826,13 @@ type ResultDetailSheetProps = {
   resolving: boolean;
   resolvedURL?: string;
   result: ResourceSearchResult | null;
+  sources: ResourceSearchSource[];
 };
 
-function ResultDetailSheet({ error, onClose, onOpenOrigin, onOpenResource, resolving, resolvedURL, result }: ResultDetailSheetProps) {
+function ResultDetailSheet({ error, onClose, onOpenOrigin, onOpenResource, resolving, resolvedURL, result, sources }: ResultDetailSheetProps) {
   const { colors } = useAppTheme();
   if (!result) return null;
-  const source = RESOURCE_SEARCH_SOURCES.find((item) => item.id === result.sourceId) || RESOURCE_SEARCH_SOURCES[0];
+  const source = sources.find((item) => item.id === result.sourceId) ?? null;
   const linkReady = Boolean(resolvedURL || result.targetUrl);
 
   return (
@@ -775,8 +850,8 @@ function ResultDetailSheet({ error, onClose, onOpenOrigin, onOpenResource, resol
           <View style={[styles.detailSource, { backgroundColor: colors.surfaceMuted, borderColor: colors.line }]}>
             <SourceLogo source={source} compact />
             <View style={styles.sourceCopy}>
-              <ThemedText style={styles.sourceName}>{source.name}</ThemedText>
-              <ThemedText style={[styles.sourceDescription, { color: colors.mutedText }]}>{source.domain} · 第三方来源</ThemedText>
+              <ThemedText style={styles.sourceName}>{source?.name || '第三方来源'}</ThemedText>
+              <ThemedText style={[styles.sourceDescription, { color: colors.mutedText }]}>{source?.domain ? `${source.domain} · 第三方来源` : '第三方来源'}</ThemedText>
             </View>
             <View style={styles.availableState}>
               <MaterialCommunityIcons name={linkReady ? 'check-circle-outline' : 'link-variant'} size={15} color={colors.success} />
@@ -826,7 +901,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 type SourceStatusSheetProps = {
   onClose: () => void;
   onOpenURL: (url: string) => void;
-  responses: Partial<Record<ResourceSearchSourceId, ResourceSearchSourceResponse>>;
+  responses: Partial<Record<string, ResourceSearchSourceResponse>>;
   sources: ResourceSearchSource[];
   visible: boolean;
 };
@@ -881,12 +956,13 @@ type SourceOptionsSheetProps = {
   onClose: () => void;
   onRestoreDefaults: () => void;
   onToggleAll: () => void;
-  onToggleSource: (sourceId: ResourceSearchSourceId) => void;
-  selectedSourceIds: ResourceSearchSourceId[];
+  onToggleSource: (sourceId: string) => void;
+  selectedSourceIds: string[];
+  sources: ResourceSearchSource[];
   visible: boolean;
 };
 
-function SourceOptionsSheet({ allSelected, onApply, onClose, onRestoreDefaults, onToggleAll, onToggleSource, selectedSourceIds, visible }: SourceOptionsSheetProps) {
+function SourceOptionsSheet({ allSelected, onApply, onClose, onRestoreDefaults, onToggleAll, onToggleSource, selectedSourceIds, sources, visible }: SourceOptionsSheetProps) {
   const { colors } = useAppTheme();
   return (
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
@@ -903,7 +979,7 @@ function SourceOptionsSheet({ allSelected, onApply, onClose, onRestoreDefaults, 
             </Pressable>
           </View>
           <ScrollView style={styles.optionsList}>
-            {RESOURCE_SEARCH_SOURCES.map((source, index) => {
+            {sources.map((source, index) => {
               const selected = selectedSourceIds.includes(source.id);
               return (
                 <Pressable key={source.id} onPress={() => onToggleSource(source.id)} style={[styles.optionRow, index > 0 ? { borderTopColor: colors.line, borderTopWidth: 1 } : undefined]}>
@@ -970,7 +1046,14 @@ function HistorySheet({ history, onClear, onClose, onSelect, visible }: HistoryS
   );
 }
 
-function SourceLogo({ compact = false, source }: { compact?: boolean; source: ResourceSearchSource }) {
+function SourceLogo({ compact = false, source }: { compact?: boolean; source: ResourceSearchSource | null }) {
+  if (!source) {
+    return (
+      <View style={[styles.sourceLogo, compact ? styles.sourceLogoCompact : undefined, { backgroundColor: '#eef1f7' }]}>
+        <ThemedText style={[styles.sourceLogoText, compact ? styles.sourceLogoTextCompact : undefined, { color: '#7483a2' }]}>?</ThemedText>
+      </View>
+    );
+  }
   return (
     <View style={[styles.sourceLogo, compact ? styles.sourceLogoCompact : undefined, { backgroundColor: source.logoBackground }]}>
       <ThemedText style={[styles.sourceLogoText, compact ? styles.sourceLogoTextCompact : undefined, { color: source.logoColor }]}>{source.logo}</ThemedText>
@@ -1034,6 +1117,7 @@ function getSourcePresentation(
 ) {
   if (pending || !status) return { color: colors.primary, icon: 'progress-clock' as IconName, label: '搜索中' };
   const values: Record<ResourceSearchSourceStatus, { color: string; icon: IconName; label: string }> = {
+    direct: { color: colors.primary, icon: 'open-in-new', label: '去原站' },
     empty: { color: colors.mutedText, icon: 'minus-circle-outline', label: '无结果' },
     error: { color: CORAL, icon: 'alert-circle-outline', label: '失败' },
     restricted: { color: CORAL, icon: 'shield-lock-outline', label: '需原站' },
@@ -1054,6 +1138,9 @@ const styles = StyleSheet.create({
   body: { flex: 1, minHeight: 0 },
   scrollContent: { paddingBottom: 30, paddingHorizontal: 16, paddingTop: 16 },
   resultsContent: { paddingBottom: 30, paddingHorizontal: 16, paddingTop: 14 },
+  sourceState: { alignItems: 'center', borderRadius: 15, borderWidth: 1, flexDirection: 'row', gap: 9, marginTop: 12, minHeight: 48, paddingHorizontal: 12 },
+  sourceStateText: { flex: 1, fontSize: 10, fontWeight: '700', lineHeight: 15 },
+  sourceStateAction: { fontSize: 10, fontWeight: '900', lineHeight: 15 },
   hero: { backgroundColor: HERO_COLOR, borderRadius: 24, minHeight: 248, overflow: 'hidden', padding: 22, position: 'relative' },
   heroTextureTop: { borderColor: 'rgba(255,255,255,0.12)', borderRadius: 18, borderWidth: 1, height: 112, position: 'absolute', right: -44, top: -30, transform: [{ rotate: '-17deg' }], width: 220 },
   heroTextureBottom: { borderColor: 'rgba(255,255,255,0.12)', borderRadius: 18, borderWidth: 1, height: 112, position: 'absolute', right: -78, top: 96, transform: [{ rotate: '-17deg' }], width: 220 },

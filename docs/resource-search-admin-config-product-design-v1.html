@@ -1,0 +1,2440 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 资源搜索站点管理 - 产品设计 V1</title>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --navy-soft: #222a52;
+        --lime: #c9f36a;
+        --coral: #e85d4a;
+        --green: #1db991;
+        --amber: #e8a33d;
+        --canvas: #eef4ff;
+        --surface: #ffffff;
+        --screen: #f4f7fd;
+        --dark: #101426;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 1200px;
+        padding: 28px 34px 40px;
+        width: 1500px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark svg {
+        height: 25px;
+        stroke-width: 2.3;
+        width: 25px;
+      }
+
+      .brand-title {
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 700;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--coral);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .real-strip {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: #ffffff;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 18px;
+        min-height: 56px;
+        padding: 0 18px;
+      }
+
+      .real-strip .lead {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 13px;
+        font-weight: 900;
+        gap: 8px;
+      }
+
+      .real-chip {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 9px;
+        color: #d7ddf0;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 7px 11px;
+      }
+
+      .section-head {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 26px 2px 14px;
+      }
+
+      .section-head h2 {
+        font-size: 20px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head p {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        margin: 4px 0 0;
+      }
+
+      .section-tag {
+        color: var(--blue);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .principle-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .principle-card {
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        min-height: 150px;
+        padding: 18px;
+      }
+
+      .principle-card .kicker {
+        color: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .principle-card h3 {
+        font-size: 17px;
+        font-weight: 900;
+        margin: 10px 0 8px;
+      }
+
+      .principle-card p {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.8;
+        margin: 0;
+      }
+
+      .scope-strip {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .scope-chip {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        display: flex;
+        flex: 1;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        min-height: 42px;
+        padding: 0 12px;
+      }
+
+      .scope-chip .dot {
+        background: var(--green);
+        border-radius: 50%;
+        height: 7px;
+        width: 7px;
+      }
+
+      .stage {
+        align-items: start;
+        display: grid;
+        gap: 30px;
+        grid-template-columns: repeat(3, 390px);
+        justify-content: center;
+      }
+
+      .phone-label {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+
+      .phone-label .num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 7px;
+        color: var(--lime);
+        display: inline-flex;
+        font-size: 10px;
+        font-weight: 900;
+        height: 22px;
+        justify-content: center;
+        width: 22px;
+      }
+
+      .phone-label strong {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .phone-label small {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .phone {
+        background: #0d1530;
+        border: 2px solid #0d1530;
+        border-radius: 48px;
+        box-shadow: 0 26px 56px rgba(49, 71, 122, 0.19);
+        height: 844px;
+        padding: 9px;
+        position: relative;
+        width: 390px;
+      }
+
+      .screen {
+        background: var(--screen);
+        border-radius: 39px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+        width: 100%;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        height: 26px;
+        justify-content: space-between;
+        padding: 0 22px;
+      }
+
+      .status-bar .time {
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .status-bar .notch {
+        background: #d9deea;
+        border-radius: 6px;
+        height: 13px;
+        width: 78px;
+      }
+
+      .topbar {
+        align-items: center;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        height: 52px;
+        justify-content: space-between;
+        padding: 0 14px;
+      }
+
+      .topbar-title {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--screen);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn svg {
+        height: 18px;
+        stroke: var(--ink);
+        stroke-width: 2;
+        width: 18px;
+      }
+
+      .phone-body {
+        flex: 1;
+        overflow: hidden;
+        padding: 0 14px;
+        position: relative;
+      }
+
+      .hero {
+        background: var(--navy);
+        border-radius: 20px;
+        margin-top: 14px;
+        overflow: hidden;
+        padding: 16px;
+        position: relative;
+      }
+
+      .hero::before,
+      .hero::after {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 18px;
+        content: "";
+        height: 96px;
+        position: absolute;
+        right: -42px;
+        top: -26px;
+        transform: rotate(-17deg);
+        width: 190px;
+      }
+
+      .hero::after {
+        right: -74px;
+        top: 76px;
+      }
+
+      .hero-meta {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        position: relative;
+      }
+
+      .hero-meta svg {
+        height: 15px;
+        stroke: var(--lime);
+        stroke-width: 2;
+        width: 15px;
+      }
+
+      .hero-title {
+        color: #ffffff;
+        font-size: 23px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 12px 0 13px;
+        position: relative;
+      }
+
+      .hero-search {
+        align-items: center;
+        background: #ffffff;
+        border-radius: 13px;
+        display: flex;
+        height: 46px;
+        padding: 0 7px 0 12px;
+        position: relative;
+      }
+
+      .hero-search input {
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 11px;
+        min-width: 0;
+        outline: none;
+        padding: 0;
+      }
+
+      .hero-search .go {
+        align-items: center;
+        background: var(--lime);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .hero-search .go svg {
+        height: 18px;
+        stroke: var(--navy);
+        stroke-width: 2.2;
+        width: 18px;
+      }
+
+      .source-head {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 15px 2px 8px;
+      }
+
+      .source-head strong {
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .source-head small {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        margin-top: 2px;
+      }
+
+      .source-head a {
+        color: var(--blue);
+        font-size: 9px;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .source-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .source-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 56px;
+        padding: 8px 11px;
+      }
+
+      .source-row:first-child {
+        border-top: 0;
+      }
+
+      .logo {
+        align-items: center;
+        border-radius: 11px;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        height: 36px;
+        justify-content: center;
+        width: 36px;
+      }
+
+      .source-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .source-name {
+        align-items: center;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .badge {
+        border-radius: 6px;
+        font-size: 7px;
+        font-weight: 900;
+        padding: 2px 5px;
+      }
+
+      .badge-aggregate {
+        background: #e7f8f1;
+        color: #14815f;
+      }
+
+      .badge-direct {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .badge-warn {
+        background: #fff4df;
+        color: #a66d00;
+      }
+
+      .source-desc {
+        color: var(--muted);
+        font-size: 8px;
+        margin-top: 3px;
+      }
+
+      .check {
+        align-items: center;
+        border: 1.5px solid var(--blue);
+        background: var(--blue);
+        border-radius: 7px;
+        display: flex;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .check svg {
+        height: 12px;
+        stroke: #ffffff;
+        stroke-width: 3;
+        width: 12px;
+      }
+
+      .bottom-nav {
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        display: flex;
+        height: 60px;
+        padding: 7px 10px;
+      }
+
+      .nav-item {
+        align-items: center;
+        color: #9aa7c0;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .nav-item.active {
+        color: var(--blue);
+      }
+
+      .nav-item svg {
+        height: 17px;
+        stroke: currentColor;
+        stroke-width: 2;
+        width: 17px;
+      }
+
+      .compact-search {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        height: 46px;
+        margin-top: 14px;
+        padding: 0 7px 0 12px;
+      }
+
+      .compact-search span {
+        color: var(--ink);
+        flex: 1;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .compact-search .go {
+        align-items: center;
+        background: var(--blue);
+        border-radius: 10px;
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .compact-search .go svg {
+        height: 16px;
+        stroke: #ffffff;
+        stroke-width: 2;
+        width: 16px;
+      }
+
+      .result-summary {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 14px 2px 9px;
+      }
+
+      .result-summary strong {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .result-summary small {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        margin-top: 3px;
+      }
+
+      .sort {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .partial {
+        align-items: center;
+        background: #fff7e8;
+        border: 1px solid #f3dfb6;
+        border-radius: 11px;
+        color: #a66d00;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 6px;
+        margin-bottom: 9px;
+        min-height: 34px;
+        padding: 0 10px;
+      }
+
+      .partial a {
+        color: var(--blue);
+        font-weight: 900;
+        margin-left: auto;
+      }
+
+      .result-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .result-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 66px;
+        padding: 9px 11px;
+      }
+
+      .result-row:first-child {
+        border-top: 0;
+      }
+
+      .result-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: var(--blue);
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .result-icon svg {
+        height: 17px;
+        stroke: currentColor;
+        stroke-width: 2;
+        width: 17px;
+      }
+
+      .result-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .result-title {
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1.45;
+      }
+
+      .result-meta {
+        color: var(--muted);
+        font-size: 8px;
+        margin-top: 4px;
+      }
+
+      .chevron {
+        color: #aeb8cc;
+      }
+
+      .chevron svg {
+        height: 16px;
+        stroke: currentColor;
+        stroke-width: 2;
+        width: 16px;
+      }
+
+      .sheet {
+        background: var(--surface);
+        border-radius: 22px 22px 0 0;
+        margin-top: 34px;
+        min-height: 640px;
+        padding: 8px 16px 16px;
+      }
+
+      .sheet-handle {
+        background: #d9deea;
+        border-radius: 4px;
+        height: 4px;
+        margin: 0 auto 12px;
+        width: 36px;
+      }
+
+      .sheet-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .sheet-head strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .sheet-head small {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        margin-top: 3px;
+      }
+
+      .status-card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .status-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 62px;
+        padding: 8px 11px;
+      }
+
+      .status-row:first-child {
+        border-top: 0;
+      }
+
+      .status-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .status-name {
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .status-meta {
+        color: var(--muted);
+        font-size: 8px;
+        margin-top: 3px;
+      }
+
+      .status-label {
+        border-radius: 7px;
+        font-size: 8px;
+        font-weight: 900;
+        padding: 4px 7px;
+        white-space: nowrap;
+      }
+
+      .status-ok {
+        background: #e4f8f0;
+        color: #0f8a66;
+      }
+
+      .status-warn {
+        background: #fff3df;
+        color: #a66d00;
+      }
+
+      .status-muted {
+        background: #eef1f7;
+        color: #7483a2;
+      }
+
+      .status-danger {
+        background: #fdecef;
+        color: #c0465b;
+      }
+
+      .open-origin {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        color: var(--blue);
+        font-size: 8px;
+        font-weight: 900;
+        padding: 6px 8px;
+        white-space: nowrap;
+      }
+
+      .sheet-note {
+        align-items: flex-start;
+        background: var(--screen);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        font-size: 8px;
+        gap: 7px;
+        line-height: 1.6;
+        margin-top: 13px;
+        padding: 10px 11px;
+      }
+
+      .sheet-note svg {
+        flex: none;
+        height: 14px;
+        stroke: var(--blue);
+        stroke-width: 2;
+        width: 14px;
+      }
+
+      .admin-frame {
+        background: var(--surface);
+        border: 1px solid rgba(205, 216, 234, 0.82);
+        border-radius: 18px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.16);
+        display: flex;
+        height: 920px;
+        overflow: hidden;
+      }
+
+      .sidebar {
+        background: var(--navy);
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 216px;
+        flex-direction: column;
+        padding: 22px 14px 16px;
+      }
+
+      .sidebar-brand {
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+        min-height: 52px;
+        padding: 0 6px 14px;
+      }
+
+      .sidebar-brand .mark {
+        align-items: center;
+        background: var(--lime);
+        border-radius: 8px;
+        color: var(--navy);
+        display: flex;
+        font-size: 17px;
+        font-weight: 900;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .sidebar-brand strong {
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .sidebar-brand small {
+        color: #8a94b5;
+        display: block;
+        font-size: 9px;
+        font-weight: 800;
+        margin-top: 2px;
+      }
+
+      .nav-section {
+        color: #66739a;
+        font-size: 9px;
+        font-weight: 900;
+        margin: 16px 10px 7px;
+      }
+
+      .nav-item-admin {
+        align-items: center;
+        border-radius: 8px;
+        color: #a7b1d1;
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 10px;
+        min-height: 38px;
+        padding: 0 10px;
+      }
+
+      .nav-item-admin svg {
+        height: 17px;
+        stroke: currentColor;
+        stroke-width: 2;
+        width: 17px;
+      }
+
+      .nav-item-admin.active {
+        background: rgba(201, 243, 106, 0.12);
+        color: #ffffff;
+      }
+
+      .nav-item-admin.active svg {
+        stroke: var(--lime);
+      }
+
+      .sidebar-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        margin-top: auto;
+        padding-top: 12px;
+      }
+
+      .admin-identity {
+        align-items: center;
+        color: #c4cbe2;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        padding: 0 8px;
+      }
+
+      .avatar {
+        align-items: center;
+        background: #2c3766;
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .admin-column {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .admin-topbar {
+        align-items: center;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        gap: 12px;
+        min-height: 62px;
+        padding: 0 18px;
+      }
+
+      .topbar-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .breadcrumb {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .topbar-copy h2 {
+        font-size: 17px;
+        font-weight: 900;
+        margin: 3px 0 0;
+      }
+
+      .topbar-copy p {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        margin: 3px 0 0;
+      }
+
+      .admin-content {
+        display: flex;
+        flex: 1;
+        gap: 16px;
+        min-height: 0;
+        padding: 16px;
+      }
+
+      .list-panel {
+        flex: 1.45;
+        min-width: 0;
+      }
+
+      .drawer-panel {
+        background: #f8faff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .toolbar {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .toolbar .search {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        display: flex;
+        flex: 1;
+        gap: 8px;
+        height: 38px;
+        padding: 0 11px;
+      }
+
+      .toolbar .search svg {
+        height: 15px;
+        stroke: var(--muted);
+        stroke-width: 2;
+        width: 15px;
+      }
+
+      .toolbar .search input {
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 10px;
+        min-width: 0;
+        outline: none;
+      }
+
+      .select {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 800;
+        height: 38px;
+        padding: 0 10px;
+      }
+
+      .btn {
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 7px;
+        height: 38px;
+        justify-content: center;
+        padding: 0 13px;
+        white-space: nowrap;
+      }
+
+      .btn svg {
+        height: 15px;
+        stroke: currentColor;
+        stroke-width: 2;
+        width: 15px;
+      }
+
+      .btn-ghost {
+        background: var(--surface);
+        color: var(--ink);
+      }
+
+      .btn-primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #ffffff;
+      }
+
+      .metric-row {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(4, 1fr);
+        margin-bottom: 12px;
+      }
+
+      .metric {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+
+      .metric b {
+        display: block;
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .metric span {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        font-weight: 800;
+        margin-top: 2px;
+      }
+
+      .metric.teal b {
+        color: var(--green);
+      }
+
+      .metric.amber b {
+        color: var(--amber);
+      }
+
+      .table-wrap {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th {
+        background: #f5f8fe;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 900;
+        padding: 9px 8px;
+        text-align: left;
+      }
+
+      td {
+        border-top: 1px solid var(--line);
+        font-size: 9px;
+        padding: 9px 8px;
+        vertical-align: middle;
+      }
+
+      .site-cell {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        min-width: 130px;
+      }
+
+      .site-cell .logo {
+        border-radius: 9px;
+        font-size: 9px;
+        height: 30px;
+        width: 30px;
+      }
+
+      .site-cell strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .site-cell small {
+        color: var(--muted);
+        display: block;
+        font-size: 7px;
+        margin-top: 2px;
+      }
+
+      .health-cell {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .health-dot {
+        border-radius: 50%;
+        height: 7px;
+        width: 7px;
+      }
+
+      .health-dot.ok {
+        background: var(--green);
+      }
+
+      .health-dot.warn {
+        background: var(--amber);
+      }
+
+      .health-dot.danger {
+        background: var(--coral);
+      }
+
+      .health-cell small {
+        color: var(--muted);
+        display: block;
+        font-size: 7px;
+        margin-top: 1px;
+      }
+
+      .switch {
+        background: var(--green);
+        border-radius: 8px;
+        height: 15px;
+        position: relative;
+        width: 28px;
+      }
+
+      .switch::after {
+        background: #ffffff;
+        border-radius: 50%;
+        content: "";
+        height: 11px;
+        position: absolute;
+        right: 2px;
+        top: 2px;
+        width: 11px;
+      }
+
+      .row-actions {
+        color: var(--blue);
+        display: flex;
+        font-size: 8px;
+        font-weight: 900;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .table-note {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 8px;
+      }
+
+      .drawer-head {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        min-height: 54px;
+        padding: 0 16px;
+      }
+
+      .drawer-head strong {
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .drawer-head small {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        margin-top: 2px;
+      }
+
+      .drawer-body {
+        overflow: hidden;
+        padding: 12px 16px 16px;
+      }
+
+      .field {
+        margin-bottom: 9px;
+      }
+
+      .field label {
+        color: var(--ink);
+        display: block;
+        font-size: 9px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .field input,
+      .field select {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        color: var(--ink);
+        font-size: 10px;
+        height: 32px;
+        outline: none;
+        padding: 0 9px;
+        width: 100%;
+      }
+
+      .field-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .field-row .field {
+        flex: 1;
+      }
+
+      .field-row .field.two {
+        flex: 2;
+      }
+
+      .logo-config {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .logo-config .logo {
+        border-radius: 11px;
+        font-size: 12px;
+        height: 42px;
+        width: 42px;
+      }
+
+      .logo-config input {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        color: var(--ink);
+        font-size: 10px;
+        height: 32px;
+        outline: none;
+        padding: 0 9px;
+        width: 100%;
+      }
+
+      .toggle-row {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+      }
+
+      .toggle-row span {
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .toggle {
+        background: var(--blue);
+        border-radius: 8px;
+        height: 17px;
+        position: relative;
+        width: 32px;
+      }
+
+      .toggle::after {
+        background: #ffffff;
+        border-radius: 50%;
+        content: "";
+        height: 13px;
+        position: absolute;
+        right: 2px;
+        top: 2px;
+        width: 13px;
+      }
+
+      .verify-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        margin-top: 10px;
+        padding: 10px;
+      }
+
+      .verify-card h4 {
+        align-items: center;
+        color: var(--ink);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        margin: 0 0 7px;
+      }
+
+      .verify-card h4 svg {
+        height: 13px;
+        stroke: var(--green);
+        stroke-width: 2;
+        width: 13px;
+      }
+
+      .health-line {
+        align-items: center;
+        color: var(--ink);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 6px;
+      }
+
+      .health-line small {
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .test-box {
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        display: flex;
+        gap: 7px;
+        margin-top: 8px;
+        padding: 0 8px;
+      }
+
+      .test-box input {
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 9px;
+        min-width: 0;
+        outline: none;
+        padding: 8px 0;
+      }
+
+      .test-box button {
+        background: var(--blue-soft);
+        border: 0;
+        border-radius: 8px;
+        color: var(--blue);
+        font-size: 8px;
+        font-weight: 900;
+        padding: 7px 10px;
+      }
+
+      .test-result {
+        border-left: 3px solid var(--green);
+        background: #f0faf6;
+        border-radius: 8px;
+        color: #0f8a66;
+        font-size: 8px;
+        font-weight: 800;
+        margin-top: 8px;
+        padding: 7px 9px;
+      }
+
+      .test-result strong {
+        display: block;
+        font-size: 9px;
+        margin-bottom: 2px;
+      }
+
+      .test-result ul {
+        color: #5d7f74;
+        font-weight: 700;
+        line-height: 1.7;
+        margin: 4px 0 0;
+        padding-left: 15px;
+      }
+
+      .drawer-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .drawer-actions .btn {
+        flex: 1;
+      }
+
+      .bottom-band {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 22px;
+      }
+
+      .band-card {
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        min-height: 190px;
+        padding: 18px;
+      }
+
+      .band-card .kicker {
+        color: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .band-card h3 {
+        font-size: 17px;
+        font-weight: 900;
+        margin: 10px 0 8px;
+      }
+
+      .band-card ul {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.9;
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .board-footer {
+        color: #8a94b5;
+        font-size: 10px;
+        font-weight: 800;
+        margin-top: 18px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="brand-title">FunBox · 资源搜索站点管理</h1>
+            <p class="brand-subtitle">后台可配置 · 真实数据 · 一期完整交付</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>产品设计 V1</strong>
+          版本：V1 草案<br />
+          日期：2026-08-02 · 状态：待评审
+        </div>
+      </header>
+
+      <div class="real-strip">
+        <span class="lead">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="height:16px;width:16px;stroke-width:2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            <path d="M9 12l2 2 4-4" />
+          </svg>
+          真实数据
+        </span>
+        <span class="real-chip">站点状态来自 2026-08-02 真实网络探测</span>
+        <span class="real-chip">搜索结果来自老二搜索真实接口</span>
+        <span class="real-chip">无 mock、无占位、无预置假历史</span>
+      </div>
+
+      <section class="section-head">
+        <div>
+          <h2>产品原则与一期范围</h2>
+          <p>配置即事实，展示即真实，全部能力同一期交付</p>
+        </div>
+        <span class="section-tag">PRD: docs/resource-search-admin-config-prd-v1.md</span>
+      </section>
+
+      <div class="principle-grid">
+        <div class="principle-card">
+          <div class="kicker">01 · 配置</div>
+          <h3>后台可配置</h3>
+          <p>站点名称、分类、Logo、首页地址、搜索模板、接入模式、排序、默认勾选、启停状态全部由管理员在后台维护，用户端实时读取。</p>
+        </div>
+        <div class="principle-card">
+          <div class="kicker">02 · 数据</div>
+          <h3>只展示真实数据</h3>
+          <p>健康检测、试搜、搜索结果、运行统计均来自真实请求与真实日志。删除客户端硬编码站点和假历史，任何环境不引入 mock。</p>
+        </div>
+        <div class="principle-card">
+          <div class="kicker">03 · 交付</div>
+          <h3>一期完整交付</h3>
+          <p>后台配置、健康检测、试搜、审计、运行概览、用户端改造与数据迁移同批上线，不设分期，不留半成品入口。</p>
+        </div>
+      </div>
+
+      <div class="scope-strip">
+        <div class="scope-chip"><span class="dot"></span>站点 CRUD 与排序</div>
+        <div class="scope-chip"><span class="dot"></span>聚合 / 直达双模式</div>
+        <div class="scope-chip"><span class="dot"></span>真实健康检测</div>
+        <div class="scope-chip"><span class="dot"></span>真实试搜验证</div>
+        <div class="scope-chip"><span class="dot"></span>操作审计</div>
+        <div class="scope-chip"><span class="dot"></span>运行概览</div>
+        <div class="scope-chip"><span class="dot"></span>用户端 API 化</div>
+      </div>
+
+      <section class="section-head">
+        <div>
+          <h2>用户端 · 真实配置与真实结果</h2>
+          <p>来源、状态与结果全部来自服务端，不再写死</p>
+        </div>
+        <span class="section-tag">移动端 / 390px</span>
+      </section>
+
+      <div class="stage">
+        <div>
+          <div class="phone-label">
+            <span class="num">1</span>
+            <strong>搜索首页</strong>
+            <small>来源来自 /sources</small>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="status-bar">
+                <span class="time">9:41</span>
+                <span class="notch"></span>
+                <span style="width:54px"></span>
+              </div>
+              <div class="topbar">
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                </div>
+                <span class="topbar-title">资源搜索</span>
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                </div>
+              </div>
+              <div class="phone-body">
+                <div class="hero">
+                  <div class="hero-meta">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-4 7-10V6l-7-3-7 3v5c0 6 7 10 7 10z" /><path d="M9.5 10.5l2 2 3-3.5" /></svg>
+                    聚合 6 个搜索站点
+                  </div>
+                  <div class="hero-title">一次输入<br />直接查看多源结果</div>
+                  <div class="hero-search">
+                    <input placeholder="电影、剧集、软件或资料" />
+                    <div class="go">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                    </div>
+                  </div>
+                </div>
+                <div class="source-head">
+                  <div>
+                    <strong>搜索站点</strong>
+                    <small>已选择 5 个 · 管理员配置生效</small>
+                  </div>
+                  <a href="#">全选</a>
+                </div>
+                <div class="source-list">
+                  <div class="source-row">
+                    <div class="logo" style="background:#fff6d9;color:#a66d00">L2</div>
+                    <div class="source-copy">
+                      <div class="source-name">老二搜索 <span class="badge badge-aggregate">聚合</span></div>
+                      <div class="source-desc">免费网盘资源搜索 · laoer.motewan.com</div>
+                    </div>
+                    <div class="check">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" /></svg>
+                    </div>
+                  </div>
+                  <div class="source-row">
+                    <div class="logo" style="background:#e7ebff;color:#4b6bff">QP</div>
+                    <div class="source-copy">
+                      <div class="source-name">夸克盘搜 <span class="badge badge-direct">直达</span></div>
+                      <div class="source-desc">综合网盘资源 · quarkpanso.com</div>
+                    </div>
+                    <div class="check">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" /></svg>
+                    </div>
+                  </div>
+                  <div class="source-row">
+                    <div class="logo" style="background:#e5f7f1;color:#16896d">YQ</div>
+                    <div class="source-copy">
+                      <div class="source-name">盘友圈 <span class="badge badge-direct">直达</span></div>
+                      <div class="source-desc">社区分享资源 · panyq.com</div>
+                    </div>
+                    <div class="check" style="background:transparent;border-color:#c9d4e6"></div>
+                  </div>
+                  <div class="source-row">
+                    <div class="logo" style="background:#fff0e7;color:#e46c2e">TV</div>
+                    <div class="source-copy">
+                      <div class="source-name">TV 搜 <span class="badge badge-direct">直达</span></div>
+                      <div class="source-desc">影视内容检索 · tvso.uk</div>
+                    </div>
+                    <div class="check">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" /></svg>
+                    </div>
+                  </div>
+                  <div class="source-row">
+                    <div class="logo" style="background:#ffeaf0;color:#e74c78">FL</div>
+                    <div class="source-copy">
+                      <div class="source-name">趣盘搜 <span class="badge badge-direct">直达</span></div>
+                      <div class="source-desc">网盘资源导航 · pan.funletu.com</div>
+                    </div>
+                    <div class="check">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" /></svg>
+                    </div>
+                  </div>
+                  <div class="source-row">
+                    <div class="logo" style="background:#edf0ff;color:#6b5adb">YS</div>
+                    <div class="source-copy">
+                      <div class="source-name">云搜 <span class="badge badge-warn">原站</span></div>
+                      <div class="source-desc">多网盘搜索 · yunso.net</div>
+                    </div>
+                    <div class="check">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" /></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <div class="nav-item">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></svg>
+                  首页
+                </div>
+                <div class="nav-item active">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+                  工具
+                </div>
+                <div class="nav-item">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                  消息
+                </div>
+                <div class="nav-item">
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" /></svg>
+                  我的
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="phone-label">
+            <span class="num">2</span>
+            <strong>搜索结果</strong>
+            <small>真实接口返回</small>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="status-bar">
+                <span class="time">9:41</span>
+                <span class="notch"></span>
+                <span style="width:54px"></span>
+              </div>
+              <div class="topbar">
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                </div>
+                <span class="topbar-title">搜索结果</span>
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" /></svg>
+                </div>
+              </div>
+              <div class="phone-body">
+                <div class="compact-search">
+                  <span>流浪地球2</span>
+                  <div class="go">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </div>
+                </div>
+                <div class="result-summary">
+                  <div>
+                    <strong>5 条真实结果</strong>
+                    <small>老二搜索 · 网盘资源 · 3.4s</small>
+                  </div>
+                  <span class="sort">相关度 ↓</span>
+                </div>
+                <div class="partial">
+                  5 个来源需前往原站，结果来自可聚合来源
+                  <a href="#">查看状态</a>
+                </div>
+                <div class="result-list">
+                  <div class="result-row">
+                    <div class="result-icon">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                    </div>
+                    <div class="result-copy">
+                      <div class="result-title">名称：流浪地球2 (2023) 4K HDR &amp; Dv 中英外挂字幕</div>
+                      <div class="result-meta">网盘资源 · 夸克网盘</div>
+                    </div>
+                    <div class="chevron">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" /></svg>
+                    </div>
+                  </div>
+                  <div class="result-row">
+                    <div class="result-icon">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                    </div>
+                    <div class="result-copy">
+                      <div class="result-title">流浪地球2 碟影UHD原盘终极REMUX版本 131.7GB</div>
+                      <div class="result-meta">网盘资源 · 夸克网盘 · 131.7 GB</div>
+                    </div>
+                    <div class="chevron">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" /></svg>
+                    </div>
+                  </div>
+                  <div class="result-row">
+                    <div class="result-icon">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                    </div>
+                    <div class="result-copy">
+                      <div class="result-title">片: 流浪地球2 太空电梯奇观 中国航天 数字生命计划</div>
+                      <div class="result-meta">网盘资源 · 夸克网盘</div>
+                    </div>
+                    <div class="chevron">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" /></svg>
+                    </div>
+                  </div>
+                  <div class="result-row">
+                    <div class="result-icon">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                    </div>
+                    <div class="result-copy">
+                      <div class="result-title">资源标题：流浪地球2 (2023) 4K/2160p 原盘Remux 中文字幕 【73.53GB】</div>
+                      <div class="result-meta">网盘资源 · 夸克网盘 · 73.53 GB</div>
+                    </div>
+                    <div class="chevron">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" /></svg>
+                    </div>
+                  </div>
+                  <div class="result-row">
+                    <div class="result-icon">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+                    </div>
+                    <div class="result-copy">
+                      <div class="result-title">名称：流浪地球2 (2023) 4K 107 GB</div>
+                      <div class="result-meta">网盘资源 · 夸克网盘 · 107 GB</div>
+                    </div>
+                    <div class="chevron">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" /></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <div class="nav-item">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></svg>
+                  首页
+                </div>
+                <div class="nav-item active">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+                  工具
+                </div>
+                <div class="nav-item">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                  消息
+                </div>
+                <div class="nav-item">
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" /></svg>
+                  我的
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="phone-label">
+            <span class="num">3</span>
+            <strong>来源状态</strong>
+            <small>真实健康检测</small>
+          </div>
+          <div class="phone">
+            <div class="screen">
+              <div class="status-bar">
+                <span class="time">9:41</span>
+                <span class="notch"></span>
+                <span style="width:54px"></span>
+              </div>
+              <div class="topbar">
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                </div>
+                <span class="topbar-title">来源状态</span>
+                <div class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" /></svg>
+                </div>
+              </div>
+              <div class="phone-body" style="padding:0">
+                <div class="sheet">
+                  <div class="sheet-handle"></div>
+                  <div class="sheet-head">
+                    <div>
+                      <strong>搜索“流浪地球2”</strong>
+                      <small>6 个来源 · 最近检测 2026-08-02</small>
+                    </div>
+                    <span class="badge badge-warn" style="font-size:8px">真实状态</span>
+                  </div>
+                  <div class="status-card">
+                    <div class="status-row">
+                      <div class="logo" style="background:#fff6d9;color:#a66d00">L2</div>
+                      <div class="status-copy">
+                        <div class="status-name">老二搜索</div>
+                        <div class="status-meta">200 · 570ms · 可聚合</div>
+                      </div>
+                      <span class="status-label status-ok">5 条</span>
+                      <span class="open-origin">查看原站</span>
+                    </div>
+                    <div class="status-row">
+                      <div class="logo" style="background:#e7ebff;color:#4b6bff">QP</div>
+                      <div class="status-copy">
+                        <div class="status-name">夸克盘搜</div>
+                        <div class="status-meta">200 · 509ms · 需浏览器验证</div>
+                      </div>
+                      <span class="status-label status-warn">需原站</span>
+                      <span class="open-origin">打开</span>
+                    </div>
+                    <div class="status-row">
+                      <div class="logo" style="background:#fff0e7;color:#e46c2e">TV</div>
+                      <div class="status-copy">
+                        <div class="status-name">TV 搜</div>
+                        <div class="status-meta">200 · 1391ms · 暂无站内接口</div>
+                      </div>
+                      <span class="status-label status-warn">需原站</span>
+                      <span class="open-origin">打开</span>
+                    </div>
+                    <div class="status-row">
+                      <div class="logo" style="background:#ffeaf0;color:#e74c78">FL</div>
+                      <div class="status-copy">
+                        <div class="status-name">趣盘搜</div>
+                        <div class="status-meta">200 · 372ms · 暂无站内接口</div>
+                      </div>
+                      <span class="status-label status-warn">需原站</span>
+                      <span class="open-origin">打开</span>
+                    </div>
+                    <div class="status-row">
+                      <div class="logo" style="background:#edf0ff;color:#6b5adb">YS</div>
+                      <div class="status-copy">
+                        <div class="status-name">云搜</div>
+                        <div class="status-meta">200 · 1555ms · 需浏览器验证</div>
+                      </div>
+                      <span class="status-label status-warn">需原站</span>
+                      <span class="open-origin">打开</span>
+                    </div>
+                    <div class="status-row">
+                      <div class="logo" style="background:#e5f7f1;color:#16896d">YQ</div>
+                      <div class="status-copy">
+                        <div class="status-name">盘友圈</div>
+                        <div class="status-meta">连接超时 · 12.0s</div>
+                      </div>
+                      <span class="status-label status-danger">超时</span>
+                      <span class="open-origin">重试</span>
+                    </div>
+                  </div>
+                  <div class="sheet-note">
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v4h1" /></svg>
+                    站点由管理员在后台配置；健康状态来自真实检测，失败原因不隐藏、不伪造。
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="section-head">
+        <div>
+          <h2>管理后台 · 资源搜索站点</h2>
+          <p>站点列表 + 编辑抽屉：真实检测、真实试搜、配置即生效</p>
+        </div>
+        <span class="section-tag">桌面端 / 1440px</span>
+      </section>
+
+      <div class="admin-frame">
+        <aside class="sidebar">
+          <div class="sidebar-brand">
+            <div class="mark">F</div>
+            <div>
+              <strong>FunBox</strong>
+              <small>管理后台</small>
+            </div>
+          </div>
+          <div class="nav-section">管理工具</div>
+          <div class="nav-item-admin">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+            后台首页
+          </div>
+          <div class="nav-item-admin">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" /></svg>
+            用户身份
+          </div>
+          <div class="nav-item-admin">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="14" r="4" /><path d="M12 10l8-8M15 7l3 3" /><path d="M4 6h5M6 4v5" /></svg>
+            入口权限
+          </div>
+          <div class="nav-item-admin">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+            问题反馈
+          </div>
+          <div class="nav-section">内容运营</div>
+          <div class="nav-item-admin">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" /></svg>
+            朋友圈管理
+          </div>
+          <div class="nav-item-admin">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+            阅读管理
+          </div>
+          <div class="nav-item-admin active">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+            资源搜索
+          </div>
+          <div class="nav-section">会员运营</div>
+          <div class="nav-item-admin">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 12h8M12 8v8" /></svg>
+            会员收款
+          </div>
+          <div class="sidebar-footer">
+            <div class="admin-identity">
+              <div class="avatar">管</div>
+              管理员
+            </div>
+          </div>
+        </aside>
+
+        <div class="admin-column">
+          <div class="admin-topbar">
+            <div class="topbar-copy">
+              <div class="breadcrumb">管理后台 / 内容运营 / 资源搜索</div>
+              <h2>资源搜索站点</h2>
+              <p>配置用户端真实使用的搜索站点、接入方式与可用状态</p>
+            </div>
+            <div class="icon-btn">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+            </div>
+            <div class="admin-identity" style="background:#f2f5fd;border-radius:10px;color:var(--ink);padding:8px 10px">
+              <div class="avatar">管</div>
+              管理员
+            </div>
+          </div>
+
+          <div class="admin-content">
+            <div class="list-panel">
+              <div class="toolbar">
+                <div class="search">
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+                  <input placeholder="搜索站点名称或域名" />
+                </div>
+                <select class="select">
+                  <option>全部分类</option>
+                </select>
+                <select class="select">
+                  <option>全部状态</option>
+                </select>
+                <button class="btn btn-ghost">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 1 1-2.6-6.3" /><path d="M21 3v6h-6" /></svg>
+                  检测全部
+                </button>
+                <button class="btn btn-primary">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" /></svg>
+                  新建站点
+                </button>
+              </div>
+
+              <div class="metric-row">
+                <div class="metric">
+                  <b>6</b>
+                  <span>站点总数</span>
+                </div>
+                <div class="metric">
+                  <b>6</b>
+                  <span>已启用</span>
+                </div>
+                <div class="metric teal">
+                  <b>1</b>
+                  <span>可聚合</span>
+                </div>
+                <div class="metric amber">
+                  <b>5</b>
+                  <span>需原站</span>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>站点</th>
+                      <th>分类</th>
+                      <th>模式</th>
+                      <th>默认</th>
+                      <th>排序</th>
+                      <th>健康状态</th>
+                      <th>启用</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div class="site-cell">
+                          <div class="logo" style="background:#fff6d9;color:#a66d00">L2</div>
+                          <div>
+                            <strong>老二搜索</strong>
+                            <small>laoer.motewan.com</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>网盘</td>
+                      <td>聚合</td>
+                      <td>是</td>
+                      <td>1</td>
+                      <td>
+                        <div class="health-cell">
+                          <span class="health-dot ok"></span>
+                          <div>
+                            正常 570ms
+                            <small>2026-08-02 13:40</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="switch"></span></td>
+                      <td><span class="row-actions">编辑 试搜 检测</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="site-cell">
+                          <div class="logo" style="background:#e7ebff;color:#4b6bff">QP</div>
+                          <div>
+                            <strong>夸克盘搜</strong>
+                            <small>quarkpanso.com</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>网盘</td>
+                      <td>直达</td>
+                      <td>是</td>
+                      <td>2</td>
+                      <td>
+                        <div class="health-cell">
+                          <span class="health-dot ok"></span>
+                          <div>
+                            原站可达 509ms
+                            <small>需浏览器验证</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="switch"></span></td>
+                      <td><span class="row-actions">编辑 试搜 检测</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="site-cell">
+                          <div class="logo" style="background:#e5f7f1;color:#16896d">YQ</div>
+                          <div>
+                            <strong>盘友圈</strong>
+                            <small>panyq.com</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>网盘</td>
+                      <td>直达</td>
+                      <td>是</td>
+                      <td>3</td>
+                      <td>
+                        <div class="health-cell">
+                          <span class="health-dot danger"></span>
+                          <div>
+                            连接超时 12.0s
+                            <small>2026-08-02 13:39</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="switch"></span></td>
+                      <td><span class="row-actions">编辑 试搜 检测</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="site-cell">
+                          <div class="logo" style="background:#fff0e7;color:#e46c2e">TV</div>
+                          <div>
+                            <strong>TV 搜</strong>
+                            <small>tvso.uk</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>影视</td>
+                      <td>直达</td>
+                      <td>是</td>
+                      <td>4</td>
+                      <td>
+                        <div class="health-cell">
+                          <span class="health-dot ok"></span>
+                          <div>
+                            原站可达 1391ms
+                            <small>暂无站内接口</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="switch"></span></td>
+                      <td><span class="row-actions">编辑 试搜 检测</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="site-cell">
+                          <div class="logo" style="background:#ffeaf0;color:#e74c78">FL</div>
+                          <div>
+                            <strong>趣盘搜</strong>
+                            <small>pan.funletu.com</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>网盘</td>
+                      <td>直达</td>
+                      <td>是</td>
+                      <td>5</td>
+                      <td>
+                        <div class="health-cell">
+                          <span class="health-dot ok"></span>
+                          <div>
+                            原站可达 372ms
+                            <small>暂无站内接口</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="switch"></span></td>
+                      <td><span class="row-actions">编辑 试搜 检测</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="site-cell">
+                          <div class="logo" style="background:#edf0ff;color:#6b5adb">YS</div>
+                          <div>
+                            <strong>云搜</strong>
+                            <small>yunso.net</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td>网盘</td>
+                      <td>直达</td>
+                      <td>是</td>
+                      <td>6</td>
+                      <td>
+                        <div class="health-cell">
+                          <span class="health-dot ok"></span>
+                          <div>
+                            原站可达 1555ms
+                            <small>需浏览器验证</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="switch"></span></td>
+                      <td><span class="row-actions">编辑 试搜 检测</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-note">最近检测 2026-08-02 · 健康数据来自真实网络请求，无预置状态；盘友圈超时为真实探测结果。</div>
+            </div>
+
+            <aside class="drawer-panel">
+              <div class="drawer-head">
+                <div>
+                  <strong>编辑站点</strong>
+                  <small>老二搜索 · 聚合模式</small>
+                </div>
+                <span class="icon-btn">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </span>
+              </div>
+              <div class="drawer-body">
+                <div class="field-row">
+                  <div class="field">
+                    <label>名称</label>
+                    <input value="老二搜索" />
+                  </div>
+                  <div class="field">
+                    <label>分类</label>
+                    <select>
+                      <option>网盘</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>简介</label>
+                  <input value="免费网盘资源搜索" />
+                </div>
+                <div class="field">
+                  <label>首页地址</label>
+                  <input value="https://laoer.motewan.com/" />
+                </div>
+                <div class="field">
+                  <label>搜索地址模板</label>
+                  <input value="https://laoer.motewan.com/s/{keyword}.html" />
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label>接入模式</label>
+                    <select>
+                      <option>聚合 · 老二哥 SSE</option>
+                    </select>
+                  </div>
+                  <div class="field two">
+                    <label>Logo</label>
+                    <div class="logo-config">
+                      <div class="logo" style="background:#fff6d9;color:#a66d00">L2</div>
+                      <input value="#fff6d9 · #a66d00" />
+                    </div>
+                  </div>
+                </div>
+                <div class="toggle-row">
+                  <span>默认勾选</span>
+                  <span class="toggle"></span>
+                </div>
+                <div class="field-row">
+                  <div class="field">
+                    <label>排序</label>
+                    <input value="1" />
+                  </div>
+                  <div class="field">
+                    <label>最大结果</label>
+                    <input value="20" />
+                  </div>
+                  <div class="field">
+                    <label>超时</label>
+                    <input value="12s" />
+                  </div>
+                </div>
+
+                <div class="verify-card">
+                  <h4>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+                    健康检测
+                  </h4>
+                  <div class="health-line">
+                    HTTP 200 · 570ms
+                    <small>2026-08-02 13:40 · 手动</small>
+                  </div>
+                </div>
+
+                <div class="verify-card">
+                  <h4>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+                    试搜验证
+                  </h4>
+                  <div class="test-box">
+                    <input value="流浪地球2" />
+                    <button>真实试搜</button>
+                  </div>
+                  <div class="test-result">
+                    <strong>通过 · 返回 5 条真实结果 · 3.4s</strong>
+                    流浪地球2 (2023) 4K HDR &amp; Dv 中英外挂字幕
+                    流浪地球2 碟影UHD原盘终极REMUX版本 131.7GB
+                    <ul>
+                      <li>结果仅来自真实请求，不可手工编辑</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="drawer-actions">
+                  <button class="btn btn-ghost">取消</button>
+                  <button class="btn btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+                    保存并验证
+                  </button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <section class="section-head">
+        <div>
+          <h2>真实数据规则与一期边界</h2>
+          <p>上线后没有一处来源、状态或结果来自假数据</p>
+        </div>
+        <span class="section-tag">验收重点</span>
+      </section>
+
+      <div class="bottom-band">
+        <div class="band-card">
+          <div class="kicker">01 · 数据来源</div>
+          <h3>全部真实</h3>
+          <ul>
+            <li>站点配置：后台数据库</li>
+            <li>健康状态：真实网络检测</li>
+            <li>搜索结果：真实适配器返回</li>
+            <li>运行统计：真实搜索日志</li>
+          </ul>
+        </div>
+        <div class="band-card">
+          <div class="kicker">02 · 移除假数据</div>
+          <h3>用户端不出现</h3>
+          <ul>
+            <li>硬编码站点数组</li>
+            <li>预置假搜索历史</li>
+            <li>占位结果与假状态</li>
+            <li>不可解释的固定文案</li>
+          </ul>
+        </div>
+        <div class="band-card">
+          <div class="kicker">03 · 一期包含</div>
+          <h3>同批交付</h3>
+          <ul>
+            <li>后台配置与编辑抽屉</li>
+            <li>健康检测 + 试搜 + 审计 + 概览</li>
+            <li>移动端 API 化改造</li>
+            <li>6 个真实站点迁移与自动检测</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="board-footer">FunBox 产品设计 · 资源搜索站点管理 V1 · 所有站点与结果数据均为真实请求所得</div>
+    </div>
+  </body>
+</html>

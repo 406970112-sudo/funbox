@@ -100,4 +100,60 @@ func (s *resourceSearchStub) Resolve(_ context.Context, resultID string) (resour
 	return s.resolved, s.resolveErr
 }
 
+func (s *resourceSearchStub) Sources(context.Context) ([]resourcesearch.PublicSource, error) {
+	return nil, nil
+}
+
+func (s *resourceSearchStub) ListSources(context.Context, resourcesearch.SourceFilter) ([]resourcesearch.PublicSource, error) {
+	return nil, nil
+}
+
+func (s *resourceSearchStub) GetSource(context.Context, string) (resourcesearch.Source, error) {
+	return resourcesearch.Source{}, resourcesearch.ErrSourceNotFound
+}
+
+func (s *resourceSearchStub) CreateSource(context.Context, string, resourcesearch.SourceInput) (resourcesearch.Source, error) {
+	return resourcesearch.Source{}, nil
+}
+
+func (s *resourceSearchStub) UpdateSource(context.Context, string, string, resourcesearch.SourceInput) (resourcesearch.Source, error) {
+	return resourcesearch.Source{}, nil
+}
+
+func (s *resourceSearchStub) SetSourceEnabled(context.Context, string, string, bool) (resourcesearch.Source, error) {
+	return resourcesearch.Source{}, nil
+}
+
+func (s *resourceSearchStub) DeleteSource(context.Context, string, string) (resourcesearch.Source, error) {
+	return resourcesearch.Source{}, nil
+}
+
+func (s *resourceSearchStub) HealthCheck(context.Context, string, string) (resourcesearch.HealthResult, error) {
+	return resourcesearch.HealthResult{}, nil
+}
+
+func (s *resourceSearchStub) HealthCheckURL(context.Context, string, int64, string) (resourcesearch.HealthResult, error) {
+	return resourcesearch.HealthResult{}, nil
+}
+
+func (s *resourceSearchStub) HealthCheckAll(context.Context) ([]resourcesearch.HealthResult, error) {
+	return nil, nil
+}
+
+func (s *resourceSearchStub) TestSearch(context.Context, string, string, string) (resourcesearch.TestResult, error) {
+	return resourcesearch.TestResult{}, nil
+}
+
+func (s *resourceSearchStub) TestSearchInput(context.Context, string, resourcesearch.SourceInput, string) (resourcesearch.TestResult, error) {
+	return resourcesearch.TestResult{}, nil
+}
+
+func (s *resourceSearchStub) Stats(context.Context, int) (resourcesearch.AdminStats, error) {
+	return resourcesearch.AdminStats{}, nil
+}
+
+func (s *resourceSearchStub) Store() *resourcesearch.Store {
+	return nil
+}
+
 var _ resourceSearchService = (*resourceSearchStub)(nil)

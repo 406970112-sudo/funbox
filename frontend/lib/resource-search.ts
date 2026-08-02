@@ -1,99 +1,41 @@
-export type ResourceSearchSource = {
-  description: string;
-  domain: string;
-  id: ResourceSearchSourceId;
-  logo: string;
-  logoBackground: string;
-  logoColor: string;
-  name: string;
-  url: `https://${string}`;
-};
+import type { ResourceSearchSource } from '@/types/resource-search';
 
-export type ResourceSearchSourceId =
-  | 'quark-pan-search'
-  | 'panyq'
-  | 'tvso'
-  | 'funletu-pan'
-  | 'yunso'
-  | 'laoer-motewan';
-
-export const RESOURCE_SEARCH_SOURCES: readonly ResourceSearchSource[] = [
-  {
-    description: '综合网盘资源',
-    domain: 'quarkpanso.com',
-    id: 'quark-pan-search',
-    logo: 'QP',
-    logoBackground: '#e7ebff',
-    logoColor: '#4b6bff',
-    name: '夸克盘搜',
-    url: 'https://www.quarkpanso.com/',
-  },
-  {
-    description: '社区分享资源',
-    domain: 'panyq.com',
-    id: 'panyq',
-    logo: 'YQ',
-    logoBackground: '#e5f7f1',
-    logoColor: '#16896d',
-    name: '盘友圈',
-    url: 'https://panyq.com/',
-  },
-  {
-    description: '影视内容检索',
-    domain: 'tvso.uk',
-    id: 'tvso',
-    logo: 'TV',
-    logoBackground: '#fff0e7',
-    logoColor: '#e46c2e',
-    name: 'TV 搜',
-    url: 'https://www.tvso.uk/',
-  },
-  {
-    description: '网盘资源导航',
-    domain: 'pan.funletu.com',
-    id: 'funletu-pan',
-    logo: 'FL',
-    logoBackground: '#ffeaf0',
-    logoColor: '#e74c78',
-    name: '趣盘搜',
-    url: 'https://pan.funletu.com/',
-  },
-  {
-    description: '多网盘搜索',
-    domain: 'yunso.net',
-    id: 'yunso',
-    logo: 'YS',
-    logoBackground: '#edf0ff',
-    logoColor: '#6b5adb',
-    name: '云搜',
-    url: 'https://www.yunso.net/',
-  },
-  {
-    description: '免费网盘资源搜索',
-    domain: 'laoer.motewan.com',
-    id: 'laoer-motewan',
-    logo: 'L2',
-    logoBackground: '#fff6d9',
-    logoColor: '#a66d00',
-    name: '老二搜索',
-    url: 'https://laoer.motewan.com/',
-  },
-];
-
-export const DEFAULT_RESOURCE_SEARCH_SOURCE_IDS: readonly ResourceSearchSourceId[] = [
-  'quark-pan-search',
-  'panyq',
-  'tvso',
-  'funletu-pan',
-  'yunso',
-  'laoer-motewan',
-];
+export const RESOURCE_SEARCH_CATEGORIES = ['网盘', '影视', '文档', '软件', '综合'] as const;
 
 export function normalizeResourceSearchQuery(value: string) {
   return value.trim().replace(/\s+/g, ' ');
 }
 
-export function getResourceSearchQueue(sourceIds: readonly ResourceSearchSourceId[]) {
-  const selectedIds = new Set(sourceIds);
-  return RESOURCE_SEARCH_SOURCES.filter((source) => selectedIds.has(source.id));
+export function getResourceSearchQueue(
+  sources: readonly ResourceSearchSource[],
+  selectedIds: readonly string[],
+) {
+  const selected = new Set(selectedIds);
+  return [...sources]
+    .filter((source) => source.enabled && selected.has(source.id))
+    .sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name));
+}
+
+export function getDefaultResourceSearchSourceIds(sources: readonly ResourceSearchSource[]) {
+  return sources
+    .filter((source) => source.enabled && source.defaultSelected)
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((source) => source.id);
+}
+
+export function groupResourceSearchSources(sources: readonly ResourceSearchSource[]) {
+  const order = new Map<string, number>(RESOURCE_SEARCH_CATEGORIES.map((category, index) => [category, index]));
+  const groups = new Map<string, ResourceSearchSource[]>();
+  for (const source of sources) {
+    const category = order.has(source.category) ? source.category : '综合';
+    const items = groups.get(category) ?? [];
+    items.push(source);
+    groups.set(category, items);
+  }
+  return [...groups.entries()]
+    .sort((left, right) => (order.get(left[0]) ?? 99) - (order.get(right[0]) ?? 99))
+    .map(([category, items]) => ({
+      category,
+      items: [...items].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
+    }));
 }
