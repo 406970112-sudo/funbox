@@ -14,18 +14,21 @@ import (
 
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
+	"my-first-expo-app/backend/internal/blog"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/cookingguide"
 	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
+	"my-first-expo-app/backend/internal/homerecommendation"
 	httpapi "my-first-expo-app/backend/internal/httpapi"
 	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/recommendation"
+	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/translation"
@@ -61,11 +64,21 @@ func main() {
 		log.Fatalf("open diary database failed: %v", err)
 	}
 	defer diaryStore.Close()
+	blogStore, err := blog.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open blog database failed: %v", err)
+	}
+	defer blogStore.Close()
 	accessStore, err := access.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("open access database failed: %v", err)
 	}
 	defer accessStore.Close()
+	resourceSearchStore, err := resourcesearch.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open resource search database failed: %v", err)
+	}
+	defer resourceSearchStore.Close()
 	readingStore, err := reading.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("open reading database failed: %v", err)
@@ -106,6 +119,15 @@ func main() {
 		log.Fatalf("open cooking guide database failed: %v", err)
 	}
 	defer cookingGuideStore.Close()
+	homeRecommendationStore, err := homerecommendation.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open home recommendation database failed: %v", err)
+	}
+	defer homeRecommendationStore.Close()
+	homeRecommendationService, err := homerecommendation.NewService(homeRecommendationStore)
+	if err != nil {
+		log.Fatalf("create home recommendation service failed: %v", err)
+	}
 	registry, err := access.Registry()
 	if err != nil {
 		log.Fatalf("load feature registry failed: %v", err)
@@ -197,6 +219,11 @@ func main() {
 		cfg.Storage.MaxDiaryImageBytes,
 		cfg.Storage.MaxDiaryImages,
 	)
+	blogService := blog.NewService(
+		blogStore,
+		cfg.Storage.BlogDir,
+		cfg.Storage.MaxBlogCoverBytes,
+	)
 
 	newsSource := news.NewRSSSource(
 		&http.Client{Timeout: cfg.News.RequestTimeout},
@@ -208,7 +235,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithDiary(
+	server := httpapi.NewServerWithBlog(
 		cfg,
 		ttsService,
 		translationService,
@@ -225,6 +252,9 @@ func main() {
 		cookingGuideService,
 		momentsService,
 		diaryService,
+		homeRecommendationService,
+		resourceSearchStore,
+		blogService,
 		scoreService,
 	)
 

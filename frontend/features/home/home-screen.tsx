@@ -38,6 +38,7 @@ import {
   searchHomeEntries,
   type HomeSearchEntry,
 } from '@/lib/home-search';
+import { prefetchFeatureRoutes } from '@/lib/route-prefetch';
 import { getStoredRecentUsage } from '@/lib/recent-usage-storage';
 import type { RecentUsageItem } from '@/lib/recent-usage';
 import { getStoredToolUsage } from '@/lib/tool-usage-storage';
@@ -46,12 +47,12 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
 
 import { GameArtwork } from './game-artwork';
+import { RecommendationCarousel } from './recommendation-carousel';
 import { SearchResultPanel } from './search-result-panel';
 
 const GAME_LIST_GAP = 10;
 const GAME_CARD_WIDTH_RATIO = 0.29;
 const BOTTOM_EXTRA_PADDING = 16;
-const DEFAULT_RECOMMENDATION_TOOL_ID = 'card-score';
 
 type SectionHeaderProps = {
   actionLabel?: string;
@@ -164,31 +165,6 @@ function CategoryChip({
         ]}>
         {label}
       </ThemedText>
-    </Pressable>
-  );
-}
-
-function RecommendationBanner({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityLabel={`今日推荐：${tool.name}，${tool.tagline}`}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.recommendationCard, pressed && styles.pressed]}>
-      <View style={styles.recommendationCopy}>
-        <ThemedText style={styles.recommendationEyebrow}>今日推荐</ThemedText>
-        <ThemedText style={styles.recommendationTitle}>{tool.name}</ThemedText>
-        <ThemedText numberOfLines={2} style={styles.recommendationDesc}>
-          {tool.tagline}
-        </ThemedText>
-        <View style={styles.recommendationCta}>
-          <ThemedText style={styles.recommendationCtaText}>{tool.usageLabel}</ThemedText>
-          <MaterialCommunityIcons name="arrow-right" size={14} color="#16332c" />
-        </View>
-      </View>
-      <View style={styles.recommendationArt} accessibilityElementsHidden>
-        <MaterialCommunityIcons name={tool.icon} size={30} color="#c9f36a" />
-      </View>
     </Pressable>
   );
 }
@@ -336,6 +312,14 @@ export function HomeScreen() {
     () => visibleTools.filter((tool) => tool.status === 'available'),
     [visibleTools],
   );
+  const visibleFeatureIDs = useMemo(
+    () =>
+      new Set([
+        ...visibleTools.map((tool) => tool.id),
+        ...visibleGames.map((game) => game.id),
+      ]),
+    [visibleGames, visibleTools],
+  );
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const searchMode = normalizedSearchQuery.length > 0;
   const categories = useMemo(() => getMergedToolCategories(availableTools), [availableTools]);
@@ -368,9 +352,6 @@ export function HomeScreen() {
       return tool ? [tool] : [];
     });
   }, [availableTools, recentToolIds]);
-  const recommendationTool =
-    availableTools.find((tool) => tool.id === DEFAULT_RECOMMENDATION_TOOL_ID) ??
-    availableTools[0];
   const playableGames = visibleGames.slice(0, 5);
   const filteredGames = useMemo(() => {
     if (!normalizedSearchQuery) return playableGames;
@@ -406,6 +387,15 @@ export function HomeScreen() {
     useCallback(() => {
       let active = true;
 
+      prefetchFeatureRoutes(
+        [
+          ...visibleTools
+            .filter((tool) => tool.status === 'available')
+            .map((tool) => tool.route),
+          ...visibleGames.map((game) => game.route),
+        ],
+      );
+
       void Promise.all([getStoredToolUsage(), getStoredRecentUsage()]).then(
         ([usageItems, recentItems]) => {
           if (active) {
@@ -418,7 +408,7 @@ export function HomeScreen() {
       return () => {
         active = false;
       };
-    }, []),
+    }, [visibleGames, visibleTools]),
   );
 
   function handleSearchChange(value: string) {
@@ -583,11 +573,10 @@ export function HomeScreen() {
         ) : null
       ) : null}
 
-      {!searchMode && recommendationTool ? (
-        <RecommendationBanner
-          tool={recommendationTool}
-          onPress={() => router.push(recommendationTool.route)}
-        />
+      {!searchMode ? (
+        <View style={styles.section}>
+          <RecommendationCarousel visibleFeatureIDs={visibleFeatureIDs} />
+        </View>
       ) : null}
 
       {!searchMode && recentTools.length > 0 ? (
@@ -817,64 +806,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     lineHeight: 18,
-  },
-  recommendationCard: {
-    alignItems: 'stretch',
-    backgroundColor: '#123a33',
-    borderRadius: 20,
-    flexDirection: 'row',
-    gap: 12,
-    overflow: 'hidden',
-    padding: 16,
-  },
-  recommendationCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  recommendationEyebrow: {
-    color: '#c9f36a',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  recommendationTitle: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '900',
-    lineHeight: 26,
-    marginTop: 6,
-  },
-  recommendationDesc: {
-    color: 'rgba(255, 255, 255, 0.86)',
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6,
-  },
-  recommendationCta: {
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#c9f36a',
-    borderRadius: 999,
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  recommendationCtaText: {
-    color: '#16332c',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  recommendationArt: {
-    alignItems: 'center',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(201, 243, 106, 0.35)',
-    height: 86,
-    justifyContent: 'center',
-    width: 86,
   },
   recentRow: {
     flexDirection: 'row',

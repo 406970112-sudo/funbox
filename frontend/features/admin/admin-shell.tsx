@@ -12,12 +12,15 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 const ADMIN_DESKTOP_BREAKPOINT = 900;
 
 type AdminPageKey =
+  | 'blog'
   | 'feedback'
   | 'index'
   | 'membership'
   | 'moments'
   | 'permissions'
+  | 'recommendations'
   | 'reading'
+  | 'resource-search'
   | 'users';
 
 type AdminNavItem = {
@@ -40,8 +43,11 @@ const NAV_SECTIONS: Array<{ items: AdminNavItem[]; title: string }> = [
   {
     title: '内容运营',
     items: [
+      { key: 'recommendations', icon: 'star-circle-outline', label: '首页推荐', path: '/admin/recommendations' },
       { key: 'moments', icon: 'account-group-outline', label: '朋友圈管理', path: '/admin/moments' },
+      { key: 'blog', icon: 'book-open-page-variant-outline', label: '博客管理', path: '/admin/blog' },
       { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读管理', path: '/admin/reading' },
+      { key: 'resource-search', icon: 'database-search-outline', label: '资源搜索', path: '/admin/resource-search' },
     ],
   },
   {
@@ -57,12 +63,19 @@ const MOBILE_NAV_ITEMS: AdminNavItem[] = [
   { key: 'users', icon: 'account-key-outline', label: '用户', path: '/admin/users' },
   { key: 'permissions', icon: 'key-outline', label: '权限', path: '/admin/permissions' },
   { key: 'feedback', icon: 'message-alert-outline', label: '反馈', path: '/admin/feedback' },
+  { key: 'recommendations', icon: 'star-circle-outline', label: '推荐', path: '/admin/recommendations' },
   { key: 'moments', icon: 'account-group-outline', label: '朋友圈', path: '/admin/moments' },
+  { key: 'blog', icon: 'book-open-page-variant-outline', label: '博客', path: '/admin/blog' },
   { key: 'membership', icon: 'qrcode', label: '收款', path: '/admin/membership' },
   { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读', path: '/admin/reading' },
 ];
 
 const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; title: string }> = {
+  blog: {
+    breadcrumb: '内容运营',
+    subtitle: '查看真实文章、报告记录并下架违规内容',
+    title: '博客管理',
+  },
   index: {
     breadcrumb: '工作台',
     subtitle: '后台各模块统一在此管理',
@@ -83,6 +96,11 @@ const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; ti
     subtitle: '查看用户提交的文字与图片',
     title: '问题反馈',
   },
+  recommendations: {
+    breadcrumb: '内容运营',
+    subtitle: '配置首页今日推荐、排期与真实效果数据',
+    title: '首页推荐管理',
+  },
   moments: {
     breadcrumb: '内容运营',
     subtitle: '查看真实动态、举报记录并下架违规内容',
@@ -97,6 +115,11 @@ const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; ti
     breadcrumb: '内容运营',
     subtitle: '导入、发布与隐藏阅读内容',
     title: '阅读管理',
+  },
+  'resource-search': {
+    breadcrumb: '内容运营',
+    subtitle: '配置用户端真实使用的搜索站点与接入方式',
+    title: '资源搜索',
   },
 };
 
@@ -264,7 +287,9 @@ function adminPageKey(pathname: string): AdminPageKey {
     segment === 'permissions' ||
     segment === 'feedback' ||
     segment === 'membership' ||
-    segment === 'reading'
+    segment === 'recommendations' ||
+    segment === 'reading' ||
+    segment === 'resource-search'
   ) {
     return segment;
   }

@@ -1,5 +1,6 @@
 package httpapi
 
+// codex resource search integration marker
 import (
 	"context"
 	"encoding/json"
@@ -14,12 +15,14 @@ import (
 
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
+	"my-first-expo-app/backend/internal/blog"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/cookingguide"
 	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
+	"my-first-expo-app/backend/internal/homerecommendation"
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/lotterylab"
 	"my-first-expo-app/backend/internal/marketradar"
@@ -40,11 +43,13 @@ import (
 type Server struct {
 	accessStore               *access.Store
 	authService               *auth.Service
+	blogService               *blog.Service
 	cfg                       config.Config
 	cookingGuideService       *cookingguide.Service
 	feedbackService           *feedback.Service
 	foodRecommendationService *foodrecommendation.Service
 	focusStore                *focus.Store
+	homeRecommendationService *homerecommendation.Service
 	rateLimiter               *RateLimiter
 	realtimeHub               *realtime.Hub
 	lotteryService            lotteryHistoryService
@@ -74,7 +79,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -87,7 +92,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -110,6 +115,9 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
+		nil,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -151,6 +159,9 @@ func NewServerWithReadingNewsAndFeedback(
 		nil,
 		nil,
 		nil,
+		nil,
+		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -179,6 +190,9 @@ func NewServerWithReadingNewsFeedbackAndFocus(
 		readingService,
 		feedbackService,
 		focusStore,
+		nil,
+		nil,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -220,6 +234,9 @@ func NewServerWithMembership(
 		nil,
 		nil,
 		nil,
+		nil,
+		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -252,6 +269,9 @@ func NewServerWithMembershipAndRecommendation(
 		focusStore,
 		membershipService,
 		recommendationService,
+		nil,
+		nil,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -293,6 +313,9 @@ func NewServerWithMembershipRecommendationAndFood(
 		nil,
 		nil,
 		nil,
+		nil,
+		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -331,6 +354,9 @@ func NewServerWithMoments(
 		nil,
 		momentsService,
 		nil,
+		nil,
+		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -352,6 +378,8 @@ func NewServerWithDiary(
 	cookingGuideService *cookingguide.Service,
 	momentsService *moments.Service,
 	diaryService *diary.Service,
+	homeRecommendationService *homerecommendation.Service,
+	resourceSearchStore *resourcesearch.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	return newServer(
@@ -371,6 +399,89 @@ func NewServerWithDiary(
 		cookingGuideService,
 		momentsService,
 		diaryService,
+		homeRecommendationService,
+		resourceSearchStore,
+		nil,
+		scoreServices...,
+	)
+}
+
+func NewServerWithBlog(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	feedbackService *feedback.Service,
+	focusStore *focus.Store,
+	membershipService *membership.Service,
+	recommendationService *recommendation.Service,
+	foodRecommendationService *foodrecommendation.Service,
+	cookingGuideService *cookingguide.Service,
+	momentsService *moments.Service,
+	diaryService *diary.Service,
+	homeRecommendationService *homerecommendation.Service,
+	resourceSearchStore *resourcesearch.Store,
+	blogService *blog.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		feedbackService,
+		focusStore,
+		membershipService,
+		recommendationService,
+		foodRecommendationService,
+		cookingGuideService,
+		momentsService,
+		diaryService,
+		homeRecommendationService,
+		resourceSearchStore,
+		blogService,
+		scoreServices...,
+	)
+}
+
+func NewServerWithHomeRecommendation(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	homeRecommendationService *homerecommendation.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		homeRecommendationService,
+		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -392,6 +503,9 @@ func newServer(
 	cookingGuideService *cookingguide.Service,
 	momentsService *moments.Service,
 	diaryService *diary.Service,
+	homeRecommendationService *homerecommendation.Service,
+	resourceSearchStore *resourcesearch.Store,
+	blogService *blog.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
@@ -425,11 +539,13 @@ func newServer(
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
+		blogService:               blogService,
 		cfg:                       cfg,
 		cookingGuideService:       cookingGuideService,
 		feedbackService:           feedbackService,
 		foodRecommendationService: foodRecommendationService,
 		focusStore:                focusStore,
+		homeRecommendationService: homeRecommendationService,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:               realtime.NewHub(),
 		lotteryService:            lottery.NewService(cfg.Lottery),
@@ -443,7 +559,7 @@ func newServer(
 		readingService:            readingService,
 		readingImporter:           readingImporter,
 		recommendationService:     recommendationService,
-		resourceSearchService:     resourcesearch.NewService(cfg.ResourceSearch),
+		resourceSearchService:     resourcesearch.NewService(cfg.ResourceSearch, resourceSearchStore),
 		scoreService:              scoreService,
 		socialStore:               socialStore,
 		translationService:        translationService,
@@ -482,6 +598,8 @@ func newServer(
 	registerFoodRecommendationRoutes(mux, api)
 	registerCookingGuideRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
+	registerBlogRoutes(mux, api)
+	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
@@ -522,6 +640,7 @@ func newServer(
 	mux.HandleFunc("GET /voice/", api.handleServeAudio)
 	mux.HandleFunc("GET /avatars/", api.handleServeAvatar)
 	mux.HandleFunc("GET /moment-media/", api.handleServeMomentMedia)
+	mux.HandleFunc("GET /blog-media/", api.handleServeBlogMedia)
 
 	handler := api.withGlobalMiddleware(mux)
 

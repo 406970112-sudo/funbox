@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FunBox 首页今日推荐配置化 - 产品设计图 V1</title>
+<style>
+  :root {
+    --ink: #161b2e;
+    --muted: #6b7590;
+    --line: #e3e7f0;
+    --surface: #ffffff;
+    --canvas: #eef1f7;
+    --blue: #4b6bff;
+    --blue-soft: #edf0ff;
+    --green: #1f7b63;
+    --lime: #c9f36a;
+    --navy: #141b39;
+    --navy-soft: #232c52;
+    --coral: #ef6b4a;
+    --amber: #e8a33d;
+    --teal: #20ad78;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .board {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px;
+    min-height: 100vh;
+  }
+
+  .board-head {
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    padding: 2px 2px 0;
+  }
+  .board-title { font-size: 22px; font-weight: 800; letter-spacing: 0; margin: 0; }
+  .board-sub { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+  .board-badge {
+    background: #eaf6dc;
+    border: 1px solid #d4e8b6;
+    border-radius: 999px;
+    color: #4d6b1f;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 12px;
+    white-space: nowrap;
+  }
+
+  .grid {
+    align-items: flex-start;
+    display: grid;
+    gap: 18px;
+    grid-template-columns: minmax(320px, 420px) minmax(760px, 1fr);
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-label {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    display: flex;
+    font-size: 10px;
+    font-weight: 800;
+    gap: 7px;
+    justify-content: space-between;
+    min-height: 34px;
+    padding: 0 14px;
+  }
+  .panel-label .dot {
+    background: var(--lime);
+    border-radius: 999px;
+    display: inline-block;
+    height: 7px;
+    width: 7px;
+  }
+
+  .phone {
+    background: #f6f8fc;
+    border: 1px solid #dfe4ee;
+    border-radius: 30px;
+    margin: 16px auto;
+    overflow: hidden;
+    padding-bottom: 10px;
+    width: 342px;
+  }
+  .phone-notch {
+    background: #10142a;
+    border-radius: 0 0 14px 14px;
+    height: 22px;
+    margin: 0 auto;
+    width: 118px;
+  }
+  .phone-body { padding: 0 16px; }
+
+  .statusbar {
+    align-items: center;
+    display: flex;
+    font-size: 10px;
+    font-weight: 700;
+    justify-content: space-between;
+    padding: 8px 4px 4px;
+  }
+  .statusbar .right { display: flex; gap: 5px; }
+  .statusbar i {
+    background: currentColor;
+    border-radius: 2px;
+    display: inline-block;
+    height: 8px;
+    width: 8px;
+  }
+
+  .brand {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    min-height: 48px;
+  }
+  .brand-mark {
+    align-items: center;
+    background: #173a33;
+    border-radius: 12px;
+    display: flex;
+    height: 42px;
+    justify-content: center;
+    width: 42px;
+  }
+  .brand-mark .cube {
+    border: 2px solid #c9f36a;
+    border-radius: 3px;
+    height: 20px;
+    width: 20px;
+  }
+  .brand h1 { font-size: 24px; font-weight: 900; letter-spacing: 0; margin: 0; }
+  .brand p { color: var(--muted); font-size: 11px; margin: 1px 0 0; }
+  .brand-count {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: auto;
+  }
+
+  .search {
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    display: flex;
+    gap: 8px;
+    height: 42px;
+    margin-top: 12px;
+    padding: 0 12px;
+  }
+  .search .mag {
+    align-items: center;
+    color: var(--muted);
+    display: flex;
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .search span { color: #a7b0c2; font-size: 13px; }
+
+  .home-section { margin-top: 22px; }
+  .home-section h2 {
+    font-size: 19px;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 25px;
+    margin: 0 0 9px;
+  }
+  .home-section .h2-row {
+    align-items: flex-end;
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 8px;
+  }
+  .home-section .h2-row h2 { margin: 0; }
+  .home-section .h2-meta {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .home-section .h2-action {
+    align-items: center;
+    color: var(--ink);
+    display: flex;
+    font-size: 12px;
+    font-weight: 800;
+    gap: 4px;
+  }
+
+  .rec-carousel {
+    display: flex;
+    gap: 10px;
+    margin: 0 -16px;
+    overflow-x: auto;
+    padding: 2px 16px 4px;
+    scroll-snap-type: x mandatory;
+  }
+  .rec-card {
+    background: #123a33;
+    border-radius: 21px;
+    color: #fff;
+    flex: 0 0 calc(100% - 26px);
+    height: 172px;
+    overflow: hidden;
+    padding: 18px;
+    position: relative;
+    scroll-snap-align: start;
+  }
+  .rec-card .kind {
+    color: #c9f36a;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .rec-card h3 {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0;
+    line-height: 26px;
+    margin: 14px 0 0;
+    max-width: 62%;
+  }
+  .rec-card p {
+    color: rgba(255,255,255,0.86);
+    font-size: 12px;
+    line-height: 18px;
+    margin: 6px 0 0;
+    max-width: 62%;
+  }
+  .rec-card .cta {
+    align-items: center;
+    background: #c9f36a;
+    bottom: 18px;
+    border-radius: 999px;
+    color: #16332c;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 800;
+    gap: 6px;
+    left: 18px;
+    padding: 7px 12px;
+    position: absolute;
+  }
+  .rec-card .art {
+    align-items: center;
+    border: 1px solid rgba(201,243,106,0.35);
+    border-radius: 18px;
+    display: flex;
+    font-size: 26px;
+    font-weight: 900;
+    height: 86px;
+    justify-content: center;
+    position: absolute;
+    right: 22px;
+    top: 42px;
+    width: 86px;
+  }
+
+  .rec-pager {
+    align-items: center;
+    display: flex;
+    height: 24px;
+    justify-content: center;
+  }
+  .rec-dot {
+    background: #d8dce6;
+    border-radius: 3px;
+    height: 5px;
+    margin: 0 4px;
+    width: 5px;
+  }
+  .rec-dot.active {
+    background: #1f4e43;
+    width: 19px;
+  }
+
+  .chip-row { display: flex; gap: 7px; }
+  .chip {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 6px 10px;
+  }
+  .chip.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+  }
+
+  .tool-grid {
+    display: grid;
+    gap: 9px;
+    grid-template-columns: repeat(4, 1fr);
+    margin-top: 12px;
+  }
+  .tool-tile {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    text-align: center;
+  }
+  .tool-tile .box {
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    display: flex;
+    font-size: 18px;
+    font-weight: 900;
+    height: 52px;
+    justify-content: center;
+    width: 52px;
+  }
+  .tool-tile span { font-size: 9px; font-weight: 700; }
+
+  .game-row {
+    display: flex;
+    gap: 9px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .game-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    flex: 1;
+    min-width: 0;
+    padding: 11px;
+  }
+  .game-card .g-icon {
+    align-items: center;
+    border-radius: 12px;
+    color: #fff;
+    display: flex;
+    font-size: 15px;
+    font-weight: 900;
+    height: 40px;
+    justify-content: center;
+    margin-bottom: 8px;
+    width: 40px;
+  }
+  .game-card b { display: block; font-size: 11px; font-weight: 900; }
+  .game-card span { color: var(--muted); font-size: 9px; }
+
+  .membership {
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 12px 14px;
+  }
+  .membership-icon {
+    align-items: center;
+    background: #fff1f4;
+    border-radius: 10px;
+    color: #ff6b8f;
+    display: flex;
+    font-size: 15px;
+    font-weight: 900;
+    height: 38px;
+    justify-content: center;
+    width: 38px;
+  }
+  .membership-copy { flex: 1; min-width: 0; }
+  .membership b { display: block; font-size: 13px; font-weight: 900; }
+  .membership span { color: var(--muted); display: block; font-size: 11px; margin-top: 3px; }
+  .membership .membership-cta {
+    color: #ff6b8f;
+    font-size: 12px;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .admin {
+    background: #f3f5fa;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: flex;
+    min-height: 900px;
+    overflow: hidden;
+  }
+  .sidebar {
+    background: var(--navy);
+    color: #fff;
+    flex: 0 0 208px;
+    padding: 16px 13px;
+  }
+  .sidebar-brand {
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.09);
+    display: flex;
+    gap: 9px;
+    margin-bottom: 14px;
+    padding: 4px 6px 14px;
+  }
+  .sidebar-brand .f {
+    align-items: center;
+    background: var(--lime);
+    border-radius: 8px;
+    color: var(--navy);
+    display: flex;
+    font-size: 14px;
+    font-weight: 900;
+    height: 30px;
+    justify-content: center;
+    width: 30px;
+  }
+  .sidebar-brand b { display: block; font-size: 14px; font-weight: 900; }
+  .sidebar-brand span { color: #8a94b5; display: block; font-size: 9px; font-weight: 700; }
+  .nav-group { color: #66739a; font-size: 9px; font-weight: 900; letter-spacing: 1px; margin: 16px 0 6px; padding: 0 9px; }
+  .nav-item {
+    align-items: center;
+    border-radius: 8px;
+    color: #a7b1d1;
+    display: flex;
+    font-size: 11px;
+    font-weight: 700;
+    gap: 9px;
+    min-height: 38px;
+    padding: 0 10px;
+  }
+  .nav-item.active {
+    background: rgba(201,243,106,0.13);
+    color: #fff;
+    font-weight: 900;
+  }
+  .nav-item .ic {
+    align-items: center;
+    background: rgba(255,255,255,0.07);
+    border-radius: 6px;
+    display: flex;
+    font-size: 12px;
+    height: 24px;
+    justify-content: center;
+    width: 24px;
+  }
+  .nav-item.active .ic { background: var(--lime); color: var(--navy); }
+
+  .admin-main { flex: 1; min-width: 0; }
+  .admin-topbar {
+    align-items: center;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 10px;
+    min-height: 62px;
+    padding: 0 18px;
+  }
+  .admin-topbar .crumb { color: var(--muted); font-size: 9px; font-weight: 700; }
+  .admin-topbar h1 { font-size: 16px; font-weight: 900; letter-spacing: 0; margin: 2px 0 0; }
+  .admin-topbar .who {
+    align-items: center;
+    background: var(--blue-soft);
+    border-radius: 999px;
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 800;
+    gap: 6px;
+    margin-left: auto;
+    padding: 6px 10px;
+  }
+
+  .admin-content { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px 18px; }
+  .stats-strip { display: grid; gap: 10px; grid-template-columns: repeat(4, 1fr); }
+  .stat-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .stat-card .k { color: var(--muted); font-size: 9px; font-weight: 800; }
+  .stat-card .v { font-size: 20px; font-weight: 900; margin-top: 3px; }
+  .stat-card .d { color: var(--teal); font-size: 9px; font-weight: 800; margin-top: 2px; }
+
+  .admin-grid {
+    align-items: flex-start;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(420px, 1.1fr) minmax(420px, 1fr);
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card-head {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    min-height: 52px;
+    padding: 0 14px;
+  }
+  .card-head b { font-size: 13px; font-weight: 900; }
+  .card-head .meta { color: var(--muted); font-size: 9px; }
+  .card-head .action {
+    align-items: center;
+    background: var(--blue);
+    border-radius: 7px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 10px;
+    font-weight: 800;
+    gap: 6px;
+    padding: 7px 11px;
+  }
+  .card-head .ghost {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .slot-row {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 11px;
+    min-height: 64px;
+    padding: 9px 14px;
+  }
+  .slot-row:last-child { border-bottom: 0; }
+  .slot-ic {
+    align-items: center;
+    border-radius: 10px;
+    color: #fff;
+    display: flex;
+    font-size: 15px;
+    font-weight: 900;
+    height: 40px;
+    justify-content: center;
+    width: 40px;
+  }
+  .slot-copy { flex: 1; min-width: 0; }
+  .slot-copy .t { align-items: center; display: flex; gap: 7px; }
+  .slot-copy .t b { font-size: 12px; font-weight: 900; }
+  .slot-copy .t .type {
+    background: var(--blue-soft);
+    border-radius: 999px;
+    color: var(--blue);
+    font-size: 8px;
+    font-weight: 800;
+    padding: 2px 6px;
+  }
+  .slot-copy .t .type.game { background: #e9f8f1; color: var(--teal); }
+  .slot-copy .s { color: var(--muted); font-size: 9px; margin-top: 3px; }
+  .slot-copy .s b { color: #3c7a5a; font-weight: 800; }
+  .slot-status {
+    align-items: center;
+    background: #eaf6dc;
+    border-radius: 999px;
+    color: #4d6b1f;
+    display: inline-flex;
+    font-size: 8px;
+    font-weight: 900;
+    gap: 4px;
+    padding: 4px 8px;
+  }
+  .slot-status.off { background: #f0f2f7; color: var(--muted); }
+  .slot-actions { display: flex; gap: 5px; }
+  .icon-btn {
+    align-items: center;
+    background: #f5f7fb;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--muted);
+    display: flex;
+    font-size: 11px;
+    font-weight: 800;
+    height: 30px;
+    justify-content: center;
+    width: 30px;
+  }
+
+  .editor-body { padding: 14px; }
+  .field { margin-bottom: 13px; }
+  .field > label { display: block; font-size: 9px; font-weight: 800; margin-bottom: 5px; }
+  .input {
+    background: #fbfcfe;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 11px;
+    min-height: 36px;
+    padding: 0 10px;
+    width: 100%;
+  }
+  .input::placeholder { color: #b5bccb; }
+  .picker {
+    align-items: center;
+    border: 1px solid var(--blue);
+    border-radius: 8px;
+    display: flex;
+    gap: 10px;
+    padding: 9px 10px;
+  }
+  .picker .p-ic {
+    align-items: center;
+    border-radius: 9px;
+    color: #fff;
+    display: flex;
+    font-size: 14px;
+    font-weight: 900;
+    height: 36px;
+    justify-content: center;
+    width: 36px;
+  }
+  .picker b { display: block; font-size: 12px; font-weight: 900; }
+  .picker span { color: var(--muted); display: block; font-size: 9px; margin-top: 2px; }
+  .picker .change {
+    background: var(--blue-soft);
+    border-radius: 999px;
+    color: var(--blue);
+    font-size: 9px;
+    font-weight: 800;
+    margin-left: auto;
+    padding: 5px 9px;
+  }
+  .seg {
+    display: flex;
+    gap: 6px;
+  }
+  .seg button {
+    background: #f5f7fb;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 800;
+    min-height: 34px;
+    padding: 0 10px;
+  }
+  .seg button.active {
+    background: var(--blue-soft);
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+  .checkline {
+    align-items: center;
+    display: flex;
+    gap: 7px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .checkline .ok {
+    background: #eaf6dc;
+    border-radius: 999px;
+    color: #4d6b1f;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 3px 7px;
+  }
+  .checkline .warn {
+    background: #fff3e0;
+    border-radius: 999px;
+    color: #a96f12;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 3px 7px;
+  }
+
+  .editor-footer {
+    align-items: center;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 14px;
+  }
+  .btn {
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 900;
+    min-height: 34px;
+    padding: 0 14px;
+  }
+  .btn.primary { background: var(--blue); border: 1px solid var(--blue); color: #fff; }
+  .btn.ghost { background: #fff; border: 1px solid var(--line); color: var(--muted); }
+
+  .two-col {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .calendar {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 12px 14px;
+  }
+  .cal-dow { color: var(--muted); font-size: 8px; font-weight: 800; text-align: center; }
+  .cal-day {
+    background: #f5f7fb;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 800;
+    min-height: 46px;
+    padding: 5px;
+    text-align: left;
+  }
+  .cal-day .n { display: block; }
+  .cal-day .tag {
+    background: var(--lime);
+    border-radius: 3px;
+    color: #173a35;
+    display: block;
+    font-size: 7px;
+    font-weight: 900;
+    margin-top: 4px;
+    padding: 2px 3px;
+  }
+  .cal-day.weekend { background: #fbfcff; }
+  .cal-day.today { border-color: var(--blue); }
+
+  .chart { padding: 12px 14px; }
+  .bars {
+    align-items: flex-end;
+    display: flex;
+    gap: 10px;
+    height: 92px;
+    margin-top: 8px;
+  }
+  .bar {
+    background: linear-gradient(180deg, #6d88ff, #4b6bff);
+    border-radius: 4px 4px 0 0;
+    flex: 1;
+    min-width: 8px;
+  }
+  .bar.alt { background: linear-gradient(180deg, #4bc9a0, #20ad78); }
+  .bars-labels {
+    color: var(--muted);
+    display: flex;
+    font-size: 7px;
+    gap: 10px;
+    justify-content: space-between;
+    margin-top: 5px;
+  }
+
+  .mini-table { padding: 4px 14px 12px; }
+  .mini-table .row {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    font-size: 10px;
+    gap: 8px;
+    min-height: 34px;
+    padding: 0 2px;
+  }
+  .mini-table .row:last-child { border-bottom: 0; }
+  .mini-table .row .nm { flex: 1; font-weight: 800; }
+  .mini-table .row .num { color: var(--muted); font-weight: 700; width: 52px; }
+  .mini-table .row .num b { color: var(--ink); font-weight: 900; }
+
+  .foot {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.7;
+    padding: 2px 4px 4px;
+  }
+  .foot b { color: var(--ink); }
+
+  @media (max-width: 1180px) {
+    .grid { grid-template-columns: 1fr; }
+    .admin-grid { grid-template-columns: 1fr; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); }
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="board">
+    <div class="board-head">
+      <div>
+        <h1 class="board-title">FunBox 首页今日推荐配置化 · 产品设计图 V1</h1>
+        <p class="board-sub">移动端首页真实数据渲染 + 管理后台配置 / 排期 / 预览 / 效果，一期完整闭环</p>
+      </div>
+      <div class="board-badge">数据全部来自真实功能注册表，图中数值仅示意字段位置</div>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-label"><span class="dot"></span>移动端首页 · 今日推荐模块</div>
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-body">
+            <div class="statusbar"><span>9:41</span><span class="right"><i></i><i></i><i></i></span></div>
+            <div class="brand">
+              <div class="brand-mark"><span class="cube"></span></div>
+              <div><h1>FunBox</h1><p>工具与游戏，随手即用</p></div>
+              <div class="brand-count">26 工具 · 5 游戏</div>
+            </div>
+            <div class="search"><span class="mag">⌕</span><span>搜索工具、游戏或场景</span></div>
+
+            <div class="home-section">
+              <div class="h2-row">
+                <h2>今日推荐</h2>
+                <span class="h2-action" style="color:var(--muted);font-size:10px;font-weight:800">01 / 03</span>
+              </div>
+              <div class="rec-carousel">
+                <div class="rec-card">
+                  <div class="kind">今日推荐</div>
+                  <h3>智能翻译</h3>
+                  <p>AI 语境增强翻译</p>
+                  <span class="cta">进入工作台 →</span>
+                  <div class="art" style="transform: rotate(4deg)">译</div>
+                </div>
+                <div class="rec-card">
+                  <div class="kind">今日推荐</div>
+                  <h3>二维码生成器</h3>
+                  <p>实时生成与导出</p>
+                  <span class="cta">立即生成 →</span>
+                  <div class="art" style="transform: rotate(-3deg)">QR</div>
+                </div>
+                <div class="rec-card">
+                  <div class="kind">今日推荐</div>
+                  <h3>贪吃蛇大作战</h3>
+                  <p>经典、无尽、闯关三种模式</p>
+                  <span class="cta">开始游戏 →</span>
+                  <div class="art">蛇</div>
+                </div>
+              </div>
+              <div class="rec-pager">
+                <span class="rec-dot active"></span>
+                <span class="rec-dot"></span>
+                <span class="rec-dot"></span>
+              </div>
+            </div>
+
+            <div class="home-section">
+              <div class="h2-row">
+                <h2>最近使用</h2>
+                <span class="h2-action">查看全部 →</span>
+              </div>
+              <div class="chip-row">
+                <div class="chip">扑克牌</div>
+                <div class="chip">热点速览</div>
+                <div class="chip">本地美食</div>
+              </div>
+            </div>
+
+            <div class="home-section">
+              <div class="h2-row">
+                <h2>全部工具</h2>
+                <span class="h2-action" style="color:var(--muted);font-weight:700">26 个工具</span>
+              </div>
+              <div class="chip-row">
+                <div class="chip active">全部</div>
+                <div class="chip">AI</div>
+                <div class="chip">效率</div>
+                <div class="chip">生活</div>
+              </div>
+              <div class="tool-grid">
+                <div class="tool-tile"><div class="box" style="color:#4b6bff">AI</div><span>AI 导航</span></div>
+                <div class="tool-tile"><div class="box" style="color:#e85d4a">译</div><span>智能翻译</span></div>
+                <div class="tool-tile"><div class="box" style="color:#1f6b5d">QR</div><span>二维码</span></div>
+                <div class="tool-tile"><div class="box" style="color:#ef6b4a">牌</div><span>打牌记分</span></div>
+                <div class="tool-tile"><div class="box" style="color:#20ad78">鲜</div><span>本地美食</span></div>
+                <div class="tool-tile"><div class="box" style="color:#8b5cf6">邮</div><span>发版邮件</span></div>
+                <div class="tool-tile"><div class="box" style="color:#4b6bff">压</div><span>图片压缩</span></div>
+                <div class="tool-tile"><div class="box" style="color:#4b6bff">找</div><span>资源搜索</span></div>
+              </div>
+            </div>
+
+            <div class="home-section">
+              <h2>放松一下</h2>
+              <div class="h2-meta" style="margin-top:-8px;margin-bottom:9px">5 款可玩小游戏，随时开一局</div>
+              <div class="game-row">
+                <div class="game-card"><div class="g-icon" style="background:#20c997">蛇</div><b>贪吃蛇大作战</b><span>休闲街机</span></div>
+                <div class="game-card"><div class="g-icon" style="background:#4b6bff">块</div><b>俄罗斯方块</b><span>经典消除</span></div>
+                <div class="game-card"><div class="g-icon" style="background:#d98a3d">象</div><b>中国象棋</b><span>传统棋类</span></div>
+              </div>
+            </div>
+
+            <div class="membership">
+              <div class="membership-icon">锁</div>
+              <div class="membership-copy">
+                <b>会员中心</b>
+                <span>解锁更多效率与 AI 能力</span>
+              </div>
+              <span class="membership-cta">查看权益</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-label"><span class="dot"></span>管理后台 · 首页推荐管理</div>
+        <div class="admin">
+          <aside class="sidebar">
+            <div class="sidebar-brand">
+              <div class="f">F</div>
+              <div><b>FunBox</b><span>管理后台</span></div>
+            </div>
+            <div class="nav-group">管理工具</div>
+            <div class="nav-item"><span class="ic">▦</span>后台首页</div>
+            <div class="nav-item"><span class="ic">人</span>用户身份</div>
+            <div class="nav-item"><span class="ic">钥</span>入口权限</div>
+            <div class="nav-item"><span class="ic">!</span>问题反馈</div>
+            <div class="nav-group">内容运营</div>
+            <div class="nav-item active"><span class="ic">荐</span>首页推荐</div>
+            <div class="nav-item"><span class="ic">友</span>朋友圈管理</div>
+            <div class="nav-item"><span class="ic">书</span>阅读管理</div>
+            <div class="nav-group">会员运营</div>
+            <div class="nav-item"><span class="ic">码</span>会员收款</div>
+          </aside>
+
+          <div class="admin-main">
+            <div class="admin-topbar">
+              <div>
+                <div class="crumb">管理后台 / 内容运营</div>
+                <h1>首页推荐管理</h1>
+              </div>
+              <span class="who">admin · 管理员</span>
+            </div>
+
+            <div class="admin-content">
+              <div class="stats-strip">
+                <div class="stat-card"><div class="k">今日生效</div><div class="v">3</div><div class="d">3 项真实功能</div></div>
+                <div class="stat-card"><div class="k">默认推荐</div><div class="v">打牌记分</div><div class="d">未配置时兜底展示</div></div>
+                <div class="stat-card"><div class="k">生效规则</div><div class="v">≥ 1 个</div><div class="d">删除/关闭最后一个被阻止</div></div>
+                <div class="stat-card"><div class="k">30 天曝光</div><div class="v">12,480</div><div class="d">较上周 +8.2%</div></div>
+                <div class="stat-card"><div class="k">30 天点击率</div><div class="v">18.6%</div><div class="d">Top 推荐位 24.1%</div></div>
+              </div>
+
+              <div class="admin-grid">
+                <div class="card">
+                  <div class="card-head">
+                    <div><b>推荐位列表</b><div class="meta">至少保留 1 个，同日最多 3 个，横向轮播展示</div></div>
+                    <span class="action">＋ 新建推荐位</span>
+                  </div>
+                  <div class="slot-row">
+                    <div class="slot-ic" style="background:#1f7b63">译</div>
+                    <div class="slot-copy">
+                      <div class="t"><b>智能翻译</b><span class="type">工具</span></div>
+                      <div class="s">AI 语境增强翻译 · <b>今日生效</b></div>
+                    </div>
+                    <span class="slot-status">● 启用</span>
+                    <div class="slot-actions"><span class="icon-btn">↑</span><span class="icon-btn">↓</span><span class="icon-btn">✎</span><span class="icon-btn">×</span></div>
+                  </div>
+                  <div class="slot-row">
+                    <div class="slot-ic" style="background:#264f5a">QR</div>
+                    <div class="slot-copy">
+                      <div class="t"><b>二维码生成器</b><span class="type">工具</span></div>
+                      <div class="s">链接、文本与 Wi-Fi 均可生成 · <b>今日生效</b></div>
+                    </div>
+                    <span class="slot-status">● 启用</span>
+                    <div class="slot-actions"><span class="icon-btn">↑</span><span class="icon-btn">↓</span><span class="icon-btn">✎</span><span class="icon-btn">×</span></div>
+                  </div>
+                  <div class="slot-row">
+                    <div class="slot-ic" style="background:#ef6b4a">蛇</div>
+                    <div class="slot-copy">
+                      <div class="t"><b>贪吃蛇大作战</b><span class="type game">游戏</span></div>
+                      <div class="s">经典、无尽、闯关三种模式 · <b>今日生效</b></div>
+                    </div>
+                    <span class="slot-status">● 启用</span>
+                    <div class="slot-actions"><span class="icon-btn">↑</span><span class="icon-btn">↓</span><span class="icon-btn">✎</span><span class="icon-btn">×</span></div>
+                  </div>
+                  <div class="slot-row">
+                    <div class="slot-ic" style="background:#4b6bff">牌</div>
+                    <div class="slot-copy">
+                      <div class="t"><b>打牌记分</b><span class="type">工具</span></div>
+                      <div class="s">多人记分，散场结算 · 每周六日生效</div>
+                    </div>
+                    <span class="slot-status off">○ 未启用</span>
+                    <div class="slot-actions"><span class="icon-btn">↑</span><span class="icon-btn">↓</span><span class="icon-btn">✎</span><span class="icon-btn">×</span></div>
+                  </div>
+                  <div class="slot-row">
+                    <div class="slot-ic" style="background:#e85d4a">读</div>
+                    <div class="slot-copy">
+                      <div class="t"><b>免费阅读</b><span class="type">工具</span></div>
+                      <div class="s">正版书城与本地阅读 · 8 月 10 日起生效</div>
+                    </div>
+                    <span class="slot-status">● 启用</span>
+                    <div class="slot-actions"><span class="icon-btn">↑</span><span class="icon-btn">↓</span><span class="icon-btn">✎</span><span class="icon-btn">×</span></div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-head">
+                    <div><b>编辑推荐位 · 智能翻译</b><div class="meta">保存即生效，写入审计日志</div></div>
+                    <span class="action ghost">实时预览</span>
+                  </div>
+                  <div class="editor-body">
+                    <div class="field">
+                      <label>推荐功能（真实注册表）</label>
+                      <div class="picker">
+                        <div class="p-ic" style="background:#1f7b63">译</div>
+                        <div><b>智能翻译</b><span>工具 · /tools/smart-translation · 状态可用</span></div>
+                        <span class="change">更换</span>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label>文案覆盖（留空使用真实字段）</label>
+                      <div class="two-col">
+                        <div class="input" style="padding-top:9px">自然表达，不止直译</div>
+                        <div class="input" style="padding-top:9px">AI 语境增强翻译</div>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label>生效范围</label>
+                      <div class="seg">
+                        <button class="active">全部日期</button>
+                        <button>指定区间</button>
+                        <button>每周 N 天</button>
+                      </div>
+                    </div>
+                    <div class="checkline">
+                      <span>注册表存在</span><span class="ok">通过</span>
+                      <span>状态可用</span><span class="ok">通过</span>
+                      <span>角色可见</span><span class="ok">normal · vip · svip · admin</span>
+                    </div>
+                  </div>
+                  <div class="editor-footer">
+                    <span class="btn ghost">取消</span>
+                    <span class="btn primary">保存并发布</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-grid">
+                <div class="card">
+                  <div class="card-head">
+                    <div><b>排期日历</b><div class="meta">按服务器日期生效，可预览任意一天</div></div>
+                    <span class="action ghost">预览某天</span>
+                  </div>
+                  <div class="calendar">
+                    <div class="cal-dow">一</div><div class="cal-dow">二</div><div class="cal-dow">三</div><div class="cal-dow">四</div><div class="cal-dow">五</div><div class="cal-dow">六</div><div class="cal-dow">日</div>
+                    <div class="cal-day"><span class="n">27</span></div><div class="cal-day"><span class="n">28</span></div><div class="cal-day"><span class="n">29</span></div><div class="cal-day"><span class="n">30</span></div><div class="cal-day"><span class="n">31</span></div><div class="cal-day weekend"><span class="n">1</span></div><div class="cal-day weekend"><span class="n">2</span><span class="tag">3 项</span></div>
+                    <div class="cal-day"><span class="n">3</span><span class="tag">3 项</span></div><div class="cal-day"><span class="n">4</span><span class="tag">3 项</span></div><div class="cal-day"><span class="n">5</span><span class="tag">3 项</span></div><div class="cal-day"><span class="n">6</span><span class="tag">3 项</span></div><div class="cal-day"><span class="n">7</span><span class="tag">3 项</span></div><div class="cal-day weekend"><span class="n">8</span><span class="tag">4 项</span></div><div class="cal-day weekend"><span class="n">9</span><span class="tag">4 项</span></div>
+                    <div class="cal-day"><span class="n">10</span><span class="tag">4 项</span></div><div class="cal-day"><span class="n">11</span><span class="tag">4 项</span></div><div class="cal-day"><span class="n">12</span><span class="tag">4 项</span></div><div class="cal-day"><span class="n">13</span><span class="tag">4 项</span></div><div class="cal-day"><span class="n">14</span><span class="tag">4 项</span></div><div class="cal-day weekend"><span class="n">15</span></div><div class="cal-day weekend"><span class="n">16</span></div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-head">
+                    <div><b>效果概览 · 最近 30 天</b><div class="meta">真实曝光与点击事件</div></div>
+                    <span class="action ghost">查看明细</span>
+                  </div>
+                  <div class="chart">
+                    <div class="bars">
+                      <div class="bar" style="height:38%"></div>
+                      <div class="bar" style="height:52%"></div>
+                      <div class="bar" style="height:45%"></div>
+                      <div class="bar" style="height:66%"></div>
+                      <div class="bar" style="height:58%"></div>
+                      <div class="bar" style="height:80%"></div>
+                      <div class="bar alt" style="height:74%"></div>
+                      <div class="bar alt" style="height:92%"></div>
+                    </div>
+                    <div class="bars-labels"><span>7/28</span><span>7/30</span><span>8/01</span><span>8/03</span></div>
+                  </div>
+                  <div class="mini-table">
+                    <div class="row"><span class="nm">智能翻译</span><span class="num">曝光 <b>3,240</b></span><span class="num">点击 <b>782</b></span></div>
+                    <div class="row"><span class="nm">二维码生成器</span><span class="num">曝光 <b>2,860</b></span><span class="num">点击 <b>601</b></span></div>
+                    <div class="row"><span class="nm">贪吃蛇大作战</span><span class="num">曝光 <b>2,410</b></span><span class="num">点击 <b>487</b></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="foot">
+      <b>设计说明：</b>首页只改动「今日推荐」模块，其余板块（搜索、最近使用、全部工具、放松一下、会员权益、底部导航）均保持现状，不新增「精选功能」板块。「今日推荐」卡片图标、名称、简介、CTA、主色、路由全部来自 <code>backend/internal/access/feature_registry.json</code> 的真实功能；管理后台只保存功能引用与覆盖文案、排期、顺序。推荐位至少保留 1 个，未配置时默认「打牌记分」并标注 fallback；同日最多 3 个，横向轮播展示。示例数值仅用于表达字段位置，生产环境禁止 mock。
+    </div>
+  </div>
+</body>
+</html>

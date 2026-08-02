@@ -13,6 +13,12 @@ import (
 //go:embed feature_registry.json
 var registryJSON []byte
 
+// RegistryJSON returns the raw feature registry bytes so other modules can
+// reuse the same single source of truth without duplicating the file.
+func RegistryJSON() []byte {
+	return append([]byte(nil), registryJSON...)
+}
+
 type FeatureDefinition struct {
 	ID           string       `json:"id"`
 	Name         string       `json:"name"`
