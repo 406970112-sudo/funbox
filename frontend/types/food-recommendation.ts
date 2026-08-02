@@ -53,6 +53,8 @@ export type FoodItem = {
   fitScore: number;
   source: string;
   updatedAt: string;
+  realPOI?: boolean;
+  navigateUrl?: string;
 };
 
 export type FoodFilterOption = {
@@ -80,6 +82,8 @@ export type FoodResponse = {
   ai: 'deepseek' | 'fallback';
   disclaimer: string;
   generatedAt: string;
+  dataMode?: 'seed' | 'poi';
+  poiUpdatedAt?: string;
 };
 
 export type FoodCatalogItem = FoodItem;

@@ -78,6 +78,8 @@ type Item struct {
 	FitScore      int            `json:"fitScore"`
 	Source        string         `json:"source"`
 	UpdatedAt     string         `json:"updatedAt"`
+	RealPOI       bool           `json:"realPOI,omitempty"`
+	NavigateURL   string         `json:"navigateUrl,omitempty"`
 }
 
 type FilterOption struct {
@@ -105,6 +107,8 @@ type Response struct {
 	AI               string           `json:"ai"`
 	Disclaimer       string           `json:"disclaimer"`
 	GeneratedAt      string           `json:"generatedAt"`
+	DataMode         string           `json:"dataMode,omitempty"`
+	POIUpdatedAt     string           `json:"poiUpdatedAt,omitempty"`
 }
 
 type CatalogResponse struct {

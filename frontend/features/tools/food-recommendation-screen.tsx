@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useState, type ComponentProps } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -31,15 +31,19 @@ import {
   SCENARIO_OPTIONS,
   sortFoodItems,
   SPICINESS_OPTIONS,
+  shuffleFoodItems,
   summarizeFoodRequest,
   type FoodFilter,
   type FoodSortKey,
 } from '@/lib/food-recommendation';
 import {
+  addFoodRecommendationFavorite,
+  fetchFoodRecommendationFavorites,
   fetchFoodRecommendationHistory,
   fetchFoodRecommendationQuery,
   getFoodRecommendationErrorMessage,
   queryFoodRecommendation,
+  removeFoodRecommendationFavorite,
   submitFoodRecommendationFeedback,
 } from '@/lib/food-recommendation-api';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
@@ -137,6 +141,18 @@ export function FoodRecommendationScreen() {
   const [feedback, setFeedback] = useState<Record<string, 'helpful' | 'not' | undefined>>({});
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [shuffleSeed, setShuffleSeed] = useState(0);
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || !accessToken) return;
+    fetchFoodRecommendationFavorites(accessToken)
+      .then((items) => {
+        setFavorites(Object.fromEntries(items.map((id) => [id, true])));
+      })
+      .catch(() => {
+        // Favorites remain local when the server is unavailable.
+      });
+  }, [accessToken, authStatus]);
 
   async function refreshHistory() {
     if (authStatus !== 'authenticated' || !accessToken) return;
@@ -215,10 +231,33 @@ export function FoodRecommendationScreen() {
   }
 
   function openRestaurant(item: FoodItem) {
+    if (item.navigateUrl) {
+      Linking.openURL(item.navigateUrl).catch(() => {
+        setStatusMessage('当前环境无法打开地图，可复制地址到地图 App 搜索。');
+      });
+      return;
+    }
     const keyword = encodeURIComponent(`${item.restaurant.name} ${item.restaurant.address}`);
     Linking.openURL(`https://uri.amap.com/search?keyword=${keyword}`).catch(() => {
       setStatusMessage('当前环境无法打开地图，可复制地址到地图 App 搜索。');
     });
+  }
+
+  async function toggleFavorite(item: FoodItem) {
+    const next = !favorites[item.dishId];
+    setFavorites((current) => ({ ...current, [item.dishId]: next }));
+    setStatusMessage(next ? '已收藏，登录后会在服务端同步。' : '已取消收藏。');
+    if (authStatus !== 'authenticated' || !accessToken) return;
+    try {
+      if (next) {
+        await addFoodRecommendationFavorite(accessToken, item.dishId);
+      } else {
+        await removeFoodRecommendationFavorite(accessToken, item.dishId);
+      }
+    } catch {
+      setFavorites((current) => ({ ...current, [item.dishId]: !next }));
+      setStatusMessage('收藏同步失败，已恢复本地状态。');
+    }
   }
 
   function requestCurrentLocation() {
@@ -296,6 +335,8 @@ export function FoodRecommendationScreen() {
   const filteredItems = result
     ? sortFoodItems(filterFoodItems(result.items, filterApplied), sortKey)
     : [];
+  const displayedItems =
+    shuffleSeed > 0 && sortKey === 'fit' ? shuffleFoodItems(filteredItems, shuffleSeed) : filteredItems;
   const filterCount = countActiveFilters(filterApplied);
 
   return (
@@ -344,9 +385,7 @@ export function FoodRecommendationScreen() {
             void runQuery(adjusted);
           }}
           onOpenRestaurant={() => openRestaurant(selectedItem)}
-          onToggleFavorite={() =>
-            setFavorites((current) => ({ ...current, [selectedItem.dishId]: !current[selectedItem.dishId] }))
-          }
+          onToggleFavorite={() => void toggleFavorite(selectedItem)}
         />
       ) : showInput || !result ? (
         <InputHero
@@ -364,7 +403,7 @@ export function FoodRecommendationScreen() {
           colors={colors}
           feedback={feedback}
           filterCount={filterCount}
-          items={filteredItems}
+          items={displayedItems}
           onFeedback={(item, helpful) => void submitFeedback(item, helpful)}
           onFilterOpen={openFilterPanel}
           onFollowUp={(action) => {
@@ -379,6 +418,11 @@ export function FoodRecommendationScreen() {
             void runQuery(adjusted);
           }}
           onOpenDetail={setSelectedItem}
+          onRefresh={() => {
+            setShuffleSeed((seed) => seed + 1);
+            setSortKey('fit');
+            setStatusMessage('已为你换一批推荐。');
+          }}
           onResetFilter={() => setFilterApplied(emptyFoodFilter())}
           onResetInput={() => {
             setResult(null);
@@ -557,6 +601,7 @@ function ResultsView({
   onFilterOpen,
   onFollowUp,
   onOpenDetail,
+  onRefresh,
   onResetFilter,
   onResetInput,
   onSort,
@@ -571,6 +616,7 @@ function ResultsView({
   onFilterOpen: () => void;
   onFollowUp: (action: (typeof FOLLOW_UP_ACTIONS)[number]) => void;
   onOpenDetail: (item: FoodItem) => void;
+  onRefresh: () => void;
   onResetFilter: () => void;
   onResetInput: () => void;
   onSort: (sortKey: FoodSortKey) => void;
@@ -585,7 +631,7 @@ function ResultsView({
             为你找到 {items.length} 道{result.district || result.city}本地美食
           </ThemedText>
           <ThemedText style={[styles.summaryMeta, { color: colors.mutedText }]}>
-            {result.ai === 'deepseek' ? 'DeepSeek 分析' : '规则匹配'} · 图片与价格为快照
+            {result.ai === 'deepseek' ? 'DeepSeek 分析' : '规则匹配'} · {result.dataMode === 'poi' ? '真实 POI' : '种子库'} · 图片与价格为快照
           </ThemedText>
         </View>
         <View style={[styles.aiPill, { backgroundColor: colors.primarySoft }]}>
@@ -672,14 +718,24 @@ function ResultsView({
         </View>
       )}
 
-      <Pressable
-        accessibilityLabel="换个地址重新输入"
-        accessibilityRole="button"
-        onPress={onResetInput}
-        style={[styles.resetInputButton, { borderColor: colors.line }]}>
-        <MaterialCommunityIcons name="pencil-outline" size={16} color={colors.mutedText} />
-        <ThemedText style={[styles.resetInputText, { color: colors.mutedText }]}>换个地址</ThemedText>
-      </Pressable>
+      <View style={styles.resultsActions}>
+        <Pressable
+          accessibilityLabel="换个地址重新输入"
+          accessibilityRole="button"
+          onPress={onResetInput}
+          style={[styles.resetInputButton, { borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="pencil-outline" size={16} color={colors.mutedText} />
+          <ThemedText style={[styles.resetInputText, { color: colors.mutedText }]}>换个地址</ThemedText>
+        </Pressable>
+        <Pressable
+          accessibilityLabel="换一批"
+          accessibilityRole="button"
+          onPress={onRefresh}
+          style={[styles.refreshButton, { borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="refresh" size={16} color={BLUE} />
+          <ThemedText style={[styles.refreshText, { color: BLUE }]}>换一批</ThemedText>
+        </Pressable>
+      </View>
       <ThemedText style={[styles.disclaimer, { color: colors.mutedText }]}>{result.disclaimer}</ThemedText>
     </View>
   );
@@ -853,9 +909,11 @@ function DetailView({
           style={styles.detailHeroImage}
           transition={150}
         />
-        <View style={styles.detailHeroTag}>
+      <View style={styles.detailHeroTag}>
           <MaterialCommunityIcons name="fire" size={12} color="#ffffff" />
-          <ThemedText style={styles.detailHeroTagText}>{item.spiciness} · {item.cuisine}</ThemedText>
+          <ThemedText style={styles.detailHeroTagText}>
+            {item.realPOI ? '真实 POI · ' : ''}{item.spiciness} · {item.cuisine}
+          </ThemedText>
         </View>
       </View>
 
@@ -1701,6 +1759,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   resetInputText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  resultsActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  refreshButton: {
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    minHeight: 34,
+    paddingHorizontal: 12,
+  },
+  refreshText: {
     fontSize: 11,
     fontWeight: '700',
   },

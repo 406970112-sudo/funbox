@@ -75,6 +75,35 @@ export async function fetchFoodRecommendationQuery(queryId: string, token?: stri
   );
 }
 
+export async function fetchFoodRecommendationFavorites(token: string) {
+  const response = await requestJSON<{ items: string[] }>(
+    '/api/v1/food-recommendation/favorites',
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return response.items;
+}
+
+export async function addFoodRecommendationFavorite(token: string, dishId: string) {
+  await requestJSON<{ success: boolean }>('/api/v1/food-recommendation/favorites', {
+    body: JSON.stringify({ dishId }),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    method: 'POST',
+  });
+}
+
+export async function removeFoodRecommendationFavorite(token: string, dishId: string) {
+  await requestJSON<{ success: boolean }>(
+    `/api/v1/food-recommendation/favorites/${encodeURIComponent(dishId)}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      method: 'DELETE',
+    },
+  );
+}
+
 export function getFoodRecommendationErrorMessage(error: unknown) {
   if (!(error instanceof FoodRecommendationAPIError)) {
     return '暂时无法连接美食推荐服务，请稍后重试。';

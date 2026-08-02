@@ -36,6 +36,18 @@ func registerFoodRecommendationRoutes(mux *http.ServeMux, api *Server) {
 		"GET /api/v1/food-recommendation/queries/{queryID}",
 		api.withOptionalAuth(api.withRateLimitedAPIPipeline("food-recommendation", api.handleFoodRecommendationQueryByID)),
 	)
+	mux.HandleFunc(
+		"GET /api/v1/food-recommendation/favorites",
+		api.withAuth(api.withRateLimitedAPIPipeline("food-recommendation", api.handleFoodRecommendationFavorites)),
+	)
+	mux.HandleFunc(
+		"POST /api/v1/food-recommendation/favorites",
+		api.withAuth(api.withRateLimitedAPIPipeline("food-recommendation", api.handleFoodRecommendationAddFavorite)),
+	)
+	mux.HandleFunc(
+		"DELETE /api/v1/food-recommendation/favorites/{dishID}",
+		api.withAuth(api.withRateLimitedAPIPipeline("food-recommendation", api.handleFoodRecommendationRemoveFavorite)),
+	)
 }
 
 func (s *Server) handleFoodRecommendationQuery(w http.ResponseWriter, r *http.Request) {
@@ -135,4 +147,52 @@ func (s *Server) handleFoodRecommendationQueryByID(w http.ResponseWriter, r *htt
 		return
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+func (s *Server) handleFoodRecommendationFavorites(w http.ResponseWriter, r *http.Request) {
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	items, err := s.foodRecommendationService.ListFavorites(r.Context(), account.ID)
+	if err != nil {
+		log.Printf("food recommendation favorites failed: %v", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "favorites_failed"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+func (s *Server) handleFoodRecommendationAddFavorite(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		DishID string `json:"dishId"`
+	}
+	if err := decodeJSONBody(r, &input); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	if err := s.foodRecommendationService.AddFavorite(r.Context(), account.ID, input.DishID); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "favorite_failed", "detail": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+func (s *Server) handleFoodRecommendationRemoveFavorite(w http.ResponseWriter, r *http.Request) {
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	if err := s.foodRecommendationService.RemoveFavorite(r.Context(), account.ID, strings.TrimSpace(r.PathValue("dishID"))); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "favorite_failed", "detail": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
 }

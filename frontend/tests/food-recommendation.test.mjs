@@ -9,6 +9,7 @@ import {
   filterFoodItems,
   formatDistance,
   formatPrice,
+  shuffleFoodItems,
   sortFoodItems,
   summarizeFoodRequest,
 } from '../lib/food-recommendation.ts';
@@ -132,6 +133,15 @@ test('sortFoodItems sorts by distance, price, rating or fit score', () => {
   assert.equal(sortFoodItems(items, 'price-asc')[0].dishId, 'near');
   assert.equal(sortFoodItems(items, 'rating')[0].dishId, 'near');
   assert.equal(sortFoodItems(items, 'fit')[0].dishId, 'near');
+});
+
+test('shuffleFoodItems produces a different stable order for a new seed', () => {
+  const items = [baseItem({ dishId: 'a' }), baseItem({ dishId: 'b' }), baseItem({ dishId: 'c' }), baseItem({ dishId: 'd' })];
+  const first = shuffleFoodItems(items, 1).map((item) => item.dishId);
+  const second = shuffleFoodItems(items, 2).map((item) => item.dishId);
+  assert.equal(first.length, 4);
+  assert.notDeepEqual(first, second);
+  assert.deepEqual([...first].sort(), ['a', 'b', 'c', 'd']);
 });
 
 test('countActiveFilters counts selected conditions', () => {

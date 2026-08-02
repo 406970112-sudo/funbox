@@ -10,8 +10,18 @@
       "source": "wikimedia",
       "credit": "Chongqing hotpot"
     },
-    "ingredients": ["牛油", "花椒", "辣椒", "毛肚", "鸭肠"],
-    "flavorProfile": ["麻辣", "鲜香", "重油"],
+    "ingredients": [
+      "牛油",
+      "花椒",
+      "辣椒",
+      "毛肚",
+      "鸭肠"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜香",
+      "重油"
+    ],
     "spiciness": "重辣",
     "avgPrice": 88,
     "rating": 4.7,
@@ -23,13 +33,29 @@
       "rating": 4.7
     },
     "bestTime": "晚上",
-    "suitableFor": ["朋友聚餐", "夜宵"],
-    "reasons": [
-      { "label": "本地味", "text": "牛油锅底本地认可度高，夜宵时段人气稳定" },
-      { "label": "距离", "text": "距你 1.2km，步行约 15 分钟" },
-      { "label": "均衡", "text": "人均 ¥88、评分 4.7，性价比均衡" }
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
     ],
-    "fitTags": ["聚餐", "夜宵", "重辣"],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "牛油锅底本地认可度高，夜宵时段人气稳定"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.2km，步行约 15 分钟"
+      },
+      {
+        "label": "均衡",
+        "text": "人均 ¥88、评分 4.7，性价比均衡"
+      }
+    ],
+    "fitTags": [
+      "聚餐",
+      "夜宵",
+      "重辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -44,8 +70,17 @@
       "source": "wikimedia",
       "credit": "Authentic Mapo Tofu"
     },
-    "ingredients": ["豆腐", "牛肉末", "郫县豆瓣", "花椒面"],
-    "flavorProfile": ["麻辣", "麻香", "鲜咸"],
+    "ingredients": [
+      "豆腐",
+      "牛肉末",
+      "郫县豆瓣",
+      "花椒面"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "麻香",
+      "鲜咸"
+    ],
     "spiciness": "中辣",
     "avgPrice": 32,
     "rating": 4.6,
@@ -57,13 +92,29 @@
       "rating": 4.6
     },
     "bestTime": "中午",
-    "suitableFor": ["一人食", "家常"],
-    "reasons": [
-      { "label": "经典", "text": "经典川菜代表，本地人日常也会点" },
-      { "label": "人均低", "text": "人均 ¥32，上菜快" },
-      { "label": "下饭", "text": "麻辣鲜香，适合配米饭" }
+    "suitableFor": [
+      "一人食",
+      "家常"
     ],
-    "fitTags": ["下饭", "家常", "中辣"],
+    "reasons": [
+      {
+        "label": "经典",
+        "text": "经典川菜代表，本地人日常也会点"
+      },
+      {
+        "label": "人均低",
+        "text": "人均 ¥32，上菜快"
+      },
+      {
+        "label": "下饭",
+        "text": "麻辣鲜香，适合配米饭"
+      }
+    ],
+    "fitTags": [
+      "下饭",
+      "家常",
+      "中辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -78,8 +129,17 @@
       "source": "wikimedia",
       "credit": "Dan-dan noodles in Chengdu"
     },
-    "ingredients": ["碱水面", "碎肉臊", "芝麻酱", "红油"],
-    "flavorProfile": ["麻辣", "干香", "微甜"],
+    "ingredients": [
+      "碱水面",
+      "碎肉臊",
+      "芝麻酱",
+      "红油"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "微甜"
+    ],
     "spiciness": "中辣",
     "avgPrice": 18,
     "rating": 4.5,
@@ -91,13 +151,29 @@
       "rating": 4.5
     },
     "bestTime": "早上/中午",
-    "suitableFor": ["一人食", "早餐"],
-    "reasons": [
-      { "label": "距离近", "text": "距你 650m，步行几分钟就到" },
-      { "label": "人均低", "text": "人均 ¥18，快速解决一餐" },
-      { "label": "出餐快", "text": "现拌现吃，翻台快" }
+    "suitableFor": [
+      "一人食",
+      "早餐"
     ],
-    "fitTags": ["小吃", "早餐", "中辣"],
+    "reasons": [
+      {
+        "label": "距离近",
+        "text": "距你 650m，步行几分钟就到"
+      },
+      {
+        "label": "人均低",
+        "text": "人均 ¥18，快速解决一餐"
+      },
+      {
+        "label": "出餐快",
+        "text": "现拌现吃，翻台快"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "早餐",
+      "中辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -112,8 +188,17 @@
       "source": "wikimedia",
       "credit": "Chengdu Zhong Dumpling"
     },
-    "ingredients": ["面皮", "猪肉馅", "红油", "蒜泥"],
-    "flavorProfile": ["微辣", "甜咸", "蒜香"],
+    "ingredients": [
+      "面皮",
+      "猪肉馅",
+      "红油",
+      "蒜泥"
+    ],
+    "flavorProfile": [
+      "微辣",
+      "甜咸",
+      "蒜香"
+    ],
     "spiciness": "微辣",
     "avgPrice": 24,
     "rating": 4.6,
@@ -125,13 +210,29 @@
       "rating": 4.6
     },
     "bestTime": "中午",
-    "suitableFor": ["一人食", "外地游客"],
-    "reasons": [
-      { "label": "名店", "text": "春熙路老字号，游客和本地人都常去" },
-      { "label": "口味温和", "text": "微辣甜咸，比火锅更容易接受" },
-      { "label": "位置好", "text": "逛街顺路就能吃到" }
+    "suitableFor": [
+      "一人食",
+      "外地游客"
     ],
-    "fitTags": ["春熙路", "游客", "微辣"],
+    "reasons": [
+      {
+        "label": "名店",
+        "text": "春熙路老字号，游客和本地人都常去"
+      },
+      {
+        "label": "口味温和",
+        "text": "微辣甜咸，比火锅更容易接受"
+      },
+      {
+        "label": "位置好",
+        "text": "逛街顺路就能吃到"
+      }
+    ],
+    "fitTags": [
+      "春熙路",
+      "游客",
+      "微辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -146,8 +247,17 @@
       "source": "wikimedia",
       "credit": "Sichuan cuisine Bo-bo chicken"
     },
-    "ingredients": ["鸡肉", "藕片", "土豆片", "红油"],
-    "flavorProfile": ["麻辣", "香辣", "回甜"],
+    "ingredients": [
+      "鸡肉",
+      "藕片",
+      "土豆片",
+      "红油"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "香辣",
+      "回甜"
+    ],
     "spiciness": "中辣",
     "avgPrice": 40,
     "rating": 4.7,
@@ -159,13 +269,29 @@
       "rating": 4.7
     },
     "bestTime": "晚上",
-    "suitableFor": ["朋友聚餐", "夜宵"],
-    "reasons": [
-      { "label": "评分高", "text": "评分 4.7，菜品选择多" },
-      { "label": "适合分享", "text": "一串一签，聚餐和夜宵都合适" },
-      { "label": "口味", "text": "红油香辣回甜，属于越吃越香的类型" }
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
     ],
-    "fitTags": ["串串", "聚餐", "中辣"],
+    "reasons": [
+      {
+        "label": "评分高",
+        "text": "评分 4.7，菜品选择多"
+      },
+      {
+        "label": "适合分享",
+        "text": "一串一签，聚餐和夜宵都合适"
+      },
+      {
+        "label": "口味",
+        "text": "红油香辣回甜，属于越吃越香的类型"
+      }
+    ],
+    "fitTags": [
+      "串串",
+      "聚餐",
+      "中辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -180,8 +306,17 @@
       "source": "wikimedia",
       "credit": "Bingfen jelly dessert"
     },
-    "ingredients": ["冰粉籽", "红糖", "山楂", "葡萄干"],
-    "flavorProfile": ["清甜", "冰凉", "果香"],
+    "ingredients": [
+      "冰粉籽",
+      "红糖",
+      "山楂",
+      "葡萄干"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "冰凉",
+      "果香"
+    ],
     "spiciness": "不辣",
     "avgPrice": 10,
     "rating": 4.4,
@@ -193,15 +328,3259 @@
       "rating": 4.4
     },
     "bestTime": "下午/晚上",
-    "suitableFor": ["一人食", "解辣"],
-    "reasons": [
-      { "label": "解辣", "text": "红糖冰粉是川味大餐后的经典收尾" },
-      { "label": "距离近", "text": "距你 800m，饭后散步可达" },
-      { "label": "便宜", "text": "人均 ¥10，适合随手来一碗" }
+    "suitableFor": [
+      "一人食",
+      "解辣"
     ],
-    "fitTags": ["甜品", "解辣", "不辣"],
+    "reasons": [
+      {
+        "label": "解辣",
+        "text": "红糖冰粉是川味大餐后的经典收尾"
+      },
+      {
+        "label": "距离近",
+        "text": "距你 800m，饭后散步可达"
+      },
+      {
+        "label": "便宜",
+        "text": "人均 ¥10，适合随手来一碗"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "解辣",
+      "不辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cd-回锅肉-1",
+    "name": "回锅肉",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "五花肉",
+      "蒜苗",
+      "郫县豆瓣",
+      "甜面酱"
+    ],
+    "flavorProfile": [
+      "咸鲜",
+      "微辣",
+      "油润"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 38,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "回锅肉老店",
+      "address": "武侯区武侯祠大街 8 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "回锅肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥38，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-回锅肉-2",
+    "name": "回锅肉（商圈店）",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "五花肉",
+      "蒜苗",
+      "郫县豆瓣",
+      "甜面酱"
+    ],
+    "flavorProfile": [
+      "咸鲜",
+      "微辣",
+      "油润"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 46,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "回锅肉（商圈店）商圈店",
+      "address": "武侯区春熙路 66 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "回锅肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥46，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-宫保鸡丁-1",
+    "name": "宫保鸡丁",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "鸡腿肉",
+      "花生米",
+      "干辣椒",
+      "葱段"
+    ],
+    "flavorProfile": [
+      "酸甜",
+      "微辣",
+      "干香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 36,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "宫保鸡丁老店",
+      "address": "锦江区春熙路 66 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "宫保鸡丁是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥36，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-宫保鸡丁-2",
+    "name": "宫保鸡丁（商圈店）",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "鸡腿肉",
+      "花生米",
+      "干辣椒",
+      "葱段"
+    ],
+    "flavorProfile": [
+      "酸甜",
+      "微辣",
+      "干香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 44,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "宫保鸡丁（商圈店）商圈店",
+      "address": "锦江区下东大街 2 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "宫保鸡丁是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥44，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-夫妻肺片-1",
+    "name": "夫妻肺片",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "牛肉",
+      "牛杂",
+      "红油",
+      "花生碎"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜香",
+      "红油"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 42,
+    "rating": 4.7,
+    "restaurant": {
+      "name": "夫妻肺片老店",
+      "address": "青羊区下东大街 2 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.7
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "朋友聚餐",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "夫妻肺片是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥42，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "朋友聚餐",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-夫妻肺片-2",
+    "name": "夫妻肺片（商圈店）",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "牛肉",
+      "牛杂",
+      "红油",
+      "花生碎"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜香",
+      "红油"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 50,
+    "rating": 4.8,
+    "restaurant": {
+      "name": "夫妻肺片（商圈店）商圈店",
+      "address": "青羊区人民南路四段 20 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.8
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "朋友聚餐",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "夫妻肺片是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥50，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "朋友聚餐",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-水煮鱼-1",
+    "name": "水煮鱼",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "草鱼",
+      "豆芽",
+      "干辣椒",
+      "花椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜嫩",
+      "重油"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 78,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "水煮鱼老店",
+      "address": "成华区人民南路四段 20 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "水煮鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥78，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-水煮鱼-2",
+    "name": "水煮鱼（商圈店）",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "草鱼",
+      "豆芽",
+      "干辣椒",
+      "花椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜嫩",
+      "重油"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 86,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "水煮鱼（商圈店）商圈店",
+      "address": "成华区望平街 9 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "水煮鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥86，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-鱼香肉丝-1",
+    "name": "鱼香肉丝",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "里脊肉",
+      "木耳",
+      "笋丝",
+      "泡椒"
+    ],
+    "flavorProfile": [
+      "鱼香",
+      "微辣",
+      "酸甜"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 30,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "鱼香肉丝老店",
+      "address": "金牛区望平街 9 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "鱼香肉丝是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥30，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "微辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-鱼香肉丝-2",
+    "name": "鱼香肉丝（商圈店）",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "里脊肉",
+      "木耳",
+      "笋丝",
+      "泡椒"
+    ],
+    "flavorProfile": [
+      "鱼香",
+      "微辣",
+      "酸甜"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 38,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "鱼香肉丝（商圈店）商圈店",
+      "address": "金牛区建设路 43 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "鱼香肉丝是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥38，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "微辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-蒜泥白肉-1",
+    "name": "蒜泥白肉",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "五花肉",
+      "蒜泥",
+      "红油",
+      "黄瓜"
+    ],
+    "flavorProfile": [
+      "蒜香",
+      "微辣",
+      "咸鲜"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 34,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "蒜泥白肉老店",
+      "address": "高新区建设路 43 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "家常",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "蒜泥白肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥34，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "微辣",
+      "家常",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-蒜泥白肉-2",
+    "name": "蒜泥白肉（商圈店）",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "五花肉",
+      "蒜泥",
+      "红油",
+      "黄瓜"
+    ],
+    "flavorProfile": [
+      "蒜香",
+      "微辣",
+      "咸鲜"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 42,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "蒜泥白肉（商圈店）商圈店",
+      "address": "高新区科华北路 58 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "家常",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "蒜泥白肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥42，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "微辣",
+      "家常",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-龙抄手-1",
+    "name": "龙抄手",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "面皮",
+      "猪肉馅",
+      "清汤",
+      "胡椒"
+    ],
+    "flavorProfile": [
+      "清鲜",
+      "微辣",
+      "皮滑"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 22,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "龙抄手老店",
+      "address": "武侯区科华北路 58 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 2.5,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "龙抄手是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥22，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-龙抄手-2",
+    "name": "龙抄手（商圈店）",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "面皮",
+      "猪肉馅",
+      "清汤",
+      "胡椒"
+    ],
+    "flavorProfile": [
+      "清鲜",
+      "微辣",
+      "皮滑"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 30,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "龙抄手（商圈店）商圈店",
+      "address": "武侯区少城路 17 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 3.2,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "龙抄手是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥30，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-甜水面-1",
+    "name": "甜水面",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "手工面",
+      "复制酱油",
+      "红油",
+      "芝麻酱"
+    ],
+    "flavorProfile": [
+      "甜辣",
+      "干香",
+      "筋道"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "甜水面老店",
+      "address": "锦江区少城路 17 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "小吃"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "甜水面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "小吃"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-甜水面-2",
+    "name": "甜水面（商圈店）",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "手工面",
+      "复制酱油",
+      "红油",
+      "芝麻酱"
+    ],
+    "flavorProfile": [
+      "甜辣",
+      "干香",
+      "筋道"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 24,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "甜水面（商圈店）商圈店",
+      "address": "锦江区宽窄巷子 25 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "小吃"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "甜水面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥24，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "小吃"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-红糖糍粑-1",
+    "name": "红糖糍粑",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "红糖",
+      "黄豆粉"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "红糖香",
+      "软糯"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 12,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "红糖糍粑老店",
+      "address": "青羊区宽窄巷子 25 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "红糖糍粑是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥12，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-红糖糍粑-2",
+    "name": "红糖糍粑（商圈店）",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "红糖",
+      "黄豆粉"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "红糖香",
+      "软糯"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 20,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "红糖糍粑（商圈店）商圈店",
+      "address": "青羊区解放碑步行街 10 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.6
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "红糖糍粑是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥20，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-蛋烘糕-1",
+    "name": "蛋烘糕",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "鸡蛋",
+      "面粉",
+      "红糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜香",
+      "绵软",
+      "蛋香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 8,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "蛋烘糕老店",
+      "address": "成华区解放碑步行街 10 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "蛋烘糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥8，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-蛋烘糕-2",
+    "name": "蛋烘糕（商圈店）",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "鸡蛋",
+      "面粉",
+      "红糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜香",
+      "绵软",
+      "蛋香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "蛋烘糕（商圈店）商圈店",
+      "address": "成华区八一路 176 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "蛋烘糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-糖油果子-1",
+    "name": "糖油果子",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米粉",
+      "红糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜脆",
+      "红糖香",
+      "酥糯"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 8,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "糖油果子老店",
+      "address": "金牛区八一路 176 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "糖油果子是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥8，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-糖油果子-2",
+    "name": "糖油果子（商圈店）",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米粉",
+      "红糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜脆",
+      "红糖香",
+      "酥糯"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "糖油果子（商圈店）商圈店",
+      "address": "金牛区较场口 90 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "糖油果子是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-三大炮-1",
+    "name": "三大炮",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "黄豆粉",
+      "红糖"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "黄豆香",
+      "有嚼劲"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 10,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "三大炮老店",
+      "address": "高新区较场口 90 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "游客",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "三大炮是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥10，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "游客",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-三大炮-2",
+    "name": "三大炮（商圈店）",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "黄豆粉",
+      "红糖"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "黄豆香",
+      "有嚼劲"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 18,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "三大炮（商圈店）商圈店",
+      "address": "高新区观音桥好吃街 3 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.6
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "游客",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "三大炮是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "游客",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-烤脑花-1",
+    "name": "烤脑花",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "猪脑",
+      "红油",
+      "蒜蓉",
+      "香菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "滑嫩",
+      "蒜香"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 20,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "烤脑花老店",
+      "address": "武侯区观音桥好吃街 3 号",
+      "openHours": "17:00-02:00",
+      "distanceKm": 3.9,
+      "rating": 4.6
+    },
+    "bestTime": "夜宵",
+    "suitableFor": [
+      "夜宵",
+      "重口味"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "烤脑花是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥20，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "重辣",
+      "夜宵",
+      "重口味"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-烤脑花-2",
+    "name": "烤脑花（商圈店）",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "猪脑",
+      "红油",
+      "蒜蓉",
+      "香菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "滑嫩",
+      "蒜香"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 28,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "烤脑花（商圈店）商圈店",
+      "address": "武侯区南坪西路 88 号",
+      "openHours": "17:00-02:00",
+      "distanceKm": 4.6,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "夜宵",
+    "suitableFor": [
+      "夜宵",
+      "重口味"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "烤脑花是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥28，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "重辣",
+      "夜宵",
+      "重口味"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-烤苕皮-1",
+    "name": "烤苕皮",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "红薯粉皮",
+      "酸豆角",
+      "辣椒面",
+      "葱花"
+    ],
+    "flavorProfile": [
+      "香辣",
+      "软糯",
+      "酸香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 12,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "烤苕皮老店",
+      "address": "锦江区南坪西路 88 号",
+      "openHours": "17:00-02:00",
+      "distanceKm": 0.4,
+      "rating": 4.5
+    },
+    "bestTime": "夜宵",
+    "suitableFor": [
+      "夜宵",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "烤苕皮是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥12，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "中辣",
+      "夜宵",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-烤苕皮-2",
+    "name": "烤苕皮（商圈店）",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "红薯粉皮",
+      "酸豆角",
+      "辣椒面",
+      "葱花"
+    ],
+    "flavorProfile": [
+      "香辣",
+      "软糯",
+      "酸香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 20,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "烤苕皮（商圈店）商圈店",
+      "address": "锦江区杨家坪正街 6 号",
+      "openHours": "17:00-02:00",
+      "distanceKm": 1.1,
+      "rating": 4.6
+    },
+    "bestTime": "夜宵",
+    "suitableFor": [
+      "夜宵",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "烤苕皮是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥20，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "中辣",
+      "夜宵",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-冷锅串串-1",
+    "name": "冷锅串串",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛肉",
+      "郡肝",
+      "藕片",
+      "红油"
+    ],
+    "flavorProfile": [
+      "香辣",
+      "麻香",
+      "回甜"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 35,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "冷锅串串老店",
+      "address": "青羊区杨家坪正街 6 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冷锅串串是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥35，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "中辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-冷锅串串-2",
+    "name": "冷锅串串（商圈店）",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛肉",
+      "郡肝",
+      "藕片",
+      "红油"
+    ],
+    "flavorProfile": [
+      "香辣",
+      "麻香",
+      "回甜"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 43,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "冷锅串串（商圈店）商圈店",
+      "address": "青羊区磁器口正街 15 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冷锅串串是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥43，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "中辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-串串香-1",
+    "name": "串串香",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "火锅",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛肉",
+      "郡肝",
+      "土豆",
+      "牛油锅底"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "牛油香",
+      "重口"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 55,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "串串香老店",
+      "address": "成华区磁器口正街 15 号",
+      "openHours": "17:00-02:00",
+      "distanceKm": 4.6,
+      "rating": 4.5
+    },
+    "bestTime": "夜宵",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "串串香是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥55，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "火锅",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-串串香-2",
+    "name": "串串香（商圈店）",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "火锅",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛肉",
+      "郡肝",
+      "土豆",
+      "牛油锅底"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "牛油香",
+      "重口"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 63,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "串串香（商圈店）商圈店",
+      "address": "成华区龙湖时代天街 C 馆",
+      "openHours": "17:00-02:00",
+      "distanceKm": 5.3,
+      "rating": 4.6
+    },
+    "bestTime": "夜宵",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "串串香是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥63，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "火锅",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-冒菜-1",
+    "name": "冒菜",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "午餐肉",
+      "藕片",
+      "豆皮",
+      "红油汤"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "香浓",
+      "下饭"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 26,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "冒菜老店",
+      "address": "金牛区龙湖时代天街 C 馆",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.4
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "工作餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冒菜是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥26，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "一人食",
+      "工作餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-冒菜-2",
+    "name": "冒菜（商圈店）",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "午餐肉",
+      "藕片",
+      "豆皮",
+      "红油汤"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "香浓",
+      "下饭"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 34,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "冒菜（商圈店）商圈店",
+      "address": "金牛区玉林西路 12 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "工作餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冒菜是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥34，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "一人食",
+      "工作餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-兔头-1",
+    "name": "兔头",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "兔头",
+      "辣椒",
+      "花椒",
+      "香料"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "入味"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 16,
+    "rating": 4.7,
+    "restaurant": {
+      "name": "兔头老店",
+      "address": "高新区玉林西路 12 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.7
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "下酒",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "兔头是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "重辣",
+      "下酒",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-兔头-2",
+    "name": "兔头（商圈店）",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "兔头",
+      "辣椒",
+      "花椒",
+      "香料"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "入味"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 24,
+    "rating": 4.8,
+    "restaurant": {
+      "name": "兔头（商圈店）商圈店",
+      "address": "高新区武侯祠大街 8 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.8
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "下酒",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "兔头是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥24，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "重辣",
+      "下酒",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-肥肠粉-1",
+    "name": "肥肠粉",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "红薯粉",
+      "肥肠",
+      "红油",
+      "榨菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "肠香",
+      "爽滑"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 18,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "肥肠粉老店",
+      "address": "武侯区武侯祠大街 8 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 5.3,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "肥肠粉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-肥肠粉-2",
+    "name": "肥肠粉（商圈店）",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "红薯粉",
+      "肥肠",
+      "红油",
+      "榨菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "肠香",
+      "爽滑"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 26,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "肥肠粉（商圈店）商圈店",
+      "address": "武侯区春熙路 66 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 0.4,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "肥肠粉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥26，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-牛肉焦饼-1",
+    "name": "牛肉焦饼",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "面粉",
+      "牛肉馅",
+      "花椒面",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "咸香",
+      "酥脆",
+      "微麻"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 10,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "牛肉焦饼老店",
+      "address": "锦江区春熙路 66 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "牛肉焦饼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥10，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-牛肉焦饼-2",
+    "name": "牛肉焦饼（商圈店）",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "面粉",
+      "牛肉馅",
+      "花椒面",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "咸香",
+      "酥脆",
+      "微麻"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 18,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "牛肉焦饼（商圈店）商圈店",
+      "address": "锦江区下东大街 2 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "牛肉焦饼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-叶儿粑-1",
+    "name": "叶儿粑",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "糯米粉",
+      "猪肉馅",
+      "芽菜",
+      "粽叶"
+    ],
+    "flavorProfile": [
+      "咸香",
+      "软糯",
+      "叶香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 10,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "叶儿粑老店",
+      "address": "青羊区下东大街 2 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 3.9,
+      "rating": 4.4
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "叶儿粑是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥10，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-叶儿粑-2",
+    "name": "叶儿粑（商圈店）",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "糯米粉",
+      "猪肉馅",
+      "芽菜",
+      "粽叶"
+    ],
+    "flavorProfile": [
+      "咸香",
+      "软糯",
+      "叶香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 18,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "叶儿粑（商圈店）商圈店",
+      "address": "青羊区人民南路四段 20 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 4.6,
+      "rating": 4.5
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "叶儿粑是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-凉糕-1",
+    "name": "凉糕",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "大米",
+      "红糖",
+      "黄豆粉"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "凉滑",
+      "米香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 8,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "凉糕老店",
+      "address": "成华区人民南路四段 20 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "凉糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥8，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-凉糕-2",
+    "name": "凉糕（商圈店）",
+    "city": "成都",
+    "district": "成华区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "大米",
+      "红糖",
+      "黄豆粉"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "凉滑",
+      "米香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "凉糕（商圈店）商圈店",
+      "address": "成华区望平街 9 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "凉糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-豆花-1",
+    "name": "豆花",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "黄豆",
+      "石膏",
+      "辣椒油",
+      "葱花"
+    ],
+    "flavorProfile": [
+      "嫩滑",
+      "豆香",
+      "咸鲜"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 9,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "豆花老店",
+      "address": "金牛区望平街 9 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 2.5,
+      "rating": 4.4
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "豆花是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥9，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-豆花-2",
+    "name": "豆花（商圈店）",
+    "city": "成都",
+    "district": "金牛区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "黄豆",
+      "石膏",
+      "辣椒油",
+      "葱花"
+    ],
+    "flavorProfile": [
+      "嫩滑",
+      "豆香",
+      "咸鲜"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 17,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "豆花（商圈店）商圈店",
+      "address": "金牛区建设路 43 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 3.2,
+      "rating": 4.5
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "豆花是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥17，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-跷脚牛肉-1",
+    "name": "跷脚牛肉",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "牛腱",
+      "牛杂",
+      "芹菜",
+      "药材汤"
+    ],
+    "flavorProfile": [
+      "清鲜",
+      "牛肉香",
+      "暖胃"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 45,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "跷脚牛肉老店",
+      "address": "高新区建设路 43 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "朋友聚餐",
+      "带家人"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "跷脚牛肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥45，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "不辣",
+      "朋友聚餐",
+      "带家人"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-跷脚牛肉-2",
+    "name": "跷脚牛肉（商圈店）",
+    "city": "成都",
+    "district": "高新区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "牛腱",
+      "牛杂",
+      "芹菜",
+      "药材汤"
+    ],
+    "flavorProfile": [
+      "清鲜",
+      "牛肉香",
+      "暖胃"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 53,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "跷脚牛肉（商圈店）商圈店",
+      "address": "高新区科华北路 58 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "朋友聚餐",
+      "带家人"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "跷脚牛肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥53，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "不辣",
+      "朋友聚餐",
+      "带家人"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-宜宾燃面-1",
+    "name": "宜宾燃面",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "碎米芽菜",
+      "花生碎",
+      "红油"
+    ],
+    "flavorProfile": [
+      "干香",
+      "麻辣",
+      "油润"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "宜宾燃面老店",
+      "address": "武侯区科华北路 58 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "宜宾燃面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-宜宾燃面-2",
+    "name": "宜宾燃面（商圈店）",
+    "city": "成都",
+    "district": "武侯区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "碎米芽菜",
+      "花生碎",
+      "红油"
+    ],
+    "flavorProfile": [
+      "干香",
+      "麻辣",
+      "油润"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 24,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "宜宾燃面（商圈店）商圈店",
+      "address": "武侯区少城路 17 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "宜宾燃面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥24，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-军屯锅盔-1",
+    "name": "军屯锅盔",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "面粉",
+      "猪肉馅",
+      "花椒面",
+      "猪油"
+    ],
+    "flavorProfile": [
+      "酥脆",
+      "咸香",
+      "微麻"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 9,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "军屯锅盔老店",
+      "address": "锦江区少城路 17 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "军屯锅盔是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥9，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-军屯锅盔-2",
+    "name": "军屯锅盔（商圈店）",
+    "city": "成都",
+    "district": "锦江区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "面粉",
+      "猪肉馅",
+      "花椒面",
+      "猪油"
+    ],
+    "flavorProfile": [
+      "酥脆",
+      "咸香",
+      "微麻"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 17,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "军屯锅盔（商圈店）商圈店",
+      "address": "锦江区宽窄巷子 25 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.6
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "军屯锅盔是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥17，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-醪糟蛋-1",
+    "name": "醪糟蛋",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Chinese_Sweet_Dumpling.JPG/960px-Chinese_Sweet_Dumpling.JPG",
+      "source": "wikimedia",
+      "credit": "Chinese sweet dumpling"
+    },
+    "ingredients": [
+      "醪糟",
+      "鸡蛋",
+      "小汤圆",
+      "枸杞"
+    ],
+    "flavorProfile": [
+      "甜润",
+      "酒香",
+      "暖胃"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 10,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "醪糟蛋老店",
+      "address": "青羊区宽窄巷子 25 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 5.3,
+      "rating": 4.4
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "醪糟蛋是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥10，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cd-醪糟蛋-2",
+    "name": "醪糟蛋（商圈店）",
+    "city": "成都",
+    "district": "青羊区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Chinese_Sweet_Dumpling.JPG/960px-Chinese_Sweet_Dumpling.JPG",
+      "source": "wikimedia",
+      "credit": "Chinese sweet dumpling"
+    },
+    "ingredients": [
+      "醪糟",
+      "鸡蛋",
+      "小汤圆",
+      "枸杞"
+    ],
+    "flavorProfile": [
+      "甜润",
+      "酒香",
+      "暖胃"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 18,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "醪糟蛋（商圈店）商圈店",
+      "address": "青羊区解放碑步行街 10 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 0.4,
+      "rating": 4.5
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "醪糟蛋是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
   },
   {
     "id": "cq-wanza-noodles",
@@ -214,8 +3593,17 @@
       "source": "wikimedia",
       "credit": "重庆豌杂面"
     },
-    "ingredients": ["碱水面", "豌豆", "杂酱", "红油"],
-    "flavorProfile": ["麻辣", "豌豆香", "软糯"],
+    "ingredients": [
+      "碱水面",
+      "豌豆",
+      "杂酱",
+      "红油"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "豌豆香",
+      "软糯"
+    ],
     "spiciness": "中辣",
     "avgPrice": 15,
     "rating": 4.6,
@@ -227,13 +3615,29 @@
       "rating": 4.6
     },
     "bestTime": "早上",
-    "suitableFor": ["一人食", "早餐"],
-    "reasons": [
-      { "label": "本地人气", "text": "豌杂面是重庆早餐里的经典" },
-      { "label": "出餐快", "text": "小面档口翻台快，不用久等" },
-      { "label": "人均低", "text": "人均 ¥15，适合一人食" }
+    "suitableFor": [
+      "一人食",
+      "早餐"
     ],
-    "fitTags": ["解放碑", "早餐", "中辣"],
+    "reasons": [
+      {
+        "label": "本地人气",
+        "text": "豌杂面是重庆早餐里的经典"
+      },
+      {
+        "label": "出餐快",
+        "text": "小面档口翻台快，不用久等"
+      },
+      {
+        "label": "人均低",
+        "text": "人均 ¥15，适合一人食"
+      }
+    ],
+    "fitTags": [
+      "解放碑",
+      "早餐",
+      "中辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -248,8 +3652,17 @@
       "source": "wikimedia",
       "credit": "Suanlafen"
     },
-    "ingredients": ["红薯粉", "花生", "榨菜", "辣椒油"],
-    "flavorProfile": ["酸辣", "鲜香", "爽滑"],
+    "ingredients": [
+      "红薯粉",
+      "花生",
+      "榨菜",
+      "辣椒油"
+    ],
+    "flavorProfile": [
+      "酸辣",
+      "鲜香",
+      "爽滑"
+    ],
     "spiciness": "中辣",
     "avgPrice": 16,
     "rating": 4.5,
@@ -261,13 +3674,29 @@
       "rating": 4.5
     },
     "bestTime": "中午",
-    "suitableFor": ["一人食", "逛街"],
-    "reasons": [
-      { "label": "口味经典", "text": "酸辣爽滑，是重庆街头代表小吃" },
-      { "label": "位置便利", "text": "靠近八一路好吃街，逛街顺路" },
-      { "label": "便宜", "text": "人均 ¥16，边走边吃" }
+    "suitableFor": [
+      "一人食",
+      "逛街"
     ],
-    "fitTags": ["小吃", "酸辣", "中辣"],
+    "reasons": [
+      {
+        "label": "口味经典",
+        "text": "酸辣爽滑，是重庆街头代表小吃"
+      },
+      {
+        "label": "位置便利",
+        "text": "靠近八一路好吃街，逛街顺路"
+      },
+      {
+        "label": "便宜",
+        "text": "人均 ¥16，边走边吃"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "酸辣",
+      "中辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -282,8 +3711,17 @@
       "source": "wikimedia",
       "credit": "Chongqing-style Mao Xuewang"
     },
-    "ingredients": ["鸭血", "毛肚", "豆芽", "辣椒"],
-    "flavorProfile": ["麻辣", "重油", "鲜香"],
+    "ingredients": [
+      "鸭血",
+      "毛肚",
+      "豆芽",
+      "辣椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "重油",
+      "鲜香"
+    ],
     "spiciness": "重辣",
     "avgPrice": 48,
     "rating": 4.6,
@@ -295,13 +3733,29 @@
       "rating": 4.6
     },
     "bestTime": "晚上",
-    "suitableFor": ["朋友聚餐", "夜宵"],
-    "reasons": [
-      { "label": "本地重口味", "text": "鸭血毛肚配红油，是重庆江湖菜代表" },
-      { "label": "分量足", "text": "一锅足够两三人分享" },
-      { "label": "下饭", "text": "麻辣鲜香，配米饭很过瘾" }
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
     ],
-    "fitTags": ["聚餐", "重辣", "下饭"],
+    "reasons": [
+      {
+        "label": "本地重口味",
+        "text": "鸭血毛肚配红油，是重庆江湖菜代表"
+      },
+      {
+        "label": "分量足",
+        "text": "一锅足够两三人分享"
+      },
+      {
+        "label": "下饭",
+        "text": "麻辣鲜香，配米饭很过瘾"
+      }
+    ],
+    "fitTags": [
+      "聚餐",
+      "重辣",
+      "下饭"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
   },
@@ -316,8 +3770,17 @@
       "source": "wikimedia",
       "credit": "Chinese sweet dumpling"
     },
-    "ingredients": ["糯米粉", "芝麻馅", "红糖", "醪糟"],
-    "flavorProfile": ["清甜", "软糯", "酒香"],
+    "ingredients": [
+      "糯米粉",
+      "芝麻馅",
+      "红糖",
+      "醪糟"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "软糯",
+      "酒香"
+    ],
     "spiciness": "不辣",
     "avgPrice": 12,
     "rating": 4.4,
@@ -329,14 +3792,3380 @@
       "rating": 4.4
     },
     "bestTime": "下午",
-    "suitableFor": ["一人食", "解辣"],
-    "reasons": [
-      { "label": "老字号", "text": "山城小汤圆是重庆甜品里的老味道" },
-      { "label": "解辣", "text": "红糖醪糟甜汤，适合吃完火锅来一碗" },
-      { "label": "距离近", "text": "距你 1.1km，步行可达" }
+    "suitableFor": [
+      "一人食",
+      "解辣"
     ],
-    "fitTags": ["甜品", "解辣", "不辣"],
+    "reasons": [
+      {
+        "label": "老字号",
+        "text": "山城小汤圆是重庆甜品里的老味道"
+      },
+      {
+        "label": "解辣",
+        "text": "红糖醪糟甜汤，适合吃完火锅来一碗"
+      },
+      {
+        "label": "距离近",
+        "text": "距你 1.1km，步行可达"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "解辣",
+      "不辣"
+    ],
     "source": "curated:2026-08-01",
     "updatedAt": "2026-08-01T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆小面-1",
+    "name": "重庆小面",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "辣椒油",
+      "花椒面",
+      "榨菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "筋道"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 14,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "重庆小面老店",
+      "address": "渝中区武侯祠大街 8 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 1.1,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆小面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥14，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆小面-2",
+    "name": "重庆小面（商圈店）",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "辣椒油",
+      "花椒面",
+      "榨菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "筋道"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 22,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "重庆小面（商圈店）商圈店",
+      "address": "渝中区春熙路 66 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 1.8,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆小面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥22，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-老麻抄手-1",
+    "name": "老麻抄手",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "面皮",
+      "猪肉馅",
+      "花椒",
+      "红油"
+    ],
+    "flavorProfile": [
+      "麻香",
+      "鲜辣",
+      "皮薄"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 16,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "老麻抄手老店",
+      "address": "江北区春熙路 66 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 3.2,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "老麻抄手是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "重辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-老麻抄手-2",
+    "name": "老麻抄手（商圈店）",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "面皮",
+      "猪肉馅",
+      "花椒",
+      "红油"
+    ],
+    "flavorProfile": [
+      "麻香",
+      "鲜辣",
+      "皮薄"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 24,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "老麻抄手（商圈店）商圈店",
+      "address": "江北区下东大街 2 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 3.9,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "一人食",
+      "早餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "老麻抄手是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥24，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "重辣",
+      "一人食",
+      "早餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-口水鸡-1",
+    "name": "口水鸡",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "土鸡",
+      "红油",
+      "花生",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜香",
+      "红油"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 48,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "口水鸡老店",
+      "address": "南岸区下东大街 2 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "朋友聚餐",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "口水鸡是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥48，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "朋友聚餐",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-口水鸡-2",
+    "name": "口水鸡（商圈店）",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "土鸡",
+      "红油",
+      "花生",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜香",
+      "红油"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 56,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "口水鸡（商圈店）商圈店",
+      "address": "南岸区人民南路四段 20 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "朋友聚餐",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "口水鸡是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥56，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "朋友聚餐",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-辣子鸡-1",
+    "name": "辣子鸡",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "鸡丁",
+      "干辣椒",
+      "花椒",
+      "花生"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "酥脆"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 52,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "辣子鸡老店",
+      "address": "九龙坡区人民南路四段 20 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "辣子鸡是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥52，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-辣子鸡-2",
+    "name": "辣子鸡（商圈店）",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "鸡丁",
+      "干辣椒",
+      "花椒",
+      "花生"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "酥脆"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 60,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "辣子鸡（商圈店）商圈店",
+      "address": "九龙坡区望平街 9 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "下酒"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "辣子鸡是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥60，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐",
+      "下酒"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-来凤鱼-1",
+    "name": "来凤鱼",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "江团",
+      "泡椒",
+      "辣椒",
+      "豆瓣"
+    ],
+    "flavorProfile": [
+      "酸辣",
+      "鲜嫩",
+      "重口"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 68,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "来凤鱼老店",
+      "address": "沙坪坝区望平街 9 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.5
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "来凤鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥68，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-来凤鱼-2",
+    "name": "来凤鱼（商圈店）",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "江团",
+      "泡椒",
+      "辣椒",
+      "豆瓣"
+    ],
+    "flavorProfile": [
+      "酸辣",
+      "鲜嫩",
+      "重口"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 76,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "来凤鱼（商圈店）商圈店",
+      "address": "沙坪坝区建设路 43 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "来凤鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥76，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-黔江鸡杂-1",
+    "name": "黔江鸡杂",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "鸡杂",
+      "泡椒",
+      "洋葱",
+      "土豆"
+    ],
+    "flavorProfile": [
+      "酸辣",
+      "脆爽",
+      "下饭"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 42,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "黔江鸡杂老店",
+      "address": "渝北区建设路 43 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "下饭"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "黔江鸡杂是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥42，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐",
+      "下饭"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-黔江鸡杂-2",
+    "name": "黔江鸡杂（商圈店）",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "鸡杂",
+      "泡椒",
+      "洋葱",
+      "土豆"
+    ],
+    "flavorProfile": [
+      "酸辣",
+      "脆爽",
+      "下饭"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 50,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "黔江鸡杂（商圈店）商圈店",
+      "address": "渝北区科华北路 58 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "下饭"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "黔江鸡杂是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥50，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "重辣",
+      "朋友聚餐",
+      "下饭"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-泉水鸡-1",
+    "name": "泉水鸡",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "土鸡",
+      "泉水",
+      "花椒",
+      "辣椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鸡肉鲜",
+      "汤汁浓"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 58,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "泉水鸡老店",
+      "address": "渝中区科华北路 58 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.5
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "带家人"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "泉水鸡是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥58，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "朋友聚餐",
+      "带家人"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-泉水鸡-2",
+    "name": "泉水鸡（商圈店）",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "川菜",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "土鸡",
+      "泉水",
+      "花椒",
+      "辣椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鸡肉鲜",
+      "汤汁浓"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 66,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "泉水鸡（商圈店）商圈店",
+      "address": "渝中区少城路 17 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "带家人"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "泉水鸡是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥66，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "川菜",
+      "中辣",
+      "朋友聚餐",
+      "带家人"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆烤鱼-1",
+    "name": "重庆烤鱼",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "草鱼",
+      "豆芽",
+      "干辣椒",
+      "花椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "焦香",
+      "重油"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 72,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "重庆烤鱼老店",
+      "address": "江北区少城路 17 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆烤鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥72，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆烤鱼-2",
+    "name": "重庆烤鱼（商圈店）",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "草鱼",
+      "豆芽",
+      "干辣椒",
+      "花椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "焦香",
+      "重油"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 80,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "重庆烤鱼（商圈店）商圈店",
+      "address": "江北区宽窄巷子 25 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆烤鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥80，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆火锅-1",
+    "name": "重庆火锅",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "火锅",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛油",
+      "花椒",
+      "辣椒",
+      "毛肚"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "牛油香",
+      "重口"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 85,
+    "rating": 4.7,
+    "restaurant": {
+      "name": "重庆火锅老店",
+      "address": "南岸区宽窄巷子 25 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.7
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆火锅是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥85，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "火锅",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆火锅-2",
+    "name": "重庆火锅（商圈店）",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "火锅",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛油",
+      "花椒",
+      "辣椒",
+      "毛肚"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "牛油香",
+      "重口"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 93,
+    "rating": 4.8,
+    "restaurant": {
+      "name": "重庆火锅（商圈店）商圈店",
+      "address": "南岸区解放碑步行街 10 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.8
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆火锅是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥93，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "火锅",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-串串香-1",
+    "name": "串串香",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "火锅",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛肉",
+      "郡肝",
+      "土豆",
+      "红油"
+    ],
+    "flavorProfile": [
+      "香辣",
+      "麻香",
+      "回甜"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 50,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "串串香老店",
+      "address": "九龙坡区解放碑步行街 10 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.5
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "串串香是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥50，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "火锅",
+      "中辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-串串香-2",
+    "name": "串串香（商圈店）",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "火锅",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "牛肉",
+      "郡肝",
+      "土豆",
+      "红油"
+    ],
+    "flavorProfile": [
+      "香辣",
+      "麻香",
+      "回甜"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 58,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "串串香（商圈店）商圈店",
+      "address": "九龙坡区八一路 176 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "串串香是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥58，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "火锅",
+      "中辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-冰汤圆-1",
+    "name": "冰汤圆",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Chinese_Sweet_Dumpling.JPG/960px-Chinese_Sweet_Dumpling.JPG",
+      "source": "wikimedia",
+      "credit": "Chinese sweet dumpling"
+    },
+    "ingredients": [
+      "小汤圆",
+      "红糖冰沙",
+      "醪糟",
+      "山楂"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "冰凉",
+      "软糯"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 12,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "冰汤圆老店",
+      "address": "沙坪坝区八一路 176 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冰汤圆是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥12，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-冰汤圆-2",
+    "name": "冰汤圆（商圈店）",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Chinese_Sweet_Dumpling.JPG/960px-Chinese_Sweet_Dumpling.JPG",
+      "source": "wikimedia",
+      "credit": "Chinese sweet dumpling"
+    },
+    "ingredients": [
+      "小汤圆",
+      "红糖冰沙",
+      "醪糟",
+      "山楂"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "冰凉",
+      "软糯"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 20,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "冰汤圆（商圈店）商圈店",
+      "address": "沙坪坝区较场口 90 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.6
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冰汤圆是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥20，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-凉虾-1",
+    "name": "凉虾",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "米浆",
+      "红糖",
+      "柠檬"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "凉滑",
+      "果酸"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 8,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "凉虾老店",
+      "address": "渝北区较场口 90 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "凉虾是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥8，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-凉虾-2",
+    "name": "凉虾（商圈店）",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "米浆",
+      "红糖",
+      "柠檬"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "凉滑",
+      "果酸"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "凉虾（商圈店）商圈店",
+      "address": "渝北区观音桥好吃街 3 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "凉虾是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆冰粉-1",
+    "name": "重庆冰粉",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "冰粉籽",
+      "红糖",
+      "山楂",
+      "葡萄干"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "冰凉",
+      "果香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 9,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "重庆冰粉老店",
+      "address": "渝中区观音桥好吃街 3 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆冰粉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥9，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-重庆冰粉-2",
+    "name": "重庆冰粉（商圈店）",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "冰粉籽",
+      "红糖",
+      "山楂",
+      "葡萄干"
+    ],
+    "flavorProfile": [
+      "清甜",
+      "冰凉",
+      "果香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 17,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "重庆冰粉（商圈店）商圈店",
+      "address": "渝中区南坪西路 88 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "解辣"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "重庆冰粉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥17，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "一人食",
+      "解辣"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-担担面-1",
+    "name": "担担面",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "杂酱",
+      "芝麻酱",
+      "红油"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "酱香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 15,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "担担面老店",
+      "address": "江北区南坪西路 88 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 0.4,
+      "rating": 4.5
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "担担面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥15，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-担担面-2",
+    "name": "担担面（商圈店）",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "杂酱",
+      "芝麻酱",
+      "红油"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "干香",
+      "酱香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 23,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "担担面（商圈店）商圈店",
+      "address": "江北区杨家坪正街 6 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 1.1,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "担担面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥23，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-牛肉面-1",
+    "name": "牛肉面",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "碱水面",
+      "牛腩",
+      "辣椒油",
+      "香菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "牛肉香",
+      "浓郁"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 18,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "牛肉面老店",
+      "address": "南岸区杨家坪正街 6 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 2.5,
+      "rating": 4.5
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "牛肉面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-牛肉面-2",
+    "name": "牛肉面（商圈店）",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "碱水面",
+      "牛腩",
+      "辣椒油",
+      "香菜"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "牛肉香",
+      "浓郁"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 26,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "牛肉面（商圈店）商圈店",
+      "address": "南岸区磁器口正街 15 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 3.2,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "牛肉面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥26，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-豆花饭-1",
+    "name": "豆花饭",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "豆花",
+      "米饭",
+      "辣椒蘸水",
+      "葱花"
+    ],
+    "flavorProfile": [
+      "嫩滑",
+      "豆香",
+      "家常"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 12,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "豆花饭老店",
+      "address": "九龙坡区磁器口正街 15 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.4
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "工作餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "豆花饭是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥12，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "工作餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-豆花饭-2",
+    "name": "豆花饭（商圈店）",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "豆花",
+      "米饭",
+      "辣椒蘸水",
+      "葱花"
+    ],
+    "flavorProfile": [
+      "嫩滑",
+      "豆香",
+      "家常"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 20,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "豆花饭（商圈店）商圈店",
+      "address": "九龙坡区龙湖时代天街 C 馆",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "工作餐"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "豆花饭是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥20，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "工作餐"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-油茶-1",
+    "name": "油茶",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "米糊",
+      "馓子",
+      "辣椒油",
+      "花生"
+    ],
+    "flavorProfile": [
+      "咸香",
+      "微辣",
+      "酥脆"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 10,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "油茶老店",
+      "address": "沙坪坝区龙湖时代天街 C 馆",
+      "openHours": "06:30-14:00",
+      "distanceKm": 1.1,
+      "rating": 4.5
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "油茶是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥10，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-油茶-2",
+    "name": "油茶（商圈店）",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "米糊",
+      "馓子",
+      "辣椒油",
+      "花生"
+    ],
+    "flavorProfile": [
+      "咸香",
+      "微辣",
+      "酥脆"
+    ],
+    "spiciness": "微辣",
+    "avgPrice": 18,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "油茶（商圈店）商圈店",
+      "address": "沙坪坝区玉林西路 12 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 1.8,
+      "rating": 4.6
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "油茶是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "微辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-熨斗糕-1",
+    "name": "熨斗糕",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "米浆",
+      "鸡蛋",
+      "红糖",
+      "猪油"
+    ],
+    "flavorProfile": [
+      "甜香",
+      "软糯",
+      "米香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 8,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "熨斗糕老店",
+      "address": "渝北区玉林西路 12 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "熨斗糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥8，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-熨斗糕-2",
+    "name": "熨斗糕（商圈店）",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "米浆",
+      "鸡蛋",
+      "红糖",
+      "猪油"
+    ],
+    "flavorProfile": [
+      "甜香",
+      "软糯",
+      "米香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "熨斗糕（商圈店）商圈店",
+      "address": "渝北区武侯祠大街 8 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "熨斗糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-冲冲糕-1",
+    "name": "冲冲糕",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "米粉",
+      "红糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "松软",
+      "米香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 8,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "冲冲糕老店",
+      "address": "渝中区武侯祠大街 8 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冲冲糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥8，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-冲冲糕-2",
+    "name": "冲冲糕（商圈店）",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "米粉",
+      "红糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "松软",
+      "米香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "冲冲糕（商圈店）商圈店",
+      "address": "渝中区春熙路 66 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "冲冲糕是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-鸡丝凉面-1",
+    "name": "鸡丝凉面",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "鸡丝",
+      "红油",
+      "花生"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜香",
+      "爽口"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 16,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "鸡丝凉面老店",
+      "address": "江北区春熙路 66 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "夏日"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "鸡丝凉面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥16，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "夏日"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-鸡丝凉面-2",
+    "name": "鸡丝凉面（商圈店）",
+    "city": "重庆",
+    "district": "江北区",
+    "cuisine": "面食",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Dandannoodles.jpg/960px-Dandannoodles.jpg",
+      "source": "wikimedia",
+      "credit": "Dan-dan noodles in Chengdu"
+    },
+    "ingredients": [
+      "水面",
+      "鸡丝",
+      "红油",
+      "花生"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "鲜香",
+      "爽口"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 24,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "鸡丝凉面（商圈店）商圈店",
+      "address": "江北区下东大街 2 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "夏日"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "鸡丝凉面是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥24，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "面食",
+      "中辣",
+      "一人食",
+      "夏日"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-灯影牛肉-1",
+    "name": "灯影牛肉",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "黄牛肉",
+      "辣椒面",
+      "花椒",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "薄脆",
+      "干香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 22,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "灯影牛肉老店",
+      "address": "南岸区下东大街 2 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.6
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "下酒",
+      "伴手礼"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "灯影牛肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥22，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "中辣",
+      "下酒",
+      "伴手礼"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-灯影牛肉-2",
+    "name": "灯影牛肉（商圈店）",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Authentic_Mapo_Tofu.jpg/960px-Authentic_Mapo_Tofu.jpg",
+      "source": "wikimedia",
+      "credit": "Authentic Mapo Tofu"
+    },
+    "ingredients": [
+      "黄牛肉",
+      "辣椒面",
+      "花椒",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "薄脆",
+      "干香"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 30,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "灯影牛肉（商圈店）商圈店",
+      "address": "南岸区人民南路四段 20 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "下酒",
+      "伴手礼"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "灯影牛肉是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥30，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "中辣",
+      "下酒",
+      "伴手礼"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-合川桃片-1",
+    "name": "合川桃片",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "核桃仁",
+      "白糖",
+      "蜜玫瑰"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "桃仁香",
+      "绵软"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 15,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "合川桃片老店",
+      "address": "九龙坡区人民南路四段 20 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "伴手礼",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "合川桃片是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥15，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "伴手礼",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-合川桃片-2",
+    "name": "合川桃片（商圈店）",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "核桃仁",
+      "白糖",
+      "蜜玫瑰"
+    ],
+    "flavorProfile": [
+      "甜糯",
+      "桃仁香",
+      "绵软"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 23,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "合川桃片（商圈店）商圈店",
+      "address": "九龙坡区望平街 9 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "伴手礼",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "合川桃片是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥23，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "伴手礼",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-米花糖-1",
+    "name": "米花糖",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "白糖",
+      "麦芽糖",
+      "花生"
+    ],
+    "flavorProfile": [
+      "甜脆",
+      "米香",
+      "酥松"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 12,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "米花糖老店",
+      "address": "沙坪坝区望平街 9 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 2.5,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "伴手礼",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "米花糖是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥12，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "伴手礼",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-米花糖-2",
+    "name": "米花糖（商圈店）",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "糯米",
+      "白糖",
+      "麦芽糖",
+      "花生"
+    ],
+    "flavorProfile": [
+      "甜脆",
+      "米香",
+      "酥松"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 20,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "米花糖（商圈店）商圈店",
+      "address": "沙坪坝区建设路 43 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.2,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "伴手礼",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "米花糖是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.2km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥20，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "伴手礼",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-三角粑-1",
+    "name": "三角粑",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "大米浆",
+      "白糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜香",
+      "外壳脆",
+      "内软"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 7,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "三角粑老店",
+      "address": "渝北区建设路 43 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.4
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "三角粑是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥7，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-三角粑-2",
+    "name": "三角粑（商圈店）",
+    "city": "重庆",
+    "district": "渝北区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg/960px-Bingfen_at_Beijing_Yibin_Hostel_%2820210401110614%29.jpg",
+      "source": "wikimedia",
+      "credit": "Bingfen jelly dessert"
+    },
+    "ingredients": [
+      "大米浆",
+      "白糖",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜香",
+      "外壳脆",
+      "内软"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 15,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "三角粑（商圈店）商圈店",
+      "address": "渝北区科华北路 58 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "一人食",
+      "逛街"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "三角粑是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥15，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "一人食",
+      "逛街"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-陈麻花-1",
+    "name": "陈麻花",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "面粉",
+      "鸡蛋",
+      "芝麻",
+      "糖"
+    ],
+    "flavorProfile": [
+      "甜酥",
+      "香脆",
+      "芝麻香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 10,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "陈麻花老店",
+      "address": "渝中区科华北路 58 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.1,
+      "rating": 4.5
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "伴手礼",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "陈麻花是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.1km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥10，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "伴手礼",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-陈麻花-2",
+    "name": "陈麻花（商圈店）",
+    "city": "重庆",
+    "district": "渝中区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "面粉",
+      "鸡蛋",
+      "芝麻",
+      "糖"
+    ],
+    "flavorProfile": [
+      "甜酥",
+      "香脆",
+      "芝麻香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 18,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "陈麻花（商圈店）商圈店",
+      "address": "渝中区少城路 17 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 1.8,
+      "rating": 4.6
+    },
+    "bestTime": "下午",
+    "suitableFor": [
+      "伴手礼",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "陈麻花是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "不辣",
+      "伴手礼",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-万州烤鱼-1",
+    "name": "万州烤鱼",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "草鱼",
+      "豆芽",
+      "泡椒",
+      "干辣椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "焦香",
+      "重油"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 68,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "万州烤鱼老店",
+      "address": "南岸区宽窄巷子 25 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 5.3,
+      "rating": 4.6
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "万州烤鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 5.3km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥68，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-万州烤鱼-2",
+    "name": "万州烤鱼（商圈店）",
+    "city": "重庆",
+    "district": "南岸区",
+    "cuisine": "烧烤",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Chongqing_hotpot_2.jpg/960px-Chongqing_hotpot_2.jpg",
+      "source": "wikimedia",
+      "credit": "Chongqing hotpot"
+    },
+    "ingredients": [
+      "草鱼",
+      "豆芽",
+      "泡椒",
+      "干辣椒"
+    ],
+    "flavorProfile": [
+      "麻辣",
+      "焦香",
+      "重油"
+    ],
+    "spiciness": "重辣",
+    "avgPrice": 76,
+    "rating": 4.699999999999999,
+    "restaurant": {
+      "name": "万州烤鱼（商圈店）商圈店",
+      "address": "南岸区解放碑步行街 10 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 0.4,
+      "rating": 4.699999999999999
+    },
+    "bestTime": "晚上",
+    "suitableFor": [
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "万州烤鱼是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 0.4km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥76，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "烧烤",
+      "重辣",
+      "朋友聚餐",
+      "夜宵"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-涪陵油醪糟-1",
+    "name": "涪陵油醪糟",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Chinese_Sweet_Dumpling.JPG/960px-Chinese_Sweet_Dumpling.JPG",
+      "source": "wikimedia",
+      "credit": "Chinese sweet dumpling"
+    },
+    "ingredients": [
+      "糯米",
+      "醪糟",
+      "猪油",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜润",
+      "酒香",
+      "油香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 11,
+    "rating": 4.4,
+    "restaurant": {
+      "name": "涪陵油醪糟老店",
+      "address": "九龙坡区解放碑步行街 10 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 1.8,
+      "rating": 4.4
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "涪陵油醪糟是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 1.8km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥11，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-涪陵油醪糟-2",
+    "name": "涪陵油醪糟（商圈店）",
+    "city": "重庆",
+    "district": "九龙坡区",
+    "cuisine": "甜品",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Chinese_Sweet_Dumpling.JPG/960px-Chinese_Sweet_Dumpling.JPG",
+      "source": "wikimedia",
+      "credit": "Chinese sweet dumpling"
+    },
+    "ingredients": [
+      "糯米",
+      "醪糟",
+      "猪油",
+      "芝麻"
+    ],
+    "flavorProfile": [
+      "甜润",
+      "酒香",
+      "油香"
+    ],
+    "spiciness": "不辣",
+    "avgPrice": 19,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "涪陵油醪糟（商圈店）商圈店",
+      "address": "九龙坡区八一路 176 号",
+      "openHours": "06:30-14:00",
+      "distanceKm": 2.5,
+      "rating": 4.5
+    },
+    "bestTime": "早上",
+    "suitableFor": [
+      "早餐",
+      "一人食"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "涪陵油醪糟是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 2.5km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥19，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "甜品",
+      "不辣",
+      "早餐",
+      "一人食"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-万州格格-1",
+    "name": "万州格格",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "羊肉",
+      "米粉",
+      "花椒",
+      "辣椒面"
+    ],
+    "flavorProfile": [
+      "咸鲜",
+      "微辣",
+      "粉糯"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 18,
+    "rating": 4.5,
+    "restaurant": {
+      "name": "万州格格老店",
+      "address": "沙坪坝区八一路 176 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 3.9,
+      "rating": 4.5
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "万州格格是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 3.9km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥18，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "中辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
+  },
+  {
+    "id": "cq-万州格格-2",
+    "name": "万州格格（商圈店）",
+    "city": "重庆",
+    "district": "沙坪坝区",
+    "cuisine": "小吃",
+    "image": {
+      "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sichuan_cuisine_Bo-bo_chicken.jpg/960px-Sichuan_cuisine_Bo-bo_chicken.jpg",
+      "source": "wikimedia",
+      "credit": "Sichuan cuisine Bo-bo chicken"
+    },
+    "ingredients": [
+      "羊肉",
+      "米粉",
+      "花椒",
+      "辣椒面"
+    ],
+    "flavorProfile": [
+      "咸鲜",
+      "微辣",
+      "粉糯"
+    ],
+    "spiciness": "中辣",
+    "avgPrice": 26,
+    "rating": 4.6,
+    "restaurant": {
+      "name": "万州格格（商圈店）商圈店",
+      "address": "沙坪坝区较场口 90 号",
+      "openHours": "09:00-21:30",
+      "distanceKm": 4.6,
+      "rating": 4.6
+    },
+    "bestTime": "中午",
+    "suitableFor": [
+      "一人食",
+      "家常"
+    ],
+    "reasons": [
+      {
+        "label": "本地味",
+        "text": "万州格格是本地人常点的代表味道，口味有辨识度"
+      },
+      {
+        "label": "距离",
+        "text": "距你 4.6km，步行或短途即可到达"
+      },
+      {
+        "label": "人均",
+        "text": "人均约 ¥26，性价比适合日常尝试"
+      }
+    ],
+    "fitTags": [
+      "小吃",
+      "中辣",
+      "一人食",
+      "家常"
+    ],
+    "source": "curated:2026-08-02",
+    "updatedAt": "2026-08-02T10:00:00+08:00"
   }
 ]

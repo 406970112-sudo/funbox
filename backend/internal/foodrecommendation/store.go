@@ -80,6 +80,14 @@ func (s *Store) migrate() error {
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_food_recommendation_feedback_query
 			ON food_recommendation_feedback(query_id, dish_id)`,
+		`CREATE TABLE IF NOT EXISTS food_recommendation_favorites (
+			user_id TEXT NOT NULL,
+			dish_id TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			PRIMARY KEY (user_id, dish_id)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_food_recommendation_favorites_user
+			ON food_recommendation_favorites(user_id, created_at DESC)`,
 	}
 
 	for _, statement := range statements {
@@ -183,6 +191,57 @@ func (s *Store) SaveFeedback(ctx context.Context, userID string, input FeedbackI
 	`, uuid.NewString(), userID, input.QueryID, input.DishID, helpful, input.Note, time.Now().UTC().Unix())
 	if err != nil {
 		return fmt.Errorf("save food recommendation feedback: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) ListFavorites(ctx context.Context, userID string) ([]string, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT dish_id
+		FROM food_recommendation_favorites
+		WHERE user_id = ?
+		ORDER BY created_at DESC
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list food favorites: %w", err)
+	}
+	defer rows.Close()
+
+	items := []string{}
+	for rows.Next() {
+		var dishID string
+		if err := rows.Scan(&dishID); err != nil {
+			return nil, fmt.Errorf("scan food favorite: %w", err)
+		}
+		items = append(items, dishID)
+	}
+	return items, rows.Err()
+}
+
+func (s *Store) AddFavorite(ctx context.Context, userID, dishID string) error {
+	if dishID == "" {
+		return fmt.Errorf("dishId is required")
+	}
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO food_recommendation_favorites (user_id, dish_id, created_at)
+		VALUES (?, ?, ?)
+		ON CONFLICT(user_id, dish_id) DO NOTHING
+	`, userID, dishID, time.Now().UTC().Unix())
+	if err != nil {
+		return fmt.Errorf("save food favorite: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) RemoveFavorite(ctx context.Context, userID, dishID string) error {
+	if dishID == "" {
+		return fmt.Errorf("dishId is required")
+	}
+	if _, err := s.db.ExecContext(ctx, `
+		DELETE FROM food_recommendation_favorites
+		WHERE user_id = ? AND dish_id = ?
+	`, userID, dishID); err != nil {
+		return fmt.Errorf("remove food favorite: %w", err)
 	}
 	return nil
 }

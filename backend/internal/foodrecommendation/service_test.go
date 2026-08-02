@@ -8,6 +8,20 @@ import (
 	"my-first-expo-app/backend/internal/config"
 )
 
+type fakePOIProvider struct{}
+
+func (fakePOIProvider) NearbyRestaurants(_ context.Context, _ POIQuery) ([]POIResult, error) {
+	return []POIResult{
+		{
+			Name:       "真实玉林火锅店",
+			Address:    "武侯区真实街 1 号",
+			DistanceKm: 0.8,
+			Location:   "104.0611,30.6409",
+			Source:     "overpass",
+		},
+	}, nil
+}
+
 func TestQueryReturnsFallbackFoodRecommendations(t *testing.T) {
 	service := NewService(config.DeepSeekConfig{}, nil)
 	result, err := service.Query(context.Background(), Request{
@@ -187,5 +201,33 @@ func TestQueryReportsUncoveredCoordinates(t *testing.T) {
 	}
 	if !strings.Contains(result.Summary, "暂未覆盖") {
 		t.Fatalf("expected uncovered message, got %q", result.Summary)
+	}
+}
+
+func TestQueryAttachesRealPOI(t *testing.T) {
+	service := NewServiceWithPOI(config.DeepSeekConfig{}, nil, fakePOIProvider{})
+	lat := 30.6409
+	lng := 104.0611
+	result, err := service.Query(context.Background(), Request{
+		Lat: &lat,
+		Lng: &lng,
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if result.DataMode != "poi" {
+		t.Fatalf("expected poi data mode, got %q", result.DataMode)
+	}
+	if len(result.Items) == 0 {
+		t.Fatal("expected items")
+	}
+	if !result.Items[0].RealPOI {
+		t.Fatal("expected real POI flag on top item")
+	}
+	if result.Items[0].Restaurant.Name != "真实玉林火锅店" {
+		t.Fatalf("unexpected POI restaurant %q", result.Items[0].Restaurant.Name)
+	}
+	if result.Items[0].NavigateURL == "" {
+		t.Fatal("expected navigation url")
 	}
 }

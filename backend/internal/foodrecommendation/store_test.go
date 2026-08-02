@@ -34,4 +34,25 @@ func TestStoreSavesQueryAndFeedback(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("save feedback: %v", err)
 	}
+
+	if err := store.AddFavorite(ctx, "user-1", "cd-bingfen"); err != nil {
+		t.Fatalf("add favorite: %v", err)
+	}
+	favorites, err := store.ListFavorites(ctx, "user-1")
+	if err != nil {
+		t.Fatalf("list favorites: %v", err)
+	}
+	if len(favorites) != 1 || favorites[0] != "cd-bingfen" {
+		t.Fatalf("unexpected favorites %#v", favorites)
+	}
+	if err := store.RemoveFavorite(ctx, "user-1", "cd-bingfen"); err != nil {
+		t.Fatalf("remove favorite: %v", err)
+	}
+	favorites, err = store.ListFavorites(ctx, "user-1")
+	if err != nil {
+		t.Fatalf("list favorites after remove: %v", err)
+	}
+	if len(favorites) != 0 {
+		t.Fatalf("expected empty favorites, got %#v", favorites)
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -29,6 +30,7 @@ type Service struct {
 	client  *http.Client
 	catalog Catalog
 	store   *Store
+	poi     POIProvider
 }
 
 type deepSeekResponsePayload struct {
@@ -49,6 +51,10 @@ type deepSeekAnalysis struct {
 }
 
 func NewService(cfg config.DeepSeekConfig, store *Store) *Service {
+	return NewServiceWithPOI(cfg, store, nil)
+}
+
+func NewServiceWithPOI(cfg config.DeepSeekConfig, store *Store, poi POIProvider) *Service {
 	catalog, err := LoadCatalog()
 	if err != nil {
 		panic(err)
@@ -58,6 +64,7 @@ func NewService(cfg config.DeepSeekConfig, store *Store) *Service {
 		client:  &http.Client{Timeout: cfg.RequestTimeout},
 		catalog: catalog,
 		store:   store,
+		poi:     poi,
 	}
 }
 
@@ -113,11 +120,66 @@ func (s *Service) Query(ctx context.Context, request Request, userID string) (Re
 	}
 	response.AvailableFilters = buildAvailableFilters(response.Items)
 
+	if s.poi != nil && request.Lat != nil && request.Lng != nil && len(response.Items) > 0 {
+		s.attachPOI(ctx, request, &response)
+	}
+
 	if s.store != nil {
 		responseJSON, _ := json.Marshal(response)
 		_ = s.store.SaveQuery(ctx, userID, response.QueryID, request.Query, response.City, response.District, string(responseJSON))
 	}
 	return response, nil
+}
+
+func (s *Service) attachPOI(ctx context.Context, request Request, response *Response) {
+	results, err := s.poi.NearbyRestaurants(ctx, POIQuery{
+		Lat:          *request.Lat,
+		Lng:          *request.Lng,
+		City:         response.City,
+		District:     response.District,
+		RadiusMeters: 3000,
+		Limit:        len(response.Items) + 2,
+	})
+	if err != nil || len(results) == 0 {
+		return
+	}
+	for i := range response.Items {
+		if i >= len(results) {
+			break
+		}
+		poi := results[i]
+		response.Items[i].Restaurant.Name = poi.Name
+		response.Items[i].Restaurant.Address = poi.Address
+		if poi.OpenHours != "" {
+			response.Items[i].Restaurant.OpenHours = poi.OpenHours
+		}
+		if poi.DistanceKm > 0 {
+			response.Items[i].Restaurant.DistanceKm = poi.DistanceKm
+			response.Items[i].DistanceKm = poi.DistanceKm
+		}
+		response.Items[i].RealPOI = true
+		response.Items[i].NavigateURL = buildNavigateURL(poi)
+		if poi.Rating > 0 {
+			response.Items[i].Rating = poi.Rating
+			response.Items[i].Restaurant.Rating = poi.Rating
+		}
+	}
+	response.DataMode = "poi"
+	response.POIUpdatedAt = nowISO()
+}
+
+func buildNavigateURL(poi POIResult) string {
+	if poi.Location != "" {
+		return fmt.Sprintf(
+			"https://uri.amap.com/marker?position=%s&name=%s",
+			poi.Location,
+			url.QueryEscape(poi.Name),
+		)
+	}
+	return fmt.Sprintf(
+		"https://uri.amap.com/search?keyword=%s",
+		url.QueryEscape(poi.Name+" "+poi.Address),
+	)
 }
 
 func (s *Service) History(ctx context.Context, userID string, limit int) ([]HistoryItem, error) {
@@ -143,6 +205,27 @@ func (s *Service) Feedback(ctx context.Context, userID string, input FeedbackInp
 		return nil
 	}
 	return s.store.SaveFeedback(ctx, userID, input)
+}
+
+func (s *Service) ListFavorites(ctx context.Context, userID string) ([]string, error) {
+	if s.store == nil {
+		return []string{}, nil
+	}
+	return s.store.ListFavorites(ctx, userID)
+}
+
+func (s *Service) AddFavorite(ctx context.Context, userID, dishID string) error {
+	if s.store == nil {
+		return nil
+	}
+	return s.store.AddFavorite(ctx, userID, strings.TrimSpace(dishID))
+}
+
+func (s *Service) RemoveFavorite(ctx context.Context, userID, dishID string) error {
+	if s.store == nil {
+		return nil
+	}
+	return s.store.RemoveFavorite(ctx, userID, strings.TrimSpace(dishID))
 }
 
 type parsedRequest struct {

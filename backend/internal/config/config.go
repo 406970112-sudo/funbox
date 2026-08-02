@@ -8,21 +8,22 @@ import (
 )
 
 type Config struct {
-	AppEnv         string
-	Auth           AuthConfig
-	Database       DatabaseConfig
-	Server         ServerConfig
-	Security       SecurityConfig
-	Storage        StorageConfig
-	DeepSeek       DeepSeekConfig
-	Lottery        LotteryConfig
-	News           NewsConfig
-	ResourceSearch ResourceSearchConfig
-	MarketRadar    MarketRadarConfig
-	Reading        ReadingConfig
-	TinyPNG        TinyPNGConfig
-	TTS            TTSConfig
-	Volc           VolcConfig
+	AppEnv             string
+	Auth               AuthConfig
+	Database           DatabaseConfig
+	Server             ServerConfig
+	Security           SecurityConfig
+	Storage            StorageConfig
+	DeepSeek           DeepSeekConfig
+	FoodRecommendation FoodRecommendationConfig
+	Lottery            LotteryConfig
+	News               NewsConfig
+	ResourceSearch     ResourceSearchConfig
+	MarketRadar        MarketRadarConfig
+	Reading            ReadingConfig
+	TinyPNG            TinyPNGConfig
+	TTS                TTSConfig
+	Volc               VolcConfig
 }
 
 type AuthConfig struct {
@@ -118,6 +119,14 @@ type DeepSeekConfig struct {
 	RequestTimeout time.Duration
 }
 
+type FoodRecommendationConfig struct {
+	AmapKey         string
+	AmapBaseURL     string
+	OverpassBaseURL string
+	POIEnabled      bool
+	POITimeout      time.Duration
+}
+
 type TinyPNGConfig struct {
 	APIKey         string
 	BaseURL        string
@@ -189,6 +198,13 @@ func Load() (Config, error) {
 			MaxTextLength:  intFirst("TRANSLATION_MAX_TEXT_LENGTH", "", "8000"),
 			Model:          envFirst("DEEPSEEK_TRANSLATION_MODEL", "deepseek-chat"),
 			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
+		},
+		FoodRecommendation: FoodRecommendationConfig{
+			AmapKey:         envFirst("AMAP_WEB_API_KEY", "AMAP_KEY", ""),
+			AmapBaseURL:     envFirst("AMAP_WEB_API_URL", "https://restapi.amap.com"),
+			OverpassBaseURL: envFirst("OVERPASS_API_URL", "https://overpass-api.de/api/interpreter"),
+			POIEnabled:      boolFirst("FOOD_POI_ENABLED", "true"),
+			POITimeout:      durationFromMs("FOOD_POI_TIMEOUT_MS", "", "3000"),
 		},
 		Lottery: LotteryConfig{
 			CacheTTL:       durationFromMs("LOTTERY_CACHE_TTL_MS", "", "900000"),

@@ -141,6 +141,17 @@ export function sortFoodItems(items: FoodItem[], sortKey: FoodSortKey) {
   return sorted;
 }
 
+export function shuffleFoodItems(items: FoodItem[], seed: number) {
+  const values = [...items];
+  let state = (seed * 9301 + 49297) % 233280;
+  for (let i = values.length - 1; i > 0; i -= 1) {
+    state = (state * 9301 + 49297) % 233280;
+    const index = state % (i + 1);
+    [values[i], values[index]] = [values[index], values[i]];
+  }
+  return values;
+}
+
 export function countActiveFilters(filter: FoodFilter) {
   return (
     filter.cuisines.length

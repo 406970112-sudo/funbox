@@ -158,7 +158,14 @@ func main() {
 		log.Printf("translation disabled: missing DEEPSEEK_API_KEY")
 	}
 	recommendationService := recommendation.NewService(cfg.DeepSeek, recommendationStore)
-	foodRecommendationService := foodrecommendation.NewService(cfg.DeepSeek, foodRecommendationStore)
+	foodPOIProvider := foodrecommendation.NewPOIProvider(foodrecommendation.POIConfig{
+		AmapKey:         cfg.FoodRecommendation.AmapKey,
+		AmapBaseURL:     cfg.FoodRecommendation.AmapBaseURL,
+		OverpassBaseURL: cfg.FoodRecommendation.OverpassBaseURL,
+		Enabled:         cfg.FoodRecommendation.POIEnabled,
+		Timeout:         cfg.FoodRecommendation.POITimeout,
+	})
+	foodRecommendationService := foodrecommendation.NewServiceWithPOI(cfg.DeepSeek, foodRecommendationStore, foodPOIProvider)
 
 	newsSource := news.NewRSSSource(
 		&http.Client{Timeout: cfg.News.RequestTimeout},
