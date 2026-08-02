@@ -79,6 +79,8 @@ export function buildFoodRequest(input: {
   distanceMaxKm?: number;
   dietary: string[];
   scenarios: string[];
+  lat?: number;
+  lng?: number;
 }): FoodRequest {
   return {
     query: input.query.trim(),
@@ -91,6 +93,8 @@ export function buildFoodRequest(input: {
     distanceMaxKm: input.distanceMaxKm || undefined,
     dietary: input.dietary,
     scenarios: input.scenarios,
+    lat: input.lat,
+    lng: input.lng,
   };
 }
 

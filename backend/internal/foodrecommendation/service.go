@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"sort"
@@ -168,8 +169,8 @@ func normalizeRequest(request Request) Request {
 }
 
 func validateRequest(request Request) error {
-	if strings.TrimSpace(request.Query) == "" && request.City == "" {
-		return fmt.Errorf("query or city is required")
+	if strings.TrimSpace(request.Query) == "" && request.City == "" && (request.Lat == nil || request.Lng == nil) {
+		return fmt.Errorf("query, city, or coordinates are required")
 	}
 	if len([]rune(request.Query)) > 200 {
 		return fmt.Errorf("query exceeds 200 characters")
@@ -199,6 +200,12 @@ func parseRequest(request Request) parsedRequest {
 	if parsed.District == "" {
 		parsed.District = inferDistrict(text, parsed.City)
 	}
+	if parsed.City == "" && request.Lat != nil && request.Lng != nil {
+		if city, district, ok := resolveLocationFromCoords(*request.Lat, *request.Lng); ok {
+			parsed.City = city
+			parsed.District = district
+		}
+	}
 	if len(parsed.Cuisines) == 0 {
 		parsed.Cuisines = inferCuisines(text)
 	}
@@ -217,13 +224,48 @@ func parseRequest(request Request) parsedRequest {
 	if len(parsed.Scenarios) == 0 {
 		parsed.Scenarios = inferScenarios(text)
 	}
-	if parsed.City == "" {
+	if parsed.City == "" && (request.Lat == nil || request.Lng == nil) {
 		parsed.City = "成都"
-	}
-	if parsed.District == "" {
 		parsed.District = "武侯区"
 	}
 	return parsed
+}
+
+func resolveLocationFromCoords(lat, lng float64) (string, string, bool) {
+	centers := []struct {
+		city     string
+		district string
+		lat      float64
+		lng      float64
+		radiusKm float64
+	}{
+		{city: "成都", district: "武侯区", lat: 30.6409, lng: 104.0611, radiusKm: 30},
+		{city: "成都", district: "锦江区", lat: 30.6572, lng: 104.0865, radiusKm: 30},
+		{city: "重庆", district: "渝中区", lat: 29.5620, lng: 106.5740, radiusKm: 30},
+	}
+	best := ""
+	bestDistance := math.MaxFloat64
+	for _, center := range centers {
+		distance := haversineKm(lat, lng, center.lat, center.lng)
+		if distance < bestDistance {
+			bestDistance = distance
+			best = center.city + "|" + center.district
+		}
+	}
+	if bestDistance <= 30 && best != "" {
+		parts := strings.Split(best, "|")
+		return parts[0], parts[1], true
+	}
+	return "", "", false
+}
+
+func haversineKm(lat1, lng1, lat2, lng2 float64) float64 {
+	const earthRadiusKm = 6371.0
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLng := (lng2 - lng1) * math.Pi / 180
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1*math.Pi/180)*math.Cos(lat2*math.Pi/180)*math.Sin(dLng/2)*math.Sin(dLng/2)
+	return earthRadiusKm * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 }
 
 func (s *Service) recall(parsed parsedRequest) []Dish {
@@ -306,6 +348,9 @@ func buildFallbackSummary(parsed parsedRequest, count int) string {
 }
 
 func buildEmptySummary(parsed parsedRequest) string {
+	if parsed.City == "" {
+		return "当前定位暂未覆盖，暂只支持成都武侯区、锦江区和重庆渝中区，可手动输入这些区域地址。"
+	}
 	return fmt.Sprintf("%s%s暂未收录符合条件的美食，试试放宽距离、口味或人均范围。", parsed.City, parsed.District)
 }
 

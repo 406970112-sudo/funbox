@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -54,6 +55,14 @@ import type {
 } from '@/types/food-recommendation';
 
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+type WebGeolocation = {
+  getCurrentPosition: (
+    success: (position: { coords: { latitude: number; longitude: number } }) => void,
+    error?: (error: { code: number; message: string; PERMISSION_DENIED: number }) => void,
+    options?: { enableHighAccuracy?: boolean; timeout?: number; maximumAge?: number },
+  ) => void;
+};
 
 const HERO = '#151b3b';
 const BLUE = '#4b6bff';
@@ -127,6 +136,7 @@ export function FoodRecommendationScreen() {
   const [showHistory, setShowHistory] = useState(false);
   const [feedback, setFeedback] = useState<Record<string, 'helpful' | 'not' | undefined>>({});
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   async function refreshHistory() {
     if (authStatus !== 'authenticated' || !accessToken) return;
@@ -146,6 +156,10 @@ export function FoodRecommendationScreen() {
       scenarios: [],
     });
     const payload = { ...request, ...overrides };
+    if (!payload.lat && location) {
+      payload.lat = location.lat;
+      payload.lng = location.lng;
+    }
     if (!payload.query.trim()) {
       setStatusMessage('先输入一个地址，例如：成都市武侯区玉林西路。');
       return;
@@ -205,6 +219,34 @@ export function FoodRecommendationScreen() {
     Linking.openURL(`https://uri.amap.com/search?keyword=${keyword}`).catch(() => {
       setStatusMessage('当前环境无法打开地图，可复制地址到地图 App 搜索。');
     });
+  }
+
+  function requestCurrentLocation() {
+    setSubmitting(true);
+    setStatusMessage('正在获取真实定位...');
+    const geolocation = (globalThis as { navigator?: { geolocation?: WebGeolocation } }).navigator?.geolocation;
+    if (Platform.OS !== 'web' || !geolocation) {
+      setSubmitting(false);
+      setStatusMessage('当前环境不支持自动定位，请手动输入地址。');
+      return;
+    }
+    geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setLocation({ lat, lng });
+        setAddressText(`当前位置（${lat.toFixed(5)}, ${lng.toFixed(5)}）`);
+        setStatusMessage(`已获取真实定位（${lat.toFixed(5)}, ${lng.toFixed(5)}），正在匹配附近美食。`);
+        void runQuery({ lat, lng });
+      },
+      (error) => {
+        setSubmitting(false);
+        setStatusMessage(
+          error.code === error.PERMISSION_DENIED ? '定位权限被拒绝，请手动输入地址。' : '定位失败，请手动输入地址。',
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    );
   }
 
   async function handleHistorySelect(item: FoodHistoryItem) {
@@ -309,13 +351,11 @@ export function FoodRecommendationScreen() {
       ) : showInput || !result ? (
         <InputHero
           colors={colors}
+          location={location}
           onAddressChange={setAddressText}
           onExamplePress={setAddressText}
           onStart={() => void runQuery()}
-          onUseLocation={() => {
-            setAddressText('成都市武侯区玉林西路 12 号');
-            setStatusMessage('已定位到玉林片区，确认地址后即可生成推荐。');
-          }}
+          onUseLocation={() => void requestCurrentLocation()}
           submitting={submitting}
           value={addressText}
         />
@@ -396,8 +436,10 @@ function InputHero({
   onUseLocation,
   submitting,
   value,
+  location,
 }: {
   colors: ReturnType<typeof useAppTheme>['colors'];
+  location: { lat: number; lng: number } | null;
   onAddressChange: (text: string) => void;
   onExamplePress: (text: string) => void;
   onStart: () => void;
@@ -417,9 +459,9 @@ function InputHero({
           <MaterialCommunityIcons name="map-marker-radius-outline" size={17} color={BLUE} />
         </View>
         <View style={styles.locationCopy}>
-          <ThemedText style={styles.locationTitle}>当前位置 · 玉林片区</ThemedText>
+          <ThemedText style={styles.locationTitle}>{location ? '当前位置已获取' : '当前位置未获取'}</ThemedText>
           <ThemedText style={[styles.locationMeta, { color: colors.mutedText }]}>
-            定位精度约 100m · 武侯区
+            {location ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}` : '点击重新定位获取真实坐标'}
           </ThemedText>
         </View>
         <Pressable accessibilityLabel="重新定位" accessibilityRole="button" onPress={onUseLocation} style={[styles.locationButton, { backgroundColor: colors.surfaceMuted }]}>

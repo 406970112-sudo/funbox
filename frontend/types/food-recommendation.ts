@@ -10,6 +10,8 @@ export type FoodRequest = {
   dietary?: string[];
   scenarios?: string[];
   previousQueryId?: string;
+  lat?: number;
+  lng?: number;
 };
 
 export type FoodImage = {

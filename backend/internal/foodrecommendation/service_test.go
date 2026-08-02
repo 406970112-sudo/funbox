@@ -2,6 +2,7 @@ package foodrecommendation
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"my-first-expo-app/backend/internal/config"
@@ -145,5 +146,46 @@ func TestQueryRejectsInvalidPriceRange(t *testing.T) {
 	}, "")
 	if err == nil {
 		t.Fatal("expected invalid price range error")
+	}
+}
+
+func TestQueryResolvesLocationFromCoordinates(t *testing.T) {
+	service := NewService(config.DeepSeekConfig{}, nil)
+	lat := 30.6409
+	lng := 104.0611
+	result, err := service.Query(context.Background(), Request{
+		Lat: &lat,
+		Lng: &lng,
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if result.City != "成都" {
+		t.Fatalf("expected Chengdu from coordinates, got %q", result.City)
+	}
+	if result.District != "武侯区" {
+		t.Fatalf("expected Wuhou district from coordinates, got %q", result.District)
+	}
+	if len(result.Items) == 0 {
+		t.Fatal("expected food recommendations for located coordinates")
+	}
+}
+
+func TestQueryReportsUncoveredCoordinates(t *testing.T) {
+	service := NewService(config.DeepSeekConfig{}, nil)
+	lat := 31.2304
+	lng := 121.4737
+	result, err := service.Query(context.Background(), Request{
+		Lat: &lat,
+		Lng: &lng,
+	}, "")
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	if len(result.Items) != 0 {
+		t.Fatalf("expected no recommendations for uncovered coordinates, got %d", len(result.Items))
+	}
+	if !strings.Contains(result.Summary, "暂未覆盖") {
+		t.Fatalf("expected uncovered message, got %q", result.Summary)
 	}
 }

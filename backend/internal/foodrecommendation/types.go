@@ -14,6 +14,8 @@ type Request struct {
 	Dietary         []string `json:"dietary,omitempty"`
 	Scenarios       []string `json:"scenarios,omitempty"`
 	PreviousQueryID string   `json:"previousQueryId,omitempty"`
+	Lat             *float64 `json:"lat,omitempty"`
+	Lng             *float64 `json:"lng,omitempty"`
 }
 
 type ImageInfo struct {

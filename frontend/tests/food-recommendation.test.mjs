@@ -29,6 +29,8 @@ test('buildFoodRequest maps address and preferences to API payload', () => {
     distanceMaxKm: 3,
     dietary: ['不吃内脏'],
     scenarios: ['朋友聚餐'],
+    lat: 30.6409,
+    lng: 104.0611,
   });
   assert.equal(request.city, '成都');
   assert.equal(request.district, '武侯区');
@@ -38,6 +40,8 @@ test('buildFoodRequest maps address and preferences to API payload', () => {
   assert.equal(request.distanceMaxKm, 3);
   assert.deepEqual(request.dietary, ['不吃内脏']);
   assert.deepEqual(request.scenarios, ['朋友聚餐']);
+  assert.equal(request.lat, 30.6409);
+  assert.equal(request.lng, 104.0611);
 });
 
 test('formatPrice and formatDistance render Chinese labels', () => {
