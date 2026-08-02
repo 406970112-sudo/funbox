@@ -33,6 +33,8 @@ import {
   getMarketRadarErrorMessage,
 } from '@/lib/market-radar-api';
 import { loadMarketRadarWatchIds, saveMarketRadarWatchIds } from '@/lib/market-radar-watch-storage';
+import { PageErrorState } from '@/shared/ui/page-error-state';
+import { PageLoadingFrame } from '@/shared/ui/page-loading-frame';
 import type {
   MarketCategoryId,
   MarketPeriodId,
@@ -213,44 +215,14 @@ export function MarketRadarScreen() {
   }
 
   if (!snapshot) {
-    const isDark = colorScheme === 'dark';
-    const pageSurface = isDark ? colors.surface : '#f8faff';
-    return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <View style={[styles.screenShell, { backgroundColor: pageSurface }]}>
-          <View style={styles.stateContainer}>
-            {isLoading ? (
-              <>
-                <ActivityIndicator color={BLUE} size="large" />
-                <ThemedText style={[styles.stateText, { color: colors.mutedText }]}>
-                  正在加载行情
-                </ThemedText>
-              </>
-            ) : (
-              <>
-                <MaterialCommunityIcons name="database-alert-outline" size={38} color={CORAL} />
-                <ThemedText style={styles.stateTitle}>行情加载失败</ThemedText>
-                <ThemedText style={[styles.stateText, { color: colors.mutedText }]}>
-                  {loadError}
-                </ThemedText>
-                <Pressable
-                  accessibilityLabel="重试加载市场雷达"
-                  accessibilityRole="button"
-                  onPress={retry}
-                  style={({ pressed }) => [
-                    styles.retryButton,
-                    { backgroundColor: BLUE },
-                    pressed && styles.pressed,
-                  ]}>
-                  <MaterialCommunityIcons name="refresh" size={18} color="#ffffff" />
-                  <ThemedText style={styles.retryButtonText}>重试</ThemedText>
-                </Pressable>
-              </>
-            )}
-          </View>
-        </View>
-      </SafeAreaView>
+    return isLoading ? (
+      <PageLoadingFrame stateLabel="正在加载行情" title="市场雷达" variant="panel" />
+    ) : (
+      <PageErrorState
+        message={loadError ?? undefined}
+        onRetry={retry}
+        title="市场雷达"
+      />
     );
   }
 

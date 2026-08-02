@@ -36,6 +36,7 @@
     "test:product-recommendation": "node --test --experimental-strip-types tests/product-recommendation.test.mjs",
     "test:food-recommendation": "node --test --experimental-strip-types tests/food-recommendation.test.mjs",
     "test:cooking-guide": "node --test --experimental-strip-types tests/cooking-guide.test.mjs",
+    "test:page-loading": "node --test --experimental-strip-types tests/page-load-state.test.mjs tests/real-data-cache.test.mjs",
     "test:ssq-lab": "node --test --experimental-strip-types tests/double-color-ball-lab.test.mjs",
     "test:ssq-lab-classic": "node --test --experimental-strip-types tests/double-color-ball-lab-classic.test.mjs"
   },

@@ -15,6 +15,7 @@ import { GameSocialProvider } from '@/features/games/game-social-provider';
 import { MomentsProvider } from '@/features/moments/moments-provider';
 import { SocialProvider } from '@/features/social/social-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppTheme } from '@/hooks/use-app-theme';
 import { installSafeRouterBack, trackBackContext } from '@/lib/router-back';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 
@@ -30,6 +31,7 @@ installSafeRouterBack();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const { colors } = useAppTheme();
   const pathname = usePathname();
   const [fontsLoaded, fontError] = useFonts({
     ...Ionicons.font,
@@ -91,7 +93,12 @@ export default function RootLayout() {
           <SocialProvider>
             <MomentsProvider>
               <GameSocialProvider>
-                <Stack screenOptions={{ headerShown: false }}>
+                <Stack
+                  screenOptions={{
+                    animation: 'slide_from_right',
+                    contentStyle: { backgroundColor: colors.background },
+                    headerShown: false,
+                  }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />

@@ -14,7 +14,7 @@ import { XiangqiGameScreen } from '@/features/games/xiangqi-game-screen';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { identityPresentation } from '@/lib/identity';
 import { getGameById, initialGameRoles } from '@/mocks/app-data';
-import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
+import { PageLoadingFrame } from '@/shared/ui/page-loading-frame';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
@@ -43,7 +43,7 @@ export function GameDetailScreen() {
   }, [gameId, gameIsAccessible, gameStatus]);
 
   if (accessStatus === 'loading') {
-    return <AppLoadingScreen />;
+    return <PageLoadingFrame title={game?.name ?? '游戏'} variant="immersive" />;
   }
 
   if (game && !gameIsAccessible) {

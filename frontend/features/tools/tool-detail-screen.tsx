@@ -37,7 +37,7 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { PageHeader } from '@/shared/ui/page-header';
 import { SurfaceCard } from '@/shared/ui/surface-card';
-import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
+import { PageLoadingFrame } from '@/shared/ui/page-loading-frame';
 import { recordStoredRecentUsage } from '@/lib/recent-usage-storage';
 import { recordStoredToolUsage } from '@/lib/tool-usage-storage';
 import type { ToolId } from '@/types/app';
@@ -74,7 +74,7 @@ export function ToolDetailScreen() {
   }, [toolId, toolIsAccessible, toolStatus]);
 
   if (status === 'loading') {
-    return <AppLoadingScreen />;
+    return <PageLoadingFrame title={tool?.name ?? '功能'} variant="workbench" />;
   }
 
   if (tool && !canAccessTool(tool.id)) {

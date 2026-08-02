@@ -1,0 +1,2013 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 页面加载体验产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #24b36b;
+        --green-soft: #e5f7ee;
+        --amber: #f1a33b;
+        --canvas: #eef4ff;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+        --dark: #101426;
+        --dark-screen: #0f1317;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 3360px;
+        padding: 28px 34px 34px;
+        width: 1740px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark svg {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--green);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        box-shadow: 0 12px 28px rgba(58, 86, 152, 0.1);
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage-title {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin: 4px 2px 14px;
+      }
+
+      .stage-title .st-index {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 30px;
+        font-size: 12px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .stage-title h2 {
+        font-size: 17px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .stage-title p {
+        color: var(--muted);
+        font-size: 11px;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 26px;
+      }
+
+      .stage.two {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .stage.three {
+        grid-template-columns: 1fr 1fr 400px;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 42px;
+        box-shadow: 0 26px 52px rgba(21, 27, 59, 0.24);
+        height: 1080px;
+        padding: 11px;
+        position: relative;
+        width: 424px;
+      }
+
+      .phone-screen {
+        background: var(--screen);
+        border-radius: 32px;
+        height: 1058px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .phone-screen.dark {
+        background: var(--dark-screen);
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 42px;
+        justify-content: space-between;
+        padding: 0 26px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 9px;
+        transform: translateX(-50%);
+        width: 96px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-body {
+        height: 1016px;
+        padding: 4px 16px 0;
+        position: relative;
+      }
+
+      .top-bar {
+        align-items: center;
+        display: flex;
+        height: 48px;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .top-bar .brand-left {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .brand-mark-sm {
+        align-items: center;
+        background: #18211f;
+        border-radius: 12px;
+        color: #ffffff;
+        display: flex;
+        height: 40px;
+        justify-content: center;
+        width: 40px;
+      }
+
+      .brand-mark-sm svg {
+        height: 22px;
+        stroke-width: 2.3;
+        width: 22px;
+      }
+
+      .brand-name {
+        font-family: Georgia, serif;
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 25px;
+      }
+
+      .brand-sub {
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 14px;
+        margin-top: 1px;
+      }
+
+      .count {
+        color: #66758a;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .search-shell {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 8px;
+        height: 42px;
+        padding: 0 12px;
+      }
+
+      .search-shell svg {
+        color: #7f8ca6;
+        flex: 0 0 18px;
+        height: 18px;
+        width: 18px;
+      }
+
+      .search-placeholder {
+        color: #9aa5ba;
+        flex: 1;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .rec-card {
+        background: #123a33;
+        border-radius: 18px;
+        color: #ffffff;
+        display: flex;
+        justify-content: space-between;
+        margin-top: 14px;
+        overflow: hidden;
+        padding: 13px 14px;
+        position: relative;
+      }
+
+      .rec-card::after {
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        content: "";
+        inset: 8px;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      .rec-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .rec-eyebrow {
+        color: var(--lime);
+        font-size: 10px;
+        font-weight: 900;
+        margin-bottom: 3px;
+      }
+
+      .rec-title {
+        font-size: 15px;
+        font-weight: 900;
+        line-height: 21px;
+      }
+
+      .rec-desc {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 10px;
+        line-height: 15px;
+        margin-top: 3px;
+      }
+
+      .rec-cta {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.14);
+        border: 1px solid rgba(201, 243, 106, 0.4);
+        border-radius: 999px;
+        color: var(--lime);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 4px;
+        margin-top: 8px;
+        padding: 5px 9px;
+        width: fit-content;
+      }
+
+      .rec-cta svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .rec-art {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        justify-content: center;
+        width: 70px;
+      }
+
+      .rec-art svg {
+        height: 56px;
+        stroke-width: 1.5;
+        width: 56px;
+      }
+
+      .section {
+        margin-top: 16px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 9px;
+      }
+
+      .section-title {
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .section-action {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 2px;
+      }
+
+      .section-action svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .recent-row {
+        display: flex;
+        gap: 9px;
+      }
+
+      .recent-tile {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        flex: 1;
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .tile-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        flex: 0 0 32px;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .tile-icon svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .tile-copy strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 15px;
+      }
+
+      .tile-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        line-height: 13px;
+        margin-top: 1px;
+      }
+
+      .tool-grid {
+        display: grid;
+        gap: 9px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .tool-tile {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        justify-content: center;
+        min-height: 92px;
+        padding: 9px 6px;
+        position: relative;
+      }
+
+      .tool-tile .tool-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .tool-tile .tool-icon svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .tool-tile span {
+        font-size: 9.5px;
+        font-weight: 800;
+        line-height: 14px;
+        padding: 0 2px;
+        text-align: center;
+      }
+
+      .tool-tile.hot {
+        border: 2px solid var(--blue);
+        box-shadow: 0 0 0 3px rgba(75, 107, 255, 0.16);
+      }
+
+      .tool-tile.hot::after {
+        background: var(--blue);
+        border-radius: 999px;
+        color: #ffffff;
+        content: "即将点击";
+        font-size: 8px;
+        font-weight: 900;
+        padding: 2px 6px;
+        position: absolute;
+        right: -6px;
+        top: -6px;
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: var(--white);
+        border-top: 1px solid var(--line);
+        bottom: 0;
+        display: flex;
+        height: 70px;
+        justify-content: space-around;
+        left: 0;
+        padding: 8px 12px 10px;
+        position: absolute;
+        right: 0;
+      }
+
+      .nav-item {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 3px;
+        width: 64px;
+      }
+
+      .nav-item svg {
+        height: 22px;
+        width: 22px;
+      }
+
+      .nav-item.active {
+        color: var(--blue);
+      }
+
+      .nav-item.active svg {
+        fill: var(--blue-soft);
+        stroke-width: 2.4;
+      }
+
+      .callout {
+        background: rgba(75, 107, 255, 0.08);
+        border: 1px solid rgba(75, 107, 255, 0.22);
+        border-radius: 10px;
+        color: #3d55c8;
+        font-size: 9.5px;
+        font-weight: 800;
+        left: 50%;
+        line-height: 1.55;
+        padding: 8px 10px;
+        position: absolute;
+        top: 214px;
+        transform: translateX(-50%);
+        width: 300px;
+        z-index: 30;
+      }
+
+      /* Transition phone */
+      .ghost-home {
+        background: var(--canvas);
+        height: 100%;
+        left: -30px;
+        opacity: 0.4;
+        padding: 4px 16px 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        transform: scale(0.97);
+      }
+
+      .ghost-home .ghost-brand {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin: 14px 0 12px;
+      }
+
+      .ghost-home .ghost-mark {
+        background: #18211f;
+        border-radius: 11px;
+        color: #ffffff;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .ghost-home .ghost-mark svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .ghost-line {
+        background: #d6e0f2;
+        border-radius: 5px;
+        height: 11px;
+        margin: 9px 0;
+      }
+
+      .ghost-line.short {
+        width: 46%;
+      }
+
+      .ghost-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 14px;
+      }
+
+      .ghost-tile {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        height: 78px;
+      }
+
+      .incoming-page {
+        background: var(--canvas);
+        bottom: 0;
+        left: 38px;
+        position: absolute;
+        right: 0;
+        top: 0;
+        transform: translateX(24px);
+        z-index: 10;
+      }
+
+      .page-header {
+        align-items: center;
+        display: flex;
+        height: 50px;
+        margin-bottom: 2px;
+      }
+
+      .page-header .back {
+        align-items: center;
+        color: var(--ink);
+        display: flex;
+        height: 36px;
+        justify-content: center;
+        margin-left: -8px;
+        width: 36px;
+      }
+
+      .page-header .back svg {
+        height: 22px;
+        width: 22px;
+      }
+
+      .page-title {
+        flex: 1;
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 22px;
+      }
+
+      .page-state {
+        color: var(--muted);
+        font-size: 9.5px;
+        font-weight: 800;
+      }
+
+      .progress-track {
+        background: var(--blue-soft);
+        border-radius: 2px;
+        height: 2px;
+        margin: 4px 0 12px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .progress-value {
+        background: var(--blue);
+        border-radius: 2px;
+        height: 100%;
+        position: absolute;
+      }
+
+      .progress-value.p18 {
+        width: 18%;
+      }
+
+      .progress-value.p44 {
+        width: 44%;
+      }
+
+      .progress-value.p62 {
+        width: 62%;
+      }
+
+      .progress-value.p71 {
+        width: 71%;
+      }
+
+      .progress-value.p38 {
+        width: 38%;
+      }
+
+      .sk {
+        background: #dfe7f6;
+        border-radius: 6px;
+      }
+
+      .sk-line {
+        height: 10px;
+      }
+
+      .sk-line.long {
+        width: 88%;
+      }
+
+      .sk-line.mid {
+        width: 64%;
+      }
+
+      .sk-line.short {
+        width: 38%;
+      }
+
+      .sk-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 13px;
+      }
+
+      .brief-sk {
+        background: var(--navy);
+        border-radius: 16px;
+        padding: 15px;
+      }
+
+      .brief-sk .sk-icon {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.14);
+        border-radius: 9px;
+        color: var(--lime);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .brief-sk .sk-icon svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .brief-sk .sk-dark {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .brief-sk .sk-dark.short {
+        width: 30%;
+      }
+
+      .brief-sk .sk-dark.long {
+        width: 82%;
+      }
+
+      .list-row {
+        align-items: center;
+        background: var(--white);
+        border-bottom: 1px solid #edf1fa;
+        display: flex;
+        gap: 11px;
+        padding: 14px 2px;
+      }
+
+      .list-row .thumb {
+        border-radius: 6px;
+        flex: 0 0 76px;
+        height: 64px;
+      }
+
+      .list-row .row-copy {
+        flex: 1;
+        gap: 8px;
+      }
+
+      .list-row .row-copy .sk-line {
+        margin-bottom: 8px;
+      }
+
+      .sk-row {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        gap: 9px;
+        padding: 11px;
+      }
+
+      .sk-row .sk-icon {
+        border-radius: 9px;
+        flex: 0 0 32px;
+        height: 32px;
+      }
+
+      .sk-row .sk-copy {
+        flex: 1;
+        gap: 7px;
+      }
+
+      .sk-row .sk-line {
+        height: 8px;
+      }
+
+      .sk-setting {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        padding: 11px 12px;
+      }
+
+      .sk-setting .sk-icon {
+        border-radius: 10px;
+        flex: 0 0 36px;
+        height: 36px;
+      }
+
+      .sk-setting .sk-copy {
+        flex: 1;
+        gap: 7px;
+      }
+
+      .sk-btn {
+        border-radius: 12px;
+        height: 46px;
+        margin-top: 10px;
+      }
+
+      .sk-form {
+        border-radius: 12px;
+        height: 46px;
+      }
+
+      .indicator-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 12px;
+      }
+
+      .indicator {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        height: 64px;
+        padding: 10px;
+      }
+
+      .indicator .sk-line {
+        height: 8px;
+        margin-bottom: 8px;
+      }
+
+      .indicator .sk-line.short {
+        width: 55%;
+      }
+
+      .chart-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 13px;
+      }
+
+      .chart-bars {
+        align-items: flex-end;
+        display: flex;
+        gap: 9px;
+        height: 118px;
+        margin-top: 12px;
+        padding: 0 4px;
+      }
+
+      .chart-bars i {
+        background: #e2e9f7;
+        border-radius: 5px 5px 2px 2px;
+        flex: 1;
+      }
+
+      .chart-bars i:nth-child(1) { height: 38%; }
+      .chart-bars i:nth-child(2) { height: 56%; }
+      .chart-bars i:nth-child(3) { height: 46%; }
+      .chart-bars i:nth-child(4) { height: 78%; }
+      .chart-bars i:nth-child(5) { height: 62%; }
+      .chart-bars i:nth-child(6) { height: 88%; }
+      .chart-bars i:nth-child(7) { height: 72%; }
+      .chart-bars i:nth-child(8) { height: 96%; }
+      .chart-bars i:nth-child(9) { height: 52%; }
+
+      .game-stage {
+        background: #101426;
+        border-radius: 16px;
+        height: 420px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .game-stage .grid-lines {
+        background-image:
+          linear-gradient(rgba(201, 243, 106, 0.12) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(201, 243, 106, 0.12) 1px, transparent 1px);
+        background-size: 34px 34px;
+        inset: 0;
+        position: absolute;
+      }
+
+      .game-stage .stage-chip {
+        align-items: center;
+        background: rgba(16, 20, 38, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        color: rgba(255, 255, 255, 0.82);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+        left: 50%;
+        padding: 6px 10px;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .game-stage .stage-chip svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .game-hud {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .hud-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        flex: 1;
+        height: 52px;
+        padding: 9px;
+      }
+
+      .hud-card .sk-line {
+        height: 7px;
+        margin-bottom: 7px;
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .control-btn {
+        background: #e4eaf7;
+        border-radius: 12px;
+        flex: 1;
+        height: 52px;
+      }
+
+      .control-btn.wide {
+        flex: 1.5;
+      }
+
+      /* Error state */
+      .error-card {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid #f3d2d9;
+        border-radius: 18px;
+        margin-top: 34px;
+        padding: 30px 22px;
+      }
+
+      .error-icon {
+        align-items: center;
+        background: #fff0f4;
+        border-radius: 50%;
+        color: #d6455d;
+        display: flex;
+        height: 62px;
+        justify-content: center;
+        width: 62px;
+      }
+
+      .error-icon svg {
+        height: 30px;
+        width: 30px;
+      }
+
+      .error-card h3 {
+        font-size: 18px;
+        font-weight: 900;
+        margin: 16px 0 6px;
+      }
+
+      .error-card p {
+        color: var(--muted);
+        font-size: 11.5px;
+        line-height: 18px;
+        margin: 0;
+        text-align: center;
+      }
+
+      .error-card .error-reason {
+        background: #fff7f8;
+        border: 1px solid #f6dfe4;
+        border-radius: 9px;
+        color: #b14a5e;
+        font-size: 10px;
+        font-weight: 800;
+        margin-top: 12px;
+        padding: 7px 10px;
+      }
+
+      .error-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .primary-btn {
+        align-items: center;
+        background: var(--blue);
+        border-radius: 12px;
+        color: #ffffff;
+        display: flex;
+        flex: 1.2;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+        height: 46px;
+        justify-content: center;
+      }
+
+      .primary-btn svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .ghost-btn {
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: var(--ink);
+        display: flex;
+        flex: 1;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 5px;
+        height: 46px;
+        justify-content: center;
+      }
+
+      .ghost-btn svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .honesty-chip {
+        align-items: center;
+        background: #f7f9ff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+        justify-content: center;
+        margin: 16px auto 0;
+        padding: 7px 11px;
+        width: fit-content;
+      }
+
+      .honesty-chip svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      /* Dark empty state */
+      .dark-empty .page-header .back {
+        color: #f5efe7;
+      }
+
+      .dark-empty .page-title {
+        color: #f5efe7;
+      }
+
+      .dark-empty .page-state {
+        color: #9eacb9;
+      }
+
+      .dark-empty .progress-track {
+        background: #17314a;
+      }
+
+      .empty-card {
+        align-items: center;
+        background: #151b20;
+        border: 1px solid #29323b;
+        border-radius: 18px;
+        margin-top: 34px;
+        padding: 32px 22px;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: #17314a;
+        border-radius: 50%;
+        color: #8ec1f3;
+        display: flex;
+        height: 62px;
+        justify-content: center;
+        width: 62px;
+      }
+
+      .empty-icon svg {
+        height: 30px;
+        width: 30px;
+      }
+
+      .empty-card h3 {
+        color: #f5efe7;
+        font-size: 18px;
+        font-weight: 900;
+        margin: 16px 0 6px;
+      }
+
+      .empty-card p {
+        color: #9eacb9;
+        font-size: 11.5px;
+        line-height: 18px;
+        margin: 0;
+        text-align: center;
+      }
+
+      .empty-action {
+        align-items: center;
+        background: #0f1823;
+        border-radius: 12px;
+        color: #c9f36a;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+        height: 46px;
+        justify-content: center;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .empty-action svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .dark-nav {
+        background: #11171c;
+        border-top: 1px solid #29323b;
+      }
+
+      .dark-nav .nav-item {
+        color: #81909b;
+      }
+
+      .dark-nav .nav-item.active {
+        color: #8ec1f3;
+      }
+
+      .dark-nav .nav-item.active svg {
+        fill: #17314a;
+      }
+
+      /* Strategy card */
+      .strategy-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        height: 1058px;
+        overflow: hidden;
+        padding: 22px;
+      }
+
+      .strategy-card h3 {
+        align-items: center;
+        display: flex;
+        font-size: 15px;
+        font-weight: 900;
+        gap: 8px;
+        margin: 0 0 12px;
+      }
+
+      .strategy-card h3 svg {
+        color: var(--blue);
+        height: 18px;
+        width: 18px;
+      }
+
+      .strategy-card .rule {
+        border-top: 1px solid #edf1fa;
+        margin-top: 12px;
+        padding-top: 12px;
+      }
+
+      .strategy-card .rule:first-of-type {
+        border-top: 0;
+        margin-top: 0;
+        padding-top: 0;
+      }
+
+      .strategy-card .rule strong {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        gap: 7px;
+      }
+
+      .strategy-card .rule strong .dot {
+        background: var(--blue);
+        border-radius: 4px;
+        height: 8px;
+        width: 8px;
+      }
+
+      .strategy-card .rule p {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 18px;
+        margin: 7px 0 0;
+      }
+
+      .strategy-card .template-list {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, 1fr);
+        margin-top: 10px;
+      }
+
+      .template-chip {
+        background: #f3f7ff;
+        border: 1px solid #e0e8fa;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 900;
+        padding: 9px 8px;
+        text-align: center;
+      }
+
+      .template-chip.blue {
+        background: var(--blue-soft);
+        border-color: #ccd8ff;
+        color: #3d55c8;
+      }
+
+      .strategy-note {
+        background: #f7f9ff;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: #4d5870;
+        font-size: 10.5px;
+        line-height: 17px;
+        margin-top: 14px;
+        padding: 11px 12px;
+      }
+
+      .strategy-note strong {
+        color: var(--ink);
+      }
+
+      .footer-note {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        color: #5d6a85;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        line-height: 1.7;
+        padding: 11px 14px;
+      }
+
+      .footer-note svg {
+        color: var(--green);
+        flex: 0 0 16px;
+        height: 16px;
+        width: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="zap"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox 页面加载体验</h1>
+            <p class="brand-subtitle">从首页点击到真实内容可见，全程有反馈，永不白屏</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>产品设计 V1</strong>
+          2026-08-02 · 待评审
+        </div>
+      </header>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="layers"></i></div>
+          <div>
+            <strong>五态体验模型</strong>
+            <p>打开中、加载中、内容、错误、空数据五态统一，任意时刻不出现纯白区域。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="database"></i></div>
+          <div>
+            <strong>真实数据保障</strong>
+            <p>标题来自真实注册表，内容只来自真实接口与本地存储；失败与空态不补假数据。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="package-check"></i></div>
+          <div>
+            <strong>一期完整交付</strong>
+            <p>转场、骨架、淡入、错误空态、缓存与巡检一次完成，不分期。</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="stage-title">
+        <span class="st-index">01</span>
+        <h2>进入路径</h2>
+        <p>点击反馈 → 转场首帧 → 列表类加载骨架</p>
+      </div>
+      <section class="stage">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="top-bar">
+                  <div class="brand-left">
+                    <div class="brand-mark-sm"><i data-lucide="box"></i></div>
+                    <div>
+                      <div class="brand-name">FunBox</div>
+                      <div class="brand-sub">工具与游戏，随手即用</div>
+                    </div>
+                  </div>
+                  <div class="count">21 个工具 · 5 款游戏</div>
+                </div>
+                <div class="search-shell">
+                  <i data-lucide="search"></i>
+                  <span class="search-placeholder">搜索工具、游戏或场景</span>
+                </div>
+                <div class="rec-card">
+                  <div class="rec-copy">
+                    <div class="rec-eyebrow">今日推荐</div>
+                    <div class="rec-title">先记清每一分<br />散场再结算</div>
+                    <div class="rec-desc">多人各自报分，全员确认后才计入总账。</div>
+                    <div class="rec-cta">查看牌局 <i data-lucide="arrow-right"></i></div>
+                  </div>
+                  <div class="rec-art"><i data-lucide="credit-card"></i></div>
+                </div>
+                <div class="section">
+                  <div class="section-head">
+                    <span class="section-title">最近使用</span>
+                    <span class="section-action">查看全部 <i data-lucide="chevron-right"></i></span>
+                  </div>
+                  <div class="recent-row">
+                    <div class="recent-tile">
+                      <div class="tile-icon" style="background: rgba(239,107,74,0.12); color: #ef6b4a;"><i data-lucide="credit-card"></i></div>
+                      <div class="tile-copy"><strong>打牌记分</strong><span>刚刚</span></div>
+                    </div>
+                    <div class="recent-tile">
+                      <div class="tile-icon" style="background: rgba(75,107,255,0.12); color: #4b6bff;"><i data-lucide="newspaper"></i></div>
+                      <div class="tile-copy"><strong>热点速览</strong><span>2 小时前</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="section">
+                  <div class="section-head">
+                    <span class="section-title">全部工具</span>
+                    <span class="section-action">21 个工具 <i data-lucide="chevron-right"></i></span>
+                  </div>
+                  <div class="tool-grid">
+                    <div class="tool-tile hot">
+                      <div class="tool-icon" style="background: rgba(75,107,255,0.12); color: #4b6bff;"><i data-lucide="newspaper"></i></div>
+                      <span>热点速览</span>
+                    </div>
+                    <div class="tool-tile">
+                      <div class="tool-icon" style="background: rgba(139,92,246,0.12); color: #8b5cf6;"><i data-lucide="mail"></i></div>
+                      <span>发版邮件助手</span>
+                    </div>
+                    <div class="tool-tile">
+                      <div class="tool-icon" style="background: rgba(75,107,255,0.12); color: #4b6bff;"><i data-lucide="orbit"></i></div>
+                      <span>AI 导航</span>
+                    </div>
+                    <div class="tool-tile">
+                      <div class="tool-icon" style="background: rgba(75,107,255,0.12); color: #4b6bff;"><i data-lucide="chart-line"></i></div>
+                      <span>市场雷达</span>
+                    </div>
+                    <div class="tool-tile">
+                      <div class="tool-icon" style="background: rgba(232,93,74,0.12); color: #e85d4a;"><i data-lucide="book-open"></i></div>
+                      <span>免费阅读</span>
+                    </div>
+                    <div class="tool-tile">
+                      <div class="tool-icon" style="background: rgba(75,107,255,0.12); color: #4b6bff;"><i data-lucide="folder-search"></i></div>
+                      <span>资源搜索</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <div class="nav-item active"><i data-lucide="home"></i>首页</div>
+                <div class="nav-item"><i data-lucide="layout-grid"></i>工具</div>
+                <div class="nav-item"><i data-lucide="message-square"></i>消息</div>
+                <div class="nav-item"><i data-lucide="user"></i>我的</div>
+              </div>
+              <div class="callout">首页真实卡片按下即反馈：按压态 + 轻触震动，同时预取目标路由</div>
+            </div>
+          </div>
+          <p class="phone-label"><b>01 首页点击前</b> · 真实工具入口高亮 + 按压反馈</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="ghost-home">
+                <div class="ghost-brand">
+                  <div class="ghost-mark"><i data-lucide="box"></i></div>
+                  <div style="flex:1;">
+                    <div class="ghost-line" style="width:42%; height:9px;"></div>
+                    <div class="ghost-line short" style="margin-top:6px; height:7px;"></div>
+                  </div>
+                </div>
+                <div class="ghost-line" style="height:26px; border-radius:10px;"></div>
+                <div class="ghost-line" style="height:64px; border-radius:14px; background:#123a33;"></div>
+                <div class="ghost-grid">
+                  <div class="ghost-tile"></div>
+                  <div class="ghost-tile"></div>
+                  <div class="ghost-tile"></div>
+                  <div class="ghost-tile"></div>
+                  <div class="ghost-tile"></div>
+                  <div class="ghost-tile"></div>
+                </div>
+              </div>
+              <div class="incoming-page">
+                <div class="screen-body">
+                  <div class="page-header">
+                    <span class="back"><i data-lucide="arrow-left"></i></span>
+                    <span class="page-title">热点速览</span>
+                    <span class="page-state">正在打开</span>
+                  </div>
+                  <div class="progress-track"><div class="progress-value p18"></div></div>
+                  <div class="brief-sk">
+                    <div class="sk-icon"><i data-lucide="newspaper"></i></div>
+                    <div class="sk sk-dark short" style="height:10px; margin-top:13px;"></div>
+                    <div class="sk sk-dark long" style="height:14px; margin-top:8px;"></div>
+                    <div class="sk sk-dark mid" style="height:9px; margin-top:8px;"></div>
+                  </div>
+                  <div class="section">
+                    <div class="sk sk-line long"></div>
+                    <div class="list-row">
+                      <div class="thumb sk"></div>
+                      <div class="row-copy">
+                        <div class="sk sk-line long"></div>
+                        <div class="sk sk-line mid"></div>
+                        <div class="sk sk-line short"></div>
+                      </div>
+                    </div>
+                    <div class="list-row">
+                      <div class="thumb sk"></div>
+                      <div class="row-copy">
+                        <div class="sk sk-line long"></div>
+                        <div class="sk sk-line mid"></div>
+                        <div class="sk sk-line short"></div>
+                      </div>
+                    </div>
+                    <div class="list-row">
+                      <div class="thumb sk"></div>
+                      <div class="row-copy">
+                        <div class="sk sk-line long"></div>
+                        <div class="sk sk-line mid"></div>
+                        <div class="sk sk-line short"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="callout" style="top:248px;">转场首帧：页面容器背景 + 真实标题 + 骨架同时出现，杜绝白屏</div>
+            </div>
+          </div>
+          <p class="phone-label"><b>02 点击瞬间</b> · 旧页左滑，新页带标题与进度进入</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="page-header">
+                  <span class="back"><i data-lucide="arrow-left"></i></span>
+                  <span class="page-title">热点速览</span>
+                  <span class="page-state">加载中 · 62%</span>
+                </div>
+                <div class="progress-track"><div class="progress-value p62"></div></div>
+                <div class="brief-sk">
+                  <div class="sk-icon"><i data-lucide="newspaper"></i></div>
+                  <div class="sk sk-dark short" style="height:10px; margin-top:13px;"></div>
+                  <div class="sk sk-dark long" style="height:14px; margin-top:8px;"></div>
+                  <div class="sk sk-dark mid" style="height:9px; margin-top:8px;"></div>
+                </div>
+                <div class="section">
+                  <div class="sk sk-line long"></div>
+                  <div class="list-row">
+                    <div class="thumb sk"></div>
+                    <div class="row-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                      <div class="sk sk-line short"></div>
+                    </div>
+                  </div>
+                  <div class="list-row">
+                    <div class="thumb sk"></div>
+                    <div class="row-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                      <div class="sk sk-line short"></div>
+                    </div>
+                  </div>
+                  <div class="list-row">
+                    <div class="thumb sk"></div>
+                    <div class="row-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                      <div class="sk sk-line short"></div>
+                    </div>
+                  </div>
+                  <div class="list-row">
+                    <div class="thumb sk"></div>
+                    <div class="row-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                      <div class="sk sk-line short"></div>
+                    </div>
+                  </div>
+                  <div class="list-row">
+                    <div class="thumb sk"></div>
+                    <div class="row-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                      <div class="sk sk-line short"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="callout" style="top:224px;">列表类骨架：摘要卡 + 真实列表行结构，只表达结构，不渲染假内容</div>
+            </div>
+          </div>
+          <p class="phone-label"><b>03 列表类加载</b> · 热点速览真实数据加载中</p>
+        </div>
+      </section>
+
+      <div class="stage-title">
+        <span class="st-index">02</span>
+        <h2>四类骨架模板</h2>
+        <p>工作台、数据面板、沉浸页与真实缓存二次进入</p>
+      </div>
+      <section class="stage two">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="page-header">
+                  <span class="back"><i data-lucide="arrow-left"></i></span>
+                  <span class="page-title">打牌记分</span>
+                  <span class="page-state">打开工作台</span>
+                </div>
+                <div class="progress-track"><div class="progress-value p44"></div></div>
+                <div class="sk-card">
+                  <div class="sk sk-line long" style="height:12px;"></div>
+                  <div class="sk sk-line short" style="margin-top:8px;"></div>
+                </div>
+                <div class="sk-card" style="margin-top:12px;">
+                  <div class="sk-row sk-setting">
+                    <div class="sk sk-icon"></div>
+                    <div class="sk-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                    </div>
+                  </div>
+                  <div class="sk-row sk-setting" style="border-top:1px solid #edf1fa; border-radius:0;">
+                    <div class="sk sk-icon"></div>
+                    <div class="sk-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                    </div>
+                  </div>
+                  <div class="sk-row sk-setting" style="border-top:1px solid #edf1fa; border-radius:0;">
+                    <div class="sk sk-icon"></div>
+                    <div class="sk-copy">
+                      <div class="sk sk-line long"></div>
+                      <div class="sk sk-line mid"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="sk-card" style="margin-top:12px;">
+                  <div class="sk sk-form"></div>
+                </div>
+                <div class="sk-btn"></div>
+              </div>
+              <div class="callout" style="top:238px;">工作台骨架：设置卡 + 表单行 + 主按钮，结构与真实页面一致</div>
+            </div>
+          </div>
+          <p class="phone-label"><b>04 工作台类</b> · 打牌记分真实房间数据加载中</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="page-header">
+                  <span class="back"><i data-lucide="arrow-left"></i></span>
+                  <span class="page-title">市场雷达</span>
+                  <span class="page-state">加载快照 · 71%</span>
+                </div>
+                <div class="progress-track"><div class="progress-value p71"></div></div>
+                <div class="sk-card">
+                  <div class="sk sk-line long" style="height:12px;"></div>
+                  <div class="sk sk-line mid" style="margin-top:8px;"></div>
+                  <div class="sk sk-line short" style="margin-top:8px;"></div>
+                </div>
+                <div class="indicator-grid">
+                  <div class="indicator"><div class="sk sk-line long"></div><div class="sk sk-line short"></div></div>
+                  <div class="indicator"><div class="sk sk-line long"></div><div class="sk sk-line short"></div></div>
+                  <div class="indicator"><div class="sk sk-line long"></div><div class="sk sk-line short"></div></div>
+                </div>
+                <div class="chart-card">
+                  <div class="sk sk-line long" style="height:10px;"></div>
+                  <div class="sk sk-line short" style="margin-top:8px;"></div>
+                  <div class="chart-bars">
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                  </div>
+                </div>
+              </div>
+              <div class="callout" style="top:250px;">数据面板骨架：摘要 + 指标块 + 图表块，等待真实行情快照</div>
+            </div>
+          </div>
+          <p class="phone-label"><b>05 数据面板类</b> · 市场雷达真实行情加载中</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="page-header">
+                  <span class="back"><i data-lucide="arrow-left"></i></span>
+                  <span class="page-title">贪吃蛇大作战</span>
+                  <span class="page-state">准备游戏</span>
+                </div>
+                <div class="progress-track"><div class="progress-value p38"></div></div>
+                <div class="game-stage">
+                  <div class="grid-lines"></div>
+                  <div class="stage-chip"><i data-lucide="gamepad-2"></i>正在加载游戏引擎</div>
+                </div>
+                <div class="game-hud">
+                  <div class="hud-card"><div class="sk sk-line long"></div><div class="sk sk-line short"></div></div>
+                  <div class="hud-card"><div class="sk sk-line long"></div><div class="sk sk-line short"></div></div>
+                  <div class="hud-card"><div class="sk sk-line long"></div><div class="sk sk-line short"></div></div>
+                </div>
+                <div class="game-controls">
+                  <div class="control-btn wide"></div>
+                  <div class="control-btn"></div>
+                  <div class="control-btn"></div>
+                </div>
+              </div>
+              <div class="callout" style="top:236px;">沉浸骨架：主画面块 + 记分 HUD + 操作条，引擎就绪后淡入</div>
+            </div>
+          </div>
+          <p class="phone-label"><b>06 沉浸类</b> · 贪吃蛇大作战引擎加载中</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="page-header">
+                  <span class="back"><i data-lucide="arrow-left"></i></span>
+                  <span class="page-title">热点速览</span>
+                  <span class="page-state">缓存内容 · 刚刚更新</span>
+                </div>
+                <div class="brief-sk" style="background:#123a33;">
+                  <div class="sk-icon"><i data-lucide="newspaper"></i></div>
+                  <div class="sk sk-dark short" style="height:10px; margin-top:13px;"></div>
+                  <div class="sk sk-dark long" style="height:14px; margin-top:8px;"></div>
+                  <div class="sk sk-dark mid" style="height:9px; margin-top:8px;"></div>
+                </div>
+                <div class="section">
+                  <div class="section-head">
+                    <span class="section-title">每日简报</span>
+                    <span class="section-action">14:07 更新</span>
+                  </div>
+                  <div class="sk-card">
+                    <div class="sk sk-line long" style="height:10px;"></div>
+                    <div class="sk sk-line mid" style="margin-top:8px;"></div>
+                    <div class="sk sk-line short" style="margin-top:8px;"></div>
+                  </div>
+                  <div class="sk-card" style="margin-top:10px;">
+                    <div class="sk sk-line long" style="height:10px;"></div>
+                    <div class="sk sk-line mid" style="margin-top:8px;"></div>
+                    <div class="sk sk-line short" style="margin-top:8px;"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="callout" style="top:250px;">真实缓存二次进入：直接展示缓存内容与更新时间，后台刷新，不出现白屏</div>
+            </div>
+          </div>
+          <p class="phone-label"><b>07 真实缓存</b> · 热点速览二次进入秒开</p>
+        </div>
+      </section>
+
+      <div class="stage-title">
+        <span class="st-index">03</span>
+        <h2>错误与空数据</h2>
+        <p>失败可恢复，空态真实，不补假数据</p>
+      </div>
+      <section class="stage three">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="page-header">
+                  <span class="back"><i data-lucide="arrow-left"></i></span>
+                  <span class="page-title">市场雷达</span>
+                  <span class="page-state">加载失败</span>
+                </div>
+                <div class="progress-track" style="background:#f6dfe4;"><div class="progress-value" style="background:#d6455d; width:100%;"></div></div>
+                <div class="error-card">
+                  <div class="error-icon"><i data-lucide="alert-circle"></i></div>
+                  <h3>加载失败</h3>
+                  <p>行情数据暂时没有取到，请检查网络后重试。</p>
+                  <div class="error-reason">上游行情接口响应超时（8s）</div>
+                  <div class="error-actions">
+                    <div class="primary-btn"><i data-lucide="refresh-cw"></i>重试</div>
+                    <div class="ghost-btn"><i data-lucide="home"></i>返回首页</div>
+                  </div>
+                </div>
+                <div class="honesty-chip"><i data-lucide="database"></i>缓存无可用快照 · 不显示假数据</div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>08 错误态</b> · 真实失败原因 + 重试 + 返回首页</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen dark">
+              <div class="status-row" style="color:#f5efe7;">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-body dark-empty">
+                <div class="page-header">
+                  <span class="back"><i data-lucide="arrow-left"></i></span>
+                  <span class="page-title">朋友圈</span>
+                  <span class="page-state">暂无内容</span>
+                </div>
+                <div class="progress-track"></div>
+                <div class="empty-card">
+                  <div class="empty-icon"><i data-lucide="images"></i></div>
+                  <h3>暂无动态</h3>
+                  <p>还没有发布过动态，快去分享第一条吧。</p>
+                  <div class="empty-action"><i data-lucide="plus"></i>去发布</div>
+                </div>
+                <div class="honesty-chip" style="background:#151b20; border-color:#29323b; color:#9eacb9;"><i data-lucide="database"></i>真实空数据 · 不补假内容</div>
+              </div>
+              <div class="bottom-nav dark-nav">
+                <div class="nav-item active"><i data-lucide="home"></i>首页</div>
+                <div class="nav-item"><i data-lucide="layout-grid"></i>工具</div>
+                <div class="nav-item"><i data-lucide="message-square"></i>消息</div>
+                <div class="nav-item"><i data-lucide="user"></i>我的</div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>09 空数据</b> · 深色主题下真实空态 + 可执行动作</p>
+        </div>
+
+        <div class="strategy-card">
+          <h3><i data-lucide="sliders-horizontal"></i>统一规范摘要</h3>
+          <div class="rule">
+            <strong><span class="dot"></span>永不白屏</strong>
+            <p>页面容器始终使用主题背景色；任何子组件未就绪时，都显示标题、骨架或状态，不允许透明或纯白占位。</p>
+          </div>
+          <div class="rule">
+            <strong><span class="dot"></span>四种骨架</strong>
+            <div class="template-list">
+              <div class="template-chip">列表类</div>
+              <div class="template-chip blue">工作台类</div>
+              <div class="template-chip">数据面板类</div>
+              <div class="template-chip">沉浸类</div>
+            </div>
+            <p>骨架与真实页面结构一一对应，最小展示 350ms，数据就绪后 300ms 淡入。</p>
+          </div>
+          <div class="rule">
+            <strong><span class="dot"></span>真实数据</strong>
+            <p>标题来自 feature_registry.json；内容只来自真实接口与本地存储；错误、空态、缓存更新均展示真实信息。</p>
+          </div>
+          <div class="rule">
+            <strong><span class="dot"></span>失败可恢复</strong>
+            <p>8 秒超时兜底，错误态提供原因、重试与返回首页；刷新保留旧内容。</p>
+          </div>
+          <div class="rule">
+            <strong><span class="dot"></span>一期交付</strong>
+            <p>转场、骨架、淡入、错误空态、真实缓存与像素巡检一次完成，不分期。</p>
+          </div>
+          <div class="strategy-note">
+            <strong>验收基准：</strong>390x844 视口逐页点击，0ms / 120ms / 350ms / 1s / 3s 五个时间点均非空白；浅色页面白色像素占比不超过背景本身；控制台错误为零。
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer-note">
+        <i data-lucide="database"></i>
+        <span>
+          设计稿中的页面标题、路由与数据源说明来自真实 feature_registry.json（2026-08-02 快照）；骨架仅为结构示意，不渲染具体内容；错误文案为真实错误类型示例，线上内容以服务端实时结果为准。
+        </span>
+      </footer>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

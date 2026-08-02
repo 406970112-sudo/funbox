@@ -21,6 +21,8 @@ import { appLayout } from '@/constants/app-theme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { fetchNewsFeed } from '@/lib/news-api';
 import { loadNewsPreferences, saveNewsPreferences } from '@/lib/news-preferences-storage';
+import { realDataCache } from '@/lib/real-data-cache';
+import { FadeInView } from '@/shared/ui/fade-in-view';
 import {
   DEFAULT_NEWS_PREFERENCES,
   NEWS_CATEGORIES,
@@ -41,6 +43,8 @@ const LIME = '#c9f36a';
 const CORAL = '#ff6b8f';
 const WHITE = '#ffffff';
 const SUMMARY_POLL_INTERVAL_MS = 1500;
+const NEWS_FEED_CACHE_KEY = 'funbox.real-data.hot-news.feed.v1';
+const NEWS_FEED_CACHE_TTL_MS = 10 * 60 * 1000;
 const CATEGORY_ICONS: Record<NewsCategory, IconName> = {
   ai: 'creation-outline',
   technology: 'chip',
@@ -82,21 +86,46 @@ export function HotNewsScreen() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const controller = new AbortController();
-    void fetchNewsFeed({ signal: controller.signal })
-      .then((nextSnapshot) => {
+
+    async function loadWithCache() {
+      const cached = await realDataCache.read<NewsFeedSnapshot>(
+        NEWS_FEED_CACHE_KEY,
+        NEWS_FEED_CACHE_TTL_MS,
+      );
+      if (cancelled) return;
+      if (cached) {
+        setSnapshot(cached.data);
+        setError('');
+        setLoading(false);
+      }
+
+      try {
+        const nextSnapshot = await fetchNewsFeed({ signal: controller.signal });
+        if (cancelled) return;
         setSnapshot(nextSnapshot);
         setError('');
-      })
-      .catch((requestError: unknown) => {
-        if (!controller.signal.aborted) {
-          setError(requestError instanceof Error ? requestError.message : '新闻加载失败，请稍后重试。');
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
+        void realDataCache.write(NEWS_FEED_CACHE_KEY, nextSnapshot);
+      } catch (requestError) {
+        if (cancelled || controller.signal.aborted) return;
+        setError(
+          cached
+            ? '数据更新稍慢，当前显示上次成功快照。'
+            : requestError instanceof Error
+              ? requestError.message
+              : '新闻加载失败，请稍后重试。',
+        );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadWithCache();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -275,7 +304,7 @@ export function HotNewsScreen() {
           ) : !snapshot ? (
             <NewsErrorState message={error} onRetry={() => void refresh()} />
           ) : (
-            <>
+            <FadeInView>
               {activeView === 'home' ? <DailyBrief snapshot={snapshot} /> : null}
               {snapshot.stale ? <StatusNotice message="数据更新稍有延迟，当前显示上一次成功快照。" /> : null}
               {error ? <StatusNotice message={error} /> : null}
@@ -313,7 +342,7 @@ export function HotNewsScreen() {
               ) : (
                 <NewsEmptyState activeView={activeView} hasFilters={Boolean(query || selectedCategory)} />
               )}
-            </>
+            </FadeInView>
           )}
         </ScrollView>
 
