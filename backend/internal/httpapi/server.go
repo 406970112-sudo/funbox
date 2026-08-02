@@ -15,6 +15,7 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
@@ -47,6 +48,7 @@ type Server struct {
 	lotteryLabService         lotteryLabHistoryService
 	marketRadarService        marketRadarSnapshotService
 	membershipService         *membership.Service
+	diaryService              *diary.Service
 	momentsService            *moments.Service
 	newsService               newsFeedService
 	readingService            *reading.Service
@@ -68,7 +70,7 @@ func NewServer(
 	accessStore *access.Store,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, nil, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithNews(
@@ -81,7 +83,7 @@ func NewServerWithNews(
 	newsService *news.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
-	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
+	return newServer(cfg, ttsService, translationService, authService, socialStore, accessStore, newsService, nil, nil, nil, nil, nil, nil, nil, nil, scoreServices...)
 }
 
 func NewServerWithReadingAndNews(
@@ -104,6 +106,7 @@ func NewServerWithReadingAndNews(
 		accessStore,
 		newsService,
 		readingService,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -141,6 +144,7 @@ func NewServerWithReadingNewsAndFeedback(
 		nil,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -169,6 +173,7 @@ func NewServerWithReadingNewsFeedbackAndFocus(
 		readingService,
 		feedbackService,
 		focusStore,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -206,6 +211,7 @@ func NewServerWithMembership(
 		nil,
 		nil,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -238,6 +244,7 @@ func NewServerWithMembershipAndRecommendation(
 		focusStore,
 		membershipService,
 		recommendationService,
+		nil,
 		nil,
 		nil,
 		scoreServices...,
@@ -275,6 +282,7 @@ func NewServerWithMembershipRecommendationAndFood(
 		recommendationService,
 		foodRecommendationService,
 		nil,
+		nil,
 		scoreServices...,
 	)
 }
@@ -311,6 +319,45 @@ func NewServerWithMoments(
 		recommendationService,
 		foodRecommendationService,
 		momentsService,
+		nil,
+		scoreServices...,
+	)
+}
+
+func NewServerWithDiary(
+	cfg config.Config,
+	ttsService *tts.Service,
+	translationService *translation.Service,
+	authService *auth.Service,
+	socialStore *social.Store,
+	accessStore *access.Store,
+	newsService *news.Service,
+	readingService *reading.Service,
+	feedbackService *feedback.Service,
+	focusStore *focus.Store,
+	membershipService *membership.Service,
+	recommendationService *recommendation.Service,
+	foodRecommendationService *foodrecommendation.Service,
+	momentsService *moments.Service,
+	diaryService *diary.Service,
+	scoreServices ...*score.Service,
+) *http.Server {
+	return newServer(
+		cfg,
+		ttsService,
+		translationService,
+		authService,
+		socialStore,
+		accessStore,
+		newsService,
+		readingService,
+		feedbackService,
+		focusStore,
+		membershipService,
+		recommendationService,
+		foodRecommendationService,
+		momentsService,
+		diaryService,
 		scoreServices...,
 	)
 }
@@ -330,6 +377,7 @@ func newServer(
 	recommendationService *recommendation.Service,
 	foodRecommendationService *foodrecommendation.Service,
 	momentsService *moments.Service,
+	diaryService *diary.Service,
 	scoreServices ...*score.Service,
 ) *http.Server {
 	var scoreService *score.Service
@@ -359,6 +407,7 @@ func newServer(
 		lotteryLabService:         lotterylab.NewService(lotterylab.Config{}),
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
 		membershipService:         membershipService,
+		diaryService:              diaryService,
 		momentsService:            momentsService,
 		newsService:               newsService,
 		readingService:            readingService,
@@ -401,6 +450,7 @@ func newServer(
 	registerFocusRoutes(mux, api)
 	registerRecommendationRoutes(mux, api)
 	registerFoodRecommendationRoutes(mux, api)
+	registerDiaryRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))
@@ -711,7 +761,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Diary-Unlock-Token")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,Retry-After,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }
 

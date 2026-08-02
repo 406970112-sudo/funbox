@@ -1,0 +1,2024 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 日记本产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce5f4;
+        --line-strong: #cdd8ea;
+        --canvas: #eef3fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #24b36b;
+        --amber: #e8a33d;
+        --red: #e33b4f;
+        --teal: #18a78f;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.055) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.055) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        margin: 0 auto;
+        padding: 30px 34px 44px;
+        width: 1840px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 25px;
+        stroke-width: 2.3;
+        width: 25px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.12;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.7;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+      }
+
+      .red-line {
+        align-items: center;
+        background: #fff4f6;
+        border: 1px solid #f6c9d3;
+        border-left: 4px solid var(--red);
+        border-radius: 12px;
+        color: #9c3b4a;
+        display: flex;
+        font-size: 12px;
+        font-weight: 700;
+        gap: 10px;
+        margin-bottom: 22px;
+        padding: 11px 16px;
+      }
+
+      .red-line svg {
+        color: var(--red);
+        flex: 0 0 18px;
+        height: 18px;
+        width: 18px;
+      }
+
+      .red-line strong {
+        color: var(--red);
+      }
+
+      .stage {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: 300px minmax(0, 1fr);
+      }
+
+      .strategy {
+        align-self: start;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+      }
+
+      .strategy-kicker {
+        color: var(--blue);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .strategy h2 {
+        font-size: 23px;
+        font-weight: 900;
+        line-height: 1.28;
+        margin: 8px 0 8px;
+      }
+
+      .strategy-lead {
+        color: #5d6b86;
+        font-size: 11.5px;
+        line-height: 1.75;
+        margin: 0;
+      }
+
+      .strategy-section {
+        border-top: 1px solid var(--line);
+        margin-top: 16px;
+        padding-top: 14px;
+      }
+
+      .strategy-section h3 {
+        font-size: 12px;
+        font-weight: 900;
+        margin: 0 0 10px;
+      }
+
+      .flow {
+        counter-reset: flow;
+      }
+
+      .flow-step {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        min-height: 28px;
+        position: relative;
+      }
+
+      .flow-step::before {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 50%;
+        color: var(--lime);
+        content: counter(flow);
+        counter-increment: flow;
+        display: flex;
+        flex: 0 0 20px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .flow-step span {
+        color: #3e475d;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .flow-step:not(:last-child)::after {
+        border-left: 1px dashed #c6d1e8;
+        content: "";
+        height: 8px;
+        left: 9px;
+        position: absolute;
+        top: 25px;
+      }
+
+      .scope-list,
+      .security-list {
+        display: grid;
+        gap: 7px;
+      }
+
+      .scope-item,
+      .security-item {
+        align-items: flex-start;
+        color: #4d5870;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        line-height: 1.5;
+      }
+
+      .scope-item i,
+      .security-item i {
+        color: var(--green);
+        flex: 0 0 14px;
+        height: 14px;
+        margin-top: 1px;
+        width: 14px;
+      }
+
+      .security-item i {
+        color: var(--blue);
+      }
+
+      .metric-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric {
+        background: var(--soft);
+        border-radius: 9px;
+        padding: 8px 9px;
+      }
+
+      .metric strong {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.15;
+      }
+
+      .metric span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        margin-top: 4px;
+      }
+
+      .decision {
+        background: var(--blue-soft);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .decision strong {
+        color: #3346a8;
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+
+      .decision p {
+        color: #53619b;
+        font-size: 10.5px;
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      .screens {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .screen-card {
+        margin: 0;
+        width: 100%;
+      }
+
+      .screen-label {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 10px;
+      }
+
+      .screen-label .index {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 7px;
+        color: var(--lime);
+        display: inline-flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .screen-label strong {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .screen-label span {
+        color: #6b7892;
+        font-size: 10px;
+      }
+
+      .phone {
+        background: #101426;
+        border-radius: 36px;
+        box-shadow: 0 24px 46px rgba(21, 27, 59, 0.22);
+        height: 1010px;
+        margin: 0 auto;
+        padding: 11px;
+        position: relative;
+        width: 356px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 27px;
+        height: 988px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 40px;
+        justify-content: space-between;
+        padding: 0 24px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .dynamic-island {
+        background: #101426;
+        border-radius: 14px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .screen-nav {
+        align-items: center;
+        display: flex;
+        height: 48px;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+
+      .nav-btn {
+        align-items: center;
+        background: #eef1f8;
+        border: 0;
+        border-radius: 50%;
+        display: inline-flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .nav-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .nav-btn.primary {
+        background: var(--blue);
+        color: #ffffff;
+      }
+
+      .screen-title {
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .content {
+        height: calc(100% - 40px - 48px);
+        overflow: hidden;
+        padding: 0 16px 14px;
+      }
+
+      .screen-with-nav .content {
+        padding-bottom: 74px;
+      }
+
+      .section {
+        margin-bottom: 18px;
+      }
+
+      .section-title {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        margin: 0 0 9px;
+      }
+
+      .hero-mini {
+        background:
+          radial-gradient(circle at 88% 8%, rgba(201, 243, 106, 0.28) 0 44px, transparent 45px),
+          linear-gradient(150deg, #232c4d, #101426);
+        border-radius: 16px;
+        color: #ffffff;
+        margin-bottom: 18px;
+        padding: 16px 15px;
+      }
+
+      .hero-top {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .hero-top .hero-icon {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 11px;
+        display: flex;
+        flex: 0 0 38px;
+        height: 38px;
+        justify-content: center;
+      }
+
+      .hero-top .hero-icon i {
+        color: var(--lime);
+        height: 19px;
+        width: 19px;
+      }
+
+      .hero-title {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .hero-subtitle {
+        color: #b7c0da;
+        font-size: 10.5px;
+        margin-top: 3px;
+      }
+
+      .hero-stats {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .hero-stat {
+        flex: 1;
+      }
+
+      .hero-stat strong {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .hero-stat span {
+        color: #aeb8d5;
+        display: block;
+        font-size: 9.5px;
+        margin-top: 2px;
+      }
+
+      .notebook-list {
+        display: grid;
+        gap: 9px;
+      }
+
+      .notebook-card {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        min-height: 72px;
+        padding: 10px 12px;
+      }
+
+      .notebook-cover {
+        align-items: center;
+        border-radius: 12px;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 46px;
+        height: 46px;
+        justify-content: center;
+      }
+
+      .notebook-cover i {
+        height: 21px;
+        width: 21px;
+      }
+
+      .notebook-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .notebook-name-row {
+        align-items: center;
+        display: flex;
+        gap: 7px;
+      }
+
+      .notebook-name {
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .lock-pill {
+        align-items: center;
+        background: var(--soft);
+        border-radius: 999px;
+        color: var(--muted);
+        display: inline-flex;
+        gap: 4px;
+        height: 22px;
+        padding: 0 8px;
+      }
+
+      .lock-pill i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .lock-pill span {
+        font-size: 9.5px;
+        font-weight: 800;
+      }
+
+      .notebook-meta {
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 4px;
+      }
+
+      .notebook-card .chevron {
+        color: #a1abc0;
+        height: 16px;
+        width: 16px;
+      }
+
+      .new-notebook {
+        align-items: center;
+        background: var(--surface);
+        border: 1px dashed var(--line-strong);
+        border-radius: 14px;
+        color: var(--muted);
+        display: flex;
+        font-size: 11.5px;
+        font-weight: 700;
+        gap: 9px;
+        justify-content: center;
+        min-height: 58px;
+      }
+
+      .new-notebook i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .empty-note {
+        align-items: center;
+        background: var(--surface);
+        border: 1px dashed var(--line-strong);
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        font-size: 10.5px;
+        gap: 9px;
+        padding: 10px 12px;
+      }
+
+      .empty-note i {
+        color: #a9b4c8;
+        height: 16px;
+        width: 16px;
+      }
+
+      .date-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .date-head strong {
+        display: block;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .date-head span {
+        color: var(--muted);
+        display: block;
+        font-size: 10.5px;
+        margin-top: 2px;
+      }
+
+      .editor-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 13px;
+      }
+
+      .chip-label {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        margin: 12px 0 7px;
+      }
+
+      .chip-row {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+
+      .chip {
+        align-items: center;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #4d5870;
+        display: inline-flex;
+        font-size: 10px;
+        font-weight: 700;
+        gap: 5px;
+        height: 30px;
+        padding: 0 11px;
+      }
+
+      .chip i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .chip.active {
+        background: var(--blue-soft);
+        border-color: #c8d4ff;
+        color: #3346a8;
+      }
+
+      .editor-input {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        margin-top: 12px;
+        outline: 0;
+        padding: 11px 12px;
+        width: 100%;
+      }
+
+      .editor-input.title {
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .editor-input.body {
+        color: #303a52;
+        font-size: 12.5px;
+        height: 130px;
+        line-height: 1.7;
+        resize: none;
+        width: 100%;
+      }
+
+      .media-pick {
+        display: grid;
+        gap: 6px;
+        grid-template-columns: repeat(4, 1fr);
+        margin-top: 12px;
+      }
+
+      .media-cell {
+        aspect-ratio: 1;
+        border-radius: 9px;
+        overflow: hidden;
+      }
+
+      .media-cell.add {
+        align-items: center;
+        background: var(--soft);
+        border: 1px dashed var(--line-strong);
+        color: var(--muted);
+        display: flex;
+        justify-content: center;
+      }
+
+      .media-cell.add i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .art-sunset {
+        background:
+          radial-gradient(circle at 72% 30%, rgba(255, 214, 102, 0.95) 0 20px, transparent 21px),
+          linear-gradient(170deg, #ff9a5f 0%, #ff6b8f 52%, #5d4b9e 100%);
+      }
+
+      .art-night {
+        background:
+          radial-gradient(circle at 24% 32%, rgba(255, 255, 255, 0.95) 0 4px, transparent 5px),
+          radial-gradient(circle at 42% 22%, rgba(255, 255, 255, 0.8) 0 3px, transparent 4px),
+          radial-gradient(circle at 68% 36%, rgba(255, 255, 255, 0.9) 0 4px, transparent 5px),
+          linear-gradient(165deg, #2c3a6b, #101426 70%);
+      }
+
+      .art-forest {
+        background:
+          linear-gradient(180deg, #a8e6f2 0 34%, transparent 34%),
+          linear-gradient(135deg, #2f8f5f 0 42%, transparent 42%),
+          linear-gradient(45deg, #1d5c3f 0 55%, transparent 55%),
+          linear-gradient(180deg, #7dd3fc, #1d5c3f);
+      }
+
+      .save-btn {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 12px;
+        color: #ffffff;
+        display: flex;
+        font-size: 13px;
+        font-weight: 800;
+        gap: 8px;
+        height: 48px;
+        justify-content: center;
+        margin-top: 14px;
+        width: 100%;
+      }
+
+      .save-btn i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .cal-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .cal-head strong {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .cal-nav {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .cal-nav button {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: inline-flex;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .cal-nav i {
+        color: var(--muted);
+        height: 15px;
+        width: 15px;
+      }
+
+      .cal-grid {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: grid;
+        gap: 4px;
+        grid-template-columns: repeat(7, 1fr);
+        padding: 10px;
+      }
+
+      .cal-weekday {
+        color: var(--faint);
+        font-size: 9px;
+        font-weight: 800;
+        height: 18px;
+        line-height: 18px;
+        text-align: center;
+      }
+
+      .cal-day {
+        align-items: center;
+        color: #4d5870;
+        display: flex;
+        flex-direction: column;
+        font-size: 10.5px;
+        font-weight: 700;
+        height: 34px;
+        justify-content: center;
+        position: relative;
+      }
+
+      .cal-day.blank {
+        visibility: hidden;
+      }
+
+      .cal-day.has-entry::after {
+        background: var(--blue);
+        border-radius: 50%;
+        bottom: 3px;
+        content: "";
+        height: 4px;
+        position: absolute;
+        width: 4px;
+      }
+
+      .cal-day.mood-happy::after {
+        background: var(--amber);
+      }
+
+      .cal-day.mood-calm::after {
+        background: var(--teal);
+      }
+
+      .cal-day.mood-sad::after {
+        background: var(--blue);
+      }
+
+      .cal-day.selected {
+        background: var(--blue);
+        border-radius: 10px;
+        color: #ffffff;
+      }
+
+      .cal-day.selected::after {
+        background: var(--lime);
+      }
+
+      .entry-preview {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .entry-preview-head {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .entry-preview-head strong {
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .entry-preview-head span {
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .entry-preview p {
+        color: #4d5870;
+        font-size: 11.5px;
+        line-height: 1.65;
+        margin: 9px 0 0;
+      }
+
+      .entry-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .entry-actions button {
+        align-items: center;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: #4d5870;
+        display: inline-flex;
+        flex: 1;
+        font-size: 10.5px;
+        font-weight: 700;
+        gap: 6px;
+        height: 34px;
+        justify-content: center;
+      }
+
+      .entry-actions i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .unlock-wrap {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        padding-top: 96px;
+        text-align: center;
+      }
+
+      .unlock-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 28px;
+        color: var(--blue);
+        display: flex;
+        height: 68px;
+        justify-content: center;
+        margin-bottom: 18px;
+        width: 68px;
+      }
+
+      .unlock-icon i {
+        height: 30px;
+        width: 30px;
+      }
+
+      .unlock-wrap h2 {
+        font-size: 18px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .unlock-sub {
+        color: var(--muted);
+        font-size: 11px;
+        margin: 7px 0 22px;
+      }
+
+      .password-input {
+        background: var(--surface);
+        border: 1px solid var(--line-strong);
+        border-radius: 13px;
+        display: flex;
+        gap: 10px;
+        height: 52px;
+        padding: 0 15px;
+        width: 100%;
+      }
+
+      .password-input i {
+        color: var(--muted);
+        height: 18px;
+        width: 18px;
+      }
+
+      .password-input input {
+        border: 0;
+        flex: 1;
+        font-size: 14px;
+        outline: 0;
+        width: 100%;
+      }
+
+      .password-error {
+        color: var(--red);
+        font-size: 10.5px;
+        font-weight: 700;
+        margin-top: 9px;
+        text-align: left;
+        width: 100%;
+      }
+
+      .unlock-btn {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 13px;
+        color: #ffffff;
+        display: flex;
+        font-size: 14px;
+        font-weight: 800;
+        gap: 8px;
+        height: 50px;
+        justify-content: center;
+        margin-top: 18px;
+        width: 100%;
+      }
+
+      .unlock-btn i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .forgot-link {
+        color: var(--muted);
+        font-size: 10.5px;
+        margin-top: 16px;
+      }
+
+      .unlock-hint {
+        align-items: center;
+        background: var(--soft);
+        border-radius: 10px;
+        color: #5d6b86;
+        display: flex;
+        font-size: 10px;
+        gap: 8px;
+        margin-top: 18px;
+        padding: 11px 12px;
+        text-align: left;
+      }
+
+      .unlock-hint i {
+        color: var(--blue);
+        flex: 0 0 15px;
+        height: 15px;
+        width: 15px;
+      }
+
+      .setting-hero {
+        align-items: center;
+        background: linear-gradient(145deg, #232c4d, #101426);
+        border-radius: 16px;
+        color: #ffffff;
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 15px;
+      }
+
+      .setting-hero .notebook-cover {
+        background: var(--blue);
+      }
+
+      .setting-hero strong {
+        display: block;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .setting-hero span {
+        color: #b7c0da;
+        display: block;
+        font-size: 10.5px;
+        margin-top: 4px;
+      }
+
+      .setting-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      .setting-row {
+        align-items: center;
+        display: flex;
+        gap: 11px;
+        min-height: 56px;
+        padding: 0 13px;
+      }
+
+      .setting-row + .setting-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .setting-row i.setting-icon {
+        color: var(--blue);
+        flex: 0 0 18px;
+        height: 18px;
+        width: 18px;
+      }
+
+      .setting-row .row-title {
+        flex: 1;
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+
+      .setting-row .row-sub {
+        color: var(--muted);
+        display: block;
+        font-size: 10px;
+        font-weight: 500;
+        margin-top: 3px;
+      }
+
+      .toggle {
+        align-items: center;
+        background: var(--line-strong);
+        border-radius: 999px;
+        display: flex;
+        height: 24px;
+        justify-content: flex-start;
+        padding: 3px;
+        width: 44px;
+      }
+
+      .toggle.on {
+        background: var(--blue);
+        justify-content: flex-end;
+      }
+
+      .toggle::after {
+        background: #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(21, 27, 59, 0.2);
+        content: "";
+        height: 18px;
+        width: 18px;
+      }
+
+      .swatch-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .swatch {
+        border: 3px solid var(--surface);
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px var(--line);
+        height: 26px;
+        width: 26px;
+      }
+
+      .swatch.active {
+        box-shadow: 0 0 0 2px var(--blue);
+      }
+
+      .danger-zone {
+        align-items: center;
+        background: #fff4f6;
+        border: 1px solid #f6c9d3;
+        border-radius: 12px;
+        color: #b04a58;
+        display: flex;
+        font-size: 11px;
+        font-weight: 700;
+        gap: 9px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .danger-zone i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .stat-cards {
+        display: grid;
+        gap: 9px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 16px;
+      }
+
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 11px 10px;
+      }
+
+      .stat-card strong {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 19px;
+        font-weight: 800;
+      }
+
+      .stat-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        margin-top: 3px;
+      }
+
+      .mood-panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 13px;
+      }
+
+      .mood-bar-row {
+        align-items: center;
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 42px 1fr 30px;
+        margin-top: 10px;
+      }
+
+      .mood-bar-label {
+        color: #4d5870;
+        font-size: 10.5px;
+        font-weight: 700;
+      }
+
+      .mood-bar-track {
+        background: var(--soft);
+        border-radius: 999px;
+        height: 8px;
+        overflow: hidden;
+      }
+
+      .mood-bar-fill {
+        border-radius: 999px;
+        height: 100%;
+      }
+
+      .mood-bar-value {
+        color: var(--muted);
+        font-size: 9.5px;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .week-bars {
+        align-items: flex-end;
+        display: flex;
+        gap: 7px;
+        height: 64px;
+        margin-top: 14px;
+      }
+
+      .week-bar {
+        background: var(--blue-soft);
+        border-radius: 6px 6px 2px 2px;
+        flex: 1;
+        min-height: 12px;
+      }
+
+      .week-bar.high {
+        background: var(--blue);
+      }
+
+      .week-bar.medium {
+        background: #9cb0ff;
+      }
+
+      .week-label {
+        color: var(--faint);
+        font-size: 9px;
+        margin-top: 6px;
+        text-align: center;
+      }
+
+      .bottom-nav {
+        align-items: flex-start;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        bottom: 0;
+        display: flex;
+        height: 68px;
+        justify-content: space-around;
+        left: 0;
+        padding-top: 8px;
+        position: absolute;
+        width: 100%;
+      }
+
+      .nav-item {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        font-size: 9.5px;
+        font-weight: 700;
+        gap: 3px;
+        position: relative;
+      }
+
+      .nav-item i {
+        height: 19px;
+        width: 19px;
+      }
+
+      .nav-item.active {
+        color: var(--blue);
+      }
+
+      .nav-dot {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 999px;
+        color: #ffffff;
+        display: inline-flex;
+        font-size: 8px;
+        font-weight: 800;
+        height: 15px;
+        justify-content: center;
+        min-width: 15px;
+        padding: 0 4px;
+        position: absolute;
+        right: -9px;
+        top: -4px;
+      }
+
+      .body-tight .content {
+        padding-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="notebook-pen" aria-hidden="true"></i></div>
+          <div>
+            <h1 class="board-title">FunBox 日记本 产品设计 V1</h1>
+            <p class="board-subtitle">多日记本 · 每日一篇 · 日记本级可选密码 · 全部真实数据</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          <strong>产品设计图</strong>
+          版本 V1 草案 · 2026-08-02 · 待评审
+        </div>
+      </header>
+
+      <div class="red-line">
+        <i data-lucide="alert-triangle" aria-hidden="true"></i>
+        <div>
+          真实数据红线：<strong>前端不硬编码、后端不 seed、所有展示来自 SQLite/API</strong>。
+          本设计稿中的具体文字、数字与日期仅用于排版示意，正式版本全部来自用户真实数据。
+        </div>
+      </div>
+
+      <div class="stage">
+        <aside class="strategy">
+          <div class="strategy-kicker">DESIGN BRIEF</div>
+          <h2>给每段日子一个独立、可锁的容器</h2>
+          <p class="strategy-lead">
+            日记本不是普通记事工具，而是 FunBox 里完全属于用户自己的私密空间：
+            多本管理、当日一文、历史回看，密码只锁日记本，不绑架整个账号。
+          </p>
+
+          <section class="strategy-section">
+            <h3>真实数据红线</h3>
+            <div class="scope-list">
+              <div class="scope-item">
+                <i data-lucide="ban" aria-hidden="true"></i>
+                <span>前端不硬编码任何日记正文、图片、心情或统计</span>
+              </div>
+              <div class="scope-item">
+                <i data-lucide="database" aria-hidden="true"></i>
+                <span>生产库不 seed；空态、加载态、错误态是唯一兜底</span>
+              </div>
+              <div class="scope-item">
+                <i data-lucide="lock" aria-hidden="true"></i>
+                <span>密码只存哈希；列表接口不返回正文与密码</span>
+              </div>
+              <div class="scope-item">
+                <i data-lucide="shield-check" aria-hidden="true"></i>
+                <span>计数与连续天数全部由服务端聚合</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="strategy-section">
+            <h3>核心流程</h3>
+            <div class="flow">
+              <div class="flow-step"><span>新建日记本，可选设密码</span></div>
+              <div class="flow-step"><span>进入本子，有密码则解锁</span></div>
+              <div class="flow-step"><span>写今日并保存，真实落库</span></div>
+              <div class="flow-step"><span>日历回看历史，逐日读取</span></div>
+              <div class="flow-step"><span>设置修改或移除密码</span></div>
+            </div>
+          </section>
+
+          <section class="strategy-section">
+            <h3>安全设计</h3>
+            <div class="security-list">
+              <div class="security-item">
+                <i data-lucide="key-round" aria-hidden="true"></i>
+                <span>bcrypt / argon2id 哈希，不存明文</span>
+              </div>
+              <div class="security-item">
+                <i data-lucide="timer" aria-hidden="true"></i>
+                <span>解锁令牌 30 分钟，可手动上锁</span>
+              </div>
+              <div class="security-item">
+                <i data-lucide="gauge" aria-hidden="true"></i>
+                <span>连续失败 5 次锁定 5 分钟</span>
+              </div>
+              <div class="security-item">
+                <i data-lucide="eye-off" aria-hidden="true"></i>
+                <span>管理员不可查看日记正文</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="strategy-section">
+            <h3>成功指标</h3>
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>≤ 60s</strong>
+                <span>进入工具到保存完成</span>
+              </div>
+              <div class="metric">
+                <strong>≤ 1s</strong>
+                <span>解锁后进入历史</span>
+              </div>
+              <div class="metric">
+                <strong>0 条</strong>
+                <span>生产库非用户记录</span>
+              </div>
+              <div class="metric">
+                <strong>≤ 15%</strong>
+                <span>设密码本解锁失败率</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="strategy-section">
+            <div class="decision">
+              <strong>关键决策：密码只锁日记本</strong>
+              <p>
+                登录账号密码不参与日记本访问；日记本密码独立可选，遗忘时不提供弱找回，
+                仅提供需账号密码二次确认的「清空重建」。
+              </p>
+            </div>
+          </section>
+        </aside>
+
+        <main class="screens">
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">01</span>
+              <strong>日记本首页</strong>
+              <span>多本管理 · 真实统计摘要</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen screen-with-nav">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">日记本</span>
+                  <button class="nav-btn primary" type="button" aria-label="新建日记本"><i data-lucide="plus" aria-hidden="true"></i></button>
+                </div>
+                <div class="content">
+                  <div class="hero-mini">
+                    <div class="hero-top">
+                      <div class="hero-icon"><i data-lucide="notebook-pen" aria-hidden="true"></i></div>
+                      <div>
+                        <div class="hero-title">坚持记录</div>
+                        <div class="hero-subtitle">本月 12 篇 · 连续 5 天</div>
+                      </div>
+                    </div>
+                    <div class="hero-stats">
+                      <div class="hero-stat"><strong>3</strong><span>日记本</span></div>
+                      <div class="hero-stat"><strong>61</strong><span>总篇数</span></div>
+                      <div class="hero-stat"><strong>5</strong><span>连续天数</span></div>
+                    </div>
+                  </div>
+
+                  <div class="section">
+                    <h2 class="section-title">我的日记本</h2>
+                    <div class="notebook-list">
+                      <div class="notebook-card">
+                        <div class="notebook-cover" style="background: #4b6bff;">
+                          <i data-lucide="briefcase" aria-hidden="true"></i>
+                        </div>
+                        <div class="notebook-copy">
+                          <div class="notebook-name-row">
+                            <span class="notebook-name">工作日志</span>
+                            <span class="lock-pill"><i data-lucide="lock" aria-hidden="true"></i><span>已加密</span></span>
+                          </div>
+                          <div class="notebook-meta">23 篇 · 最近 2026-08-01</div>
+                        </div>
+                        <i class="chevron" data-lucide="chevron-right" aria-hidden="true"></i>
+                      </div>
+                      <div class="notebook-card">
+                        <div class="notebook-cover" style="background: #18a78f;">
+                          <i data-lucide="map-pin" aria-hidden="true"></i>
+                        </div>
+                        <div class="notebook-copy">
+                          <div class="notebook-name-row">
+                            <span class="notebook-name">旅行手记</span>
+                          </div>
+                          <div class="notebook-meta">32 篇 · 最近 2026-08-01</div>
+                        </div>
+                        <i class="chevron" data-lucide="chevron-right" aria-hidden="true"></i>
+                      </div>
+                      <div class="notebook-card">
+                        <div class="notebook-cover" style="background: #ff6b8f;">
+                          <i data-lucide="book-heart" aria-hidden="true"></i>
+                        </div>
+                        <div class="notebook-copy">
+                          <div class="notebook-name-row">
+                            <span class="notebook-name">秘密花园</span>
+                            <span class="lock-pill"><i data-lucide="lock" aria-hidden="true"></i><span>已加密</span></span>
+                          </div>
+                          <div class="notebook-meta">6 篇 · 最近 2026-07-28</div>
+                        </div>
+                        <i class="chevron" data-lucide="chevron-right" aria-hidden="true"></i>
+                      </div>
+                      <button class="new-notebook" type="button">
+                        <i data-lucide="plus" aria-hidden="true"></i>
+                        新建日记本
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="empty-note">
+                    <i data-lucide="info" aria-hidden="true"></i>
+                    <span>无日记本时展示真实空状态，不填充示例内容</span>
+                  </div>
+                </div>
+                <div class="bottom-nav">
+                  <div class="nav-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>工具</div>
+                  <div class="nav-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="nav-item active"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">02</span>
+              <strong>写今日日记</strong>
+              <span>每日一篇 · 心情天气 · 图片</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen screen-with-nav">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">写日记</span>
+                  <button class="nav-btn" type="button" aria-label="历史"><i data-lucide="calendar-days" aria-hidden="true"></i></button>
+                </div>
+                <div class="content">
+                  <div class="date-head">
+                    <div>
+                      <strong>8 月 2 日</strong>
+                      <span>2026 年 · 周日</span>
+                    </div>
+                    <span class="lock-pill"><i data-lucide="lock" aria-hidden="true"></i><span>已加密</span></span>
+                  </div>
+
+                  <div class="editor-card">
+                    <div class="chip-label">今天的心情</div>
+                    <div class="chip-row">
+                      <button class="chip active" type="button"><i data-lucide="smile" aria-hidden="true"></i>开心</button>
+                      <button class="chip" type="button"><i data-lucide="sun" aria-hidden="true"></i>平静</button>
+                      <button class="chip" type="button"><i data-lucide="cloud" aria-hidden="true"></i>疲惫</button>
+                      <button class="chip" type="button"><i data-lucide="cloud-rain" aria-hidden="true"></i>难过</button>
+                      <button class="chip" type="button"><i data-lucide="flame" aria-hidden="true"></i>生气</button>
+                    </div>
+
+                    <div class="chip-label">天气</div>
+                    <div class="chip-row">
+                      <button class="chip active" type="button"><i data-lucide="sun" aria-hidden="true"></i>晴</button>
+                      <button class="chip" type="button"><i data-lucide="cloud-sun" aria-hidden="true"></i>多云</button>
+                      <button class="chip" type="button"><i data-lucide="cloud-rain" aria-hidden="true"></i>雨</button>
+                      <button class="chip" type="button"><i data-lucide="wind" aria-hidden="true"></i>风</button>
+                    </div>
+
+                    <input class="editor-input title" type="text" placeholder="标题（选填）" />
+                    <textarea class="editor-input body" placeholder="今天发生了什么…"></textarea>
+
+                    <div class="media-pick">
+                      <div class="media-cell art-sunset"></div>
+                      <div class="media-cell art-night"></div>
+                      <div class="media-cell art-forest"></div>
+                      <div class="media-cell add"><i data-lucide="image-plus" aria-hidden="true"></i></div>
+                    </div>
+                  </div>
+
+                  <button class="save-btn" type="button">
+                    <i data-lucide="save" aria-hidden="true"></i>
+                    保存今日
+                  </button>
+                </div>
+                <div class="bottom-nav">
+                  <div class="nav-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>工具</div>
+                  <div class="nav-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="nav-item active"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">03</span>
+              <strong>历史日记</strong>
+              <span>日历月视图 · 按日期读取</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen screen-with-nav">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">旅行手记</span>
+                  <button class="nav-btn" type="button" aria-label="搜索"><i data-lucide="search" aria-hidden="true"></i></button>
+                </div>
+                <div class="content">
+                  <div class="cal-head">
+                    <strong>2026 年 7 月</strong>
+                    <div class="cal-nav">
+                      <button type="button" aria-label="上个月"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                      <button type="button" aria-label="下个月"><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+                    </div>
+                  </div>
+
+                  <div class="cal-grid">
+                    <div class="cal-weekday">一</div>
+                    <div class="cal-weekday">二</div>
+                    <div class="cal-weekday">三</div>
+                    <div class="cal-weekday">四</div>
+                    <div class="cal-weekday">五</div>
+                    <div class="cal-weekday">六</div>
+                    <div class="cal-weekday">日</div>
+                    <div class="cal-day blank">29</div>
+                    <div class="cal-day blank">30</div>
+                    <div class="cal-day">1</div>
+                    <div class="cal-day">2</div>
+                    <div class="cal-day mood-happy has-entry">3</div>
+                    <div class="cal-day">4</div>
+                    <div class="cal-day mood-calm has-entry">5</div>
+                    <div class="cal-day">6</div>
+                    <div class="cal-day">7</div>
+                    <div class="cal-day mood-sad has-entry">8</div>
+                    <div class="cal-day">9</div>
+                    <div class="cal-day">10</div>
+                    <div class="cal-day mood-happy has-entry">11</div>
+                    <div class="cal-day">12</div>
+                    <div class="cal-day">13</div>
+                    <div class="cal-day mood-calm has-entry">14</div>
+                    <div class="cal-day">15</div>
+                    <div class="cal-day">16</div>
+                    <div class="cal-day mood-happy has-entry">17</div>
+                    <div class="cal-day">18</div>
+                    <div class="cal-day">19</div>
+                    <div class="cal-day mood-sad has-entry">20</div>
+                    <div class="cal-day">21</div>
+                    <div class="cal-day">22</div>
+                    <div class="cal-day mood-calm has-entry">23</div>
+                    <div class="cal-day">24</div>
+                    <div class="cal-day">25</div>
+                    <div class="cal-day">26</div>
+                    <div class="cal-day mood-happy has-entry">27</div>
+                    <div class="cal-day">28</div>
+                    <div class="cal-day">29</div>
+                    <div class="cal-day">30</div>
+                    <div class="cal-day mood-happy has-entry">31</div>
+                    <div class="cal-day selected">1</div>
+                    <div class="cal-day">2</div>
+                  </div>
+
+                  <div class="entry-preview">
+                    <div class="entry-preview-head">
+                      <strong>8 月 1 日 · 周六</strong>
+                      <span><i data-lucide="smile" aria-hidden="true" style="height: 13px; width: 13px; vertical-align: -2px;"></i> 开心</span>
+                    </div>
+                    <p>
+                      傍晚沿着西湖走到雷峰塔，云被风吹成很薄的一层…
+                    </p>
+                    <div class="entry-actions">
+                      <button type="button"><i data-lucide="pencil" aria-hidden="true"></i>编辑</button>
+                      <button type="button"><i data-lucide="trash-2" aria-hidden="true"></i>删除</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="bottom-nav">
+                  <div class="nav-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>工具</div>
+                  <div class="nav-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="nav-item active"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">04</span>
+              <strong>解锁弹窗</strong>
+              <span>密码校验 · 30 分钟会话</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen screen-with-nav">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="x" aria-hidden="true"></i></button>
+                  <span class="screen-title">解锁日记本</span>
+                  <span style="width: 34px;"></span>
+                </div>
+                <div class="content">
+                  <div class="unlock-wrap">
+                    <div class="unlock-icon"><i data-lucide="lock" aria-hidden="true"></i></div>
+                    <h2>输入日记本密码</h2>
+                    <div class="unlock-sub">旅行手记 · 输入正确密码后查看历史</div>
+
+                    <div class="password-input">
+                      <i data-lucide="key-round" aria-hidden="true"></i>
+                      <input type="password" placeholder="请输入密码" value="••••••" />
+                      <i data-lucide="eye" aria-hidden="true" style="color: #8a93a7;"></i>
+                    </div>
+
+                    <div class="password-error">密码错误，还可尝试 4 次</div>
+
+                    <button class="unlock-btn" type="button">
+                      <i data-lucide="unlock" aria-hidden="true"></i>
+                      解锁
+                    </button>
+
+                    <div class="forgot-link">忘记密码？只能清空并重建此日记本</div>
+
+                    <div class="unlock-hint">
+                      <i data-lucide="shield-check" aria-hidden="true"></i>
+                      <span>解锁后 30 分钟内无需重复输入；退出登录或手动上锁后立即失效。</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">05</span>
+              <strong>日记本设置</strong>
+              <span>密码开关 · 修改与移除</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen screen-with-nav">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">日记本设置</span>
+                  <button class="nav-btn primary" type="button" aria-label="保存"><i data-lucide="check" aria-hidden="true"></i></button>
+                </div>
+                <div class="content">
+                  <div class="setting-hero">
+                    <div class="notebook-cover"><i data-lucide="briefcase" aria-hidden="true"></i></div>
+                    <div>
+                      <strong>工作日志</strong>
+                      <span>23 篇 · 已设置密码</span>
+                    </div>
+                  </div>
+
+                  <div class="section">
+                    <h2 class="section-title">基本信息</h2>
+                    <div class="setting-list">
+                      <div class="setting-row">
+                        <i class="setting-icon" data-lucide="pencil" aria-hidden="true"></i>
+                        <div class="row-title">
+                          日记本名称
+                          <span class="row-sub">工作日志</span>
+                        </div>
+                        <i class="chevron" data-lucide="chevron-right" aria-hidden="true" style="color: #a1abc0; height: 16px; width: 16px;"></i>
+                      </div>
+                      <div class="setting-row" style="min-height: 76px; padding: 10px 13px;">
+                        <i class="setting-icon" data-lucide="palette" aria-hidden="true"></i>
+                        <div class="row-title">
+                          封面色
+                          <div class="swatch-row">
+                            <span class="swatch active" style="background: #4b6bff;"></span>
+                            <span class="swatch" style="background: #18a78f;"></span>
+                            <span class="swatch" style="background: #ff6b8f;"></span>
+                            <span class="swatch" style="background: #e8a33d;"></span>
+                            <span class="swatch" style="background: #8b5cf6;"></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="section">
+                    <h2 class="section-title">日记本密码</h2>
+                    <div class="setting-list">
+                      <div class="setting-row">
+                        <i class="setting-icon" data-lucide="lock" aria-hidden="true"></i>
+                        <div class="row-title">
+                          启用密码
+                          <span class="row-sub">查看历史日记前必须解锁</span>
+                        </div>
+                        <span class="toggle on"></span>
+                      </div>
+                      <div class="setting-row">
+                        <i class="setting-icon" data-lucide="key-round" aria-hidden="true"></i>
+                        <div class="row-title">修改密码<span class="row-sub">需验证当前密码</span></div>
+                        <i class="chevron" data-lucide="chevron-right" aria-hidden="true" style="color: #a1abc0; height: 16px; width: 16px;"></i>
+                      </div>
+                      <div class="setting-row">
+                        <i class="setting-icon" data-lucide="lock-open" aria-hidden="true" style="color: var(--red);"></i>
+                        <div class="row-title">移除密码<span class="row-sub">移除后本子直接可看</span></div>
+                        <i class="chevron" data-lucide="chevron-right" aria-hidden="true" style="color: #a1abc0; height: 16px; width: 16px;"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="danger-zone">
+                    <i data-lucide="trash-2" aria-hidden="true"></i>
+                    <span>删除日记本：需账号密码二次确认，内容不可恢复</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen-card">
+            <div class="screen-label">
+              <span class="index">06</span>
+              <strong>记录统计</strong>
+              <span>一期 · 服务端真实聚合</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen screen-with-nav">
+                <div class="status-row">
+                  <span class="dynamic-island"></span>
+                  <span class="status-time">9:41</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal" aria-hidden="true"></i>
+                    <i data-lucide="wifi" aria-hidden="true"></i>
+                    <i data-lucide="battery-full" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <div class="screen-nav">
+                  <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                  <span class="screen-title">记录统计</span>
+                  <button class="nav-btn" type="button" aria-label="更多"><i data-lucide="ellipsis" aria-hidden="true"></i></button>
+                </div>
+                <div class="content">
+                  <div class="stat-cards">
+                    <div class="stat-card"><strong>5</strong><span>连续天数</span></div>
+                    <div class="stat-card"><strong>12</strong><span>本月篇数</span></div>
+                    <div class="stat-card"><strong>61</strong><span>总篇数</span></div>
+                  </div>
+
+                  <div class="mood-panel">
+                    <div class="section-title" style="margin: 0;">心情分布</div>
+                    <div class="mood-bar-row">
+                      <span class="mood-bar-label"><i data-lucide="smile" aria-hidden="true" style="height: 12px; width: 12px; vertical-align: -2px;"></i> 开心</span>
+                      <div class="mood-bar-track"><div class="mood-bar-fill" style="width: 42%; background: var(--amber);"></div></div>
+                      <span class="mood-bar-value">42%</span>
+                    </div>
+                    <div class="mood-bar-row">
+                      <span class="mood-bar-label"><i data-lucide="sun" aria-hidden="true" style="height: 12px; width: 12px; vertical-align: -2px;"></i> 平静</span>
+                      <div class="mood-bar-track"><div class="mood-bar-fill" style="width: 31%; background: var(--teal);"></div></div>
+                      <span class="mood-bar-value">31%</span>
+                    </div>
+                    <div class="mood-bar-row">
+                      <span class="mood-bar-label"><i data-lucide="cloud" aria-hidden="true" style="height: 12px; width: 12px; vertical-align: -2px;"></i> 疲惫</span>
+                      <div class="mood-bar-track"><div class="mood-bar-fill" style="width: 16%; background: var(--blue);"></div></div>
+                      <span class="mood-bar-value">16%</span>
+                    </div>
+                    <div class="mood-bar-row">
+                      <span class="mood-bar-label"><i data-lucide="cloud-rain" aria-hidden="true" style="height: 12px; width: 12px; vertical-align: -2px;"></i> 难过</span>
+                      <div class="mood-bar-track"><div class="mood-bar-fill" style="width: 7%; background: #8b5cf6;"></div></div>
+                      <span class="mood-bar-value">7%</span>
+                    </div>
+                    <div class="mood-bar-row">
+                      <span class="mood-bar-label"><i data-lucide="flame" aria-hidden="true" style="height: 12px; width: 12px; vertical-align: -2px;"></i> 生气</span>
+                      <div class="mood-bar-track"><div class="mood-bar-fill" style="width: 4%; background: var(--coral);"></div></div>
+                      <span class="mood-bar-value">4%</span>
+                    </div>
+
+                    <div class="section-title" style="margin: 16px 0 0;">最近 7 天</div>
+                    <div class="week-bars">
+                      <div class="week-bar high" style="height: 42px;"></div>
+                      <div class="week-bar medium" style="height: 30px;"></div>
+                      <div class="week-bar high" style="height: 54px;"></div>
+                      <div class="week-bar" style="height: 16px;"></div>
+                      <div class="week-bar high" style="height: 46px;"></div>
+                      <div class="week-bar medium" style="height: 34px;"></div>
+                      <div class="week-bar high" style="height: 58px;"></div>
+                    </div>
+                    <div class="chip-row" style="justify-content: space-between; margin-top: 2px;">
+                      <span class="week-label">一</span>
+                      <span class="week-label">二</span>
+                      <span class="week-label">三</span>
+                      <span class="week-label">四</span>
+                      <span class="week-label">五</span>
+                      <span class="week-label">六</span>
+                      <span class="week-label">日</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="bottom-nav">
+                  <div class="nav-item"><i data-lucide="home" aria-hidden="true"></i>首页</div>
+                  <div class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>工具</div>
+                  <div class="nav-item"><i data-lucide="message-circle" aria-hidden="true"></i>消息</div>
+                  <div class="nav-item active"><i data-lucide="user" aria-hidden="true"></i>我的</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

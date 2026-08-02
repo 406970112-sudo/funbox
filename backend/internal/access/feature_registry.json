@@ -423,5 +423,20 @@
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "diary",
+    "name": "日记本",
+    "tagline": "每天一篇，多本管理，可设密码",
+    "description": "创建多个日记本，每天记录真实生活；每个日记本可独立设置密码，设密码后查看历史必须先解锁。支持搜索、统计、导出与内容加密。",
+    "icon": "notebook-edit-outline",
+    "category": "记录",
+    "route": "/tools/diary",
+    "accentColor": "#4b6bff",
+    "badges": ["日记本", "私密记录"],
+    "usageLabel": "开始写日记",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]

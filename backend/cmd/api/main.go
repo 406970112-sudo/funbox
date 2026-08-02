@@ -15,6 +15,7 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
@@ -54,6 +55,11 @@ func main() {
 		log.Fatalf("open moments database failed: %v", err)
 	}
 	defer momentsStore.Close()
+	diaryStore, err := diary.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Fatalf("open diary database failed: %v", err)
+	}
+	defer diaryStore.Close()
 	accessStore, err := access.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Fatalf("open access database failed: %v", err)
@@ -178,6 +184,12 @@ func main() {
 		cfg.Storage.MaxMomentImageBytes,
 		cfg.Storage.MaxMomentImages,
 	)
+	diaryService := diary.NewService(
+		diaryStore,
+		cfg.Storage.DiaryDir,
+		cfg.Storage.MaxDiaryImageBytes,
+		cfg.Storage.MaxDiaryImages,
+	)
 
 	newsSource := news.NewRSSSource(
 		&http.Client{Timeout: cfg.News.RequestTimeout},
@@ -189,7 +201,7 @@ func main() {
 	defer cancelBackground()
 	go newsService.Run(backgroundContext)
 
-	server := httpapi.NewServerWithMoments(
+	server := httpapi.NewServerWithDiary(
 		cfg,
 		ttsService,
 		translationService,
@@ -204,6 +216,7 @@ func main() {
 		recommendationService,
 		foodRecommendationService,
 		momentsService,
+		diaryService,
 		scoreService,
 	)
 

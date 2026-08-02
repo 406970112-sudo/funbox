@@ -86,11 +86,14 @@ type NewsConfig struct {
 type StorageConfig struct {
 	AudioDir                 string
 	AvatarDir                string
-	MomentDir                string
+	DiaryDir                 string
 	FeedbackDir              string
+	MomentDir                string
 	PaymentQRDir             string
 	ReadingDir               string
 	MaxAvatarBytes           int64
+	MaxDiaryImageBytes       int64
+	MaxDiaryImages           int
 	MaxFeedbackImageBytes    int64
 	MaxFeedbackImages        int
 	MaxMomentImageBytes      int64
@@ -178,11 +181,14 @@ func Load() (Config, error) {
 		Storage: StorageConfig{
 			AudioDir:                 envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
 			AvatarDir:                envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
-			MomentDir:                envFirst("STORAGE_MOMENT_DIR", "data/moments"),
+			DiaryDir:                 envFirst("STORAGE_DIARY_DIR", "data/diary-images"),
 			FeedbackDir:              envFirst("STORAGE_FEEDBACK_DIR", "data/feedback-images"),
+			MomentDir:                envFirst("STORAGE_MOMENT_DIR", "data/moments"),
 			PaymentQRDir:             envFirst("STORAGE_PAYMENT_QR_DIR", "data/payment-qr"),
 			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
 			MaxAvatarBytes:           int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
+			MaxDiaryImageBytes:       int64(intFirst("STORAGE_MAX_DIARY_IMAGE_BYTES", "", "5242880")),
+			MaxDiaryImages:           intFirst("STORAGE_MAX_DIARY_IMAGES", "", "9"),
 			MaxFeedbackImageBytes:    int64(intFirst("STORAGE_MAX_FEEDBACK_IMAGE_BYTES", "", "5242880")),
 			MaxFeedbackImages:        intFirst("STORAGE_MAX_FEEDBACK_IMAGES", "", "3"),
 			MaxMomentImageBytes:      int64(intFirst("STORAGE_MAX_MOMENT_IMAGE_BYTES", "", "5242880")),

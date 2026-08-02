@@ -23,6 +23,7 @@ import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assi
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
+import { DiaryScreen } from '@/features/diary/diary-screen';
 import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
 import { ReadingHomeScreen } from '@/features/reading/reading-home-screen';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -262,6 +263,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <FocusScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'diary') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DiaryScreen />
       </>
     );
   }
