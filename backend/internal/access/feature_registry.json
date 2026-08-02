@@ -466,5 +466,20 @@
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "blog",
+    "name": "博客",
+    "tagline": "发布真实长文，公开或仅好友可见",
+    "description": "发布真实博客文章，选择完全公开、好友可见或仅自己可见；读者可点赞、评论，互动通知实时同步。",
+    "icon": "book-open-page-variant-outline",
+    "category": "社交",
+    "route": "/tools/blog",
+    "accentColor": "#4b6bff",
+    "badges": ["真实长文", "三档可见"],
+    "usageLabel": "进入博客",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]
