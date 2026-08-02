@@ -1,0 +1,2366 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 博客产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce5f4;
+        --line-strong: #cdd8ea;
+        --canvas: #eef3fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #24b36b;
+        --amber: #e8a33d;
+        --red: #e33b4f;
+        --teal: #18a78f;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.055) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.055) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        margin: 0 auto;
+        padding: 30px 34px 44px;
+        width: 1840px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 25px;
+        stroke-width: 2.3;
+        width: 25px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.12;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.7;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 13px;
+      }
+
+      .red-line {
+        align-items: center;
+        background: #fff4f6;
+        border: 1px solid #f6c9d3;
+        border-left: 4px solid var(--red);
+        border-radius: 12px;
+        color: #9c3b4a;
+        display: flex;
+        font-size: 12px;
+        font-weight: 700;
+        gap: 10px;
+        margin-bottom: 22px;
+        padding: 11px 16px;
+      }
+
+      .red-line svg {
+        color: var(--red);
+        flex: 0 0 18px;
+        height: 18px;
+        width: 18px;
+      }
+
+      .red-line strong {
+        color: var(--red);
+      }
+
+      .stage {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: 300px minmax(0, 1fr);
+      }
+
+      .strategy {
+        align-self: start;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+      }
+
+      .strategy-kicker {
+        color: var(--blue);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .strategy h2 {
+        font-size: 23px;
+        font-weight: 900;
+        line-height: 1.28;
+        margin: 8px 0 8px;
+      }
+
+      .strategy-lead {
+        color: #5d6b86;
+        font-size: 11.5px;
+        line-height: 1.75;
+        margin: 0;
+      }
+
+      .strategy-section {
+        border-top: 1px solid var(--line);
+        margin-top: 16px;
+        padding-top: 14px;
+      }
+
+      .strategy-section h3 {
+        font-size: 12px;
+        font-weight: 900;
+        margin: 0 0 10px;
+      }
+
+      .flow {
+        counter-reset: flow;
+      }
+
+      .flow-step {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        min-height: 28px;
+        position: relative;
+      }
+
+      .flow-step::before {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 50%;
+        color: var(--lime);
+        content: counter(flow);
+        counter-increment: flow;
+        display: flex;
+        flex: 0 0 20px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .flow-step span {
+        color: #3e475d;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .flow-step:not(:last-child)::after {
+        border-left: 1px dashed #c6d1e8;
+        content: "";
+        height: 8px;
+        left: 9px;
+        position: absolute;
+        top: 25px;
+      }
+
+      .scope-list {
+        display: grid;
+        gap: 7px;
+      }
+
+      .scope-item {
+        align-items: center;
+        color: #4d5870;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+      }
+
+      .scope-item i {
+        color: var(--green);
+        flex: 0 0 14px;
+        height: 14px;
+        width: 14px;
+      }
+
+      .entry-chips {
+        display: grid;
+        gap: 7px;
+      }
+
+      .entry-chip {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 9px 10px;
+      }
+
+      .metric-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric {
+        background: var(--soft);
+        border-radius: 9px;
+        padding: 8px 9px;
+      }
+
+      .metric strong {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.15;
+      }
+
+      .metric span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        margin-top: 4px;
+      }
+
+      .decision {
+        background: var(--blue-soft);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      .decision strong {
+        color: #3346a8;
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+
+      .decision p {
+        color: #53619b;
+        font-size: 10.5px;
+        line-height: 1.55;
+        margin: 0;
+      }
+
+      .screens {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+
+      .screen-row {
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .screen-card {
+        margin: 0;
+        width: 344px;
+      }
+
+      .screen-label {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 10px;
+      }
+
+      .screen-label .index {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 7px;
+        color: var(--white);
+        display: inline-flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .screen-label strong {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .screen-label span {
+        color: #6b7892;
+        font-size: 10px;
+      }
+
+      .phone {
+        background: #101426;
+        border-radius: 36px;
+        box-shadow: 0 24px 46px rgba(21, 27, 59, 0.22);
+        height: 1010px;
+        padding: 11px;
+        position: relative;
+        width: 344px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 27px;
+        height: 988px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 40px;
+        justify-content: space-between;
+        padding: 0 24px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .dynamic-island {
+        background: #101426;
+        border-radius: 14px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .screen-nav {
+        align-items: center;
+        display: flex;
+        height: 48px;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+
+      .nav-btn {
+        align-items: center;
+        background: #eef1f8;
+        border: 0;
+        border-radius: 50%;
+        display: inline-flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .nav-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .nav-btn.primary {
+        background: var(--blue);
+        color: #ffffff;
+      }
+
+      .screen-title {
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .content {
+        height: calc(100% - 40px - 48px);
+        overflow: hidden;
+        padding: 0 16px 14px;
+      }
+
+      .screen-with-nav .content {
+        padding-bottom: 74px;
+      }
+
+      .section {
+        margin-bottom: 18px;
+      }
+
+      .section-title {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        margin: 0 0 9px;
+      }
+
+      .segmented {
+        background: #e9eef7;
+        border-radius: 10px;
+        display: flex;
+        gap: 4px;
+        margin-bottom: 12px;
+        padding: 4px;
+      }
+
+      .seg-item {
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        color: var(--muted);
+        flex: 1;
+        font-size: 11px;
+        font-weight: 700;
+        height: 30px;
+        position: relative;
+      }
+
+      .seg-item.active {
+        background: var(--white);
+        box-shadow: 0 3px 10px rgba(75, 107, 255, 0.1);
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .seg-item .seg-badge {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 999px;
+        color: #ffffff;
+        display: inline-flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 8px;
+        font-weight: 800;
+        height: 14px;
+        justify-content: center;
+        margin-left: 4px;
+        min-width: 14px;
+        padding: 0 3px;
+        vertical-align: 1px;
+      }
+
+      .feed-filter {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .filter-pill {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        display: inline-flex;
+        font-size: 10px;
+        font-weight: 700;
+        gap: 5px;
+        height: 26px;
+        padding: 0 10px;
+      }
+
+      .filter-pill i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .filter-pill.active {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .post-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 12px;
+      }
+
+      .post-top {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .post-cover {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        flex: 0 0 58px;
+        height: 58px;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .post-cover i {
+        color: rgba(255, 255, 255, 0.92);
+        height: 22px;
+        width: 22px;
+      }
+
+      .cover-a {
+        background:
+          radial-gradient(circle at 70% 26%, rgba(255, 255, 255, 0.85) 0 9px, transparent 10px),
+          linear-gradient(160deg, #2b3560, #101426 76%);
+      }
+
+      .cover-b {
+        background:
+          linear-gradient(135deg, rgba(201, 243, 106, 0.95) 0 28%, transparent 28%),
+          linear-gradient(160deg, #31406f, #18203f);
+      }
+
+      .cover-c {
+        background: linear-gradient(160deg, #ff9a5f, #ff6b8f 68%);
+      }
+
+      .cover-d {
+        background: linear-gradient(160deg, #53d6a8, #18a78f 72%);
+      }
+
+      .cover-e {
+        background: linear-gradient(160deg, #a78bfa, #7e5bef 72%);
+      }
+
+      .cover-label {
+        bottom: 4px;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 8px;
+        font-weight: 800;
+        left: 0;
+        position: absolute;
+        right: 0;
+        text-align: center;
+      }
+
+      .post-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .post-title {
+        font-size: 13.5px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .post-summary {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.5;
+        margin-top: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .post-meta {
+        color: var(--muted);
+        font-size: 9.5px;
+        margin-top: 5px;
+      }
+
+      .post-author {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .avatar {
+        align-items: center;
+        border-radius: 50%;
+        display: flex;
+        flex: 0 0 20px;
+        height: 20px;
+        justify-content: center;
+        overflow: hidden;
+        width: 20px;
+      }
+
+      .avatar i {
+        color: #ffffff;
+        height: 10px;
+        width: 10px;
+      }
+
+      .avatar-a {
+        background: linear-gradient(145deg, #6d7dff, #4b6bff);
+      }
+
+      .avatar-b {
+        background: linear-gradient(145deg, #f59b5f, #e85d4a);
+      }
+
+      .avatar-c {
+        background: linear-gradient(145deg, #53d6a8, #18a78f);
+      }
+
+      .avatar-d {
+        background: linear-gradient(145deg, #a78bfa, #7e5bef);
+      }
+
+      .avatar .initials {
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .author-name {
+        color: #4d5870;
+        font-size: 10.5px;
+        font-weight: 700;
+      }
+
+      .post-stats {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        gap: 14px;
+        margin-top: 10px;
+        padding-top: 9px;
+      }
+
+      .stat-item {
+        align-items: center;
+        color: var(--muted);
+        display: inline-flex;
+        font-size: 10.5px;
+        gap: 5px;
+      }
+
+      .stat-item i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .stat-item.like {
+        color: var(--coral);
+      }
+
+      .stat-item.visibility {
+        color: var(--blue);
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: #ffffff;
+        border-top: 1px solid var(--line);
+        bottom: 0;
+        display: flex;
+        height: 62px;
+        left: 0;
+        position: absolute;
+        right: 0;
+      }
+
+      .nav-item {
+        align-items: center;
+        color: #9ca5ba;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        font-size: 9.5px;
+        font-weight: 700;
+        gap: 3px;
+        justify-content: center;
+        position: relative;
+      }
+
+      .nav-item i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .nav-item.active {
+        color: var(--blue);
+      }
+
+      .nav-item .nav-dot {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 999px;
+        color: #ffffff;
+        font-family: "Manrope", sans-serif;
+        font-size: 8px;
+        font-weight: 800;
+        height: 15px;
+        justify-content: center;
+        left: calc(50% + 8px);
+        min-width: 15px;
+        padding: 0 4px;
+        position: absolute;
+        top: 0;
+      }
+
+      .hero-banner {
+        background:
+          radial-gradient(circle at 86% 20%, rgba(201, 243, 106, 0.32) 0 58px, transparent 59px),
+          linear-gradient(150deg, #232c4d, #101426);
+        border-radius: 16px;
+        color: #ffffff;
+        margin-bottom: 14px;
+        padding: 16px;
+        position: relative;
+      }
+
+      .hero-kicker {
+        color: var(--lime);
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .hero-title {
+        font-size: 19px;
+        font-weight: 900;
+        margin-top: 6px;
+      }
+
+      .hero-copy {
+        color: #b7c0d8;
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin-top: 5px;
+        max-width: 220px;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 13px;
+      }
+
+      .hero-btn {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 9px;
+        color: #ffffff;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 6px;
+        height: 34px;
+        justify-content: center;
+        padding: 0 13px;
+      }
+
+      .hero-btn i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .hero-btn.soft {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .skeleton-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 12px;
+      }
+
+      .skeleton-row {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .skeleton-cover {
+        animation: shimmer 1.6s infinite;
+        background: linear-gradient(100deg, #edf1f8 20%, #f7f9fd 40%, #edf1f8 60%);
+        background-size: 220% 100%;
+        border-radius: 10px;
+        flex: 0 0 58px;
+        height: 58px;
+      }
+
+      .skeleton-lines {
+        flex: 1;
+      }
+
+      .skeleton-line {
+        animation: shimmer 1.6s infinite;
+        background: linear-gradient(100deg, #edf1f8 20%, #f7f9fd 40%, #edf1f8 60%);
+        background-size: 220% 100%;
+        border-radius: 6px;
+        height: 11px;
+        margin-bottom: 7px;
+      }
+
+      .skeleton-line.short {
+        width: 62%;
+      }
+
+      @keyframes shimmer {
+        from {
+          background-position: 140% 0;
+        }
+        to {
+          background-position: -80% 0;
+        }
+      }
+
+      .empty-state {
+        align-items: center;
+        background: var(--white);
+        border: 1px dashed var(--line-strong);
+        border-radius: 14px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        justify-content: center;
+        min-height: 150px;
+        padding: 16px;
+        text-align: center;
+      }
+
+      .empty-state i {
+        color: #a9b4c8;
+        height: 26px;
+        width: 26px;
+      }
+
+      .empty-state strong {
+        color: #4d5870;
+        font-size: 12.5px;
+      }
+
+      .empty-state span {
+        font-size: 10.5px;
+        line-height: 1.5;
+      }
+
+      .editor-panel {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 13px;
+      }
+
+      .editor-title-input {
+        color: #303a52;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.5;
+        min-height: 26px;
+      }
+
+      .editor-title-placeholder {
+        color: #a9b4c8;
+      }
+
+      .editor-divider {
+        background: #edf1f8;
+        height: 1px;
+        margin: 10px 0;
+      }
+
+      .editor-body {
+        color: #4d5870;
+        font-size: 12px;
+        line-height: 1.7;
+        min-height: 96px;
+      }
+
+      .editor-placeholder {
+        color: #a9b4c8;
+      }
+
+      .editor-footer {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+
+      .draft-chip {
+        align-items: center;
+        color: var(--muted);
+        display: inline-flex;
+        font-size: 9.5px;
+        gap: 5px;
+      }
+
+      .draft-chip i {
+        color: var(--green);
+        height: 12px;
+        width: 12px;
+      }
+
+      .word-chip {
+        align-items: center;
+        background: var(--soft);
+        border-radius: 999px;
+        color: var(--muted);
+        display: inline-flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 800;
+        height: 22px;
+        margin-left: auto;
+        padding: 0 9px;
+      }
+
+      .input-row {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        min-height: 52px;
+        padding: 0 12px;
+      }
+
+      .input-row + .input-row {
+        margin-top: 9px;
+      }
+
+      .input-row .input-icon {
+        color: var(--blue);
+        flex: 0 0 17px;
+        height: 17px;
+        width: 17px;
+      }
+
+      .input-copy {
+        color: #a9b4c8;
+        flex: 1;
+        font-size: 12px;
+      }
+
+      .input-value {
+        color: #303a52;
+        font-size: 12px;
+        font-weight: 700;
+        max-width: 170px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .pick-cell {
+        align-items: center;
+        aspect-ratio: 1;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        display: flex;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .pick-grid {
+        display: grid;
+        gap: 6px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 12px;
+      }
+
+      .pick-cell.add {
+        border-style: dashed;
+        color: var(--blue);
+      }
+
+      .pick-cell.add i {
+        height: 20px;
+        width: 20px;
+      }
+
+      .visibility-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 13px;
+      }
+
+      .visibility-title {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 800;
+        gap: 7px;
+      }
+
+      .visibility-title i {
+        color: var(--blue);
+        height: 15px;
+        width: 15px;
+      }
+
+      .visibility-seg {
+        background: #e9eef7;
+        border-radius: 9px;
+        display: grid;
+        gap: 4px;
+        grid-template-columns: 1fr 1fr 1fr;
+        margin-top: 10px;
+        padding: 4px;
+      }
+
+      .visibility-seg button {
+        background: transparent;
+        border: 0;
+        border-radius: 7px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        height: 30px;
+      }
+
+      .visibility-seg button.active {
+        background: var(--white);
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .visibility-note {
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.55;
+        margin-top: 9px;
+      }
+
+      .publish-btn {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 12px;
+        color: #ffffff;
+        display: flex;
+        font-size: 13px;
+        font-weight: 800;
+        gap: 7px;
+        height: 46px;
+        justify-content: center;
+        margin-top: 14px;
+        width: 100%;
+      }
+
+      .publish-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .article-cover {
+        align-items: center;
+        background:
+          radial-gradient(circle at 74% 26%, rgba(201, 243, 106, 0.4) 0 30px, transparent 31px),
+          linear-gradient(160deg, #2b3560, #101426 76%);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 14px;
+        min-height: 164px;
+        position: relative;
+      }
+
+      .article-cover i {
+        color: rgba(255, 255, 255, 0.9);
+        height: 30px;
+        width: 30px;
+      }
+
+      .article-title {
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1.35;
+      }
+
+      .article-meta {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        margin-top: 7px;
+      }
+
+      .article-meta .dot {
+        background: #c6d1e8;
+        border-radius: 50%;
+        height: 3px;
+        width: 3px;
+      }
+
+      .article-body {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        color: #303a52;
+        font-size: 12.5px;
+        line-height: 1.75;
+        margin-top: 12px;
+        padding: 14px;
+      }
+
+      .article-body p {
+        margin: 0 0 9px;
+      }
+
+      .article-body p:last-child {
+        margin-bottom: 0;
+      }
+
+      .article-body .body-placeholder {
+        color: #a9b4c8;
+      }
+
+      .article-actions {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        gap: 8px;
+        margin-top: 11px;
+        padding-top: 10px;
+      }
+
+      .article-action {
+        align-items: center;
+        background: var(--soft);
+        border: 0;
+        border-radius: 9px;
+        color: #4d5870;
+        display: inline-flex;
+        flex: 1;
+        font-size: 10.5px;
+        font-weight: 700;
+        gap: 6px;
+        height: 32px;
+        justify-content: center;
+      }
+
+      .article-action i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .article-action.liked {
+        background: #fff0f4;
+        color: var(--coral);
+      }
+
+      .comment-composer {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 9px;
+        margin: 12px 0 10px;
+        padding: 9px 10px 9px 12px;
+      }
+
+      .comment-input {
+        color: #9ba7bd;
+        flex: 1;
+        font-size: 11.5px;
+        font-weight: 600;
+      }
+
+      .comment-item {
+        align-items: flex-start;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 8px;
+        padding: 10px 12px;
+      }
+
+      .comment-item .avatar {
+        flex: 0 0 30px;
+        height: 30px;
+        margin-top: 1px;
+        width: 30px;
+      }
+
+      .comment-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .comment-head {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .comment-name {
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .comment-time {
+        color: var(--faint);
+        font-size: 9.5px;
+      }
+
+      .comment-body {
+        color: #3e475d;
+        font-size: 11.5px;
+        line-height: 1.55;
+        margin-top: 4px;
+      }
+
+      .comment-like {
+        color: var(--muted);
+        flex: 0 0 16px;
+        height: 16px;
+        margin-top: 6px;
+        width: 16px;
+      }
+
+      .notice-item {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 8px;
+        padding: 11px 12px;
+        position: relative;
+      }
+
+      .notice-item.unread {
+        background: #f7f9ff;
+        border-color: #c9d5ff;
+      }
+
+      .notice-item .avatar {
+        flex: 0 0 38px;
+        height: 38px;
+        width: 38px;
+      }
+
+      .notice-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .notice-title {
+        color: #303a52;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+
+      .notice-title strong {
+        font-weight: 900;
+      }
+
+      .notice-preview {
+        color: var(--muted);
+        font-size: 10.5px;
+        margin-top: 3px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .notice-time {
+        color: var(--faint);
+        font-size: 9.5px;
+        margin-top: 3px;
+      }
+
+      .unread-dot {
+        background: var(--coral);
+        border-radius: 50%;
+        height: 8px;
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 8px;
+      }
+
+      .chevron {
+        color: #a1abc0;
+        height: 16px;
+        width: 16px;
+      }
+
+      .admin-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 12px;
+      }
+
+      .admin-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .admin-title {
+        font-size: 12.5px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .admin-sub {
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+
+      .status-chip {
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 800;
+        height: 20px;
+        line-height: 20px;
+        margin-left: auto;
+        padding: 0 8px;
+        white-space: nowrap;
+      }
+
+      .status-chip.active {
+        background: #e2f7ee;
+        color: #12835b;
+      }
+
+      .status-chip.hidden {
+        background: #ffeef1;
+        color: #c9364a;
+      }
+
+      .admin-actions {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        gap: 6px;
+        margin-top: 9px;
+        padding-top: 9px;
+      }
+
+      .admin-action {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: #4d5870;
+        flex: 1;
+        font-size: 10px;
+        font-weight: 700;
+        height: 28px;
+      }
+
+      .admin-action.danger {
+        background: #fff4f6;
+        border-color: #f6c9d3;
+        color: #c9364a;
+      }
+
+      .login-banner {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        margin-bottom: 12px;
+        padding: 13px;
+      }
+
+      .login-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 11px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 40px;
+        height: 40px;
+        justify-content: center;
+      }
+
+      .login-icon i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .login-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .login-title {
+        font-size: 12.5px;
+        font-weight: 800;
+      }
+
+      .login-sub {
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 3px;
+      }
+
+      .login-btn {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 9px;
+        color: #ffffff;
+        display: inline-flex;
+        font-size: 10.5px;
+        font-weight: 800;
+        gap: 5px;
+        height: 32px;
+        padding: 0 12px;
+      }
+
+      .login-btn i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .manage-row {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+      }
+
+      .manage-item {
+        align-items: center;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: #4d5870;
+        display: inline-flex;
+        font-size: 10px;
+        font-weight: 700;
+        gap: 5px;
+        height: 28px;
+        padding: 0 9px;
+      }
+
+      .manage-item i {
+        height: 13px;
+        width: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="book-open-text" aria-hidden="true"></i></div>
+          <div>
+            <h1 class="board-title">FunBox 博客 · 产品设计 V1</h1>
+            <p class="board-subtitle">真实创作 · 三档可见 · 公开流 · 点赞评论</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          <strong>V1 草案</strong>
+          2026-08-02 · 待评审
+        </div>
+      </header>
+
+      <div class="red-line">
+        <i data-lucide="shield-check" aria-hidden="true"></i>
+        <div>
+          <strong>真实数据红线：</strong>
+          正式功能的文章、标题、正文、封面、字数、点赞、评论、通知均来自真实数据库与 API，禁止 mock、seed 或硬编码演示数据。本设计稿中的封面与姓名仅用于展示布局。
+        </div>
+      </div>
+
+      <div class="stage">
+        <aside class="strategy">
+          <div class="strategy-kicker">PRODUCT DESIGN</div>
+          <h2>让每个真实思考成为可被发现的长文</h2>
+          <p class="strategy-lead">
+            博客是 FunBox 的长文内容栏目：用户发布真实文章，选择完全公开、好友可见或仅自己可见，读者点赞、评论，互动通知实时同步。
+          </p>
+
+          <div class="strategy-section">
+            <h3>核心流程</h3>
+            <div class="flow">
+              <div class="flow-step"><span>填写标题正文 / 选择可见范围</span></div>
+              <div class="flow-step"><span>本地草稿自动保留</span></div>
+              <div class="flow-step"><span>服务端事务写入 SQLite</span></div>
+              <div class="flow-step"><span>公开 / 好友流可见与阅读</span></div>
+              <div class="flow-step"><span>点赞评论实时通知</span></div>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>真实数据来源</h3>
+            <div class="scope-list">
+              <div class="scope-item"><i data-lucide="check" aria-hidden="true"></i>users / friendships 真实账号与好友关系</div>
+              <div class="scope-item"><i data-lucide="check" aria-hidden="true"></i>blog_posts 真实文章与封面</div>
+              <div class="scope-item"><i data-lucide="check" aria-hidden="true"></i>服务端计算真实字数</div>
+              <div class="scope-item"><i data-lucide="check" aria-hidden="true"></i>likes / comments 真实互动</div>
+              <div class="scope-item"><i data-lucide="check" aria-hidden="true"></i>WebSocket + REST 真实通知同步</div>
+              <div class="scope-item"><i data-lucide="check" aria-hidden="true"></i>禁止 seed / mock / 硬编码回退</div>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>栏目入口</h3>
+            <div class="entry-chips">
+              <div class="entry-chip">底部 Tab 新增“博客”</div>
+              <div class="entry-chip">我的 &gt; 社交 &gt; 博客</div>
+              <div class="entry-chip">首页工具网格快捷入口</div>
+              <div class="entry-chip">消息 Tab 合并互动未读红点</div>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>成功指标</h3>
+            <div class="metric-grid">
+              <div class="metric"><strong>≥99%</strong><span>发布成功率</span></div>
+              <div class="metric"><strong>≤1.5s</strong><span>公开流首屏 p95</span></div>
+              <div class="metric"><strong>≥40%</strong><span>互动参与用户</span></div>
+              <div class="metric"><strong>100%</strong><span>无假数据验收</span></div>
+            </div>
+          </div>
+
+          <div class="strategy-section">
+            <h3>关键决策</h3>
+            <div class="decision">
+              <strong>三档可见范围</strong>
+              <p>public 任何人可见，friends 仅好友可见，self 仅自己可见；作者可随时修改。</p>
+            </div>
+            <div class="decision" style="margin-top: 8px;">
+              <strong>正文纯文本</strong>
+              <p>正文按纯文本保留换行渲染，不执行 HTML；长度、敏感词与权限在服务端校验。</p>
+            </div>
+            <div class="decision" style="margin-top: 8px;">
+              <strong>事件只做刷新信号</strong>
+              <p>WebSocket 事件仅提示刷新，完整状态始终以 REST 返回的真实数据为准。</p>
+            </div>
+          </div>
+        </aside>
+
+        <main class="screens">
+          <div class="screen-row">
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">01</span>
+                <strong>博客首页</strong>
+                <span>公开 / 好友流</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">博客</span>
+                    <button class="nav-btn primary" type="button" aria-label="写文章"><i data-lucide="square-pen" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="hero-banner">
+                      <div class="hero-kicker">REAL WRITING</div>
+                      <div class="hero-title">读真实的长文</div>
+                      <p class="hero-copy">用户发布的真实博客在这里被发现，公开内容无需登录即可阅读。</p>
+                      <div class="hero-actions">
+                        <button class="hero-btn" type="button"><i data-lucide="square-pen" aria-hidden="true"></i>写文章</button>
+                        <button class="hero-btn soft" type="button"><i data-lucide="file-text" aria-hidden="true"></i>我的博客</button>
+                      </div>
+                    </div>
+                    <div class="segmented">
+                      <button class="seg-item active" type="button">公开</button>
+                      <button class="seg-item" type="button">好友</button>
+                    </div>
+                    <div class="feed-filter">
+                      <button class="filter-pill active" type="button"><i data-lucide="flame" aria-hidden="true"></i>最新</button>
+                      <button class="filter-pill" type="button"><i data-lucide="clock" aria-hidden="true"></i>近一周</button>
+                    </div>
+                    <div class="post-card">
+                      <div class="post-top">
+                        <div class="post-cover cover-a">
+                          <i data-lucide="book-open-text" aria-hidden="true"></i>
+                          <span class="cover-label">真实封面</span>
+                        </div>
+                        <div class="post-copy">
+                          <div class="post-title">文章标题</div>
+                          <div class="post-summary">文章摘要，来自真实数据。</div>
+                          <div class="post-meta">1240 字 · 发布 2 分钟前</div>
+                        </div>
+                      </div>
+                      <div class="post-author">
+                        <div class="avatar avatar-a"><i data-lucide="user" aria-hidden="true"></i></div>
+                        <span class="author-name">作者昵称</span>
+                      </div>
+                      <div class="post-stats">
+                        <span class="stat-item like"><i data-lucide="heart" aria-hidden="true"></i>3</span>
+                        <span class="stat-item"><i data-lucide="message-circle" aria-hidden="true"></i>2</span>
+                        <span class="stat-item visibility"><i data-lucide="globe" aria-hidden="true"></i>公开</span>
+                      </div>
+                    </div>
+                    <div class="post-card">
+                      <div class="post-top">
+                        <div class="post-cover cover-b">
+                          <i data-lucide="notebook-text" aria-hidden="true"></i>
+                          <span class="cover-label">真实封面</span>
+                        </div>
+                        <div class="post-copy">
+                          <div class="post-title">文章标题</div>
+                          <div class="post-summary">文章摘要，来自真实数据。</div>
+                          <div class="post-meta">860 字 · 发布 1 小时前</div>
+                        </div>
+                      </div>
+                      <div class="post-author">
+                        <div class="avatar avatar-b"><span class="initials">友</span></div>
+                        <span class="author-name">好友昵称</span>
+                      </div>
+                      <div class="post-stats">
+                        <span class="stat-item like"><i data-lucide="heart" aria-hidden="true"></i>1</span>
+                        <span class="stat-item"><i data-lucide="message-circle" aria-hidden="true"></i>1</span>
+                        <span class="stat-item visibility"><i data-lucide="users" aria-hidden="true"></i>好友</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bottom-nav">
+                    <span class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>首页</span>
+                    <span class="nav-item active"><i data-lucide="book-open-text" aria-hidden="true"></i>博客</span>
+                    <span class="nav-item"><i data-lucide="message-square" aria-hidden="true"></i>消息<span class="nav-dot">3</span></span>
+                    <span class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">02</span>
+                <strong>发布文章</strong>
+                <span>标题 · 正文 · 封面 · 可见范围</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="关闭"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <span class="screen-title">写文章</span>
+                    <button class="nav-btn primary" type="button" aria-label="保存草稿"><i data-lucide="save" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="editor-panel">
+                      <div class="editor-title-placeholder editor-title-input">标题（1-80 字）</div>
+                      <div class="editor-divider"></div>
+                      <div class="editor-placeholder editor-body">正文（1-10000 字，纯文本，保留换行）</div>
+                      <div class="editor-footer">
+                        <span class="draft-chip"><i data-lucide="cloud-check" aria-hidden="true"></i>草稿已自动保存</span>
+                        <span class="word-chip">0 / 10000</span>
+                      </div>
+                    </div>
+                    <div class="input-row">
+                      <i class="input-icon" data-lucide="align-left" aria-hidden="true"></i>
+                      <span class="input-copy">摘要</span>
+                      <span class="input-value">0-300 字，可选</span>
+                    </div>
+                    <div class="pick-grid">
+                      <div class="pick-cell add"><i data-lucide="plus" aria-hidden="true"></i></div>
+                      <div class="pick-cell cover-c"><span class="cover-label">封面</span></div>
+                      <div class="pick-cell cover-d"><span class="cover-label">封面</span></div>
+                    </div>
+                    <div class="visibility-card">
+                      <div class="visibility-title"><i data-lucide="shield" aria-hidden="true"></i>谁可以看</div>
+                      <div class="visibility-seg">
+                        <button class="active" type="button">完全公开</button>
+                        <button type="button">好友可见</button>
+                        <button type="button">仅自己</button>
+                      </div>
+                    </div>
+                    <button class="publish-btn" type="button"><i data-lucide="send" aria-hidden="true"></i>发布</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">03</span>
+                <strong>文章详情</strong>
+                <span>正文 · 点赞 · 评论</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">文章</span>
+                    <button class="nav-btn" type="button" aria-label="更多"><i data-lucide="more-horizontal" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="article-cover">
+                      <i data-lucide="book-open-text" aria-hidden="true"></i>
+                      <span class="cover-label">真实封面 / 用户上传</span>
+                    </div>
+                    <div class="article-title">文章标题</div>
+                    <div class="article-meta">
+                      <span>作者昵称</span>
+                      <span class="dot"></span>
+                      <span>1240 字</span>
+                      <span class="dot"></span>
+                      <span>发布 5 分钟前</span>
+                    </div>
+                    <div class="article-body">
+                      <p class="body-placeholder">正文第一段（真实内容，按纯文本渲染）</p>
+                      <p class="body-placeholder">正文第二段（真实内容，保留换行与空格）</p>
+                      <p class="body-placeholder">正文第三段（真实内容）</p>
+                    </div>
+                    <div class="article-actions">
+                      <button class="article-action liked" type="button"><i data-lucide="heart" aria-hidden="true"></i>3</button>
+                      <button class="article-action" type="button"><i data-lucide="message-circle" aria-hidden="true"></i>2</button>
+                      <button class="article-action" type="button"><i data-lucide="flag" aria-hidden="true"></i>报告</button>
+                    </div>
+                    <div class="comment-composer">
+                      <span class="comment-input">写评论，支持 @ 好友</span>
+                      <button class="nav-btn primary" type="button" aria-label="发送" style="width: 32px; height: 32px;"><i data-lucide="send" aria-hidden="true"></i></button>
+                    </div>
+                    <div class="comment-item">
+                      <div class="avatar avatar-c"><span class="initials">友</span></div>
+                      <div class="comment-copy">
+                        <div class="comment-head">
+                          <span class="comment-name">好友昵称</span>
+                          <span class="comment-time">2 分钟前</span>
+                        </div>
+                        <div class="comment-body">真实评论内容，纯文本渲染。</div>
+                      </div>
+                      <i class="comment-like" data-lucide="heart" aria-hidden="true"></i>
+                    </div>
+                    <div class="comment-item">
+                      <div class="avatar avatar-d"><span class="initials">友</span></div>
+                      <div class="comment-copy">
+                        <div class="comment-head">
+                          <span class="comment-name">好友昵称</span>
+                          <span class="comment-time">1 分钟前</span>
+                        </div>
+                        <div class="comment-body">回复内容，支持 @ 好友。</div>
+                      </div>
+                      <i class="comment-like" data-lucide="heart" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                  <div class="bottom-nav">
+                    <span class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>首页</span>
+                    <span class="nav-item active"><i data-lucide="book-open-text" aria-hidden="true"></i>博客</span>
+                    <span class="nav-item"><i data-lucide="message-square" aria-hidden="true"></i>消息<span class="nav-dot">3</span></span>
+                    <span class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="screen-row">
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">04</span>
+                <strong>我的博客</strong>
+                <span>管理 · 可见范围</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">我的博客</span>
+                    <button class="nav-btn primary" type="button" aria-label="写文章"><i data-lucide="square-pen" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="post-card">
+                      <div class="post-top">
+                        <div class="post-cover cover-a">
+                          <i data-lucide="book-open-text" aria-hidden="true"></i>
+                          <span class="cover-label">真实封面</span>
+                        </div>
+                        <div class="post-copy">
+                          <div class="post-title">文章标题</div>
+                          <div class="post-summary">文章摘要，来自真实数据。</div>
+                          <div class="post-meta">1240 字 · 5 分钟前</div>
+                        </div>
+                      </div>
+                      <div class="post-stats">
+                        <span class="stat-item like"><i data-lucide="heart" aria-hidden="true"></i>3</span>
+                        <span class="stat-item"><i data-lucide="message-circle" aria-hidden="true"></i>2</span>
+                        <span class="stat-item visibility"><i data-lucide="globe" aria-hidden="true"></i>公开</span>
+                        <div class="manage-row">
+                          <span class="manage-item"><i data-lucide="pencil" aria-hidden="true"></i>编辑</span>
+                          <span class="manage-item"><i data-lucide="trash-2" aria-hidden="true"></i>删除</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="post-card">
+                      <div class="post-top">
+                        <div class="post-cover cover-c">
+                          <i data-lucide="lock" aria-hidden="true"></i>
+                          <span class="cover-label">真实封面</span>
+                        </div>
+                        <div class="post-copy">
+                          <div class="post-title">仅自己可见的文章</div>
+                          <div class="post-summary">文章摘要，来自真实数据。</div>
+                          <div class="post-meta">860 字 · 昨天</div>
+                        </div>
+                      </div>
+                      <div class="post-stats">
+                        <span class="stat-item like"><i data-lucide="heart" aria-hidden="true"></i>0</span>
+                        <span class="stat-item visibility"><i data-lucide="lock" aria-hidden="true"></i>仅自己</span>
+                        <div class="manage-row">
+                          <span class="manage-item"><i data-lucide="pencil" aria-hidden="true"></i>编辑</span>
+                          <span class="manage-item"><i data-lucide="trash-2" aria-hidden="true"></i>删除</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="visibility-card">
+                      <div class="visibility-title"><i data-lucide="shield" aria-hidden="true"></i>修改可见范围</div>
+                      <div class="visibility-seg">
+                        <button class="active" type="button">完全公开</button>
+                        <button type="button">好友可见</button>
+                        <button type="button">仅自己</button>
+                      </div>
+                      <div class="visibility-note">修改后立即生效，已产生的点赞评论保留，但仅可见范围内的人可查看。</div>
+                    </div>
+                  </div>
+                  <div class="bottom-nav">
+                    <span class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>首页</span>
+                    <span class="nav-item active"><i data-lucide="book-open-text" aria-hidden="true"></i>博客</span>
+                    <span class="nav-item"><i data-lucide="message-square" aria-hidden="true"></i>消息<span class="nav-dot">3</span></span>
+                    <span class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">05</span>
+                <strong>互动通知</strong>
+                <span>消息 Tab 合并未读</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">消息</span>
+                    <button class="nav-btn" type="button" aria-label="全部已读"><i data-lucide="check-check" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="segmented">
+                      <button class="seg-item" type="button">聊天</button>
+                      <button class="seg-item active" type="button">互动通知<span class="seg-badge">3</span></button>
+                    </div>
+                    <div class="notice-item unread">
+                      <div class="avatar avatar-b"><span class="initials">友</span></div>
+                      <div class="notice-copy">
+                        <div class="notice-title"><strong>好友昵称</strong> 赞了你的文章</div>
+                        <div class="notice-preview">文章标题</div>
+                        <div class="notice-time">2 分钟前</div>
+                      </div>
+                      <i class="chevron" data-lucide="chevron-right" aria-hidden="true"></i>
+                      <span class="unread-dot"></span>
+                    </div>
+                    <div class="notice-item unread">
+                      <div class="avatar avatar-c"><span class="initials">友</span></div>
+                      <div class="notice-copy">
+                        <div class="notice-title"><strong>好友昵称</strong> 评论了你</div>
+                        <div class="notice-preview">真实评论内容，纯文本渲染。</div>
+                        <div class="notice-time">18 分钟前</div>
+                      </div>
+                      <i class="chevron" data-lucide="chevron-right" aria-hidden="true"></i>
+                      <span class="unread-dot"></span>
+                    </div>
+                    <div class="notice-item unread">
+                      <div class="avatar avatar-d"><span class="initials">友</span></div>
+                      <div class="notice-copy">
+                        <div class="notice-title"><strong>好友昵称</strong> @了你</div>
+                        <div class="notice-preview">回复内容，支持 @ 好友。</div>
+                        <div class="notice-time">1 小时前</div>
+                      </div>
+                      <i class="chevron" data-lucide="chevron-right" aria-hidden="true"></i>
+                      <span class="unread-dot"></span>
+                    </div>
+                    <div class="notice-item">
+                      <div class="avatar avatar-a"><i data-lucide="user" aria-hidden="true"></i></div>
+                      <div class="notice-copy">
+                        <div class="notice-title"><strong>作者昵称</strong> 回复了你</div>
+                        <div class="notice-preview">回复内容，纯文本渲染。</div>
+                        <div class="notice-time">昨天</div>
+                      </div>
+                      <i class="chevron" data-lucide="chevron-right" aria-hidden="true"></i>
+                    </div>
+                  </div>
+                  <div class="bottom-nav">
+                    <span class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>首页</span>
+                    <span class="nav-item active"><i data-lucide="book-open-text" aria-hidden="true"></i>博客</span>
+                    <span class="nav-item"><i data-lucide="message-square" aria-hidden="true"></i>消息<span class="nav-dot">3</span></span>
+                    <span class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">06</span>
+                <strong>加载与失败</strong>
+                <span>骨架屏 · 重试</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">博客</span>
+                    <button class="nav-btn primary" type="button" aria-label="写文章"><i data-lucide="square-pen" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="segmented">
+                      <button class="seg-item active" type="button">公开</button>
+                      <button class="seg-item" type="button">好友</button>
+                    </div>
+                    <div class="skeleton-card">
+                      <div class="skeleton-row">
+                        <div class="skeleton-cover"></div>
+                        <div class="skeleton-lines">
+                          <div class="skeleton-line short"></div>
+                          <div class="skeleton-line"></div>
+                          <div class="skeleton-line short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="skeleton-card">
+                      <div class="skeleton-row">
+                        <div class="skeleton-cover"></div>
+                        <div class="skeleton-lines">
+                          <div class="skeleton-line short"></div>
+                          <div class="skeleton-line"></div>
+                          <div class="skeleton-line short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="skeleton-card">
+                      <div class="skeleton-row">
+                        <div class="skeleton-cover"></div>
+                        <div class="skeleton-lines">
+                          <div class="skeleton-line short"></div>
+                          <div class="skeleton-line"></div>
+                          <div class="skeleton-line short"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="empty-state" style="margin-top: 4px;">
+                      <i data-lucide="wifi-off" aria-hidden="true"></i>
+                      <strong>加载失败</strong>
+                      <span>显示错误与重试，不清空已加载的真实内容。</span>
+                    </div>
+                  </div>
+                  <div class="bottom-nav">
+                    <span class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>首页</span>
+                    <span class="nav-item active"><i data-lucide="book-open-text" aria-hidden="true"></i>博客</span>
+                    <span class="nav-item"><i data-lucide="message-square" aria-hidden="true"></i>消息</span>
+                    <span class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="screen-row">
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">07</span>
+                <strong>真实空状态</strong>
+                <span>无 mock 内容兜底</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">博客</span>
+                    <button class="nav-btn primary" type="button" aria-label="写文章"><i data-lucide="square-pen" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="segmented">
+                      <button class="seg-item active" type="button">公开</button>
+                      <button class="seg-item" type="button">好友</button>
+                    </div>
+                    <div class="empty-state">
+                      <i data-lucide="book-open-text" aria-hidden="true"></i>
+                      <strong>还没有公开博客</strong>
+                      <span>用户发布第一篇后，公开内容会出现在这里。</span>
+                    </div>
+                    <div class="empty-state" style="margin-top: 10px;">
+                      <i data-lucide="users" aria-hidden="true"></i>
+                      <strong>添加好友后能看到好友博客</strong>
+                      <span>好友可见内容仅对真实好友展示。</span>
+                    </div>
+                    <div class="empty-state" style="margin-top: 10px;">
+                      <i data-lucide="bell" aria-hidden="true"></i>
+                      <strong>还没有互动通知</strong>
+                      <span>点赞、评论、@通知会出现在这里。</span>
+                    </div>
+                  </div>
+                  <div class="bottom-nav">
+                    <span class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>首页</span>
+                    <span class="nav-item active"><i data-lucide="book-open-text" aria-hidden="true"></i>博客</span>
+                    <span class="nav-item"><i data-lucide="message-square" aria-hidden="true"></i>消息</span>
+                    <span class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">08</span>
+                <strong>未登录引导</strong>
+                <span>公开可读 · 互动登录</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen screen-with-nav">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">博客</span>
+                    <button class="nav-btn" type="button" aria-label="更多"><i data-lucide="more-horizontal" aria-hidden="true"></i></button>
+                  </div>
+                  <div class="content">
+                    <div class="login-banner">
+                      <div class="login-icon"><i data-lucide="log-in" aria-hidden="true"></i></div>
+                      <div class="login-copy">
+                        <div class="login-title">登录后点赞、评论、发布</div>
+                        <div class="login-sub">公开内容无需登录即可阅读。</div>
+                      </div>
+                      <button class="login-btn" type="button"><i data-lucide="arrow-right" aria-hidden="true"></i>登录</button>
+                    </div>
+                    <div class="segmented">
+                      <button class="seg-item active" type="button">公开</button>
+                      <button class="seg-item" type="button">好友</button>
+                    </div>
+                    <div class="post-card">
+                      <div class="post-top">
+                        <div class="post-cover cover-b">
+                          <i data-lucide="notebook-text" aria-hidden="true"></i>
+                          <span class="cover-label">真实封面</span>
+                        </div>
+                        <div class="post-copy">
+                          <div class="post-title">文章标题</div>
+                          <div class="post-summary">文章摘要，来自真实数据。</div>
+                          <div class="post-meta">860 字 · 发布 1 小时前</div>
+                        </div>
+                      </div>
+                      <div class="post-author">
+                        <div class="avatar avatar-b"><span class="initials">友</span></div>
+                        <span class="author-name">作者昵称</span>
+                      </div>
+                      <div class="post-stats">
+                        <span class="stat-item like"><i data-lucide="heart" aria-hidden="true"></i>1</span>
+                        <span class="stat-item"><i data-lucide="message-circle" aria-hidden="true"></i>1</span>
+                        <span class="stat-item visibility"><i data-lucide="globe" aria-hidden="true"></i>公开</span>
+                      </div>
+                    </div>
+                    <div class="post-card">
+                      <div class="post-top">
+                        <div class="post-cover cover-d">
+                          <i data-lucide="book-open-text" aria-hidden="true"></i>
+                          <span class="cover-label">真实封面</span>
+                        </div>
+                        <div class="post-copy">
+                          <div class="post-title">文章标题</div>
+                          <div class="post-summary">文章摘要，来自真实数据。</div>
+                          <div class="post-meta">2100 字 · 发布 3 小时前</div>
+                        </div>
+                      </div>
+                      <div class="post-author">
+                        <div class="avatar avatar-c"><span class="initials">友</span></div>
+                        <span class="author-name">作者昵称</span>
+                      </div>
+                      <div class="post-stats">
+                        <span class="stat-item like"><i data-lucide="heart" aria-hidden="true"></i>5</span>
+                        <span class="stat-item"><i data-lucide="message-circle" aria-hidden="true"></i>2</span>
+                        <span class="stat-item visibility"><i data-lucide="globe" aria-hidden="true"></i>公开</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bottom-nav">
+                    <span class="nav-item"><i data-lucide="layout-grid" aria-hidden="true"></i>首页</span>
+                    <span class="nav-item active"><i data-lucide="book-open-text" aria-hidden="true"></i>博客</span>
+                    <span class="nav-item"><i data-lucide="message-square" aria-hidden="true"></i>消息</span>
+                    <span class="nav-item"><i data-lucide="user" aria-hidden="true"></i>我的</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen-card">
+              <div class="screen-label">
+                <span class="index">09</span>
+                <strong>管理员治理</strong>
+                <span>真实列表 · 下架</span>
+              </div>
+              <div class="phone">
+                <div class="phone-screen">
+                  <div class="status-row">
+                    <span class="dynamic-island"></span>
+                    <span class="status-time">9:41</span>
+                    <span class="status-icons">
+                      <i data-lucide="signal" aria-hidden="true"></i>
+                      <i data-lucide="wifi" aria-hidden="true"></i>
+                      <i data-lucide="battery-full" aria-hidden="true"></i>
+                    </span>
+                  </div>
+                  <div class="screen-nav">
+                    <button class="nav-btn" type="button" aria-label="返回"><i data-lucide="chevron-left" aria-hidden="true"></i></button>
+                    <span class="screen-title">博客管理</span>
+                    <span style="width: 34px;"></span>
+                  </div>
+                  <div class="content">
+                    <div class="segmented">
+                      <button class="seg-item active" type="button">文章</button>
+                      <button class="seg-item" type="button">评论</button>
+                      <button class="seg-item" type="button">报告</button>
+                    </div>
+                    <div class="admin-card">
+                      <div class="admin-head">
+                        <div class="post-cover cover-a" style="flex-basis: 44px; height: 44px; width: 44px;">
+                          <i data-lucide="book-open-text" aria-hidden="true"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                          <div class="admin-title">文章标题</div>
+                          <div class="admin-sub">作者昵称 · 3 报告 · 1240 字</div>
+                        </div>
+                        <span class="status-chip active">正常</span>
+                      </div>
+                      <div class="admin-actions">
+                        <button class="admin-action" type="button">查看详情</button>
+                        <button class="admin-action danger" type="button">下架</button>
+                      </div>
+                    </div>
+                    <div class="admin-card">
+                      <div class="admin-head">
+                        <div class="post-cover cover-c" style="flex-basis: 44px; height: 44px; width: 44px;">
+                          <i data-lucide="file-text" aria-hidden="true"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                          <div class="admin-title">文章标题</div>
+                          <div class="admin-sub">作者昵称 · 1 报告 · 860 字</div>
+                        </div>
+                        <span class="status-chip active">正常</span>
+                      </div>
+                      <div class="admin-actions">
+                        <button class="admin-action" type="button">查看详情</button>
+                        <button class="admin-action danger" type="button">下架</button>
+                      </div>
+                    </div>
+                    <div class="admin-card">
+                      <div class="admin-head">
+                        <div class="post-cover cover-e" style="flex-basis: 44px; height: 44px; width: 44px;">
+                          <i data-lucide="shield-alert" aria-hidden="true"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                          <div class="admin-title">文章标题</div>
+                          <div class="admin-sub">作者昵称 · 已下架</div>
+                        </div>
+                        <span class="status-chip hidden">已下架</span>
+                      </div>
+                      <div class="admin-actions">
+                        <button class="admin-action" type="button">查看报告</button>
+                        <button class="admin-action" type="button">恢复</button>
+                      </div>
+                    </div>
+                    <div class="empty-state" style="margin-top: 8px;">
+                      <i data-lucide="check-circle" aria-hidden="true"></i>
+                      <strong>待处理报告为空</strong>
+                      <span>真实报告记录全部处理后，这里显示空状态。</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

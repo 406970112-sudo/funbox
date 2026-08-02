@@ -13,6 +13,7 @@ import {
 import { ThemedText } from '@/components/themed-text';
 import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useBlog } from '@/features/blog/blog-provider';
 import { useMoments } from '@/features/moments/moments-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { hasIdentityBadge, identityPresentation, identityRoute } from '@/lib/identity';
@@ -36,6 +37,7 @@ type RecentUsageDisplayItem = {
 export function ProfileScreen() {
   const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
+  const { unreadCount: blogUnreadCount } = useBlog();
   const { clearIdentityChangeNotice, identityChangeNotice, refreshUser, signOut, status, user } =
     useAuth();
   const { visibleGames, visibleTools } = useFeatureAccess();
@@ -234,6 +236,37 @@ export function ProfileScreen() {
               <View style={styles.socialBadge}>
                 <ThemedText style={styles.socialBadgeText}>
                   {Math.min(unreadCount, 99)}
+                </ThemedText>
+              </View>
+            ) : null}
+            <MaterialCommunityIcons name="chevron-right" size={21} color={colors.mutedText} />
+          </Pressable>
+          <Pressable
+            accessibilityLabel="打开博客"
+            accessibilityRole="button"
+            onPress={() => router.push('/tools/blog' as Href)}
+            style={({ pressed }) => [
+              styles.socialRow,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.line,
+                marginTop: 9,
+                opacity: pressed ? 0.72 : 1,
+              },
+            ]}>
+            <View style={styles.socialIcon}>
+              <MaterialCommunityIcons name="book-open-page-variant-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.socialCopy}>
+              <ThemedText style={styles.socialTitle}>博客</ThemedText>
+              <ThemedText style={[styles.socialSubtitle, { color: colors.mutedText }]}>
+                真实长文 · 三档可见
+              </ThemedText>
+            </View>
+            {blogUnreadCount > 0 ? (
+              <View style={styles.socialBadge}>
+                <ThemedText style={styles.socialBadgeText}>
+                  {Math.min(blogUnreadCount, 99)}
                 </ThemedText>
               </View>
             ) : null}

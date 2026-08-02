@@ -11,6 +11,7 @@ import 'react-native-reanimated';
 
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { FeatureAccessProvider } from '@/features/access/feature-access-provider';
+import { BlogProvider } from '@/features/blog/blog-provider';
 import { GameSocialProvider } from '@/features/games/game-social-provider';
 import { MomentsProvider } from '@/features/moments/moments-provider';
 import { SocialProvider } from '@/features/social/social-provider';
@@ -92,7 +93,8 @@ export default function RootLayout() {
         <FeatureAccessProvider>
           <SocialProvider>
             <MomentsProvider>
-              <GameSocialProvider>
+              <BlogProvider>
+                <GameSocialProvider>
                 <Stack
                   screenOptions={{
                     animation: 'slide_from_right',
@@ -115,6 +117,10 @@ export default function RootLayout() {
                 <Stack.Screen name="moments/create" options={{ animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="moments/[momentId]" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="moments/notifications" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="blog/create" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="blog/[postId]" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="blog/mine" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="blog/notifications" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen
               name="tools/[toolId]"
               options={{
@@ -129,7 +135,8 @@ export default function RootLayout() {
             />
                 </Stack>
                 <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-              </GameSocialProvider>
+                </GameSocialProvider>
+              </BlogProvider>
             </MomentsProvider>
           </SocialProvider>
         </FeatureAccessProvider>

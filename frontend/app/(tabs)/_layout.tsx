@@ -1,10 +1,12 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { appLayout } from '@/constants/app-theme';
+import { useBlog } from '@/features/blog/blog-provider';
 import { useMoments } from '@/features/moments/moments-provider';
 import { useSocial } from '@/features/social/social-provider';
 import { getUnreadMessageState } from '@/features/social/unread-message-state';
@@ -14,7 +16,8 @@ export default function TabLayout() {
   const { colors } = useAppTheme();
   const { conversations } = useSocial();
   const { unreadCount: momentUnreadCount } = useMoments();
-  const unreadState = getUnreadMessageState(conversations, momentUnreadCount);
+  const { unreadCount: blogUnreadCount } = useBlog();
+  const unreadState = getUnreadMessageState(conversations, momentUnreadCount + blogUnreadCount);
 
   return (
     <Tabs
@@ -47,6 +50,19 @@ export default function TabLayout() {
           title: '首页',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="blog"
+        options={{
+          title: '博客',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'book-open-page-variant' : 'book-open-page-variant-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />

@@ -1035,6 +1035,34 @@ func (s *Store) enrichPosts(ctx context.Context, viewerID string, items []Post) 
 		args = append(args, id)
 	}
 
+	likeCounts, likedByMe, err := s.loadLikeEnrichment(ctx, viewerID, idList, args)
+	if err != nil {
+		return err
+	}
+	commentCounts, err := s.loadCommentCounts(ctx, idList, args)
+	if err != nil {
+		return err
+	}
+	commentsByPost, err := s.loadRecentComments(ctx, idList, args, RecentCommentsLimit*len(items))
+	if err != nil {
+		return err
+	}
+
+	for index := range items {
+		items[index].LikeCount = likeCounts[items[index].ID]
+		items[index].LikedByMe = viewerID != "" && likedByMe[items[index].ID]
+		items[index].CommentCount = commentCounts[items[index].ID]
+		items[index].RecentComments = commentsByPost[items[index].ID]
+	}
+	return nil
+}
+
+func (s *Store) loadLikeEnrichment(
+	ctx context.Context,
+	viewerID string,
+	idList string,
+	args []any,
+) (map[string]int, map[string]bool, error) {
 	rows, err := s.db.QueryContext(
 		ctx,
 		`SELECT l.post_id, COUNT(l.user_id),
@@ -1045,45 +1073,84 @@ func (s *Store) enrichPosts(ctx context.Context, viewerID string, items []Post) 
 		append([]any{viewerID}, args...)...,
 	)
 	if err != nil {
-		return fmt.Errorf("enrich blog likes: %w", err)
+		return nil, nil, fmt.Errorf("enrich blog likes: %w", err)
 	}
 	defer rows.Close()
-	likeCounts := make(map[string]int, len(ids))
-	likedByMe := make(map[string]bool, len(ids))
+	likeCounts := make(map[string]int, len(args))
+	likedByMe := make(map[string]bool, len(args))
 	for rows.Next() {
 		var postID string
 		var count int
 		var liked int
 		if err := rows.Scan(&postID, &count, &liked); err != nil {
-			return fmt.Errorf("scan blog like enrichment: %w", err)
+			return nil, nil, fmt.Errorf("scan blog like enrichment: %w", err)
 		}
 		likeCounts[postID] = count
 		likedByMe[postID] = liked > 0
 	}
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("iterate blog like enrichment: %w", err)
+		return nil, nil, fmt.Errorf("iterate blog like enrichment: %w", err)
 	}
+	return likeCounts, likedByMe, nil
+}
 
-	rows, err = s.db.QueryContext(
+func (s *Store) loadCommentCounts(
+	ctx context.Context,
+	idList string,
+	args []any,
+) (map[string]int, error) {
+	rows, err := s.db.QueryContext(
 		ctx,
-		`SELECT c.post_id, c.id, c.parent_id, c.body, c.created_at,
+		`SELECT c.post_id, COUNT(*) FROM blog_comments c
+		 WHERE c.status = 'active' AND c.post_id IN (`+idList+`)
+		 GROUP BY c.post_id`,
+		append([]any{}, args...)...,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("enrich blog comment counts: %w", err)
+	}
+	defer rows.Close()
+	commentCounts := make(map[string]int, len(args))
+	for rows.Next() {
+		var postID string
+		var count int
+		if err := rows.Scan(&postID, &count); err != nil {
+			return nil, fmt.Errorf("scan blog comment count: %w", err)
+		}
+		commentCounts[postID] = count
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate blog comment counts: %w", err)
+	}
+	return commentCounts, nil
+}
+
+func (s *Store) loadRecentComments(
+	ctx context.Context,
+	idList string,
+	args []any,
+	limit int,
+) (map[string][]Comment, error) {
+	rows, err := s.db.QueryContext(
+		ctx,
+		`SELECT c.id, c.post_id, c.parent_id, c.body, c.status, c.created_at,
 		        u.id, u.username, u.display_name, u.avatar_file, u.role
 		 FROM blog_comments c
 		 JOIN users u ON u.id = c.author_id
 		 WHERE c.status = 'active' AND c.post_id IN (`+idList+`)
 		 ORDER BY c.created_at DESC, c.id DESC
 		 LIMIT ?`,
-		append(append([]any{}, args...), RecentCommentsLimit*len(items))...,
+		append(append([]any{}, args...), limit)...,
 	)
 	if err != nil {
-		return fmt.Errorf("enrich blog comments: %w", err)
+		return nil, fmt.Errorf("enrich blog comments: %w", err)
 	}
 	defer rows.Close()
-	commentsByPost := make(map[string][]Comment, len(ids))
+	commentsByPost := make(map[string][]Comment, len(args))
 	for rows.Next() {
 		comment, err := scanCommentRow(rows)
 		if err != nil {
-			return fmt.Errorf("scan blog comment enrichment: %w", err)
+			return nil, fmt.Errorf("scan blog comment enrichment: %w", err)
 		}
 		list := commentsByPost[comment.PostID]
 		if len(list) < RecentCommentsLimit {
@@ -1092,15 +1159,9 @@ func (s *Store) enrichPosts(ctx context.Context, viewerID string, items []Post) 
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("iterate blog comment enrichment: %w", err)
+		return nil, fmt.Errorf("iterate blog comment enrichment: %w", err)
 	}
-
-	for index := range items {
-		items[index].LikeCount = likeCounts[items[index].ID]
-		items[index].LikedByMe = viewerID != "" && likedByMe[items[index].ID]
-		items[index].RecentComments = commentsByPost[items[index].ID]
-	}
-	return nil
+	return commentsByPost, nil
 }
 
 func (s *Store) createComment(

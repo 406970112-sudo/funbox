@@ -27,6 +27,7 @@ import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
 import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
+import { BlogFeedScreen } from '@/features/blog/blog-feed-screen';
 import { ReadingHomeScreen } from '@/features/reading/reading-home-screen';
 import { useAuth } from '@/features/auth/auth-provider';
 import { ThemedText } from '@/components/themed-text';
@@ -213,6 +214,10 @@ export function ToolDetailScreen() {
 
   if (tool?.id === 'moments') {
     return <MomentsFeedScreen />;
+  }
+
+  if (tool?.id === 'blog') {
+    return <BlogFeedScreen />;
   }
 
   if (tool?.id === 'product-recommendation') {

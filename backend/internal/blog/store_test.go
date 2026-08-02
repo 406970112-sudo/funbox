@@ -182,6 +182,40 @@ func TestBlogLikesCommentsNotificationsAndAdmin(t *testing.T) {
 	}
 }
 
+func TestBlogPublicFeedEnrichesLikesAndCommentsForAnonymousViewer(t *testing.T) {
+	fixture := openBlogTestStore(t, "Alice", "Bob")
+	store := fixture.store
+	alice := fixture.accounts[0]
+	bob := fixture.accounts[1]
+	ctx := context.Background()
+	makeBlogFriends(t, fixture.socialStore, bob.ID, alice.ID)
+
+	created, err := store.Create(ctx, alice.ID, "公开文章", "", "正文内容", "", VisibilityPublic)
+	if err != nil {
+		t.Fatalf("create public post: %v", err)
+	}
+	if _, err := store.Like(ctx, bob.ID, created.ID); err != nil {
+		t.Fatalf("like public post: %v", err)
+	}
+	if _, err := store.Comment(ctx, bob.ID, created.ID, "", "评论", nil); err != nil {
+		t.Fatalf("comment public post: %v", err)
+	}
+	page, err := store.ListFeed(ctx, "", "public", "", 20)
+	if err != nil {
+		t.Fatalf("anonymous public feed: %v", err)
+	}
+	if len(page.Items) != 1 {
+		t.Fatalf("public feed = %+v", page.Items)
+	}
+	item := page.Items[0]
+	if item.LikeCount != 1 || item.CommentCount != 1 {
+		t.Fatalf("enriched item = %+v", item)
+	}
+	if len(item.RecentComments) != 1 || item.RecentComments[0].Body != "评论" {
+		t.Fatalf("recent comments = %+v", item.RecentComments)
+	}
+}
+
 type blogTestFixture struct {
 	accounts    []user.User
 	socialStore *social.Store

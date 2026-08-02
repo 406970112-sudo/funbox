@@ -6,12 +6,14 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { IdentityPill } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useBlog } from '@/features/blog/blog-provider';
 import { useMoments } from '@/features/moments/moments-provider';
 import { SocialAvatar, SocialEmptyState } from '@/features/social/social-ui';
 import { useSocial } from '@/features/social/social-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { MomentNotification } from '@/types/moments';
+import type { BlogNotification } from '@/types/blog';
 import type { Conversation } from '@/types/social';
 
 export function MessagesScreen() {
@@ -27,6 +29,14 @@ export function MessagesScreen() {
     refreshNotifications,
     unreadCount: momentUnreadCount,
   } = useMoments();
+  const {
+    error: blogError,
+    loading: blogLoading,
+    markRead: blogMarkRead,
+    notifications: blogNotifications,
+    refreshNotifications: refreshBlogNotifications,
+    unreadCount: blogUnreadCount,
+  } = useBlog();
   const [activeTab, setActiveTab] = useState<'chat' | 'notifications'>('chat');
   const onlineFriends = friends.filter((friend) => friend.user.online).slice(0, 5);
   const chatUnreadCount = conversations.reduce(
@@ -37,7 +47,8 @@ export function MessagesScreen() {
   useFocusEffect(
     useCallback(() => {
       void refreshNotifications();
-    }, [refreshNotifications]),
+      void refreshBlogNotifications();
+    }, [refreshBlogNotifications, refreshNotifications]),
   );
 
   if (status !== 'authenticated') {
@@ -99,7 +110,7 @@ export function MessagesScreen() {
         />
         <TabButton
           active={activeTab === 'notifications'}
-          badge={momentUnreadCount}
+          badge={momentUnreadCount + blogUnreadCount}
           label="互动通知"
           onPress={() => setActiveTab('notifications')}
         />
@@ -217,6 +228,49 @@ export function MessagesScreen() {
             />
           )}
           {momentsError ? <ThemedText style={styles.errorText}>{momentsError}</ThemedText> : null}
+          <View style={styles.blogSection}>
+            <View style={styles.sectionHeading}>
+              <ThemedText style={styles.sectionTitle}>博客互动</ThemedText>
+              <Pressable
+                accessibilityRole="button"
+                disabled={blogUnreadCount === 0}
+                onPress={() => void blogMarkRead()}
+                style={styles.markReadButton}>
+                <MaterialCommunityIcons name="check-all" size={15} color={colors.primary} />
+                <ThemedText style={styles.markReadText}>全部已读</ThemedText>
+              </Pressable>
+            </View>
+            {blogLoading ? (
+              <View style={styles.loadingState}>
+                <ActivityIndicator color={colors.primary} />
+              </View>
+            ) : blogNotifications.length > 0 ? (
+              <View>
+                {blogNotifications.map((notification) => (
+                  <BlogNoticeRow
+                    key={notification.id}
+                    notification={notification}
+                    onPress={() => {
+                      void blogMarkRead(notification.postId);
+                      if (notification.postId) {
+                        router.push({
+                          pathname: '/blog/[postId]',
+                          params: { postId: notification.postId },
+                        });
+                      }
+                    }}
+                  />
+                ))}
+              </View>
+            ) : (
+              <SocialEmptyState
+                description="好友赞了你的文章、评论或回复你时，会显示在这里。"
+                icon="book-open-page-variant-outline"
+                title="还没有博客互动"
+              />
+            )}
+            {blogError ? <ThemedText style={styles.errorText}>{blogError}</ThemedText> : null}
+          </View>
         </View>
       )}
     </MobileScreen>
@@ -345,6 +399,63 @@ function MomentNoticeRow({
   );
 }
 
+function BlogNoticeRow({
+  notification,
+  onPress,
+}: {
+  notification: BlogNotification;
+  onPress: () => void;
+}) {
+  const { colors } = useAppTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.noticeRow,
+        {
+          borderBottomColor: colors.line,
+          opacity: pressed ? 0.68 : 1,
+        },
+      ]}>
+      <SocialAvatar size={40} user={notification.actor} />
+      <View style={styles.conversationCopy}>
+        <ThemedText numberOfLines={1} style={styles.noticeTitle}>
+          {blogNotificationTitle(notification)}
+        </ThemedText>
+        {notification.preview ? (
+          <ThemedText
+            numberOfLines={1}
+            style={[styles.conversationPreview, { color: colors.mutedText }]}>
+            {notification.preview}
+          </ThemedText>
+        ) : null}
+      </View>
+      <View style={styles.noticeSide}>
+        <ThemedText style={[styles.conversationTime, { color: colors.mutedText }]}>
+          {formatMomentNoticeTime(notification.createdAt)}
+        </ThemedText>
+        {!notification.read ? <View style={styles.noticeDot} /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+function blogNotificationTitle(notification: BlogNotification) {
+  switch (notification.type) {
+    case 'post.like':
+      return `${notification.actor.displayName} 赞了你的文章`;
+    case 'post.comment':
+      return `${notification.actor.displayName} 评论了你的文章`;
+    case 'post.reply':
+      return `${notification.actor.displayName} 回复了你`;
+    case 'post.mention':
+      return `${notification.actor.displayName} @了你`;
+    default:
+      return `${notification.actor.displayName} 与你互动`;
+  }
+}
+
 function momentNotificationTitle(notification: MomentNotification) {
   switch (notification.type) {
     case 'like':
@@ -390,6 +501,12 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     width: 40,
+  },
+  blogSection: {
+    borderTopColor: '#dce5f4',
+    borderTopWidth: 1,
+    marginTop: 16,
+    paddingTop: 16,
   },
   conversationCopy: {
     flex: 1,

@@ -21,6 +21,7 @@
     "test:social-unread": "node --test --experimental-strip-types tests/unread-message-state.test.mjs",
     "test:ssq": "node --test --experimental-strip-types tests/double-color-ball.test.mjs",
     "test:auth": "node --test --experimental-strip-types tests/auth-validation.test.mjs",
+    "test:blog": "node --test --experimental-strip-types tests/blog-model.test.mjs",
     "test:admin-users": "node --test --experimental-strip-types tests/admin-users.test.mjs",
     "test:identity": "node --test --experimental-strip-types tests/identity.test.mjs",
     "test:membership": "node --test --experimental-strip-types tests/membership-payment.test.mjs",
