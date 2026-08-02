@@ -1,0 +1,2244 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 识花草产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --green: #24b36b;
+        --green-soft: #e5f7ee;
+        --amber: #f1a33b;
+        --canvas: #eef4ff;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+        --dark: #101426;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 2440px;
+        padding: 28px 34px 34px;
+        width: 1740px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark svg {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--green);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 22px;
+      }
+
+      .stage.two {
+        grid-template-columns: repeat(2, 424px) 1fr;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 42px;
+        box-shadow: 0 26px 52px rgba(21, 27, 59, 0.24);
+        height: 1080px;
+        padding: 11px;
+        position: relative;
+        width: 424px;
+      }
+
+      .phone-screen {
+        background: var(--screen);
+        border-radius: 32px;
+        height: 1058px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 42px;
+        justify-content: space-between;
+        padding: 0 26px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 9px;
+        transform: translateX(-50%);
+        width: 96px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-content {
+        height: 1016px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        height: 52px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--green);
+        border-radius: 9px;
+        color: var(--white);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: #edf2ff;
+        border: 0;
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+      }
+
+      .hero {
+        background:
+          linear-gradient(135deg, rgba(21, 27, 59, 0.94), rgba(36, 179, 107, 0.84)),
+          url("plant-identification-assets/sunflower.jpg") center / cover no-repeat;
+        border-radius: 18px;
+        color: var(--white);
+        height: 228px;
+        margin: 0 16px 14px;
+        overflow: hidden;
+        padding: 18px 16px;
+        position: relative;
+      }
+
+      .hero .hero-img {
+        border-radius: 12px;
+        bottom: 16px;
+        height: 128px;
+        object-fit: cover;
+        position: absolute;
+        right: 16px;
+        width: 128px;
+      }
+
+      .hero .kicker {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.18);
+        border: 1px solid rgba(201, 243, 106, 0.45);
+        border-radius: 999px;
+        color: var(--lime);
+        display: inline-flex;
+        font-size: 9.5px;
+        font-weight: 800;
+        gap: 5px;
+        padding: 4px 9px;
+      }
+
+      .hero .kicker i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .hero h1 {
+        font-size: 21px;
+        font-weight: 900;
+        line-height: 1.3;
+        margin: 10px 0 6px;
+        max-width: 230px;
+      }
+
+      .hero p {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+        max-width: 240px;
+      }
+
+      .hero-actions {
+        bottom: 14px;
+        display: flex;
+        gap: 9px;
+        left: 16px;
+        position: absolute;
+      }
+
+      .cta {
+        align-items: center;
+        border: 0;
+        border-radius: 12px;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 6px;
+        height: 40px;
+        justify-content: center;
+        padding: 0 13px;
+      }
+
+      .cta i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .cta.primary {
+        background: var(--lime);
+        color: var(--navy);
+      }
+
+      .cta.ghost {
+        background: rgba(255, 255, 255, 0.16);
+        color: var(--white);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .source-strip {
+        align-items: center;
+        display: flex;
+        gap: 7px;
+        margin: 0 16px 14px;
+      }
+
+      .source-chip {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #5c6b88;
+        display: inline-flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        height: 24px;
+        padding: 0 8px;
+      }
+
+      .source-chip i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .source-chip.live {
+        background: var(--green-soft);
+        border-color: #bfe9d1;
+        color: var(--green);
+      }
+
+      .section {
+        margin: 0 16px 14px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 9px;
+      }
+
+      .section-head h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 9.5px;
+        font-weight: 700;
+      }
+
+      .recent-row {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .recent-item {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 9px;
+        padding: 8px;
+      }
+
+      .recent-item img {
+        border-radius: 9px;
+        height: 46px;
+        object-fit: cover;
+        width: 46px;
+      }
+
+      .recent-item b {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .recent-item small {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .common-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .common-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        padding-bottom: 9px;
+      }
+
+      .common-card img {
+        height: 74px;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .common-card b {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+        margin: 7px 9px 2px;
+      }
+
+      .common-card small {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        margin: 0 9px;
+      }
+
+      .disclaimer {
+        align-items: flex-start;
+        background: #fff8e6;
+        border: 1px solid #f3dfae;
+        border-radius: 12px;
+        color: #8a6d1f;
+        display: flex;
+        font-size: 9px;
+        gap: 7px;
+        line-height: 1.6;
+        margin: 0 16px;
+        padding: 9px 10px;
+      }
+
+      .disclaimer i {
+        flex: 0 0 13px;
+        height: 13px;
+        margin-top: 1px;
+        width: 13px;
+      }
+
+      /* Camera screen */
+      .camera-body {
+        background:
+          linear-gradient(rgba(16, 20, 38, 0.1), rgba(16, 20, 38, 0.45)),
+          url("plant-identification-assets/dandelion.jpg") center / cover no-repeat;
+        color: var(--white);
+        height: 1016px;
+        position: relative;
+      }
+
+      .camera-top {
+        align-items: center;
+        display: flex;
+        height: 56px;
+        justify-content: space-between;
+        padding: 0 16px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .camera-top .back-btn,
+      .camera-top .flash-btn {
+        align-items: center;
+        background: rgba(16, 20, 38, 0.42);
+        border: 0;
+        border-radius: 12px;
+        color: var(--white);
+        display: flex;
+        height: 36px;
+        justify-content: center;
+        width: 36px;
+      }
+
+      .camera-top i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .camera-hint {
+        align-items: center;
+        background: rgba(16, 20, 38, 0.52);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 10px;
+        font-weight: 700;
+        gap: 6px;
+        left: 50%;
+        padding: 7px 12px;
+        position: absolute;
+        top: 66px;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        z-index: 2;
+      }
+
+      .camera-hint i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .viewfinder {
+        height: 300px;
+        left: 50%;
+        position: absolute;
+        top: 208px;
+        transform: translateX(-50%);
+        width: 300px;
+      }
+
+      .viewfinder .corner {
+        border: 2px solid var(--lime);
+        height: 28px;
+        position: absolute;
+        width: 28px;
+      }
+
+      .viewfinder .corner.tl {
+        border-bottom: 0;
+        border-radius: 8px 0 0;
+        border-right: 0;
+        left: -1px;
+        top: -1px;
+      }
+
+      .viewfinder .corner.tr {
+        border-bottom: 0;
+        border-left: 0;
+        border-radius: 0 8px 0 0;
+        right: -1px;
+        top: -1px;
+      }
+
+      .viewfinder .corner.bl {
+        border-radius: 0 0 0 8px;
+        border-right: 0;
+        border-top: 0;
+        bottom: -1px;
+        left: -1px;
+      }
+
+      .viewfinder .corner.br {
+        border-left: 0;
+        border-radius: 0 0 8px;
+        border-top: 0;
+        bottom: -1px;
+        right: -1px;
+      }
+
+      .scan-line {
+        background: linear-gradient(90deg, transparent, rgba(201, 243, 106, 0.9), transparent);
+        height: 2px;
+        left: 12px;
+        position: absolute;
+        right: 12px;
+        top: 84px;
+      }
+
+      .viewfinder-label {
+        background: rgba(16, 20, 38, 0.62);
+        border-radius: 999px;
+        bottom: -38px;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 9.5px;
+        left: 50%;
+        padding: 5px 10px;
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
+      }
+
+      .camera-controls {
+        align-items: center;
+        bottom: 34px;
+        display: flex;
+        justify-content: space-between;
+        left: 0;
+        padding: 0 32px;
+        position: absolute;
+        right: 0;
+        z-index: 2;
+      }
+
+      .control-btn {
+        align-items: center;
+        background: rgba(16, 20, 38, 0.42);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        height: 46px;
+        justify-content: center;
+        width: 46px;
+      }
+
+      .control-btn i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .gallery-preview {
+        border: 2px solid rgba(255, 255, 255, 0.85);
+        border-radius: 10px;
+        height: 46px;
+        object-fit: cover;
+        width: 46px;
+      }
+
+      .shutter {
+        background: var(--white);
+        border: 5px solid rgba(255, 255, 255, 0.35);
+        border-radius: 50%;
+        height: 66px;
+        width: 66px;
+      }
+
+      .camera-datasource {
+        bottom: 108px;
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 9px;
+        font-weight: 700;
+        left: 0;
+        position: absolute;
+        right: 0;
+        text-align: center;
+        z-index: 2;
+      }
+
+      /* Analyzing overlay */
+      .analyzing {
+        align-items: center;
+        background: rgba(16, 20, 38, 0.86);
+        display: flex;
+        flex-direction: column;
+        height: 1016px;
+        justify-content: center;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+        z-index: 4;
+      }
+
+      .analyzing img {
+        border-radius: 16px;
+        height: 250px;
+        object-fit: cover;
+        width: 250px;
+      }
+
+      .analyzing .spinner {
+        animation: spin 1.1s linear infinite;
+        color: var(--lime);
+        height: 34px;
+        margin-top: 18px;
+        width: 34px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .analyzing b {
+        color: var(--white);
+        font-size: 14px;
+        font-weight: 900;
+        margin-top: 12px;
+      }
+
+      .analyzing small {
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 9.5px;
+        margin-top: 6px;
+      }
+
+      /* Results screen */
+      .results-top {
+        height: 196px;
+        position: relative;
+      }
+
+      .results-top img {
+        height: 196px;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .results-top::after {
+        background: linear-gradient(180deg, rgba(16, 20, 38, 0.12), rgba(244, 247, 253, 0));
+        content: "";
+        height: 196px;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+
+      .results-top .close-btn {
+        align-items: center;
+        background: rgba(16, 20, 38, 0.45);
+        border: 0;
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        position: absolute;
+        right: 16px;
+        top: 12px;
+        width: 34px;
+        z-index: 2;
+      }
+
+      .results-top .close-btn i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .results-status {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        margin: 14px 16px 12px;
+      }
+
+      .status-badge {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 999px;
+        color: var(--green);
+        display: inline-flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 5px;
+        height: 28px;
+        padding: 0 11px;
+      }
+
+      .status-badge i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .score-pill {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10.5px;
+        font-weight: 800;
+        padding: 6px 10px;
+      }
+
+      .score-pill b {
+        color: var(--green);
+      }
+
+      .match-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        margin: 0 16px 12px;
+        overflow: hidden;
+        padding: 14px;
+        position: relative;
+      }
+
+      .match-card::before {
+        background: linear-gradient(135deg, var(--green), #4b6bff);
+        border-radius: 9px;
+        content: "";
+        height: 54px;
+        left: 14px;
+        position: absolute;
+        top: 14px;
+        width: 54px;
+      }
+
+      .match-card .thumb {
+        border-radius: 9px;
+        height: 54px;
+        object-fit: cover;
+        position: relative;
+        width: 54px;
+        z-index: 1;
+      }
+
+      .match-row {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+
+      .match-meta {
+        flex: 1;
+      }
+
+      .match-meta b {
+        display: block;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .match-meta .sci {
+        color: var(--muted);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-style: italic;
+        font-weight: 700;
+      }
+
+      .match-meta .tags {
+        display: flex;
+        gap: 6px;
+        margin-top: 5px;
+      }
+
+      .match-meta .tags span {
+        background: var(--blue-soft);
+        border-radius: 999px;
+        color: var(--blue);
+        font-size: 8.5px;
+        font-weight: 800;
+        padding: 3px 8px;
+      }
+
+      .match-card .detail-link {
+        align-items: center;
+        color: var(--green);
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 4px;
+        margin-top: 12px;
+      }
+
+      .match-card .detail-link i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .candidates {
+        margin: 0 16px;
+      }
+
+      .candidate {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 8px;
+        padding: 10px 12px;
+      }
+
+      .candidate .rank {
+        align-items: center;
+        background: #f0f3fb;
+        border-radius: 8px;
+        color: var(--muted);
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .candidate b {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .candidate small {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .candidate .score {
+        color: var(--ink);
+        font-family: "Manrope", sans-serif;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-left: auto;
+      }
+
+      .results-actions {
+        display: flex;
+        gap: 10px;
+        margin: 14px 16px 10px;
+      }
+
+      .results-actions .cta {
+        flex: 1;
+      }
+
+      .results-actions .cta.secondary {
+        background: var(--white);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .feedback-row {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9.5px;
+        font-weight: 700;
+        gap: 5px;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+
+      .feedback-row i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .data-note {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 700;
+        gap: 5px;
+        justify-content: center;
+        margin: 0 16px;
+      }
+
+      .data-note i {
+        height: 11px;
+        width: 11px;
+      }
+
+      /* Detail screen */
+      .detail-hero {
+        height: 196px;
+        position: relative;
+      }
+
+      .detail-hero img {
+        height: 196px;
+        object-fit: cover;
+        width: 100%;
+      }
+
+      .detail-hero::after {
+        background: linear-gradient(180deg, rgba(16, 20, 38, 0.18), transparent 45%);
+        content: "";
+        height: 196px;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+
+      .detail-top-actions {
+        display: flex;
+        gap: 8px;
+        left: 16px;
+        position: absolute;
+        top: 12px;
+        z-index: 2;
+      }
+
+      .detail-top-actions .icon-btn {
+        background: rgba(16, 20, 38, 0.45);
+        color: var(--white);
+      }
+
+      .detail-hero .credit {
+        background: rgba(16, 20, 38, 0.5);
+        border-radius: 999px;
+        bottom: 10px;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 8.5px;
+        left: 16px;
+        padding: 4px 9px;
+        position: absolute;
+        z-index: 2;
+      }
+
+      .detail-body {
+        margin-top: -14px;
+        position: relative;
+        z-index: 3;
+      }
+
+      .name-block {
+        background: var(--screen);
+        border-radius: 18px 18px 0 0;
+        padding: 12px 16px 10px;
+      }
+
+      .name-block h1 {
+        font-size: 20px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .name-block .sci {
+        color: var(--muted);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-style: italic;
+        font-weight: 700;
+        margin: 3px 0 8px;
+      }
+
+      .alias-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .alias-chips span {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #5c6b88;
+        font-size: 8.5px;
+        font-weight: 700;
+        padding: 4px 9px;
+      }
+
+      .taxon-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, 1fr);
+        margin: 0 16px 10px;
+      }
+
+      .taxon-cell {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 8px 10px;
+      }
+
+      .taxon-cell small {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 800;
+        margin-bottom: 3px;
+      }
+
+      .taxon-cell b {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .safety-card {
+        background: var(--green-soft);
+        border: 1px solid #bfe9d1;
+        border-radius: 14px;
+        margin: 0 16px 10px;
+        padding: 11px 12px 9px;
+      }
+
+      .safety-head {
+        align-items: center;
+        display: flex;
+        gap: 7px;
+        margin-bottom: 7px;
+      }
+
+      .safety-head .safety-icon {
+        align-items: center;
+        background: var(--green);
+        border-radius: 8px;
+        color: var(--white);
+        display: flex;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .safety-head .safety-icon i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .safety-head b {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .safety-head span {
+        color: var(--green);
+        font-size: 8.5px;
+        font-weight: 800;
+        margin-left: auto;
+      }
+
+      .safety-card p {
+        color: #31624a;
+        font-size: 9.5px;
+        line-height: 1.65;
+        margin: 0 0 5px;
+      }
+
+      .safety-source {
+        align-items: center;
+        color: var(--green);
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 4px;
+      }
+
+      .safety-source i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .desc-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin: 0 16px 10px;
+        padding: 11px;
+      }
+
+      .desc-card h3 {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 7px;
+        margin: 0 0 7px;
+      }
+
+      .desc-card h3 i {
+        color: var(--blue);
+        height: 14px;
+        width: 14px;
+      }
+
+      .desc-card p {
+        color: #4d5a75;
+        font-size: 10px;
+        line-height: 1.7;
+        margin: 0 0 6px;
+      }
+
+      .desc-card .link {
+        align-items: center;
+        color: var(--blue);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+      }
+
+      .desc-card .link i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .distrib-row {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        margin: 0 16px 10px;
+        padding: 9px 12px;
+      }
+
+      .distrib-row .dist-icon {
+        align-items: center;
+        background: #f0f3fb;
+        border-radius: 10px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .distrib-row .dist-icon i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .distrib-row b {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .distrib-row small {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .detail-sources {
+        margin: 0 16px 10px;
+      }
+
+      .source-line {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 6px;
+        padding: 8px 10px;
+      }
+
+      .source-line .s-ic {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 8px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 28px;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .source-line .s-ic i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .source-line b {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .source-line small {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .source-line span {
+        color: var(--green);
+        font-size: 8px;
+        font-weight: 800;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+
+      .detail-actions {
+        display: flex;
+        gap: 9px;
+        margin: 0 16px;
+        padding-bottom: 12px;
+      }
+
+      .detail-actions .cta {
+        flex: 1;
+      }
+
+      .detail-actions .cta.secondary {
+        background: var(--white);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      /* History screen */
+      .history-list {
+        margin: 8px 16px 0;
+      }
+
+      .history-item {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        margin-bottom: 10px;
+        padding: 10px;
+      }
+
+      .history-item img {
+        border-radius: 10px;
+        height: 52px;
+        object-fit: cover;
+        width: 52px;
+      }
+
+      .history-meta {
+        flex: 1;
+      }
+
+      .history-meta b {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 900;
+      }
+
+      .history-meta small {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .history-score {
+        color: var(--green);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .history-empty {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        margin: 26px 16px 0;
+        padding: 30px 16px;
+        text-align: center;
+      }
+
+      .history-empty .empty-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 50%;
+        color: var(--green);
+        display: flex;
+        height: 54px;
+        justify-content: center;
+        width: 54px;
+      }
+
+      .history-empty .empty-icon i {
+        height: 24px;
+        width: 24px;
+      }
+
+      .history-empty b {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-top: 12px;
+      }
+
+      .history-empty p {
+        color: var(--muted);
+        font-size: 9.5px;
+        margin: 5px 0 14px;
+      }
+
+      .history-empty .cta {
+        background: var(--green);
+        color: var(--white);
+      }
+
+      .history-actions {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 16px 0;
+      }
+
+      .history-actions span {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .history-actions button {
+        background: transparent;
+        border: 0;
+        color: var(--coral);
+        font-size: 9.5px;
+        font-weight: 800;
+      }
+
+      /* Strategy panel */
+      .strategy {
+        align-self: start;
+      }
+
+      .panel {
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 18px;
+        padding: 20px;
+      }
+
+      .kicker {
+        color: var(--green);
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .strategy h2 {
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 8px 0 10px;
+      }
+
+      .strategy-lead {
+        color: #5f6c86;
+        font-size: 11.5px;
+        line-height: 1.75;
+        margin: 0 0 16px;
+      }
+
+      .strategy-section {
+        border-top: 1px solid #e6ecf8;
+        margin-top: 14px;
+        padding-top: 14px;
+      }
+
+      .strategy-section h3 {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 7px;
+        margin: 0 0 9px;
+      }
+
+      .strategy-section h3 i {
+        color: var(--blue);
+        height: 15px;
+        width: 15px;
+      }
+
+      .rule-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .rule-list li {
+        color: #4d5a75;
+        font-size: 11px;
+        line-height: 1.6;
+        list-style: none;
+        padding-left: 18px;
+        position: relative;
+      }
+
+      .rule-list li::before {
+        background: var(--lime);
+        border-radius: 50%;
+        content: "";
+        height: 7px;
+        left: 2px;
+        position: absolute;
+        top: 6px;
+        width: 7px;
+      }
+
+      .mini-flow {
+        background: var(--navy);
+        border-radius: 12px;
+        color: #cfd6e6;
+        display: grid;
+        font-size: 10.5px;
+        gap: 6px;
+        line-height: 1.5;
+        padding: 13px 14px;
+      }
+
+      .mini-flow strong {
+        color: var(--lime);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .data-badge {
+        align-items: center;
+        background: var(--green-soft);
+        border: 1px solid #bfe9d1;
+        border-radius: 10px;
+        color: var(--green);
+        display: inline-flex;
+        font-size: 9.5px;
+        font-weight: 800;
+        gap: 6px;
+        margin-top: 12px;
+        padding: 7px 9px;
+      }
+
+      .data-badge i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .status-table {
+        border-collapse: collapse;
+        font-size: 10px;
+        width: 100%;
+      }
+
+      .status-table th,
+      .status-table td {
+        border-bottom: 1px solid #e6ecf8;
+        padding: 8px 6px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .status-table th {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .status-table td {
+        color: #4d5a75;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
+      .footer-note {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        color: #5f6c86;
+        display: flex;
+        font-size: 10px;
+        gap: 9px;
+        line-height: 1.7;
+        padding: 12px 15px;
+      }
+
+      .footer-note i {
+        color: var(--green);
+        flex: 0 0 15px;
+        height: 15px;
+        width: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark">
+            <i data-lucide="leaf"></i>
+          </div>
+          <div>
+            <p class="brand-title">FunBox 识花草 · 产品设计 V1</p>
+            <p class="brand-subtitle">拍一张照片，认识眼前的植物：名称、科属、描述与食用提示</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>一期完整交付</strong>
+          真实数据 · 可追溯 · 2026-08-02
+        </div>
+      </header>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="database"></i></div>
+          <div>
+            <strong>真实数据管线</strong>
+            <p>PlantNet 识别、GBIF 分类、iNaturalist 图片与观察、Wikipedia 描述，字段级标注来源与抓取时间。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="check-circle-2"></i></div>
+          <div>
+            <strong>一期一次做完</strong>
+            <p>双入口识别、候选结果、详情聚合、历史记录、纠错反馈与数据来源页在同一版本交付。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="shield-alert"></i></div>
+          <div>
+            <strong>安全兜底</strong>
+            <p>食用/毒性信息只展示可引用原文；资料缺失一律提示“请勿采食”，不输出无依据判断。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <span class="mark"><i data-lucide="leaf"></i></span>
+                    <strong>识花草</strong>
+                  </div>
+                  <div class="app-actions">
+                    <button class="icon-btn"><i data-lucide="history"></i></button>
+                    <button class="icon-btn"><i data-lucide="info"></i></button>
+                  </div>
+                </div>
+
+                <div class="hero">
+                  <span class="kicker"><i data-lucide="badge-check"></i>真实数据识别</span>
+                  <h1>拍一张，认识眼前的植物</h1>
+                  <p>名称、科属、常见描述与食用提示，均来自真实数据源。</p>
+                  <img class="hero-img" src="plant-identification-assets/sunflower.jpg" alt="向日葵" />
+                  <div class="hero-actions">
+                    <button class="cta primary"><i data-lucide="camera"></i>扫一扫识别</button>
+                    <button class="cta ghost"><i data-lucide="image"></i>相册</button>
+                  </div>
+                </div>
+
+                <div class="source-strip">
+                  <span class="source-chip live"><i data-lucide="circle-dot"></i>真实数据</span>
+                  <span class="source-chip">PlantNet</span>
+                  <span class="source-chip">GBIF</span>
+                  <span class="source-chip">iNaturalist</span>
+                  <span class="source-chip">Wikipedia</span>
+                </div>
+
+                <div class="section">
+                  <div class="section-head">
+                    <h3>最近识别</h3>
+                    <span>查看全部</span>
+                  </div>
+                  <div class="recent-row">
+                    <div class="recent-item">
+                      <img src="plant-identification-assets/sunflower.jpg" alt="向日葵" />
+                      <div>
+                        <b>向日葵</b>
+                        <small>今天 14:32 · 92%</small>
+                      </div>
+                    </div>
+                    <div class="recent-item">
+                      <img src="plant-identification-assets/dandelion.jpg" alt="蒲公英" />
+                      <div>
+                        <b>蒲公英</b>
+                        <small>昨天 18:05 · 88%</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="section-head">
+                    <h3>常见植物</h3>
+                    <span>真实图源</span>
+                  </div>
+                  <div class="common-grid">
+                    <div class="common-card">
+                      <img src="plant-identification-assets/sunflower.jpg" alt="向日葵" />
+                      <b>向日葵</b>
+                      <small>菊科 · Helianthus annuus</small>
+                    </div>
+                    <div class="common-card">
+                      <img src="plant-identification-assets/ginkgo.jpg" alt="银杏" />
+                      <b>银杏</b>
+                      <small>银杏科 · Ginkgo biloba</small>
+                    </div>
+                    <div class="common-card">
+                      <img src="plant-identification-assets/dandelion.jpg" alt="蒲公英" />
+                      <b>蒲公英</b>
+                      <small>菊科 · Taraxacum mongolicum</small>
+                    </div>
+                    <div class="common-card">
+                      <img src="plant-identification-assets/rose.jpg" alt="蔷薇属" />
+                      <b>蔷薇属</b>
+                      <small>蔷薇科 · Rosa</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="disclaimer">
+                  <i data-lucide="info"></i>
+                  <span>识别结果仅供参考，请勿据此采食或药用。食用/毒性信息以权威来源为准。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>01 识别首页</b> · 双入口 + 最近识别 + 常见植物</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row" style="color: #fff; position: absolute; width: 100%; z-index: 3; background: transparent;">
+                <span class="status-time">9:41</span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="camera-body">
+                <div class="camera-top">
+                  <button class="back-btn"><i data-lucide="chevron-left"></i></button>
+                  <button class="flash-btn"><i data-lucide="zap"></i></button>
+                </div>
+                <div class="camera-hint">
+                  <i data-lucide="scan-line"></i>
+                  把叶片和花放进取景框，尽量拍清晰
+                </div>
+                <div class="viewfinder">
+                  <span class="corner tl"></span>
+                  <span class="corner tr"></span>
+                  <span class="corner bl"></span>
+                  <span class="corner br"></span>
+                  <div class="scan-line"></div>
+                  <span class="viewfinder-label">主体对焦 · 自动识别</span>
+                </div>
+                <div class="camera-datasource">识别服务 PlantNet · 图片仅用于本次识别</div>
+                <div class="camera-controls">
+                  <img class="gallery-preview" src="plant-identification-assets/sunflower.jpg" alt="相册" />
+                  <button class="shutter" aria-label="拍照"></button>
+                  <button class="control-btn"><i data-lucide="refresh-cw"></i></button>
+                </div>
+              </div>
+              <div class="analyzing">
+                <img src="plant-identification-assets/sunflower.jpg" alt="待识别照片" />
+                <i class="spinner" data-lucide="loader-circle"></i>
+                <b>正在识别</b>
+                <small>PlantNet · GBIF · 数据聚合中</small>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>02 相机识别</b> · 取景 + 拍摄 + 分析态</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="results-top">
+                  <img src="plant-identification-assets/sunflower.jpg" alt="识别照片" />
+                  <button class="close-btn"><i data-lucide="x"></i></button>
+                </div>
+
+                <div class="results-status">
+                  <span class="status-badge"><i data-lucide="check-circle-2"></i>识别完成</span>
+                  <span class="score-pill">Top1 置信度 <b>92%</b></span>
+                </div>
+
+                <div class="match-card">
+                  <div class="match-row">
+                    <img class="thumb" src="plant-identification-assets/sunflower.jpg" alt="向日葵" />
+                    <div class="match-meta">
+                      <b>向日葵</b>
+                      <span class="sci">Helianthus annuus</span>
+                      <div class="tags">
+                        <span>菊科</span>
+                        <span>向日葵属</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="detail-link">查看完整资料 <i data-lucide="arrow-right"></i></div>
+                </div>
+
+                <div class="candidates">
+                  <div class="candidate">
+                    <span class="rank">1</span>
+                    <div>
+                      <b>向日葵</b>
+                      <small>Helianthus annuus · 菊科</small>
+                    </div>
+                    <span class="score">92%</span>
+                  </div>
+                  <div class="candidate">
+                    <span class="rank">2</span>
+                    <div>
+                      <b>菊芋</b>
+                      <small>Helianthus tuberosus · 菊科</small>
+                    </div>
+                    <span class="score">5%</span>
+                  </div>
+                  <div class="candidate">
+                    <span class="rank">3</span>
+                    <div>
+                      <b>狭叶向日葵</b>
+                      <small>Helianthus petiolaris · 菊科</small>
+                    </div>
+                    <span class="score">3%</span>
+                  </div>
+                </div>
+
+                <div class="results-actions">
+                  <button class="cta primary"><i data-lucide="camera"></i>重新拍摄</button>
+                  <button class="cta secondary"><i data-lucide="image"></i>重选照片</button>
+                </div>
+
+                <div class="feedback-row">
+                  <i data-lucide="flag"></i>
+                  识别结果不对？点此纠错
+                </div>
+
+                <div class="data-note">
+                  <i data-lucide="database"></i>
+                  PlantNet · score 0.92 · 2026-08-02 快照
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>03 识别结果</b> · 主结果 + 候选列表 + 置信度</p>
+        </div>
+      </section>
+
+      <section class="stage two">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="detail-hero">
+                  <img src="plant-identification-assets/sunflower.jpg" alt="向日葵" />
+                  <div class="detail-top-actions">
+                    <button class="icon-btn"><i data-lucide="chevron-left"></i></button>
+                    <button class="icon-btn"><i data-lucide="bookmark"></i></button>
+                    <button class="icon-btn"><i data-lucide="share-2"></i></button>
+                  </div>
+                  <span class="credit">Wikimedia · CC BY-SA · Emily Scherer / iNaturalist</span>
+                </div>
+
+                <div class="detail-body">
+                  <div class="name-block">
+                    <h1>向日葵</h1>
+                    <p class="sci">Helianthus annuus</p>
+                    <div class="alias-chips">
+                      <span>向阳花</span>
+                      <span>朝阳花</span>
+                      <span>葵花</span>
+                      <span>文菊</span>
+                    </div>
+                  </div>
+
+                  <div class="taxon-grid">
+                    <div class="taxon-cell">
+                      <small>科</small>
+                      <b>菊科 Asteraceae</b>
+                    </div>
+                    <div class="taxon-cell">
+                      <small>属</small>
+                      <b>向日葵属 Helianthus</b>
+                    </div>
+                    <div class="taxon-cell">
+                      <small>目</small>
+                      <b>菊目 Asterales</b>
+                    </div>
+                    <div class="taxon-cell">
+                      <small>纲</small>
+                      <b>木兰纲 Magnoliopsida</b>
+                    </div>
+                  </div>
+
+                  <div class="safety-card">
+                    <div class="safety-head">
+                      <span class="safety-icon"><i data-lucide="utensils"></i></span>
+                      <b>可食用性</b>
+                      <span>有来源</span>
+                    </div>
+                    <p>维基百科词条记载：因用其果实榨取的食用油和果实具备较高经济价值，而被认为是一种经济作物；葵花籽可作为食材与榨油原料。</p>
+                    <div class="safety-source">
+                      <i data-lucide="external-link"></i>
+                      Wikipedia · 08-02 快照
+                    </div>
+                  </div>
+
+                  <div class="desc-card">
+                    <h3><i data-lucide="align-left"></i>常见描述</h3>
+                    <p>向日葵是一种大型菊科向日葵属植物。因用其果实榨取的食用油和果实具备较高经济价值，而被认为是一种经济作物。该植物最早是在美洲被人类驯化。</p>
+                    <div class="link">查看词条原文 <i data-lucide="arrow-up-right"></i></div>
+                  </div>
+
+                  <div class="distrib-row">
+                    <span class="dist-icon"><i data-lucide="map-pin"></i></span>
+                    <div>
+                      <b>原产美洲，现全球广泛种植</b>
+                      <small>iNaturalist 全球观察 82,441 条 · 08-02 快照</small>
+                    </div>
+                  </div>
+
+                  <div class="detail-sources">
+                    <div class="source-line">
+                      <span class="s-ic"><i data-lucide="scan-line"></i></span>
+                      <div>
+                        <b>PlantNet 识别</b>
+                        <small>图像识别 · 08-02 14:32</small>
+                      </div>
+                      <span>已校验</span>
+                    </div>
+                    <div class="source-line">
+                      <span class="s-ic"><i data-lucide="layers"></i></span>
+                      <div>
+                        <b>GBIF 分类</b>
+                        <small>科/属/目/纲 · 08-02 14:32</small>
+                      </div>
+                      <span>已校验</span>
+                    </div>
+                    <div class="source-line">
+                      <span class="s-ic"><i data-lucide="book-open"></i></span>
+                      <div>
+                        <b>Wikipedia 描述</b>
+                        <small>词条摘要 · 08-02 14:32</small>
+                      </div>
+                      <span>已校验</span>
+                    </div>
+                  </div>
+
+                  <div class="detail-actions">
+                    <button class="cta primary"><i data-lucide="bookmark"></i>收藏</button>
+                    <button class="cta secondary"><i data-lucide="share-2"></i>分享</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>04 物种详情</b> · 六层信息 + 食用提示 + 来源</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <button class="icon-btn plain" style="margin-right: 2px;"><i data-lucide="chevron-left"></i></button>
+                    <strong>识别历史</strong>
+                  </div>
+                  <button class="icon-btn"><i data-lucide="more-horizontal"></i></button>
+                </div>
+
+                <div class="history-actions">
+                  <span>最近 50 条 · 自动保存</span>
+                  <button>清空</button>
+                </div>
+
+                <div class="history-list">
+                  <div class="history-item">
+                    <img src="plant-identification-assets/sunflower.jpg" alt="向日葵" />
+                    <div class="history-meta">
+                      <b>向日葵</b>
+                      <small>今天 14:32 · Helianthus annuus</small>
+                    </div>
+                    <span class="history-score">92%</span>
+                  </div>
+                  <div class="history-item">
+                    <img src="plant-identification-assets/dandelion.jpg" alt="蒲公英" />
+                    <div class="history-meta">
+                      <b>蒲公英</b>
+                      <small>昨天 18:05 · Taraxacum mongolicum</small>
+                    </div>
+                    <span class="history-score">88%</span>
+                  </div>
+                  <div class="history-item">
+                    <img src="plant-identification-assets/ginkgo.jpg" alt="银杏" />
+                    <div class="history-meta">
+                      <b>银杏</b>
+                      <small>08-01 10:20 · Ginkgo biloba</small>
+                    </div>
+                    <span class="history-score">76%</span>
+                  </div>
+                  <div class="history-item">
+                    <img src="plant-identification-assets/rose.jpg" alt="蔷薇属" />
+                    <div class="history-meta">
+                      <b>蔷薇属</b>
+                      <small>07-31 09:14 · Rosa</small>
+                    </div>
+                    <span class="history-score">81%</span>
+                  </div>
+                </div>
+
+                <div class="history-empty">
+                  <span class="empty-icon"><i data-lucide="sprout"></i></span>
+                  <b>还没有识别记录</b>
+                  <p>拍一棵植物，记录会保存在这里。</p>
+                  <button class="cta"><i data-lucide="camera"></i>去识别</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>05 识别历史</b> · 记录 + 删除 + 空态</p>
+        </div>
+
+        <div class="strategy">
+          <div class="panel">
+            <p class="kicker">DESIGN NOTES</p>
+            <h2>一期完整的信息闭环</h2>
+            <p class="strategy-lead">
+              识别不止回答“是什么”：从候选结果到详情页，六层信息全部来自真实数据源，缺失字段不补造。
+            </p>
+
+            <div class="strategy-section">
+              <h3><i data-lucide="workflow"></i>核心链路</h3>
+              <div class="mini-flow">
+                <strong>拍摄/选图</strong>
+                <span>→ PlantNet 识别候选物种 + score</span>
+                <strong>聚合资料</strong>
+                <span>→ GBIF 分类 + Wikipedia 描述 + iNaturalist 图片</span>
+                <strong>结果呈现</strong>
+                <span>→ 主结果 + 候选 + 食用提示 + 来源</span>
+                <strong>闭环沉淀</strong>
+                <span>→ 历史、收藏、纠错反馈</span>
+              </div>
+            </div>
+
+            <div class="strategy-section">
+              <h3><i data-lucide="shield-check"></i>食用提示规则</h3>
+              <ul class="rule-list">
+                <li>词条有可引用原文时，展示原文片段并标注来源与快照时间。</li>
+                <li>无可靠资料时，固定显示“暂无可信食用资料，请勿采食”。</li>
+                <li>人工审校警示表只做高风险提示，不做“可食”判断。</li>
+              </ul>
+              <div class="data-badge">
+                <i data-lucide="badge-check"></i>
+                字段级 source / fetchedAt
+              </div>
+            </div>
+
+            <div class="strategy-section">
+              <h3><i data-lucide="list-checks"></i>边界与异常</h3>
+              <table class="status-table">
+                <tr>
+                  <th>场景</th>
+                  <th>处理</th>
+                </tr>
+                <tr>
+                  <td>置信度 &lt; 60%</td>
+                  <td>提示重拍，候选列表继续可查</td>
+                </tr>
+                <tr>
+                  <td>词条缺失</td>
+                  <td>显示“暂无”，不补造内容</td>
+                </tr>
+                <tr>
+                  <td>识别服务失败</td>
+                  <td>明确提示 + 重试，不出占位物种</td>
+                </tr>
+                <tr>
+                  <td>图片 404</td>
+                  <td>占位“图片整理中”，文字资料照常</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="strategy-section">
+              <h3><i data-lucide="palette"></i>视觉与一期范围</h3>
+              <ul class="rule-list">
+                <li>沿用 FunBox 浅蓝画布、深色文字、品牌蓝；植物功能补充绿色与嫩绿。</li>
+                <li>320 / 390 / 430px 下文字不溢出、元素不重叠，深浅主题均可用。</li>
+                <li>所有页面与接口在同一个版本交付，不分期。</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer-note">
+        <i data-lucide="database"></i>
+        <span>
+          设计稿中的物种名称、分类、描述、观察数与图片来自 GBIF、iNaturalist、Wikipedia 真实接口快照（2026-08-02）；界面为产品示意，线上内容以服务端实时聚合结果为准。图片版权归原作者所有，使用已标注来源与许可。
+        </span>
+      </footer>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

@@ -18,6 +18,7 @@ type Config struct {
 	FoodRecommendation FoodRecommendationConfig
 	Lottery            LotteryConfig
 	News               NewsConfig
+	PlantID            PlantIDConfig
 	ResourceSearch     ResourceSearchConfig
 	MarketRadar        MarketRadarConfig
 	Reading            ReadingConfig
@@ -133,6 +134,15 @@ type FoodRecommendationConfig struct {
 	POITimeout      time.Duration
 }
 
+type PlantIDConfig struct {
+	APIKey         string
+	BaseURL        string
+	Project        string
+	MaxMatches     int
+	CacheTTL       time.Duration
+	RequestTimeout time.Duration
+}
+
 type TinyPNGConfig struct {
 	APIKey         string
 	BaseURL        string
@@ -217,6 +227,14 @@ func Load() (Config, error) {
 			OverpassBaseURL: envFirst("OVERPASS_API_URL", "https://overpass-api.de/api/interpreter"),
 			POIEnabled:      boolFirst("FOOD_POI_ENABLED", "true"),
 			POITimeout:      durationFromMs("FOOD_POI_TIMEOUT_MS", "", "3000"),
+		},
+		PlantID: PlantIDConfig{
+			APIKey:         envFirst("PLANTNET_API_KEY", ""),
+			BaseURL:        envFirst("PLANTNET_API_URL", "https://my-api.plantnet.org"),
+			Project:        envFirst("PLANTNET_PROJECT", "all"),
+			MaxMatches:     intFirst("PLANT_ID_MAX_MATCHES", "", "5"),
+			CacheTTL:       durationFromMs("PLANT_ID_CACHE_TTL_MS", "", "86400000"),
+			RequestTimeout: durationFromMs("PLANT_ID_TIMEOUT_MS", "", "45000"),
 		},
 		Lottery: LotteryConfig{
 			CacheTTL:       durationFromMs("LOTTERY_CACHE_TTL_MS", "", "900000"),

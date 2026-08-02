@@ -451,5 +451,20 @@
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "plant-identifier",
+    "name": "识花草",
+    "tagline": "拍照识别植物，查科属与食用提示",
+    "description": "扫描或上传植物照片，返回候选物种与真实资料：分类、描述、分布、食用提示，全部来自真实数据源。",
+    "icon": "sprout-outline",
+    "category": "生活",
+    "route": "/tools/plant-identifier",
+    "accentColor": "#24b36b",
+    "badges": ["真实数据", "拍照识别"],
+    "usageLabel": "拍一拍",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]

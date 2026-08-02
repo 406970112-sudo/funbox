@@ -26,6 +26,7 @@ import (
 	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
+	"my-first-expo-app/backend/internal/plantid"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/recommendation"
@@ -53,6 +54,7 @@ type Server struct {
 	diaryService              *diary.Service
 	momentsService            *moments.Service
 	newsService               newsFeedService
+	plantIDService            *plantid.Service
 	readingService            *reading.Service
 	readingImporter           *reading.Importer
 	recommendationService     *recommendation.Service
@@ -396,6 +398,20 @@ func newServer(
 	if len(scoreServices) > 0 {
 		scoreService = scoreServices[0]
 	}
+	var plantIDService *plantid.Service
+	plantIDStore, err := plantid.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open plant id database failed: %v", err)
+	} else {
+		plantIDService = plantid.NewService(plantid.Config{
+			APIKey:         cfg.PlantID.APIKey,
+			BaseURL:        cfg.PlantID.BaseURL,
+			Project:        cfg.PlantID.Project,
+			MaxMatches:     cfg.PlantID.MaxMatches,
+			CacheTTL:       cfg.PlantID.CacheTTL,
+			RequestTimeout: cfg.PlantID.RequestTimeout,
+		}, plantIDStore)
+	}
 	var readingImporter *reading.Importer
 	if readingService != nil {
 		readingImporter = reading.NewImporter(readingService.Store(), reading.ImporterOptions{
@@ -423,6 +439,7 @@ func newServer(
 		diaryService:              diaryService,
 		momentsService:            momentsService,
 		newsService:               newsService,
+		plantIDService:            plantIDService,
 		readingService:            readingService,
 		readingImporter:           readingImporter,
 		recommendationService:     recommendationService,
@@ -465,6 +482,7 @@ func newServer(
 	registerFoodRecommendationRoutes(mux, api)
 	registerCookingGuideRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
+	registerPlantIDRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))

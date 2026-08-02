@@ -7,6 +7,7 @@ import { SmartTranslationToolScreen } from '@/features/tools/smart-translation-s
 import { ProductRecommendationScreen } from '@/features/tools/product-recommendation-screen';
 import { FoodRecommendationScreen } from '@/features/tools/food-recommendation-screen';
 import { CookingGuideScreen } from '@/features/tools/cooking-guide-screen';
+import { PlantIdentifierScreen } from '@/features/tools/plant-identifier-screen';
 import { AiNavigationScreen } from '@/features/tools/ai-navigation-screen';
 import { TextToSpeechToolScreen } from '@/features/tools/tts-tool-screen';
 import { QrCodeToolScreen } from '@/features/tools/qr-code-tool-screen';
@@ -237,6 +238,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <CookingGuideScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'plant-identifier') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <PlantIdentifierScreen />
       </>
     );
   }
