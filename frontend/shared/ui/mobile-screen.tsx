@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren, RefObject } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,12 +8,14 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 
 type MobileScreenProps = PropsWithChildren<{
   contentContainerStyle?: StyleProp<ViewStyle>;
+  scrollViewRef?: RefObject<ScrollView | null>;
   scrollContentStyle?: StyleProp<ViewStyle>;
 }>;
 
 export function MobileScreen({
   children,
   contentContainerStyle,
+  scrollViewRef,
   scrollContentStyle,
 }: MobileScreenProps) {
   const { colors } = useAppTheme();
@@ -21,6 +23,7 @@ export function MobileScreen({
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, scrollContentStyle]}>
         <View

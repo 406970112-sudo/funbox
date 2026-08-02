@@ -15,6 +15,7 @@
     "test:brick-breaker-rules": "node --test --experimental-strip-types tests/brick-breaker-rules.test.mjs",
     "test:qr": "node --test --experimental-strip-types tests/qr-code.test.mjs",
     "test:ai-navigation": "node --test --experimental-strip-types tests/ai-navigation.test.mjs",
+    "test:json-workbench": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/json-workbench.test.mjs",
     "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
     "test:social-refresh": "node --test --experimental-strip-types tests/latest-request-gate.test.mjs",
     "test:social-unread": "node --test --experimental-strip-types tests/unread-message-state.test.mjs",
@@ -28,6 +29,7 @@
     "test:featured-carousel": "node --test --experimental-strip-types tests/featured-carousel-sequence.test.mjs",
     "test:featured-tools": "node --test --experimental-strip-types tests/featured-tools.test.mjs",
     "test:home-catalog": "node --test --experimental-strip-types tests/home-tools-catalog.test.mjs",
+    "test:home-search": "node --test --experimental-strip-types tests/home-search.test.mjs",
     "test:recent-usage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/recent-usage.test.mjs",
     "test:reading": "node --test --experimental-strip-types tests/reading-local-import.test.mjs tests/reading-state.test.mjs",
     "test:market-radar": "node --test --experimental-strip-types tests/market-radar.test.mjs",
@@ -39,6 +41,7 @@
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",
     "@expo/vector-icons": "^15.0.3",
+    "@iarna/toml": "^2.2.5",
     "@livekit/react-native": "^2.11.0",
     "@livekit/react-native-expo-plugin": "^1.0.2",
     "@livekit/react-native-webrtc": "^144.1.0",
@@ -89,7 +92,8 @@
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
     "react-tetris": "^0.4.0",
-    "ws": "^7.5.10"
+    "ws": "^7.5.10",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/matter-js": "^0.20.2",

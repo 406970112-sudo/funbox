@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FunBox 首页搜索直达产品设计 V1</title>
+  <style>
+    :root {
+      --page: #e6ecf5;
+      --board: #eef4ff;
+      --ink: #18233d;
+      --muted: #7483a2;
+      --soft: #8a97b0;
+      --line: #d9e3f2;
+      --surface: #ffffff;
+      --primary: #4b6bff;
+      --primarySoft: #e7ecff;
+      --accent: #ff6b8f;
+      --green: #123a33;
+      --lime: #c9f36a;
+      --highlight: #ffe58a;
+      --shadow: 0 18px 44px rgba(58, 86, 152, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    }
+
+    .board {
+      background: var(--board);
+      height: 1240px;
+      margin: 0 auto;
+      overflow: hidden;
+      position: relative;
+      width: 1760px;
+    }
+
+    .board::before {
+      border: 1px solid #d4dff1;
+      border-radius: 18px;
+      content: "";
+      inset: 18px;
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .header {
+      left: 48px;
+      position: absolute;
+      top: 34px;
+      width: 1664px;
+    }
+
+    .header-row {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .title-block { display: flex; gap: 16px; }
+
+    .brand-chip {
+      align-items: center;
+      background: var(--green);
+      border-radius: 14px;
+      color: var(--lime);
+      display: flex;
+      height: 52px;
+      justify-content: center;
+      width: 52px;
+    }
+
+    .brand-chip svg { height: 28px; width: 28px; }
+
+    .title-copy h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: 34px;
+      margin: 0;
+    }
+
+    .title-copy p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 20px;
+      margin: 5px 0 0;
+    }
+
+    .meta-chips {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+    }
+
+    .meta-chip {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #5b6884;
+      font-size: 11px;
+      font-weight: 800;
+      height: 30px;
+      line-height: 28px;
+      padding: 0 14px;
+    }
+
+    .meta-chip.accent {
+      background: #fff0f4;
+      border-color: #ffd3df;
+      color: #d84b72;
+    }
+
+    /* Left strategy rail */
+    .rail {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      height: 988px;
+      left: 48px;
+      overflow: hidden;
+      padding: 22px 22px 18px;
+      position: absolute;
+      top: 112px;
+      width: 338px;
+    }
+
+    .rail h2 {
+      align-items: center;
+      display: flex;
+      font-size: 15px;
+      font-weight: 900;
+      gap: 8px;
+      margin: 0 0 10px;
+    }
+
+    .rail h2 .dot {
+      background: var(--primary);
+      border-radius: 4px;
+      height: 8px;
+      width: 8px;
+    }
+
+    .rail-section {
+      border-top: 1px solid #e9eef8;
+      padding-top: 16px;
+      margin-top: 14px;
+    }
+
+    .rail-section:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+
+    .rail ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .rail li {
+      color: #4d5870;
+      font-size: 12px;
+      line-height: 19px;
+      margin: 7px 0;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .rail li::before {
+      color: var(--primary);
+      content: "·";
+      font-size: 18px;
+      font-weight: 900;
+      left: 2px;
+      line-height: 16px;
+      position: absolute;
+      top: 1px;
+    }
+
+    .rail li.off::before { color: #b3bccd; }
+
+    .principle-card {
+      background: #f3f7ff;
+      border: 1px solid #e0e8fa;
+      border-radius: 12px;
+      margin-top: 12px;
+      padding: 11px 12px;
+    }
+
+    .principle-card strong {
+      color: #233052;
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .principle-card p {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 18px;
+      margin: 0;
+    }
+
+    .point-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .point {
+      align-items: flex-start;
+      display: flex;
+      gap: 9px;
+    }
+
+    .point-num {
+      align-items: center;
+      background: var(--green);
+      border-radius: 50%;
+      color: var(--lime);
+      display: flex;
+      flex: 0 0 20px;
+      font-size: 11px;
+      font-weight: 900;
+      height: 20px;
+      justify-content: center;
+      width: 20px;
+    }
+
+    .point p {
+      color: #4d5870;
+      font-size: 11.5px;
+      line-height: 18px;
+      margin: 1px 0 0;
+    }
+
+    .rail-note {
+      background: #f7f9ff;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 17px;
+      margin-top: 14px;
+      padding: 9px 11px;
+    }
+
+    /* Phone frames */
+    .phone-wrap {
+      position: absolute;
+      top: 112px;
+      width: 398px;
+    }
+
+    .phone-wrap.one { left: 424px; }
+    .phone-wrap.two { left: 856px; }
+    .phone-wrap.three { left: 1288px; }
+
+    .phone-label {
+      align-items: center;
+      display: flex;
+      height: 30px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .phone-label span {
+      background: #18233d;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 7px 14px;
+    }
+
+    .phone-label span.blue { background: var(--primary); }
+    .phone-label span.green { background: #217a63; }
+
+    .phone {
+      background: #eef4ff;
+      border: 1px solid #c8d4e8;
+      border-radius: 44px;
+      box-shadow: var(--shadow);
+      height: 890px;
+      overflow: hidden;
+      position: relative;
+      width: 398px;
+    }
+
+    .status {
+      align-items: center;
+      color: #18233d;
+      display: flex;
+      font-size: 13px;
+      font-weight: 800;
+      height: 38px;
+      justify-content: space-between;
+      padding: 8px 24px 0;
+    }
+
+    .status-right {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+    }
+
+    .signal {
+      align-items: flex-end;
+      display: flex;
+      gap: 2px;
+      height: 12px;
+    }
+
+    .signal i {
+      background: #18233d;
+      border-radius: 2px;
+      display: block;
+      width: 3px;
+    }
+
+    .signal i:nth-child(1) { height: 4px; }
+    .signal i:nth-child(2) { height: 7px; }
+    .signal i:nth-child(3) { height: 10px; }
+    .signal i:nth-child(4) { height: 13px; }
+
+    .wifi {
+      border: 1.6px solid #18233d;
+      border-radius: 50%;
+      height: 9px;
+      position: relative;
+      transform: rotate(-45deg);
+      width: 14px;
+    }
+
+    .battery {
+      border: 1.6px solid #18233d;
+      border-radius: 4px;
+      height: 13px;
+      padding: 2px;
+      position: relative;
+      width: 23px;
+    }
+
+    .battery::before {
+      background: #18233d;
+      border-radius: 1px;
+      content: "";
+      inset: 2px 5px 2px 2px;
+      position: absolute;
+    }
+
+    .battery::after {
+      background: #18233d;
+      border-radius: 0 2px 2px 0;
+      content: "";
+      height: 5px;
+      right: -4px;
+      top: 2px;
+      width: 2px;
+    }
+
+    .screen {
+      height: 852px;
+      padding: 10px 16px 0;
+      position: relative;
+    }
+
+    .top-bar {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .brand {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      align-items: center;
+      background: #18211f;
+      border-radius: 12px;
+      color: #fff;
+      display: flex;
+      height: 40px;
+      justify-content: center;
+      width: 40px;
+    }
+
+    .brand-mark svg { height: 22px; width: 22px; }
+
+    .brand-name {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 25px;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 14px;
+      margin-top: 1px;
+    }
+
+    .count {
+      color: #66758a;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .search-shell {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      display: flex;
+      gap: 8px;
+      height: 42px;
+      padding: 0 12px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .search-shell.focused {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(75, 107, 255, 0.14);
+    }
+
+    .search-shell svg.search-ic { color: #7f8ca6; flex: 0 0 18px; height: 18px; width: 18px; }
+
+    .search-input {
+      color: var(--ink);
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .search-input .cursor {
+      background: var(--primary);
+      border-radius: 1px;
+      display: inline-block;
+      height: 15px;
+      margin-left: 1px;
+      vertical-align: -3px;
+      width: 2px;
+    }
+
+    .clear-ic {
+      align-items: center;
+      color: #9aa5ba;
+      display: flex;
+      height: 24px;
+      justify-content: center;
+      width: 24px;
+    }
+
+    .clear-ic svg { height: 16px; width: 16px; }
+
+    .result-panel {
+      background: var(--surface);
+      border: 1px solid #d5e0f3;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(58, 86, 152, 0.16);
+      margin-top: 6px;
+      overflow: hidden;
+      position: relative;
+      z-index: 20;
+    }
+
+    .result-head {
+      align-items: center;
+      background: #f7f9ff;
+      border-bottom: 1px solid #edf1fa;
+      color: var(--muted);
+      display: flex;
+      font-size: 11px;
+      font-weight: 800;
+      height: 32px;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .result-head strong { color: #33405f; font-weight: 900; }
+
+    .result-row {
+      align-items: center;
+      border-bottom: 1px solid #f0f3fa;
+      display: flex;
+      gap: 10px;
+      min-height: 56px;
+      padding: 8px 12px;
+    }
+
+    .result-row:last-of-type { border-bottom: 0; }
+
+    .result-row.active { background: #f2f6ff; }
+
+    .result-icon {
+      align-items: center;
+      border-radius: 10px;
+      display: flex;
+      flex: 0 0 34px;
+      height: 34px;
+      justify-content: center;
+      width: 34px;
+    }
+
+    .result-icon svg { height: 19px; width: 19px; }
+
+    .result-copy { flex: 1; min-width: 0; }
+
+    .result-name {
+      align-items: center;
+      color: #1a2540;
+      display: flex;
+      font-size: 13px;
+      font-weight: 900;
+      gap: 7px;
+      line-height: 18px;
+    }
+
+    .result-name mark {
+      background: var(--highlight);
+      border-radius: 3px;
+      color: inherit;
+      padding: 0 2px;
+    }
+
+    .kind-tag {
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 15px;
+      padding: 0 7px;
+    }
+
+    .kind-tag.blue { background: var(--primarySoft); color: var(--primary); }
+    .kind-tag.green { background: #e2f5ef; color: #17765e; }
+    .kind-tag.orange { background: #fff0e6; color: #c76a2a; }
+
+    .result-desc {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 15px;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .row-arrow {
+      align-items: center;
+      color: #b0b9cc;
+      display: flex;
+      flex: 0 0 18px;
+      height: 30px;
+      justify-content: center;
+      width: 18px;
+    }
+
+    .row-arrow svg { height: 17px; width: 17px; }
+
+    .result-foot {
+      align-items: center;
+      background: #f8faff;
+      border-top: 1px solid #edf1fa;
+      color: var(--primary);
+      display: flex;
+      font-size: 11px;
+      font-weight: 900;
+      height: 38px;
+      justify-content: space-between;
+      padding: 0 12px;
+    }
+
+    .result-foot .foot-count { color: var(--muted); font-size: 10.5px; font-weight: 700; }
+    .result-foot .foot-go { align-items: center; display: flex; gap: 4px; }
+    .result-foot svg { height: 15px; width: 15px; }
+
+    .rec-card {
+      background: var(--green);
+      border-radius: 18px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+      overflow: hidden;
+      padding: 14px;
+    }
+
+    .rec-copy { flex: 1; min-width: 0; }
+
+    .rec-eyebrow {
+      color: var(--lime);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+
+    .rec-title {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 24px;
+      margin-top: 4px;
+    }
+
+    .rec-desc {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 11px;
+      line-height: 16px;
+      margin-top: 4px;
+    }
+
+    .rec-cta {
+      align-items: center;
+      background: var(--lime);
+      border-radius: 999px;
+      color: #16332c;
+      display: inline-flex;
+      font-size: 10.5px;
+      font-weight: 900;
+      gap: 5px;
+      margin-top: 10px;
+      padding: 6px 11px;
+    }
+
+    .rec-cta svg { height: 13px; width: 13px; }
+
+    .rec-art {
+      align-items: center;
+      border: 1px solid rgba(201, 243, 106, 0.4);
+      border-radius: 16px;
+      display: flex;
+      height: 78px;
+      justify-content: center;
+      margin-left: 10px;
+      width: 78px;
+    }
+
+    .rec-art svg { color: var(--lime); height: 34px; width: 34px; }
+
+    .section {
+      margin-top: 16px;
+    }
+
+    .section-head {
+      align-items: flex-end;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .section-title { font-size: 17px; font-weight: 900; line-height: 22px; }
+
+    .section-meta {
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+
+    .section-action {
+      align-items: center;
+      color: #26324f;
+      display: flex;
+      font-size: 11px;
+      font-weight: 900;
+      gap: 3px;
+    }
+
+    .section-action svg { height: 14px; width: 14px; }
+
+    .recent-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .recent-tile {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      flex: 1;
+      min-width: 0;
+      padding: 9px;
+    }
+
+    .recent-icon {
+      align-items: center;
+      border-radius: 9px;
+      display: flex;
+      height: 30px;
+      justify-content: center;
+      width: 30px;
+    }
+
+    .recent-icon svg { height: 16px; width: 16px; }
+
+    .recent-name {
+      font-size: 10.5px;
+      font-weight: 900;
+      line-height: 14px;
+      margin-top: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .recent-time {
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 13px;
+      margin-top: 2px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      height: 30px;
+      line-height: 28px;
+      padding: 0 13px;
+      white-space: nowrap;
+    }
+
+    .chip.on {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .tool-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .tool-tile {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      min-height: 88px;
+      padding: 9px;
+    }
+
+    .tool-icon {
+      align-items: center;
+      border-radius: 9px;
+      display: flex;
+      height: 32px;
+      justify-content: center;
+      width: 32px;
+    }
+
+    .tool-icon svg { height: 17px; width: 17px; }
+
+    .tool-name {
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 15px;
+      margin-top: 7px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tool-badge {
+      background: #f1f4fc;
+      border-radius: 999px;
+      color: #5b6d92;
+      display: inline-block;
+      font-size: 8.5px;
+      font-weight: 900;
+      line-height: 15px;
+      margin-top: 5px;
+      padding: 0 7px;
+    }
+
+    .problem-bracket {
+      align-items: center;
+      border: 1.5px dashed #ff6b8f;
+      border-radius: 12px;
+      color: #d84b72;
+      display: flex;
+      font-size: 10.5px;
+      font-weight: 900;
+      gap: 7px;
+      margin-top: 10px;
+      padding: 9px 10px;
+    }
+
+    .problem-bracket svg { flex: 0 0 15px; height: 15px; width: 15px; }
+
+    .dim-body {
+      bottom: 0;
+      filter: blur(0.6px);
+      left: 0;
+      opacity: 0.38;
+      position: absolute;
+      right: 0;
+      top: 144px;
+      z-index: 1;
+    }
+
+    .dim-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      height: 92px;
+      margin-top: 14px;
+    }
+
+    .dim-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 14px;
+    }
+
+    .dim-tile {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      height: 78px;
+    }
+
+    .dim-label {
+      align-items: center;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #d5e0f3;
+      border-radius: 999px;
+      color: #5b6d92;
+      display: flex;
+      font-size: 10.5px;
+      font-weight: 900;
+      gap: 6px;
+      left: 16px;
+      padding: 8px 12px;
+      position: absolute;
+      top: 470px;
+      z-index: 5;
+    }
+
+    .dim-label svg { height: 14px; width: 14px; }
+
+    .empty-panel {
+      background: var(--surface);
+      border: 1px solid #d5e0f3;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(58, 86, 152, 0.16);
+      margin-top: 6px;
+      padding: 20px 16px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .empty-icon {
+      align-items: center;
+      background: #f2f5ff;
+      border-radius: 12px;
+      color: #8592ad;
+      display: flex;
+      height: 40px;
+      justify-content: center;
+      margin: 0 auto 10px;
+      width: 40px;
+    }
+
+    .empty-icon svg { height: 21px; width: 21px; }
+
+    .empty-title {
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 19px;
+      text-align: center;
+    }
+
+    .empty-sub {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 16px;
+      margin-top: 5px;
+      text-align: center;
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 13px;
+    }
+
+    .empty-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #55617c;
+      font-size: 10.5px;
+      font-weight: 900;
+      line-height: 30px;
+      padding: 0 13px;
+    }
+
+    .empty-btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .bottom-nav {
+      align-items: center;
+      background: rgba(255, 255, 255, 0.98);
+      border-top: 1px solid #e3eaf5;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 62px;
+      left: 0;
+      position: absolute;
+      right: 0;
+    }
+
+    .nav-item {
+      align-items: center;
+      color: #98a3b8;
+      display: flex;
+      flex-direction: column;
+      font-size: 9.5px;
+      font-weight: 800;
+      gap: 3px;
+      justify-content: center;
+    }
+
+    .nav-item.on { color: var(--primary); }
+
+    .nav-item svg { height: 19px; width: 19px; }
+
+    /* Bottom strip */
+    .bottom-strip {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(4, 1fr);
+      left: 48px;
+      position: absolute;
+      top: 1052px;
+      width: 1664px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      min-height: 128px;
+      padding: 13px 14px;
+    }
+
+    .info-head {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .info-num {
+      align-items: center;
+      background: var(--green);
+      border-radius: 50%;
+      color: var(--lime);
+      display: flex;
+      flex: 0 0 20px;
+      font-size: 10px;
+      font-weight: 900;
+      height: 20px;
+      justify-content: center;
+      width: 20px;
+    }
+
+    .info-card h3 {
+      font-size: 12.5px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .info-card p {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 18px;
+      margin: 0;
+    }
+
+    .info-card .tag {
+      background: #f2f6ff;
+      border-radius: 999px;
+      color: var(--primary);
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 20px;
+      margin-top: 8px;
+      padding: 0 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="board">
+    <div class="header">
+      <div class="header-row">
+        <div class="title-block">
+          <div class="brand-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+              <rect x="13" y="13" width="7" height="7" rx="1.5" />
+            </svg>
+          </div>
+          <div class="title-copy">
+            <h1>FunBox 首页搜索直达 · 产品设计 V1</h1>
+            <p>搜索即达：结果面板紧跟搜索框，工具与游戏统一展示，点击一行直接进入对应路由。</p>
+          </div>
+        </div>
+        <div class="meta-chips">
+          <span class="meta-chip">2026-08-02</span>
+          <span class="meta-chip">待评审</span>
+          <span class="meta-chip accent">真实数据</span>
+        </div>
+      </div>
+    </div>
+
+    <aside class="rail">
+      <div class="rail-section">
+        <h2><span class="dot"></span>问题</h2>
+        <ul>
+          <li>搜索结果仍排在今日推荐、最近使用之后，用户要先向下滚动才能看到。</li>
+          <li>游戏结果在最底部的“放松一下”，搜索“棋”等关键词时几乎不可见。</li>
+          <li>搜索框与结果位置割裂，输入后缺少即时、完整的反馈。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>方案</h2>
+        <ul>
+          <li>输入关键词后，结果面板直接出现在搜索框下方。</li>
+          <li>工具与游戏统一混排，点击任意一行直达对应路由。</li>
+          <li>结果行展示图标、名称、分类、摘要与匹配高亮。</li>
+          <li>Web 端支持上下选择、回车直达、Esc 关闭。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>数据原则</h2>
+        <ul>
+          <li>工具结果来自 feature_registry.json，游戏来自 popularGames。</li>
+          <li>只展示当前权限可见、状态可用、未被隐藏的真实入口。</li>
+          <li>不出现假数据、mock 结果或硬编码热词。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>非目标</h2>
+        <ul class="off-list">
+          <li class="off">不做 AI 语义搜索与拼音纠错。</li>
+          <li class="off">不改权限体系、底部导航与详情页。</li>
+          <li class="off">不新增后端接口与 mock 文件。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>设计要点</h2>
+        <div class="point-list">
+          <div class="point"><span class="point-num">1</span><p>结果面板与搜索框同宽同对齐，6px 间距。</p></div>
+          <div class="point"><span class="point-num">2</span><p>工具 + 游戏混排，名称命中优先。</p></div>
+          <div class="point"><span class="point-num">3</span><p>关键词高亮，摘要单行，行高 56px。</p></div>
+          <div class="point"><span class="point-num">4</span><p>底栏统计与正文过滤数量严格一致。</p></div>
+          <div class="point"><span class="point-num">5</span><p>空态只提供真实操作，不造热词。</p></div>
+        </div>
+        <div class="rail-note">
+          演示数据全部来自当前真实注册表；设计稿中的“16 个工具 · 5 款游戏”为注册表现状快照。
+        </div>
+      </div>
+    </aside>
+
+    <div class="phone-wrap one">
+      <div class="phone-label"><span>现状 · 结果在下方</span></div>
+      <div class="phone">
+        <div class="status">
+          <span>9:41</span>
+          <div class="status-right">
+            <div class="signal"><i></i><i></i><i></i><i></i></div>
+            <div class="wifi"></div>
+            <div class="battery"></div>
+          </div>
+        </div>
+        <div class="screen">
+          <div class="top-bar">
+            <div class="brand">
+              <div class="brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                </svg>
+              </div>
+              <div>
+                <div class="brand-name">FunBox</div>
+                <div class="brand-sub">工具与游戏，随手即用</div>
+              </div>
+            </div>
+            <div class="count">16 个工具 · 5 款游戏</div>
+          </div>
+
+          <div class="search-shell">
+            <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+              <circle cx="10.5" cy="10.5" r="6" />
+              <path d="m15 15 5 5" />
+            </svg>
+            <div class="search-input">AI</div>
+            <div class="clear-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="rec-card">
+            <div class="rec-copy">
+              <div class="rec-eyebrow">今日推荐</div>
+              <div class="rec-title">打牌记分</div>
+              <div class="rec-desc">多人记分，散场结算</div>
+              <div class="rec-cta">
+                开始记分
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12h15M13 6l6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="rec-art">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="7" width="11" height="13" rx="2" />
+                <path d="M9 4h11v13" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">最近使用</div>
+                <div class="section-meta">从真实使用记录读取</div>
+              </div>
+              <div class="section-action">
+                查看全部
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="recent-row">
+              <div class="recent-tile">
+                <div class="recent-icon" style="background:#f0eefc;color:#7e5bef">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="5" width="14" height="15" rx="2" />
+                    <path d="M9 4.5h6V7H9zM9 12l2 2 4-4" />
+                  </svg>
+                </div>
+                <div class="recent-name">效率清单</div>
+                <div class="recent-time">2 分钟前</div>
+              </div>
+              <div class="recent-tile">
+                <div class="recent-icon" style="background:#e9f5f1;color:#1f6b5d">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="7" height="7" rx="1" />
+                    <rect x="13" y="4" width="7" height="7" rx="1" />
+                    <rect x="4" y="13" width="7" height="7" rx="1" />
+                    <path d="M13 13h3v3h-3zM18 13h2M13 18h2M18 18h2" />
+                  </svg>
+                </div>
+                <div class="recent-name">二维码生成器</div>
+                <div class="recent-time">26 分钟前</div>
+              </div>
+              <div class="recent-tile">
+                <div class="recent-icon" style="background:#eef1ff;color:#4b6bff">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="5" width="16" height="14" rx="2" />
+                    <circle cx="9" cy="10" r="1.6" />
+                    <path d="m5 18 5-5 3 3 3-3 3 3" />
+                  </svg>
+                </div>
+                <div class="recent-name">图片压缩</div>
+                <div class="recent-time">昨天</div>
+              </div>
+              <div class="recent-tile">
+                <div class="recent-icon" style="background:#e9f0f6;color:#1f4d78">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 12h2v4h3V8h3v8h3V6h3v10h2" />
+                  </svg>
+                </div>
+                <div class="recent-name">文字转语音</div>
+                <div class="recent-time">昨天</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-head">
+              <div>
+                <div class="section-title">全部工具</div>
+                <div class="section-meta">搜索 “AI” 后匹配 4 个工具</div>
+              </div>
+              <div class="section-action">4 个工具</div>
+            </div>
+            <div class="chips">
+              <span class="chip on">全部</span>
+              <span class="chip">AI</span>
+              <span class="chip">效率</span>
+              <span class="chip">阅读</span>
+              <span class="chip">生活</span>
+            </div>
+            <div class="tool-grid">
+              <div class="tool-tile">
+                <div class="tool-icon" style="background:#eef1ff;color:#4b6bff">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <ellipse cx="12" cy="12" rx="9" ry="4" />
+                    <circle cx="12" cy="12" r="2.2" />
+                    <path d="M3 12a9 4 0 0 1 18 0" />
+                  </svg>
+                </div>
+                <div class="tool-name">AI 导航</div>
+                <div class="tool-badge">AI</div>
+              </div>
+              <div class="tool-tile">
+                <div class="tool-icon" style="background:#eef1ff;color:#4b6bff">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="5" width="16" height="15" rx="2" />
+                    <path d="M8 9h8M8 13h8M8 17h5" />
+                  </svg>
+                </div>
+                <div class="tool-name">热点速览</div>
+                <div class="tool-badge">AI</div>
+              </div>
+              <div class="tool-tile">
+                <div class="tool-icon" style="background:#e9f6f1;color:#1f7b63">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 5h8M9 3v2M7 5c1 2.6 2.7 4.4 5 5.4M12 7c-1.2 1.4-2.8 2.6-5 3.4" />
+                    <path d="M10 19l4-8 4 8M11.2 16.5h5.6" />
+                  </svg>
+                </div>
+                <div class="tool-name">智能翻译</div>
+                <div class="tool-badge">AI</div>
+              </div>
+              <div class="tool-tile">
+                <div class="tool-icon" style="background:#f4efff;color:#8b5cf6">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="5" width="16" height="15" rx="2" />
+                    <path d="M8 9h8M8 13h8M8 17h5" />
+                  </svg>
+                </div>
+                <div class="tool-name">发版邮件助手</div>
+                <div class="tool-badge">AI</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="problem-bracket">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+            搜索结果仍被放在下方网格，需要滚动查找
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item on">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1Z" />
+              </svg>
+              首页
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                <rect x="13" y="13" width="7" height="7" rx="1.5" />
+              </svg>
+              工具
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="15" rx="3" />
+                <path d="M8 10h8M8 14h5" />
+              </svg>
+              消息
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+              </svg>
+              我的
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-wrap two">
+      <div class="phone-label"><span class="blue">方案 · 工具结果直达</span></div>
+      <div class="phone">
+        <div class="status">
+          <span>9:41</span>
+          <div class="status-right">
+            <div class="signal"><i></i><i></i><i></i><i></i></div>
+            <div class="wifi"></div>
+            <div class="battery"></div>
+          </div>
+        </div>
+        <div class="screen">
+          <div class="top-bar">
+            <div class="brand">
+              <div class="brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                </svg>
+              </div>
+              <div>
+                <div class="brand-name">FunBox</div>
+                <div class="brand-sub">工具与游戏，随手即用</div>
+              </div>
+            </div>
+            <div class="count">16 个工具 · 5 款游戏</div>
+          </div>
+
+          <div class="search-shell focused">
+            <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+              <circle cx="10.5" cy="10.5" r="6" />
+              <path d="m15 15 5 5" />
+            </svg>
+            <div class="search-input">AI<span class="cursor"></span></div>
+            <div class="clear-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="result-panel">
+            <div class="result-head">
+              <strong>搜索结果</strong>
+              <span>4 个工具 · 0 款游戏</span>
+            </div>
+            <div class="result-row active">
+              <div class="result-icon" style="background:#eef1ff;color:#4b6bff">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <ellipse cx="12" cy="12" rx="9" ry="4" />
+                  <circle cx="12" cy="12" r="2.2" />
+                  <path d="M3 12a9 4 0 0 1 18 0" />
+                </svg>
+              </div>
+              <div class="result-copy">
+                <div class="result-name"><mark>AI</mark> 导航 <span class="kind-tag blue">AI</span></div>
+                <div class="result-desc">全球主流 AI 官方入口 · /tools/ai-navigation</div>
+              </div>
+              <div class="row-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="result-row">
+              <div class="result-icon" style="background:#eef1ff;color:#4b6bff">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="5" width="16" height="15" rx="2" />
+                  <path d="M8 9h8M8 13h8M8 17h5" />
+                </svg>
+              </div>
+              <div class="result-copy">
+                <div class="result-name">热点速览 <span class="kind-tag blue">AI</span></div>
+                <div class="result-desc">每日 <mark>AI</mark> 简报与多源追踪 · /tools/hot-news</div>
+              </div>
+              <div class="row-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="result-row">
+              <div class="result-icon" style="background:#e9f6f1;color:#1f7b63">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 5h8M9 3v2M7 5c1 2.6 2.7 4.4 5 5.4M12 7c-1.2 1.4-2.8 2.6-5 3.4" />
+                  <path d="M10 19l4-8 4 8M11.2 16.5h5.6" />
+                </svg>
+              </div>
+              <div class="result-copy">
+                <div class="result-name">智能翻译 <span class="kind-tag blue">AI</span></div>
+                <div class="result-desc"><mark>AI</mark> 语境增强翻译 · /tools/smart-translation</div>
+              </div>
+              <div class="row-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="result-row">
+              <div class="result-icon" style="background:#f4efff;color:#8b5cf6">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="5" width="16" height="15" rx="2" />
+                  <path d="M8 9h8M8 13h8M8 17h5" />
+                </svg>
+              </div>
+              <div class="result-copy">
+                <div class="result-name">发版邮件助手 <span class="kind-tag blue">AI</span></div>
+                <div class="result-desc">生成发版通知邮件 · /tools/release-email-assistant</div>
+              </div>
+              <div class="row-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="result-foot">
+              <span class="foot-count">与正文过滤数量一致</span>
+              <span class="foot-go">在全部工具中查看
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12h15M13 6l6 6-6 6" />
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="dim-body">
+            <div class="dim-card"></div>
+            <div class="dim-card"></div>
+            <div class="dim-grid">
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+            </div>
+          </div>
+          <div class="dim-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4l3 2" />
+            </svg>
+            搜索态：正文降级，聚焦结果面板
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item on">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1Z" />
+              </svg>
+              首页
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                <rect x="13" y="13" width="7" height="7" rx="1.5" />
+              </svg>
+              工具
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="15" rx="3" />
+                <path d="M8 10h8M8 14h5" />
+              </svg>
+              消息
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+              </svg>
+              我的
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-wrap three">
+      <div class="phone-label"><span class="green">方案 · 游戏结果直达</span></div>
+      <div class="phone">
+        <div class="status">
+          <span>9:41</span>
+          <div class="status-right">
+            <div class="signal"><i></i><i></i><i></i><i></i></div>
+            <div class="wifi"></div>
+            <div class="battery"></div>
+          </div>
+        </div>
+        <div class="screen">
+          <div class="top-bar">
+            <div class="brand">
+              <div class="brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                </svg>
+              </div>
+              <div>
+                <div class="brand-name">FunBox</div>
+                <div class="brand-sub">工具与游戏，随手即用</div>
+              </div>
+            </div>
+            <div class="count">16 个工具 · 5 款游戏</div>
+          </div>
+
+          <div class="search-shell focused">
+            <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+              <circle cx="10.5" cy="10.5" r="6" />
+              <path d="m15 15 5 5" />
+            </svg>
+            <div class="search-input">棋<span class="cursor"></span></div>
+            <div class="clear-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="result-panel">
+            <div class="result-head">
+              <strong>搜索结果</strong>
+              <span>0 个工具 · 2 款游戏</span>
+            </div>
+            <div class="result-row active">
+              <div class="result-icon" style="background:#f8efe6;color:#d98a3d">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 4c2 1 3 3 3 5s-1 3-3 4c-2-1-3-2-3-4s1-4 3-5Z" />
+                  <path d="M8 14h8l1 3H7l1-3Z" />
+                  <path d="M7 19h10" />
+                </svg>
+              </div>
+              <div class="result-copy">
+                <div class="result-name">中国象<mark>棋</mark> <span class="kind-tag orange">棋类</span></div>
+                <div class="result-desc">三档人机与好友实时对局 · /games/xiangqi</div>
+              </div>
+              <div class="row-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="result-row">
+              <div class="result-icon" style="background:#f5eee6;color:#cf794a">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1" />
+                  <rect x="13" y="4" width="7" height="7" rx="1" />
+                  <rect x="4" y="13" width="7" height="7" rx="1" />
+                  <rect x="13" y="13" width="7" height="7" rx="1" />
+                </svg>
+              </div>
+              <div class="result-copy">
+                <div class="result-name">五子<mark>棋</mark>人机对战 <span class="kind-tag orange">棋类</span></div>
+                <div class="result-desc">三档 AI 人机对弈 · /games/gomoku</div>
+              </div>
+              <div class="row-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+            <div class="result-foot">
+              <span class="foot-count">游戏与工具同一结果流</span>
+              <span class="foot-go">在全部工具中查看
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12h15M13 6l6 6-6 6" />
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="dim-body">
+            <div class="dim-card"></div>
+            <div class="dim-card"></div>
+            <div class="dim-grid">
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+            </div>
+          </div>
+          <div class="dim-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 8v4l3 2" />
+            </svg>
+            键盘：↑↓ 选择 · Enter 直达 · Esc 关闭
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item on">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1Z" />
+              </svg>
+              首页
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                <rect x="13" y="13" width="7" height="7" rx="1.5" />
+              </svg>
+              工具
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="15" rx="3" />
+                <path d="M8 10h8M8 14h5" />
+              </svg>
+              消息
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+              </svg>
+              我的
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-strip">
+      <div class="info-card">
+        <div class="info-head"><span class="info-num">1</span><h3>交互规则</h3></div>
+        <p>聚焦 + 输入即出面板；点击外部关闭；清空关键词恢复默认首页；结果行整行可点击。</p>
+        <span class="tag">移动端点击直达</span>
+      </div>
+      <div class="info-card">
+        <div class="info-head"><span class="info-num">2</span><h3>键盘可达</h3></div>
+        <p>Web 端支持 ↑↓ 选择、Enter 直达、Esc 收起，结果行保留按钮语义与无障碍状态。</p>
+        <span class="tag">Web 可用</span>
+      </div>
+      <div class="info-card">
+        <div class="info-head"><span class="info-num">3</span><h3>真实数据</h3></div>
+        <p>结果来自 feature_registry.json 与 popularGames，经权限、状态、隐藏规则过滤，无假数据。</p>
+        <span class="tag">单一事实源</span>
+      </div>
+      <div class="info-card">
+        <div class="info-head"><span class="info-num">4</span><h3>空态兜底</h3></div>
+        <p>无匹配时展示真实空态，只提供“清空关键词”和“在全部工具中查看”，不展示运营假热词。</p>
+        <span class="tag">不造假数据</span>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

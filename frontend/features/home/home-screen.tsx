@@ -1,14 +1,16 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useRouter, type Href } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
+  type NativeSyntheticEvent,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
+  type TextInputKeyPressEventData,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -30,12 +32,21 @@ import {
   getToolGridExpandLabel,
   getToolGridSlice,
 } from '@/lib/home-tools-catalog';
+import {
+  getHomeSearchSlice,
+  getQuickSearchEntries,
+  searchHomeEntries,
+  type HomeSearchEntry,
+} from '@/lib/home-search';
+import { getStoredRecentUsage } from '@/lib/recent-usage-storage';
+import type { RecentUsageItem } from '@/lib/recent-usage';
 import { getStoredToolUsage } from '@/lib/tool-usage-storage';
 import type { ToolUsageStat } from '@/lib/tool-usage';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { AppTool, GameItem } from '@/types/app';
 
 import { GameArtwork } from './game-artwork';
+import { SearchResultPanel } from './search-result-panel';
 
 const GAME_LIST_GAP = 10;
 const GAME_CARD_WIDTH_RATIO = 0.29;
@@ -313,16 +324,24 @@ export function HomeScreen() {
   const [toolUsage, setToolUsage] = useState<ToolUsageStat[]>([]);
   const [activeCategory, setActiveCategory] = useState(HOME_ALL_CATEGORY);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
+  const [recentUsage, setRecentUsage] = useState<RecentUsageItem[]>([]);
   const [toolsExpanded, setToolsExpanded] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const searchInputRef = useRef<TextInput>(null);
+  const toolsSectionYRef = useRef(0);
 
   const availableTools = useMemo(
     () => visibleTools.filter((tool) => tool.status === 'available'),
     [visibleTools],
   );
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const searchMode = normalizedSearchQuery.length > 0;
   const categories = useMemo(() => getMergedToolCategories(availableTools), [availableTools]);
   const filteredTools = useMemo(
-    () => filterMergedTools(availableTools, activeCategory, searchQuery),
-    [activeCategory, availableTools, searchQuery],
+    () => filterMergedTools(availableTools, searchMode ? HOME_ALL_CATEGORY : activeCategory, searchQuery),
+    [activeCategory, availableTools, searchMode, searchQuery],
   );
   const visibleToolsForGrid = useMemo(
     () => getToolGridSlice(filteredTools, toolsExpanded),
@@ -353,13 +372,24 @@ export function HomeScreen() {
     availableTools.find((tool) => tool.id === DEFAULT_RECOMMENDATION_TOOL_ID) ??
     availableTools[0];
   const playableGames = visibleGames.slice(0, 5);
-  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const filteredGames = useMemo(() => {
     if (!normalizedSearchQuery) return playableGames;
     return playableGames.filter((game) =>
       `${game.name} ${game.genre}`.toLowerCase().includes(normalizedSearchQuery),
     );
   }, [normalizedSearchQuery, playableGames]);
+  const searchEntries = useMemo(
+    () => searchHomeEntries(availableTools, playableGames, searchQuery, toolUsage),
+    [availableTools, playableGames, searchQuery, toolUsage],
+  );
+  const panelSearchEntries = useMemo(() => getHomeSearchSlice(searchEntries), [searchEntries]);
+  const toolResultCount = searchEntries.filter((entry) => entry.kind === 'tool').length;
+  const gameResultCount = searchEntries.length - toolResultCount;
+  const quickSearchEntries = useMemo(
+    () => getQuickSearchEntries(availableTools, playableGames, recentUsage),
+    [availableTools, playableGames, recentUsage],
+  );
+  const searchPanelOpen = searchMode && (searchFocused || selectedSearchIndex >= 0);
   const showMembershipPromo = authStatus !== 'authenticated' || user?.role === 'normal';
   const availableToolCount = availableTools.length;
   const gameCount = playableGames.length;
@@ -376,9 +406,14 @@ export function HomeScreen() {
     useCallback(() => {
       let active = true;
 
-      void getStoredToolUsage().then((items) => {
-        if (active) setToolUsage(items);
-      });
+      void Promise.all([getStoredToolUsage(), getStoredRecentUsage()]).then(
+        ([usageItems, recentItems]) => {
+          if (active) {
+            setToolUsage(usageItems);
+            setRecentUsage(recentItems);
+          }
+        },
+      );
 
       return () => {
         active = false;
@@ -389,6 +424,61 @@ export function HomeScreen() {
   function handleSearchChange(value: string) {
     setSearchQuery(value);
     setToolsExpanded(false);
+    setSelectedSearchIndex(-1);
+    setSearchFocused(true);
+  }
+
+  function handleClearSearch() {
+    setSearchQuery('');
+    setToolsExpanded(false);
+    setSelectedSearchIndex(-1);
+    setSearchFocused(false);
+    searchInputRef.current?.blur();
+  }
+
+  function handleOpenSearchEntry(entry: HomeSearchEntry) {
+    setSearchFocused(false);
+    setSelectedSearchIndex(-1);
+    searchInputRef.current?.blur();
+    router.push(entry.route as Href);
+  }
+
+  function handleViewAllResults() {
+    setSearchFocused(false);
+    setSelectedSearchIndex(-1);
+    setToolsExpanded(true);
+    searchInputRef.current?.blur();
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({
+        animated: true,
+        y: Math.max(0, toolsSectionYRef.current - 8),
+      });
+    });
+  }
+
+  function handleSearchKeyPress(event: NativeSyntheticEvent<TextInputKeyPressEventData>) {
+    if (!searchMode) return;
+    const key = event.nativeEvent.key;
+
+    if (key === 'ArrowDown') {
+      setSelectedSearchIndex((index) => Math.min(index + 1, searchEntries.length - 1));
+      return;
+    }
+    if (key === 'ArrowUp') {
+      setSelectedSearchIndex((index) => Math.max(index - 1, -1));
+      return;
+    }
+    if (key === 'Enter') {
+      const target =
+        selectedSearchIndex >= 0 ? searchEntries[selectedSearchIndex] : searchEntries[0];
+      if (target) handleOpenSearchEntry(target);
+      return;
+    }
+    if (key === 'Escape') {
+      setSearchFocused(false);
+      setSelectedSearchIndex(-1);
+      searchInputRef.current?.blur();
+    }
   }
 
   function handleCategoryPress(category: string) {
@@ -399,6 +489,7 @@ export function HomeScreen() {
   return (
     <MobileScreen
       contentContainerStyle={styles.pageContent}
+      scrollViewRef={scrollRef}
       scrollContentStyle={{ paddingBottom: bottomPadding }}>
       <View style={styles.topBar}>
         <View style={styles.brandLockup}>
@@ -425,13 +516,29 @@ export function HomeScreen() {
         </ThemedText>
       </View>
 
-      <View style={[styles.searchShell, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+      <View
+        style={[
+          styles.searchShell,
+          searchPanelOpen && styles.searchShellFocused,
+          {
+            backgroundColor: colors.surface,
+            borderColor: searchPanelOpen ? colors.primary : colors.line,
+          },
+        ]}>
         <MaterialCommunityIcons name="magnify" size={20} color={colors.mutedText} />
         <TextInput
           accessibilityLabel="搜索工具和游戏"
+          onBlur={() => {
+            setTimeout(() => {
+              setSearchFocused(false);
+            }, 150);
+          }}
           onChangeText={handleSearchChange}
+          onFocus={() => setSearchFocused(true)}
+          onKeyPress={handleSearchKeyPress}
           placeholder="搜索工具、游戏或场景"
           placeholderTextColor={colors.mutedText}
+          ref={searchInputRef}
           style={[styles.searchInput, { color: colors.text }]}
           value={searchQuery}
         />
@@ -440,21 +547,50 @@ export function HomeScreen() {
             accessibilityLabel="清除搜索"
             accessibilityRole="button"
             hitSlop={8}
-            onPress={() => handleSearchChange('')}
+            onPress={handleClearSearch}
             style={styles.searchClear}>
             <MaterialCommunityIcons name="close-circle" size={18} color={colors.mutedText} />
           </Pressable>
         ) : null}
       </View>
 
-      {recommendationTool ? (
+      {searchPanelOpen ? (
+        searchMode ? (
+          <SearchResultPanel
+            entries={panelSearchEntries}
+            gameCount={gameResultCount}
+            onClear={handleClearSearch}
+            onOpen={handleOpenSearchEntry}
+            onSelect={setSelectedSearchIndex}
+            onViewAll={handleViewAllResults}
+            query={searchQuery}
+            selectedIndex={selectedSearchIndex}
+            toolCount={toolResultCount}
+          />
+        ) : quickSearchEntries.length > 0 ? (
+          <SearchResultPanel
+            entries={quickSearchEntries}
+            gameCount={quickSearchEntries.filter((entry) => entry.kind === 'game').length}
+            onClear={handleClearSearch}
+            onOpen={handleOpenSearchEntry}
+            onSelect={setSelectedSearchIndex}
+            onViewAll={handleViewAllResults}
+            query=""
+            quick
+            selectedIndex={selectedSearchIndex}
+            toolCount={quickSearchEntries.filter((entry) => entry.kind === 'tool').length}
+          />
+        ) : null
+      ) : null}
+
+      {!searchMode && recommendationTool ? (
         <RecommendationBanner
           tool={recommendationTool}
           onPress={() => router.push(recommendationTool.route)}
         />
       ) : null}
 
-      {recentTools.length > 0 ? (
+      {!searchMode && recentTools.length > 0 ? (
         <View style={styles.section}>
           <SectionHeader
             actionLabel="查看全部"
@@ -477,22 +613,30 @@ export function HomeScreen() {
         </View>
       ) : null}
 
-      <View style={styles.section}>
+      <View
+        onLayout={(event) => {
+          toolsSectionYRef.current = event.nativeEvent.layout.y;
+        }}
+        pointerEvents={searchPanelOpen ? 'none' : 'auto'}
+        style={searchPanelOpen ? styles.searchBodyDimmed : undefined}>
+        <View style={styles.section}>
         <SectionHeader title="全部工具" actionLabel={`${filteredTools.length} 个工具`} />
-        <ScrollView
-          contentContainerStyle={styles.categoryContent}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoryScroller}>
-          {[HOME_ALL_CATEGORY, ...categories].map((category) => (
-            <CategoryChip
-              key={category}
-              label={category}
-              selected={activeCategory === category}
-              onPress={() => handleCategoryPress(category)}
-            />
-          ))}
-        </ScrollView>
+        {!searchMode ? (
+          <ScrollView
+            contentContainerStyle={styles.categoryContent}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoryScroller}>
+            {[HOME_ALL_CATEGORY, ...categories].map((category) => (
+              <CategoryChip
+                key={category}
+                label={category}
+                selected={activeCategory === category}
+                onPress={() => handleCategoryPress(category)}
+              />
+            ))}
+          </ScrollView>
+        ) : null}
 
         {filteredTools.length === 0 ? (
           <View style={styles.emptyState}>
@@ -534,34 +678,35 @@ export function HomeScreen() {
             ) : null}
           </>
         )}
-      </View>
-
-      {filteredGames.length > 0 ? (
-        <View style={styles.section}>
-          <SectionHeader meta={gameSectionMeta} title="放松一下" />
-          <FlatList
-            contentContainerStyle={styles.gameListContent}
-            data={filteredGames}
-            horizontal
-            ItemSeparatorComponent={() => <View style={styles.gameSeparator} />}
-            keyExtractor={(game) => game.id}
-            nestedScrollEnabled
-            renderItem={({ item }) => (
-              <GameTile
-                game={item}
-                width={gameCardWidth}
-                onPress={() => router.push(item.route)}
-              />
-            )}
-            showsHorizontalScrollIndicator={false}
-            style={styles.gameList}
-          />
         </View>
-      ) : null}
 
-      {showMembershipPromo ? (
-        <MembershipPromo onPress={() => router.push('/profile/membership')} />
-      ) : null}
+        {filteredGames.length > 0 ? (
+          <View style={styles.section}>
+            <SectionHeader meta={gameSectionMeta} title="放松一下" />
+            <FlatList
+              contentContainerStyle={styles.gameListContent}
+              data={filteredGames}
+              horizontal
+              ItemSeparatorComponent={() => <View style={styles.gameSeparator} />}
+              keyExtractor={(game) => game.id}
+              nestedScrollEnabled
+              renderItem={({ item }) => (
+                <GameTile
+                  game={item}
+                  width={gameCardWidth}
+                  onPress={() => router.push(item.route)}
+                />
+              )}
+              showsHorizontalScrollIndicator={false}
+              style={styles.gameList}
+            />
+          </View>
+        ) : null}
+
+        {showMembershipPromo ? (
+          <MembershipPromo onPress={() => router.push('/profile/membership')} />
+        ) : null}
+      </View>
     </MobileScreen>
   );
 }
@@ -612,6 +757,15 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 42,
     paddingHorizontal: 12,
+  },
+  searchShellFocused: {
+    shadowColor: 'rgba(58, 86, 152, 0.16)',
+    shadowOffset: { height: 6, width: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 14,
+  },
+  searchBodyDimmed: {
+    opacity: 0.38,
   },
   searchInput: {
     flex: 1,
