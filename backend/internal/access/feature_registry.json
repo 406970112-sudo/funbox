@@ -393,3 +393,20 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]
+  },
+  {
+    "id": "json-workbench",
+    "name": "JSON 工作台",
+    "tagline": "转换、对比，全部本地处理",
+    "description": "粘贴真实 JSON 即可格式化、清洗、转换 YAML/CSV/XML/TS/Schema/SQL，并把两份 JSON 做语义级对比。",
+    "icon": "code-json",
+    "category": "开发",
+    "route": "/tools/json-workbench",
+    "accentColor": "#4b6bff",
+    "badges": ["本地处理", "语义对比"],
+    "usageLabel": "打开工作台",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  }
+]

@@ -21,6 +21,7 @@ import { DoubleColorBallLabClassicScreen } from '@/features/tools/double-color-b
 import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
+import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { ReadingHomeScreen } from '@/features/reading/reading-home-screen';
 import { useAuth } from '@/features/auth/auth-provider';
@@ -260,6 +261,14 @@ export function ToolDetailScreen() {
     );
   }
 
+  if (tool?.id === 'json-workbench') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <JsonWorkbenchScreen />
+      </>
+    );
+  }
   if (tool?.id === 'double-color-ball') {
     return (
       <>

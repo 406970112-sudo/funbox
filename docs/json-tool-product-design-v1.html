@@ -1,0 +1,1732 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FunBox · JSON 工作台产品设计 V1</title>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --board: #e4ebf6;
+        --page: #eef4ff;
+        --surface: #ffffff;
+        --surface-2: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --purple: #7e5bef;
+        --purple-soft: #f0edff;
+        --amber: #f1a33b;
+        --amber-soft: #fff3e0;
+        --green: #21ad78;
+        --green-soft: #e4f7ee;
+        --red: #ef5962;
+        --red-soft: #ffecee;
+        --code: #101426;
+        --code-ink: #dbe4f7;
+        --code-muted: #8f9cc0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--board);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        letter-spacing: 0;
+      }
+
+      button {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.38) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.38) 1px, transparent 1px),
+          var(--board);
+        background-size: 40px 40px;
+        min-height: 100vh;
+        padding: 30px 40px 38px;
+        width: 1600px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 auto;
+        max-width: 1520px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 16px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 56px;
+        justify-content: center;
+        width: 56px;
+      }
+
+      .brand-mark svg {
+        height: 28px;
+        stroke-width: 2.3;
+        width: 28px;
+      }
+
+      .brand-title {
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        margin: 5px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--purple);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .stage {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 280px 600px 600px;
+        margin: 24px auto 0;
+        max-width: 1520px;
+      }
+
+      .strategy {
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        display: flex;
+        flex-direction: column;
+        min-height: 940px;
+        padding: 24px 22px;
+      }
+
+      .strategy h2,
+      .section-title h2,
+      .mobile-head h2 {
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 0;
+        margin: 0 0 12px;
+      }
+
+      .strategy .lead {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .strategy h1 {
+        font-size: 22px;
+        line-height: 1.35;
+        margin: 0 0 10px;
+      }
+
+      .strategy .desc {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.7;
+        margin: 0 0 18px;
+      }
+
+      .block {
+        border-top: 1px solid var(--line);
+        margin-top: 16px;
+        padding-top: 14px;
+      }
+
+      .block h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0 0 10px;
+      }
+
+      .problem-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .problem-list li {
+        color: #4d5870;
+        display: flex;
+        font-size: 11.5px;
+        gap: 8px;
+        line-height: 1.55;
+        list-style: none;
+      }
+
+      .dot {
+        background: var(--coral);
+        border-radius: 50%;
+        flex: 0 0 auto;
+        height: 8px;
+        margin-top: 5px;
+        width: 8px;
+      }
+
+      .decision {
+        background: var(--surface-2);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .option {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+      }
+
+      .option strong {
+        display: block;
+        font-size: 11.5px;
+        margin-bottom: 2px;
+      }
+
+      .option span {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.5;
+      }
+
+      .option.chosen {
+        background: var(--blue);
+        border-color: var(--blue);
+      }
+
+      .option.chosen strong,
+      .option.chosen span {
+        color: #ffffff;
+      }
+
+      .recommend {
+        background: var(--lime);
+        border-radius: 999px;
+        color: var(--navy);
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 900;
+        margin-bottom: 5px;
+        padding: 2px 8px;
+      }
+
+      .scope-list {
+        color: #4d5870;
+        display: flex;
+        flex-direction: column;
+        font-size: 11.5px;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .scope-list li {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        list-style: none;
+      }
+
+      .scope-list .check {
+        background: var(--lime);
+        border-radius: 50%;
+        color: var(--navy);
+        flex: 0 0 auto;
+        font-size: 9px;
+        font-weight: 900;
+        height: 16px;
+        line-height: 16px;
+        text-align: center;
+        width: 16px;
+      }
+
+      .metric-row {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric {
+        background: var(--surface-2);
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .metric b {
+        color: var(--blue);
+        display: block;
+        font-size: 20px;
+        line-height: 1.1;
+      }
+
+      .metric span {
+        color: var(--muted);
+        display: block;
+        font-size: 10.5px;
+        line-height: 1.45;
+        margin-top: 4px;
+      }
+
+      .entry {
+        background: var(--purple-soft);
+        border-radius: 8px;
+        color: var(--purple);
+        font-size: 11px;
+        font-weight: 800;
+        padding: 10px;
+        text-align: center;
+      }
+
+      .real-note {
+        background: var(--amber-soft);
+        border-radius: 8px;
+        color: #8a5a14;
+        font-size: 10.5px;
+        line-height: 1.6;
+        padding: 10px 12px;
+      }
+
+      .screen {
+        align-self: start;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      .screen-tag {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 0;
+        color: #ffffff;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 8px;
+        justify-content: center;
+        padding: 9px 0;
+        width: auto;
+      }
+
+      .screen-1-wrap {
+        position: relative;
+      }
+
+      .screen-2-wrap {
+        position: relative;
+      }
+
+      .winbar {
+        align-items: center;
+        background: #f8faff;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        height: 46px;
+        padding: 0 14px;
+      }
+
+      .traffic {
+        display: flex;
+        gap: 6px;
+        margin-right: 12px;
+      }
+
+      .traffic i {
+        border-radius: 50%;
+        display: block;
+        height: 9px;
+        width: 9px;
+      }
+
+      .traffic i:nth-child(1) {
+        background: #ff6b6b;
+      }
+
+      .traffic i:nth-child(2) {
+        background: #f5b83d;
+      }
+
+      .traffic i:nth-child(3) {
+        background: #45c987;
+      }
+
+      .win-title {
+        color: var(--ink);
+        font-size: 12.5px;
+        font-weight: 800;
+      }
+
+      .win-title small {
+        color: var(--muted);
+        font-size: 10.5px;
+        font-weight: 500;
+        margin-left: 8px;
+      }
+
+      .win-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+      }
+
+      .win-actions span {
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .app {
+        display: flex;
+        min-height: 880px;
+      }
+
+      .app-side {
+        background: var(--navy);
+        display: flex;
+        flex: 0 0 56px;
+        flex-direction: column;
+        padding: 12px 0;
+      }
+
+      .nav-item {
+        align-items: center;
+        color: #9aa8c7;
+        display: flex;
+        flex-direction: column;
+        font-size: 9px;
+        gap: 3px;
+        justify-content: center;
+        min-height: 54px;
+      }
+
+      .nav-item svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .nav-item.active {
+        background: rgba(255, 255, 255, 0.1);
+        border-left: 3px solid var(--lime);
+        color: #ffffff;
+      }
+
+      .app-main {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-width: 0;
+        padding: 12px;
+      }
+
+      .toolbar {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
+      }
+
+      .seg {
+        align-items: center;
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        display: inline-flex;
+        gap: 2px;
+        padding: 3px;
+      }
+
+      .seg button {
+        background: transparent;
+        border: 0;
+        border-radius: 6px;
+        color: var(--muted);
+        cursor: default;
+        font-size: 10.5px;
+        font-weight: 700;
+        padding: 5px 9px;
+      }
+
+      .seg button.active {
+        background: var(--surface);
+        box-shadow: 0 1px 3px rgba(24, 35, 61, 0.14);
+        color: var(--blue);
+      }
+
+      .status-line {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .pill {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 9.5px;
+        font-weight: 800;
+        gap: 4px;
+        padding: 4px 9px;
+      }
+
+      .pill.ok {
+        background: var(--green-soft);
+        color: #147a56;
+      }
+
+      .pill.local {
+        background: var(--purple-soft);
+        color: var(--purple);
+      }
+
+      .pill.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .pill.red {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .pill.amber {
+        background: var(--amber-soft);
+        color: #a5640d;
+      }
+
+      .source-line {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9.5px;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .work-grid {
+        display: grid;
+        flex: 1;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 12px;
+        min-height: 0;
+      }
+
+      .pane {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .pane-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 11px 7px;
+      }
+
+      .pane-head b {
+        font-size: 11.5px;
+      }
+
+      .pane-head span {
+        color: var(--muted);
+        font-size: 9.5px;
+      }
+
+      .code-wrap {
+        background: var(--code);
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: 10px 0 10px 12px;
+      }
+
+      .code-scroll {
+        font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+        font-size: 10px;
+        height: 100%;
+        line-height: 1.75;
+        margin: 0;
+        overflow: hidden;
+        white-space: pre;
+      }
+
+      .code-scroll .k {
+        color: #8fb8ff;
+      }
+
+      .code-scroll .s {
+        color: #b8e986;
+      }
+
+      .code-scroll .n {
+        color: #f4c65f;
+      }
+
+      .code-scroll .p {
+        color: #93a1c1;
+      }
+
+      .code-scroll .c {
+        color: #66739c;
+        font-style: italic;
+      }
+
+      .code-scroll .add {
+        color: #5ee6a3;
+      }
+
+      .code-scroll .del {
+        color: #ff8291;
+      }
+
+      .code-scroll .mod {
+        color: #ffd479;
+      }
+
+      .code-scroll .path {
+        color: #9fb4e8;
+      }
+
+      .code-scroll .dim {
+        color: #6d7ba3;
+      }
+
+      .config-bar {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding: 9px 11px;
+      }
+
+      .switch-line {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+
+      .sw {
+        align-items: center;
+        color: #4d5870;
+        display: inline-flex;
+        font-size: 10px;
+        gap: 5px;
+      }
+
+      .sw i {
+        background: var(--blue);
+        border-radius: 999px;
+        display: inline-block;
+        height: 13px;
+        padding: 2px;
+        position: relative;
+        width: 24px;
+      }
+
+      .sw i::after {
+        background: #ffffff;
+        border-radius: 50%;
+        content: "";
+        display: block;
+        height: 9px;
+        position: absolute;
+        right: 2px;
+        top: 2px;
+        width: 9px;
+      }
+
+      .actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        font-size: 10.5px;
+        font-weight: 800;
+        padding: 7px 12px;
+      }
+
+      .btn.primary {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #ffffff;
+      }
+
+      .btn svg {
+        height: 13px;
+        margin-right: 5px;
+        vertical-align: -2px;
+        width: 13px;
+      }
+
+      .stats-line {
+        color: var(--muted);
+        font-size: 9.5px;
+        margin-top: 8px;
+      }
+
+      .compare-meta {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+
+      .ab {
+        align-items: center;
+        display: flex;
+        flex: 1;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .ab-box {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        min-width: 0;
+        padding: 7px 10px;
+      }
+
+      .ab-box b {
+        display: block;
+        font-size: 10.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ab-box span {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ab-letter {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 6px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 auto;
+        font-size: 10px;
+        font-weight: 900;
+        height: 22px;
+        justify-content: center;
+        width: 22px;
+      }
+
+      .ab-letter.b {
+        background: var(--purple);
+        color: #ffffff;
+      }
+
+      .compare-bar {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+
+      .stat-chips {
+        display: flex;
+        gap: 8px;
+      }
+
+      .stat-chip {
+        border-radius: 8px;
+        font-size: 10px;
+        padding: 7px 10px;
+      }
+
+      .stat-chip b {
+        display: block;
+        font-size: 14px;
+        line-height: 1.1;
+      }
+
+      .stat-chip span {
+        font-size: 9px;
+      }
+
+      .stat-chip.mod {
+        background: var(--amber-soft);
+        color: #9a6210;
+      }
+
+      .stat-chip.add {
+        background: var(--green-soft);
+        color: #147a56;
+      }
+
+      .stat-chip.del {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .stat-chip.total {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .compare-grid {
+        display: grid;
+        flex: 1;
+        gap: 12px;
+        grid-template-columns: 1.15fr 0.85fr;
+        margin-top: 12px;
+        min-height: 0;
+      }
+
+      .diff-tree {
+        background: var(--code);
+        border-radius: 10px;
+        min-width: 0;
+        padding: 11px 12px;
+      }
+
+      .diff-tree .tree-title {
+        color: #c4cfe9;
+        font-size: 10px;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+
+      .tree-line {
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 9.8px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+      }
+
+      .tree-line .add {
+        color: #5ee6a3;
+      }
+
+      .tree-line .del {
+        color: #ff8291;
+      }
+
+      .tree-line .mod {
+        color: #ffd479;
+      }
+
+      .tree-line .dim {
+        color: #6d7ba3;
+      }
+
+      .tree-line .path {
+        color: #9fb4e8;
+      }
+
+      .tree-line .label {
+        color: #dce4f7;
+      }
+
+      .changes {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .changes .pane-head {
+        padding-bottom: 8px;
+      }
+
+      .change-row {
+        border-top: 1px solid var(--line);
+        display: grid;
+        font-size: 9.5px;
+        gap: 4px 8px;
+        grid-template-columns: 46px 1fr;
+        padding: 7px 10px;
+      }
+
+      .change-row .type {
+        align-items: center;
+        border-radius: 6px;
+        display: inline-flex;
+        font-size: 9px;
+        font-weight: 900;
+        height: 20px;
+        justify-content: center;
+      }
+
+      .change-row .type.add {
+        background: var(--green-soft);
+        color: #147a56;
+      }
+
+      .change-row .type.del {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .change-row .type.mod {
+        background: var(--amber-soft);
+        color: #9a6210;
+      }
+
+      .change-row .path {
+        color: var(--ink);
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .change-row .vals {
+        color: var(--muted);
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 9px;
+        grid-column: 2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .action-bar {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 12px;
+      }
+
+      .mobile-band {
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        margin: 24px auto 0;
+        max-width: 1520px;
+        padding: 22px 24px 26px;
+      }
+
+      .mobile-head {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .mobile-head h2 {
+        margin: 0;
+      }
+
+      .mobile-head p {
+        color: var(--muted);
+        font-size: 11.5px;
+        margin: 0;
+      }
+
+      .phones {
+        display: grid;
+        gap: 26px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .phone {
+        background: #101426;
+        border-radius: 34px;
+        box-shadow: 0 18px 42px rgba(21, 27, 59, 0.22);
+        margin: 0 auto;
+        padding: 12px;
+        width: 384px;
+      }
+
+      .phone-screen {
+        background: #f8faff;
+        border-radius: 25px;
+        height: 730px;
+        overflow: hidden;
+        padding: 0 16px 16px;
+        position: relative;
+      }
+
+      .status {
+        align-items: center;
+        color: #171c36;
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        height: 40px;
+        justify-content: space-between;
+        padding: 0 6px;
+      }
+
+      .status .iso {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 500;
+      }
+
+      .phone-title {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin: 6px 0 14px;
+      }
+
+      .phone-title .mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 10px;
+        color: var(--lime);
+        display: flex;
+        height: 36px;
+        justify-content: center;
+        width: 36px;
+      }
+
+      .phone-title .mark svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .phone-title b {
+        display: block;
+        font-size: 16px;
+      }
+
+      .phone-title span {
+        color: var(--muted);
+        display: block;
+        font-size: 10px;
+        margin-top: 2px;
+      }
+
+      .tool-card {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        gap: 12px;
+        margin-bottom: 10px;
+        padding: 12px;
+      }
+
+      .tool-card.active {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 2px var(--blue-soft);
+      }
+
+      .tool-icon {
+        align-items: center;
+        background: var(--purple-soft);
+        border-radius: 9px;
+        color: var(--purple);
+        display: flex;
+        flex: 0 0 auto;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .tool-icon svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .tool-card b {
+        display: block;
+        font-size: 12.5px;
+      }
+
+      .tool-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 10px;
+        margin-top: 2px;
+      }
+
+      .tool-card .go {
+        color: var(--blue);
+        margin-left: auto;
+      }
+
+      .tool-card .go svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .phone-label {
+        color: var(--muted);
+        font-size: 10.5px;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      .mobile-editor {
+        background: var(--code);
+        border-radius: 10px;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 9.5px;
+        height: auto;
+        line-height: 1.75;
+        min-height: 220px;
+        padding: 10px 12px;
+        white-space: pre;
+      }
+
+      .mobile-tabs {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 12px 0 10px;
+      }
+
+      .mobile-tabs .tab {
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 10.5px;
+        font-weight: 800;
+        padding: 8px;
+        text-align: center;
+      }
+
+      .mobile-tabs .tab.active {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: #ffffff;
+      }
+
+      .mobile-output {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 9px;
+        height: auto;
+        line-height: 1.7;
+        min-height: 135px;
+        padding: 10px 12px;
+        white-space: pre;
+      }
+
+      .provenance {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.8;
+        margin: 20px auto 0;
+        max-width: 1520px;
+      }
+
+      .provenance b {
+        color: var(--ink);
+      }
+
+      .provenance a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+
+      .provenance ul {
+        display: grid;
+        gap: 4px;
+        grid-template-columns: 1fr 1fr;
+        margin: 6px 0 0;
+        padding-left: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="braces"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox · JSON 工作台</h1>
+            <p class="brand-subtitle">产品设计 V1 · 真实数据 · 本地处理 · 语义对比</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>一期全量版</strong>
+          2026-08-02 · 待评审
+        </div>
+      </header>
+
+      <div class="stage">
+        <aside class="strategy">
+          <div>
+            <p class="lead">一句话定位</p>
+            <h1>本地优先的 JSON 转换与语义对比工作台</h1>
+            <p class="desc">粘贴真实 JSON 即可格式化、清洗、转换格式、生成类型与 Schema，并把任意两份真实 JSON 做语义级对比。</p>
+          </div>
+
+          <div class="block">
+            <h3>要解决的问题</h3>
+            <ul class="problem-list">
+              <li><i class="dot"></i>在线工具需要上传内部与生产数据，存在泄露风险</li>
+              <li><i class="dot"></i>格式化、转换、对比分散在不同站点，来回搬运</li>
+              <li><i class="dot"></i>文本 diff 把键顺序变化当成差异，真实变更被淹没</li>
+              <li><i class="dot"></i>没有历史、模板与批量能力，重复劳动</li>
+            </ul>
+          </div>
+
+          <div class="block">
+            <h3>关键决策</h3>
+            <div class="decision">
+              <div class="option chosen">
+                <span class="recommend">推荐</span>
+                <strong>A · 本地处理</strong>
+                <span>解析、转换、对比全部在浏览器 Worker 完成，数据零上传</span>
+              </div>
+              <div class="option">
+                <strong>B · 云端转换</strong>
+                <span>能力一致但需要上传数据，V1 不做</span>
+              </div>
+              <div class="option">
+                <strong>C · 纯查看器</strong>
+                <span>只格式化不转换，能力不足</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="block">
+            <h3>一期范围（全量交付）</h3>
+            <ul class="scope-list">
+              <li><i class="check">✓</i>转换器：格式化、清洗、JSON→YAML/CSV/XML/TS/Schema/SQL</li>
+              <li><i class="check">✓</i>对比器：语义树对比、忽略配置、变更清单与合并</li>
+              <li><i class="check">✓</i>历史记录、模板与收藏</li>
+              <li><i class="check">✓</i>敏感字段遮蔽与本地隐私</li>
+            </ul>
+          </div>
+
+          <div class="block">
+            <h3>成功指标</h3>
+            <div class="metric-row">
+              <div class="metric"><b>20s</b><span>进入工具到完成一次转换</span></div>
+              <div class="metric"><b>0</b><span>核心链路数据上传请求</span></div>
+              <div class="metric"><b>100%</b><span>示例为真实数据并标注来源</span></div>
+              <div class="metric"><b>0</b><span>键顺序导致的伪差异</span></div>
+            </div>
+          </div>
+
+          <div class="block">
+            <h3>入口</h3>
+            <div class="entry">工具注册表 json-workbench · 路由 /tools/json-workbench</div>
+          </div>
+
+          <div class="block">
+            <div class="real-note">数据原则：内置示例与验收用例只使用真实数据，每个示例保留来源 URL 与抓取时间，禁止假数据与 mock 数据。</div>
+          </div>
+        </aside>
+
+        <section class="screen screen-1-wrap">
+          <div class="screen-tag"><i data-lucide="braces" style="height:14px;width:14px"></i> 转换器 · 真实数据</div>
+          <div class="winbar">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="win-title">JSON 工作台 <small>转换器</small></div>
+            <div class="win-actions"><span>隐私：本地处理</span></div>
+          </div>
+          <div class="app">
+            <div class="app-side">
+              <div class="nav-item active"><i data-lucide="arrows-right-left"></i>转换</div>
+              <div class="nav-item"><i data-lucide="git-compare"></i>对比</div>
+              <div class="nav-item"><i data-lucide="history"></i>历史</div>
+              <div class="nav-item"><i data-lucide="bookmark"></i>收藏</div>
+            </div>
+            <div class="app-main">
+              <div class="toolbar">
+                <div class="seg">
+                  <button>粘贴</button>
+                  <button>文件</button>
+                  <button>URL</button>
+                  <button class="active">真实示例</button>
+                </div>
+                <div class="status-line">
+                  <span class="pill ok">✓ 已解析</span>
+                  <span class="pill local">数据不出浏览器</span>
+                </div>
+              </div>
+              <div class="source-line">
+                <i data-lucide="link" style="height:11px;width:11px"></i>
+                真实数据 · microsoft/TypeScript package.json (main) · 2026-08-02 抓取
+              </div>
+
+              <div class="work-grid">
+                <div class="pane">
+                  <div class="pane-head">
+                    <b>输入 JSON</b>
+                    <span>1.9 KB · 42 个节点 · 最大深度 3</span>
+                  </div>
+                  <div class="code-wrap">
+                    <pre class="code-scroll"><span class="p">{</span>
+<span class="k">  "name"</span><span class="p">:</span> <span class="s">"typescript"</span><span class="p">,</span>
+<span class="k">  "author"</span><span class="p">:</span> <span class="s">"Microsoft Corp."</span><span class="p">,</span>
+<span class="k">  "homepage"</span><span class="p">:</span> <span class="s">"https://www.typescriptlang.org/"</span><span class="p">,</span>
+<span class="k">  "version"</span><span class="p">:</span> <span class="s">"6.0.0"</span><span class="p">,</span>
+<span class="k">  "license"</span><span class="p">:</span> <span class="s">"Apache-2.0"</span><span class="p">,</span>
+<span class="k">  "description"</span><span class="p">:</span> <span class="s">"TypeScript is a language for application scale JavaScript development"</span><span class="p">,</span>
+<span class="k">  "keywords"</span><span class="p">:</span> <span class="p">[</span><span class="s">"TypeScript"</span><span class="p">,</span> <span class="s">"Microsoft"</span><span class="p">,</span> <span class="s">"compiler"</span><span class="p">,</span> <span class="s">"language"</span><span class="p">,</span> <span class="s">"javascript"</span><span class="p">],</span>
+<span class="k">  "bugs"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"url"</span><span class="p">:</span> <span class="s">"https://github.com/microsoft/TypeScript/issues"</span> <span class="p">},</span>
+<span class="k">  "repository"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"type"</span><span class="p">:</span> <span class="s">"git"</span><span class="p">,</span> <span class="k">"url"</span><span class="p">:</span> <span class="s">"https://github.com/microsoft/TypeScript.git"</span> <span class="p">},</span>
+<span class="k">  "main"</span><span class="p">:</span> <span class="s">"./lib/typescript.js"</span><span class="p">,</span>
+<span class="k">  "typings"</span><span class="p">:</span> <span class="s">"./lib/typescript.d.ts"</span><span class="p">,</span>
+<span class="k">  "bin"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"tsc"</span><span class="p">:</span> <span class="s">"./bin/tsc"</span><span class="p">,</span> <span class="k">"tsserver"</span><span class="p">:</span> <span class="s">"./bin/tsserver"</span> <span class="p">},</span>
+<span class="k">  "engines"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"node"</span><span class="p">:</span> <span class="s">"&gt;=14.17"</span> <span class="p">},</span>
+<span class="k">  "files"</span><span class="p">:</span> <span class="p">[</span><span class="s">"bin"</span><span class="p">,</span> <span class="s">"lib"</span><span class="p">,</span> <span class="s">"!lib/enu"</span><span class="p">,</span> <span class="s">"LICENSE.txt"</span><span class="p">,</span> <span class="s">"README.md"</span><span class="p">,</span> <span class="s">"SECURITY.md"</span><span class="p">,</span>
+<span class="c">    // … 已折叠 4 项，点击展开</span>
+<span class="k">  "devDependencies"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"@dprint/formatter"</span><span class="p">:</span> <span class="s">"^0.4.1"</span><span class="p">,</span> <span class="k">"@dprint/typescript"</span><span class="p">:</span> <span class="s">"0.93.4"</span><span class="p">,</span>
+<span class="c">    // … 已折叠 40 项，点击展开</span>
+<span class="k">  "scripts"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"test"</span><span class="p">:</span> <span class="s">"hereby runtests-parallel --light=false"</span><span class="p">,</span> <span class="s">"…"</span> <span class="p">}</span>
+<span class="p">}</span></pre>
+                  </div>
+                </div>
+
+                <div class="pane">
+                  <div class="pane-head">
+                    <b>输出</b>
+                    <span>格式：YAML</span>
+                  </div>
+                  <div class="seg" style="margin:0 10px 8px">
+                    <button class="active" data-tab="yaml">YAML</button>
+                    <button data-tab="csv">CSV</button>
+                    <button data-tab="xml">XML</button>
+                    <button data-tab="ts">TS 类型</button>
+                    <button data-tab="schema">Schema</button>
+                  </div>
+                  <div class="code-wrap" style="flex:1">
+                    <pre class="code-scroll" id="out-yaml"><span class="k">name</span><span class="p">:</span> typescript
+<span class="k">author</span><span class="p">:</span> Microsoft Corp.
+<span class="k">homepage</span><span class="p">:</span> https://www.typescriptlang.org/
+<span class="k">version</span><span class="p">:</span> 6.0.0
+<span class="k">license</span><span class="p">:</span> Apache-2.0
+<span class="k">description</span><span class="p">:</span> TypeScript is a language for application scale JavaScript development
+<span class="k">keywords</span><span class="p">:</span>
+  <span class="p">-</span> TypeScript
+  <span class="p">-</span> Microsoft
+  <span class="p">-</span> compiler
+  <span class="p">-</span> language
+  <span class="p">-</span> javascript
+<span class="k">bugs</span><span class="p">:</span>
+  <span class="k">url</span><span class="p">:</span> https://github.com/microsoft/TypeScript/issues
+<span class="k">repository</span><span class="p">:</span>
+  <span class="k">type</span><span class="p">:</span> git
+  <span class="k">url</span><span class="p">:</span> https://github.com/microsoft/TypeScript.git
+<span class="k">main</span><span class="p">:</span> ./lib/typescript.js
+<span class="k">typings</span><span class="p">:</span> ./lib/typescript.d.ts
+<span class="k">bin</span><span class="p">:</span>
+  <span class="k">tsc</span><span class="p">:</span> ./bin/tsc
+  <span class="k">tsserver</span><span class="p">:</span> ./bin/tsserver
+<span class="k">engines</span><span class="p">:</span>
+  <span class="k">node</span><span class="p">:</span> <span class="s">"&gt;=14.17"</span>
+<span class="k">files</span><span class="p">:</span>
+  <span class="p">-</span> bin
+  <span class="p">-</span> lib
+  <span class="p">-</span> <span class="s">"!lib/enu"</span>
+  <span class="p">-</span> LICENSE.txt
+  <span class="p">-</span> README.md
+  <span class="p">-</span> SECURITY.md
+<span class="c">  # … 已折叠 4 项，点击展开</span></pre>
+                    <pre class="code-scroll" id="out-csv" style="display:none"><span class="k">time</span>,<span class="k">temperature_2m_c</span>,<span class="k">precipitation_probability_percent</span>,<span class="k">wind_speed_10m_kmh</span>
+2026-08-02T00:00,29.8,0,5.3
+2026-08-02T01:00,29.6,0,3.6
+2026-08-02T02:00,29.4,0,2.5
+2026-08-02T03:00,28.6,0,2.3
+2026-08-02T04:00,28.2,0,2.5
+2026-08-02T05:00,27.9,0,3.5
+2026-08-02T06:00,28.2,0,2.9
+2026-08-02T07:00,30.3,0,2.7
+2026-08-02T08:00,32.4,0,1.5
+2026-08-02T09:00,34.5,0,0.7
+<span class="c"># 真实数据 · Open-Meteo 上海 2026-08-02 每小时预报</span></pre>
+                    <pre class="code-scroll" id="out-xml" style="display:none"><span class="p">&lt;?</span><span class="k">xml</span> version=<span class="s">"1.0"</span> encoding=<span class="s">"UTF-8"</span><span class="p">?&gt;</span>
+<span class="p">&lt;</span><span class="k">package</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="k">name</span><span class="p">&gt;</span>typescript<span class="p">&lt;/</span><span class="k">name</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="k">author</span><span class="p">&gt;</span>Microsoft Corp.<span class="p">&lt;/</span><span class="k">author</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="k">version</span><span class="p">&gt;</span>6.0.0<span class="p">&lt;/</span><span class="k">version</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="k">license</span><span class="p">&gt;</span>Apache-2.0<span class="p">&lt;/</span><span class="k">license</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="k">bin</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">tsc</span><span class="p">&gt;</span>./bin/tsc<span class="p">&lt;/</span><span class="k">tsc</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">tsserver</span><span class="p">&gt;</span>./bin/tsserver<span class="p">&lt;/</span><span class="k">tsserver</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="k">bin</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="k">engines</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">node</span><span class="p">&gt;</span><span class="n">&gt;=14.17</span><span class="p">&lt;/</span><span class="k">node</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="k">engines</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="k">package</span><span class="p">&gt;</span></pre>
+                    <pre class="code-scroll" id="out-ts" style="display:none"><span class="k">export interface</span> TypeScriptPackage <span class="p">{</span>
+  <span class="k">name</span>: <span class="s">string</span><span class="p">;</span>
+  <span class="k">author</span>: <span class="s">string</span><span class="p">;</span>
+  <span class="k">homepage</span>: <span class="s">string</span><span class="p">;</span>
+  <span class="k">version</span>: <span class="s">string</span><span class="p">;</span>
+  <span class="k">license</span>: <span class="s">string</span><span class="p">;</span>
+  <span class="k">description</span>: <span class="s">string</span><span class="p">;</span>
+  <span class="k">keywords</span>: <span class="s">string</span><span class="p">[];</span>
+  <span class="k">bugs</span>: <span class="p">{</span> <span class="k">url</span>: <span class="s">string</span> <span class="p">};</span>
+  <span class="k">repository</span>: <span class="p">{</span> <span class="k">type</span>: <span class="s">string</span>; <span class="k">url</span>: <span class="s">string</span> <span class="p">};</span>
+  <span class="k">bin</span>: <span class="p">{</span> <span class="k">tsc</span>: <span class="s">string</span>; <span class="k">tsserver</span>: <span class="s">string</span> <span class="p">};</span>
+  <span class="k">engines</span>: <span class="p">{</span> <span class="k">node</span>: <span class="s">string</span> <span class="p">};</span>
+  <span class="k">devDependencies</span>: <span class="p">Record&lt;</span><span class="s">string</span><span class="p">,</span> <span class="s">string</span><span class="p">&gt;;</span>
+  <span class="k">scripts</span>: <span class="p">Record&lt;</span><span class="s">string</span><span class="p">,</span> <span class="s">string</span><span class="p">&gt;;</span>
+<span class="p">}</span></pre>
+                    <pre class="code-scroll" id="out-schema" style="display:none"><span class="p">{</span>
+  <span class="k">"$schema"</span><span class="p">:</span> <span class="s">"https://json-schema.org/draft/2020-12/schema"</span><span class="p">,</span>
+  <span class="k">"type"</span><span class="p">:</span> <span class="s">"object"</span><span class="p">,</span>
+  <span class="k">"required"</span><span class="p">:</span> <span class="p">[</span><span class="s">"name"</span><span class="p">,</span> <span class="s">"author"</span><span class="p">,</span> <span class="s">"version"</span><span class="p">,</span> <span class="s">"license"</span><span class="p">],</span>
+  <span class="k">"properties"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="k">"name"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"type"</span><span class="p">:</span> <span class="s">"string"</span> <span class="p">},</span>
+    <span class="k">"version"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"type"</span><span class="p">:</span> <span class="s">"string"</span> <span class="p">},</span>
+    <span class="k">"keywords"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"type"</span><span class="p">:</span> <span class="s">"array"</span><span class="p">,</span> <span class="k">"items"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"type"</span><span class="p">:</span> <span class="s">"string"</span> <span class="p">}</span> <span class="p">},</span>
+    <span class="k">"bin"</span><span class="p">:</span> <span class="p">{</span> <span class="k">"type"</span><span class="p">:</span> <span class="s">"object"</span> <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="config-bar">
+                <div class="switch-line">
+                  <span class="sw">键排序 <i></i></span>
+                  <span class="sw">忽略空值 <i></i></span>
+                  <span class="sw">敏感遮蔽 <i></i></span>
+                </div>
+                <div class="actions">
+                  <button class="btn"><i data-lucide="copy"></i>复制</button>
+                  <button class="btn"><i data-lucide="download"></i>导出</button>
+                  <button class="btn primary"><i data-lucide="bookmark-plus"></i>保存模板</button>
+                </div>
+              </div>
+              <div class="stats-line">转换耗时 12 ms · 41 个字段 · YAML 2.4 KB · 输出可安全复制</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen screen-2-wrap">
+          <div class="screen-tag"><i data-lucide="git-compare" style="height:14px;width:14px"></i> 对比器 · 真实数据</div>
+          <div class="winbar">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="win-title">JSON 工作台 <small>对比器</small></div>
+            <div class="win-actions"><span>语义树对比</span></div>
+          </div>
+          <div class="app">
+            <div class="app-side">
+              <div class="nav-item"><i data-lucide="arrows-right-left"></i>转换</div>
+              <div class="nav-item active"><i data-lucide="git-compare"></i>对比</div>
+              <div class="nav-item"><i data-lucide="history"></i>历史</div>
+              <div class="nav-item"><i data-lucide="bookmark"></i>收藏</div>
+            </div>
+            <div class="app-main">
+              <div class="toolbar">
+                <div class="seg">
+                  <button>载入 A</button>
+                  <button>载入 B</button>
+                  <button class="active">真实示例</button>
+                </div>
+                <div class="status-line">
+                  <span class="pill ok">✓ 两份均已解析</span>
+                  <span class="pill local">SHA-256 已核对</span>
+                </div>
+              </div>
+
+              <div class="compare-meta">
+                <div class="ab">
+                  <span class="ab-letter">A</span>
+                  <div class="ab-box">
+                    <b>typescript-package-5.4.5.json</b>
+                    <span>microsoft/TypeScript v5.4.5 · 2026-08-02 抓取</span>
+                  </div>
+                </div>
+                <div class="ab">
+                  <span class="ab-letter b">B</span>
+                  <div class="ab-box">
+                    <b>typescript-package-5.6.3.json</b>
+                    <span>microsoft/TypeScript v5.6.3 · 2026-08-02 抓取</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="compare-bar">
+                <div class="seg">
+                  <button class="active">语义树</button>
+                  <button>文本</button>
+                  <button>单路径</button>
+                </div>
+                <div class="stat-chips">
+                  <div class="stat-chip mod"><b>25</b><span>修改</span></div>
+                  <div class="stat-chip add"><b>12</b><span>新增</span></div>
+                  <div class="stat-chip del"><b>8</b><span>删除</span></div>
+                  <div class="stat-chip total"><b>0</b><span>伪差异</span></div>
+                </div>
+              </div>
+
+              <div class="compare-grid">
+                <div class="diff-tree">
+                  <div class="tree-title">差异树 · 仅显示真实变更</div>
+                  <div class="tree-line"><span class="label">$ root</span> <span class="dim">（25 处修改）</span></div>
+                  <div class="tree-line"><span class="path">├─ version</span> <span class="mod">"5.4.5" → "5.6.3"</span></div>
+                  <div class="tree-line"><span class="path">├─ bugs.url</span> <span class="mod">…/Microsoft/TypeScript/issues → …/microsoft/TypeScript/issues</span></div>
+                  <div class="tree-line"><span class="path">├─ repository.url</span> <span class="mod">…/Microsoft/TypeScript.git → …/microsoft/TypeScript.git</span></div>
+                  <div class="tree-line"><span class="label">└─ devDependencies</span> <span class="dim">（11 新增 · 7 删除 · 22 修改）</span></div>
+                  <div class="tree-line"><span class="path">   ├─ @dprint/formatter</span> <span class="add">+ "^0.4.1"</span></div>
+                  <div class="tree-line"><span class="path">   ├─ @dprint/typescript</span> <span class="add">+ "0.91.6"</span></div>
+                  <div class="tree-line"><span class="path">   ├─ @eslint/js</span> <span class="add">+ "^9.9.0"</span></div>
+                  <div class="tree-line"><span class="path">   ├─ @octokit/rest</span> <span class="mod">"^20.0.2" → "^21.0.1"</span></div>
+                  <div class="tree-line"><span class="path">   ├─ @types/chai</span> <span class="mod">"^4.3.11" → "^4.3.17"</span></div>
+                  <div class="tree-line"><span class="path">   ├─ @types/glob</span> <span class="del">- "^8.1.0"</span></div>
+                  <div class="tree-line"><span class="path">   ├─ @types/mocha</span> <span class="mod">"^10.0.6" → "^10.0.7"</span></div>
+                  <div class="tree-line"><span class="path">   └─ @typescript-eslint/eslint-plugin</span> <span class="del">- "^6.19.0"</span></div>
+                  <div class="tree-line"><span class="label">└─ scripts.knip</span> <span class="add">+ "hereby knip"</span></div>
+                  <div class="tree-line"><span class="label">└─ browser.@microsoft/typescript-etw</span> <span class="del">- false</span></div>
+                  <div class="tree-line"><span class="dim">… 其余 28 条变更见右侧清单</span></div>
+                </div>
+
+                <div class="changes">
+                  <div class="pane-head">
+                    <b>变更清单</b>
+                    <span>路径 · A 值 → B 值</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type mod">修改</span>
+                    <span class="path">version</span>
+                    <span class="vals">"5.4.5" → "5.6.3"</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type mod">修改</span>
+                    <span class="path">bugs.url</span>
+                    <span class="vals">…/Microsoft/… → …/microsoft/…</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type add">新增</span>
+                    <span class="path">devDependencies.@dprint/formatter</span>
+                    <span class="vals">— → "^0.4.1"</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type add">新增</span>
+                    <span class="path">devDependencies.@eslint/js</span>
+                    <span class="vals">— → "^9.9.0"</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type del">删除</span>
+                    <span class="path">devDependencies.@types/glob</span>
+                    <span class="vals">"^8.1.0" → —</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type del">删除</span>
+                    <span class="path">devDependencies.@typescript-eslint/parser</span>
+                    <span class="vals">"^6.19.0" → —</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type mod">修改</span>
+                    <span class="path">devDependencies.@octokit/rest</span>
+                    <span class="vals">"^20.0.2" → "^21.0.1"</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type mod">修改</span>
+                    <span class="path">devDependencies.chai</span>
+                    <span class="vals">"^4.4.1" → "^4.5.0"</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type add">新增</span>
+                    <span class="path">scripts.knip</span>
+                    <span class="vals">— → "hereby knip"</span>
+                  </div>
+                  <div class="change-row">
+                    <span class="type del">删除</span>
+                    <span class="path">browser.@microsoft/typescript-etw</span>
+                    <span class="vals">false → —</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="action-bar">
+                <button class="btn"><i data-lucide="file-down"></i>导出摘要</button>
+                <button class="btn"><i data-lucide="git-merge"></i>合并 JSON</button>
+                <button class="btn primary"><i data-lucide="save"></i>保存会话</button>
+              </div>
+              <div class="stats-line">对比耗时 28 ms · 忽略键顺序/空值已开启 · 变更清单 45 条可导出 CSV</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="mobile-band">
+        <div class="mobile-head">
+          <h2>移动端适配</h2>
+          <p>FunBox 工具列表入口 + 单栏转换页，接收分享面板 JSON</p>
+        </div>
+        <div class="phones">
+          <div>
+            <div class="phone-label">FunBox · 工具列表</div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status"><span>10:42</span><span class="iso">2026-08-02</span></div>
+                <div class="phone-title">
+                  <div class="mark"><i data-lucide="boxes"></i></div>
+                  <div><b>FunBox</b><span>我的工具箱 · 4 个最近使用</span></div>
+                </div>
+                <div class="tool-card active">
+                  <div class="tool-icon"><i data-lucide="braces"></i></div>
+                  <div><b>JSON 工作台</b><span>转换 · 对比 · 全部本地处理</span></div>
+                  <span class="go"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="tool-card">
+                  <div class="tool-icon"><i data-lucide="sparkles"></i></div>
+                  <div><b>智能翻译</b><span>最近使用 · 今天 09:18</span></div>
+                  <span class="go"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="tool-card">
+                  <div class="tool-icon"><i data-lucide="qr-code"></i></div>
+                  <div><b>二维码生成</b><span>最近使用 · 昨天</span></div>
+                  <span class="go"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="tool-card">
+                  <div class="tool-icon"><i data-lucide="image-down"></i></div>
+                  <div><b>图片压缩</b><span>最近使用 · 本周</span></div>
+                  <span class="go"><i data-lucide="chevron-right"></i></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="phone-label">JSON 工作台 · 移动转换页</div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status"><span>10:43</span><span class="iso">本地处理</span></div>
+                <div class="phone-title">
+                  <div class="mark"><i data-lucide="braces"></i></div>
+                  <div><b>JSON 工作台</b><span>真实数据 · typescript package.json</span></div>
+                </div>
+                <div class="seg" style="display:flex">
+                  <button class="active">输入</button>
+                  <button>输出 YAML</button>
+                  <button>对比</button>
+                </div>
+                <div class="mobile-editor code-scroll"><span class="k">"name"</span>: <span class="s">"typescript"</span>,
+<span class="k">"version"</span>: <span class="s">"6.0.0"</span>,
+<span class="k">"license"</span>: <span class="s">"Apache-2.0"</span>,
+<span class="k">"main"</span>: <span class="s">"./lib/typescript.js"</span>,
+<span class="k">"engines"</span>: { <span class="k">"node"</span>: <span class="s">"&gt;=14.17"</span> }</div>
+                <div class="mobile-tabs">
+                  <div class="tab active">格式化</div>
+                  <div class="tab">转 YAML</div>
+                  <div class="tab">转 CSV</div>
+                  <div class="tab">生成类型</div>
+                </div>
+                <div class="mobile-output code-scroll"><span class="k">name</span>: typescript
+<span class="k">version</span>: 6.0.0
+<span class="k">license</span>: Apache-2.0
+<span class="k">main</span>: ./lib/typescript.js
+<span class="k">engines</span>:
+  <span class="k">node</span>: <span class="s">"&gt;=14.17"</span></div>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                  <button class="btn" style="flex:1">复制</button>
+                  <button class="btn primary" style="flex:1">分享</button>
+                </div>
+                <div class="source-line">真实数据 · microsoft/TypeScript main · 2026-08-02</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="provenance">
+        <b>真实数据来源（2026-08-02 抓取，完整快照见 docs/json-tool-samples/）</b>
+        <ul>
+          <li>microsoft/TypeScript package.json · <a href="https://raw.githubusercontent.com/microsoft/TypeScript/main/package.json">raw.githubusercontent.com/microsoft/TypeScript/main/package.json</a></li>
+          <li>microsoft/TypeScript v5.4.5 · <a href="https://raw.githubusercontent.com/microsoft/TypeScript/v5.4.5/package.json">raw.githubusercontent.com/microsoft/TypeScript/v5.4.5/package.json</a></li>
+          <li>microsoft/TypeScript v5.6.3 · <a href="https://raw.githubusercontent.com/microsoft/TypeScript/v5.6.3/package.json">raw.githubusercontent.com/microsoft/TypeScript/v5.6.3/package.json</a></li>
+          <li>Open-Meteo 上海实时天气 · <a href="https://api.open-meteo.com/v1/forecast?latitude=31.2304&amp;longitude=121.4737">api.open-meteo.com/v1/forecast</a></li>
+          <li>npm registry express latest · <a href="https://registry.npmjs.org/express/latest">registry.npmjs.org/express/latest</a></li>
+          <li>expressjs/express package.json · <a href="https://raw.githubusercontent.com/expressjs/express/master/package.json">raw.githubusercontent.com/expressjs/express/master/package.json</a></li>
+        </ul>
+      </footer>
+    </div>
+
+    <script>
+      if (window.lucide) {
+        lucide.createIcons({ attrs: { width: 16, height: 16 } });
+      }
+      document.querySelectorAll(".seg button[data-tab]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var seg = btn.parentElement;
+          seg.querySelectorAll("button").forEach(function (b) {
+            b.classList.toggle("active", b === btn);
+          });
+          var id = btn.getAttribute("data-tab");
+          seg.parentElement.querySelectorAll("pre[id^=out-]").forEach(function (pre) {
+            pre.style.display = pre.id === "out-" + id ? "" : "none";
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
