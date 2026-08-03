@@ -227,5 +227,5 @@ func (s *Server) writeStockAlertError(w http.ResponseWriter, err error) {
 	case errors.Is(err, stockalert.ErrSendKeyNotConfigured):
 		status, code = http.StatusBadRequest, "stock_alert_sendkey_not_configured"
 	}
-	writeJSON(w, status, map[string]any{"error": code})
+	writeJSON(w, status, map[string]any{"error": code, "detail": err.Error()})
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,6 +39,8 @@ type Provider struct {
 	cfg    Config
 	client *http.Client
 }
+
+const requestRetries = 1
 
 func NewProvider(cfg Config) *Provider {
 	if cfg.RequestTimeout <= 0 {
@@ -96,7 +99,7 @@ func (p *Provider) SearchSymbols(ctx context.Context, query string) ([]Symbol, e
 
 	var response suggestResponse
 	if err := p.getJSON(ctx, endpoint, &response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search upstream: %w", err)
 	}
 	symbols := make([]Symbol, 0, len(response.QuotationCodeTable.Data))
 	for _, item := range response.QuotationCodeTable.Data {
@@ -195,7 +198,7 @@ func (p *Provider) FetchQuote(ctx context.Context, secID string, delayed bool) (
 
 	var response quoteResponse
 	if err := p.getJSON(ctx, endpoint, &response); err != nil {
-		return Quote{}, err
+		return Quote{}, fmt.Errorf("quote %s: %w", secID, err)
 	}
 	if response.Rc != 0 || response.Data == nil || response.Data.F43 <= 0 {
 		return Quote{}, fmt.Errorf("%w: quote secid=%s rc=%d", ErrSourceInvalid, secID, response.Rc)
@@ -238,7 +241,7 @@ func (p *Provider) FetchKlines(ctx context.Context, secID string) ([]Kline, erro
 
 	var response klineResponse
 	if err := p.getJSON(ctx, endpoint, &response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("kline %s: %w", secID, err)
 	}
 	if response.Rc != 0 || response.Data == nil || len(response.Data.Klines) == 0 {
 		return nil, fmt.Errorf("%w: kline secid=%s rc=%d", ErrSourceInvalid, secID, response.Rc)
@@ -288,7 +291,7 @@ func (p *Provider) FetchIntraday(ctx context.Context, secID string) (IntradaySna
 
 	var response intradayResponse
 	if err := p.getJSON(ctx, endpoint, &response); err != nil {
-		return IntradaySnapshot{}, err
+		return IntradaySnapshot{}, fmt.Errorf("intraday %s: %w", secID, err)
 	}
 	if response.Rc != 0 || response.Data == nil || len(response.Data.Trends) == 0 {
 		return IntradaySnapshot{}, fmt.Errorf("%w: intraday secid=%s rc=%d", ErrSourceInvalid, secID, response.Rc)
@@ -331,6 +334,28 @@ func (p *Provider) FetchIntraday(ctx context.Context, secID string) (IntradaySna
 }
 
 func (p *Provider) getJSON(ctx context.Context, endpoint string, target any) error {
+	var lastErr error
+	for attempt := 0; attempt <= requestRetries; attempt++ {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(300 * time.Millisecond):
+			}
+		}
+		err := p.requestJSON(ctx, endpoint, target)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+		if !errors.Is(err, ErrSourceUnavailable) {
+			return err
+		}
+	}
+	return lastErr
+}
+
+func (p *Provider) requestJSON(ctx context.Context, endpoint string, target any) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return err

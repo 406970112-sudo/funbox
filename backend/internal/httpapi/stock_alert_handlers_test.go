@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -97,6 +98,17 @@ func TestStockAlertAddWatchHandlerMapsAnalysisError(t *testing.T) {
 	response := httptest.NewRecorder()
 	api.handleStockAlertAddWatch(response, stockAlertTestRequest(http.MethodPost, "/api/v1/stock-alert/watch", `{"query":"600519"}`))
 	if response.Code != http.StatusServiceUnavailable || !strings.Contains(response.Body.String(), "stock_alert_analysis_unavailable") {
+		t.Fatalf("status/body = %d %s", response.Code, response.Body.String())
+	}
+}
+
+func TestStockAlertErrorIncludesUpstreamStage(t *testing.T) {
+	api := &Server{stockAlertService: &fakeStockAlertService{
+		err: fmt.Errorf("search upstream: %w", stockalert.ErrSourceUnavailable),
+	}}
+	response := httptest.NewRecorder()
+	api.handleStockAlertSearch(response, stockAlertTestRequest(http.MethodGet, "/api/v1/stock-alert/search?q=600519", ""))
+	if response.Code != http.StatusBadGateway || !strings.Contains(response.Body.String(), "search upstream") {
 		t.Fatalf("status/body = %d %s", response.Code, response.Body.String())
 	}
 }
