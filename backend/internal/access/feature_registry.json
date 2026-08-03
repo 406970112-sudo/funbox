@@ -105,6 +105,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "stock-trade-alert",
+    "name": "股票交易提醒",
+    "tagline": "分时买卖点实时监听",
+    "description": "输入股票代码或名称，基于近 3 个月真实日线与当日真实分时由 DeepSeek-V4-Flash 生成今日信号规则，触发后通过 Server酱 微信提醒。",
+    "icon": "chart-timeline-variant-shimmer",
+    "category": "行情",
+    "route": "/tools/stock-trade-alert",
+    "accentColor": "#4b6bff",
+    "badges": ["分时实时", "Server酱"],
+    "usageLabel": "开启分时提醒",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "double-color-ball-hub",
     "name": "双色球",
     "tagline": "概率参考与计划实验室统一入口",

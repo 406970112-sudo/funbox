@@ -36,6 +36,7 @@ import (
 	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
+	"my-first-expo-app/backend/internal/stockalert"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
 )
@@ -66,6 +67,7 @@ type Server struct {
 	resourceSearchService     resourceSearchService
 	scoreService              *score.Service
 	socialStore               *social.Store
+	stockAlertService         stockAlertService
 	translationService        *translation.Service
 	ttsService                *tts.Service
 }
@@ -536,6 +538,32 @@ func newServer(
 			MaxCompressionRatio: 1000,
 		})
 	}
+	var stockAlertService *stockalert.Service
+	stockAlertStore, err := stockalert.OpenStore(cfg.Database.Path, cfg.StockAlert.Secret)
+	if err != nil {
+		log.Printf("open stock alert database failed: %v", err)
+	} else {
+		stockAlertService = stockalert.NewService(stockalert.Config{
+			CacheTTL:            cfg.StockAlert.CacheTTL,
+			MonitorInterval:     cfg.StockAlert.MonitorInterval,
+			IntradayRefresh:     cfg.StockAlert.IntradayRefresh,
+			QuoteBaseURL:        cfg.StockAlert.QuoteBaseURL,
+			DelayedQuoteBaseURL: cfg.StockAlert.DelayedQuoteBaseURL,
+			HistoryBaseURL:      cfg.StockAlert.HistoryBaseURL,
+			SearchBaseURL:       cfg.StockAlert.SearchBaseURL,
+			RequestTimeout:      cfg.StockAlert.RequestTimeout,
+			MaxWatchPerUser:     cfg.StockAlert.MaxWatchPerUser,
+			AnalysisDailyLimit:  cfg.StockAlert.AnalysisDailyLimit,
+			MinKlines:           cfg.StockAlert.MinKlines,
+			QuoteMaxAge:         cfg.StockAlert.QuoteMaxAge,
+			SendKey:             cfg.StockAlert.SendKey,
+			Secret:              cfg.StockAlert.Secret,
+			Enabled:             cfg.StockAlert.Enabled,
+			DeepSeekBaseURL:     cfg.DeepSeek.BaseURL,
+			DeepSeekAPIKey:      cfg.DeepSeek.APIKey,
+			DeepSeekModel:       cfg.DeepSeek.StockModel,
+		}, stockAlertStore)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
@@ -562,6 +590,7 @@ func newServer(
 		resourceSearchService:     resourcesearch.NewService(cfg.ResourceSearch, resourceSearchStore),
 		scoreService:              scoreService,
 		socialStore:               socialStore,
+		stockAlertService:         stockAlertService,
 		translationService:        translationService,
 		ttsService:                ttsService,
 	}
@@ -588,6 +617,7 @@ func newServer(
 	registerLotteryRoutes(mux, api)
 	registerLotteryLabRoutes(mux, api)
 	registerMarketRadarRoutes(mux, api)
+	registerStockAlertRoutes(mux, api)
 	registerNewsRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
 	registerReadingRoutes(mux, api)
@@ -644,12 +674,18 @@ func newServer(
 
 	handler := api.withGlobalMiddleware(mux)
 
-	return &http.Server{
+	monitorContext, monitorCancel := context.WithCancel(context.Background())
+	if stockAlertService != nil {
+		go stockAlertService.Run(monitorContext)
+	}
+	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
+	server.RegisterOnShutdown(monitorCancel)
+	return server
 }
 
 func (s *Server) withAPIPipeline(next http.HandlerFunc) http.HandlerFunc {

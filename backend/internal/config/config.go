@@ -21,6 +21,7 @@ type Config struct {
 	PlantID            PlantIDConfig
 	ResourceSearch     ResourceSearchConfig
 	MarketRadar        MarketRadarConfig
+	StockAlert         StockAlertConfig
 	Reading            ReadingConfig
 	TinyPNG            TinyPNGConfig
 	TTS                TTSConfig
@@ -63,6 +64,24 @@ type MarketRadarConfig struct {
 	HistoryBaseURL string
 	QuoteBaseURL   string
 	RequestTimeout time.Duration
+}
+
+type StockAlertConfig struct {
+	CacheTTL            time.Duration
+	MonitorInterval     time.Duration
+	IntradayRefresh     time.Duration
+	QuoteBaseURL        string
+	DelayedQuoteBaseURL string
+	HistoryBaseURL      string
+	SearchBaseURL       string
+	RequestTimeout      time.Duration
+	MaxWatchPerUser     int
+	AnalysisDailyLimit  int
+	MinKlines           int
+	QuoteMaxAge         time.Duration
+	SendKey             string
+	Secret              string
+	Enabled             bool
 }
 
 type LotteryConfig struct {
@@ -125,6 +144,7 @@ type DeepSeekConfig struct {
 	BaseURL        string
 	MaxTextLength  int
 	Model          string
+	StockModel     string
 	RequestTimeout time.Duration
 }
 
@@ -223,6 +243,7 @@ func Load() (Config, error) {
 			BaseURL:        envFirst("DEEPSEEK_API_URL", "https://api.deepseek.com"),
 			MaxTextLength:  intFirst("TRANSLATION_MAX_TEXT_LENGTH", "", "8000"),
 			Model:          envFirst("DEEPSEEK_TRANSLATION_MODEL", "deepseek-chat"),
+			StockModel:     envFirst("DEEPSEEK_STOCK_MODEL", "deepseek-v4-flash"),
 			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
 		},
 		FoodRecommendation: FoodRecommendationConfig{
@@ -270,6 +291,23 @@ func Load() (Config, error) {
 			HistoryBaseURL: envFirst("MARKET_RADAR_HISTORY_BASE_URL", "https://push2his.eastmoney.com"),
 			QuoteBaseURL:   envFirst("MARKET_RADAR_QUOTE_BASE_URL", "https://push2delay.eastmoney.com"),
 			RequestTimeout: durationFromMs("MARKET_RADAR_REQUEST_TIMEOUT_MS", "", "12000"),
+		},
+		StockAlert: StockAlertConfig{
+			CacheTTL:            durationFromMs("STOCK_ALERT_CACHE_TTL_MS", "", "60000"),
+			MonitorInterval:     durationFromMs("STOCK_ALERT_MONITOR_INTERVAL_MS", "", "10000"),
+			IntradayRefresh:     durationFromMs("STOCK_ALERT_INTRADAY_REFRESH_MS", "", "30000"),
+			QuoteBaseURL:        envFirst("STOCK_ALERT_QUOTE_BASE_URL", "https://push2.eastmoney.com"),
+			DelayedQuoteBaseURL: envFirst("STOCK_ALERT_DELAYED_QUOTE_BASE_URL", "https://push2delay.eastmoney.com"),
+			HistoryBaseURL:      envFirst("STOCK_ALERT_HISTORY_BASE_URL", "https://push2his.eastmoney.com"),
+			SearchBaseURL:       envFirst("STOCK_ALERT_SEARCH_BASE_URL", "https://searchapi.eastmoney.com"),
+			RequestTimeout:      durationFromMs("STOCK_ALERT_REQUEST_TIMEOUT_MS", "", "12000"),
+			MaxWatchPerUser:     intFirst("STOCK_ALERT_MAX_WATCH_PER_USER", "", "10"),
+			AnalysisDailyLimit:  intFirst("STOCK_ALERT_ANALYSIS_DAILY_LIMIT", "", "10"),
+			MinKlines:           intFirst("STOCK_ALERT_MIN_KLINES", "", "60"),
+			QuoteMaxAge:         durationFromMs("STOCK_ALERT_QUOTE_MAX_AGE_MS", "", "15000"),
+			SendKey:             envFirst("STOCK_ALERT_SENDKEY", ""),
+			Secret:              envFirst("STOCK_ALERT_SECRET", "funbox-stock-alert-secret"),
+			Enabled:             boolFirst("STOCK_ALERT_ENABLED", "false"),
 		},
 		TinyPNG: TinyPNGConfig{
 			APIKey:         envFirst("TINYPNG_API_KEY", ""),
