@@ -53,6 +53,15 @@ bash deploy/alicloud/ubuntu-22.04/deploy-project.sh
 - `VOLC_RESOURCE_ID`
 - `VOLC_ENDPOINT`
 - `CORS_ALLOWED_ORIGINS`
+- `DEEPSEEK_STOCK_MODEL`
+- `STOCK_ALERT_ENABLED`
+- `STOCK_ALERT_SENDKEY`
+- `STOCK_ALERT_SECRET`
+- `STOCK_ALERT_MONITOR_INTERVAL_MS`
+- `STOCK_ALERT_QUOTE_MAX_AGE_MS`
+- `STOCK_ALERT_MAX_WATCH_PER_USER`
+- `STOCK_ALERT_ANALYSIS_DAILY_LIMIT`
+- `STOCK_ALERT_MIN_KLINES`
 - `SERVER_PORT`
 - `RATE_LIMIT_WINDOW_MS`
 - `RATE_LIMIT_MAX_REQUESTS`
@@ -155,6 +164,7 @@ sudo BRANCH=your-branch bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04
 - `DEPLOY_USER`：用于部署的 SSH 用户。
 - `DEPLOY_SSH_KEY`：部署用户对应的 SSH 私钥全文。
 - `DEPLOY_KNOWN_HOSTS`：服务器 SSH 主机公钥记录，可在可信终端执行 `ssh-keyscan -H 服务器公网IP` 获取。
+- `STOCK_ALERT_SENDKEY`：Server酱 SendKey，用于股票交易提醒的微信推送；在 `Settings > Secrets and variables > Actions` 中配置后，每次部署会自动写入服务器 `backend/.env`。
 
 部署用户必须能够免密执行更新脚本需要的 `sudo` 命令。工作流会先快进更新服务器仓库，确保首次自动部署时也能获取最新的 `update-server.sh`。
 

@@ -20,6 +20,7 @@ FETCH_RETRIES="${FETCH_RETRIES:-5}"
 FETCH_RETRY_DELAY_SECONDS="${FETCH_RETRY_DELAY_SECONDS:-15}"
 BACKUP_ROOT="${BACKUP_ROOT:-/srv/deploy-backups}"
 CORS_ALLOWED_ORIGINS_OVERRIDE="${CORS_ALLOWED_ORIGINS_OVERRIDE:-}"
+STOCK_ALERT_SENDKEY_OVERRIDE="${STOCK_ALERT_SENDKEY_OVERRIDE:-}"
 DEFAULT_PERSISTENT_ROOT="/srv/my-first-expo-app-shared"
 PERSISTENT_ROOT="${PERSISTENT_ROOT:-}"
 PREVIOUS_APP_ROOT="${PREVIOUS_APP_ROOT:-/srv/my-first-expo-app-current}"
@@ -160,6 +161,31 @@ sync_deepseek_config() {
   api_url="$(read_env_value "$email_env" "DEEPSEEK_API_URL")"
   if [[ -n "$api_url" ]]; then
     set_env_value "$backend_env" "DEEPSEEK_API_URL" "$api_url"
+  fi
+}
+
+sync_stock_alert_config() {
+  local backend_env="$BACKEND_ROOT/.env"
+  local current
+
+  current="$(read_env_value "$backend_env" "STOCK_ALERT_ENABLED")"
+  if [[ -z "$current" ]]; then
+    set_env_value "$backend_env" "STOCK_ALERT_ENABLED" "true"
+  fi
+
+  current="$(read_env_value "$backend_env" "STOCK_ALERT_SECRET")"
+  if [[ -z "$current" ]]; then
+    set_env_value "$backend_env" "STOCK_ALERT_SECRET" "funbox-stock-alert-secret"
+  fi
+
+  current="$(read_env_value "$backend_env" "DEEPSEEK_STOCK_MODEL")"
+  if [[ -z "$current" ]]; then
+    set_env_value "$backend_env" "DEEPSEEK_STOCK_MODEL" "deepseek-v4-flash"
+  fi
+
+  current="$(read_env_value "$backend_env" "STOCK_ALERT_SENDKEY")"
+  if [[ -z "$current" && -n "$STOCK_ALERT_SENDKEY_OVERRIDE" ]]; then
+    set_env_value "$backend_env" "STOCK_ALERT_SENDKEY" "$STOCK_ALERT_SENDKEY_OVERRIDE"
   fi
 }
 
@@ -664,6 +690,9 @@ log "Prepared shared persistent storage at $PERSISTENT_ROOT"
 
 sync_deepseek_config
 log "Synchronized DeepSeek configuration from the email agent"
+
+sync_stock_alert_config
+log "Synchronized stock alert configuration"
 
 if [[ -n "$CORS_ALLOWED_ORIGINS_OVERRIDE" ]]; then
   set_env_value "$BACKEND_ROOT/.env" "CORS_ALLOWED_ORIGINS" "$CORS_ALLOWED_ORIGINS_OVERRIDE"
