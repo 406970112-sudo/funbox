@@ -49,6 +49,25 @@ func TestAddWatchRejectsInsufficientKlines(t *testing.T) {
 	}
 }
 
+func TestAddWatchFallsBackToTencentWhenEastmoneyUnavailable(t *testing.T) {
+	upstream := newStockAlertUpstream(t, 90, 30)
+	upstream.FailAllEastmoney()
+	store := openTestStore(t)
+	service := NewService(testStockAlertConfig(upstream.URL()), store)
+	service.now = func() time.Time { return fixedNow }
+
+	item, err := service.AddWatch(context.Background(), "user-1", "600519")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if item.SymbolCode != "600519" || item.Analysis == nil {
+		t.Fatalf("item = %#v", item)
+	}
+	if item.LatestPrice <= 0 {
+		t.Fatalf("quote fallback missing: %#v", item)
+	}
+}
+
 func TestAddWatchReturnsTypedErrorsWithoutCache(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "offline", http.StatusBadGateway)
@@ -155,6 +174,8 @@ func testStockAlertConfig(upstreamURL string) Config {
 		DelayedQuoteBaseURL: upstreamURL,
 		HistoryBaseURL:      upstreamURL,
 		SearchBaseURL:       upstreamURL,
+		TencentBaseURL:      upstreamURL,
+		TencentQuoteBaseURL: upstreamURL,
 		RequestTimeout:      5 * time.Second,
 		MaxWatchPerUser:     10,
 		AnalysisDailyLimit:  10,
@@ -170,11 +191,14 @@ func testStockAlertConfig(upstreamURL string) Config {
 var fixedNow = time.Date(2026, 8, 5, 10, 0, 0, 0, time.FixedZone("CST", 8*3600))
 
 type stockAlertUpstream struct {
-	server        *httptest.Server
-	klineCount    int
-	intradayCount int
-	calls         int
-	mu            sync.Mutex
+	server                *httptest.Server
+	klineCount            int
+	intradayCount         int
+	calls                 int
+	mu                    sync.Mutex
+	failEastmoneyKline    bool
+	failEastmoneyIntraday bool
+	failEastmoneyQuote    bool
 }
 
 func newStockAlertUpstream(t *testing.T, klineCount int, intradayCount int) *stockAlertUpstream {
@@ -195,6 +219,12 @@ func (u *stockAlertUpstream) Calls() int {
 	return u.calls
 }
 
+func (u *stockAlertUpstream) FailAllEastmoney() {
+	u.failEastmoneyKline = true
+	u.failEastmoneyIntraday = true
+	u.failEastmoneyQuote = true
+}
+
 func (u *stockAlertUpstream) handle(w http.ResponseWriter, r *http.Request) {
 	u.mu.Lock()
 	u.calls++
@@ -212,6 +242,10 @@ func (u *stockAlertUpstream) handle(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 	case strings.Contains(r.URL.Path, "/api/qt/stock/get"):
+		if u.failEastmoneyQuote {
+			http.Error(w, "offline", http.StatusBadGateway)
+			return
+		}
 		writeUpstreamJSON(w, map[string]any{
 			"rc": 0,
 			"data": map[string]any{
@@ -224,6 +258,10 @@ func (u *stockAlertUpstream) handle(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 	case strings.Contains(r.URL.Path, "/api/qt/stock/kline/get"):
+		if u.failEastmoneyKline {
+			http.Error(w, "offline", http.StatusBadGateway)
+			return
+		}
 		klines := make([]string, 0, u.klineCount)
 		for i := 0; i < u.klineCount; i++ {
 			date := fmt.Sprintf("2026-%02d-%02d", (i/28)+4, (i%28)+1)
@@ -239,6 +277,10 @@ func (u *stockAlertUpstream) handle(w http.ResponseWriter, r *http.Request) {
 		}
 		writeUpstreamJSON(w, map[string]any{"rc": 0, "data": map[string]any{"klines": klines, "name": "贵州茅台"}})
 	case strings.Contains(r.URL.Path, "/api/qt/stock/trends2/get"):
+		if u.failEastmoneyIntraday {
+			http.Error(w, "offline", http.StatusBadGateway)
+			return
+		}
 		trends := make([]string, 0, u.intradayCount)
 		for i := 0; i < u.intradayCount; i++ {
 			minute := fmt.Sprintf("%02d:%02d", 9+(i/60), 30+(i%60))
@@ -255,6 +297,49 @@ func (u *stockAlertUpstream) handle(w http.ResponseWriter, r *http.Request) {
 			))
 		}
 		writeUpstreamJSON(w, map[string]any{"rc": 0, "data": map[string]any{"trends": trends, "prePrice": "100.00"}})
+	case strings.Contains(r.URL.Path, "/appstock/app/fqkline/get"):
+		rows := make([][]string, 0, u.klineCount)
+		for i := 0; i < u.klineCount; i++ {
+			closePrice := fmt.Sprintf("%.2f", 95.0+float64(i)*0.1)
+			rows = append(rows, []string{
+				fmt.Sprintf("2026-%02d-%02d", (i/28)+4, (i%28)+1),
+				closePrice,
+				closePrice,
+				fmt.Sprintf("%.2f", 96.0+float64(i)*0.1),
+				fmt.Sprintf("%.2f", 94.0+float64(i)*0.1),
+				"1000",
+			})
+		}
+		writeUpstreamJSON(w, map[string]any{
+			"code": 0,
+			"data": map[string]any{
+				"sh600519": map[string]any{"qfqday": rows},
+			},
+		})
+	case strings.Contains(r.URL.Path, "/appstock/app/minute/query"):
+		entries := []string{"0930 100.00 100 10000", "0931 100.05 200 20000", "0932 100.10 300 30000"}
+		writeUpstreamJSON(w, map[string]any{
+			"code": 0,
+			"data": map[string]any{
+				"sh600519": map[string]any{
+					"data": map[string]any{"date": "20260805", "data": entries},
+				},
+			},
+		})
+	case strings.HasPrefix(r.URL.Path, "/q="):
+		fields := make([]string, 40)
+		fields[0] = "1"
+		fields[1] = "璐靛窞鑼呭彴"
+		fields[2] = "600519"
+		fields[3] = "100.00"
+		fields[4] = "99.00"
+		fields[5] = "99.50"
+		fields[31] = "1.00"
+		fields[32] = "1.01"
+		fields[33] = "100.50"
+		fields[34] = "99.00"
+		w.Header().Set("Content-Type", "text/plain; charset=GBK")
+		_, _ = fmt.Fprintf(w, "v_sh600519=\"%s\";", strings.Join(fields, "~"))
 	case strings.Contains(r.URL.Path, "/chat/completions"):
 		rule := map[string]any{
 			"buySignal": map[string]any{

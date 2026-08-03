@@ -74,6 +74,8 @@ type StockAlertConfig struct {
 	DelayedQuoteBaseURL string
 	HistoryBaseURL      string
 	SearchBaseURL       string
+	TencentBaseURL      string
+	TencentQuoteBaseURL string
 	RequestTimeout      time.Duration
 	MaxWatchPerUser     int
 	AnalysisDailyLimit  int
@@ -300,6 +302,8 @@ func Load() (Config, error) {
 			DelayedQuoteBaseURL: envFirst("STOCK_ALERT_DELAYED_QUOTE_BASE_URL", "https://push2delay.eastmoney.com"),
 			HistoryBaseURL:      envFirst("STOCK_ALERT_HISTORY_BASE_URL", "https://push2his.eastmoney.com"),
 			SearchBaseURL:       envFirst("STOCK_ALERT_SEARCH_BASE_URL", "https://searchapi.eastmoney.com"),
+			TencentBaseURL:      envFirst("STOCK_ALERT_TENCENT_BASE_URL", "https://web.ifzq.gtimg.cn"),
+			TencentQuoteBaseURL: envFirst("STOCK_ALERT_TENCENT_QUOTE_BASE_URL", "https://qt.gtimg.cn"),
 			RequestTimeout:      durationFromMs("STOCK_ALERT_REQUEST_TIMEOUT_MS", "", "12000"),
 			MaxWatchPerUser:     intFirst("STOCK_ALERT_MAX_WATCH_PER_USER", "", "10"),
 			AnalysisDailyLimit:  intFirst("STOCK_ALERT_ANALYSIS_DAILY_LIMIT", "", "10"),

@@ -84,18 +84,18 @@ func (s *Service) AddWatch(ctx context.Context, userID string, query string) (Wa
 		return WatchItem{}, ErrAnalysisLimitReached
 	}
 
-	klines, err := s.getKlines(ctx, symbol.SecID)
+	klines, err := s.getKlines(ctx, symbol.SecID, symbol.Code, symbol.Market)
 	if err != nil {
 		return WatchItem{}, err
 	}
 	if len(klines) < s.cfg.MinKlines {
 		return WatchItem{}, fmt.Errorf("%w: %d klines, need %d", ErrInsufficientData, len(klines), s.cfg.MinKlines)
 	}
-	intraday, err := s.provider.FetchIntraday(ctx, symbol.SecID)
+	intraday, err := s.getIntraday(ctx, symbol.SecID, symbol.Code, symbol.Market)
 	if err != nil {
 		return WatchItem{}, err
 	}
-	quote, err := s.fetchQuoteWithFallback(ctx, symbol.SecID)
+	quote, err := s.fetchQuoteWithFallback(ctx, symbol.SecID, symbol.Code, symbol.Market)
 	if err != nil {
 		return WatchItem{}, err
 	}
@@ -202,18 +202,18 @@ func (s *Service) Reanalyze(ctx context.Context, userID string, symbolCode strin
 	if used >= s.cfg.AnalysisDailyLimit {
 		return WatchItem{}, ErrAnalysisLimitReached
 	}
-	klines, err := s.getKlines(ctx, item.SecID)
+	klines, err := s.getKlines(ctx, item.SecID, item.SymbolCode, item.Market)
 	if err != nil {
 		return WatchItem{}, err
 	}
 	if len(klines) < s.cfg.MinKlines {
 		return WatchItem{}, fmt.Errorf("%w: %d klines, need %d", ErrInsufficientData, len(klines), s.cfg.MinKlines)
 	}
-	intraday, err := s.provider.FetchIntraday(ctx, item.SecID)
+	intraday, err := s.getIntraday(ctx, item.SecID, item.SymbolCode, item.Market)
 	if err != nil {
 		return WatchItem{}, err
 	}
-	quote, err := s.fetchQuoteWithFallback(ctx, item.SecID)
+	quote, err := s.fetchQuoteWithFallback(ctx, item.SecID, item.SymbolCode, item.Market)
 	if err != nil {
 		return WatchItem{}, err
 	}
@@ -245,7 +245,7 @@ func (s *Service) Intraday(ctx context.Context, userID string, symbolCode string
 	if err != nil {
 		return IntradaySnapshot{}, err
 	}
-	return s.provider.FetchIntraday(ctx, item.SecID)
+	return s.getIntraday(ctx, item.SecID, item.SymbolCode, item.Market)
 }
 
 func (s *Service) Events(ctx context.Context, userID string, limit int) ([]AlertEvent, int, error) {
@@ -336,11 +336,11 @@ func (s *Service) tick(ctx context.Context) {
 		if err != nil {
 			continue
 		}
-		klines, err := s.getKlines(ctx, item.SecID)
+		klines, err := s.getKlines(ctx, item.SecID, item.SymbolCode, item.Market)
 		if err != nil {
 			continue
 		}
-		intraday, err := s.provider.FetchIntraday(ctx, item.SecID)
+		intraday, err := s.getIntraday(ctx, item.SecID, item.SymbolCode, item.Market)
 		if err != nil {
 			intraday = IntradaySnapshot{}
 		}
@@ -395,38 +395,39 @@ func (s *Service) tick(ctx context.Context) {
 }
 
 func (s *Service) refreshItem(ctx context.Context, item *WatchItem) {
-	quote, err := s.provider.FetchQuote(ctx, item.SecID, false)
+	quote, err := s.fetchQuoteWithFallback(ctx, item.SecID, item.SymbolCode, item.Market)
 	if err != nil {
-		quote, err = s.provider.FetchQuote(ctx, item.SecID, true)
-		if err != nil {
-			item.SignalStatus = SignalDataMissing
-			item.QuoteStale = true
-			return
-		}
+		item.SignalStatus = SignalDataMissing
 		item.QuoteStale = true
+		return
 	}
 	item.LatestPrice = quote.Price
 	item.ChangePct = quote.ChangePct
-	if intraday, err := s.provider.FetchIntraday(ctx, item.SecID); err == nil && len(intraday.Points) > 0 {
+	if intraday, err := s.getIntraday(ctx, item.SecID, item.SymbolCode, item.Market); err == nil && len(intraday.Points) > 0 {
 		item.AvgPrice = intraday.Latest.AvgPrice
 		item.IntradayTime = intraday.Latest.Time
 	}
 	item.SignalStatus = computeStatus(*item, quote)
 }
 
-func (s *Service) fetchQuoteWithFallback(ctx context.Context, secID string) (Quote, error) {
+func (s *Service) fetchQuoteWithFallback(ctx context.Context, secID string, code string, market string) (Quote, error) {
 	quote, err := s.provider.FetchQuote(ctx, secID, false)
 	if err == nil {
 		return quote, nil
 	}
 	quote, delayedErr := s.provider.FetchQuote(ctx, secID, true)
 	if delayedErr != nil {
-		return Quote{}, err
+		tencentQuote, tencentErr := s.provider.FetchQuoteTencent(ctx, code, market)
+		if tencentErr != nil {
+			return Quote{}, fmt.Errorf("%w: eastmoney quote=%v tencent quote=%v", ErrSourceUnavailable, err, tencentErr)
+		}
+		tencentQuote.Delayed = true
+		return tencentQuote, nil
 	}
 	return quote, nil
 }
 
-func (s *Service) getKlines(ctx context.Context, secID string) ([]Kline, error) {
+func (s *Service) getKlines(ctx context.Context, secID string, code string, market string) ([]Kline, error) {
 	s.klineMu.Lock()
 	entry, exists := s.klineCache[secID]
 	s.klineMu.Unlock()
@@ -434,6 +435,14 @@ func (s *Service) getKlines(ctx context.Context, secID string) ([]Kline, error) 
 		return entry.klines, nil
 	}
 	klines, err := s.provider.FetchKlines(ctx, secID)
+	if errors.Is(err, ErrSourceUnavailable) {
+		fallback, fallbackErr := s.provider.FetchKlinesTencent(ctx, code, market)
+		if fallbackErr != nil {
+			return nil, fmt.Errorf("%w: eastmoney kline=%v tencent kline=%v", ErrSourceUnavailable, err, fallbackErr)
+		}
+		klines = fallback
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -441,6 +450,21 @@ func (s *Service) getKlines(ctx context.Context, secID string) ([]Kline, error) 
 	s.klineCache[secID] = klineCacheEntry{klines: klines, fetchedAt: s.now()}
 	s.klineMu.Unlock()
 	return klines, nil
+}
+
+func (s *Service) getIntraday(ctx context.Context, secID string, code string, market string) (IntradaySnapshot, error) {
+	intraday, err := s.provider.FetchIntraday(ctx, secID)
+	if err == nil {
+		return intraday, nil
+	}
+	if !errors.Is(err, ErrSourceUnavailable) {
+		return IntradaySnapshot{}, err
+	}
+	fallback, fallbackErr := s.provider.FetchIntradayTencent(ctx, code, market)
+	if fallbackErr != nil {
+		return IntradaySnapshot{}, fmt.Errorf("%w: eastmoney intraday=%v tencent intraday=%v", ErrSourceUnavailable, err, fallbackErr)
+	}
+	return fallback, nil
 }
 
 func (s *Service) resolveSendKey(ctx context.Context, userID string) (string, error) {

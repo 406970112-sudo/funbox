@@ -551,6 +551,8 @@ func newServer(
 			DelayedQuoteBaseURL: cfg.StockAlert.DelayedQuoteBaseURL,
 			HistoryBaseURL:      cfg.StockAlert.HistoryBaseURL,
 			SearchBaseURL:       cfg.StockAlert.SearchBaseURL,
+			TencentBaseURL:      cfg.StockAlert.TencentBaseURL,
+			TencentQuoteBaseURL: cfg.StockAlert.TencentQuoteBaseURL,
 			RequestTimeout:      cfg.StockAlert.RequestTimeout,
 			MaxWatchPerUser:     cfg.StockAlert.MaxWatchPerUser,
 			AnalysisDailyLimit:  cfg.StockAlert.AnalysisDailyLimit,

@@ -22,6 +22,8 @@ type Config struct {
 	DelayedQuoteBaseURL string
 	HistoryBaseURL      string
 	SearchBaseURL       string
+	TencentBaseURL      string
+	TencentQuoteBaseURL string
 	RequestTimeout      time.Duration
 	MaxWatchPerUser     int
 	AnalysisDailyLimit  int
@@ -57,6 +59,12 @@ func NewProvider(cfg Config) *Provider {
 	}
 	if cfg.SearchBaseURL == "" {
 		cfg.SearchBaseURL = "https://searchapi.eastmoney.com"
+	}
+	if cfg.TencentBaseURL == "" {
+		cfg.TencentBaseURL = "https://web.ifzq.gtimg.cn"
+	}
+	if cfg.TencentQuoteBaseURL == "" {
+		cfg.TencentQuoteBaseURL = "https://qt.gtimg.cn"
 	}
 	return &Provider{
 		cfg: cfg,
