@@ -1,6 +1,22 @@
 package stockalert
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+func TestRuleSystemPromptRequiresStructuredReferenceZones(t *testing.T) {
+	prompt := buildRuleSystemPrompt()
+	for _, required := range []string{
+		"referenceZone (object containing low (number) and high (number))",
+		"Never encode referenceZone as text",
+		"Never omit a required field",
+	} {
+		if !strings.Contains(prompt, required) {
+			t.Fatalf("prompt missing %q", required)
+		}
+	}
+}
 
 func TestParseRuleAcceptsNumericStrings(t *testing.T) {
 	raw := `{

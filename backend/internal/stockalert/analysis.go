@@ -104,29 +104,32 @@ func (c *DeepSeekClient) Analyze(ctx context.Context, features Features) (Signal
 		return SignalRule{}, fmt.Errorf("%w: DEEPSEEK_API_KEY 未配置", ErrAnalysisUnavailable)
 	}
 	featureJSON, _ := json.Marshal(features)
-	systemPrompt := strings.Join([]string{
-		"You are a disciplined intraday trading assistant.",
-		"You only receive real OHLCV and intraday features. Never invent news, earnings, policy, or price data.",
-		"Generate one JSON object with exact schema: buySignal(triggerPrice, conditions, referenceZone), sellSignal(triggerPrice, conditions, referenceZone), stopLoss(triggerPrice, condition), validTradingDays, reasons, summary.",
-		"Every triggerPrice must be a concrete price based on the provided features. Conditions must stay within supported primitives: price vs trigger, price vs intraday average, volume ratio, 5-minute change.",
-		"All prices and validTradingDays must be JSON numbers, never quoted strings.",
-		"Rules: stopLoss.triggerPrice < buySignal.triggerPrice <= sellSignal.triggerPrice.",
-		"Return one valid JSON object only, no markdown fences.",
-	}, " ")
+	systemPrompt := buildRuleSystemPrompt()
 	userPrompt := "Analyze these real features and return today's intraday signal rules as JSON:\n" + string(featureJSON)
-
-	body, _ := json.Marshal(map[string]any{
-		"model": c.Model,
-		"messages": []map[string]any{
-			{"role": "system", "content": systemPrompt},
-			{"role": "user", "content": userPrompt},
-		},
-		"response_format": map[string]any{"type": "json_object"},
-	})
 	endpoint := strings.TrimRight(c.BaseURL, "/") + "/chat/completions"
 
 	var lastErr error
 	for attempt := 0; attempt < 2; attempt++ {
+		messages := []map[string]any{
+			{"role": "system", "content": systemPrompt},
+			{"role": "user", "content": userPrompt},
+		}
+		if lastErr != nil {
+			messages = append(messages, map[string]any{
+				"role":    "user",
+				"content": "The previous response failed validation: " + lastErr.Error() + ". Return the complete object again and follow every required field type exactly.",
+			})
+		}
+		body, err := json.Marshal(map[string]any{
+			"model":           c.Model,
+			"messages":        messages,
+			"response_format": map[string]any{"type": "json_object"},
+			"temperature":     0.1,
+			"max_tokens":      1200,
+		})
+		if err != nil {
+			return SignalRule{}, fmt.Errorf("%w: marshal request: %v", ErrAnalysisUnavailable, err)
+		}
 		request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 		if err != nil {
 			return SignalRule{}, err
@@ -172,6 +175,23 @@ func (c *DeepSeekClient) Analyze(ctx context.Context, features Features) (Signal
 		lastErr = err
 	}
 	return SignalRule{}, lastErr
+}
+
+func buildRuleSystemPrompt() string {
+	return strings.Join([]string{
+		"You are a disciplined intraday trading assistant.",
+		"You only receive real OHLCV and intraday features. Never invent news, earnings, policy, or price data.",
+		"Return one complete JSON object with all of these required fields and types:",
+		"buySignal must be an object containing triggerPrice (number), conditions (array of strings), and referenceZone (object containing low (number) and high (number)).",
+		"sellSignal must be an object containing triggerPrice (number), conditions (array of strings), and referenceZone (object containing low (number) and high (number)).",
+		"stopLoss must be an object containing triggerPrice (number) and condition (string).",
+		"validTradingDays must be an integer; reasons must be an array of strings; summary must be a string.",
+		"Never encode referenceZone as text. Never omit a required field. Never return null or zero for a price.",
+		"All prices and validTradingDays must be JSON numbers, never quoted strings.",
+		"Every triggerPrice must be a concrete price based on the provided features. Conditions must stay within supported primitives: price vs trigger, price vs intraday average, volume ratio, 5-minute change.",
+		"Rules: stopLoss.triggerPrice < buySignal.triggerPrice <= sellSignal.triggerPrice.",
+		"Return one valid JSON object only, no markdown fences.",
+	}, " ")
 }
 
 func parseRule(rawText string, features Features) (SignalRule, error) {
