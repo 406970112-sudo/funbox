@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
@@ -39,6 +40,8 @@ import {
   fetchDaysLeftStats,
   fetchDaysLeftSummary,
   getDaysLeftErrorMessage,
+  getDaysLeftExportUrl,
+  importDaysLeftRecords,
   renewDaysLeftRecord,
   undoDaysLeftRecord,
   updateDaysLeftCategory,
@@ -357,7 +360,11 @@ export function DaysLeftScreen() {
               reminders={reminders}
               stats={stats}
               calendar={calendar}
+              accessToken={accessToken}
               onDismiss={(id) => runMutation(() => dismissDaysLeftReminder(accessToken, id), '提醒已关闭')}
+              onChanged={async () => {
+                await refresh();
+              }}
               colors={colors}
             />
           ) : null}
@@ -643,12 +650,54 @@ function RemindersTab(props: {
   reminders: Awaited<ReturnType<typeof fetchDaysLeftReminders>>;
   stats: Awaited<ReturnType<typeof fetchDaysLeftStats>> | null;
   calendar: Map<string, number>;
+  accessToken: string;
   onDismiss: (id: string) => void;
+  onChanged: () => Promise<void>;
   colors: ReturnType<typeof useAppTheme>['colors'];
 }) {
-  const { reminders, stats, calendar, onDismiss, colors } = props;
+  const { reminders, stats, calendar, accessToken, onDismiss, onChanged, colors } = props;
   const monthKey = currentMonthKey();
   const cells = buildCalendarDays(monthKey, calendar);
+
+  async function downloadExport(format: 'csv' | 'json') {
+    const response = await fetch(getDaysLeftExportUrl(format), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      Alert.alert('导出失败', '请稍后重试。');
+      return;
+    }
+    const blob = await response.blob();
+    if (Platform.OS === 'web') {
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `days-left-export.${format}`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } else {
+      Alert.alert('导出提示', '当前可在网页端下载 CSV/JSON 导出文件。');
+    }
+  }
+
+  async function importJson() {
+    const picked = await DocumentPicker.getDocumentAsync({
+      type: 'application/json',
+      copyToCacheDirectory: true,
+    });
+    if (picked.canceled || picked.assets.length === 0) return;
+    try {
+      const uri = picked.assets[0].uri;
+      const text = await fetch(uri).then((response) => response.text());
+      const records = JSON.parse(text);
+      const count = await importDaysLeftRecords(accessToken, records);
+      Alert.alert('导入完成', `已导入 ${count} 条真实记录。`);
+      await onChanged();
+    } catch {
+      Alert.alert('导入失败', '请确认文件是有效的 JSON 到期记录。');
+    }
+  }
+
   return (
     <>
       <View style={[styles.statsHero, styles.heroLight]}>
@@ -723,6 +772,30 @@ function RemindersTab(props: {
             </View>
           ))}
         </View>
+      </View>
+      <SectionTitle title="导入导出" meta="只导出当前账号真实数据" />
+      <View style={styles.exportRow}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void downloadExport('csv')}
+          style={[styles.exportButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="file-delimited-outline" size={16} color={colors.primary} />
+          <ThemedText style={[styles.exportText, { color: colors.text }]}>导出 CSV</ThemedText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void downloadExport('json')}
+          style={[styles.exportButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="code-json" size={16} color={colors.primary} />
+          <ThemedText style={[styles.exportText, { color: colors.text }]}>导出 JSON</ThemedText>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void importJson()}
+          style={[styles.exportButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="file-import-outline" size={16} color={colors.primary} />
+          <ThemedText style={[styles.exportText, { color: colors.text }]}>导入 JSON</ThemedText>
+        </Pressable>
       </View>
     </>
   );
@@ -1998,6 +2071,24 @@ const styles = StyleSheet.create({
     height: 4,
     marginTop: 2,
     width: 4,
+  },
+  exportRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  exportButton: {
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 5,
+    justifyContent: 'center',
+    minHeight: 42,
+  },
+  exportText: {
+    fontSize: 10,
+    fontWeight: '900',
   },
   modalRoot: {
     flex: 1,
