@@ -1,0 +1,1754 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FunBox · DNF手游活动助手 产品设计 V1</title>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --board: #e4ebf6;
+      --page: #eef4ff;
+      --surface: #ffffff;
+      --surface-muted: #f3f6fb;
+      --ink: #18233d;
+      --muted: #7483a2;
+      --line: #dce5f6;
+      --blue: #4b6bff;
+      --blue-soft: #e6ebff;
+      --navy: #151b3b;
+      --lime: #c9f36a;
+      --coral: #ff5d6c;
+      --amber: #f1a33b;
+      --dark: #091126;
+      --done: #8b97ad;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--board);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    body { min-width: 2700px; }
+
+    button, input { font: inherit; letter-spacing: 0; }
+
+    .board {
+      background:
+        linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px),
+        var(--board);
+      background-size: 40px 40px;
+      min-height: 1500px;
+      padding: 34px 42px 38px;
+      width: 2700px;
+    }
+
+    .board-header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin: 0 auto;
+      max-width: 2616px;
+    }
+
+    .brand { align-items: center; display: flex; gap: 16px; }
+
+    .brand-mark {
+      align-items: center;
+      background: var(--navy);
+      border-radius: 14px;
+      color: var(--lime);
+      display: flex;
+      height: 54px;
+      justify-content: center;
+      width: 54px;
+    }
+
+    .brand-mark svg { height: 27px; stroke-width: 2.3; width: 27px; }
+
+    .board-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .board-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin: 5px 0 0;
+    }
+
+    .version {
+      border-left: 3px solid var(--coral);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.7;
+      padding-left: 12px;
+      text-align: right;
+    }
+
+    .version strong {
+      color: var(--ink);
+      display: block;
+      font-size: 14px;
+    }
+
+    .stage {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 330px repeat(6, 350px);
+      margin: 28px auto 0;
+      max-width: 2616px;
+    }
+
+    .strategy {
+      align-self: stretch;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(255,255,255,.92);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 22px 20px 18px;
+    }
+
+    .strategy-kicker {
+      color: var(--blue);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .strategy h2 {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.3;
+      margin: 10px 0 10px;
+    }
+
+    .strategy-lead {
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.75;
+      margin: 0;
+    }
+
+    .strategy-section {
+      border-top: 1px solid var(--line);
+      margin-top: 16px;
+      padding-top: 13px;
+    }
+
+    .strategy-section h3 {
+      font-size: 13px;
+      font-weight: 900;
+      margin: 0 0 9px;
+    }
+
+    .problem-list, .goal-list, .rule-list {
+      display: grid;
+      gap: 7px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .problem-list li, .goal-list li {
+      align-items: flex-start;
+      color: #56647f;
+      display: flex;
+      font-size: 10.5px;
+      gap: 7px;
+      line-height: 1.5;
+    }
+
+    .problem-list i, .goal-list i {
+      color: var(--coral);
+      flex: 0 0 auto;
+      height: 14px;
+      margin-top: 2px;
+      width: 14px;
+    }
+
+    .goal-list i { color: var(--blue); }
+
+    .principle-box {
+      background: #fff5f5;
+      border-left: 3px solid var(--coral);
+      color: #7a4a52;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.65;
+      padding: 9px 11px;
+    }
+
+    .principle-box b { color: #a83a4d; }
+
+    .scope-list {
+      color: #4d5870;
+      font-size: 10px;
+      line-height: 1.85;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .scope-list li::before {
+      color: var(--blue);
+      content: "◆";
+      font-size: 8px;
+      font-weight: 900;
+      margin-right: 7px;
+    }
+
+    .strategy-outcome {
+      background: #edf5ed;
+      border-left: 3px solid #21ad78;
+      color: #48605a;
+      font-size: 10.5px;
+      font-weight: 700;
+      line-height: 1.65;
+      margin-top: auto;
+      padding: 11px 12px;
+    }
+
+    .strategy-outcome b { color: #2f7c58; }
+
+    .concept { min-width: 0; }
+
+    .concept-label {
+      align-items: center;
+      display: flex;
+      gap: 9px;
+      height: 34px;
+      margin-bottom: 10px;
+    }
+
+    .concept-index {
+      align-items: center;
+      background: var(--navy);
+      color: var(--lime);
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      height: 25px;
+      justify-content: center;
+      width: 25px;
+    }
+
+    .concept-label strong { font-size: 14px; font-weight: 900; }
+
+    .concept-label span:last-child {
+      color: var(--muted);
+      font-size: 9px;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .phone {
+      background: var(--dark);
+      border: 5px solid var(--dark);
+      border-radius: 38px;
+      box-shadow: 0 22px 48px rgba(36,55,94,.2);
+      height: 900px;
+      margin: 0 auto;
+      max-width: 350px;
+      overflow: hidden;
+      padding: 8px;
+      position: relative;
+      width: 100%;
+    }
+
+    .phone::before {
+      background: var(--dark);
+      border-radius: 0 0 14px 14px;
+      content: "";
+      height: 24px;
+      left: 50%;
+      position: absolute;
+      top: 8px;
+      transform: translateX(-50%);
+      width: 92px;
+      z-index: 5;
+    }
+
+    .screen {
+      background: var(--page);
+      border-radius: 27px;
+      display: grid;
+      grid-template-rows: 30px 54px 1fr 64px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .status-bar {
+      align-items: center;
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      justify-content: space-between;
+      padding: 5px 18px 0;
+    }
+
+    .status-icons { align-items: center; display: flex; gap: 6px; }
+    .status-icons svg { height: 12px; width: 12px; }
+
+    .topbar {
+      align-items: center;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 42px 1fr 42px;
+      padding: 0 12px;
+    }
+
+    .topbar h2 {
+      font-size: 15px;
+      font-weight: 900;
+      margin: 0;
+      text-align: center;
+    }
+
+    .topbar .title-stack { text-align: center; }
+
+    .topbar .title-stack small {
+      color: var(--muted);
+      display: block;
+      font-size: 8px;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    .icon-button {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      display: flex;
+      height: 36px;
+      justify-content: center;
+      padding: 0;
+      position: relative;
+      width: 36px;
+    }
+
+    .icon-button.secondary {
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      justify-self: end;
+    }
+
+    .icon-button svg { height: 18px; width: 18px; }
+
+    .unread-dot {
+      background: var(--coral);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      height: 9px;
+      position: absolute;
+      right: 5px;
+      top: 4px;
+      width: 9px;
+    }
+
+    .scroll {
+      min-height: 0;
+      overflow: hidden;
+      padding: 11px 12px 13px;
+    }
+
+    .hero {
+      background:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
+        var(--navy);
+      background-size: 22px 22px;
+      border-radius: 14px;
+      color: #fff;
+      padding: 13px 13px 12px;
+    }
+
+    .hero-eyebrow {
+      color: var(--lime);
+      font-size: 9px;
+      font-weight: 900;
+      margin-bottom: 7px;
+    }
+
+    .hero-stats {
+      align-items: baseline;
+      display: flex;
+      gap: 8px;
+    }
+
+    .hero-stats b {
+      font-size: 25px;
+      font-weight: 900;
+    }
+
+    .hero-stats span {
+      color: #aebbd0;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .hero-meta {
+      color: #aebbd0;
+      font-size: 8.5px;
+      font-weight: 700;
+      margin-top: 7px;
+    }
+
+    .search-box {
+      align-items: center;
+      background: #fff;
+      border-radius: 8px;
+      display: flex;
+      height: 40px;
+      margin-top: 10px;
+      padding: 0 7px 0 11px;
+    }
+
+    .search-box svg { color: #8a93a7; height: 15px; width: 15px; }
+
+    .search-box input {
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      flex: 1;
+      font-size: 10px;
+      min-width: 0;
+      outline: 0;
+      padding: 0 8px;
+    }
+
+    .search-box input::placeholder { color: #9aa3b7; }
+
+    .search-box button {
+      background: var(--lime);
+      border: 0;
+      border-radius: 6px;
+      color: var(--navy);
+      font-size: 9px;
+      font-weight: 900;
+      height: 28px;
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+
+    .stats-grid {
+      display: grid;
+      gap: 7px;
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 10px;
+    }
+
+    .stat-cell {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 8px 5px;
+      text-align: center;
+    }
+
+    .stat-cell b {
+      display: block;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .stat-cell span {
+      color: var(--muted);
+      display: block;
+      font-size: 7.5px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .stat-cell.hot b { color: var(--coral); }
+    .stat-cell.ready b { color: #2e8f62; }
+
+    .section-head {
+      align-items: flex-end;
+      display: flex;
+      justify-content: space-between;
+      margin: 12px 2px 7px;
+    }
+
+    .section-head h3 { font-size: 12px; font-weight: 900; margin: 0; }
+
+    .section-head span { color: var(--muted); font-size: 8.5px; font-weight: 700; }
+
+    .act-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 9px;
+      grid-template-columns: 96px 1fr;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .act-cover {
+      background-position: center;
+      background-size: cover;
+      min-height: 86px;
+      position: relative;
+    }
+
+    .act-cover::after {
+      background: linear-gradient(180deg, rgba(9,17,38,0) 55%, rgba(9,17,38,.62));
+      content: "";
+      inset: 0;
+      position: absolute;
+    }
+
+    .cover-days {
+      bottom: 6px;
+      color: var(--lime);
+      font-size: 8px;
+      font-weight: 900;
+      left: 8px;
+      position: absolute;
+      z-index: 1;
+    }
+
+    .act-body { min-width: 0; padding: 9px 9px 8px 0; }
+
+    .act-title {
+      font-size: 11.5px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .act-time {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .act-row-actions {
+      align-items: center;
+      display: flex;
+      gap: 5px;
+      margin-top: 7px;
+    }
+
+    .act-link {
+      align-items: center;
+      background: var(--navy);
+      border-radius: 5px;
+      color: var(--lime);
+      display: flex;
+      font-size: 8px;
+      font-weight: 900;
+      gap: 3px;
+      height: 25px;
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+
+    .act-link svg, .act-share svg { height: 11px; width: 11px; }
+
+    .act-share {
+      align-items: center;
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      display: flex;
+      height: 25px;
+      justify-content: center;
+      width: 25px;
+    }
+
+    .source-line {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+      line-height: 1.6;
+      margin: 9px 2px 0;
+    }
+
+    .source-line b { color: #56647f; }
+
+    .tabs {
+      align-items: center;
+      display: flex;
+      gap: 11px;
+      margin: 2px 2px 9px;
+      overflow: hidden;
+    }
+
+    .tab {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 0 7px;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .tab.active { color: var(--ink); }
+
+    .tab.active::after {
+      background: var(--blue);
+      bottom: 0;
+      content: "";
+      height: 3px;
+      left: 0;
+      position: absolute;
+      right: 0;
+    }
+
+    .tab-count {
+      background: var(--blue-soft);
+      border-radius: 8px;
+      color: var(--blue);
+      font-size: 8px;
+      font-weight: 900;
+      margin-left: 3px;
+      padding: 1px 5px;
+    }
+
+    .list-toolbar {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: flex;
+      height: 34px;
+      justify-content: space-between;
+      padding: 0 9px;
+    }
+
+    .list-toolbar span { color: var(--muted); font-size: 8px; font-weight: 800; }
+    .list-toolbar b { font-size: 8.5px; font-weight: 900; }
+
+    .act-list {
+      background: #fff;
+      border: 1px solid var(--line);
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .act-row {
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 58px 1fr 24px;
+      min-height: 62px;
+      padding: 7px 8px;
+    }
+
+    .act-row:first-child { border-top: 0; }
+
+    .thumb {
+      background-position: center;
+      background-size: cover;
+      border-radius: 5px;
+      height: 46px;
+    }
+
+    .row-title {
+      font-size: 10.5px;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .row-date {
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    .row-tags { display: flex; gap: 4px; margin-top: 4px; }
+
+    .tag {
+      border-radius: 4px;
+      font-size: 7px;
+      font-weight: 900;
+      line-height: 1;
+      padding: 3px 5px;
+    }
+
+    .tag-live { background: #e7f6ef; color: #2e8f62; }
+    .tag-done { background: #eef1f8; color: #8b97ad; }
+    .tag-unknown { background: #fff3e2; color: #b06d14; }
+
+    .row-share {
+      align-items: center;
+      align-self: center;
+      color: var(--muted);
+      display: flex;
+      height: 26px;
+      justify-content: center;
+      width: 26px;
+    }
+
+    .row-share svg { height: 14px; width: 14px; }
+
+    .detail-hero {
+      border-radius: 12px;
+      height: 148px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .detail-hero img {
+      height: 100%;
+      object-fit: cover;
+      width: 100%;
+    }
+
+    .detail-hero::after {
+      background: linear-gradient(180deg, rgba(9,17,38,0) 35%, rgba(9,17,38,.72));
+      content: "";
+      inset: 0;
+      position: absolute;
+    }
+
+    .detail-hero .state-float {
+      background: var(--lime);
+      border-radius: 5px;
+      color: var(--navy);
+      font-size: 8px;
+      font-weight: 900;
+      left: 9px;
+      padding: 4px 7px;
+      position: absolute;
+      top: 9px;
+      z-index: 1;
+    }
+
+    .detail-hero .days-float {
+      bottom: 9px;
+      color: var(--lime);
+      font-size: 13px;
+      font-weight: 900;
+      left: 10px;
+      position: absolute;
+      z-index: 1;
+    }
+
+    .detail-hero .days-float small {
+      color: #dbe4f5;
+      display: block;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .detail-title {
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.35;
+      margin: 11px 2px 0;
+    }
+
+    .detail-time {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      margin: 5px 2px 0;
+    }
+
+    .intro-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      margin-top: 10px;
+      padding: 10px 11px;
+    }
+
+    .intro-card .card-label {
+      align-items: center;
+      color: var(--muted);
+      display: flex;
+      font-size: 8.5px;
+      font-weight: 800;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+
+    .intro-card .card-label svg { height: 12px; width: 12px; }
+
+    .intro-copy {
+      color: #41506b;
+      font-size: 9.5px;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+
+    .detail-actions { display: grid; gap: 7px; grid-template-columns: 1fr 1fr; margin-top: 9px; }
+
+    .detail-action {
+      align-items: center;
+      background: var(--blue);
+      border-radius: 6px;
+      color: #fff;
+      display: flex;
+      font-size: 9px;
+      font-weight: 900;
+      gap: 5px;
+      height: 34px;
+      justify-content: center;
+    }
+
+    .detail-action svg { height: 13px; width: 13px; }
+
+    .detail-action.ghost {
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    .data-card {
+      background: var(--surface-muted);
+      border-left: 3px solid var(--blue);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 700;
+      line-height: 1.6;
+      margin-top: 9px;
+      padding: 8px 10px;
+    }
+
+    .data-card b { color: #56647f; }
+
+    .calendar-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 9px 10px 10px;
+    }
+
+    .calendar-head {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .calendar-head b { font-size: 12px; font-weight: 900; }
+
+    .calendar-head .nav-arrow {
+      align-items: center;
+      color: var(--muted);
+      display: flex;
+      gap: 9px;
+    }
+
+    .calendar-head svg { height: 13px; width: 13px; }
+
+    .week-row {
+      color: var(--muted);
+      display: grid;
+      font-size: 7.5px;
+      font-weight: 800;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 5px;
+      text-align: center;
+    }
+
+    .days-grid {
+      display: grid;
+      gap: 4px;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .day {
+      align-items: center;
+      border-radius: 6px;
+      display: flex;
+      font-size: 8.5px;
+      font-weight: 800;
+      height: 34px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .day.muted { color: #c2cadb; }
+    .day.today { background: var(--navy); color: var(--lime); }
+    .day.has { background: var(--blue-soft); color: var(--blue); }
+    .day.has::after {
+      background: var(--blue);
+      border-radius: 50%;
+      bottom: 4px;
+      content: "";
+      height: 4px;
+      position: absolute;
+      width: 4px;
+    }
+
+    .day.today.has::after { background: var(--lime); }
+
+    .calendar-legend {
+      color: var(--muted);
+      display: flex;
+      font-size: 7.5px;
+      font-weight: 700;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .legend-dot {
+      border-radius: 50%;
+      display: inline-block;
+      height: 6px;
+      margin-right: 3px;
+      width: 6px;
+    }
+
+    .day-list-head {
+      align-items: baseline;
+      display: flex;
+      gap: 6px;
+      margin: 11px 2px 7px;
+    }
+
+    .day-list-head b { font-size: 11px; font-weight: 900; }
+    .day-list-head span { color: var(--muted); font-size: 8px; font-weight: 700; }
+
+    .fav-banner {
+      align-items: center;
+      background: #fff3e2;
+      border-left: 3px solid var(--amber);
+      color: #8a5c16;
+      display: flex;
+      font-size: 8.5px;
+      font-weight: 800;
+      gap: 6px;
+      padding: 8px 10px;
+    }
+
+    .fav-banner svg { color: var(--amber); height: 13px; width: 13px; }
+
+    .fav-list { margin-top: 9px; }
+
+    .fav-row {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 48px 1fr 26px;
+      margin-top: 7px;
+      padding: 7px 8px;
+    }
+
+    .fav-cover {
+      background-position: center;
+      background-size: cover;
+      border-radius: 5px;
+      height: 42px;
+    }
+
+    .fav-copy b {
+      display: block;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .fav-copy span {
+      color: var(--muted);
+      display: block;
+      font-size: 8px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    .fav-remove {
+      align-items: center;
+      color: #9aa3b7;
+      display: flex;
+      height: 26px;
+      justify-content: center;
+      width: 26px;
+    }
+
+    .fav-remove svg { height: 14px; width: 14px; }
+
+    .share-panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 10px 11px;
+    }
+
+    .share-option {
+      align-items: center;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 9px;
+      grid-template-columns: 28px 1fr 12px;
+      margin-top: 7px;
+      padding: 8px 9px;
+    }
+
+    .share-option:first-of-type { margin-top: 9px; }
+
+    .share-option .so-icon {
+      align-items: center;
+      background: var(--blue-soft);
+      border-radius: 6px;
+      color: var(--blue);
+      display: flex;
+      height: 28px;
+      justify-content: center;
+      width: 28px;
+    }
+
+    .share-option .so-icon svg { height: 14px; width: 14px; }
+
+    .share-option b { display: block; font-size: 9.5px; font-weight: 900; }
+    .share-option span { color: var(--muted); display: block; font-size: 7.5px; font-weight: 700; margin-top: 2px; }
+
+    .share-option .chev { color: #9aa3b7; }
+    .share-option .chev svg { height: 12px; width: 12px; }
+
+    .poster {
+      background: var(--navy);
+      border-radius: 12px;
+      margin-top: 11px;
+      overflow: hidden;
+      padding: 0 0 11px;
+    }
+
+    .poster-cover {
+      height: 118px;
+      position: relative;
+    }
+
+    .poster-cover img { height: 100%; object-fit: cover; width: 100%; }
+    .poster-cover::after {
+      background: linear-gradient(180deg, rgba(9,17,38,0) 30%, rgba(9,17,38,.85));
+      content: "";
+      inset: 0;
+      position: absolute;
+    }
+
+    .poster-title {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+      margin: 9px 11px 0;
+    }
+
+    .poster-meta {
+      color: #aebbd0;
+      font-size: 8px;
+      font-weight: 700;
+      margin: 4px 11px 0;
+    }
+
+    .poster-foot {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 11px 0;
+    }
+
+    .poster-source { color: var(--lime); font-size: 8px; font-weight: 900; }
+    .poster-source small { color: #aebbd0; display: block; font-size: 7px; font-weight: 700; margin-top: 2px; }
+
+    .poster-qr {
+      background: #fff;
+      border-radius: 6px;
+      height: 44px;
+      padding: 3px;
+      width: 44px;
+    }
+
+    .poster-qr img { height: 100%; width: 100%; }
+
+    .bottom-nav {
+      align-items: center;
+      background: #fff;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .nav-item {
+      align-items: center;
+      color: #9ca5ba;
+      display: flex;
+      flex-direction: column;
+      font-size: 8px;
+      font-weight: 800;
+      gap: 3px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .nav-item svg { height: 17px; width: 17px; }
+
+    .nav-item.active { color: var(--blue); }
+
+    .nav-badge {
+      background: var(--coral);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      height: 9px;
+      position: absolute;
+      right: 27px;
+      top: 4px;
+      width: 9px;
+    }
+
+    .state-band {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(10, 1fr);
+      margin: 26px auto 0;
+      max-width: 2616px;
+    }
+
+    .state-chip {
+      align-items: center;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(255,255,255,.95);
+      color: #56647f;
+      display: flex;
+      font-size: 9.5px;
+      font-weight: 800;
+      gap: 7px;
+      min-height: 42px;
+      padding: 0 10px;
+    }
+
+    .state-chip svg { color: var(--blue); flex: 0 0 auto; height: 14px; width: 14px; }
+    .state-chip.ready { color: #2f7c58; }
+    .state-chip.ready svg { color: #21ad78; }
+    .state-chip.warn { color: #8a5c16; }
+    .state-chip.warn svg { color: var(--amber); }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <header class="board-header">
+      <div class="brand">
+        <div class="brand-mark" data-lucide="swords"></div>
+        <div>
+          <h1 class="board-title">DNF手游活动助手 · 产品设计 V1</h1>
+          <p class="board-subtitle">真实活动聚合 · 状态筛选 · 活动详情 · 关注与分享 · 数据全部来自官方网站</p>
+        </div>
+      </div>
+      <div class="version">
+        <strong>FunBox</strong>
+        V1 评审稿 · 2026-08-04<br />
+        一期全量 · 真实数据 · 无 mock
+      </div>
+    </header>
+
+    <main class="stage">
+      <aside class="strategy">
+        <div class="strategy-kicker">Product Strategy</div>
+        <h2>DNF 手游活动助手</h2>
+        <p class="strategy-lead">聚合《地下城与勇士：起源》官网活动中心真实活动，按进行中、未开始、已结束、时间待官方确认四类状态组织，并提供详情、日历、关注与分享。</p>
+
+        <section class="strategy-section">
+          <h3>问题</h3>
+          <ul class="problem-list">
+            <li><i data-lucide="circle-x"></i><span>活动分散在游戏内、官网、助手多个渠道，玩家不知道今天还能做什么。</span></li>
+            <li><i data-lucide="circle-x"></i><span>活动强时效，错过就结束；第三方汇总更新慢且不可信。</span></li>
+            <li><i data-lucide="circle-x"></i><span>组队、召回类活动缺少一键分享入口，传播成本高。</span></li>
+          </ul>
+        </section>
+
+        <section class="strategy-section">
+          <h3>目标</h3>
+          <ul class="goal-list">
+            <li><i data-lucide="circle-check"></i><span>进入 1 秒内看到真实进行中活动与官方入口。</span></li>
+            <li><i data-lucide="circle-check"></i><span>四种状态与官网日期一致，缺失时间不猜测。</span></li>
+            <li><i data-lucide="circle-check"></i><span>详情、日历、关注、分享一次交付，无分期。</span></li>
+            <li><i data-lucide="circle-check"></i><span>全部数据可追溯到官网 JSON，无 mock 回退。</span></li>
+          </ul>
+        </section>
+
+        <section class="strategy-section">
+          <h3>真实数据原则</h3>
+          <div class="principle-box">
+            只使用 <b>mdnf.qq.com</b> 官网活动中心 JSON，标题、时间、链接、配图原样展示；<b>不调用 LLM 生成摘要</b>，缺失字段归入“时间待官方确认”。
+          </div>
+        </section>
+
+        <section class="strategy-section">
+          <h3>一期范围</h3>
+          <ul class="scope-list">
+            <li>活动总览与真实统计</li>
+            <li>活动列表、状态筛选、搜索</li>
+            <li>活动详情与官方入口</li>
+            <li>活动日历</li>
+            <li>我的关注与状态变更提示</li>
+            <li>复制链接 / 分享海报 / 微信分享</li>
+            <li>数据来源、同步时间与异常状态</li>
+          </ul>
+        </section>
+
+        <div class="strategy-outcome">
+          <b>结果：</b>2026-08-04 官网快照 63 条真实活动 · 进行中 3 条 · 已结束 57 条 · 时间待确认 3 条，全部无 mock。
+        </div>
+      </aside>
+
+      <section class="concept">
+        <div class="concept-label">
+          <span class="concept-index">01</span>
+          <strong>活动总览</strong>
+          <span>真实统计 · 进行中优先</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </div>
+            </div>
+            <div class="topbar">
+              <button class="icon-button" data-lucide="chevron-left"></button>
+              <div class="title-stack">
+                <h2>DNF手游活动助手</h2>
+                <small>地下城与勇士：起源</small>
+              </div>
+              <button class="icon-button secondary" data-lucide="bell"><span class="unread-dot"></span></button>
+            </div>
+            <div class="scroll">
+              <div class="hero">
+                <div class="hero-eyebrow">官网同步 · 实时状态</div>
+                <div class="hero-stats"><b>3</b><span>个活动正在生效，今天还能参加</span></div>
+                <div class="hero-meta">来源：地下城与勇士：起源 官方网站 · 2026-08-04 12:00 同步</div>
+              </div>
+
+              <div class="search-box">
+                <i data-lucide="search"></i>
+                <input placeholder="搜索活动名称，如 摸金秘境" />
+                <button>搜索</button>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat-cell hot"><b>3</b><span>进行中</span></div>
+                <div class="stat-cell"><b>0</b><span>未开始</span></div>
+                <div class="stat-cell ready"><b>57</b><span>已结束</span></div>
+                <div class="stat-cell"><b>3</b><span>待确认</span></div>
+              </div>
+
+              <div class="section-head">
+                <h3>进行中活动</h3>
+                <span>按结束日期排序</span>
+              </div>
+
+              <div class="act-card">
+                <div class="act-cover" style="background-image:url('dnf-mobile-activity-assets/mojin-mijing.jpg')">
+                  <span class="cover-days">剩余 7 天</span>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">摸金秘境 星赠好礼</div>
+                  <div class="act-time">2026-07-15 ~ 2026-08-11</div>
+                  <div class="act-row-actions">
+                    <span class="act-link"><i data-lucide="external-link"></i>打开官方页</span>
+                    <span class="act-share"><i data-lucide="share-2"></i></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="act-card">
+                <div class="act-cover" style="background-image:url('dnf-mobile-activity-assets/gonghui-zhaojiling.jpg')">
+                  <span class="cover-days">剩余 5 天</span>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">公会召集令</div>
+                  <div class="act-time">2026-07-15 ~ 2026-08-09</div>
+                  <div class="act-row-actions">
+                    <span class="act-link"><i data-lucide="external-link"></i>打开官方页</span>
+                    <span class="act-share"><i data-lucide="share-2"></i></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="act-card">
+                <div class="act-cover" style="background-image:url('dnf-mobile-activity-assets/alade-fashion.jpg')">
+                  <span class="cover-days">长期进行</span>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">阿拉德时装秀，秀出你的美</div>
+                  <div class="act-time">2026-07-13 ~ 2030-07-13</div>
+                  <div class="act-row-actions">
+                    <span class="act-link"><i data-lucide="external-link"></i>打开官方页</span>
+                    <span class="act-share"><i data-lucide="share-2"></i></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="source-line"><b>数据说明：</b>活动标题、起止时间、跳转链接、配图均来自官网活动中心 JSON；状态由服务器按官网日期判定。</div>
+            </div>
+            <nav class="bottom-nav">
+              <span class="nav-item active"><i data-lucide="home"></i>首页</span>
+              <span class="nav-item"><i data-lucide="calendar-days"></i>日历</span>
+              <span class="nav-item"><i data-lucide="heart"></i>关注</span>
+              <span class="nav-item"><i data-lucide="user"></i>我的</span>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <section class="concept">
+        <div class="concept-label">
+          <span class="concept-index">02</span>
+          <strong>活动列表与筛选</strong>
+          <span>状态 · 搜索 · 排序</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </div>
+            </div>
+            <div class="topbar">
+              <button class="icon-button" data-lucide="chevron-left"></button>
+              <div class="title-stack">
+                <h2>全部活动</h2>
+                <small>共 63 条真实活动</small>
+              </div>
+              <button class="icon-button secondary" data-lucide="sliders-horizontal"></button>
+            </div>
+            <div class="scroll">
+              <div class="tabs">
+                <span class="tab active">进行中 <em class="tab-count">3</em></span>
+                <span class="tab">未开始 <em class="tab-count">0</em></span>
+                <span class="tab">已结束 <em class="tab-count">57</em></span>
+                <span class="tab">待确认 <em class="tab-count">3</em></span>
+              </div>
+
+              <div class="search-box">
+                <i data-lucide="search"></i>
+                <input placeholder="搜索活动名称" />
+                <button>搜索</button>
+              </div>
+
+              <div class="list-toolbar">
+                <span>结果按结束日期排序</span>
+                <b><i data-lucide="arrow-up-down" style="height:11px;width:11px;vertical-align:-1px"></i> 排序</b>
+              </div>
+
+              <div class="act-list">
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/mojin-mijing.jpg')"></div>
+                  <div>
+                    <div class="row-title">摸金秘境 星赠好礼</div>
+                    <div class="row-date">2026-07-15 ~ 2026-08-11</div>
+                    <div class="row-tags"><span class="tag tag-live">进行中 · 剩余 7 天</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/gonghui-zhaojiling.jpg')"></div>
+                  <div>
+                    <div class="row-title">公会召集令</div>
+                    <div class="row-date">2026-07-15 ~ 2026-08-09</div>
+                    <div class="row-tags"><span class="tag tag-live">进行中 · 剩余 5 天</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/alade-fashion.jpg')"></div>
+                  <div>
+                    <div class="row-title">阿拉德时装秀，秀出你的美</div>
+                    <div class="row-date">2026-07-13 ~ 2030-07-13</div>
+                    <div class="row-tags"><span class="tag tag-live">进行中 · 长期</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/kaishi-jianbao.jpg')"></div>
+                  <div>
+                    <div class="row-title">开石鉴宝 点石成金</div>
+                    <div class="row-date">2026-07-08 ~ 2026-07-22</div>
+                    <div class="row-tags"><span class="tag tag-done">已结束</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/erjue-shike.jpg')"></div>
+                  <div>
+                    <div class="row-title">我的二觉时刻</div>
+                    <div class="row-date">2026-03-13 ~ 2026-04-13</div>
+                    <div class="row-tags"><span class="tag tag-done">已结束</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+              </div>
+
+              <div class="source-line"><b>真实空态：</b>“未开始”当前为 0 条，展示“当前官网暂无未开始活动”，不填充示例数据。</div>
+            </div>
+            <nav class="bottom-nav">
+              <span class="nav-item"><i data-lucide="home"></i>首页</span>
+              <span class="nav-item active"><i data-lucide="calendar-days"></i>列表</span>
+              <span class="nav-item"><i data-lucide="heart"></i>关注</span>
+              <span class="nav-item"><i data-lucide="user"></i>我的</span>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <section class="concept">
+        <div class="concept-label">
+          <span class="concept-index">03</span>
+          <strong>活动详情</strong>
+          <span>官方简介 · 官方入口</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </div>
+            </div>
+            <div class="topbar">
+              <button class="icon-button" data-lucide="chevron-left"></button>
+              <div class="title-stack">
+                <h2>活动详情</h2>
+                <small>官方数据</small>
+              </div>
+              <button class="icon-button secondary" data-lucide="share-2"></button>
+            </div>
+            <div class="scroll">
+              <div class="detail-hero">
+                <span class="state-float">进行中</span>
+                <img src="dnf-mobile-activity-assets/mojin-mijing.jpg" alt="摸金秘境 星赠好礼" />
+                <div class="days-float">剩余 7 天<small>2026-08-11 结束</small></div>
+              </div>
+
+              <h3 class="detail-title">摸金秘境 星赠好礼</h3>
+              <div class="detail-time">2026-07-15 ~ 2026-08-11 · 官网日期</div>
+
+              <div class="intro-card">
+                <div class="card-label"><i data-lucide="file-text"></i>官方简介（官网原文）</div>
+                <div class="intro-copy">幸运星助力，开星赢好运，解锁时空罗盘，瓜分疲劳药&海量金币！</div>
+              </div>
+
+              <div class="detail-actions">
+                <span class="detail-action"><i data-lucide="external-link"></i>打开官方活动页</span>
+                <span class="detail-action ghost"><i data-lucide="share-2"></i>分享活动</span>
+              </div>
+
+              <div class="data-card">
+                <b>来源：</b>地下城与勇士：起源 官方网站<br />
+                <b>官网链接：</b>act2.hdnf.qq.com/a20260625luckystar/index.html<br />
+                <b>同步时间：</b>2026-08-04 12:00<br />
+                <b>状态口径：</b>2026-07-15 ≤ 今天 ≤ 2026-08-11
+              </div>
+
+              <div class="section-head">
+                <h3>相关活动</h3>
+                <span>同月真实活动</span>
+              </div>
+              <div class="act-card">
+                <div class="act-cover" style="background-image:url('dnf-mobile-activity-assets/alade-fashion.jpg')">
+                  <span class="cover-days">长期进行</span>
+                </div>
+                <div class="act-body">
+                  <div class="act-title">阿拉德时装秀，秀出你的美</div>
+                  <div class="act-time">2026-07-13 ~ 2030-07-13</div>
+                  <div class="act-row-actions">
+                    <span class="act-link"><i data-lucide="external-link"></i>查看</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <nav class="bottom-nav">
+              <span class="nav-item"><i data-lucide="home"></i>首页</span>
+              <span class="nav-item"><i data-lucide="calendar-days"></i>列表</span>
+              <span class="nav-item active"><i data-lucide="heart"></i>关注</span>
+              <span class="nav-item"><i data-lucide="user"></i>我的</span>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <section class="concept">
+        <div class="concept-label">
+          <span class="concept-index">04</span>
+          <strong>活动日历</strong>
+          <span>按真实起止日期标记</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </div>
+            </div>
+            <div class="topbar">
+              <button class="icon-button" data-lucide="chevron-left"></button>
+              <div class="title-stack">
+                <h2>活动日历</h2>
+                <small>2026 年 8 月</small>
+              </div>
+              <button class="icon-button secondary" data-lucide="calendar-search"></button>
+            </div>
+            <div class="scroll">
+              <div class="calendar-card">
+                <div class="calendar-head">
+                  <b>2026 年 8 月</b>
+                  <span class="nav-arrow">
+                    <i data-lucide="chevron-left"></i>
+                    <i data-lucide="chevron-right"></i>
+                  </span>
+                </div>
+                <div class="week-row">
+                  <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                </div>
+                <div class="days-grid">
+                  <span class="day muted">27</span><span class="day muted">28</span><span class="day muted">29</span><span class="day muted">30</span><span class="day muted">31</span>
+                  <span class="day has">1</span><span class="day has">2</span><span class="day has">3</span><span class="day today has">4</span><span class="day has">5</span><span class="day has">6</span><span class="day has">7</span>
+                  <span class="day has">8</span><span class="day has">9</span><span class="day has">10</span><span class="day has">11</span><span class="day">12</span><span class="day">13</span><span class="day">14</span>
+                  <span class="day">15</span><span class="day">16</span><span class="day">17</span><span class="day">18</span><span class="day">19</span><span class="day">20</span><span class="day">21</span>
+                  <span class="day">22</span><span class="day">23</span><span class="day">24</span><span class="day">25</span><span class="day">26</span><span class="day">27</span><span class="day">28</span>
+                  <span class="day">29</span><span class="day">30</span><span class="day">31</span><span class="day muted">1</span><span class="day muted">2</span><span class="day muted">3</span><span class="day muted">4</span>
+                </div>
+                <div class="calendar-legend">
+                  <span><span class="legend-dot" style="background:var(--blue)"></span>摸金秘境 07-15~08-11</span>
+                  <span><span class="legend-dot" style="background:var(--amber)"></span>公会召集令 07-15~08-09</span>
+                </div>
+              </div>
+
+              <div class="day-list-head"><b>8 月 4 日</b><span>今天生效 3 个活动</span></div>
+
+              <div class="act-list">
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/mojin-mijing.jpg')"></div>
+                  <div>
+                    <div class="row-title">摸金秘境 星赠好礼</div>
+                    <div class="row-date">进行中 · 剩余 7 天</div>
+                    <div class="row-tags"><span class="tag tag-live">跨月活动</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/gonghui-zhaojiling.jpg')"></div>
+                  <div>
+                    <div class="row-title">公会召集令</div>
+                    <div class="row-date">进行中 · 剩余 5 天</div>
+                    <div class="row-tags"><span class="tag tag-live">跨月活动</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/alade-fashion.jpg')"></div>
+                  <div>
+                    <div class="row-title">阿拉德时装秀，秀出你的美</div>
+                    <div class="row-date">进行中 · 长期活动</div>
+                    <div class="row-tags"><span class="tag tag-live">跨年活动</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="share-2"></i></span>
+                </div>
+              </div>
+
+              <div class="source-line"><b>日历规则：</b>仅按官网开始/结束日期标记；时间缺失的活动不进入日历，归入“待确认”。</div>
+            </div>
+            <nav class="bottom-nav">
+              <span class="nav-item"><i data-lucide="home"></i>首页</span>
+              <span class="nav-item active"><i data-lucide="calendar-days"></i>日历</span>
+              <span class="nav-item"><i data-lucide="heart"></i>关注</span>
+              <span class="nav-item"><i data-lucide="user"></i>我的</span>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <section class="concept">
+        <div class="concept-label">
+          <span class="concept-index">05</span>
+          <strong>我的关注</strong>
+          <span>状态变更提示</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </div>
+            </div>
+            <div class="topbar">
+              <button class="icon-button" data-lucide="chevron-left"></button>
+              <div class="title-stack">
+                <h2>我的关注</h2>
+                <small>2 / 30</small>
+              </div>
+              <button class="icon-button secondary" data-lucide="trash-2"></button>
+            </div>
+            <div class="scroll">
+              <div class="fav-banner">
+                <i data-lucide="clock"></i>
+                <span>摸金秘境 星赠好礼 将于 08-11 结束，剩余 7 天。</span>
+              </div>
+
+              <div class="fav-list">
+                <div class="fav-row">
+                  <div class="fav-cover" style="background-image:url('dnf-mobile-activity-assets/mojin-mijing.jpg')"></div>
+                  <div class="fav-copy">
+                    <b>摸金秘境 星赠好礼</b>
+                    <span>进行中 · 2026-08-11 结束 · 剩余 7 天</span>
+                  </div>
+                  <span class="fav-remove"><i data-lucide="heart-off"></i></span>
+                </div>
+                <div class="fav-row">
+                  <div class="fav-cover" style="background-image:url('dnf-mobile-activity-assets/alade-fashion.jpg')"></div>
+                  <div class="fav-copy">
+                    <b>阿拉德时装秀，秀出你的美</b>
+                    <span>进行中 · 长期活动 · 2026-07-13 起</span>
+                  </div>
+                  <span class="fav-remove"><i data-lucide="heart-off"></i></span>
+                </div>
+              </div>
+
+              <div class="section-head">
+                <h3>关注动态</h3>
+                <span>按官网日期计算</span>
+              </div>
+
+              <div class="act-list">
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/gonghui-zhaojiling.jpg')"></div>
+                  <div>
+                    <div class="row-title">公会召集令 已加入关注池</div>
+                    <div class="row-date">07-15 开始 · 08-09 结束</div>
+                    <div class="row-tags"><span class="tag tag-live">进行中</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="act-row">
+                  <div class="thumb" style="background-image:url('dnf-mobile-activity-assets/kaishi-jianbao.jpg')"></div>
+                  <div>
+                    <div class="row-title">开石鉴宝 点石成金 已结束</div>
+                    <div class="row-date">07-22 结束 · 状态自动变更</div>
+                    <div class="row-tags"><span class="tag tag-done">已结束</span></div>
+                  </div>
+                  <span class="row-share"><i data-lucide="chevron-right"></i></span>
+                </div>
+              </div>
+
+              <div class="source-line"><b>存储：</b>关注列表本地持久化；进入页面时按官网日期重算状态并提示变更，一期不依赖账号同步。</div>
+            </div>
+            <nav class="bottom-nav">
+              <span class="nav-item"><i data-lucide="home"></i>首页</span>
+              <span class="nav-item"><i data-lucide="calendar-days"></i>日历</span>
+              <span class="nav-item active"><i data-lucide="heart"></i>关注</span>
+              <span class="nav-item"><i data-lucide="user"></i>我的</span>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <section class="concept">
+        <div class="concept-label">
+          <span class="concept-index">06</span>
+          <strong>活动分享</strong>
+          <span>链接 · 海报 · 微信</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </div>
+            </div>
+            <div class="topbar">
+              <button class="icon-button" data-lucide="chevron-left"></button>
+              <div class="title-stack">
+                <h2>分享活动</h2>
+                <small>真实链接 · 官方素材</small>
+              </div>
+              <button class="icon-button secondary" data-lucide="x"></button>
+            </div>
+            <div class="scroll">
+              <div class="share-panel">
+                <div class="share-option">
+                  <span class="so-icon"><i data-lucide="link"></i></span>
+                  <div><b>复制官方链接</b><span>act2.hdnf.qq.com/a20260625luckystar/index.html</span></div>
+                  <span class="chev"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="share-option">
+                  <span class="so-icon"><i data-lucide="image"></i></span>
+                  <div><b>生成分享海报</b><span>官方配图 + 真实标题与时间 + 官网二维码</span></div>
+                  <span class="chev"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="share-option">
+                  <span class="so-icon"><i data-lucide="message-circle"></i></span>
+                  <div><b>微信分享</b><span>小程序卡片，标题与封面来自真实活动数据</span></div>
+                  <span class="chev"><i data-lucide="chevron-right"></i></span>
+                </div>
+              </div>
+
+              <div class="poster">
+                <div class="poster-cover">
+                  <img src="dnf-mobile-activity-assets/mojin-mijing.jpg" alt="摸金秘境 星赠好礼" />
+                </div>
+                <div class="poster-title">摸金秘境 星赠好礼</div>
+                <div class="poster-meta">2026-07-15 ~ 2026-08-11 · 剩余 7 天</div>
+                <div class="poster-foot">
+                  <div class="poster-source">地下城与勇士：起源 官方活动<small>扫码直达官网活动页</small></div>
+                  <div class="poster-qr"><img src="dnf-mobile-activity-assets/qr-mojin.svg" alt="官网活动页二维码" /></div>
+                </div>
+              </div>
+
+              <div class="data-card">
+                <b>分享真实性：</b>链接与二维码都指向官网活动页原文；海报文案固定为真实标题 + 真实时间 + 来源，不追加奖励描述。
+              </div>
+            </div>
+            <nav class="bottom-nav">
+              <span class="nav-item"><i data-lucide="home"></i>首页</span>
+              <span class="nav-item"><i data-lucide="calendar-days"></i>日历</span>
+              <span class="nav-item"><i data-lucide="heart"></i>关注</span>
+              <span class="nav-item active"><i data-lucide="user"></i>我的</span>
+            </nav>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="state-band">
+      <div class="state-chip"><i data-lucide="refresh-cw"></i>加载中：正在同步官网活动</div>
+      <div class="state-chip"><i data-lucide="alert-triangle"></i>数据源不可用：可重试，不展示 mock</div>
+      <div class="state-chip warn"><i data-lucide="clock"></i>时间待确认：缺失字段不猜测</div>
+      <div class="state-chip"><i data-lucide="image-off"></i>配图缺失：标题卡片占位</div>
+      <div class="state-chip"><i data-lucide="inbox"></i>未开始为空：展示真实空态</div>
+      <div class="state-chip"><i data-lucide="heart-off"></i>关注为空：展示添加引导</div>
+      <div class="state-chip"><i data-lucide="shield-alert"></i>详情抓取失败：以官网为准</div>
+      <div class="state-chip"><i data-lucide="share-2"></i>分享失败：二维码不强制出图</div>
+      <div class="state-chip ready"><i data-lucide="database"></i>stale 快照：仅展示并标注</div>
+      <div class="state-chip ready"><i data-lucide="shield-check"></i>官方来源 + 同步时间可追溯</div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

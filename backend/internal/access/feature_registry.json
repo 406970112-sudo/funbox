@@ -496,5 +496,20 @@
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "dnf-mobile-activity",
+    "name": "DNF手游活动助手",
+    "tagline": "官方活动 · 状态筛选 · 一键分享",
+    "description": "聚合《地下城与勇士：起源》官方网站真实活动，按进行中、未开始、已结束、时间待确认筛选，支持活动详情、日历、关注与官方链接分享。",
+    "icon": "gamepad-variant-outline",
+    "category": "游戏",
+    "route": "/tools/dnf-mobile-activity",
+    "accentColor": "#4b6bff",
+    "badges": ["官方数据", "状态筛选", "分享"],
+    "usageLabel": "查看活动",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]

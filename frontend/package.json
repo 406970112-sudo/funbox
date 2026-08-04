@@ -35,6 +35,7 @@
     "test:reading": "node --test --experimental-strip-types tests/reading-local-import.test.mjs tests/reading-state.test.mjs",
     "test:market-radar": "node --test --experimental-strip-types tests/market-radar.test.mjs",
     "test:stock-alert": "node --test --experimental-strip-types tests/stock-trade-alert.test.mjs",
+    "test:dnf-activity": "node --test --experimental-strip-types tests/dnf-mobile-activity.test.mjs",
     "test:product-recommendation": "node --test --experimental-strip-types tests/product-recommendation.test.mjs",
     "test:food-recommendation": "node --test --experimental-strip-types tests/food-recommendation.test.mjs",
     "test:cooking-guide": "node --test --experimental-strip-types tests/cooking-guide.test.mjs",

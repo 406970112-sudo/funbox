@@ -19,6 +19,7 @@ import (
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/cookingguide"
 	"my-first-expo-app/backend/internal/diary"
+	"my-first-expo-app/backend/internal/dnfactivity"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
@@ -58,6 +59,7 @@ type Server struct {
 	marketRadarService        marketRadarSnapshotService
 	membershipService         *membership.Service
 	diaryService              *diary.Service
+	dnfActivityService        dnfActivityService
 	momentsService            *moments.Service
 	newsService               newsFeedService
 	plantIDService            *plantid.Service
@@ -567,6 +569,20 @@ func newServer(
 			DeepSeekModel:          cfg.DeepSeek.StockModel,
 		}, stockAlertStore)
 	}
+	var dnfActivitySvc *dnfactivity.Service
+	dnfActivityStore, err := dnfactivity.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open dnf activity database failed: %v", err)
+	} else {
+		dnfActivitySvc = dnfactivity.NewService(dnfactivity.ServiceConfig{
+			SourceURL:     cfg.DNFActivity.SourceURL,
+			SyncInterval:  cfg.DNFActivity.SyncInterval,
+			CacheTTL:      cfg.DNFActivity.CacheTTL,
+			PageSize:      cfg.DNFActivity.PageSize,
+			MaxFavorites:  cfg.DNFActivity.MaxFavorites,
+			DetailTimeout: cfg.DNFActivity.DetailTimeout,
+		}, dnfActivityStore)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
@@ -584,6 +600,7 @@ func newServer(
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
 		membershipService:         membershipService,
 		diaryService:              diaryService,
+		dnfActivityService:        dnfActivitySvc,
 		momentsService:            momentsService,
 		newsService:               newsService,
 		plantIDService:            plantIDService,
@@ -621,6 +638,7 @@ func newServer(
 	registerLotteryLabRoutes(mux, api)
 	registerMarketRadarRoutes(mux, api)
 	registerStockAlertRoutes(mux, api)
+	registerDnfActivityRoutes(mux, api)
 	registerNewsRoutes(mux, api)
 	registerResourceSearchRoutes(mux, api)
 	registerReadingRoutes(mux, api)
@@ -680,6 +698,9 @@ func newServer(
 	monitorContext, monitorCancel := context.WithCancel(context.Background())
 	if stockAlertService != nil {
 		go stockAlertService.Run(monitorContext)
+	}
+	if dnfActivitySvc != nil {
+		go dnfActivitySvc.Run(monitorContext)
 	}
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),

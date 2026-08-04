@@ -15,12 +15,14 @@ type Config struct {
 	Security           SecurityConfig
 	Storage            StorageConfig
 	DeepSeek           DeepSeekConfig
+	DNFActivity        DNFActivityConfig
 	FoodRecommendation FoodRecommendationConfig
 	Lottery            LotteryConfig
 	News               NewsConfig
 	PlantID            PlantIDConfig
 	ResourceSearch     ResourceSearchConfig
 	MarketRadar        MarketRadarConfig
+	PriceRadar         PriceRadarConfig
 	StockAlert         StockAlertConfig
 	Reading            ReadingConfig
 	TinyPNG            TinyPNGConfig
@@ -66,6 +68,15 @@ type MarketRadarConfig struct {
 	RequestTimeout time.Duration
 }
 
+type PriceRadarConfig struct {
+	BaseURL        string
+	CacheTTL       time.Duration
+	MaxImageBytes  int64
+	MaxImages      int
+	RequestTimeout time.Duration
+	StorageDir     string
+}
+
 type StockAlertConfig struct {
 	CacheTTL            time.Duration
 	MonitorInterval     time.Duration
@@ -84,6 +95,15 @@ type StockAlertConfig struct {
 	SendKey             string
 	Secret              string
 	Enabled             bool
+}
+
+type DNFActivityConfig struct {
+	SourceURL     string
+	SyncInterval  time.Duration
+	CacheTTL      time.Duration
+	PageSize      int
+	MaxFavorites  int
+	DetailTimeout time.Duration
 }
 
 type LotteryConfig struct {
@@ -294,6 +314,14 @@ func Load() (Config, error) {
 			QuoteBaseURL:   envFirst("MARKET_RADAR_QUOTE_BASE_URL", "https://push2delay.eastmoney.com"),
 			RequestTimeout: durationFromMs("MARKET_RADAR_REQUEST_TIMEOUT_MS", "", "12000"),
 		},
+		PriceRadar: PriceRadarConfig{
+			BaseURL:        envFirst("PRICE_RADAR_BASE_URL", "https://pfsc.agri.cn"),
+			CacheTTL:       durationFromMs("PRICE_RADAR_CACHE_TTL_MS", "", "900000"),
+			MaxImageBytes:  int64(intFirst("PRICE_RADAR_MAX_IMAGE_BYTES", "", "5242880")),
+			MaxImages:      intFirst("PRICE_RADAR_MAX_IMAGES", "", "3"),
+			RequestTimeout: durationFromMs("PRICE_RADAR_REQUEST_TIMEOUT_MS", "", "15000"),
+			StorageDir:     envFirst("PRICE_RADAR_STORAGE_DIR", "data/price-radar"),
+		},
 		StockAlert: StockAlertConfig{
 			CacheTTL:            durationFromMs("STOCK_ALERT_CACHE_TTL_MS", "", "60000"),
 			MonitorInterval:     durationFromMs("STOCK_ALERT_MONITOR_INTERVAL_MS", "", "10000"),
@@ -312,6 +340,14 @@ func Load() (Config, error) {
 			SendKey:             envFirst("STOCK_ALERT_SENDKEY", ""),
 			Secret:              envFirst("STOCK_ALERT_SECRET", "funbox-stock-alert-secret"),
 			Enabled:             boolFirst("STOCK_ALERT_ENABLED", "false"),
+		},
+		DNFActivity: DNFActivityConfig{
+			SourceURL:     envFirst("DNF_ACTIVITY_SOURCE_URL", "https://mdnf.qq.com/zlkdatasys/web202405_data/events_data.json"),
+			SyncInterval:  durationFromMs("DNF_ACTIVITY_SYNC_INTERVAL_MS", "", "1800000"),
+			CacheTTL:      durationFromMs("DNF_ACTIVITY_CACHE_TTL_MS", "", "1800000"),
+			PageSize:      intFirst("DNF_ACTIVITY_PAGE_SIZE", "", "20"),
+			MaxFavorites:  intFirst("DNF_ACTIVITY_MAX_FAVORITES", "", "30"),
+			DetailTimeout: durationFromMs("DNF_ACTIVITY_DETAIL_TIMEOUT_MS", "", "8000"),
 		},
 		TinyPNG: TinyPNGConfig{
 			APIKey:         envFirst("TINYPNG_API_KEY", ""),
