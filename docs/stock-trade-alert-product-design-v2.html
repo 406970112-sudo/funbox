@@ -1,0 +1,1985 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FunBox · 股票交易提醒 产品设计 V2</title>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --board: #e4ebf6;
+      --page: #eef4ff;
+      --surface: #ffffff;
+      --surface-muted: #f3f6fb;
+      --ink: #18233d;
+      --muted: #7483a2;
+      --line: #dce5f6;
+      --blue: #4b6bff;
+      --blue-soft: #e6ebff;
+      --navy: #151b3b;
+      --lime: #c9f36a;
+      --coral: #ff5d6c;
+      --up: #ef5962;
+      --down: #21ad78;
+      --amber: #f1a33b;
+      --dark: #091126;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--board);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    body { min-width: 2500px; }
+
+    button, input { font: inherit; letter-spacing: 0; }
+
+    .board {
+      background:
+        linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px),
+        var(--board);
+      background-size: 40px 40px;
+      min-height: 1480px;
+      padding: 34px 40px 38px;
+      width: 2500px;
+    }
+
+    .board-header {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin: 0 auto;
+      max-width: 2420px;
+    }
+
+    .brand { align-items: center; display: flex; gap: 16px; }
+
+    .brand-mark {
+      align-items: center;
+      background: var(--navy);
+      border-radius: 14px;
+      color: var(--lime);
+      display: flex;
+      height: 54px;
+      justify-content: center;
+      width: 54px;
+    }
+
+    .brand-mark svg { height: 27px; stroke-width: 2.3; width: 27px; }
+
+    .board-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .board-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin: 5px 0 0;
+    }
+
+    .version {
+      border-left: 3px solid var(--coral);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.7;
+      padding-left: 12px;
+      text-align: right;
+    }
+
+    .version strong {
+      color: var(--ink);
+      display: block;
+      font-size: 14px;
+    }
+
+    .stage {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 340px repeat(5, 390px);
+      margin: 28px auto 0;
+      max-width: 2420px;
+    }
+
+    .strategy {
+      align-self: stretch;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(255,255,255,.92);
+      display: flex;
+      flex-direction: column;
+      min-height: 1280px;
+      padding: 24px 22px;
+    }
+
+    .strategy-kicker {
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .strategy h2 {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.35;
+      margin: 10px 0 10px;
+    }
+
+    .strategy-lead {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.8;
+      margin: 0;
+    }
+
+    .strategy-section {
+      border-top: 1px solid var(--line);
+      margin-top: 20px;
+      padding-top: 16px;
+    }
+
+    .strategy-section h3 {
+      font-size: 14px;
+      font-weight: 900;
+      margin: 0 0 11px;
+    }
+
+    .problem-list, .goal-list {
+      display: grid;
+      gap: 9px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .problem-list li, .goal-list li {
+      align-items: flex-start;
+      color: #56647f;
+      display: flex;
+      font-size: 11.5px;
+      gap: 8px;
+      line-height: 1.55;
+    }
+
+    .problem-list i, .goal-list i {
+      color: var(--coral);
+      flex: 0 0 auto;
+      height: 15px;
+      margin-top: 2px;
+      width: 15px;
+    }
+
+    .goal-list i { color: var(--down); }
+
+    .approaches { display: grid; gap: 8px; }
+
+    .approach {
+      align-items: center;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 9px;
+      grid-template-columns: 24px 1fr;
+      min-height: 54px;
+      padding: 8px 10px;
+    }
+
+    .approach-number {
+      align-items: center;
+      background: var(--surface-muted);
+      color: var(--muted);
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      height: 24px;
+      justify-content: center;
+      width: 24px;
+    }
+
+    .approach strong { display: block; font-size: 11.5px; line-height: 1.3; }
+
+    .approach span {
+      color: var(--muted);
+      display: block;
+      font-size: 9px;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    .approach.selected {
+      background: var(--navy);
+      border-color: var(--navy);
+    }
+
+    .approach.selected .approach-number {
+      background: var(--lime);
+      color: var(--navy);
+    }
+
+    .approach.selected strong { color: #fff; }
+    .approach.selected span { color: #aebbd0; }
+
+    .principle-box {
+      background: #fff5f5;
+      border-left: 3px solid var(--coral);
+      color: #7a4a52;
+      font-size: 10.5px;
+      font-weight: 700;
+      line-height: 1.7;
+      padding: 10px 12px;
+    }
+
+    .principle-box b { color: #a83a4d; }
+
+    .scope-list {
+      color: #4d5870;
+      font-size: 11px;
+      line-height: 1.9;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .scope-list li::before {
+      color: var(--lime);
+      content: "◆";
+      font-weight: 900;
+      margin-right: 7px;
+    }
+
+    .strategy-outcome {
+      background: #edf5ed;
+      border-left: 3px solid var(--down);
+      color: #48605a;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.7;
+      margin-top: auto;
+      padding: 12px 13px;
+    }
+
+    .strategy-outcome b { color: #2f7c58; }
+
+    .concept { min-width: 0; }
+
+    .concept-label {
+      align-items: center;
+      display: flex;
+      gap: 9px;
+      height: 34px;
+      margin-bottom: 10px;
+    }
+
+    .concept-index {
+      align-items: center;
+      background: var(--navy);
+      color: var(--lime);
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      height: 25px;
+      justify-content: center;
+      width: 25px;
+    }
+
+    .concept-label strong { font-size: 15px; font-weight: 900; }
+
+    .concept-label span:last-child {
+      color: var(--muted);
+      font-size: 10px;
+      margin-left: auto;
+    }
+
+    .phone {
+      background: var(--dark);
+      border: 5px solid var(--dark);
+      border-radius: 38px;
+      box-shadow: 0 22px 48px rgba(36,55,94,.2);
+      height: 900px;
+      margin: 0 auto;
+      max-width: 390px;
+      overflow: hidden;
+      padding: 8px;
+      position: relative;
+      width: 100%;
+    }
+
+    .phone::before {
+      background: var(--dark);
+      border-radius: 0 0 14px 14px;
+      content: "";
+      height: 24px;
+      left: 50%;
+      position: absolute;
+      top: 8px;
+      transform: translateX(-50%);
+      width: 92px;
+      z-index: 5;
+    }
+
+    .screen {
+      background: var(--page);
+      border-radius: 27px;
+      display: grid;
+      grid-template-rows: 30px 54px 1fr 64px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .status-bar {
+      align-items: center;
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      justify-content: space-between;
+      padding: 5px 18px 0;
+    }
+
+    .status-icons { align-items: center; display: flex; gap: 6px; }
+    .status-icons svg { height: 12px; width: 12px; }
+
+    .topbar {
+      align-items: center;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 42px 1fr 42px;
+      padding: 0 12px;
+    }
+
+    .topbar h2 {
+      font-size: 16px;
+      font-weight: 900;
+      margin: 0;
+      text-align: center;
+    }
+
+    .topbar .title-stack { text-align: center; }
+
+    .topbar .title-stack small {
+      color: var(--muted);
+      display: block;
+      font-size: 8px;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+
+    .icon-button {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      display: flex;
+      height: 36px;
+      justify-content: center;
+      padding: 0;
+      position: relative;
+      width: 36px;
+    }
+
+    .icon-button.secondary {
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      justify-self: end;
+    }
+
+    .icon-button svg { height: 18px; width: 18px; }
+
+    .unread-dot {
+      background: var(--coral);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      height: 9px;
+      position: absolute;
+      right: 5px;
+      top: 4px;
+      width: 9px;
+    }
+
+    .scroll {
+      min-height: 0;
+      overflow: hidden;
+      padding: 12px 13px 14px;
+    }
+
+    .hero {
+      background:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
+        var(--navy);
+      background-size: 22px 22px;
+      border-radius: 16px;
+      color: #fff;
+      padding: 13px 13px 12px;
+    }
+
+    .hero-eyebrow {
+      color: var(--lime);
+      font-size: 9px;
+      font-weight: 900;
+      margin-bottom: 7px;
+    }
+
+    .search-box {
+      align-items: center;
+      background: #fff;
+      border-radius: 8px;
+      display: flex;
+      height: 42px;
+      padding: 0 7px 0 11px;
+    }
+
+    .search-box svg { color: #8a93a7; height: 16px; width: 16px; }
+
+    .search-box input {
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      flex: 1;
+      font-size: 11px;
+      min-width: 0;
+      outline: 0;
+      padding: 0 8px;
+    }
+
+    .search-box input::placeholder { color: #9aa3b7; }
+
+    .search-box button {
+      background: var(--lime);
+      border: 0;
+      border-radius: 6px;
+      color: var(--navy);
+      font-size: 10px;
+      font-weight: 900;
+      height: 30px;
+      padding: 0 11px;
+      white-space: nowrap;
+    }
+
+    .search-box .clear {
+      color: #9aa3b7;
+      display: flex;
+      height: 26px;
+      margin-right: 4px;
+      width: 26px;
+    }
+
+    .search-box .clear svg { height: 13px; width: 13px; }
+
+    .hero-meta {
+      color: #aebbd0;
+      font-size: 8.5px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .tabs {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      margin: 13px 2px 9px;
+      overflow: hidden;
+    }
+
+    .tab {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 0 7px;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .tab.active { color: var(--ink); }
+
+    .tab.active::after {
+      background: var(--blue);
+      bottom: 0;
+      content: "";
+      height: 3px;
+      left: 0;
+      position: absolute;
+      right: 0;
+    }
+
+    .tab-count {
+      background: var(--blue-soft);
+      border-radius: 8px;
+      color: var(--blue);
+      font-size: 9px;
+      font-weight: 900;
+      margin-left: 4px;
+      padding: 1px 6px;
+    }
+
+    .section-head {
+      align-items: flex-end;
+      display: flex;
+      justify-content: space-between;
+      margin: 12px 2px 7px;
+    }
+
+    .section-head h3 { font-size: 12px; font-weight: 900; margin: 0; }
+
+    .section-head span { color: var(--muted); font-size: 8.5px; font-weight: 700; }
+
+    .result-list, .watch-list, .event-list, .rule-list {
+      background: #fff;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .result-row {
+      align-items: center;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 54px;
+      min-height: 62px;
+      padding: 8px 10px;
+    }
+
+    .result-row:first-child, .watch-row:first-child, .event-row:first-child, .rule-row:first-child { border-top: 0; }
+
+    .stock-name {
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .stock-code {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .tag-row { display: flex; gap: 4px; margin-top: 4px; }
+
+    .tag {
+      border-radius: 4px;
+      font-size: 7.5px;
+      font-weight: 900;
+      line-height: 1;
+      padding: 3px 5px;
+    }
+
+    .tag-market { background: #eef1f8; color: #6b7892; }
+    .tag-type { background: #fff3e2; color: #b06d14; }
+    .tag-stock { background: #e7ecff; color: var(--blue); }
+    .tag-inwatch { background: #e7f6ef; color: #2e8f62; }
+
+    .result-quote { text-align: right; }
+
+    .quote {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .quote small {
+      display: block;
+      font-size: 9px;
+      font-weight: 800;
+      margin-top: 1px;
+    }
+
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+
+    .add-button {
+      align-items: center;
+      border: 1px solid var(--blue);
+      border-radius: 6px;
+      color: var(--blue);
+      display: flex;
+      font-size: 9px;
+      font-weight: 900;
+      gap: 4px;
+      height: 28px;
+      justify-content: center;
+    }
+
+    .add-button svg { height: 12px; width: 12px; }
+
+    .add-button.on {
+      background: #e7f6ef;
+      border-color: #cbe8d9;
+      color: #2e8f62;
+    }
+
+    .add-button.off {
+      background: #eef1f8;
+      border-color: #e0e5f0;
+      color: #9aa3b7;
+    }
+
+    .watch-row {
+      align-items: center;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 7px;
+      grid-template-columns: 1fr 70px 60px;
+      min-height: 66px;
+      padding: 8px 10px;
+    }
+
+    .watch-main { min-width: 0; }
+
+    .stock-code-line { color: var(--muted); font-size: 8.5px; font-weight: 700; margin-top: 2px; }
+
+    .status-pill {
+      border-radius: 5px;
+      display: inline-block;
+      font-size: 7.5px;
+      font-weight: 900;
+      line-height: 1;
+      margin-top: 4px;
+      padding: 3px 5px;
+      white-space: nowrap;
+    }
+
+    .state-listening { background: #eef1f8; color: #6b7892; }
+    .state-near { background: #fff3e2; color: #b06d14; }
+    .state-triggered { background: #e7ecff; color: var(--blue); }
+    .state-closed { background: #eef1f8; color: #6b7892; }
+
+    .mini-spark {
+      grid-column: 1 / 3;
+      height: 12px;
+      margin-top: 2px;
+      width: 100%;
+    }
+
+    .row-actions {
+      align-items: center;
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .icon-btn {
+      align-items: center;
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      display: flex;
+      height: 28px;
+      justify-content: center;
+      width: 28px;
+    }
+
+    .icon-btn svg { height: 14px; width: 14px; }
+    .icon-btn.active { background: var(--blue-soft); border-color: #c9d3ff; color: var(--blue); }
+
+    .set-reminder {
+      align-items: center;
+      background: var(--navy);
+      border-radius: 6px;
+      color: var(--lime);
+      display: flex;
+      font-size: 8px;
+      font-weight: 900;
+      gap: 3px;
+      height: 28px;
+      padding: 0 7px;
+      white-space: nowrap;
+    }
+
+    .set-reminder svg { height: 11px; width: 11px; }
+
+    .source-line {
+      color: var(--muted);
+      font-size: 8.5px;
+      font-weight: 700;
+      line-height: 1.6;
+      margin: 9px 2px 0;
+    }
+
+    .source-line b { color: #56647f; }
+
+    .bottom-nav {
+      align-items: center;
+      background: #fff;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .nav-item {
+      align-items: center;
+      color: #9ca5ba;
+      display: flex;
+      flex-direction: column;
+      font-size: 8px;
+      font-weight: 800;
+      gap: 3px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .nav-item svg { height: 17px; width: 17px; }
+
+    .nav-item.active { color: var(--blue); }
+
+    .nav-badge {
+      background: var(--coral);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      height: 9px;
+      position: absolute;
+      right: 28px;
+      top: 4px;
+      width: 9px;
+    }
+
+    .stock-picker {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr 30px;
+      padding: 10px 11px;
+    }
+
+    .picker-name {
+      align-items: baseline;
+      display: flex;
+      gap: 6px;
+    }
+
+    .picker-name b { font-size: 12px; font-weight: 900; }
+    .picker-name span { color: var(--muted); font-size: 8.5px; font-weight: 700; }
+    .picker-quote { color: var(--muted); font-size: 9px; font-weight: 800; margin-top: 3px; }
+
+    .picker-switch {
+      align-items: center;
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      display: flex;
+      height: 28px;
+      justify-content: center;
+      width: 28px;
+    }
+
+    .picker-switch svg { height: 13px; width: 13px; }
+
+    .segmented {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: flex;
+      gap: 2px;
+      padding: 3px;
+    }
+
+    .segment {
+      border-radius: 5px;
+      color: var(--muted);
+      flex: 1;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 8px 2px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .segment.active {
+      background: var(--navy);
+      color: var(--lime);
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      margin-top: 10px;
+      padding: 10px 11px;
+    }
+
+    .card-label {
+      color: var(--muted);
+      font-size: 8.5px;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .condition-row {
+      align-items: center;
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      display: flex;
+      height: 40px;
+      justify-content: space-between;
+      padding: 0 9px;
+    }
+
+    .condition-row b { font-size: 11px; font-weight: 900; }
+
+    .stepper {
+      align-items: center;
+      display: flex;
+      gap: 7px;
+    }
+
+    .step-btn {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      display: flex;
+      height: 24px;
+      justify-content: center;
+      width: 24px;
+    }
+
+    .step-btn svg { height: 12px; width: 12px; }
+
+    .quick-chips { display: flex; gap: 6px; margin-top: 7px; }
+
+    .quick-chip {
+      background: var(--blue-soft);
+      border-radius: 5px;
+      color: var(--blue);
+      font-size: 8px;
+      font-weight: 800;
+      padding: 4px 6px;
+      white-space: nowrap;
+    }
+
+    .preview {
+      align-items: center;
+      background: #eef7f2;
+      border-left: 3px solid var(--down);
+      color: #48605a;
+      display: flex;
+      font-size: 8.5px;
+      font-weight: 800;
+      gap: 6px;
+      margin-top: 9px;
+      padding: 8px 9px;
+    }
+
+    .preview svg { height: 13px; width: 13px; }
+    .preview b { color: #2f7c58; }
+
+    .setting-row {
+      align-items: center;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      min-height: 40px;
+    }
+
+    .setting-row:first-child { border-top: 0; }
+    .setting-row b { font-size: 10px; font-weight: 900; }
+    .setting-row span { color: var(--muted); font-size: 8.5px; font-weight: 700; }
+
+    .toggle {
+      align-items: center;
+      background: var(--blue);
+      border-radius: 10px;
+      display: flex;
+      height: 18px;
+      justify-content: flex-end;
+      padding: 2px;
+      width: 34px;
+    }
+
+    .toggle::after {
+      background: #fff;
+      border-radius: 50%;
+      content: "";
+      height: 14px;
+      width: 14px;
+    }
+
+    .toggle.off {
+      background: #d9dfec;
+      justify-content: flex-start;
+    }
+
+    .primary-button {
+      align-items: center;
+      background: var(--blue);
+      border-radius: 7px;
+      color: #fff;
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      gap: 6px;
+      height: 38px;
+      justify-content: center;
+      margin-top: 11px;
+    }
+
+    .primary-button svg { height: 14px; width: 14px; }
+
+    .secondary-button {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--ink);
+      display: flex;
+      font-size: 10px;
+      font-weight: 900;
+      gap: 6px;
+      height: 38px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .secondary-button svg { height: 14px; width: 14px; }
+
+    .price-hero {
+      background: var(--navy);
+      border-radius: 16px;
+      color: #fff;
+      padding: 13px 14px 12px;
+    }
+
+    .live-badge {
+      align-items: center;
+      color: var(--lime);
+      display: flex;
+      font-size: 9px;
+      font-weight: 900;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .live-dot {
+      background: var(--lime);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(201,243,106,.24);
+      height: 7px;
+      width: 7px;
+    }
+
+    .price-line { align-items: baseline; display: flex; gap: 10px; }
+
+    .price-line strong {
+      font-family: Arial, sans-serif;
+      font-size: 29px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+      height: 33px;
+      line-height: 33px;
+    }
+
+    .price-line span { font-size: 12px; font-weight: 900; }
+    .price-line .change { font-size: 12px; font-weight: 900; }
+
+    .price-grid {
+      border-top: 1px solid rgba(255,255,255,.12);
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 9px;
+      padding-top: 9px;
+    }
+
+    .price-grid div span {
+      color: #aebbd0;
+      display: block;
+      font-size: 8px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .price-grid div b {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+
+    .chart-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 9px 9px 8px;
+    }
+
+    .chart-legend {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+
+    .legend-item {
+      align-items: center;
+      color: #6b7892;
+      display: flex;
+      font-size: 7.5px;
+      font-weight: 800;
+      gap: 4px;
+    }
+
+    .legend-line {
+      border-radius: 2px;
+      height: 3px;
+      width: 13px;
+    }
+
+    .chart-card svg { display: block; height: 130px; width: 100%; }
+
+    .axis-labels {
+      color: #9aa3b7;
+      display: flex;
+      font-size: 7.5px;
+      font-weight: 700;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    .trigger-banner {
+      align-items: center;
+      background: #eef1f8;
+      border-radius: 7px;
+      color: #6b7892;
+      display: flex;
+      font-size: 8.5px;
+      font-weight: 800;
+      gap: 6px;
+      margin-top: 9px;
+      padding: 8px 9px;
+    }
+
+    .trigger-banner svg { height: 13px; width: 13px; }
+
+    .rule-row {
+      align-items: center;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 7px;
+      grid-template-columns: 1fr 56px;
+      min-height: 44px;
+      padding: 7px 10px;
+    }
+
+    .rule-copy b { display: block; font-size: 9.5px; font-weight: 900; }
+    .rule-copy span { color: var(--muted); display: block; font-size: 8px; font-weight: 700; margin-top: 2px; }
+
+    .rule-state {
+      border-radius: 5px;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 4px 6px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .rule-on { background: #e7f6ef; color: #2e8f62; }
+    .rule-off { background: #eef1f8; color: #9aa3b7; }
+
+    .empty-state {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 24px 12px;
+      text-align: center;
+    }
+
+    .empty-state svg { color: var(--blue); height: 26px; width: 26px; }
+    .empty-state b { color: var(--ink); font-size: 11px; font-weight: 900; }
+    .empty-state span { font-size: 8.5px; font-weight: 700; line-height: 1.5; }
+
+    .summary-hero {
+      align-items: center;
+      background: var(--navy);
+      border-radius: 16px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      padding: 13px 14px;
+    }
+
+    .summary-hero strong {
+      display: block;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .summary-hero span {
+      color: #aebbd0;
+      display: block;
+      font-size: 8.5px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .summary-count {
+      align-items: center;
+      background: var(--lime);
+      border-radius: 9px;
+      color: var(--navy);
+      display: flex;
+      font-size: 18px;
+      font-weight: 900;
+      height: 42px;
+      justify-content: center;
+      width: 42px;
+    }
+
+    .event-row {
+      border-top: 1px solid var(--line);
+      padding: 9px 11px;
+    }
+
+    .event-head {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .event-head b { font-size: 10px; font-weight: 900; }
+
+    .push-pill {
+      border-radius: 5px;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 3px 6px;
+      white-space: nowrap;
+    }
+
+    .push-ok { background: #e7f6ef; color: #2e8f62; }
+    .push-app { background: #e7ecff; color: var(--blue); }
+
+    .settings-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      margin-top: 12px;
+      padding: 10px 11px;
+    }
+
+    .settings-head {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .settings-head b { font-size: 11px; font-weight: 900; }
+
+    .settings-head span {
+      background: var(--lime);
+      border-radius: 5px;
+      color: var(--navy);
+      font-size: 8px;
+      font-weight: 900;
+      padding: 3px 7px;
+    }
+
+    .key-row {
+      align-items: center;
+      background: var(--surface-muted);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      display: flex;
+      height: 36px;
+      justify-content: space-between;
+      padding: 0 9px;
+    }
+
+    .key-row span { font-family: Arial, sans-serif; font-size: 10px; font-weight: 900; }
+    .key-row small { color: var(--muted); font-size: 8px; font-weight: 800; }
+
+    .quota-line {
+      color: var(--muted);
+      font-size: 8.5px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .quota-line b { color: var(--blue); }
+
+    .settings-actions { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; margin-top: 8px; }
+
+    .mini-action {
+      align-items: center;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      display: flex;
+      font-size: 9px;
+      font-weight: 900;
+      gap: 5px;
+      height: 32px;
+      justify-content: center;
+    }
+
+    .mini-action svg { height: 12px; width: 12px; }
+    .mini-action.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    .data-card {
+      background: var(--surface-muted);
+      border-left: 3px solid var(--blue);
+      color: var(--muted);
+      font-size: 8.5px;
+      font-weight: 700;
+      line-height: 1.65;
+      margin-top: 10px;
+      padding: 8px 10px;
+    }
+
+    .data-card b { color: #56647f; }
+
+    .disclaimer {
+      color: #9aa3b7;
+      font-size: 7.5px;
+      font-weight: 700;
+      margin: 9px 2px 0;
+      text-align: center;
+    }
+
+    .state-band {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(10, 1fr);
+      margin: 26px auto 0;
+      max-width: 2420px;
+    }
+
+    .state-chip {
+      align-items: center;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(255,255,255,.95);
+      color: #56647f;
+      display: flex;
+      font-size: 10px;
+      font-weight: 800;
+      gap: 7px;
+      min-height: 42px;
+      padding: 0 10px;
+    }
+
+    .state-chip svg { color: var(--blue); flex: 0 0 auto; height: 14px; width: 14px; }
+    .state-chip.ready { color: #2f7c58; }
+    .state-chip.ready svg { color: var(--down); }
+
+    body.standalone {
+      min-width: 430px;
+    }
+
+    body.standalone .board {
+      min-height: 932px;
+      padding: 0;
+      width: 430px;
+    }
+
+    body.standalone .board-header,
+    body.standalone .strategy,
+    body.standalone .state-band {
+      display: none;
+    }
+
+    body.standalone .stage {
+      display: block;
+      margin: 0;
+      max-width: 430px;
+    }
+
+    body.standalone .concept {
+      display: none;
+    }
+
+    body.standalone .concept.active {
+      display: block;
+    }
+
+    body.standalone .phone {
+      border-radius: 42px;
+      height: 932px;
+      max-width: 430px;
+      width: 430px;
+    }
+
+    body.standalone .phone::before {
+      top: 10px;
+    }
+
+    body.standalone .screen {
+      border-radius: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <header class="board-header">
+      <div class="brand">
+        <div class="brand-mark"><i data-lucide="zap"></i></div>
+        <div>
+          <h1 class="board-title">FunBox · 股票交易提醒</h1>
+          <p class="board-subtitle">真实搜索 → 确认自选 → 配置分时提醒 → 双通道推送</p>
+        </div>
+      </div>
+      <div class="version">
+        <strong>产品方案 V2</strong>
+        2026-08-04 · 待评审 · 一期全量
+      </div>
+    </header>
+
+    <section class="stage">
+      <aside class="strategy">
+        <span class="strategy-kicker">Product Strategy</span>
+        <h2>先搜真标的，<br />再配分时提醒</h2>
+        <p class="strategy-lead">用户输入代码或名称后，先看到东方财富 suggest 返回的真实候选列表；确认后加入自选；再从自选选择股票配置价格、涨跌幅、分时均线、量能或 AI 信号提醒。交易时段基于真实分时序列监听，触发后站内 + Server酱 双通道推送。</p>
+
+        <div class="strategy-section">
+          <h3>用户问题</h3>
+          <ul class="problem-list">
+            <li><i data-lucide="circle-alert"></i>同名或跨市场标的容易选错，需要先确认再操作。</li>
+            <li><i data-lucide="circle-alert"></i>搜索后直接被拉入分析，缺少“自选池”这个中间步骤。</li>
+            <li><i data-lucide="circle-alert"></i>提醒规则固定，用户不能按自己的价位和指标设置。</li>
+            <li><i data-lucide="circle-alert"></i>行情不可验证，需要真实来源、更新时间和计算口径。</li>
+          </ul>
+        </div>
+
+        <div class="strategy-section">
+          <h3>方案主线</h3>
+          <div class="approaches">
+            <div class="approach selected">
+              <span class="approach-number">1</span>
+              <div><strong>真实搜索 + 确认</strong><span>东方财富 suggest 候选列表，先展示后加入，不隐式猜测</span></div>
+            </div>
+            <div class="approach">
+              <span class="approach-number">2</span>
+              <div><strong>自选标的池</strong><span>服务端持久化，承载真实行情与提醒状态</span></div>
+            </div>
+            <div class="approach">
+              <span class="approach-number">3</span>
+              <div><strong>分时提醒配置</strong><span>价格 / 涨跌幅 / 分时均线 / 量能 / AI 信号五类规则</span></div>
+            </div>
+            <div class="approach">
+              <span class="approach-number">4</span>
+              <div><strong>真实分时监听</strong><span>交易时段 10 秒级轮询，只用新鲜真实分时触发</span></div>
+            </div>
+            <div class="approach">
+              <span class="approach-number">5</span>
+              <div><strong>双通道提醒</strong><span>站内消息 + Server酱 微信推送</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="strategy-section">
+          <h3>数据原则</h3>
+          <div class="principle-box">
+            <b>禁止假数据 / mock 回退。</b><br />
+            分时只来自真实序列，绝不本地生成；上游不可用即明确报错；stale 只展示不触发；测试 fixture 只进测试，不进生产。
+          </div>
+        </div>
+
+        <div class="strategy-section">
+          <h3>一期范围</h3>
+          <ul class="scope-list">
+            <li>真实标的搜索与结果确认</li>
+            <li>自选管理 + 服务端持久化</li>
+            <li>五类分时提醒规则配置</li>
+            <li>交易时段真实分时监听</li>
+            <li>站内消息 + Server酱 双通道</li>
+            <li>提醒消息中心与 SendKey 设置</li>
+            <li>全量状态与错误覆盖</li>
+          </ul>
+        </div>
+
+        <div class="strategy-outcome">
+          <b>成功标准：</b>搜索先出真实候选；确认加入自选；从自选配置分时提醒；触发后给出精确价格与时刻，微信 + 站内都能看到；全程无演示数据。
+        </div>
+      </aside>
+
+      <div class="concept" data-screen="search">
+        <div class="concept-label">
+          <span class="concept-index">1</span>
+          <strong>搜索真实标的</strong>
+          <span>先结果 · 后自选</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </span>
+            </div>
+            <div class="topbar">
+              <button class="icon-button"><i data-lucide="chevron-left"></i></button>
+              <h2>搜索股票</h2>
+              <button class="icon-button secondary"><i data-lucide="scan-search"></i></button>
+            </div>
+            <div class="scroll">
+              <div class="hero">
+                <div class="hero-eyebrow">REAL SEARCH · EASTMONEY SUGGEST</div>
+                <div class="search-box">
+                  <i data-lucide="search"></i>
+                  <input value="宁德" />
+                  <span class="clear"><i data-lucide="x"></i></span>
+                  <button>搜索</button>
+                </div>
+                <div class="hero-meta">真实标的口径 · 更新时间 08-04 15:00</div>
+              </div>
+
+              <div class="tabs">
+                <span class="tab active">全部<span class="tab-count">8</span></span>
+                <span class="tab">A股</span>
+                <span class="tab">港股</span>
+                <span class="tab">美股</span>
+                <span class="tab">指数</span>
+                <span class="tab">板块</span>
+              </div>
+
+              <div class="section-head">
+                <h3>搜索结果</h3>
+                <span>股票可加入 · 其他类型仅展示</span>
+              </div>
+
+              <div class="result-list">
+                <div class="result-row">
+                  <div>
+                    <div class="stock-name">宁德时代</div>
+                    <div class="stock-code">300750 · 深A</div>
+                    <div class="tag-row">
+                      <span class="tag tag-stock">A股</span>
+                      <span class="tag tag-inwatch">已在自选</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="quote up">395.10<small>+0.18%</small></div>
+                    <div class="add-button on"><i data-lucide="check"></i>已加入</div>
+                  </div>
+                </div>
+                <div class="result-row">
+                  <div>
+                    <div class="stock-name">宁德时代</div>
+                    <div class="stock-code">03750 · 港股</div>
+                    <div class="tag-row"><span class="tag tag-stock">港股</span></div>
+                  </div>
+                  <div>
+                    <div class="quote up">649.50<small>+3.92%</small></div>
+                    <div class="add-button"><i data-lucide="plus"></i>加入自选</div>
+                  </div>
+                </div>
+                <div class="result-row">
+                  <div>
+                    <div class="stock-name">宁德摩通六乙沽A</div>
+                    <div class="stock-code">13112 · 港股权证</div>
+                    <div class="tag-row"><span class="tag tag-type">权证</span></div>
+                  </div>
+                  <div>
+                    <div class="quote down">0.145<small>-13.69%</small></div>
+                    <div class="add-button off"><i data-lucide="ban"></i>不可加入</div>
+                  </div>
+                </div>
+                <div class="result-row">
+                  <div>
+                    <div class="stock-name">宁德麦银七三购A</div>
+                    <div class="stock-code">13187 · 港股权证</div>
+                    <div class="tag-row"><span class="tag tag-type">权证</span></div>
+                  </div>
+                  <div>
+                    <div class="quote up">0.053<small>+26.19%</small></div>
+                    <div class="add-button off"><i data-lucide="ban"></i>不可加入</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="source-line"><b>真实搜索结果：</b>东方财富 suggest · 最新价来自真实行情快照 <b>·</b> 仅供信息参考，不构成投资建议</div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item"><i data-lucide="home"></i>首页</div>
+              <div class="nav-item active"><i data-lucide="layout-grid"></i>工具</div>
+              <div class="nav-item"><i data-lucide="message-square"></i>消息<span class="nav-badge"></span></div>
+              <div class="nav-item"><i data-lucide="user"></i>我的</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-screen="watch">
+        <div class="concept-label">
+          <span class="concept-index">2</span>
+          <strong>自选标的</strong>
+          <span>真实行情 · 提醒入口</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </span>
+            </div>
+            <div class="topbar">
+              <button class="icon-button"><i data-lucide="chevron-left"></i></button>
+              <h2>股票交易提醒</h2>
+              <button class="icon-button secondary"><i data-lucide="bell"></i><span class="unread-dot"></span></button>
+            </div>
+            <div class="scroll">
+              <div class="hero">
+                <div class="hero-eyebrow">REAL MARKET DATA</div>
+                <div class="search-box">
+                  <i data-lucide="search"></i>
+                  <input placeholder="输入代码或名称" />
+                  <button>搜索</button>
+                </div>
+                <div class="hero-meta">已收盘 · 下一交易日自动继续监听</div>
+              </div>
+
+              <div class="section-head">
+                <h3>自选标的</h3>
+                <span>4/10 · 已开启 4 条提醒</span>
+              </div>
+
+              <div class="watch-list">
+                <div class="watch-row">
+                  <div class="watch-main">
+                    <div class="stock-name">贵州茅台</div>
+                    <div class="stock-code-line">600519.SH · 均线 1336.19</div>
+                    <span class="status-pill state-listening">已开启提醒</span>
+                    <svg class="mini-spark" viewBox="0 0 220 12" preserveAspectRatio="none"><polyline points="0,0 22,5 44,11 66,13 88,11 110,14 132,12 154,17 176,19 198,23 220,26" fill="none" stroke="#4b6bff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </div>
+                  <div>
+                    <div class="quote down">1328.36<small>-2.25%</small></div>
+                  </div>
+                  <div class="row-actions">
+                    <span class="icon-btn active"><i data-lucide="bell-ring"></i></span>
+                    <span class="set-reminder"><i data-lucide="sliders-horizontal"></i>设置</span>
+                  </div>
+                </div>
+                <div class="watch-row">
+                  <div class="watch-main">
+                    <div class="stock-name">宁德时代</div>
+                    <div class="stock-code-line">300750.SZ · 均线 395.63</div>
+                    <span class="status-pill state-listening">已开启提醒</span>
+                    <svg class="mini-spark" viewBox="0 0 220 12" preserveAspectRatio="none"><polyline points="0,12 22,10 44,11 66,8 88,9 110,6 132,7 154,4 176,3 198,5 220,2" fill="none" stroke="#21ad78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </div>
+                  <div>
+                    <div class="quote up">395.10<small>+0.18%</small></div>
+                  </div>
+                  <div class="row-actions">
+                    <span class="icon-btn active"><i data-lucide="bell-ring"></i></span>
+                    <span class="set-reminder"><i data-lucide="sliders-horizontal"></i>设置</span>
+                  </div>
+                </div>
+                <div class="watch-row">
+                  <div class="watch-main">
+                    <div class="stock-name">腾讯控股</div>
+                    <div class="stock-code-line">00700.HK · 均线 486.32</div>
+                    <span class="status-pill state-listening">已开启提醒</span>
+                    <svg class="mini-spark" viewBox="0 0 220 12" preserveAspectRatio="none"><polyline points="0,6 22,7 44,5 66,8 88,6 110,9 132,8 154,10 176,9 198,11 220,10" fill="none" stroke="#f1a33b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </div>
+                  <div>
+                    <div class="quote down">487.60<small>-0.57%</small></div>
+                  </div>
+                  <div class="row-actions">
+                    <span class="icon-btn active"><i data-lucide="bell-ring"></i></span>
+                    <span class="set-reminder"><i data-lucide="sliders-horizontal"></i>设置</span>
+                  </div>
+                </div>
+                <div class="watch-row">
+                  <div class="watch-main">
+                    <div class="stock-name">英伟达</div>
+                    <div class="stock-code-line">NVDA · 均线 205.68</div>
+                    <span class="status-pill state-closed">已收盘</span>
+                    <svg class="mini-spark" viewBox="0 0 220 12" preserveAspectRatio="none"><polyline points="0,11 22,10 44,9 66,8 88,6 110,5 132,4 154,3 176,2 198,2 220,1" fill="none" stroke="#ef5962" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </div>
+                  <div>
+                    <div class="quote up">206.64<small>+2.93%</small></div>
+                  </div>
+                  <div class="row-actions">
+                    <span class="icon-btn"><i data-lucide="bell-off"></i></span>
+                    <span class="set-reminder"><i data-lucide="sliders-horizontal"></i>设置</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="source-line"><b>真实行情：</b>东方财富 · 2026-08-04 收盘快照 <b>·</b> 仅展示真实数据，不生成演示分时</div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item"><i data-lucide="home"></i>首页</div>
+              <div class="nav-item active"><i data-lucide="layout-grid"></i>工具</div>
+              <div class="nav-item"><i data-lucide="message-square"></i>消息<span class="nav-badge"></span></div>
+              <div class="nav-item"><i data-lucide="user"></i>我的</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-screen="config">
+        <div class="concept-label">
+          <span class="concept-index">3</span>
+          <strong>分时提醒配置</strong>
+          <span>自选 → 规则 → 生效</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </span>
+            </div>
+            <div class="topbar">
+              <button class="icon-button"><i data-lucide="chevron-left"></i></button>
+              <h2>分时提醒</h2>
+              <button class="icon-button secondary"><i data-lucide="check"></i></button>
+            </div>
+            <div class="scroll">
+              <div class="stock-picker">
+                <div>
+                  <div class="picker-name">
+                    <b>贵州茅台</b>
+                    <span>600519.SH</span>
+                  </div>
+                  <div class="picker-quote">1328.36 <span style="color:#21ad78">-2.25%</span> · 均线 1336.19</div>
+                </div>
+                <span class="picker-switch"><i data-lucide="chevron-down"></i></span>
+              </div>
+
+              <div class="card">
+                <div class="card-label">提醒类型</div>
+                <div class="segmented">
+                  <span class="segment active">价格</span>
+                  <span class="segment">涨跌幅</span>
+                  <span class="segment">分时均线</span>
+                  <span class="segment">量能</span>
+                  <span class="segment">AI信号</span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-label">提醒条件</div>
+                <div class="condition-row">
+                  <b>分时价 向上突破</b>
+                  <div class="stepper">
+                    <span class="step-btn"><i data-lucide="minus"></i></span>
+                    <b style="font-family:Arial">1330.00</b>
+                    <span class="step-btn"><i data-lucide="plus"></i></span>
+                  </div>
+                </div>
+                <div class="quick-chips">
+                  <span class="quick-chip">昨收 1358.98</span>
+                  <span class="quick-chip">日内高 1350.94</span>
+                  <span class="quick-chip">+0.5%</span>
+                  <span class="quick-chip">+1%</span>
+                </div>
+                <div class="preview">
+                  <i data-lucide="circle-check"></i>
+                  <span>真实快照 1328.36 · 未触发 <b>1330.00</b> · 下一交易日生效</span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-label">生效设置</div>
+                <div class="setting-row">
+                  <b>交易时段</b>
+                  <span>09:30-11:30 · 13:00-15:00</span>
+                </div>
+                <div class="setting-row">
+                  <b>有效交易日</b>
+                  <span>5 天</span>
+                </div>
+                <div class="setting-row">
+                  <b>站内消息</b>
+                  <span class="toggle"></span>
+                </div>
+                <div class="setting-row">
+                  <b>Server酱 微信</b>
+                  <span class="toggle"></span>
+                </div>
+              </div>
+
+              <div class="section-head">
+                <h3>该标的提醒规则</h3>
+                <span>3 条</span>
+              </div>
+              <div class="rule-list">
+                <div class="rule-row">
+                  <div class="rule-copy">
+                    <b>价格 · 向上突破 1330.00</b>
+                    <span>生效 5 个交易日 · 站内 + 微信</span>
+                  </div>
+                  <span class="rule-state rule-on">开启</span>
+                </div>
+                <div class="rule-row">
+                  <div class="rule-copy">
+                    <b>价格 · 向下跌破 1320.00</b>
+                    <span>生效 5 个交易日 · 站内 + 微信</span>
+                  </div>
+                  <span class="rule-state rule-on">开启</span>
+                </div>
+                <div class="rule-row">
+                  <div class="rule-copy">
+                    <b>AI 信号 · 分时买入</b>
+                    <span>deepseek-v4-flash 今日规则</span>
+                  </div>
+                  <span class="rule-state rule-on">开启</span>
+                </div>
+              </div>
+
+              <button class="primary-button"><i data-lucide="bell-ring"></i>保存并开启提醒</button>
+              <div class="disclaimer">仅供信息参考，不构成投资建议</div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item"><i data-lucide="home"></i>首页</div>
+              <div class="nav-item active"><i data-lucide="layout-grid"></i>工具</div>
+              <div class="nav-item"><i data-lucide="message-square"></i>消息<span class="nav-badge"></span></div>
+              <div class="nav-item"><i data-lucide="user"></i>我的</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-screen="detail">
+        <div class="concept-label">
+          <span class="concept-index">4</span>
+          <strong>个股分时详情</strong>
+          <span>真实分时 · 提醒状态</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </span>
+            </div>
+            <div class="topbar">
+              <button class="icon-button"><i data-lucide="chevron-left"></i></button>
+              <div class="title-stack">
+                <h2>贵州茅台</h2>
+                <small>600519.SH</small>
+              </div>
+              <button class="icon-button secondary"><i data-lucide="bell-ring"></i></button>
+            </div>
+            <div class="scroll">
+              <div class="price-hero">
+                <div class="live-badge"><span class="live-dot"></span>已收盘 · 真实分时 15:00</div>
+                <div class="price-line">
+                  <strong>1328.36</strong>
+                  <span class="down" style="color:#21ad78">-2.25%</span>
+                  <span class="change" style="color:#21ad78">-30.62</span>
+                </div>
+                <div class="price-grid">
+                  <div><span>今开</span><b>1350.06</b></div>
+                  <div><span>分时均价</span><b>1336.19</b></div>
+                  <div><span>最高</span><b>1350.94</b></div>
+                  <div><span>最低</span><b>1328.36</b></div>
+                </div>
+              </div>
+
+              <div class="section-head">
+                <h3>今日分时 · 真实序列</h3>
+                <span>241 个分钟点 · 08-04</span>
+              </div>
+              <div class="chart-card">
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-line" style="background:#4b6bff"></span>分时价</span>
+                  <span class="legend-item"><span class="legend-line" style="background:#f1a33b"></span>分时均价</span>
+                  <span class="legend-item"><span class="legend-line" style="background:#c9f36a"></span>突破 1330</span>
+                  <span class="legend-item"><span class="legend-line" style="background:#ff5d6c"></span>跌破 1320</span>
+                </div>
+                <svg viewBox="0 0 360 130" preserveAspectRatio="none">
+                  <line x1="0" y1="126" x2="360" y2="126" stroke="#c9f36a" stroke-width="1.5" stroke-dasharray="5 4"/>
+                  <line x1="0" y1="100" x2="360" y2="100" stroke="#ff5d6c" stroke-width="1.5" stroke-dasharray="5 4"/>
+                  <polyline points="0,0 8.8,23.1 17.6,48.4 26.3,65.1 35.1,66 43.9,83.7 52.7,60.3 61.5,56.7 70.2,58.2 79,63.3 87.8,63.7 96.6,68.7 105.4,83 114.1,103.3 122.9,102.2 131.7,99 140.5,84.1 149.3,87.8 158,96.2 166.8,94.3 175.6,102.3 184.4,92 193.2,94.2 202,90.5 210.7,100.5 219.5,105.9 228.3,110.6 237.1,104.1 245.9,109.4 254.6,107.4 263.4,106.8 272.2,103 281,111.3 289.8,112.3 298.5,113.6 307.3,112.7 316.1,111.5 324.9,115.7 333.7,120.1 342.4,125.5 351.2,130 360,130" fill="none" stroke="#4b6bff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  <polyline points="0,0 8.8,24.5 17.6,35.9 26.3,54.8 35.1,65 43.9,70.9 52.7,75.3 61.5,78.8 70.2,79.9 79,80.7 87.8,81.2 96.6,81.8 105.4,83.8 114.1,89.3 122.9,92.7 131.7,93.8 140.5,94.4 149.3,95.1 158,95.7 166.8,96.7 175.6,98.1 184.4,102.9 193.2,103.7 202,104.3 210.7,105.4 219.5,106.6 228.3,108.2 237.1,109.4 245.9,111 254.6,112.2 263.4,112.9 272.2,113.5 281,114.7 289.8,116.1 298.5,117 307.3,118 316.1,119.1 324.9,120.9 333.7,123 342.4,127.1 351.2,130 360,130" fill="none" stroke="#f1a33b" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="axis-labels">
+                  <span>09:30</span><span>10:30</span><span>11:30</span><span>13:00</span><span>14:00</span><span>15:00</span>
+                </div>
+              </div>
+
+              <div class="trigger-banner">
+                <i data-lucide="circle-check"></i>
+                今日未触发 · 0 条提醒命中 · 已收盘
+              </div>
+
+              <div class="section-head">
+                <h3>当前提醒规则</h3>
+                <span>3 条</span>
+              </div>
+              <div class="rule-list">
+                <div class="rule-row">
+                  <div class="rule-copy">
+                    <b>价格 · 向上突破 1330.00</b>
+                    <span>站内 + 微信 · 剩余 4 个交易日</span>
+                  </div>
+                  <span class="rule-state rule-on">开启</span>
+                </div>
+                <div class="rule-row">
+                  <div class="rule-copy">
+                    <b>价格 · 向下跌破 1320.00</b>
+                    <span>站内 + 微信 · 剩余 4 个交易日</span>
+                  </div>
+                  <span class="rule-state rule-on">开启</span>
+                </div>
+                <div class="rule-row">
+                  <div class="rule-copy">
+                    <b>AI 信号 · 分时买入</b>
+                    <span>deepseek-v4-flash · 今日规则</span>
+                  </div>
+                  <span class="rule-state rule-on">开启</span>
+                </div>
+              </div>
+
+              <div class="section-head">
+                <h3>分时提醒时间线</h3>
+                <span>真实触发记录</span>
+              </div>
+              <div class="empty-state">
+                <i data-lucide="clock"></i>
+                <b>今日无触发记录</b>
+                <span>分时数据完整 · 241 个分钟点 · 下一交易日自动监听</span>
+              </div>
+
+              <button class="primary-button"><i data-lucide="sliders-horizontal"></i>编辑提醒</button>
+              <button class="secondary-button"><i data-lucide="pause"></i>暂停全部提醒</button>
+              <div class="data-card">
+                <b>数据与口径：</b>东方财富真实分时序列（trends2/get）；提醒规则由用户配置，AI 信号由 deepseek-v4-flash 生成，盘中由后端信号引擎判定。
+              </div>
+              <div class="disclaimer">仅供信息参考，不构成投资建议</div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item"><i data-lucide="home"></i>首页</div>
+              <div class="nav-item active"><i data-lucide="layout-grid"></i>工具</div>
+              <div class="nav-item"><i data-lucide="message-square"></i>消息<span class="nav-badge"></span></div>
+              <div class="nav-item"><i data-lucide="user"></i>我的</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="concept" data-screen="events">
+        <div class="concept-label">
+          <span class="concept-index">5</span>
+          <strong>提醒与设置</strong>
+          <span>消息中心 · Server酱</span>
+        </div>
+        <div class="phone">
+          <div class="screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span class="status-icons">
+                <i data-lucide="signal"></i>
+                <i data-lucide="wifi"></i>
+                <i data-lucide="battery-full"></i>
+              </span>
+            </div>
+            <div class="topbar">
+              <button class="icon-button"><i data-lucide="chevron-left"></i></button>
+              <div class="title-stack">
+                <h2>提醒消息</h2>
+                <small>站内 · Server酱 双通道</small>
+              </div>
+              <button class="icon-button secondary"><i data-lucide="settings"></i></button>
+            </div>
+            <div class="scroll">
+              <div class="summary-hero">
+                <div>
+                  <strong>今日触发 0 条 · 已开启 6 条提醒</strong>
+                  <span>触发判定只使用不超过 15 秒的真实分时快照</span>
+                </div>
+                <div class="summary-count">0</div>
+              </div>
+
+              <div class="section-head">
+                <h3>提醒记录</h3>
+                <span>站内未读 0</span>
+              </div>
+              <div class="empty-state">
+                <i data-lucide="bell-off"></i>
+                <b>今日无触发记录</b>
+                <span>已开启的提醒将在下一交易日自动监听</span>
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-head">
+                  <b>Server酱 推送设置</b>
+                  <span>已绑定</span>
+                </div>
+                <div class="key-row">
+                  <span>sct****NoMR</span>
+                  <small>仅显示掩码 · SCT / SC3</small>
+                </div>
+                <div class="quota-line">今日已用 <b>0 / 5</b> 条免费额度，超出后仍可收到站内提醒。</div>
+                <div class="settings-actions">
+                  <span class="mini-action primary"><i data-lucide="send"></i>测试推送</span>
+                  <span class="mini-action"><i data-lucide="key"></i>更换 Key</span>
+                </div>
+              </div>
+
+              <div class="data-card">
+                <b>推送状态：</b>站内消息独立留痕；微信推送失败不影响站内提醒，失败原因会记录在设置页。
+              </div>
+              <div class="disclaimer">仅供信息参考，不构成投资建议</div>
+            </div>
+            <div class="bottom-nav">
+              <div class="nav-item"><i data-lucide="home"></i>首页</div>
+              <div class="nav-item active"><i data-lucide="layout-grid"></i>工具</div>
+              <div class="nav-item"><i data-lucide="message-square"></i>消息<span class="nav-badge"></span></div>
+              <div class="nav-item"><i data-lucide="user"></i>我的</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="state-band">
+      <div class="state-chip ready"><i data-lucide="check-circle-2"></i>正常监听</div>
+      <div class="state-chip"><i data-lucide="loader-2"></i>搜索加载中</div>
+      <div class="state-chip"><i data-lucide="search-x"></i>搜索失败</div>
+      <div class="state-chip"><i data-lucide="star"></i>已在自选</div>
+      <div class="state-chip"><i data-lucide="sliders-horizontal"></i>提醒配置中</div>
+      <div class="state-chip"><i data-lucide="activity"></i>分时数据缺失</div>
+      <div class="state-chip"><i data-lucide="calendar-off"></i>休市 / 停牌</div>
+      <div class="state-chip"><i data-lucide="server-off"></i>上游不可用</div>
+      <div class="state-chip"><i data-lucide="bell-ring"></i>提醒已触发</div>
+      <div class="state-chip"><i data-lucide="ban"></i>推送失败</div>
+    </section>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const screen = params.get('screen');
+      if (!screen) return;
+      const concepts = document.querySelectorAll('.concept');
+      concepts.forEach(function (node) {
+        node.classList.toggle('active', node.dataset.screen === screen);
+      });
+      document.body.classList.add('standalone');
+    })();
+  </script>
+</body>
+</html>
