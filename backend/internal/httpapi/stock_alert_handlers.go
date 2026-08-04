@@ -14,12 +14,17 @@ import (
 type stockAlertService interface {
 	Search(context.Context, string) ([]stockalert.Symbol, error)
 	AddWatch(context.Context, string, string) (stockalert.WatchItem, error)
+	AddWatchBySymbol(context.Context, string, stockalert.Symbol) (stockalert.WatchItem, error)
 	ListWatch(context.Context, string) ([]stockalert.WatchItem, error)
 	GetWatch(context.Context, string, string) (stockalert.WatchItem, error)
 	UpdateWatch(context.Context, string, string, *bool, []string) (stockalert.WatchItem, error)
 	DeleteWatch(context.Context, string, string) error
 	Reanalyze(context.Context, string, string) (stockalert.WatchItem, error)
 	Intraday(context.Context, string, string) (stockalert.IntradaySnapshot, error)
+	ListReminders(context.Context, string, string) ([]stockalert.Reminder, error)
+	CreateReminder(context.Context, string, string, stockalert.ReminderInput) (stockalert.Reminder, error)
+	UpdateReminder(context.Context, string, string, stockalert.ReminderInput) (stockalert.Reminder, error)
+	DeleteReminder(context.Context, string, string) error
 	Events(context.Context, string, int) ([]stockalert.AlertEvent, int, error)
 	MarkEventsRead(context.Context, string, []string) error
 	GetSettings(context.Context, string) (stockalert.Settings, error)
@@ -39,6 +44,10 @@ func registerStockAlertRoutes(mux *http.ServeMux, api *Server) {
 	mux.HandleFunc("DELETE /api/v1/stock-alert/watch/{symbol}", api.withAuth(api.withAPIPipeline(api.handleStockAlertDeleteWatch)))
 	mux.HandleFunc("POST /api/v1/stock-alert/watch/{symbol}/reanalyze", api.withAuth(api.withAPIPipeline(api.handleStockAlertReanalyze)))
 	mux.HandleFunc("GET /api/v1/stock-alert/watch/{symbol}/intraday", api.withAuth(api.withAPIPipeline(api.handleStockAlertIntraday)))
+	mux.HandleFunc("GET /api/v1/stock-alert/reminders", api.withAuth(api.withAPIPipeline(api.handleStockAlertListReminders)))
+	mux.HandleFunc("POST /api/v1/stock-alert/reminders", api.withAuth(api.withAPIPipeline(api.handleStockAlertCreateReminder)))
+	mux.HandleFunc("PATCH /api/v1/stock-alert/reminders/{id}", api.withAuth(api.withAPIPipeline(api.handleStockAlertUpdateReminder)))
+	mux.HandleFunc("DELETE /api/v1/stock-alert/reminders/{id}", api.withAuth(api.withAPIPipeline(api.handleStockAlertDeleteReminder)))
 	mux.HandleFunc("GET /api/v1/stock-alert/events", api.withAuth(api.withAPIPipeline(api.handleStockAlertEvents)))
 	mux.HandleFunc("POST /api/v1/stock-alert/events/read", api.withAuth(api.withAPIPipeline(api.handleStockAlertMarkEventsRead)))
 	mux.HandleFunc("GET /api/v1/stock-alert/settings", api.withAuth(api.withAPIPipeline(api.handleStockAlertGetSettings)))
@@ -59,13 +68,20 @@ func (s *Server) handleStockAlertSearch(w http.ResponseWriter, r *http.Request) 
 func (s *Server) handleStockAlertAddWatch(w http.ResponseWriter, r *http.Request) {
 	account, _ := authenticatedUserFromContext(r.Context())
 	var input struct {
-		Query string `json:"query"`
+		Query  string             `json:"query"`
+		Symbol *stockalert.Symbol `json:"symbol"`
 	}
 	if err := decodeJSONBody(r, &input); err != nil {
 		writeRequestBodyError(w, err)
 		return
 	}
-	item, err := s.stockAlertService.AddWatch(r.Context(), account.ID, input.Query)
+	var item stockalert.WatchItem
+	var err error
+	if input.Symbol != nil {
+		item, err = s.stockAlertService.AddWatchBySymbol(r.Context(), account.ID, *input.Symbol)
+	} else {
+		item, err = s.stockAlertService.AddWatch(r.Context(), account.ID, input.Query)
+	}
 	if err != nil {
 		s.writeStockAlertError(w, err)
 		return
@@ -138,6 +154,58 @@ func (s *Server) handleStockAlertIntraday(w http.ResponseWriter, r *http.Request
 		return
 	}
 	writeJSON(w, http.StatusOK, snapshot)
+}
+
+func (s *Server) handleStockAlertListReminders(w http.ResponseWriter, r *http.Request) {
+	account, _ := authenticatedUserFromContext(r.Context())
+	reminders, err := s.stockAlertService.ListReminders(r.Context(), account.ID, strings.TrimSpace(r.URL.Query().Get("symbol")))
+	if err != nil {
+		s.writeStockAlertError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": reminders})
+}
+
+func (s *Server) handleStockAlertCreateReminder(w http.ResponseWriter, r *http.Request) {
+	account, _ := authenticatedUserFromContext(r.Context())
+	var input struct {
+		SymbolCode string                   `json:"symbolCode"`
+		Reminder   stockalert.ReminderInput `json:"reminder"`
+	}
+	if err := decodeJSONBody(r, &input); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	reminder, err := s.stockAlertService.CreateReminder(r.Context(), account.ID, input.SymbolCode, input.Reminder)
+	if err != nil {
+		s.writeStockAlertError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, reminder)
+}
+
+func (s *Server) handleStockAlertUpdateReminder(w http.ResponseWriter, r *http.Request) {
+	account, _ := authenticatedUserFromContext(r.Context())
+	var input stockalert.ReminderInput
+	if err := decodeJSONBody(r, &input); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	reminder, err := s.stockAlertService.UpdateReminder(r.Context(), account.ID, r.PathValue("id"), input)
+	if err != nil {
+		s.writeStockAlertError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, reminder)
+}
+
+func (s *Server) handleStockAlertDeleteReminder(w http.ResponseWriter, r *http.Request) {
+	account, _ := authenticatedUserFromContext(r.Context())
+	if err := s.stockAlertService.DeleteReminder(r.Context(), account.ID, r.PathValue("id")); err != nil {
+		s.writeStockAlertError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
 }
 
 func (s *Server) handleStockAlertEvents(w http.ResponseWriter, r *http.Request) {

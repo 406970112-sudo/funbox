@@ -3,6 +3,8 @@ import type {
   IntradaySnapshot,
   StockAlertEvent,
   StockAlertSettings,
+  StockReminder,
+  StockReminderInput,
   StockSymbol,
   StockWatchItem,
 } from '@/types/stock-alert';
@@ -14,6 +16,7 @@ type ErrorPayload = {
 type SearchResponse = { symbols: StockSymbol[] };
 type WatchListResponse = { items: StockWatchItem[] };
 type EventsResponse = { events: StockAlertEvent[]; unread: number };
+type RemindersResponse = { items: StockReminder[] };
 
 export class StockAlertAPIError extends Error {
   code: string;
@@ -37,6 +40,13 @@ export function searchStockSymbols(token: string, query: string) {
 export function addStockWatch(token: string, query: string) {
   return requestJSON<StockWatchItem>('/api/v1/stock-alert/watch', token, {
     body: JSON.stringify({ query }),
+    method: 'POST',
+  });
+}
+
+export function addStockWatchBySymbol(token: string, symbol: StockSymbol) {
+  return requestJSON<StockWatchItem>('/api/v1/stock-alert/watch', token, {
+    body: JSON.stringify({ symbol }),
     method: 'POST',
   });
 }
@@ -86,6 +96,45 @@ export function fetchStockIntraday(token: string, symbol: string) {
   return requestJSON<IntradaySnapshot>(
     `/api/v1/stock-alert/watch/${encodeURIComponent(symbol)}/intraday`,
     token,
+  );
+}
+
+export function fetchStockReminders(token: string, symbol?: string) {
+  const query = symbol ? `?symbol=${encodeURIComponent(symbol)}` : '';
+  return requestJSON<RemindersResponse>(
+    `/api/v1/stock-alert/reminders${query}`,
+    token,
+  ).then((payload) => payload.items);
+}
+
+export function createStockReminder(
+  token: string,
+  symbolCode: string,
+  input: StockReminderInput,
+) {
+  return requestJSON<StockReminder>('/api/v1/stock-alert/reminders', token, {
+    body: JSON.stringify({ symbolCode, reminder: input }),
+    method: 'POST',
+  });
+}
+
+export function updateStockReminder(
+  token: string,
+  reminderId: string,
+  input: StockReminderInput,
+) {
+  return requestJSON<StockReminder>(
+    `/api/v1/stock-alert/reminders/${encodeURIComponent(reminderId)}`,
+    token,
+    { body: JSON.stringify(input), method: 'PATCH' },
+  );
+}
+
+export function deleteStockReminder(token: string, reminderId: string) {
+  return requestJSON<{ success: boolean }>(
+    `/api/v1/stock-alert/reminders/${encodeURIComponent(reminderId)}`,
+    token,
+    { method: 'DELETE' },
   );
 }
 

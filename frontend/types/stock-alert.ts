@@ -4,6 +4,10 @@ export type StockSymbol = {
   market: string;
   secId: string;
   region: string;
+  typeName?: string;
+  tradable: boolean;
+  latestPrice?: number;
+  changePct?: number;
 };
 
 export type IntradayPoint = {
@@ -81,6 +85,8 @@ export type StockAlertEvent = {
   id: string;
   userId: string;
   watchItemId: string;
+  reminderId?: string;
+  reminderLabel?: string;
   symbolCode: string;
   name: string;
   direction: StockReminderType;
@@ -101,4 +107,33 @@ export type StockAlertSettings = {
   sendKeyBound: boolean;
   reminderEnabled: boolean;
   updatedAt: string;
+};
+
+export type StockReminderRuleType = 'price' | 'change' | 'avg' | 'volume' | 'ai';
+
+export type StockReminder = {
+  id: string;
+  userId: string;
+  watchItemId: string;
+  symbolCode: string;
+  name: string;
+  ruleType: StockReminderRuleType;
+  direction: string;
+  threshold: number;
+  timeRange: string;
+  validDays: number;
+  channels: string[];
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StockReminderInput = {
+  ruleType: StockReminderRuleType;
+  direction: string;
+  threshold: number;
+  timeRange: string;
+  validDays: number;
+  channels: string[];
+  enabled?: boolean;
 };

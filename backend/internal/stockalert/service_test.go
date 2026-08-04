@@ -171,6 +171,77 @@ func TestMonitorTickCreatesOneConfirmedEventPerDay(t *testing.T) {
 	_ = item
 }
 
+func TestCreateReminderPersistsAndListForSymbol(t *testing.T) {
+	upstream := newStockAlertUpstream(t, 90, 30)
+	store := openTestStore(t)
+	service := NewService(testStockAlertConfig(upstream.URL()), store)
+	service.now = func() time.Time { return fixedNow }
+
+	item, err := service.AddWatch(context.Background(), "user-1", "贵州茅台")
+	if err != nil {
+		t.Fatal(err)
+	}
+	reminder, err := service.CreateReminder(context.Background(), "user-1", item.SymbolCode, ReminderInput{
+		RuleType:  ReminderPrice,
+		Direction: "up",
+		Threshold: 100,
+		TimeRange: "09:30-15:00",
+		ValidDays: 5,
+		Channels:  []string{ChannelApp, ChannelServerChan},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reminder.SymbolCode != "600519" || !reminder.Enabled {
+		t.Fatalf("reminder = %#v", reminder)
+	}
+	reminders, err := service.ListReminders(context.Background(), "user-1", "600519")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reminders) != 1 || reminders[0].ID != reminder.ID {
+		t.Fatalf("reminders = %#v", reminders)
+	}
+}
+
+func TestMonitorTickTriggersReminderOncePerDay(t *testing.T) {
+	upstream := newStockAlertUpstream(t, 90, 30)
+	store := openTestStore(t)
+	service := NewService(testStockAlertConfig(upstream.URL()), store)
+	service.now = func() time.Time { return fixedNow }
+
+	item, err := service.AddWatch(context.Background(), "user-1", "贵州茅台")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.CreateReminder(context.Background(), "user-1", item.SymbolCode, ReminderInput{
+		RuleType:  ReminderPrice,
+		Direction: "up",
+		Threshold: 100,
+		TimeRange: "09:30-15:00",
+		ValidDays: 5,
+		Channels:  []string{ChannelApp, ChannelServerChan},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	service.tick(context.Background())
+	events, unread, err := service.Events(context.Background(), "user-1", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || unread != 1 {
+		t.Fatalf("events = %#v unread = %d", events, unread)
+	}
+	if events[0].ReminderID == "" || events[0].Direction != "up" || !strings.Contains(events[0].ReminderLabel, "价格") {
+		t.Fatalf("event = %#v", events[0])
+	}
+	service.tick(context.Background())
+	eventsAgain, _, _ := service.Events(context.Background(), "user-1", 10)
+	if len(eventsAgain) != 1 {
+		t.Fatalf("duplicate reminder events = %d", len(eventsAgain))
+	}
+}
+
 func openTestStore(t *testing.T) *Store {
 	t.Helper()
 	store, err := OpenStore(":memory:", "test-secret")

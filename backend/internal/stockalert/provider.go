@@ -86,6 +86,7 @@ type suggestItem struct {
 	MktNum           string `json:"MktNum"`
 	QuoteID          string `json:"QuoteID"`
 	SecurityTypeName string `json:"SecurityTypeName"`
+	Classify         string `json:"Classify"`
 }
 
 type suggestResponse struct {
@@ -136,12 +137,24 @@ func buildSymbol(item suggestItem) (Symbol, bool) {
 		secID = mkt + "." + code
 	}
 	market, region := marketRegion(mkt, code)
+	tradable := item.Classify == "AStock" || item.Classify == "HK" || item.Classify == "UsStock"
+	if tradable {
+		typeName := strings.TrimSpace(item.SecurityTypeName)
+		for _, keyword := range []string{"购", "沽", "证", "期货", "指数", "板块"} {
+			if strings.Contains(typeName, keyword) {
+				tradable = false
+				break
+			}
+		}
+	}
 	return Symbol{
-		Code:   code,
-		Name:   name,
-		Market: market,
-		SecID:  secID,
-		Region: region,
+		Code:     code,
+		Name:     name,
+		Market:   market,
+		SecID:    secID,
+		Region:   region,
+		TypeName: strings.TrimSpace(item.SecurityTypeName),
+		Tradable: tradable,
 	}, true
 }
 

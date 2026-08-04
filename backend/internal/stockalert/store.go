@@ -109,13 +109,62 @@ func (s *Store) migrate() error {
 			reminder_enabled INTEGER NOT NULL DEFAULT 1,
 			updated_at TEXT NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS stock_reminders (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			watch_item_id TEXT NOT NULL,
+			symbol_code TEXT NOT NULL,
+			name TEXT NOT NULL,
+			rule_type TEXT NOT NULL,
+			direction TEXT NOT NULL,
+			threshold REAL NOT NULL DEFAULT 0,
+			time_range TEXT NOT NULL DEFAULT '09:30-15:00',
+			valid_days INTEGER NOT NULL DEFAULT 5,
+			channels TEXT NOT NULL DEFAULT '["app","serverchan"]',
+			enabled INTEGER NOT NULL DEFAULT 1,
+			created_at TEXT NOT NULL,
+			updated_at TEXT NOT NULL
+		)`,
 	}
 	for _, statement := range statements {
 		if _, err := s.db.ExecContext(context.Background(), statement); err != nil {
 			return fmt.Errorf("migrate stock alert database: %w", err)
 		}
 	}
+	if err := s.ensureColumn("stock_alert_events", "reminder_id", "TEXT"); err != nil {
+		return err
+	}
+	if err := s.ensureColumn("stock_alert_events", "reminder_label", "TEXT"); err != nil {
+		return err
+	}
 	return nil
+}
+
+func (s *Store) ensureColumn(table string, column string, columnType string) error {
+	rows, err := s.db.QueryContext(context.Background(), `PRAGMA table_info(`+table+`)`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid int
+		var name, dataType string
+		var notNull int
+		var defaultValue any
+		var primaryKey int
+		if err := rows.Scan(&cid, &name, &dataType, &notNull, &defaultValue, &primaryKey); err != nil {
+			return err
+		}
+		if name == column {
+			return rows.Err()
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	_, err = s.db.ExecContext(context.Background(),
+		`ALTER TABLE `+table+` ADD COLUMN `+column+` `+columnType)
+	return err
 }
 
 func (s *Store) CountWatchItems(ctx context.Context, userID string) (int, error) {
@@ -229,6 +278,105 @@ func (s *Store) DeleteWatchItem(ctx context.Context, userID string, symbolCode s
 		return err
 	}
 	_, _ = s.db.ExecContext(ctx, `DELETE FROM stock_analyses WHERE watch_item_id = ?`, item.ID)
+	_, _ = s.db.ExecContext(ctx, `DELETE FROM stock_reminders WHERE watch_item_id = ?`, item.ID)
+	return nil
+}
+
+func (s *Store) ListReminders(ctx context.Context, userID string) ([]Reminder, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, user_id, watch_item_id, symbol_code, name, rule_type, direction, threshold,
+			time_range, valid_days, channels, enabled, created_at, updated_at
+		FROM stock_reminders WHERE user_id = ? ORDER BY created_at DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	reminders := make([]Reminder, 0)
+	for rows.Next() {
+		reminder, err := scanReminder(rows)
+		if err != nil {
+			return nil, err
+		}
+		reminders = append(reminders, reminder)
+	}
+	return reminders, rows.Err()
+}
+
+func (s *Store) ListRemindersByWatchItem(ctx context.Context, userID string, watchItemID string) ([]Reminder, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, user_id, watch_item_id, symbol_code, name, rule_type, direction, threshold,
+			time_range, valid_days, channels, enabled, created_at, updated_at
+		FROM stock_reminders WHERE user_id = ? AND watch_item_id = ? ORDER BY created_at DESC`,
+		userID, watchItemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	reminders := make([]Reminder, 0)
+	for rows.Next() {
+		reminder, err := scanReminder(rows)
+		if err != nil {
+			return nil, err
+		}
+		reminders = append(reminders, reminder)
+	}
+	return reminders, rows.Err()
+}
+
+func (s *Store) GetReminder(ctx context.Context, userID string, reminderID string) (Reminder, error) {
+	row := s.db.QueryRowContext(ctx, `
+		SELECT id, user_id, watch_item_id, symbol_code, name, rule_type, direction, threshold,
+			time_range, valid_days, channels, enabled, created_at, updated_at
+		FROM stock_reminders WHERE id = ? AND user_id = ?`, reminderID, userID)
+	reminder, err := scanReminder(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Reminder{}, ErrNotFound
+	}
+	return reminder, err
+}
+
+func (s *Store) CreateReminder(ctx context.Context, reminder Reminder) error {
+	channels, _ := marshalStringList(reminder.Channels)
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO stock_reminders (
+			id, user_id, watch_item_id, symbol_code, name, rule_type, direction, threshold,
+			time_range, valid_days, channels, enabled, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		reminder.ID, reminder.UserID, reminder.WatchItemID, reminder.SymbolCode, reminder.Name,
+		reminder.RuleType, reminder.Direction, reminder.Threshold, reminder.TimeRange,
+		reminder.ValidDays, channels, boolToInt(reminder.Enabled),
+		reminder.CreatedAt.Format(time.RFC3339), reminder.UpdatedAt.Format(time.RFC3339),
+	)
+	return err
+}
+
+func (s *Store) UpdateReminder(ctx context.Context, reminder Reminder) error {
+	channels, _ := marshalStringList(reminder.Channels)
+	_, err := s.db.ExecContext(ctx, `
+		UPDATE stock_reminders SET
+			rule_type = ?, direction = ?, threshold = ?, time_range = ?, valid_days = ?,
+			channels = ?, enabled = ?, updated_at = ?
+		WHERE id = ? AND user_id = ?`,
+		reminder.RuleType, reminder.Direction, reminder.Threshold, reminder.TimeRange,
+		reminder.ValidDays, channels, boolToInt(reminder.Enabled),
+		reminder.UpdatedAt.Format(time.RFC3339), reminder.ID, reminder.UserID,
+	)
+	return err
+}
+
+func (s *Store) DeleteReminder(ctx context.Context, userID string, reminderID string) error {
+	result, err := s.db.ExecContext(ctx,
+		`DELETE FROM stock_reminders WHERE id = ? AND user_id = ?`, reminderID, userID)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrNotFound
+	}
 	return nil
 }
 
@@ -310,12 +458,14 @@ func (s *Store) AddEvent(ctx context.Context, event AlertEvent) error {
 	conditions, _ := marshalStringList(event.Conditions)
 	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO stock_alert_events (
-			id, user_id, watch_item_id, symbol_code, name, direction, signal_strength,
+			id, user_id, watch_item_id, reminder_id, reminder_label, symbol_code, name, direction, signal_strength,
 			trigger_time, trigger_price, avg_price, conditions_json, pushed, pushed_message, read_at, created_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		event.ID,
 		event.UserID,
 		event.WatchItemID,
+		nullableString(event.ReminderID),
+		nullableString(event.ReminderLabel),
 		event.SymbolCode,
 		event.Name,
 		event.Direction,
@@ -330,6 +480,16 @@ func (s *Store) AddEvent(ctx context.Context, event AlertEvent) error {
 		event.CreatedAt.Format(time.RFC3339),
 	)
 	return err
+}
+
+func (s *Store) HasReminderEventOnDate(ctx context.Context, reminderID string, date string) (bool, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT COUNT(*) FROM stock_alert_events
+		WHERE reminder_id = ? AND substr(trigger_time, 1, 10) = ?`,
+		reminderID, date,
+	).Scan(&count)
+	return count > 0, err
 }
 
 func (s *Store) HasConfirmedEventOnDate(ctx context.Context, watchItemID string, direction string, date string) (bool, error) {
@@ -367,7 +527,7 @@ func (s *Store) ListEvents(ctx context.Context, userID string, limit int) ([]Ale
 		limit = 50
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, user_id, watch_item_id, symbol_code, name, direction, signal_strength,
+		SELECT id, user_id, watch_item_id, reminder_id, reminder_label, symbol_code, name, direction, signal_strength,
 			trigger_time, trigger_price, avg_price, conditions_json, pushed, pushed_message, read_at, created_at
 		FROM stock_alert_events WHERE user_id = ? ORDER BY trigger_time DESC LIMIT ?`, userID, limit)
 	if err != nil {
@@ -564,11 +724,13 @@ func scanEvent(row rowScanner) (AlertEvent, error) {
 	var event AlertEvent
 	var conditions string
 	var pushed int
+	var reminderID sql.NullString
+	var reminderLabel sql.NullString
 	var readAt sql.NullString
 	var triggerTime string
 	var createdAt string
 	err := row.Scan(
-		&event.ID, &event.UserID, &event.WatchItemID, &event.SymbolCode, &event.Name,
+		&event.ID, &event.UserID, &event.WatchItemID, &reminderID, &reminderLabel, &event.SymbolCode, &event.Name,
 		&event.Direction, &event.SignalStrength, &triggerTime, &event.TriggerPrice, &event.AvgPrice,
 		&conditions, &pushed, &event.PushedMessage, &readAt, &createdAt,
 	)
@@ -577,6 +739,8 @@ func scanEvent(row rowScanner) (AlertEvent, error) {
 	}
 	event.Conditions = unmarshalStringList(conditions)
 	event.Pushed = pushed == 1
+	event.ReminderID = reminderID.String
+	event.ReminderLabel = reminderLabel.String
 	event.TriggerTime, _ = time.Parse(time.RFC3339, triggerTime)
 	event.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
 	if readAt.Valid && readAt.String != "" {
@@ -584,6 +748,27 @@ func scanEvent(row rowScanner) (AlertEvent, error) {
 		event.ReadAt = &parsed
 	}
 	return event, nil
+}
+
+func scanReminder(row rowScanner) (Reminder, error) {
+	var reminder Reminder
+	var channels string
+	var enabled int
+	var createdAt string
+	var updatedAt string
+	err := row.Scan(
+		&reminder.ID, &reminder.UserID, &reminder.WatchItemID, &reminder.SymbolCode, &reminder.Name,
+		&reminder.RuleType, &reminder.Direction, &reminder.Threshold, &reminder.TimeRange,
+		&reminder.ValidDays, &channels, &enabled, &createdAt, &updatedAt,
+	)
+	if err != nil {
+		return Reminder{}, err
+	}
+	reminder.Channels = unmarshalStringList(channels)
+	reminder.Enabled = enabled == 1
+	reminder.CreatedAt, _ = time.Parse(time.RFC3339, createdAt)
+	reminder.UpdatedAt, _ = time.Parse(time.RFC3339, updatedAt)
+	return reminder, nil
 }
 
 func (w WatchItem) AnalysisIDOrEmpty() string {
@@ -617,6 +802,13 @@ func nullableTime(value *time.Time) any {
 		return nil
 	}
 	return value.Format(time.RFC3339)
+}
+
+func nullableString(value string) any {
+	if value == "" {
+		return nil
+	}
+	return value
 }
 
 func marshalStringList(values []string) (string, error) {

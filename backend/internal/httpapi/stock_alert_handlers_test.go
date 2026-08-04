@@ -15,13 +15,15 @@ import (
 )
 
 type fakeStockAlertService struct {
-	symbols  []stockalert.Symbol
-	watch    stockalert.WatchItem
-	items    []stockalert.WatchItem
-	events   []stockalert.AlertEvent
-	settings stockalert.Settings
-	push     map[string]any
-	err      error
+	symbols   []stockalert.Symbol
+	watch     stockalert.WatchItem
+	items     []stockalert.WatchItem
+	reminders []stockalert.Reminder
+	reminder  stockalert.Reminder
+	events    []stockalert.AlertEvent
+	settings  stockalert.Settings
+	push      map[string]any
+	err       error
 }
 
 func (f *fakeStockAlertService) Search(_ context.Context, _ string) ([]stockalert.Symbol, error) {
@@ -29,6 +31,10 @@ func (f *fakeStockAlertService) Search(_ context.Context, _ string) ([]stockaler
 }
 
 func (f *fakeStockAlertService) AddWatch(_ context.Context, _ string, _ string) (stockalert.WatchItem, error) {
+	return f.watch, f.err
+}
+
+func (f *fakeStockAlertService) AddWatchBySymbol(_ context.Context, _ string, _ stockalert.Symbol) (stockalert.WatchItem, error) {
 	return f.watch, f.err
 }
 
@@ -54,6 +60,22 @@ func (f *fakeStockAlertService) Reanalyze(_ context.Context, _ string, _ string)
 
 func (f *fakeStockAlertService) Intraday(_ context.Context, _ string, _ string) (stockalert.IntradaySnapshot, error) {
 	return stockalert.IntradaySnapshot{}, f.err
+}
+
+func (f *fakeStockAlertService) ListReminders(_ context.Context, _ string, _ string) ([]stockalert.Reminder, error) {
+	return f.reminders, f.err
+}
+
+func (f *fakeStockAlertService) CreateReminder(_ context.Context, _ string, _ string, _ stockalert.ReminderInput) (stockalert.Reminder, error) {
+	return f.reminder, f.err
+}
+
+func (f *fakeStockAlertService) UpdateReminder(_ context.Context, _ string, _ string, _ stockalert.ReminderInput) (stockalert.Reminder, error) {
+	return f.reminder, f.err
+}
+
+func (f *fakeStockAlertService) DeleteReminder(_ context.Context, _ string, _ string) error {
+	return f.err
 }
 
 func (f *fakeStockAlertService) Events(_ context.Context, _ string, _ int) ([]stockalert.AlertEvent, int, error) {
@@ -102,6 +124,21 @@ func TestStockAlertAddWatchHandlerMapsAnalysisError(t *testing.T) {
 	}
 }
 
+func TestStockAlertAddWatchBySymbolHandler(t *testing.T) {
+	api := &Server{stockAlertService: &fakeStockAlertService{
+		watch: stockalert.WatchItem{SymbolCode: "300750", Name: "宁德时代", Market: "SZ", SignalStatus: stockalert.SignalListening},
+	}}
+	response := httptest.NewRecorder()
+	api.handleStockAlertAddWatch(response, stockAlertTestRequest(
+		http.MethodPost,
+		"/api/v1/stock-alert/watch",
+		`{"symbol":{"code":"300750","name":"宁德时代","market":"SZ","secId":"0.300750"}}`,
+	))
+	if response.Code != http.StatusCreated || !strings.Contains(response.Body.String(), "300750") {
+		t.Fatalf("status/body = %d %s", response.Code, response.Body.String())
+	}
+}
+
 func TestStockAlertErrorIncludesUpstreamStage(t *testing.T) {
 	api := &Server{stockAlertService: &fakeStockAlertService{
 		err: fmt.Errorf("search upstream: %w", stockalert.ErrSourceUnavailable),
@@ -110,6 +147,39 @@ func TestStockAlertErrorIncludesUpstreamStage(t *testing.T) {
 	api.handleStockAlertSearch(response, stockAlertTestRequest(http.MethodGet, "/api/v1/stock-alert/search?q=600519", ""))
 	if response.Code != http.StatusBadGateway || !strings.Contains(response.Body.String(), "search upstream") {
 		t.Fatalf("status/body = %d %s", response.Code, response.Body.String())
+	}
+}
+
+func TestStockAlertReminderHandlers(t *testing.T) {
+	reminder := stockalert.Reminder{
+		ID:         "r1",
+		SymbolCode: "600519",
+		Name:       "贵州茅台",
+		RuleType:   stockalert.ReminderPrice,
+		Direction:  "up",
+		Threshold:  1330,
+		Channels:   []string{stockalert.ChannelApp, stockalert.ChannelServerChan},
+		Enabled:    true,
+	}
+	api := &Server{stockAlertService: &fakeStockAlertService{
+		reminders: []stockalert.Reminder{reminder},
+		reminder:  reminder,
+	}}
+
+	listResponse := httptest.NewRecorder()
+	api.handleStockAlertListReminders(listResponse, stockAlertTestRequest(http.MethodGet, "/api/v1/stock-alert/reminders", ""))
+	if listResponse.Code != http.StatusOK || !strings.Contains(listResponse.Body.String(), "r1") {
+		t.Fatalf("list status/body = %d %s", listResponse.Code, listResponse.Body.String())
+	}
+
+	createResponse := httptest.NewRecorder()
+	api.handleStockAlertCreateReminder(createResponse, stockAlertTestRequest(
+		http.MethodPost,
+		"/api/v1/stock-alert/reminders",
+		`{"symbolCode":"600519","reminder":{"ruleType":"price","direction":"up","threshold":1330,"channels":["app","serverchan"]}}`,
+	))
+	if createResponse.Code != http.StatusCreated || !strings.Contains(createResponse.Body.String(), "600519") {
+		t.Fatalf("create status/body = %d %s", createResponse.Code, createResponse.Body.String())
 	}
 }
 

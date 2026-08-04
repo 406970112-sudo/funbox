@@ -55,7 +55,12 @@ func NewService(cfg Config, store *Store) *Service {
 }
 
 func (s *Service) Search(ctx context.Context, query string) ([]Symbol, error) {
-	return s.provider.SearchSymbols(ctx, query)
+	symbols, err := s.provider.SearchSymbols(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	s.enrichSearchQuotes(ctx, symbols)
+	return symbols, nil
 }
 
 func (s *Service) AddWatch(ctx context.Context, userID string, query string) (WatchItem, error) {
@@ -67,7 +72,21 @@ func (s *Service) AddWatch(ctx context.Context, userID string, query string) (Wa
 	if err != nil {
 		return WatchItem{}, err
 	}
-	symbol := symbols[0]
+	return s.addWatch(ctx, userID, symbols[0])
+}
+
+func (s *Service) AddWatchBySymbol(ctx context.Context, userID string, symbol Symbol) (WatchItem, error) {
+	symbol.Code = strings.TrimSpace(symbol.Code)
+	symbol.Name = strings.TrimSpace(symbol.Name)
+	symbol.Market = strings.TrimSpace(symbol.Market)
+	symbol.SecID = strings.TrimSpace(symbol.SecID)
+	if symbol.Code == "" || symbol.Name == "" || symbol.Market == "" || symbol.SecID == "" {
+		return WatchItem{}, fmt.Errorf("%w: symbol fields required", ErrInvalidInput)
+	}
+	return s.addWatch(ctx, userID, symbol)
+}
+
+func (s *Service) addWatch(ctx context.Context, userID string, symbol Symbol) (WatchItem, error) {
 	count, err := s.store.CountWatchItems(ctx, userID)
 	if err != nil {
 		return WatchItem{}, err
@@ -79,9 +98,6 @@ func (s *Service) AddWatch(ctx context.Context, userID string, query string) (Wa
 	used, err := s.store.CountAnalysesToday(ctx, userID, today)
 	if err != nil {
 		return WatchItem{}, err
-	}
-	if used >= s.cfg.AnalysisDailyLimit {
-		return WatchItem{}, ErrAnalysisLimitReached
 	}
 
 	klines, err := s.getKlines(ctx, symbol.SecID, symbol.Code, symbol.Market)
@@ -103,12 +119,18 @@ func (s *Service) AddWatch(ctx context.Context, userID string, query string) (Wa
 	if err != nil {
 		return WatchItem{}, err
 	}
-	rule, err := s.deepseek.Analyze(ctx, features)
-	if err != nil {
-		return WatchItem{}, err
+	var rule SignalRule
+	var analysisErr error
+	if used < s.cfg.AnalysisDailyLimit {
+		rule, analysisErr = s.deepseek.Analyze(ctx, features)
+	} else {
+		analysisErr = ErrAnalysisLimitReached
 	}
 
-	validUntil := tradingDaysFrom(s.now(), rule.ValidTradingDays)
+	validUntil := ""
+	if analysisErr == nil && rule.ValidTradingDays > 0 {
+		validUntil = tradingDaysFrom(s.now(), rule.ValidTradingDays)
+	}
 	item, err := s.store.GetWatchItem(ctx, userID, symbol.Code)
 	if errors.Is(err, ErrNotFound) {
 		item = WatchItem{
@@ -129,16 +151,45 @@ func (s *Service) AddWatch(ctx context.Context, userID string, query string) (Wa
 	} else if err != nil {
 		return WatchItem{}, err
 	}
-	analysis := Analysis{
-		WatchItemID: item.ID,
-		Model:       s.deepseek.Model,
-		DataEndDate: features.DataEndDate,
-		Rule:        rule,
-	}
-	if err := s.store.AttachAnalysis(ctx, item.ID, analysis, validUntil); err != nil {
-		return WatchItem{}, err
+	if analysisErr == nil {
+		analysis := Analysis{
+			WatchItemID: item.ID,
+			Model:       s.deepseek.Model,
+			DataEndDate: features.DataEndDate,
+			Rule:        rule,
+		}
+		if err := s.store.AttachAnalysis(ctx, item.ID, analysis, validUntil); err != nil {
+			return WatchItem{}, err
+		}
 	}
 	return s.GetWatch(ctx, userID, symbol.Code)
+}
+
+func (s *Service) enrichSearchQuotes(ctx context.Context, symbols []Symbol) {
+	limit := len(symbols)
+	if limit > 8 {
+		limit = 8
+	}
+	workers := make(chan struct{}, 4)
+	var wg sync.WaitGroup
+	for index := 0; index < limit; index++ {
+		if !symbols[index].Tradable {
+			continue
+		}
+		wg.Add(1)
+		workers <- struct{}{}
+		go func(symbol *Symbol) {
+			defer wg.Done()
+			defer func() { <-workers }()
+			quote, err := s.fetchQuoteWithFallback(ctx, symbol.SecID, symbol.Code, symbol.Market)
+			if err != nil {
+				return
+			}
+			symbol.LatestPrice = quote.Price
+			symbol.ChangePct = quote.ChangePct
+		}(&symbols[index])
+	}
+	wg.Wait()
 }
 
 func (s *Service) ListWatch(ctx context.Context, userID string) ([]WatchItem, error) {
@@ -183,6 +234,76 @@ func (s *Service) UpdateWatch(ctx context.Context, userID string, symbolCode str
 		return WatchItem{}, err
 	}
 	return s.GetWatch(ctx, userID, symbolCode)
+}
+
+func (s *Service) ListReminders(ctx context.Context, userID string, symbolCode string) ([]Reminder, error) {
+	if symbolCode != "" {
+		item, err := s.store.GetWatchItem(ctx, userID, symbolCode)
+		if err != nil {
+			return nil, err
+		}
+		return s.store.ListRemindersByWatchItem(ctx, userID, item.ID)
+	}
+	return s.store.ListReminders(ctx, userID)
+}
+
+func (s *Service) CreateReminder(ctx context.Context, userID string, symbolCode string, input ReminderInput) (Reminder, error) {
+	item, err := s.store.GetWatchItem(ctx, userID, symbolCode)
+	if err != nil {
+		return Reminder{}, err
+	}
+	if input.RuleType == ReminderAI {
+		refreshed, reanalyzeErr := s.Reanalyze(ctx, userID, symbolCode)
+		if reanalyzeErr != nil {
+			return Reminder{}, reanalyzeErr
+		}
+		item = refreshed
+	}
+	reminder, err := normalizeReminderInput(input)
+	if err != nil {
+		return Reminder{}, err
+	}
+	now := s.now()
+	reminder.ID = uuid.NewString()
+	reminder.UserID = userID
+	reminder.WatchItemID = item.ID
+	reminder.SymbolCode = item.SymbolCode
+	reminder.Name = item.Name
+	reminder.CreatedAt = now
+	reminder.UpdatedAt = now
+	if err := s.store.CreateReminder(ctx, reminder); err != nil {
+		return Reminder{}, err
+	}
+	return reminder, nil
+}
+
+func (s *Service) UpdateReminder(ctx context.Context, userID string, reminderID string, input ReminderInput) (Reminder, error) {
+	current, err := s.store.GetReminder(ctx, userID, reminderID)
+	if err != nil {
+		return Reminder{}, err
+	}
+	next, err := normalizeReminderInput(input)
+	if err != nil {
+		return Reminder{}, err
+	}
+	current.RuleType = next.RuleType
+	current.Direction = next.Direction
+	current.Threshold = next.Threshold
+	current.TimeRange = next.TimeRange
+	current.ValidDays = next.ValidDays
+	current.Channels = next.Channels
+	if input.Enabled != nil {
+		current.Enabled = *input.Enabled
+	}
+	current.UpdatedAt = s.now()
+	if err := s.store.UpdateReminder(ctx, current); err != nil {
+		return Reminder{}, err
+	}
+	return current, nil
+}
+
+func (s *Service) DeleteReminder(ctx context.Context, userID string, reminderID string) error {
+	return s.store.DeleteReminder(ctx, userID, reminderID)
 }
 
 func (s *Service) DeleteWatch(ctx context.Context, userID string, symbolCode string) error {
@@ -346,6 +467,59 @@ func (s *Service) tick(ctx context.Context) {
 		}
 		features, err := BuildFeatures(klines, intraday, quote)
 		if err != nil {
+			continue
+		}
+		reminders, _ := s.store.ListRemindersByWatchItem(ctx, item.UserID, item.ID)
+		hasCustomReminder := false
+		for _, reminder := range reminders {
+			if reminder.Enabled {
+				hasCustomReminder = true
+			}
+		}
+		for _, reminder := range reminders {
+			if !reminder.Enabled || !containsString(reminder.Channels, ChannelApp) {
+				continue
+			}
+			date := s.now().In(shanghaiLocation()).Format("2006-01-02")
+			duplicate, _ := s.store.HasReminderEventOnDate(ctx, reminder.ID, date)
+			if duplicate {
+				continue
+			}
+			triggered, conditions := s.evaluateReminder(reminder, item, features, quote)
+			if !triggered {
+				continue
+			}
+			event := AlertEvent{
+				ID:             uuid.NewString(),
+				UserID:         item.UserID,
+				WatchItemID:    item.ID,
+				ReminderID:     reminder.ID,
+				ReminderLabel:  reminderLabel(reminder),
+				SymbolCode:     item.SymbolCode,
+				Name:           item.Name,
+				Direction:      reminder.Direction,
+				SignalStrength: StrengthConfirmed,
+				TriggerTime:    s.now(),
+				TriggerPrice:   quote.Price,
+				AvgPrice:       features.IntradayAvg,
+				Conditions:     conditions,
+				CreatedAt:      s.now(),
+			}
+			if err := s.store.AddEvent(ctx, event); err != nil {
+				continue
+			}
+			if !containsString(reminder.Channels, ChannelServerChan) {
+				continue
+			}
+			sendKey, err := s.resolveSendKey(ctx, item.UserID)
+			if err != nil || sendKey == "" {
+				_ = s.store.UpdateEventPush(ctx, event.ID, false, "sendkey_not_configured")
+				continue
+			}
+			ok, message := s.pushReminder(ctx, sendKey, item, reminder, quote, features)
+			_ = s.store.UpdateEventPush(ctx, event.ID, ok, message)
+		}
+		if hasCustomReminder {
 			continue
 		}
 		direction, strength, triggered := evaluateSignal(item, features, quote)
@@ -570,6 +744,155 @@ func evaluateSignal(item WatchItem, features Features, quote Quote) (string, str
 	default:
 		return "", "", false
 	}
+}
+
+func (s *Service) evaluateReminder(reminder Reminder, item WatchItem, features Features, quote Quote) (bool, []string) {
+	switch reminder.RuleType {
+	case ReminderPrice:
+		if reminder.Direction == "up" && quote.Price >= reminder.Threshold {
+			return true, []string{fmt.Sprintf("分时价达到 %.2f", reminder.Threshold)}
+		}
+		if reminder.Direction == "down" && quote.Price <= reminder.Threshold {
+			return true, []string{fmt.Sprintf("分时价跌破 %.2f", reminder.Threshold)}
+		}
+	case ReminderChange:
+		if reminder.Direction == "up" && features.ChangePct >= reminder.Threshold {
+			return true, []string{fmt.Sprintf("涨跌幅达到 %.2f%%", reminder.Threshold)}
+		}
+		if reminder.Direction == "down" && features.ChangePct <= reminder.Threshold {
+			return true, []string{fmt.Sprintf("涨跌幅跌破 %.2f%%", reminder.Threshold)}
+		}
+	case ReminderAvg:
+		if reminder.Direction == "up" && features.IntradayAboveAvg {
+			return true, []string{"分时价位于分时均价上方"}
+		}
+		if reminder.Direction == "down" && !features.IntradayAboveAvg {
+			return true, []string{"分时价位于分时均价下方"}
+		}
+	case ReminderVolume:
+		if reminder.Direction == "up" && features.VolumeRatio >= reminder.Threshold {
+			return true, []string{fmt.Sprintf("量比达到 %.2f", reminder.Threshold)}
+		}
+		if reminder.Direction == "down" && features.VolumeRatio <= reminder.Threshold {
+			return true, []string{fmt.Sprintf("量比跌破 %.2f", reminder.Threshold)}
+		}
+	case ReminderAI:
+		if item.Analysis == nil {
+			return false, nil
+		}
+		direction, strength, triggered := evaluateSignal(item, features, quote)
+		if triggered && strength == StrengthConfirmed && direction == reminder.Direction {
+			return true, signalConditions(item.Analysis.Rule, direction)
+		}
+	}
+	return false, nil
+}
+
+func normalizeReminderInput(input ReminderInput) (Reminder, error) {
+	input.RuleType = strings.TrimSpace(input.RuleType)
+	input.Direction = strings.TrimSpace(input.Direction)
+	input.TimeRange = strings.TrimSpace(input.TimeRange)
+	allowedTypes := map[string]bool{
+		ReminderPrice: true, ReminderChange: true, ReminderAvg: true,
+		ReminderVolume: true, ReminderAI: true,
+	}
+	if !allowedTypes[input.RuleType] {
+		return Reminder{}, fmt.Errorf("%w: invalid reminder type", ErrInvalidInput)
+	}
+	switch input.RuleType {
+	case ReminderPrice, ReminderChange, ReminderAvg, ReminderVolume:
+		if input.Direction != "up" && input.Direction != "down" {
+			return Reminder{}, fmt.Errorf("%w: reminder direction must be up/down", ErrInvalidInput)
+		}
+	case ReminderAI:
+		if input.Direction != "buy" && input.Direction != "sell" && input.Direction != "stop" {
+			return Reminder{}, fmt.Errorf("%w: ai direction must be buy/sell/stop", ErrInvalidInput)
+		}
+	}
+	if input.RuleType == ReminderPrice || input.RuleType == ReminderVolume {
+		if input.Threshold <= 0 {
+			return Reminder{}, fmt.Errorf("%w: threshold must be positive", ErrInvalidInput)
+		}
+	}
+	if input.TimeRange == "" {
+		input.TimeRange = "09:30-15:00"
+	}
+	if input.ValidDays <= 0 {
+		input.ValidDays = 5
+	}
+	if input.ValidDays > 30 {
+		return Reminder{}, fmt.Errorf("%w: valid days cannot exceed 30", ErrInvalidInput)
+	}
+	if len(input.Channels) == 0 {
+		input.Channels = []string{ChannelApp, ChannelServerChan}
+	}
+	channels := make([]string, 0, len(input.Channels))
+	for _, channel := range input.Channels {
+		channel = strings.TrimSpace(channel)
+		if channel == ChannelApp || channel == ChannelServerChan {
+			channels = append(channels, channel)
+		}
+	}
+	if len(channels) == 0 {
+		return Reminder{}, fmt.Errorf("%w: reminder channel required", ErrInvalidInput)
+	}
+	if !containsString(channels, ChannelApp) {
+		channels = append([]string{ChannelApp}, channels...)
+	}
+	enabled := true
+	if input.Enabled != nil {
+		enabled = *input.Enabled
+	}
+	return Reminder{
+		RuleType:  input.RuleType,
+		Direction: input.Direction,
+		Threshold: input.Threshold,
+		TimeRange: input.TimeRange,
+		ValidDays: input.ValidDays,
+		Channels:  channels,
+		Enabled:   enabled,
+	}, nil
+}
+
+func reminderLabel(reminder Reminder) string {
+	typeLabels := map[string]string{
+		ReminderPrice:  "价格",
+		ReminderChange: "涨跌幅",
+		ReminderAvg:    "分时均线",
+		ReminderVolume: "量能",
+		ReminderAI:     "AI信号",
+	}
+	if reminder.RuleType == ReminderAI {
+		return fmt.Sprintf("%s · %s", typeLabels[reminder.RuleType], directionLabel(reminder.Direction))
+	}
+	action := "达到"
+	if reminder.Direction == "up" {
+		action = "向上突破"
+	} else if reminder.Direction == "down" {
+		action = "向下跌破"
+	}
+	if reminder.RuleType == ReminderAvg {
+		return fmt.Sprintf("%s · %s", typeLabels[reminder.RuleType], action)
+	}
+	return fmt.Sprintf("%s · %s %.2f", typeLabels[reminder.RuleType], action, reminder.Threshold)
+}
+
+func (s *Service) pushReminder(ctx context.Context, sendKey string, item WatchItem, reminder Reminder, quote Quote, features Features) (bool, string) {
+	title := fmt.Sprintf("FunBox提醒 | %s(%s) %s触发", item.Name, item.SymbolCode, reminderLabel(reminder))
+	desp := fmt.Sprintf(
+		"**%s %s**\n\n- 触发时刻：%s\n- 最新分时价：%.2f\n- 分时均价：%.2f\n- 条件：%s\n\n仅供信息参考，不构成投资建议。",
+		item.Name, reminderLabel(reminder), s.now().Format("2006-01-02 15:04:05"),
+		quote.Price, features.IntradayAvg, reminderLabel(reminder),
+	)
+	short := fmt.Sprintf("%s %s %.2f", item.Name, reminderLabel(reminder), quote.Price)
+	response, err := s.pushServerChan(ctx, sendKey, title, desp, short)
+	if err != nil {
+		return false, err.Error()
+	}
+	if response.Code != 0 {
+		return false, fmt.Sprintf("serverchan code=%d %s", response.Code, response.Message)
+	}
+	return true, "pushed"
 }
 
 func signalConditions(rule SignalRule, direction string) []string {

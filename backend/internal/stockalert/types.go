@@ -19,11 +19,15 @@ var (
 )
 
 type Symbol struct {
-	Code   string `json:"code"`
-	Name   string `json:"name"`
-	Market string `json:"market"`
-	SecID  string `json:"secId"`
-	Region string `json:"region"`
+	Code        string  `json:"code"`
+	Name        string  `json:"name"`
+	Market      string  `json:"market"`
+	SecID       string  `json:"secId"`
+	Region      string  `json:"region"`
+	TypeName    string  `json:"typeName,omitempty"`
+	Tradable    bool    `json:"tradable"`
+	LatestPrice float64 `json:"latestPrice,omitempty"`
+	ChangePct   float64 `json:"changePct,omitempty"`
 }
 
 type IntradayPoint struct {
@@ -143,6 +147,8 @@ type AlertEvent struct {
 	ID             string     `json:"id"`
 	UserID         string     `json:"userId"`
 	WatchItemID    string     `json:"watchItemId"`
+	ReminderID     string     `json:"reminderId,omitempty"`
+	ReminderLabel  string     `json:"reminderLabel,omitempty"`
 	SymbolCode     string     `json:"symbolCode"`
 	Name           string     `json:"name"`
 	Direction      string     `json:"direction"`
@@ -168,6 +174,46 @@ type Settings struct {
 type SearchResult struct {
 	Symbols []Symbol `json:"symbols"`
 }
+
+type Reminder struct {
+	ID          string    `json:"id"`
+	UserID      string    `json:"userId"`
+	WatchItemID string    `json:"watchItemId"`
+	SymbolCode  string    `json:"symbolCode"`
+	Name        string    `json:"name"`
+	RuleType    string    `json:"ruleType"`
+	Direction   string    `json:"direction"`
+	Threshold   float64   `json:"threshold"`
+	TimeRange   string    `json:"timeRange"`
+	ValidDays   int       `json:"validDays"`
+	Channels    []string  `json:"channels"`
+	Enabled     bool      `json:"enabled"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+type ReminderInput struct {
+	RuleType  string   `json:"ruleType"`
+	Direction string   `json:"direction"`
+	Threshold float64  `json:"threshold"`
+	TimeRange string   `json:"timeRange"`
+	ValidDays int      `json:"validDays"`
+	Channels  []string `json:"channels"`
+	Enabled   *bool    `json:"enabled"`
+}
+
+const (
+	ReminderPrice  = "price"
+	ReminderChange = "change"
+	ReminderAvg    = "avg"
+	ReminderVolume = "volume"
+	ReminderAI     = "ai"
+)
+
+const (
+	ChannelApp        = "app"
+	ChannelServerChan = "serverchan"
+)
 
 const (
 	SignalListening     = "listening"

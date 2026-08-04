@@ -16,11 +16,15 @@ import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import {
+  addStockWatchBySymbol,
   addStockWatch,
+  createStockReminder,
+  deleteStockReminder,
   deleteStockWatch,
   fetchStockAlertEvents,
   fetchStockAlertSettings,
   fetchStockIntraday,
+  fetchStockReminders,
   fetchStockWatch,
   fetchStockWatchList,
   getStockAlertErrorMessage,
@@ -29,6 +33,7 @@ import {
   saveStockAlertSettings,
   searchStockSymbols,
   testStockPush,
+  updateStockReminder,
   updateStockWatch,
 } from '@/lib/stock-alert-api';
 import {
@@ -46,6 +51,9 @@ import type {
   IntradaySnapshot,
   StockAlertEvent,
   StockAlertSettings,
+  StockReminder,
+  StockReminderInput,
+  StockReminderRuleType,
   StockReminderType,
   StockSymbol,
   StockWatchItem,
@@ -83,15 +91,22 @@ export function StockTradeAlertScreen() {
   const { colorScheme, colors } = useAppTheme();
   const [view, setView] = useState<ViewId>('watch');
   const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<StockSymbol[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [items, setItems] = useState<StockWatchItem[]>([]);
   const [events, setEvents] = useState<StockAlertEvent[]>([]);
   const [unread, setUnread] = useState(0);
   const [settings, setSettings] = useState<StockAlertSettings | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [reminderSymbol, setReminderSymbol] = useState<string | null>(null);
+  const [reminders, setReminders] = useState<StockReminder[]>([]);
+  const [detailReminders, setDetailReminders] = useState<StockReminder[]>([]);
   const [detail, setDetail] = useState<StockWatchItem | null>(null);
   const [intraday, setIntraday] = useState<IntradaySnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSavingReminder, setIsSavingReminder] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sendKey, setSendKey] = useState('');
@@ -101,7 +116,7 @@ export function StockTradeAlertScreen() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ animated: false, y: 0 });
     if (typeof window !== 'undefined') window.scrollTo({ behavior: 'auto', left: 0, top: 0 });
-  }, [view, selectedSymbol]);
+  }, [view, selectedSymbol, reminderSymbol]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -148,6 +163,7 @@ export function StockTradeAlertScreen() {
     if (!accessToken || !selectedSymbol) {
       setDetail(null);
       setIntraday(null);
+      setDetailReminders([]);
       return;
     }
     const token = accessToken;
@@ -155,12 +171,14 @@ export function StockTradeAlertScreen() {
     const controller = new AbortController();
     async function loadDetail() {
       try {
-        const [nextDetail, nextIntraday] = await Promise.all([
+        const [nextDetail, nextIntraday, nextReminders] = await Promise.all([
           fetchStockWatch(token, symbol),
           fetchStockIntraday(token, symbol),
+          fetchStockReminders(token, symbol),
         ]);
         setDetail(nextDetail);
         setIntraday(nextIntraday);
+        setDetailReminders(nextReminders);
       } catch (loadError) {
         if (!controller.signal.aborted) setError(getStockAlertErrorMessage(loadError));
       }
@@ -170,10 +188,12 @@ export function StockTradeAlertScreen() {
       Promise.all([
         fetchStockWatch(token, symbol),
         fetchStockIntraday(token, symbol),
+        fetchStockReminders(token, symbol),
       ])
-        .then(([nextDetail, nextIntraday]) => {
+        .then(([nextDetail, nextIntraday, nextReminders]) => {
           setDetail(nextDetail);
           setIntraday(nextIntraday);
+          setDetailReminders(nextReminders);
         })
         .catch(() => undefined);
     }, 30000);
@@ -183,10 +203,21 @@ export function StockTradeAlertScreen() {
     };
   }, [accessToken, selectedSymbol]);
 
-  async function handleAnalyze() {
+  useEffect(() => {
+    if (!accessToken || !reminderSymbol) {
+      setReminders([]);
+      return;
+    }
+    const token = accessToken;
+    fetchStockReminders(token, reminderSymbol)
+      .then(setReminders)
+      .catch((loadError) => setError(getStockAlertErrorMessage(loadError)));
+  }, [accessToken, reminderSymbol]);
+
+  async function handleSearch() {
     const normalized = query.trim();
     if (!normalized || !accessToken) return;
-    setIsAnalyzing(true);
+    setIsSearching(true);
     setError(null);
     try {
       const candidates = await searchStockSymbols(accessToken, normalized);
@@ -194,13 +225,27 @@ export function StockTradeAlertScreen() {
         setError('未找到匹配标的，试试 600519 / 贵州茅台 / NVDA。');
         return;
       }
-      const item = await addStockWatch(accessToken, normalized);
-      setItems((current) => [item, ...current.filter((entry) => entry.symbolCode !== item.symbolCode)]);
-      setSelectedSymbol(item.symbolCode);
-      setQuery('');
-      setView('watch');
+      setSearchResults(candidates);
+      setShowSearchResults(true);
     } catch (analyzeError) {
       setError(getStockAlertErrorMessage(analyzeError));
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  async function handleAddResult(symbol: StockSymbol) {
+    if (!accessToken) return;
+    setIsAnalyzing(true);
+    setError(null);
+    try {
+      const item = await addStockWatchBySymbol(accessToken, symbol);
+      setItems((current) => [item, ...current.filter((entry) => entry.symbolCode !== item.symbolCode)]);
+      setShowSearchResults(false);
+      setQuery('');
+      setView('watch');
+    } catch (addError) {
+      setError(getStockAlertErrorMessage(addError));
     } finally {
       setIsAnalyzing(false);
     }
@@ -302,6 +347,54 @@ export function StockTradeAlertScreen() {
     }
   }
 
+  async function handleSaveReminder(input: StockReminderInput, editingId?: string) {
+    if (!accessToken || !reminderSymbol) return;
+    setIsSavingReminder(true);
+    setError(null);
+    try {
+      const saved = editingId
+        ? await updateStockReminder(accessToken, editingId, input)
+        : await createStockReminder(accessToken, reminderSymbol, input);
+      setReminders((current) => editingId
+        ? current.map((item) => (item.id === saved.id ? saved : item))
+        : [saved, ...current]);
+    } catch (saveError) {
+      setError(getStockAlertErrorMessage(saveError));
+    } finally {
+      setIsSavingReminder(false);
+    }
+  }
+
+  async function handleToggleReminder(reminder: StockReminder) {
+    if (!accessToken) return;
+    setError(null);
+    try {
+      const saved = await updateStockReminder(accessToken, reminder.id, {
+        ruleType: reminder.ruleType,
+        direction: reminder.direction,
+        threshold: reminder.threshold,
+        timeRange: reminder.timeRange,
+        validDays: reminder.validDays,
+        channels: reminder.channels,
+        enabled: !reminder.enabled,
+      });
+      setReminders((current) => current.map((item) => (item.id === saved.id ? saved : item)));
+    } catch (toggleError) {
+      setError(getStockAlertErrorMessage(toggleError));
+    }
+  }
+
+  async function handleDeleteReminder(reminder: StockReminder) {
+    if (!accessToken) return;
+    setError(null);
+    try {
+      await deleteStockReminder(accessToken, reminder.id);
+      setReminders((current) => current.filter((item) => item.id !== reminder.id));
+    } catch (deleteError) {
+      setError(getStockAlertErrorMessage(deleteError));
+    }
+  }
+
   if (authStatus === 'loading') {
     return <PageLoadingFrame stateLabel="正在加载提醒" title="股票交易提醒" variant="panel" />;
   }
@@ -322,6 +415,24 @@ export function StockTradeAlertScreen() {
 
   const isDark = colorScheme === 'dark';
   const pageSurface = isDark ? colors.surface : '#f8faff';
+
+  if (reminderSymbol) {
+    return (
+      <ReminderConfigScreen
+        colors={colors}
+        error={error}
+        isDark={isDark}
+        isSaving={isSavingReminder}
+        onBack={() => setReminderSymbol(null)}
+        onDelete={handleDeleteReminder}
+        onSave={handleSaveReminder}
+        onToggle={handleToggleReminder}
+        reminders={reminders}
+        symbol={reminderSymbol}
+        watchItem={items.find((item) => item.symbolCode === reminderSymbol) ?? null}
+      />
+    );
+  }
 
   if (selectedSymbol) {
     return (
@@ -349,6 +460,15 @@ export function StockTradeAlertScreen() {
             <PriceHero detail={detail} intraday={intraday} isDark={isDark} colors={colors} />
             <IntradayChart intraday={intraday} isDark={isDark} colors={colors} />
             <SignalRules detail={detail} colors={colors} />
+            <ReminderRulesCard
+              colors={colors}
+              onAddReminder={() => {
+                if (detail) setReminderSymbol(detail.symbolCode);
+              }}
+              onDelete={handleDeleteReminder}
+              onToggle={handleToggleReminder}
+              reminders={detailReminders}
+            />
             <SignalTimeline detail={detail} events={events} colors={colors} />
             <View style={styles.actionRow}>
               <Pressable
@@ -425,13 +545,18 @@ export function StockTradeAlertScreen() {
             <WatchView
               colors={colors}
               isDark={isDark}
+              isSearching={isSearching}
               items={items}
-              onAnalyze={handleAnalyze}
+              onAddResult={handleAddResult}
+              onBackFromSearch={() => setShowSearchResults(false)}
+              onSearch={handleSearch}
               onOpen={setSelectedSymbol}
               onQueryChange={setQuery}
+              onSetReminder={(symbol) => setReminderSymbol(symbol)}
               onToggle={handleToggleWatch}
               query={query}
-              isAnalyzing={isAnalyzing}
+              searchResults={searchResults}
+              showSearchResults={showSearchResults}
             />
           ) : null}
 
@@ -504,23 +629,33 @@ function ViewTabs({
 function WatchView({
   colors,
   isDark,
+  isSearching,
   items,
-  onAnalyze,
+  onAddResult,
+  onBackFromSearch,
+  onSearch,
   onOpen,
   onQueryChange,
+  onSetReminder,
   onToggle,
   query,
-  isAnalyzing,
+  searchResults,
+  showSearchResults,
 }: {
   colors: ThemeColors;
   isDark: boolean;
+  isSearching: boolean;
   items: StockWatchItem[];
-  onAnalyze: () => void;
+  onAddResult: (symbol: StockSymbol) => void;
+  onBackFromSearch: () => void;
+  onSearch: () => void;
   onOpen: (symbol: string) => void;
   onQueryChange: (value: string) => void;
+  onSetReminder: (symbol: string) => void;
   onToggle: (item: StockWatchItem) => void;
   query: string;
-  isAnalyzing: boolean;
+  searchResults: StockSymbol[];
+  showSearchResults: boolean;
 }) {
   return (
     <>
@@ -537,86 +672,191 @@ function WatchView({
             value={query}
           />
           <Pressable
-            onPress={onAnalyze}
+            onPress={onSearch}
             style={({ pressed }) => [styles.analyzeButton, pressed && styles.pressed]}>
-            {isAnalyzing ? (
+            {isSearching ? (
               <ActivityIndicator color={HERO} size="small" />
             ) : (
-              <MaterialCommunityIcons name="chart-line" size={15} color={HERO} />
+              <MaterialCommunityIcons name="magnify" size={15} color={HERO} />
             )}
-            <ThemedText style={styles.analyzeButtonText}>AI 分析并开启分时提醒</ThemedText>
+            <ThemedText style={styles.analyzeButtonText}>搜索</ThemedText>
           </Pressable>
         </View>
-        <ThemedText style={styles.heroMeta}>交易时段 10 秒级实时监听 · 真实分时数据来自东方财富</ThemedText>
+        <ThemedText style={styles.heroMeta}>真实搜索结果先确认，再加入自选配置分时提醒</ThemedText>
       </View>
 
-      <View style={styles.sectionHead}>
-        <ThemedText style={styles.sectionTitle}>自选标的</ThemedText>
-        <ThemedText style={[styles.sectionHint, { color: colors.mutedText }]}>
-          {items.length}/10 · 点击查看分时
-        </ThemedText>
-      </View>
-
-      {items.length === 0 ? (
-        <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-          <MaterialCommunityIcons name="chart-timeline-variant-shimmer" size={34} color={BLUE} />
-          <ThemedText style={[styles.emptyTitle, { color: colors.text }]}>还没有自选标的</ThemedText>
-          <ThemedText style={[styles.emptyBody, { color: colors.mutedText }]}>
-            输入代码或名称，AI 会基于 90 日真实 K 线与当日分时生成买卖点信号规则。
-          </ThemedText>
-        </View>
+      {showSearchResults ? (
+        <SearchResultsView
+          colors={colors}
+          items={items}
+          onAddResult={onAddResult}
+          onBack={onBackFromSearch}
+          results={searchResults}
+        />
       ) : (
-        <View style={[styles.watchList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-          {items.map((item, index) => (
-            <Pressable
-              key={item.symbolCode}
-              onPress={() => onOpen(item.symbolCode)}
-              style={({ pressed }) => [
-                styles.watchRow,
-                index > 0 && { borderTopColor: colors.line, borderTopWidth: StyleSheet.hairlineWidth },
-                pressed && styles.pressed,
-              ]}>
-              <View style={styles.watchMain}>
-                <View style={styles.watchNameRow}>
-                  <ThemedText style={styles.stockName}>{item.name}</ThemedText>
-                  <Pressable
-                    onPress={() => onToggle(item)}
-                    style={styles.bellButton}
-                    hitSlop={8}>
-                    <MaterialCommunityIcons
-                      name={item.enabled ? 'bell-ring' : 'bell-off-outline'}
-                      size={17}
-                      color={item.enabled ? BLUE : colors.mutedText}
-                    />
-                  </Pressable>
-                </View>
-                <ThemedText style={[styles.stockCode, { color: colors.mutedText }]}>
-                  {item.symbolCode}.{item.market} · {item.analysis ? `买入触发 ${formatPrice(item.analysis.rule.buyTrigger)}` : '等待分析'}
-                </ThemedText>
-                <StatusPill status={item.signalStatus} />
-              </View>
-              <View style={styles.watchQuote}>
-                <ThemedText
-                  style={[
-                    styles.quotePrice,
-                    { color: priceColor(item.changePct) },
+        <>
+          <View style={styles.sectionHead}>
+            <ThemedText style={styles.sectionTitle}>自选标的</ThemedText>
+            <ThemedText style={[styles.sectionHint, { color: colors.mutedText }]}>
+              {items.length}/10 · 选择标的设置提醒
+            </ThemedText>
+          </View>
+
+          {items.length === 0 ? (
+            <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+              <MaterialCommunityIcons name="chart-timeline-variant-shimmer" size={34} color={BLUE} />
+              <ThemedText style={[styles.emptyTitle, { color: colors.text }]}>还没有自选标的</ThemedText>
+              <ThemedText style={[styles.emptyBody, { color: colors.mutedText }]}>
+                搜索真实标的后加入自选，再从自选设置分时提醒。
+              </ThemedText>
+            </View>
+          ) : (
+            <View style={[styles.watchList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+              {items.map((item, index) => (
+                <Pressable
+                  key={item.symbolCode}
+                  onPress={() => onOpen(item.symbolCode)}
+                  style={({ pressed }) => [
+                    styles.watchRow,
+                    index > 0 && { borderTopColor: colors.line, borderTopWidth: StyleSheet.hairlineWidth },
+                    pressed && styles.pressed,
                   ]}>
-                  {formatPrice(item.latestPrice ?? 0)}
-                </ThemedText>
-                <ThemedText style={[styles.quoteSub, { color: colors.mutedText }]}>
-                  {item.avgPrice ? `均线 ${formatPrice(item.avgPrice)}` : item.changePct != null ? `${item.changePct >= 0 ? '+' : ''}${item.changePct.toFixed(2)}%` : '--'}
-                </ThemedText>
-              </View>
-              <MaterialCommunityIcons name="chevron-right" size={18} color={colors.mutedText} />
-            </Pressable>
-          ))}
-        </View>
+                  <View style={styles.watchMain}>
+                    <View style={styles.watchNameRow}>
+                      <ThemedText style={styles.stockName}>{item.name}</ThemedText>
+                      <Pressable onPress={() => onToggle(item)} style={styles.bellButton} hitSlop={8}>
+                        <MaterialCommunityIcons
+                          name={item.enabled ? 'bell-ring' : 'bell-off-outline'}
+                          size={17}
+                          color={item.enabled ? BLUE : colors.mutedText}
+                        />
+                      </Pressable>
+                    </View>
+                    <ThemedText style={[styles.stockCode, { color: colors.mutedText }]}>
+                      {item.symbolCode}.{item.market} · {item.analysis ? `买入触发 ${formatPrice(item.analysis.rule.buyTrigger)}` : '等待分析'}
+                    </ThemedText>
+                    <StatusPill status={item.signalStatus} />
+                  </View>
+                  <View style={styles.watchQuote}>
+                    <ThemedText style={[styles.quotePrice, { color: priceColor(item.changePct) }]}>
+                      {formatPrice(item.latestPrice ?? 0)}
+                    </ThemedText>
+                    <ThemedText style={[styles.quoteSub, { color: colors.mutedText }]}>
+                      {item.avgPrice ? `均线 ${formatPrice(item.avgPrice)}` : item.changePct != null ? `${item.changePct >= 0 ? '+' : ''}${item.changePct.toFixed(2)}%` : '--'}
+                    </ThemedText>
+                  </View>
+                  <Pressable
+                    onPress={() => onSetReminder(item.symbolCode)}
+                    style={({ pressed }) => [styles.setReminderButton, pressed && styles.pressed]}>
+                    <MaterialCommunityIcons name="tune-variant" size={13} color={HERO} />
+                    <ThemedText style={styles.setReminderText}>设置</ThemedText>
+                  </Pressable>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </>
       )}
 
       <View style={[styles.sourceLine, { borderColor: colors.line }]}>
         <MaterialCommunityIcons name="database-clock-outline" size={15} color={colors.mutedText} />
         <ThemedText style={[styles.sourceText, { color: colors.mutedText }]}>
-          分时监听中 · 东方财富真实分时 · 仅供信息参考，不构成投资建议
+          东方财富真实行情 · 无 mock 回退 · 仅供信息参考，不构成投资建议
+        </ThemedText>
+      </View>
+    </>
+  );
+}
+
+function SearchResultsView({
+  colors,
+  items,
+  onAddResult,
+  onBack,
+  results,
+}: {
+  colors: ThemeColors;
+  items: StockWatchItem[];
+  onAddResult: (symbol: StockSymbol) => void;
+  onBack: () => void;
+  results: StockSymbol[];
+}) {
+  const inWatch = (symbol: StockSymbol) => items.some((item) => item.symbolCode === symbol.code);
+  return (
+    <>
+      <View style={styles.sectionHead}>
+        <ThemedText style={styles.sectionTitle}>搜索结果 {results.length} 条</ThemedText>
+        <Pressable onPress={onBack}>
+          <ThemedText style={[styles.sectionHint, { color: BLUE }]}>返回自选</ThemedText>
+        </Pressable>
+      </View>
+      <View style={[styles.watchList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+        {results.map((symbol, index) => {
+          const added = inWatch(symbol);
+          return (
+            <View
+              key={`${symbol.market}-${symbol.code}`}
+              style={[
+                styles.searchRow,
+                index > 0 && { borderTopColor: colors.line, borderTopWidth: StyleSheet.hairlineWidth },
+              ]}>
+              <View style={styles.watchMain}>
+                <ThemedText style={styles.stockName}>{symbol.name}</ThemedText>
+                <ThemedText style={[styles.stockCode, { color: colors.mutedText }]}>
+                  {symbol.code} · {symbol.market} · {symbol.typeName || symbol.region}
+                </ThemedText>
+                <View style={styles.tagRow}>
+                  <View style={[styles.tagPill, { backgroundColor: symbol.tradable ? '#e7ecff' : '#fff3e2' }]}>
+                    <ThemedText style={[styles.tagPillText, { color: symbol.tradable ? BLUE : '#b06d14' }]}>
+                      {symbol.tradable ? '股票' : symbol.typeName || '其他'}
+                    </ThemedText>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.searchResultRight}>
+                {symbol.latestPrice != null ? (
+                  <>
+                    <ThemedText style={[styles.quotePrice, { color: priceColor(symbol.changePct) }]}>
+                      {formatPrice(symbol.latestPrice)}
+                    </ThemedText>
+                    <ThemedText style={[styles.quoteSub, { color: colors.mutedText }]}>
+                      {symbol.changePct != null ? `${symbol.changePct >= 0 ? '+' : ''}${symbol.changePct.toFixed(2)}%` : '--'}
+                    </ThemedText>
+                  </>
+                ) : (
+                  <ThemedText style={[styles.stockCode, { color: colors.mutedText }]}>--</ThemedText>
+                )}
+                <Pressable
+                  disabled={!symbol.tradable || added}
+                  onPress={() => onAddResult(symbol)}
+                  style={({ pressed }) => [
+                    styles.addResultButton,
+                    added && styles.addResultAdded,
+                    (!symbol.tradable || added) && { opacity: 0.65 },
+                    pressed && styles.pressed,
+                  ]}>
+                  <MaterialCommunityIcons
+                    name={added ? 'check' : symbol.tradable ? 'plus' : 'close-circle-outline'}
+                    size={13}
+                    color={added ? '#2e8f62' : symbol.tradable ? BLUE : '#9aa3b7'}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.addResultText,
+                      { color: added ? '#2e8f62' : symbol.tradable ? BLUE : '#9aa3b7' },
+                    ]}>
+                    {added ? '已在自选' : symbol.tradable ? '加入自选' : '不可加入'}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+      <View style={[styles.sourceLine, { borderColor: colors.line }]}>
+        <MaterialCommunityIcons name="database-clock-outline" size={15} color={colors.mutedText} />
+        <ThemedText style={[styles.sourceText, { color: colors.mutedText }]}>
+          东方财富 suggest 真实标的口径 · 行情为真实快照 · 仅供信息参考
         </ThemedText>
       </View>
     </>
@@ -792,6 +1032,69 @@ function ZoneCell({ color, label, value, note }: { color: string; label: string;
   );
 }
 
+function ReminderRulesCard({
+  colors,
+  onAddReminder,
+  onDelete,
+  onToggle,
+  reminders,
+}: {
+  colors: ThemeColors;
+  onAddReminder: () => void;
+  onDelete: (reminder: StockReminder) => void;
+  onToggle: (reminder: StockReminder) => void;
+  reminders: StockReminder[];
+}) {
+  return (
+    <>
+      <View style={styles.sectionHead}>
+        <ThemedText style={styles.sectionTitle}>当前提醒规则</ThemedText>
+        <Pressable onPress={onAddReminder}>
+          <ThemedText style={[styles.sectionHint, { color: BLUE }]}>+ 新建</ThemedText>
+        </Pressable>
+      </View>
+      {reminders.length === 0 ? (
+        <View style={[styles.emptyLine, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <MaterialCommunityIcons name="bell-plus-outline" size={20} color={colors.mutedText} />
+          <ThemedText style={[styles.emptyLineText, { color: colors.mutedText }]}>
+            暂无自定义提醒，从自选选择股票后设置价格、涨跌幅、均线、量能或 AI 信号。
+          </ThemedText>
+        </View>
+      ) : (
+        <View style={[styles.eventList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          {reminders.map((reminder, index) => (
+            <View
+              key={reminder.id}
+              style={[
+                styles.ruleRow,
+                index > 0 && { borderTopColor: colors.line, borderTopWidth: StyleSheet.hairlineWidth },
+              ]}>
+              <View style={styles.ruleCopy}>
+                <ThemedText style={styles.ruleTitle}>{getReminderLabel(reminder)}</ThemedText>
+                <ThemedText style={[styles.ruleMeta, { color: colors.mutedText }]}>
+                  {reminder.timeRange} · {reminder.validDays} 个交易日 · {reminder.channels.includes('serverchan') ? '站内+微信' : '站内'}
+                </ThemedText>
+              </View>
+              <View style={styles.ruleActions}>
+                <Pressable onPress={() => onToggle(reminder)} style={styles.iconBtnSmall}>
+                  <MaterialCommunityIcons
+                    name={reminder.enabled ? 'bell-ring' : 'bell-off-outline'}
+                    size={14}
+                    color={reminder.enabled ? BLUE : colors.mutedText}
+                  />
+                </Pressable>
+                <Pressable onPress={() => onDelete(reminder)} style={styles.iconBtnSmall}>
+                  <MaterialCommunityIcons name="trash-can-outline" size={14} color={CORAL} />
+                </Pressable>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+    </>
+  );
+}
+
 function SignalTimeline({
   detail,
   events,
@@ -841,6 +1144,282 @@ function SignalTimeline({
         </View>
       )}
     </>
+  );
+}
+
+function ReminderConfigScreen({
+  colors,
+  error,
+  isDark,
+  isSaving,
+  onBack,
+  onDelete,
+  onSave,
+  onToggle,
+  reminders,
+  symbol,
+  watchItem,
+}: {
+  colors: ThemeColors;
+  error: string | null;
+  isDark: boolean;
+  isSaving: boolean;
+  onBack: () => void;
+  onDelete: (reminder: StockReminder) => void;
+  onSave: (input: StockReminderInput, editingId?: string) => void;
+  onToggle: (reminder: StockReminder) => void;
+  reminders: StockReminder[];
+  symbol: string;
+  watchItem: StockWatchItem | null;
+}) {
+  const [draft, setDraft] = useState<StockReminderInput>({
+    ruleType: 'price',
+    direction: 'up',
+    threshold: 1330,
+    timeRange: '09:30-15:00',
+    validDays: 5,
+    channels: ['app', 'serverchan'],
+  });
+  const [editingId, setEditingId] = useState<string | undefined>(undefined);
+  const pageSurface = isDark ? colors.surface : '#f8faff';
+
+  function startEdit(reminder: StockReminder) {
+    setDraft({
+      ruleType: reminder.ruleType,
+      direction: reminder.direction,
+      threshold: reminder.threshold,
+      timeRange: reminder.timeRange,
+      validDays: reminder.validDays,
+      channels: [...reminder.channels],
+    });
+    setEditingId(reminder.id);
+  }
+
+  function save() {
+    onSave(draft, editingId);
+    if (editingId) {
+      setEditingId(undefined);
+      setDraft((current) => ({ ...current, ruleType: 'price', direction: 'up', threshold: 1330, validDays: 5, channels: ['app', 'serverchan'] }));
+    }
+  }
+
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <View style={[styles.screenShell, { backgroundColor: pageSurface }]}>
+        <DetailHeader
+          colors={colors}
+          enabled={watchItem?.enabled ?? true}
+          name={watchItem?.name ?? symbol}
+          onBack={onBack}
+          symbol={watchItem?.symbolCode ?? symbol}
+        />
+        <ScrollView contentContainerStyle={styles.detailContent} showsVerticalScrollIndicator={false}>
+          {error ? (
+            <View style={[styles.errorBanner, { backgroundColor: isDark ? '#3b242c' : '#fff1f4' }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={16} color={CORAL} />
+              <ThemedText style={[styles.errorBannerText, { color: colors.mutedText }]}>{error}</ThemedText>
+            </View>
+          ) : null}
+
+          <View style={[styles.priceHero, isDark && styles.priceHeroDark]}>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <ThemedText style={styles.liveText}>真实行情 · 提醒规则配置</ThemedText>
+            </View>
+            <View style={styles.priceLine}>
+              <ThemedText style={styles.priceStrong}>{formatPrice(watchItem?.latestPrice ?? 0)}</ThemedText>
+              <ThemedText style={[styles.priceChange, { color: priceColor(watchItem?.changePct) }]}>
+                {watchItem?.changePct != null ? `${watchItem.changePct >= 0 ? '+' : ''}${watchItem.changePct.toFixed(2)}%` : '--'}
+              </ThemedText>
+            </View>
+            <View style={styles.priceGrid}>
+              <PriceCell label="分时均价" value={formatPrice(watchItem?.avgPrice ?? 0)} />
+              <PriceCell label="信号状态" value={getSignalStatusLabel(watchItem?.signalStatus ?? 'data-missing')} />
+              <PriceCell label="买入触发" value={watchItem?.analysis ? formatPrice(watchItem.analysis.rule.buyTrigger) : '--'} />
+              <PriceCell label="止损触发" value={watchItem?.analysis ? formatPrice(watchItem.analysis.rule.stopLoss) : '--'} />
+            </View>
+          </View>
+
+          <View style={styles.sectionHead}>
+            <ThemedText style={styles.sectionTitle}>提醒类型</ThemedText>
+            {editingId ? (
+              <Pressable onPress={() => setEditingId(undefined)}>
+                <ThemedText style={[styles.sectionHint, { color: BLUE }]}>取消编辑</ThemedText>
+              </Pressable>
+            ) : null}
+          </View>
+          <View style={[styles.ruleTypeGrid, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+            {(['price', 'change', 'avg', 'volume', 'ai'] as StockReminderRuleType[]).map((type) => (
+              <Pressable
+                key={type}
+                onPress={() => {
+                  setDraft((current) => ({ ...current, ruleType: type, direction: type === 'ai' ? 'buy' : 'up' }));
+                }}
+                style={[styles.ruleTypeCell, draft.ruleType === type && styles.ruleTypeCellActive]}>
+                <ThemedText style={[styles.ruleTypeText, draft.ruleType === type && { color: '#c9f36a' }]}>
+                  {getRuleTypeLabel(type)}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={[styles.settingsCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+            <ThemedText style={styles.settingsTitle}>提醒条件</ThemedText>
+            {draft.ruleType === 'ai' ? (
+              <View style={styles.directionRow}>
+                {(['buy', 'sell', 'stop'] as StockReminderType[]).map((direction) => (
+                  <Pressable
+                    key={direction}
+                    onPress={() => setDraft((current) => ({ ...current, direction }))}
+                    style={[styles.directionButton, draft.direction === direction && styles.directionButtonActive]}>
+                    <ThemedText style={[styles.directionText, draft.direction === direction && { color: '#151b3b' }]}>
+                      {getDirectionLabel(direction)}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            ) : (
+              <>
+                <View style={styles.directionRow}>
+                  <Pressable
+                    onPress={() => setDraft((current) => ({ ...current, direction: 'up' }))}
+                    style={[styles.directionButton, draft.direction === 'up' && styles.directionButtonActive]}>
+                    <ThemedText style={[styles.directionText, draft.direction === 'up' && { color: '#151b3b' }]}>
+                      {draft.ruleType === 'avg' ? '上穿均线' : '向上突破'}
+                    </ThemedText>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setDraft((current) => ({ ...current, direction: 'down' }))}
+                    style={[styles.directionButton, draft.direction === 'down' && styles.directionButtonActive]}>
+                    <ThemedText style={[styles.directionText, draft.direction === 'down' && { color: '#151b3b' }]}>
+                      {draft.ruleType === 'avg' ? '下穿均线' : '向下跌破'}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+                {draft.ruleType !== 'avg' ? (
+                  <View style={[styles.thresholdRow, { backgroundColor: isDark ? '#1c2440' : '#f3f6fb', borderColor: colors.line }]}>
+                    <Pressable
+                      onPress={() => setDraft((current) => ({ ...current, threshold: Number((current.threshold - (draft.ruleType === 'change' ? 0.1 : 1)).toFixed(2)) }))}
+                      style={styles.stepButton}>
+                      <MaterialCommunityIcons name="minus" size={14} color={colors.text} />
+                    </Pressable>
+                    <ThemedText style={styles.thresholdValue}>
+                      {draft.ruleType === 'change' ? `${draft.threshold.toFixed(1)}%` : draft.threshold.toFixed(2)}
+                    </ThemedText>
+                    <Pressable
+                      onPress={() => setDraft((current) => ({ ...current, threshold: Number((current.threshold + (draft.ruleType === 'change' ? 0.1 : 1)).toFixed(2)) }))}
+                      style={styles.stepButton}>
+                      <MaterialCommunityIcons name="plus" size={14} color={colors.text} />
+                    </Pressable>
+                  </View>
+                ) : null}
+              </>
+            )}
+          </View>
+
+          <View style={[styles.settingsCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+            <ThemedText style={styles.settingsTitle}>生效设置</ThemedText>
+            <View style={styles.settingRow}>
+              <ThemedText style={styles.settingLabel}>交易时段</ThemedText>
+              <ThemedText style={[styles.settingValue, { color: colors.mutedText }]}>09:30-11:30 · 13:00-15:00</ThemedText>
+            </View>
+            <View style={styles.settingRow}>
+              <ThemedText style={styles.settingLabel}>有效交易日</ThemedText>
+              <View style={styles.stepperInline}>
+                <Pressable
+                  onPress={() => setDraft((current) => ({ ...current, validDays: Math.max(1, current.validDays - 1) }))}
+                  style={styles.stepButton}>
+                  <MaterialCommunityIcons name="minus" size={14} color={colors.text} />
+                </Pressable>
+                <ThemedText style={styles.thresholdValue}>{draft.validDays} 天</ThemedText>
+                <Pressable
+                  onPress={() => setDraft((current) => ({ ...current, validDays: Math.min(30, current.validDays + 1) }))}
+                  style={styles.stepButton}>
+                  <MaterialCommunityIcons name="plus" size={14} color={colors.text} />
+                </Pressable>
+              </View>
+            </View>
+            <View style={styles.settingRow}>
+              <ThemedText style={styles.settingLabel}>站内消息</ThemedText>
+              <View style={[styles.togglePill, draft.channels.includes('app') && styles.togglePillOn]}>
+                <View style={[styles.toggleKnob, draft.channels.includes('app') && styles.toggleKnobOn]} />
+              </View>
+            </View>
+            <View style={styles.settingRow}>
+              <ThemedText style={styles.settingLabel}>Server酱 微信</ThemedText>
+              <Pressable
+                onPress={() => setDraft((current) => ({
+                  ...current,
+                  channels: current.channels.includes('serverchan')
+                    ? current.channels.filter((channel) => channel !== 'serverchan')
+                    : [...current.channels, 'serverchan'],
+                }))}
+                style={[styles.togglePill, draft.channels.includes('serverchan') && styles.togglePillOn]}>
+                <View style={[styles.toggleKnob, draft.channels.includes('serverchan') && styles.toggleKnobOn]} />
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.sectionHead}>
+            <ThemedText style={styles.sectionTitle}>已设置提醒</ThemedText>
+            <ThemedText style={[styles.sectionHint, { color: colors.mutedText }]}>{reminders.length} 条</ThemedText>
+          </View>
+          {reminders.length === 0 ? (
+            <View style={[styles.emptyLine, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+              <MaterialCommunityIcons name="bell-plus-outline" size={20} color={colors.mutedText} />
+              <ThemedText style={[styles.emptyLineText, { color: colors.mutedText }]}>
+                暂无提醒规则，保存后交易时段自动监听。
+              </ThemedText>
+            </View>
+          ) : (
+            <View style={[styles.eventList, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+              {reminders.map((reminder, index) => (
+                <View
+                  key={reminder.id}
+                  style={[
+                    styles.ruleRow,
+                    index > 0 && { borderTopColor: colors.line, borderTopWidth: StyleSheet.hairlineWidth },
+                  ]}>
+                  <Pressable onPress={() => startEdit(reminder)} style={styles.ruleCopy}>
+                    <ThemedText style={styles.ruleTitle}>{getReminderLabel(reminder)}</ThemedText>
+                    <ThemedText style={[styles.ruleMeta, { color: colors.mutedText }]}>
+                      {reminder.timeRange} · {reminder.validDays} 个交易日 · {reminder.channels.includes('serverchan') ? '站内+微信' : '站内'}
+                    </ThemedText>
+                  </Pressable>
+                  <View style={styles.ruleActions}>
+                    <Pressable onPress={() => onToggle(reminder)} style={styles.iconBtnSmall}>
+                      <MaterialCommunityIcons
+                        name={reminder.enabled ? 'bell-ring' : 'bell-off-outline'}
+                        size={14}
+                        color={reminder.enabled ? BLUE : colors.mutedText}
+                      />
+                    </Pressable>
+                    <Pressable onPress={() => onDelete(reminder)} style={styles.iconBtnSmall}>
+                      <MaterialCommunityIcons name="trash-can-outline" size={14} color={CORAL} />
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <Pressable
+            onPress={save}
+            style={({ pressed }) => [styles.actionButton, styles.primaryButton, pressed && styles.pressed, { marginTop: 12 }]}>
+            {isSaving ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <MaterialCommunityIcons name="bell-ring" size={16} color="#fff" />
+            )}
+            <ThemedText style={styles.primaryButtonText}>{editingId ? '保存修改' : '保存并开启提醒'}</ThemedText>
+          </Pressable>
+          <ThemedText style={[styles.disclaimer, { color: colors.mutedText }]}>
+            仅供信息参考，不构成投资建议
+          </ThemedText>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -1037,6 +1616,29 @@ function StatusPill({ status }: { status: StockWatchItem['signalStatus'] }) {
   );
 }
 
+function getRuleTypeLabel(type: StockReminderRuleType) {
+  const labels: Record<StockReminderRuleType, string> = {
+    price: '价格',
+    change: '涨跌幅',
+    avg: '分时均线',
+    volume: '量能',
+    ai: 'AI信号',
+  };
+  return labels[type] ?? type;
+}
+
+function getReminderLabel(reminder: StockReminder) {
+  const type = getRuleTypeLabel(reminder.ruleType);
+  if (reminder.ruleType === 'ai') {
+    return `${type} · ${getDirectionLabel(reminder.direction as StockReminderType)}`;
+  }
+  if (reminder.ruleType === 'avg') {
+    return `${type} · ${reminder.direction === 'up' ? '上穿均线' : '下穿均线'}`;
+  }
+  const action = reminder.direction === 'up' ? '向上突破' : '向下跌破';
+  return `${type} · ${action} ${reminder.threshold.toFixed(2)}`;
+}
+
 function formatPrice(value: number) {
   if (!Number.isFinite(value) || value <= 0) return '--';
   return value.toFixed(2);
@@ -1168,6 +1770,140 @@ const styles = StyleSheet.create({
   watchQuote: { alignItems: 'flex-end' },
   quotePrice: { fontFamily: 'Arial', fontSize: 13, fontWeight: '900', fontVariant: ['tabular-nums'] },
   quoteSub: { fontSize: 9, fontWeight: '700', marginTop: 2 },
+  setReminderButton: {
+    alignItems: 'center',
+    backgroundColor: '#c9f36a',
+    borderRadius: 6,
+    flexDirection: 'row',
+    gap: 3,
+    height: 28,
+    justifyContent: 'center',
+    paddingHorizontal: 7,
+  },
+  setReminderText: { color: '#151b3b', fontSize: 8.5, fontWeight: '900' },
+  searchRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 78,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  searchResultRight: { alignItems: 'flex-end', justifyContent: 'center' },
+  tagRow: { flexDirection: 'row', gap: 4, marginTop: 5 },
+  tagPill: { borderRadius: 4, paddingHorizontal: 6, paddingVertical: 3 },
+  tagPillText: { fontSize: 8, fontWeight: '900' },
+  addResultButton: {
+    alignItems: 'center',
+    borderColor: '#4b6bff',
+    borderRadius: 6,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 3,
+    height: 26,
+    justifyContent: 'center',
+    marginTop: 6,
+    minWidth: 72,
+    paddingHorizontal: 7,
+  },
+  addResultAdded: { borderColor: '#cbe8d9', backgroundColor: '#e7f6ef' },
+  addResultText: { fontSize: 8.5, fontWeight: '900' },
+  ruleTypeGrid: {
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 3,
+    padding: 3,
+  },
+  ruleTypeCell: {
+    alignItems: 'center',
+    borderRadius: 5,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 34,
+  },
+  ruleTypeCellActive: { backgroundColor: '#151b3b' },
+  ruleTypeText: { color: '#7483a2', fontSize: 9, fontWeight: '900' },
+  directionRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  directionButton: {
+    alignItems: 'center',
+    backgroundColor: '#f3f6fb',
+    borderColor: '#dce5f6',
+    borderRadius: 6,
+    borderWidth: 1,
+    flex: 1,
+    height: 34,
+    justifyContent: 'center',
+  },
+  directionButtonActive: { backgroundColor: '#c9f36a', borderColor: '#c9f36a' },
+  directionText: { fontSize: 10, fontWeight: '900', color: '#7483a2' },
+  thresholdRow: {
+    alignItems: 'center',
+    borderRadius: 7,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    minHeight: 40,
+    paddingHorizontal: 8,
+  },
+  thresholdValue: { fontFamily: 'Arial', fontSize: 14, fontWeight: '900' },
+  stepButton: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#dce5f6',
+    borderRadius: 5,
+    borderWidth: 1,
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
+  },
+  settingRow: {
+    alignItems: 'center',
+    borderTopColor: '#dce5f6',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 44,
+  },
+  settingLabel: { fontSize: 10.5, fontWeight: '900' },
+  settingValue: { fontSize: 9, fontWeight: '700' },
+  stepperInline: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  togglePill: {
+    alignItems: 'center',
+    backgroundColor: '#d9dfec',
+    borderRadius: 10,
+    flexDirection: 'row',
+    height: 20,
+    justifyContent: 'flex-start',
+    padding: 2,
+    width: 36,
+  },
+  togglePillOn: { backgroundColor: '#4b6bff', justifyContent: 'flex-end' },
+  toggleKnob: { backgroundColor: '#fff', borderRadius: 8, height: 16, width: 16 },
+  toggleKnobOn: { backgroundColor: '#fff' },
+  ruleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 54,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+  },
+  ruleCopy: { flex: 1, minWidth: 0 },
+  ruleTitle: { fontSize: 10.5, fontWeight: '900' },
+  ruleMeta: { fontSize: 8.5, fontWeight: '700', marginTop: 3 },
+  ruleActions: { flexDirection: 'row', gap: 6 },
+  iconBtnSmall: {
+    alignItems: 'center',
+    backgroundColor: '#f3f6fb',
+    borderColor: '#dce5f6',
+    borderRadius: 6,
+    borderWidth: 1,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
   sourceLine: {
     alignItems: 'center',
     borderRadius: 8,
