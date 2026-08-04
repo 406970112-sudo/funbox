@@ -107,14 +107,14 @@
   {
     "id": "stock-trade-alert",
     "name": "股票交易提醒",
-    "tagline": "分时买卖点实时监听",
-    "description": "输入股票代码或名称，基于近 3 个月真实日线与当日真实分时由 DeepSeek-V4-Flash 生成今日信号规则，触发后通过 Server酱 微信提醒。",
+    "tagline": "搜索真实标的，配置分时提醒",
+    "description": "搜索真实标的后确认加入自选，从自选选择股票配置价格、涨跌幅、分时均线、量能或 AI 信号提醒，交易时段基于真实分时监听，触发后站内 + Server酱 微信提醒。",
     "icon": "chart-timeline-variant-shimmer",
     "category": "行情",
     "route": "/tools/stock-trade-alert",
     "accentColor": "#4b6bff",
-    "badges": ["分时实时", "Server酱"],
-    "usageLabel": "开启分时提醒",
+    "badges": ["真实数据", "分时实时", "Server酱"],
+    "usageLabel": "配置分时提醒",
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
