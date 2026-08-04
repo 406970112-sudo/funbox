@@ -19,6 +19,7 @@ import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
 import { PriceRadarScreen } from '@/features/tools/price-radar-screen';
 import { StockTradeAlertScreen } from '@/features/tools/stock-trade-alert-screen';
 import { DnfMobileActivityScreen } from '@/features/tools/dnf-mobile-activity-screen';
+import { DaysLeftScreen } from '@/features/tools/days-left-screen';
 import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
 import { DoubleColorBallHistoryScreen } from '@/features/tools/double-color-ball-history-screen';
 import { DoubleColorBallLabScreen } from '@/features/tools/double-color-ball-lab-screen';
@@ -318,6 +319,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <FocusScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'days-left') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DaysLeftScreen />
       </>
     );
   }

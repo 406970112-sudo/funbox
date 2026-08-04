@@ -1,0 +1,2315 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 还有几天 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --canvas: #eef4ff;
+        --board: #e4ebf6;
+        --surface: #ffffff;
+        --surface-muted: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --green: #1db991;
+        --green-soft: #e4f7ee;
+        --amber: #f1a33b;
+        --coral: #ff5d6c;
+        --dark: #091126;
+        --white: #ffffff;
+        --shadow: 0 22px 46px rgba(58, 86, 152, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+        min-width: 1760px;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--board);
+        background-size: 32px 32px;
+        margin: 0 auto;
+        min-height: 3400px;
+        padding: 28px 34px 34px;
+        width: 1760px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark i {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--coral);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .overview-card .oc-icon.amber {
+        background: #fff2df;
+        color: var(--amber);
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 320px repeat(3, 420px);
+        margin-bottom: 22px;
+      }
+
+      .stage.wide {
+        grid-template-columns: 320px 420px 1fr;
+      }
+
+      .strategy {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .strategy h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .strategy p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .flow-item {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 26px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .rule-box {
+        background: var(--green-soft);
+        border-left: 3px solid var(--green);
+        border-radius: 10px;
+        color: #1c5b3c;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.7;
+        margin-top: 12px;
+        padding: 10px 11px;
+      }
+
+      .principle-list,
+      .scope-list {
+        display: grid;
+        gap: 9px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .principle-list li,
+      .scope-list li {
+        align-items: flex-start;
+        color: #4d5a75;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        line-height: 1.55;
+      }
+
+      .principle-list i,
+      .scope-list i {
+        color: var(--coral);
+        flex: 0 0 auto;
+        height: 14px;
+        margin-top: 2px;
+        width: 14px;
+      }
+
+      .scope-list i {
+        color: var(--green);
+      }
+
+      .entry-chip {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 12px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        margin-top: 18px;
+        min-height: 42px;
+        padding: 9px 11px;
+      }
+
+      .entry-chip i {
+        height: 15px;
+        stroke-width: 2.4;
+        width: 15px;
+      }
+
+      .entry-chip span {
+        color: #8a80b8;
+        font-weight: 600;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 1040px;
+        padding: 10px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone-screen {
+        background: var(--surface-muted);
+        border-radius: 29px;
+        display: flex;
+        flex-direction: column;
+        height: 1020px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 22px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 22px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-content {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        height: 50px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 9px;
+        color: var(--lime);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .date-row {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 16px 10px;
+      }
+
+      .date-main {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .date-main i {
+        color: var(--blue);
+        height: 14px;
+        width: 14px;
+      }
+
+      .date-sub {
+        color: var(--blue);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .hero-empty {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        margin: 0 16px 10px;
+        padding: 18px 15px;
+        text-align: center;
+      }
+
+      .hero-empty .empty-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 14px;
+        color: var(--lime);
+        display: flex;
+        height: 46px;
+        justify-content: center;
+        margin: 0 auto 10px;
+        width: 46px;
+      }
+
+      .hero-empty .empty-mark i {
+        height: 21px;
+        stroke-width: 2.3;
+        width: 21px;
+      }
+
+      .hero-empty h2 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .hero-empty p {
+        color: var(--muted);
+        font-size: 9.5px;
+        line-height: 1.7;
+        margin: 7px 0 13px;
+      }
+
+      .hero-actions {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .cta {
+        align-items: center;
+        border: 0;
+        border-radius: 10px;
+        display: inline-flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 6px;
+        height: 38px;
+        justify-content: center;
+        padding: 0 12px;
+      }
+
+      .cta i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .cta.primary {
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      .cta.ghost {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .cta.dark {
+        background: var(--navy);
+        color: var(--white);
+      }
+
+      .section {
+        margin: 0 16px 12px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .section-head h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .category-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .category-chip {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 8px;
+        min-height: 46px;
+        padding: 8px 10px;
+      }
+
+      .category-chip .cat-icon {
+        align-items: center;
+        border-radius: 8px;
+        display: flex;
+        flex: 0 0 28px;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .category-chip .cat-icon i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .category-chip strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .category-chip span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .real-note {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 6px;
+        margin: 0 16px;
+        padding: 9px 11px;
+      }
+
+      .real-note i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 62px;
+        justify-content: space-around;
+      }
+
+      .bottom-nav span {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .bottom-nav span.active {
+        color: var(--blue);
+      }
+
+      .bottom-nav i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .hero-real {
+        background: linear-gradient(135deg, #10163a, #253066);
+        border-radius: 16px;
+        color: var(--white);
+        margin: 0 16px 10px;
+        padding: 15px 16px;
+      }
+
+      .hero-real .hero-kicker {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+      }
+
+      .hero-real .hero-kicker i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .days-line {
+        align-items: baseline;
+        display: flex;
+        gap: 7px;
+        margin: 10px 0 4px;
+      }
+
+      .days-line b {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 38px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .days-line span {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .hero-real h2 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .hero-real .alias {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .verified-chip {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.16);
+        border: 1px solid rgba(201, 243, 106, 0.4);
+        border-radius: 999px;
+        color: var(--lime);
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 4px;
+        margin-top: 10px;
+        padding: 5px 8px;
+      }
+
+      .verified-chip i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .summary-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        margin: 0 16px 12px;
+      }
+
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 9px 10px;
+      }
+
+      .stat-card b {
+        display: block;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .stat-card.overdue b {
+        color: var(--coral);
+      }
+
+      .stat-card.soon b {
+        color: var(--amber);
+      }
+
+      .stat-card.safe b {
+        color: var(--green);
+      }
+
+      .stat-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 5px;
+      }
+
+      .empty {
+        align-items: center;
+        background: var(--surface);
+        border: 1px dashed #cfd9eb;
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+        padding: 14px 12px;
+        text-align: center;
+      }
+
+      .empty.compact {
+        padding: 13px 12px;
+      }
+
+      .empty .empty-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 50%;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        margin-right: 10px;
+        width: 34px;
+      }
+
+      .empty .empty-icon i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .empty strong {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .empty p {
+        color: var(--muted);
+        font-size: 8.5px;
+        line-height: 1.5;
+        margin: 4px 0 0;
+      }
+
+      .record-card {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--blue);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        padding: 11px 12px;
+      }
+
+      .record-card + .record-card {
+        margin-top: 8px;
+      }
+
+      .record-card .rec-icon {
+        align-items: center;
+        border-radius: 9px;
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .record-card .rec-icon i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .record-card .rec-main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .record-card .rec-main strong {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .record-card .rec-main span {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 3px;
+        white-space: nowrap;
+      }
+
+      .record-card .rec-right {
+        text-align: right;
+      }
+
+      .record-card .rec-right b {
+        display: block;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .record-card .rec-right span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .source-badge {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 6px;
+        color: #3d54b8;
+        display: inline-flex;
+        font-size: 7.5px;
+        font-weight: 900;
+        gap: 3px;
+        margin-top: 5px;
+        padding: 3px 6px;
+      }
+
+      .source-badge i {
+        height: 9px;
+        width: 9px;
+      }
+
+      .form-wrap {
+        margin: 0 16px;
+      }
+
+      .form-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        padding: 12px 13px;
+      }
+
+      .form-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .form-row + .form-row {
+        border-top: 1px solid var(--line);
+        margin-top: 9px;
+        padding-top: 9px;
+      }
+
+      .form-row label {
+        color: var(--muted);
+        flex: 0 0 64px;
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .form-value {
+        color: var(--ink);
+        flex: 1;
+        font-size: 10.5px;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .form-value.placeholder {
+        color: #9aa6bd;
+        font-weight: 600;
+      }
+
+      .form-value.unit {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .form-title {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        height: 42px;
+        padding: 0 12px;
+        width: 100%;
+      }
+
+      .form-title::placeholder {
+        color: #9aa6bd;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .seg {
+        background: #e6ecf8;
+        border-radius: 10px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(4, 1fr);
+        margin-bottom: 10px;
+        padding: 3px;
+      }
+
+      .seg.two {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .seg button {
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 800;
+        height: 28px;
+        padding: 0 4px;
+      }
+
+      .seg button.active {
+        background: var(--surface);
+        box-shadow: 0 3px 9px rgba(58, 86, 152, 0.12);
+        color: var(--ink);
+      }
+
+      .category-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .pill {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #56647f;
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 4px;
+        height: 28px;
+        padding: 0 10px;
+      }
+
+      .pill i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .pill.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--lime);
+      }
+
+      .upload-zone {
+        align-items: center;
+        background: var(--surface);
+        border: 1.5px dashed #b9c7e2;
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-bottom: 10px;
+        padding: 18px 12px;
+      }
+
+      .upload-zone .up-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 50%;
+        color: var(--blue);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        margin-bottom: 8px;
+        width: 38px;
+      }
+
+      .upload-zone .up-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .upload-zone strong {
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .upload-zone span {
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .bottom-bar {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 66px;
+        gap: 8px;
+        padding: 0 16px;
+      }
+
+      .bottom-bar .cta {
+        flex: 1;
+      }
+
+      .detail-hero {
+        background: linear-gradient(135deg, rgba(21, 27, 59, 0.97), rgba(75, 107, 255, 0.86));
+        border-radius: 16px;
+        color: var(--white);
+        margin: 0 16px 10px;
+        padding: 15px 16px;
+      }
+
+      .detail-hero .hero-kicker {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+      }
+
+      .detail-hero .hero-kicker i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .detail-hero h2 {
+        font-size: 17px;
+        font-weight: 900;
+        margin: 9px 0 2px;
+      }
+
+      .detail-hero .alias {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 9px;
+        font-weight: 700;
+        margin-bottom: 11px;
+      }
+
+      .detail-days {
+        align-items: baseline;
+        display: flex;
+        gap: 7px;
+      }
+
+      .detail-days b {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .detail-days span {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .detail-meta {
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 7px;
+      }
+
+      .verify-box {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--green);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        margin: 0 16px 10px;
+        padding: 11px 12px;
+      }
+
+      .verify-box .ver-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .verify-box .ver-icon i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .verify-box strong {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .verify-box span {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .detail-actions {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 0 16px 10px;
+      }
+
+      .detail-actions .cta {
+        height: 40px;
+        width: 100%;
+      }
+
+      .history-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px;
+        padding: 12px 13px;
+      }
+
+      .history-list h4 {
+        font-size: 10.5px;
+        font-weight: 900;
+        margin: 0 0 8px;
+      }
+
+      .history-list p {
+        color: var(--muted);
+        font-size: 8.5px;
+        margin: 0;
+      }
+
+      .list-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        overflow: hidden;
+      }
+
+      .list-head {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 13px;
+      }
+
+      .list-head b {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .list-head span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .list-row {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        padding: 9px 13px;
+      }
+
+      .list-row + .list-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .list-row .row-icon {
+        align-items: center;
+        border-radius: 8px;
+        display: flex;
+        flex: 0 0 30px;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .list-row .row-icon i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .list-row .row-main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .list-row .row-main strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .list-row .row-main span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .list-row b {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .add-category {
+        align-items: center;
+        border: 1.5px dashed #b9c7e2;
+        border-radius: 12px;
+        color: var(--blue);
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin: 0 16px;
+        min-height: 46px;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .add-category i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .note-panel {
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .note-panel h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .note-row {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .note-row i {
+        color: var(--blue);
+        flex: 0 0 auto;
+        height: 15px;
+        margin-top: 2px;
+        width: 15px;
+      }
+
+      .note-row strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .note-row span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .search-shell {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        height: 42px;
+        margin: 0 16px 10px;
+        padding: 0 12px;
+      }
+
+      .search-shell > i {
+        color: var(--muted);
+        height: 16px;
+        margin-right: 8px;
+        width: 16px;
+      }
+
+      .search-shell input {
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 10px;
+        font-weight: 800;
+        min-width: 0;
+        outline: 0;
+      }
+
+      .search-shell input::placeholder {
+        color: #9aa6bd;
+        font-weight: 600;
+      }
+
+      .sort-row {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 16px 10px;
+      }
+
+      .sort-row span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 800;
+      }
+
+      .sort-row b {
+        align-items: center;
+        color: var(--blue);
+        display: inline-flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 4px;
+      }
+
+      .sort-row b i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .stats-hero {
+        background: linear-gradient(135deg, #10163a, #1f4e5c);
+        border-radius: 16px;
+        color: var(--white);
+        margin: 0 16px 10px;
+        padding: 15px 16px;
+      }
+
+      .stats-hero .hero-kicker {
+        color: var(--lime);
+        font-size: 9px;
+        font-weight: 900;
+      }
+
+      .stats-hero .stats-line {
+        align-items: baseline;
+        display: flex;
+        gap: 7px;
+        margin: 9px 0 3px;
+      }
+
+      .stats-hero .stats-line b {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 32px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .stats-hero .stats-line span {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .stats-hero p {
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 8.5px;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .mini-cal {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px;
+        padding: 12px 13px;
+      }
+
+      .mini-cal h4 {
+        font-size: 10.5px;
+        font-weight: 900;
+        margin: 0 0 9px;
+      }
+
+      .cal-head,
+      .cal-week {
+        display: grid;
+        gap: 4px;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+      }
+
+      .cal-head {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+
+      .cal-day {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        height: 24px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .cal-day.today {
+        background: var(--blue);
+        border-radius: 7px;
+        color: var(--white);
+      }
+
+      .cal-day.due {
+        background: var(--green-soft);
+        border-radius: 7px;
+        color: var(--green);
+      }
+
+      .annotation-card {
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 20px 24px;
+      }
+
+      .annotation-card h3 {
+        font-size: 17px;
+        font-weight: 900;
+        margin: 0 0 16px;
+      }
+
+      .check-list {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(5, 1fr);
+      }
+
+      .check-item {
+        align-items: flex-start;
+        display: flex;
+        gap: 9px;
+      }
+
+      .check-item .check {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 50%;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 24px;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .check-item .check i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .check-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .check-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        line-height: 1.55;
+        margin-top: 4px;
+      }
+
+      .board-note {
+        align-items: flex-start;
+        background: #fff7e8;
+        border-left: 3px solid var(--amber);
+        border-radius: 10px;
+        color: #6b5427;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 700;
+        gap: 8px;
+        line-height: 1.7;
+        margin-top: 14px;
+        padding: 11px 13px;
+      }
+
+      .board-note i {
+        color: var(--amber);
+        flex: 0 0 auto;
+        height: 15px;
+        margin-top: 2px;
+        width: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="calendar-clock"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox · 还有几天</h1>
+            <p class="brand-subtitle">个人期限管理器 · 真实数据优先 · 一期全量交付</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>V1 草案</strong>
+          2026-08-04 · 待评审
+        </div>
+      </header>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="check-circle-2"></i></div>
+          <div>
+            <strong>一期全量</strong>
+            <p>首页、列表、新增、续期、分类、提醒、统计、导入导出一次交付，不设分期。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon blue"><i data-lucide="database"></i></div>
+          <div>
+            <strong>真实数据</strong>
+            <p>首启为空，无种子、mock、AI 编造；记录只能来自真实录入、照片、扫描确认或接口校验。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon amber"><i data-lucide="refresh-cw"></i></div>
+          <div>
+            <strong>到期闭环</strong>
+            <p>固定到期、开封有效期、周期续费、纪念日四类记录均可续期、完成、撤销并保留历史。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>核心定位</h3>
+          <p>不做一个泛日历，也不做一个待办清单，只回答一件事：还有几天，到期后怎么办。</p>
+          <ul class="principle-list">
+            <li><i data-lucide="calendar-days"></i>四类到期：固定、开封、周期、纪念日</li>
+            <li><i data-lucide="shield-check"></i>风险四档：逾期 / 7 天 / 30 天 / 90 天</li>
+            <li><i data-lucide="image"></i>真实证据：证件、包装、账单可拍照存档</li>
+            <li><i data-lucide="refresh-cw"></i>续期闭环：续期、完成、撤销、历史</li>
+            <li><i data-lucide="bell"></i>提醒分层：App 内 + 系统通知 + Web 站内</li>
+            <li><i data-lucide="lock"></i>隐私克制：仅当前用户，接口全部鉴权</li>
+          </ul>
+          <div class="rule-box">本方案不设分期，所有功能在同一个版本内一次做完。</div>
+          <div class="entry-chip">
+            <i data-lucide="route"></i>
+            <span>注册名 <b>days-left</b> · 路由 /tools/days-left</span>
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="calendar-clock"></i></div>
+                  <strong>还有几天</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn"><i data-lucide="search"></i></button>
+                  <button class="icon-btn"><i data-lucide="plus"></i></button>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="date-row">
+                  <div class="date-main"><i data-lucide="calendar-days"></i>8月4日 星期二</div>
+                  <div class="date-sub">真实数据</div>
+                </div>
+                <div class="hero-empty">
+                  <div class="empty-mark"><i data-lucide="calendar-clock"></i></div>
+                  <h2>第一次使用</h2>
+                  <p>还没有到期记录，从你手边的真实证件、账单或包装开始。</p>
+                  <div class="hero-actions">
+                    <button class="cta primary"><i data-lucide="plus"></i>添加到期记录</button>
+                    <button class="cta ghost"><i data-lucide="camera"></i>拍证件 / 扫包装</button>
+                  </div>
+                </div>
+                <div class="section">
+                  <div class="section-head">
+                    <h3>分类模板</h3>
+                    <span>产品结构 · 不包含数据</span>
+                  </div>
+                  <div class="category-grid">
+                    <div class="category-chip">
+                      <div class="cat-icon" style="background:#e6ebff;color:#4b6bff"><i data-lucide="id-card"></i></div>
+                      <div><strong>证件</strong><span>0 条真实记录</span></div>
+                    </div>
+                    <div class="category-chip">
+                      <div class="cat-icon" style="background:#fff2df;color:#f1a33b"><i data-lucide="credit-card"></i></div>
+                      <div><strong>财务合同</strong><span>0 条真实记录</span></div>
+                    </div>
+                    <div class="category-chip">
+                      <div class="cat-icon" style="background:#e4f7ee;color:#1db991"><i data-lucide="package"></i></div>
+                      <div><strong>生活物品</strong><span>0 条真实记录</span></div>
+                    </div>
+                    <div class="category-chip">
+                      <div class="cat-icon" style="background:#f0edff;color:#7e5bef"><i data-lucide="server"></i></div>
+                      <div><strong>数字资产</strong><span>0 条真实记录</span></div>
+                    </div>
+                    <div class="category-chip">
+                      <div class="cat-icon" style="background:#e3f6f4;color:#18a78f"><i data-lucide="car"></i></div>
+                      <div><strong>车辆</strong><span>0 条真实记录</span></div>
+                    </div>
+                    <div class="category-chip">
+                      <div class="cat-icon" style="background:#ffe9ef;color:#ff6b8f"><i data-lucide="cake"></i></div>
+                      <div><strong>纪念日</strong><span>0 条真实记录</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="real-note"><i data-lucide="database"></i>产品不预置任何到期数据，所有记录由你真实录入。</div>
+              </div>
+              <nav class="bottom-nav">
+                <span class="active"><i data-lucide="home"></i>首页</span>
+                <span><i data-lucide="list"></i>记录</span>
+                <span><i data-lucide="bell"></i>提醒</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>首页</b> · 首次使用空状态，无任何种子数据</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="calendar-clock"></i></div>
+                  <strong>还有几天</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn"><i data-lucide="search"></i></button>
+                  <button class="icon-btn"><i data-lucide="plus"></i></button>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="date-row">
+                  <div class="date-main"><i data-lucide="calendar-days"></i>8月4日 星期二</div>
+                  <div class="date-sub">实时校验</div>
+                </div>
+                <div class="hero-real">
+                  <div class="hero-kicker"><i data-lucide="shield-check"></i>未来 90 天 · 真实数据锚点</div>
+                  <div class="days-line"><b>83</b><span>天后到期</span></div>
+                  <h2>xwhub.cn SSL 证书</h2>
+                  <div class="alias">数字资产 · 周期续费 · 2026-10-26</div>
+                  <div class="verified-chip"><i data-lucide="check"></i>Let's Encrypt · 2026-08-04 校验</div>
+                </div>
+                <div class="summary-grid">
+                  <div class="stat-card overdue"><b>0</b><span>已逾期</span></div>
+                  <div class="stat-card soon"><b>0</b><span>7 天内</span></div>
+                  <div class="stat-card soon"><b>0</b><span>30 天内</span></div>
+                  <div class="stat-card safe"><b>1</b><span>90 天内</span></div>
+                </div>
+                <div class="section">
+                  <div class="section-head"><h3>今日到期</h3><span>真实统计</span></div>
+                  <div class="empty compact">
+                    <div class="empty-icon"><i data-lucide="check"></i></div>
+                    <div><strong>今天没有到期</strong><p>已逾期与今日到期均为 0。</p></div>
+                  </div>
+                </div>
+                <div class="section">
+                  <div class="section-head"><h3>即将到期</h3><span>按剩余天数排序</span></div>
+                  <div class="record-card">
+                    <div class="rec-icon" style="background:#f0edff;color:#7e5bef"><i data-lucide="server"></i></div>
+                    <div class="rec-main">
+                      <strong>xwhub.cn SSL 证书</strong>
+                      <span>数字资产 · 2026-10-26</span>
+                      <div class="source-badge"><i data-lucide="shield-check"></i>接口校验</div>
+                    </div>
+                    <div class="rec-right"><b>83 天</b><span>未到期</span></div>
+                  </div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span class="active"><i data-lucide="home"></i>首页</span>
+                <span><i data-lucide="list"></i>记录</span>
+                <span><i data-lucide="bell"></i>提醒</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>首页</b> · 今日摘要与风险分桶，数字来自真实记录</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>新增到期记录</strong>
+                </div>
+                <div class="app-actions"><span style="color:var(--muted);font-size:9px;font-weight:800">真实录入</span></div>
+              </div>
+              <div class="screen-content">
+                <div class="form-wrap">
+                  <div class="form-card" style="padding:0;border:0;background:transparent">
+                    <input class="form-title" value="xwhub.cn SSL 证书" />
+                  </div>
+                  <div class="form-card">
+                    <div class="form-row"><label>分类</label><span class="form-value">数字资产</span></div>
+                    <div class="category-pills">
+                      <span class="pill"><i data-lucide="id-card"></i>证件</span>
+                      <span class="pill"><i data-lucide="credit-card"></i>财务</span>
+                      <span class="pill"><i data-lucide="package"></i>生活</span>
+                      <span class="pill active"><i data-lucide="server"></i>数字资产</span>
+                      <span class="pill"><i data-lucide="car"></i>车辆</span>
+                      <span class="pill"><i data-lucide="cake"></i>纪念日</span>
+                    </div>
+                    <div class="form-row"><label>到期类型</label><span class="form-value">周期续费</span></div>
+                    <div class="seg">
+                      <button>固定到期</button>
+                      <button>开封有效</button>
+                      <button class="active">周期续费</button>
+                      <button>纪念日</button>
+                    </div>
+                    <div class="form-row"><label>到期日期</label><span class="form-value">2026-10-26</span></div>
+                    <div class="form-row"><label>续费周期</label><span class="form-value">每年</span></div>
+                    <div class="form-row"><label>提前提醒</label><span class="form-value">30 天 <span class="unit">可自定义</span></span></div>
+                  </div>
+                  <div class="form-card">
+                    <div class="form-row"><label>备注</label><span class="form-value placeholder">Let's Encrypt 自动续期，预留时间</span></div>
+                  </div>
+                  <div class="upload-zone">
+                    <div class="up-icon"><i data-lucide="camera"></i></div>
+                    <strong>拍摄或上传真实照片</strong>
+                    <span>照片只作为证据，不生成日期</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-bar">
+                <button class="cta ghost">取消</button>
+                <button class="cta primary"><i data-lucide="check"></i>保存记录</button>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>新增 / 编辑</b> · 四类到期 + 真实证据入口</div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>核心流程</h3>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div><strong>首页看风险</strong><span>已逾期、7 天、30 天、90 天四档直接展示真实计数。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div><strong>新增真实记录</strong><span>名称、分类、到期类型、日期、提醒，可选照片证据。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div><strong>到期前提醒</strong><span>按提前量排程，App 内、系统通知、Web 站内。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div><strong>续期 / 完成</strong><span>填写真实新日期，生成历史，可撤销。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">5</div>
+            <div><strong>统计与导出</strong><span>月度日历、处理率、续期历史，导出自己的真实数据。</span></div>
+          </div>
+          <div class="rule-box">所有计算只来自真实字段；缺字段显示“暂无”，不补造。</div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>记录详情</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn"><i data-lucide="settings-2"></i></button>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="detail-hero">
+                  <div class="hero-kicker"><i data-lucide="server"></i>数字资产 · 周期续费</div>
+                  <h2>xwhub.cn SSL 证书</h2>
+                  <div class="alias">xwhub.cn / www.xwhub.cn</div>
+                  <div class="detail-days"><b>83</b><span>天后到期</span></div>
+                  <div class="detail-meta">2026-10-26 到期 · 未到期</div>
+                </div>
+                <div class="verify-box">
+                  <div class="ver-icon"><i data-lucide="shield-check"></i></div>
+                  <div>
+                    <strong>已通过真实校验</strong>
+                    <span>Let's Encrypt · 到期 2026-10-26 17:04:20</span>
+                  </div>
+                </div>
+                <div class="list-card">
+                  <div class="list-head"><b>记录信息</b><span>真实来源</span></div>
+                  <div class="list-row">
+                    <div class="row-main"><strong>到期日期</strong><span>2026-10-26</span></div>
+                    <b>83 天</b>
+                  </div>
+                  <div class="list-row">
+                    <div class="row-main"><strong>提前提醒</strong><span>30 天</span></div>
+                    <b>09-26</b>
+                  </div>
+                  <div class="list-row">
+                    <div class="row-main"><strong>来源</strong><span>接口校验 · 2026-08-04</span></div>
+                    <b>已核验</b>
+                  </div>
+                </div>
+                <div class="detail-actions">
+                  <button class="cta primary"><i data-lucide="refresh-cw"></i>标记已续期</button>
+                  <button class="cta ghost"><i data-lucide="check"></i>标记已完成</button>
+                </div>
+                <div class="history-list">
+                  <h4>续期历史</h4>
+                  <p>暂无续期历史，所有动作会在这里保留真实记录。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>详情 / 续期</b> · 真实校验 + 续期历史</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>分类管理</strong>
+                </div>
+                <div class="app-actions"><span style="color:var(--muted);font-size:9px;font-weight:800">结构非数据</span></div>
+              </div>
+              <div class="screen-content">
+                <div class="section">
+                  <div class="section-head"><h3>内置分类</h3><span>默认提醒可修改</span></div>
+                </div>
+                <div class="list-card">
+                  <div class="list-row">
+                    <div class="row-icon" style="background:#e6ebff;color:#4b6bff"><i data-lucide="id-card"></i></div>
+                    <div class="row-main"><strong>证件</strong><span>固定到期 · 提前 90 天</span></div>
+                    <b>0</b>
+                  </div>
+                  <div class="list-row">
+                    <div class="row-icon" style="background:#fff2df;color:#f1a33b"><i data-lucide="credit-card"></i></div>
+                    <div class="row-main"><strong>财务合同</strong><span>周期续费 · 提前 30 天</span></div>
+                    <b>0</b>
+                  </div>
+                  <div class="list-row">
+                    <div class="row-icon" style="background:#e4f7ee;color:#1db991"><i data-lucide="package"></i></div>
+                    <div class="row-main"><strong>生活物品</strong><span>开封有效 · 提前 7 天</span></div>
+                    <b>0</b>
+                  </div>
+                  <div class="list-row">
+                    <div class="row-icon" style="background:#f0edff;color:#7e5bef"><i data-lucide="server"></i></div>
+                    <div class="row-main"><strong>数字资产</strong><span>周期续费 · 提前 30 天</span></div>
+                    <b>1</b>
+                  </div>
+                  <div class="list-row">
+                    <div class="row-icon" style="background:#e3f6f4;color:#18a78f"><i data-lucide="car"></i></div>
+                    <div class="row-main"><strong>车辆</strong><span>固定到期 · 提前 30 天</span></div>
+                    <b>0</b>
+                  </div>
+                  <div class="list-row">
+                    <div class="row-icon" style="background:#ffe9ef;color:#ff6b8f"><i data-lucide="cake"></i></div>
+                    <div class="row-main"><strong>纪念日</strong><span>纪念日 · 提前 3 天</span></div>
+                    <b>0</b>
+                  </div>
+                </div>
+                <div class="add-category"><i data-lucide="plus"></i>新建自定义分类</div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="home"></i>首页</span>
+                <span class="active"><i data-lucide="list"></i>记录</span>
+                <span><i data-lucide="bell"></i>提醒</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>分类管理</b> · 内置模板 + 自定义分类</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="bell"></i></div>
+                  <strong>提醒与统计</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn"><i data-lucide="settings-2"></i></button>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="stats-hero">
+                  <div class="hero-kicker">真实统计 · 2026-08-04</div>
+                  <div class="stats-line"><b>1</b><span>项未来 90 天到期</span></div>
+                  <p>待提醒 0 · 已提醒 0 · 已处理 0</p>
+                </div>
+                <div class="summary-grid">
+                  <div class="stat-card"><b>0</b><span>30 天内</span></div>
+                  <div class="stat-card safe"><b>1</b><span>90 天内</span></div>
+                  <div class="stat-card overdue"><b>0</b><span>已逾期</span></div>
+                  <div class="stat-card"><b>0</b><span>已处理</span></div>
+                </div>
+                <div class="section">
+                  <div class="section-head"><h3>待提醒</h3><span>到期日 - 提前量</span></div>
+                  <div class="record-card">
+                    <div class="rec-icon" style="background:#f0edff;color:#7e5bef"><i data-lucide="server"></i></div>
+                    <div class="rec-main">
+                      <strong>xwhub.cn SSL 证书</strong>
+                      <span>2026-09-26 提醒 · 提前 30 天</span>
+                    </div>
+                    <div class="rec-right"><b>53</b><span>天后提醒</span></div>
+                  </div>
+                </div>
+                <div class="mini-cal">
+                  <h4>2026 年 8 月 · 本月 0 个到期日</h4>
+                  <div class="cal-head"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                  <div class="cal-week">
+                    <span class="cal-day"></span><span class="cal-day"></span><span class="cal-day"></span><span class="cal-day"></span><span class="cal-day"></span><span class="cal-day">1</span><span class="cal-day">2</span>
+                  </div>
+                  <div class="cal-week">
+                    <span class="cal-day">3</span><span class="cal-day today">4</span><span class="cal-day">5</span><span class="cal-day">6</span><span class="cal-day">7</span><span class="cal-day">8</span><span class="cal-day">9</span>
+                  </div>
+                  <div class="cal-week">
+                    <span class="cal-day">10</span><span class="cal-day">11</span><span class="cal-day">12</span><span class="cal-day">13</span><span class="cal-day">14</span><span class="cal-day">15</span><span class="cal-day">16</span>
+                  </div>
+                  <div class="cal-week">
+                    <span class="cal-day">17</span><span class="cal-day">18</span><span class="cal-day">19</span><span class="cal-day">20</span><span class="cal-day">21</span><span class="cal-day">22</span><span class="cal-day">23</span>
+                  </div>
+                  <div class="cal-week">
+                    <span class="cal-day">24</span><span class="cal-day">25</span><span class="cal-day">26</span><span class="cal-day">27</span><span class="cal-day">28</span><span class="cal-day">29</span><span class="cal-day">30</span>
+                  </div>
+                  <div class="cal-week">
+                    <span class="cal-day">31</span>
+                  </div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="home"></i>首页</span>
+                <span><i data-lucide="list"></i>记录</span>
+                <span class="active"><i data-lucide="bell"></i>提醒</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>提醒与统计</b> · 月度日历与续期历史</div>
+        </div>
+      </section>
+
+      <section class="stage wide">
+        <aside class="strategy">
+          <h3>列表与筛选</h3>
+          <p>所有记录在同一张列表里可搜、可筛、可排序，也能批量处理和导出。</p>
+          <div class="note-row">
+            <i data-lucide="search"></i>
+            <div><strong>真实搜索</strong><span>搜索名称、备注和来源，不搜索编造字段。</span></div>
+          </div>
+          <div class="note-row">
+            <i data-lucide="sliders-horizontal"></i>
+            <div><strong>组合筛选</strong><span>分类、状态、风险分桶叠加过滤，数字实时来自真实记录。</span></div>
+          </div>
+          <div class="note-row">
+            <i data-lucide="arrow-down-up"></i>
+            <div><strong>稳定排序</strong><span>到期日、剩余天数、风险等级、最近添加，不引入人工置顶。</span></div>
+          </div>
+          <div class="note-row">
+            <i data-lucide="list-checks"></i>
+            <div><strong>批量处理</strong><span>批量标记已处理、批量导出，空选择不提交。</span></div>
+          </div>
+          <div class="rule-box">列表只展示当前用户真实记录，分类计数与筛选结果始终一致。</div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="list"></i></div>
+                  <strong>到期记录</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn"><i data-lucide="search"></i></button>
+                  <button class="icon-btn"><i data-lucide="plus"></i></button>
+                </div>
+              </div>
+              <div class="screen-content">
+                <div class="search-shell">
+                  <i data-lucide="search"></i>
+                  <input placeholder="搜索名称、备注或来源" />
+                </div>
+                <div class="category-pills" style="margin:0 16px 10px">
+                  <span class="pill active">全部</span>
+                  <span class="pill"><i data-lucide="id-card"></i>证件</span>
+                  <span class="pill"><i data-lucide="credit-card"></i>财务</span>
+                  <span class="pill"><i data-lucide="package"></i>生活</span>
+                  <span class="pill"><i data-lucide="server"></i>数字资产</span>
+                  <span class="pill"><i data-lucide="car"></i>车辆</span>
+                </div>
+                <div class="seg" style="margin:0 16px 10px">
+                  <button class="active">全部</button>
+                  <button>待处理</button>
+                  <button>已处理</button>
+                  <button>已续期</button>
+                </div>
+                <div class="sort-row">
+                  <span>共 1 条真实记录</span>
+                  <b><i data-lucide="arrow-down-up"></i>按剩余天数</b>
+                </div>
+                <div class="section">
+                  <div class="record-card">
+                    <div class="rec-icon" style="background:#f0edff;color:#7e5bef"><i data-lucide="server"></i></div>
+                    <div class="rec-main">
+                      <strong>xwhub.cn SSL 证书</strong>
+                      <span>数字资产 · 2026-10-26</span>
+                      <div class="source-badge"><i data-lucide="shield-check"></i>接口校验</div>
+                    </div>
+                    <div class="rec-right"><b>83 天</b><span>待处理</span></div>
+                  </div>
+                </div>
+                <div class="empty compact" style="margin:0 16px">
+                  <div class="empty-icon"><i data-lucide="database"></i></div>
+                  <div><strong>其他分类暂无记录</strong><p>列表不会为了好看而填充任何演示数据。</p></div>
+                </div>
+              </div>
+              <div class="bottom-bar">
+                <button class="cta ghost"><i data-lucide="check-check"></i>批量标记</button>
+                <button class="cta dark"><i data-lucide="download"></i>导出 CSV</button>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>记录列表</b> · 搜索、筛选、排序、批量处理与导出</div>
+        </div>
+
+        <div class="note-panel">
+          <h3>记录列表规则</h3>
+          <div class="note-row">
+            <i data-lucide="database"></i>
+            <div><strong>真实计数</strong><span>“共 N 条真实记录”由后端统计返回，空结果不展示 0 条以外的占位。</span></div>
+          </div>
+          <div class="note-row">
+            <i data-lucide="shield-check"></i>
+            <div><strong>来源徽标</strong><span>手动录入、照片、扫描确认、接口校验、文件导入分别展示不同徽标。</span></div>
+          </div>
+          <div class="note-row">
+            <i data-lucide="check-check"></i>
+            <div><strong>批量动作</strong><span>未选择任何记录时按钮禁用，防止误操作。</span></div>
+          </div>
+          <div class="note-row">
+            <i data-lucide="download"></i>
+            <div><strong>导出真实数据</strong><span>CSV/JSON 只导出当前用户自己的数据，包含导出时间。</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="annotation-card">
+        <h3>一期全量交付</h3>
+        <div class="check-list">
+          <div class="check-item">
+            <div class="check"><i data-lucide="check"></i></div>
+            <div>
+              <strong>到期闭环</strong>
+              <span>新增、续期、完成、撤销、历史一次完成。</span>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check"><i data-lucide="check"></i></div>
+            <div>
+              <strong>真实数据</strong>
+              <span>无种子、mock、AI 编造；来源与校验可追溯。</span>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check"><i data-lucide="check"></i></div>
+            <div>
+              <strong>四类到期</strong>
+              <span>固定、开封、周期、纪念日分别计算与处理。</span>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check"><i data-lucide="check"></i></div>
+            <div>
+              <strong>提醒与统计</strong>
+              <span>App 内、系统通知、Web 站内提醒与真实统计。</span>
+            </div>
+          </div>
+          <div class="check-item">
+            <div class="check"><i data-lucide="check"></i></div>
+            <div>
+              <strong>风格一致</strong>
+              <span>沿用 FunBox 浅蓝画布、深藏青重点、双主题。</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="board-note">
+        <i data-lucide="info"></i>
+        <span><strong>真实数据说明：</strong>`xwhub.cn` SSL 证书到期时间来自 2026-08-04 本机 TLS 实时校验，签发机构 Let's Encrypt，到期 2026-10-26 17:04:20，距当日 83 天；其余条目均为版式示意。产品运行时无种子、mock 数据，首启为空，所有记录只能由用户真实录入或真实来源写入。</span>
+      </div>
+    </main>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

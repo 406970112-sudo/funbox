@@ -348,6 +348,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "days-left",
+    "name": "还有几天",
+    "tagline": "证件、续费、保质期与纪念日",
+    "description": "管理固定到期、开封有效期、周期续费和纪念日，支持真实证书校验、提醒、续期历史与导入导出。",
+    "icon": "calendar-clock-outline",
+    "category": "生活",
+    "route": "/tools/days-left",
+    "accentColor": "#4b6bff",
+    "badges": ["真实数据", "到期提醒", "续期历史"],
+    "usageLabel": "开始管理",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "snake-brawl",
     "name": "贪吃蛇大作战",
     "tagline": "经典、无尽、闯关三种模式",

@@ -18,6 +18,7 @@ import (
 	"my-first-expo-app/backend/internal/blog"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/cookingguide"
+	"my-first-expo-app/backend/internal/daysleft"
 	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/dnfactivity"
 	"my-first-expo-app/backend/internal/feedback"
@@ -60,6 +61,7 @@ type Server struct {
 	marketRadarService        marketRadarSnapshotService
 	membershipService         *membership.Service
 	diaryService              *diary.Service
+	daysLeftStore             *daysleft.Store
 	dnfActivityService        dnfActivityService
 	momentsService            *moments.Service
 	newsService               newsFeedService
@@ -603,6 +605,11 @@ func newServer(
 			cfg.Server.PublicBaseURL,
 		)
 	}
+	var daysLeftStore *daysleft.Store
+	daysLeftStore, err = daysleft.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open days left database failed: %v", err)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
@@ -620,6 +627,7 @@ func newServer(
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
 		membershipService:         membershipService,
 		diaryService:              diaryService,
+		daysLeftStore:             daysLeftStore,
 		dnfActivityService:        dnfActivitySvc,
 		momentsService:            momentsService,
 		newsService:               newsService,
@@ -670,6 +678,7 @@ func newServer(
 	registerFoodRecommendationRoutes(mux, api)
 	registerCookingGuideRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
+	registerDaysLeftRoutes(mux, api)
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
@@ -729,6 +738,26 @@ func newServer(
 		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
+	}
+	if daysLeftStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = daysLeftStore.Close()
+		})
+	}
+	if plantIDStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = plantIDStore.Close()
+		})
+	}
+	if stockAlertStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = stockAlertStore.Close()
+		})
+	}
+	if dnfActivityStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = dnfActivityStore.Close()
+		})
 	}
 	if priceRadarStore != nil {
 		server.RegisterOnShutdown(func() {
