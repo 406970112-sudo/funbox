@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,28 +33,70 @@ func NewDeepSeekClient(baseURL string, apiKey string, model string, timeout time
 
 type rulePayload struct {
 	BuySignal struct {
-		TriggerPrice  float64  `json:"triggerPrice"`
-		Conditions    []string `json:"conditions"`
+		TriggerPrice  flexibleFloat64 `json:"triggerPrice"`
+		Conditions    []string        `json:"conditions"`
 		ReferenceZone struct {
-			Low  float64 `json:"low"`
-			High float64 `json:"high"`
+			Low  flexibleFloat64 `json:"low"`
+			High flexibleFloat64 `json:"high"`
 		} `json:"referenceZone"`
 	} `json:"buySignal"`
 	SellSignal struct {
-		TriggerPrice  float64  `json:"triggerPrice"`
-		Conditions    []string `json:"conditions"`
+		TriggerPrice  flexibleFloat64 `json:"triggerPrice"`
+		Conditions    []string        `json:"conditions"`
 		ReferenceZone struct {
-			Low  float64 `json:"low"`
-			High float64 `json:"high"`
+			Low  flexibleFloat64 `json:"low"`
+			High flexibleFloat64 `json:"high"`
 		} `json:"referenceZone"`
 	} `json:"sellSignal"`
 	StopLoss struct {
-		TriggerPrice float64 `json:"triggerPrice"`
-		Condition    string  `json:"condition"`
+		TriggerPrice flexibleFloat64 `json:"triggerPrice"`
+		Condition    string          `json:"condition"`
 	} `json:"stopLoss"`
-	ValidTradingDays int      `json:"validTradingDays"`
-	Reasons          []string `json:"reasons"`
-	Summary          string   `json:"summary"`
+	ValidTradingDays flexibleInt `json:"validTradingDays"`
+	Reasons          []string    `json:"reasons"`
+	Summary          string      `json:"summary"`
+}
+
+type flexibleFloat64 float64
+
+func (value *flexibleFloat64) UnmarshalJSON(data []byte) error {
+	parsed, err := parseFlexibleFloat(data)
+	if err != nil {
+		return err
+	}
+	*value = flexibleFloat64(parsed)
+	return nil
+}
+
+type flexibleInt int
+
+func (value *flexibleInt) UnmarshalJSON(data []byte) error {
+	text := strings.TrimSpace(string(data))
+	if strings.HasPrefix(text, "\"") {
+		if err := json.Unmarshal(data, &text); err != nil {
+			return err
+		}
+	}
+	parsed, err := strconv.Atoi(strings.TrimSpace(text))
+	if err != nil {
+		return fmt.Errorf("invalid integer %q: %w", text, err)
+	}
+	*value = flexibleInt(parsed)
+	return nil
+}
+
+func parseFlexibleFloat(data []byte) (float64, error) {
+	text := strings.TrimSpace(string(data))
+	if strings.HasPrefix(text, "\"") {
+		if err := json.Unmarshal(data, &text); err != nil {
+			return 0, err
+		}
+	}
+	parsed, err := strconv.ParseFloat(strings.TrimSpace(text), 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid number %q: %w", text, err)
+	}
+	return parsed, nil
 }
 
 func (c *DeepSeekClient) Analyze(ctx context.Context, features Features) (SignalRule, error) {
@@ -66,6 +109,7 @@ func (c *DeepSeekClient) Analyze(ctx context.Context, features Features) (Signal
 		"You only receive real OHLCV and intraday features. Never invent news, earnings, policy, or price data.",
 		"Generate one JSON object with exact schema: buySignal(triggerPrice, conditions, referenceZone), sellSignal(triggerPrice, conditions, referenceZone), stopLoss(triggerPrice, condition), validTradingDays, reasons, summary.",
 		"Every triggerPrice must be a concrete price based on the provided features. Conditions must stay within supported primitives: price vs trigger, price vs intraday average, volume ratio, 5-minute change.",
+		"All prices and validTradingDays must be JSON numbers, never quoted strings.",
 		"Rules: stopLoss.triggerPrice < buySignal.triggerPrice <= sellSignal.triggerPrice.",
 		"Return one valid JSON object only, no markdown fences.",
 	}, " ")
@@ -136,16 +180,16 @@ func parseRule(rawText string, features Features) (SignalRule, error) {
 		return SignalRule{}, fmt.Errorf("%w: parse rule json: %v", ErrAnalysisUnavailable, err)
 	}
 	rule := SignalRule{
-		BuyTrigger:        payload.BuySignal.TriggerPrice,
+		BuyTrigger:        float64(payload.BuySignal.TriggerPrice),
 		BuyConditions:     payload.BuySignal.Conditions,
-		BuyReferenceLow:   payload.BuySignal.ReferenceZone.Low,
-		BuyReferenceHigh:  payload.BuySignal.ReferenceZone.High,
-		SellTrigger:       payload.SellSignal.TriggerPrice,
+		BuyReferenceLow:   float64(payload.BuySignal.ReferenceZone.Low),
+		BuyReferenceHigh:  float64(payload.BuySignal.ReferenceZone.High),
+		SellTrigger:       float64(payload.SellSignal.TriggerPrice),
 		SellConditions:    payload.SellSignal.Conditions,
-		SellReferenceLow:  payload.SellSignal.ReferenceZone.Low,
-		SellReferenceHigh: payload.SellSignal.ReferenceZone.High,
-		StopLoss:          payload.StopLoss.TriggerPrice,
-		ValidTradingDays:  payload.ValidTradingDays,
+		SellReferenceLow:  float64(payload.SellSignal.ReferenceZone.Low),
+		SellReferenceHigh: float64(payload.SellSignal.ReferenceZone.High),
+		StopLoss:          float64(payload.StopLoss.TriggerPrice),
+		ValidTradingDays:  int(payload.ValidTradingDays),
 		Reasons:           payload.Reasons,
 		Summary:           payload.Summary,
 	}
