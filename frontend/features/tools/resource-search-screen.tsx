@@ -1077,7 +1077,6 @@ function ToolBottomNavigation() {
   const { colors } = useAppTheme();
   const items: { icon: IconName; label: string; onPress: () => void; selected?: boolean }[] = [
     { icon: 'home-outline', label: '首页', onPress: () => router.replace('/') },
-    { icon: 'view-grid', label: '工具', onPress: () => router.replace('/tools'), selected: true },
     { icon: 'message-outline', label: '消息', onPress: () => router.replace('/messages') },
     { icon: 'account-circle-outline', label: '我的', onPress: () => router.replace('/profile') },
   ];
