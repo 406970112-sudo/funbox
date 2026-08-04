@@ -1,0 +1,9 @@
+{
+  "desc": "XWHub Mini Program sitemap",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "pages/index/index"
+    }
+  ]
+}

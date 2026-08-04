@@ -60,5 +60,8 @@ backend/data/
 # isolated Codex feature workspaces
 .worktrees/
 
+# WeChat DevTools local settings
+miniprogram/project.private.config.json
+
 # Superpowers visual brainstorming sessions
 .superpowers/
