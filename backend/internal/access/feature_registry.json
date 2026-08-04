@@ -483,6 +483,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "price-radar",
+    "name": "菜价雷达",
+    "tagline": "查真实菜价，凭证可核验",
+    "description": "输入菜名查看官方批发参考与附近用户凭证报价，可上传小票/发票报价格、提交结构化异议，后台人工核验后公开展示。",
+    "icon": "basket-outline",
+    "category": "生活",
+    "route": "/tools/price-radar",
+    "accentColor": "#24b36b",
+    "badges": ["真实数据", "凭证核验", "异议可追溯"],
+    "usageLabel": "查菜价",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "blog",
     "name": "博客",
     "tagline": "发布真实长文，公开或仅好友可见",

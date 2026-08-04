@@ -31,6 +31,7 @@ import (
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/plantid"
+	"my-first-expo-app/backend/internal/priceradar"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/recommendation"
@@ -63,6 +64,7 @@ type Server struct {
 	momentsService            *moments.Service
 	newsService               newsFeedService
 	plantIDService            *plantid.Service
+	priceRadarService         *priceradar.Service
 	readingService            *reading.Service
 	readingImporter           *reading.Importer
 	recommendationService     *recommendation.Service
@@ -583,6 +585,24 @@ func newServer(
 			DetailTimeout: cfg.DNFActivity.DetailTimeout,
 		}, dnfActivityStore)
 	}
+	var priceRadarService *priceradar.Service
+	priceRadarStore, err := priceradar.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open price radar database failed: %v", err)
+	} else {
+		priceRadarService = priceradar.NewService(
+			priceradar.NewProvider(priceradar.Config{
+				BaseURL:        cfg.PriceRadar.BaseURL,
+				CacheTTL:       cfg.PriceRadar.CacheTTL,
+				RequestTimeout: cfg.PriceRadar.RequestTimeout,
+			}),
+			priceRadarStore,
+			cfg.PriceRadar.StorageDir,
+			cfg.PriceRadar.MaxImageBytes,
+			cfg.PriceRadar.MaxImages,
+			cfg.Server.PublicBaseURL,
+		)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
@@ -604,6 +624,7 @@ func newServer(
 		momentsService:            momentsService,
 		newsService:               newsService,
 		plantIDService:            plantIDService,
+		priceRadarService:         priceRadarService,
 		readingService:            readingService,
 		readingImporter:           readingImporter,
 		recommendationService:     recommendationService,
@@ -652,6 +673,7 @@ func newServer(
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
+	registerPriceRadarRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))
@@ -707,6 +729,11 @@ func newServer(
 		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
+	}
+	if priceRadarStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = priceRadarStore.Close()
+		})
 	}
 	server.RegisterOnShutdown(monitorCancel)
 	return server

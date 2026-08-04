@@ -16,6 +16,7 @@ import { HotNewsScreen } from '@/features/tools/hot-news-screen';
 import { ResourceSearchScreen } from '@/features/tools/resource-search-screen';
 import { LiveStreamCaptureScreen } from '@/features/tools/live-stream-capture-screen';
 import { MarketRadarScreen } from '@/features/tools/market-radar-screen';
+import { PriceRadarScreen } from '@/features/tools/price-radar-screen';
 import { StockTradeAlertScreen } from '@/features/tools/stock-trade-alert-screen';
 import { DnfMobileActivityScreen } from '@/features/tools/dnf-mobile-activity-screen';
 import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
@@ -272,6 +273,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <MarketRadarScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'price-radar') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <PriceRadarScreen />
       </>
     );
   }

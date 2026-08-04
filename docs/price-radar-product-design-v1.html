@@ -1,0 +1,1977 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 菜价雷达 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --canvas: #eef4ff;
+        --board: #e4ebf6;
+        --surface: #ffffff;
+        --surface-muted: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --green: #24b36b;
+        --green-soft: #e4f7ee;
+        --amber: #f1a33b;
+        --coral: #ff5d6c;
+        --dark: #091126;
+        --white: #ffffff;
+        --shadow: 0 22px 46px rgba(58, 86, 152, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+        min-width: 1760px;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--board);
+        background-size: 32px 32px;
+        margin: 0 auto;
+        min-height: 2360px;
+        padding: 28px 34px 34px;
+        width: 1760px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark i {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--green);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 320px repeat(3, 420px);
+        margin-bottom: 22px;
+      }
+
+      .stage.two {
+        grid-template-columns: 420px 420px 1fr;
+      }
+
+      .strategy {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .strategy h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .strategy p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .flow-item {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 26px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .rule-box {
+        background: var(--green-soft);
+        border-left: 3px solid var(--green);
+        border-radius: 10px;
+        color: #1c5b3c;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.7;
+        margin-top: 12px;
+        padding: 10px 11px;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 1040px;
+        padding: 10px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone-screen {
+        background: var(--surface-muted);
+        border-radius: 29px;
+        height: 1020px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 22px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 22px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-content {
+        height: 982px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        height: 50px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--green);
+        border-radius: 9px;
+        color: var(--white);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .loc-row {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 16px 10px;
+      }
+
+      .loc-main {
+        align-items: center;
+        display: flex;
+        font-size: 12px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .loc-main i {
+        color: var(--green);
+        height: 14px;
+        width: 14px;
+      }
+
+      .loc-sub {
+        color: var(--blue);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .search-shell {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        height: 46px;
+        margin: 0 16px 10px;
+        padding: 0 6px 0 13px;
+      }
+
+      .search-shell > i {
+        color: var(--muted);
+        height: 17px;
+        margin-right: 8px;
+        width: 17px;
+      }
+
+      .search-shell input {
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 12px;
+        font-weight: 800;
+        min-width: 0;
+        outline: 0;
+      }
+
+      .search-shell input::placeholder {
+        color: #9aa6bd;
+        font-weight: 600;
+      }
+
+      .search-btn {
+        background: var(--navy);
+        border: 0;
+        border-radius: 10px;
+        color: var(--lime);
+        font-size: 11px;
+        font-weight: 900;
+        height: 34px;
+        padding: 0 14px;
+      }
+
+      .source-strip {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 7px;
+        margin: 0 16px 10px;
+      }
+
+      .live-chip {
+        align-items: center;
+        background: var(--green-soft);
+        border: 1px solid #bfe9d1;
+        border-radius: 999px;
+        color: var(--green);
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 900;
+        gap: 4px;
+        height: 22px;
+        padding: 0 8px;
+      }
+
+      .live-chip i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .official-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--green);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        padding: 12px 13px;
+      }
+
+      .card-label {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+        margin-bottom: 8px;
+      }
+
+      .market-main,
+      .market-sub {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .market-main {
+        margin-bottom: 8px;
+      }
+
+      .market-main strong,
+      .market-sub strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .market-main span,
+      .market-sub span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .market-main > b {
+        color: var(--green);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .market-sub > b {
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .market-sub {
+        border-top: 1px dashed var(--line);
+        padding-top: 8px;
+      }
+
+      .source-line {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 8px;
+        color: var(--muted);
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 5px;
+        margin-top: 10px;
+        padding: 7px 9px;
+      }
+
+      .source-line i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .today-chips {
+        display: flex;
+        gap: 7px;
+        margin: 0 16px 12px;
+        overflow: hidden;
+      }
+
+      .chip {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #56647f;
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        height: 26px;
+        padding: 0 10px;
+        white-space: nowrap;
+      }
+
+      .section {
+        margin: 0 16px 12px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .section-head h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .seg {
+        background: #e6ecf8;
+        border-radius: 10px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(4, 1fr);
+        margin-bottom: 10px;
+        padding: 3px;
+      }
+
+      .seg button {
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        height: 28px;
+      }
+
+      .seg button.active {
+        background: var(--surface);
+        box-shadow: 0 3px 9px rgba(58, 86, 152, 0.12);
+        color: var(--ink);
+      }
+
+      .empty {
+        align-items: center;
+        background: var(--surface);
+        border: 1px dashed #cfd9eb;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 22px 14px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 50%;
+        color: var(--green);
+        display: flex;
+        height: 44px;
+        justify-content: center;
+        margin-bottom: 10px;
+        width: 44px;
+      }
+
+      .empty-icon i {
+        height: 20px;
+        width: 20px;
+      }
+
+      .empty strong {
+        font-size: 11.5px;
+        font-weight: 900;
+      }
+
+      .empty p {
+        color: var(--muted);
+        font-size: 9px;
+        line-height: 1.6;
+        margin: 6px 0 12px;
+      }
+
+      .cta {
+        align-items: center;
+        border: 0;
+        border-radius: 10px;
+        display: inline-flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 6px;
+        height: 36px;
+        justify-content: center;
+        padding: 0 13px;
+      }
+
+      .cta i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .cta.primary {
+        background: var(--green);
+        color: var(--white);
+      }
+
+      .cta.ghost {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        bottom: 0;
+        display: flex;
+        height: 62px;
+        justify-content: space-around;
+        left: 0;
+        position: absolute;
+        right: 0;
+      }
+
+      .bottom-nav span {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .bottom-nav span.active {
+        color: var(--blue);
+      }
+
+      .bottom-nav i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .detail-hero {
+        background: linear-gradient(135deg, rgba(21, 27, 59, 0.96), rgba(36, 179, 107, 0.82));
+        border-radius: 14px;
+        color: var(--white);
+        margin: 0 16px 12px;
+        padding: 14px 15px;
+      }
+
+      .detail-hero .hero-kicker {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+      }
+
+      .detail-hero .hero-kicker i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .detail-hero h2 {
+        font-size: 17px;
+        font-weight: 900;
+        margin: 8px 0 2px;
+      }
+
+      .detail-hero .alias {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 9px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+
+      .price-line {
+        align-items: baseline;
+        display: flex;
+        gap: 7px;
+      }
+
+      .price-line b {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .price-line span {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .hero-meta {
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 7px;
+      }
+
+      .hero-note {
+        background: rgba(255, 255, 255, 0.13);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 10px;
+        padding: 7px 9px;
+      }
+
+      .seg.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .empty.compact {
+        padding: 16px 12px;
+      }
+
+      .empty.compact .empty-icon {
+        height: 36px;
+        margin-bottom: 8px;
+        width: 36px;
+      }
+
+      .empty.compact .empty-icon i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .empty.compact strong {
+        font-size: 10.5px;
+      }
+
+      .empty.compact p {
+        font-size: 8.5px;
+        margin: 5px 0 0;
+      }
+
+      .reference-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 12px;
+        overflow: hidden;
+      }
+
+      .reference-head {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 13px;
+      }
+
+      .reference-head b {
+        font-size: 11.5px;
+        font-weight: 900;
+      }
+
+      .reference-head span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .ref-row {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 13px;
+      }
+
+      .ref-row + .ref-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .ref-row strong {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .ref-row span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .ref-row b {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .detail-actions {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 0 16px;
+      }
+
+      .detail-actions .cta {
+        height: 38px;
+        width: 100%;
+      }
+
+      .form-wrap {
+        margin: 0 16px;
+      }
+
+      .form-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        padding: 12px 13px;
+      }
+
+      .form-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .form-row + .form-row {
+        border-top: 1px solid var(--line);
+        margin-top: 9px;
+        padding-top: 9px;
+      }
+
+      .form-row label {
+        color: var(--muted);
+        flex: 0 0 58px;
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .form-value {
+        color: var(--ink);
+        flex: 1;
+        font-size: 10.5px;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .form-value.placeholder {
+        color: #9aa6bd;
+        font-weight: 600;
+      }
+
+      .form-value.unit {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .upload-zone {
+        align-items: center;
+        background: var(--surface);
+        border: 1.5px dashed #b9c7e2;
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-bottom: 10px;
+        padding: 22px 12px;
+      }
+
+      .upload-zone .up-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 50%;
+        color: var(--blue);
+        display: flex;
+        height: 40px;
+        justify-content: center;
+        margin-bottom: 8px;
+        width: 40px;
+      }
+
+      .upload-zone .up-icon i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .upload-zone strong {
+        color: var(--ink);
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .upload-zone span {
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .rule-strip {
+        align-items: center;
+        background: #fff5e6;
+        border: 1px solid #f7e1bd;
+        border-radius: 10px;
+        color: #9a6418;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 6px;
+        line-height: 1.5;
+        margin: 0 0 12px;
+        padding: 9px 11px;
+      }
+
+      .rule-strip i {
+        flex: 0 0 14px;
+        height: 14px;
+        width: 14px;
+      }
+
+      .submit-btn {
+        align-items: center;
+        background: var(--green);
+        border: 0;
+        border-radius: 12px;
+        color: var(--white);
+        display: flex;
+        font-size: 11.5px;
+        font-weight: 900;
+        gap: 6px;
+        height: 42px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .submit-btn i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .principle-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 0 16px 12px;
+      }
+
+      .principle {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+      }
+
+      .principle .p-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 8px;
+        color: var(--green);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        margin-bottom: 7px;
+        width: 28px;
+      }
+
+      .principle .p-icon i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .principle strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .principle span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        line-height: 1.5;
+        margin-top: 3px;
+      }
+
+      .source-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 12px;
+        overflow: hidden;
+      }
+
+      .source-row {
+        align-items: flex-start;
+        display: flex;
+        gap: 9px;
+        padding: 11px 13px;
+      }
+
+      .source-row + .source-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .source-row .s-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 8px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 30px;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .source-row .s-icon i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .source-row strong {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .source-row span {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        line-height: 1.5;
+        margin-top: 3px;
+      }
+
+      .source-row .s-state {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 999px;
+        color: var(--green);
+        flex: 0 0 auto;
+        font-size: 8px;
+        font-weight: 900;
+        height: 22px;
+        padding: 0 8px;
+      }
+
+      .source-row .s-state.wait {
+        background: #f2f5fb;
+        color: var(--muted);
+      }
+
+      .notice-card {
+        background: var(--surface);
+        border-left: 3px solid var(--coral);
+        border-radius: 10px;
+        margin: 0 16px 12px;
+        padding: 11px 13px;
+      }
+
+      .notice-card strong {
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .notice-card p {
+        color: var(--muted);
+        font-size: 8.5px;
+        line-height: 1.6;
+        margin: 5px 0 0;
+      }
+
+      .annotation-card {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .annotation-card h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 12px;
+      }
+
+      .check-list {
+        display: grid;
+        gap: 9px;
+      }
+
+      .check-item {
+        align-items: flex-start;
+        display: flex;
+        gap: 9px;
+      }
+
+      .check-item .check {
+        align-items: center;
+        background: var(--green);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        flex: 0 0 22px;
+        height: 22px;
+        justify-content: center;
+        margin-top: 1px;
+        width: 22px;
+      }
+
+      .check-item .check i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .check-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .check-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .admin-panel {
+        align-self: stretch;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .admin-head {
+        align-items: center;
+        background: var(--navy);
+        color: var(--white);
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 18px;
+      }
+
+      .admin-head strong {
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .admin-head span {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        color: var(--lime);
+        display: inline-flex;
+        font-size: 9.5px;
+        font-weight: 900;
+        gap: 5px;
+        padding: 5px 10px;
+      }
+
+      .admin-body {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: 150px 1fr;
+        min-height: 500px;
+        padding: 16px;
+      }
+
+      .admin-nav {
+        display: grid;
+        gap: 7px;
+      }
+
+      .admin-nav button {
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        color: var(--muted);
+        font-size: 10.5px;
+        font-weight: 800;
+        height: 38px;
+        text-align: left;
+        padding: 0 12px;
+      }
+
+      .admin-nav button.active {
+        background: var(--blue-soft);
+        border-color: #d3dcff;
+        color: var(--blue);
+      }
+
+      .admin-main {
+        min-width: 0;
+      }
+
+      .admin-section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .admin-section-head b {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .admin-section-head span {
+        color: var(--muted);
+        font-size: 9.5px;
+        font-weight: 800;
+      }
+
+      .admin-empty {
+        align-items: center;
+        background: var(--surface-muted);
+        border: 1px dashed #c9d4e8;
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 170px;
+        text-align: center;
+      }
+
+      .admin-empty i {
+        color: var(--green);
+        height: 26px;
+        margin-bottom: 8px;
+        width: 26px;
+      }
+
+      .admin-empty strong {
+        color: var(--ink);
+        font-size: 11.5px;
+        font-weight: 900;
+      }
+
+      .admin-empty span {
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 5px;
+      }
+
+      .admin-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .admin-box {
+        background: var(--surface-muted);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 12px 13px;
+      }
+
+      .admin-box h4 {
+        font-size: 10.5px;
+        font-weight: 900;
+        margin: 0 0 8px;
+      }
+
+      .admin-rule {
+        align-items: flex-start;
+        color: #56647f;
+        display: flex;
+        font-size: 9.5px;
+        font-weight: 700;
+        gap: 7px;
+        line-height: 1.5;
+        padding: 4px 0;
+      }
+
+      .admin-rule i {
+        color: var(--green);
+        flex: 0 0 13px;
+        height: 13px;
+        margin-top: 1px;
+        width: 13px;
+      }
+
+      .source-status-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        font-size: 9.5px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 8px 0;
+      }
+
+      .source-status-row:first-child {
+        border-top: 0;
+      }
+
+      .source-status-row span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .source-status-row b {
+        color: var(--green);
+        font-size: 9px;
+      }
+
+      .board-note {
+        align-items: center;
+        background: #fff7ea;
+        border: 1px solid #f5dfba;
+        border-radius: 12px;
+        color: #8a5b16;
+        display: flex;
+        font-size: 11px;
+        font-weight: 700;
+        gap: 8px;
+        line-height: 1.6;
+        margin-top: 6px;
+        padding: 11px 14px;
+      }
+
+      .board-note i {
+        flex: 0 0 16px;
+        height: 16px;
+        width: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="shopping-basket"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox 菜价雷达 产品设计 V1</h1>
+            <p class="brand-subtitle">查真实菜价 · 官方基准 + 附近用户凭证 + 合作商户开放数据</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>一期全量交付</strong>
+          真实数据 · 无 mock · 风格沿用 FunBox
+        </div>
+      </header>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="badge-check"></i></div>
+          <div>
+            <strong>真实数据优先</strong>
+            <p>官方批发参考、零售监测、合作商户、用户凭证分层展示，缺数据就显示真实空态。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="layers"></i></div>
+          <div>
+            <strong>凭证可核验</strong>
+            <p>小票/发票上传后进入待核验，后台人工审校，未核验内容不标记为已确认价。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="message-square-warning"></i></div>
+          <div>
+            <strong>异议可追溯</strong>
+            <p>结构化异议 + 图片证据，处理结果回流，原记录与处理过程全部留痕。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>真实数据闭环</h3>
+          <p>从官方基准价到用户凭证修正，每一层都保留来源、时间、单位与状态。</p>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div>
+              <strong>官方基准</strong>
+              <span>农业农村部信息中心批发价 + 地方零售监测，标清日期与单位。</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div>
+              <strong>用户凭证</strong>
+              <span>上传小票/发票，商户、价格、日期、位置全部真实填写。</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div>
+              <strong>异议修正</strong>
+              <span>结构化原因 + 可选图片，后台处理后更新记录状态。</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div>
+              <strong>后台核验</strong>
+              <span>通过 / 驳回 / 需补充，只改状态不改价格，全程审计。</span>
+            </div>
+          </div>
+          <div class="rule-box">
+            无 mock 保障：任何数据源不可用时显示错误、重试或 stale，不回退演示数据。
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <b class="status-time">9:41</b>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <div class="app-title">
+                    <span class="mark"><i data-lucide="shopping-basket"></i></span>
+                    <strong>菜价雷达</strong>
+                  </div>
+                  <div class="app-actions">
+                    <button class="icon-btn"><i data-lucide="map-pin"></i></button>
+                    <button class="icon-btn"><i data-lucide="info"></i></button>
+                  </div>
+                </div>
+
+                <div class="loc-row">
+                  <span class="loc-main"><i data-lucide="map-pin"></i>上海市 · 静安区</span>
+                  <span class="loc-sub">切换</span>
+                </div>
+
+                <div class="search-shell">
+                  <i data-lucide="search"></i>
+                  <input value="生菜" aria-label="搜索菜名" />
+                  <button class="search-btn">查询</button>
+                </div>
+
+                <div class="source-strip">
+                  <span class="live-chip"><i data-lucide="badge-check"></i>真实数据</span>
+                  <span>农业农村部信息中心 · 2026-08-04 已更新</span>
+                </div>
+
+                <div class="official-card">
+                  <div class="card-label"><i data-lucide="landmark"></i>官方批发参考 · 元/公斤</div>
+                  <div class="market-main">
+                    <div>
+                      <strong>上海农产品中心批发市场</strong>
+                      <span>上海市 · 2026-08-04</span>
+                    </div>
+                    <b>5.20</b>
+                  </div>
+                  <div class="market-sub">
+                    <div>
+                      <strong>上海市江桥批发市场</strong>
+                      <span>上海市 · 2026-08-04</span>
+                    </div>
+                    <b>4.80</b>
+                  </div>
+                  <div class="source-line"><i data-lucide="database"></i>全国农产品批发市场价格信息系统</div>
+                </div>
+
+                <div class="today-chips">
+                  <span class="chip">生菜 5.20</span>
+                  <span class="chip">菠菜 9.50</span>
+                  <span class="chip">油菜 2.80</span>
+                </div>
+
+                <div class="section">
+                  <div class="section-head">
+                    <h3>附近用户报价</h3>
+                    <span>按距离排序</span>
+                  </div>
+                  <div class="seg">
+                    <button class="active">全部</button>
+                    <button>超市</button>
+                    <button>菜市场</button>
+                    <button>社区店</button>
+                  </div>
+                  <div class="empty">
+                    <div class="empty-icon"><i data-lucide="shopping-basket"></i></div>
+                    <strong>附近还没有用户凭证报价</strong>
+                    <p>真实凭证经核验后显示在这里，不会填充演示价格</p>
+                    <button class="cta primary"><i data-lucide="camera"></i>上传凭证</button>
+                  </div>
+                </div>
+
+                <div class="bottom-nav">
+                  <span class="active"><i data-lucide="home"></i>首页</span>
+                  <span><i data-lucide="layout-grid"></i>工具</span>
+                  <span><i data-lucide="message-circle"></i>消息</span>
+                  <span><i data-lucide="user"></i>我的</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>01 查价首页</b> · 搜索 + 官方批发参考 + 附近空态</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <b class="status-time">9:41</b>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <div class="app-title"><strong>生菜</strong></div>
+                  <div class="app-actions">
+                    <button class="icon-btn"><i data-lucide="share-2"></i></button>
+                  </div>
+                </div>
+
+                <div class="detail-hero">
+                  <div class="hero-kicker"><i data-lucide="landmark"></i>官方批发参考</div>
+                  <h2>生菜</h2>
+                  <div class="alias">叶用莴苣 · 品种字典归一化</div>
+                  <div class="price-line">
+                    <b>5.20</b>
+                    <span>元/公斤</span>
+                  </div>
+                  <div class="hero-meta">上海农产品中心批发市场 · 2026-08-04</div>
+                  <div class="hero-note">官方批发价不等于门店零售价，门店价请参考附近用户凭证或合作商户价。</div>
+                </div>
+
+                <div class="seg three" style="margin: 0 16px 10px;">
+                  <button class="active">附近价格</button>
+                  <button>凭证</button>
+                  <button>讨论</button>
+                </div>
+
+                <div class="section">
+                  <div class="empty compact">
+                    <div class="empty-icon"><i data-lucide="map-pin-off"></i></div>
+                    <strong>附近暂无用户凭证报价</strong>
+                    <p>用户上传并经核验后显示在这里</p>
+                  </div>
+                </div>
+
+                <div class="reference-list">
+                  <div class="reference-head">
+                    <b>同市场其他品种</b>
+                    <span>上海农产品中心批发市场 · 2026-08-04</span>
+                  </div>
+                  <div class="ref-row">
+                    <div><strong>油菜</strong><span>批发参考 · 元/公斤</span></div>
+                    <b>2.80</b>
+                  </div>
+                  <div class="ref-row">
+                    <div><strong>菠菜</strong><span>批发参考 · 元/公斤</span></div>
+                    <b>9.50</b>
+                  </div>
+                  <div class="ref-row">
+                    <div><strong>韭菜</strong><span>批发参考 · 元/公斤</span></div>
+                    <b>3.00</b>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="empty compact">
+                    <div class="empty-icon"><i data-lucide="message-square"></i></div>
+                    <strong>还没有讨论与异议</strong>
+                    <p>去发表第一条意见或提交凭证</p>
+                  </div>
+                </div>
+
+                <div class="detail-actions">
+                  <button class="cta primary"><i data-lucide="camera"></i>上传凭证</button>
+                  <button class="cta ghost"><i data-lucide="flag"></i>提异议</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>02 商品详情</b> · 官方参考 + 凭证/讨论空态</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <b class="status-time">9:41</b>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <div class="app-title"><strong>上传凭证</strong></div>
+                  <div class="app-actions">
+                    <button class="icon-btn"><i data-lucide="x"></i></button>
+                  </div>
+                </div>
+
+                <div class="seg two" style="margin: 0 16px 12px; grid-template-columns: 1fr 1fr;">
+                  <button class="active">报价格</button>
+                  <button>提异议</button>
+                </div>
+
+                <div class="upload-zone">
+                  <div class="up-icon"><i data-lucide="camera"></i></div>
+                  <strong>添加凭证照片</strong>
+                  <span>最多 3 张 · 相机 / 相册 · 请拍清晰原图</span>
+                </div>
+
+                <div class="form-card">
+                  <div class="form-row">
+                    <label>商品名称</label>
+                    <span class="form-value">生菜</span>
+                  </div>
+                  <div class="form-row">
+                    <label>商户名称</label>
+                    <span class="form-value placeholder">输入市场或超市名称</span>
+                  </div>
+                  <div class="form-row">
+                    <label>商户类型</label>
+                    <span class="form-value">菜市场 <span class="unit">▾</span></span>
+                  </div>
+                  <div class="form-row">
+                    <label>单价</label>
+                    <span class="form-value placeholder">输入价格</span>
+                  </div>
+                  <div class="form-row">
+                    <label>单位</label>
+                    <span class="form-value">元/500克 <span class="unit">▾</span></span>
+                  </div>
+                  <div class="form-row">
+                    <label>购买日期</label>
+                    <span class="form-value">2026-08-04</span>
+                  </div>
+                  <div class="form-row">
+                    <label>位置</label>
+                    <span class="form-value">自动定位 <span class="unit">▾</span></span>
+                  </div>
+                </div>
+
+                <div class="rule-strip">
+                  <i data-lucide="shield-check"></i>
+                  <span>提交后进入人工核验，核验前不会标记为已确认价；请上传真实原图凭证。</span>
+                </div>
+
+                <div style="margin: 0 16px;">
+                  <button class="submit-btn"><i data-lucide="send"></i>提交待核验</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>03 上传凭证 / 提交异议</b> · 原图 + 结构化表单</p>
+        </div>
+      </section>
+
+      <section class="stage two">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <b class="status-time">9:41</b>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <div class="app-title"><strong>数据来源与规则</strong></div>
+                  <div class="app-actions">
+                    <button class="icon-btn"><i data-lucide="circle-help"></i></button>
+                  </div>
+                </div>
+
+                <div class="principle-grid">
+                  <div class="principle">
+                    <div class="p-icon"><i data-lucide="landmark"></i></div>
+                    <strong>官方基准</strong>
+                    <span>批发/零售监测，保留来源与日期</span>
+                  </div>
+                  <div class="principle">
+                    <div class="p-icon"><i data-lucide="store"></i></div>
+                    <strong>合作商户</strong>
+                    <span>正式授权接口才展示</span>
+                  </div>
+                  <div class="principle">
+                    <div class="p-icon"><i data-lucide="receipt-text"></i></div>
+                    <strong>用户凭证</strong>
+                    <span>人工核验后进入公开列表</span>
+                  </div>
+                  <div class="principle">
+                    <div class="p-icon"><i data-lucide="ban"></i></div>
+                    <strong>禁止 mock</strong>
+                    <span>数据缺失显示空态，不回退演示</span>
+                  </div>
+                </div>
+
+                <div class="source-list">
+                  <div class="source-row">
+                    <div class="s-icon"><i data-lucide="database"></i></div>
+                    <div style="flex: 1;">
+                      <strong>农业农村部信息中心</strong>
+                      <span>全国农产品批发市场价格信息系统 · 批发市场日度价 · 元/公斤</span>
+                    </div>
+                    <span class="s-state">今日已更新</span>
+                  </div>
+                  <div class="source-row">
+                    <div class="s-icon"><i data-lucide="building-2"></i></div>
+                    <div style="flex: 1;">
+                      <strong>地方发改委 / 商务局</strong>
+                      <span>城市级零售监测均价 · 农贸市场与超市分列 · 元/500克</span>
+                    </div>
+                    <span class="s-state wait">以官方发布为准</span>
+                  </div>
+                  <div class="source-row">
+                    <div class="s-icon"><i data-lucide="store"></i></div>
+                    <div style="flex: 1;">
+                      <strong>合作商户开放接口</strong>
+                      <span>仅展示正式授权商户；未接入区域不展示</span>
+                    </div>
+                    <span class="s-state wait">未接入不展示</span>
+                  </div>
+                  <div class="source-row">
+                    <div class="s-icon"><i data-lucide="receipt-text"></i></div>
+                    <div style="flex: 1;">
+                      <strong>用户凭证</strong>
+                      <span>小票/发票 + 结构化信息 · 待核验 / 已核验 / 已驳回</span>
+                    </div>
+                    <span class="s-state wait">人工核验</span>
+                  </div>
+                </div>
+
+                <div class="notice-card">
+                  <strong>无 mock 保障</strong>
+                  <p>任何数据源不可用时显示错误、重试或 stale 标记，绝不回退演示数据。</p>
+                </div>
+
+                <div class="notice-card" style="border-left-color: var(--blue);">
+                  <strong>隐私说明</strong>
+                  <p>凭证默认公开展示，可切换为仅核验可见；支持删除与举报。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>04 数据来源与规则</b> · 来源状态 + 无 mock 保障</p>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-head">
+            <strong>后台核验 · 菜价雷达</strong>
+            <span><i data-lucide="badge-check"></i>真实数据队列</span>
+          </div>
+          <div class="admin-body">
+            <div class="admin-nav">
+              <button class="active">待核验</button>
+              <button>已通过</button>
+              <button>已驳回</button>
+              <button>数据源状态</button>
+            </div>
+            <div class="admin-main">
+              <div class="admin-section-head">
+                <b>待核验队列</b>
+                <span>默认按提交时间倒序 · 只显示真实提交记录</span>
+              </div>
+              <div class="admin-empty">
+                <i data-lucide="inbox"></i>
+                <strong>当前没有待核验凭证</strong>
+                <span>用户提交后自动进入此队列，不填充演示记录</span>
+              </div>
+              <div class="admin-grid" style="margin-top: 14px;">
+                <div class="admin-box">
+                  <h4>核验规则</h4>
+                  <div class="admin-rule"><i data-lucide="check"></i>图片清晰可识别</div>
+                  <div class="admin-rule"><i data-lucide="check"></i>价格与凭证一致</div>
+                  <div class="admin-rule"><i data-lucide="check"></i>商户与位置可对应</div>
+                  <div class="admin-rule"><i data-lucide="check"></i>不修改用户提交值</div>
+                </div>
+                <div class="admin-box">
+                  <h4>数据源运行状态</h4>
+                  <div class="source-status-row">
+                    <span>农业农村部信息中心</span>
+                    <b>正常</b>
+                  </div>
+                  <div class="source-status-row">
+                    <span>地方价格监测</span>
+                    <b>以官方发布为准</b>
+                  </div>
+                  <div class="source-status-row">
+                    <span>合作商户接口</span>
+                    <b>未接入不展示</b>
+                  </div>
+                  <div class="source-status-row">
+                    <span>用户凭证</span>
+                    <b>人工核验</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="annotation-card">
+          <h3>一期全量交付</h3>
+          <div class="check-list">
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div>
+                <strong>查价闭环</strong>
+                <span>搜索、定位、官方参考、附近真实报价一次完成。</span>
+              </div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div>
+                <strong>凭证与异议</strong>
+                <span>图片上传、结构化异议、讨论与状态回流全部可用。</span>
+              </div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div>
+                <strong>后台核验</strong>
+                <span>待核验队列、通过/驳回/需补充、异议处置与审计。</span>
+              </div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div>
+                <strong>无 mock 兜底</strong>
+                <span>数据源不可用即错误/重试/stale，不回退演示数据。</span>
+              </div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div>
+                <strong>风格一致</strong>
+                <span>浅蓝背景、白色表面、深藏青重点、8px 圆角、双主题。</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <div class="board-note">
+        <i data-lucide="info"></i>
+        <span><strong>真实数据说明：</strong>本稿官方价格取自农业农村部信息中心 2026-08-04 公开批发价；用户报价、凭证、讨论与后台待核验队列均以空态呈现，不使用任何 mock 数据。</span>
+      </div>
+    </main>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

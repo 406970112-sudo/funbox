@@ -18,6 +18,7 @@ type AdminPageKey =
   | 'membership'
   | 'moments'
   | 'permissions'
+  | 'price-radar'
   | 'recommendations'
   | 'reading'
   | 'resource-search'
@@ -48,6 +49,7 @@ const NAV_SECTIONS: Array<{ items: AdminNavItem[]; title: string }> = [
       { key: 'blog', icon: 'book-open-page-variant-outline', label: '博客管理', path: '/admin/blog' },
       { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读管理', path: '/admin/reading' },
       { key: 'resource-search', icon: 'database-search-outline', label: '资源搜索', path: '/admin/resource-search' },
+      { key: 'price-radar', icon: 'basket-outline', label: '菜价核验', path: '/admin/price-radar' },
     ],
   },
   {
@@ -68,6 +70,7 @@ const MOBILE_NAV_ITEMS: AdminNavItem[] = [
   { key: 'blog', icon: 'book-open-page-variant-outline', label: '博客', path: '/admin/blog' },
   { key: 'membership', icon: 'qrcode', label: '收款', path: '/admin/membership' },
   { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读', path: '/admin/reading' },
+  { key: 'price-radar', icon: 'basket-outline', label: '菜价', path: '/admin/price-radar' },
 ];
 
 const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; title: string }> = {
@@ -115,6 +118,11 @@ const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; ti
     breadcrumb: '内容运营',
     subtitle: '导入、发布与隐藏阅读内容',
     title: '阅读管理',
+  },
+  'price-radar': {
+    breadcrumb: '内容运营',
+    subtitle: '核验用户上传的菜价凭证并处理结构化异议',
+    title: '菜价核验',
   },
   'resource-search': {
     breadcrumb: '内容运营',
@@ -289,7 +297,8 @@ function adminPageKey(pathname: string): AdminPageKey {
     segment === 'membership' ||
     segment === 'recommendations' ||
     segment === 'reading' ||
-    segment === 'resource-search'
+    segment === 'resource-search' ||
+    segment === 'price-radar'
   ) {
     return segment;
   }
