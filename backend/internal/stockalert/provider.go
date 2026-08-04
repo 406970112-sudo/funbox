@@ -15,26 +15,27 @@ import (
 )
 
 type Config struct {
-	CacheTTL            time.Duration
-	MonitorInterval     time.Duration
-	IntradayRefresh     time.Duration
-	QuoteBaseURL        string
-	DelayedQuoteBaseURL string
-	HistoryBaseURL      string
-	SearchBaseURL       string
-	TencentBaseURL      string
-	TencentQuoteBaseURL string
-	RequestTimeout      time.Duration
-	MaxWatchPerUser     int
-	AnalysisDailyLimit  int
-	MinKlines           int
-	QuoteMaxAge         time.Duration
-	SendKey             string
-	Secret              string
-	Enabled             bool
-	DeepSeekBaseURL     string
-	DeepSeekAPIKey      string
-	DeepSeekModel       string
+	CacheTTL               time.Duration
+	MonitorInterval        time.Duration
+	IntradayRefresh        time.Duration
+	QuoteBaseURL           string
+	DelayedQuoteBaseURL    string
+	HistoryBaseURL         string
+	SearchBaseURL          string
+	TencentBaseURL         string
+	TencentQuoteBaseURL    string
+	RequestTimeout         time.Duration
+	DeepSeekRequestTimeout time.Duration
+	MaxWatchPerUser        int
+	AnalysisDailyLimit     int
+	MinKlines              int
+	QuoteMaxAge            time.Duration
+	SendKey                string
+	Secret                 string
+	Enabled                bool
+	DeepSeekBaseURL        string
+	DeepSeekAPIKey         string
+	DeepSeekModel          string
 }
 
 type Provider struct {

@@ -82,6 +82,20 @@ func TestAddWatchReturnsTypedErrorsWithoutCache(t *testing.T) {
 	}
 }
 
+func TestNewServiceUsesSeparateProviderAndDeepSeekTimeouts(t *testing.T) {
+	cfg := testStockAlertConfig("http://example.invalid")
+	cfg.RequestTimeout = 50 * time.Millisecond
+	cfg.DeepSeekRequestTimeout = 3 * time.Second
+
+	service := NewService(cfg, nil)
+	if service.provider.client.Timeout != cfg.RequestTimeout {
+		t.Fatalf("provider timeout = %s, want %s", service.provider.client.Timeout, cfg.RequestTimeout)
+	}
+	if service.deepseek.client.Timeout != cfg.DeepSeekRequestTimeout {
+		t.Fatalf("deepseek timeout = %s, want %s", service.deepseek.client.Timeout, cfg.DeepSeekRequestTimeout)
+	}
+}
+
 func TestSettingsEncryptAndMaskSendKey(t *testing.T) {
 	store := openTestStore(t)
 	service := NewService(testStockAlertConfig("http://example.invalid"), store)
@@ -169,22 +183,23 @@ func openTestStore(t *testing.T) *Store {
 
 func testStockAlertConfig(upstreamURL string) Config {
 	return Config{
-		MonitorInterval:     time.Minute,
-		QuoteBaseURL:        upstreamURL,
-		DelayedQuoteBaseURL: upstreamURL,
-		HistoryBaseURL:      upstreamURL,
-		SearchBaseURL:       upstreamURL,
-		TencentBaseURL:      upstreamURL,
-		TencentQuoteBaseURL: upstreamURL,
-		RequestTimeout:      5 * time.Second,
-		MaxWatchPerUser:     10,
-		AnalysisDailyLimit:  10,
-		MinKlines:           60,
-		QuoteMaxAge:         15 * time.Second,
-		Enabled:             true,
-		DeepSeekBaseURL:     upstreamURL,
-		DeepSeekAPIKey:      "test-key",
-		DeepSeekModel:       "deepseek-v4-flash",
+		MonitorInterval:        time.Minute,
+		QuoteBaseURL:           upstreamURL,
+		DelayedQuoteBaseURL:    upstreamURL,
+		HistoryBaseURL:         upstreamURL,
+		SearchBaseURL:          upstreamURL,
+		TencentBaseURL:         upstreamURL,
+		TencentQuoteBaseURL:    upstreamURL,
+		RequestTimeout:         5 * time.Second,
+		DeepSeekRequestTimeout: 5 * time.Second,
+		MaxWatchPerUser:        10,
+		AnalysisDailyLimit:     10,
+		MinKlines:              60,
+		QuoteMaxAge:            15 * time.Second,
+		Enabled:                true,
+		DeepSeekBaseURL:        upstreamURL,
+		DeepSeekAPIKey:         "test-key",
+		DeepSeekModel:          "deepseek-v4-flash",
 	}
 }
 

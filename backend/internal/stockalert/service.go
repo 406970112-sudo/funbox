@@ -46,7 +46,7 @@ func NewService(cfg Config, store *Store) *Service {
 	return &Service{
 		store:      store,
 		provider:   NewProvider(cfg),
-		deepseek:   NewDeepSeekClient(cfg.DeepSeekBaseURL, cfg.DeepSeekAPIKey, cfg.DeepSeekModel, cfg.RequestTimeout),
+		deepseek:   NewDeepSeekClient(cfg.DeepSeekBaseURL, cfg.DeepSeekAPIKey, cfg.DeepSeekModel, cfg.DeepSeekRequestTimeout),
 		cfg:        cfg,
 		now:        time.Now,
 		client:     &http.Client{Timeout: 12 * time.Second},
