@@ -17,10 +17,12 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/traditionalchinese"
 	unicodeencoding "golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
 )
@@ -217,11 +219,106 @@ func decodeText(data []byte) (string, string, error) {
 	if utf8.Valid(data) {
 		return string(data), "UTF-8", nil
 	}
-	decoded, _, err := transform.Bytes(simplifiedchinese.GB18030.NewDecoder(), data)
-	if err != nil || !utf8.Valid(decoded) {
+
+	type candidate struct {
+		name  string
+		text  string
+		score float64
+	}
+	candidates := make([]candidate, 0, 4)
+	addCandidate := func(name string, decoded []byte, ok bool) {
+		if !ok || !utf8.Valid(decoded) {
+			return
+		}
+		value := string(decoded)
+		candidates = append(candidates, candidate{name: name, text: value, score: textQuality(value)})
+	}
+
+	gbDecoded, gbOK := decodeGB18030(data)
+	big5Decoded, big5OK := decodeBig5(data)
+	addCandidate("GB18030/GBK", gbDecoded, gbOK)
+	addCandidate("Big5", big5Decoded, big5OK)
+
+	// BOM-less UTF-16 files otherwise fall through to GB18030 and become
+	// replacement garbage, so score those decodings too.
+	utf16LE, utf16LEOK := decodeUTF16WithoutBOM(data, true)
+	utf16BE, utf16BEOK := decodeUTF16WithoutBOM(data, false)
+	utf16LEValue, utf16BEValue := string(utf16LE), string(utf16BE)
+	utf16LEScore, utf16BEScore := textQuality(utf16LEValue), textQuality(utf16BEValue)
+	bestNonUTF16 := 0.0
+	for _, item := range candidates {
+		if item.score > bestNonUTF16 {
+			bestNonUTF16 = item.score
+		}
+	}
+	if bytes.IndexByte(data, 0) >= 0 || utf16LEScore > bestNonUTF16+0.35 || utf16BEScore > bestNonUTF16+0.35 {
+		addCandidate("UTF-16LE", utf16LE, utf16LEOK)
+		addCandidate("UTF-16BE", utf16BE, utf16BEOK)
+	}
+
+	best := candidate{name: "", score: -1}
+	for _, item := range candidates {
+		if item.score > best.score {
+			best = item
+		}
+	}
+	if best.score < 0.25 {
 		return "", "", errors.New("TXT encoding is not supported")
 	}
-	return string(decoded), "GB18030/GBK", nil
+	return best.text, best.name, nil
+}
+
+func decodeGB18030(data []byte) ([]byte, bool) {
+	decoded, _, err := transform.Bytes(simplifiedchinese.GB18030.NewDecoder(), data)
+	return decoded, err == nil
+}
+
+func decodeBig5(data []byte) ([]byte, bool) {
+	decoded, _, err := transform.Bytes(traditionalchinese.Big5.NewDecoder(), data)
+	return decoded, err == nil
+}
+
+func decodeUTF16WithoutBOM(data []byte, littleEndian bool) ([]byte, bool) {
+	endianness := unicodeencoding.BigEndian
+	if littleEndian {
+		endianness = unicodeencoding.LittleEndian
+	}
+	decoded, _, err := transform.Bytes(unicodeencoding.UTF16(endianness, unicodeencoding.IgnoreBOM).NewDecoder(), data)
+	return decoded, err == nil
+}
+
+var chinesePunctuation = map[rune]struct{}{
+	'，': {}, '。': {}, '、': {}, '；': {}, '：': {}, '？': {}, '！': {},
+	'《': {}, '》': {}, '（': {}, '）': {}, '【': {}, '】': {}, '「': {},
+	'」': {}, '『': {}, '』': {}, '…': {}, '—': {}, '·': {}, '“': {},
+	'”': {}, '‘': {}, '’': {},
+}
+
+func textQuality(value string) float64 {
+	total := utf8.RuneCountInString(value)
+	if total == 0 {
+		return -1
+	}
+	usable := 0
+	bad := 0
+	for _, r := range value {
+		if r == utf8.RuneError || r == 0 {
+			bad += 2
+			continue
+		}
+		if unicode.IsControl(r) && r != '\n' && r != '\r' && r != '\t' {
+			bad += 2
+			continue
+		}
+		if unicode.Is(unicode.Han, r) || unicode.IsLetter(r) || unicode.IsDigit(r) {
+			usable++
+			continue
+		}
+		if _, ok := chinesePunctuation[r]; ok {
+			usable++
+		}
+	}
+	return float64(usable-bad) / float64(total)
 }
 
 type containerDocument struct {

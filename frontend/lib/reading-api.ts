@@ -142,6 +142,18 @@ export function getReadingErrorMessage(error: unknown) {
     reading_provider_unavailable: '正版内容服务暂时不可用。',
     reading_rights_required: '请先补全版权方、授权范围、凭证和有效期。',
   };
+  if (error.code === 'reading_import_failed') {
+    const importDetails: Record<string, string> = {
+      'TXT encoding is not supported': 'TXT 编码暂不支持，请另存为 UTF-8 或 GBK 后重试。',
+      'book contains no readable chapters': '没有识别到可阅读的正文，请确认 TXT 内容完整。',
+      'only TXT and EPUB files are supported': '仅支持 TXT 和 EPUB 文件。',
+      'uploaded book is empty': '上传的文件是空的。',
+    };
+    for (const [detail, message] of Object.entries(importDetails)) {
+      if (error.message.includes(detail)) return message;
+    }
+    if (error.message && error.message !== error.code) return `文件解析失败：${error.message}`;
+  }
   return messages[error.code] ?? error.message ?? '阅读请求失败。';
 }
 

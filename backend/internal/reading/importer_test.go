@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/traditionalchinese"
 	"golang.org/x/text/transform"
 )
 
@@ -37,6 +38,29 @@ func TestImporterParsesUTF8GBKAndUTF16Text(t *testing.T) {
 			book, err := store.GetBook(context.Background(), result.Book.ID)
 			if err != nil || book.PublishStatus != StatusDraft {
 				t.Fatalf("stored draft = %+v, err = %v", book, err)
+			}
+		})
+	}
+}
+
+func TestImporterParsesUTF16WithoutBOMAndBig5Text(t *testing.T) {
+	cases := []struct {
+		name string
+		data []byte
+	}{
+		{name: "utf16le-no-bom", data: encodeUTF16WithoutBOM("书名：雾港来信\n作者：林深\n\n第一章 雾中的灯\n灯塔亮了。\n\n第二章 旧邮局\n信还在。", true)},
+		{name: "utf16be-no-bom", data: encodeUTF16WithoutBOM("书名：雾港来信\n作者：林深\n\n第一章 雾中的灯\n灯塔亮了。\n\n第二章 旧邮局\n信还在。", false)},
+		{name: "big5", data: encodeBig5(t, "書名：霧港來信\n作者：林深\n\n第一章 霧中的燈\n燈塔亮了。\n\n第二章 舊郵局\n信還在。")},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, importer := newTestImporter(t)
+			result, err := importer.Import(context.Background(), bytes.NewReader(tc.data), "letter.txt", "admin")
+			if err != nil {
+				t.Fatalf("import text: %v", err)
+			}
+			if len(result.Chapters) != 2 {
+				t.Fatalf("chapters = %+v", result.Chapters)
 			}
 		})
 	}
@@ -116,6 +140,27 @@ func encodeUTF16LE(value string) []byte {
 	result := []byte{0xff, 0xfe}
 	for _, char := range []rune(value) {
 		result = append(result, byte(char), byte(char>>8))
+	}
+	return result
+}
+
+func encodeUTF16WithoutBOM(value string, littleEndian bool) []byte {
+	result := make([]byte, 0, len(value)*2)
+	for _, char := range []rune(value) {
+		if littleEndian {
+			result = append(result, byte(char), byte(char>>8))
+		} else {
+			result = append(result, byte(char>>8), byte(char))
+		}
+	}
+	return result
+}
+
+func encodeBig5(t *testing.T, value string) []byte {
+	t.Helper()
+	result, _, err := transform.Bytes(traditionalchinese.Big5.NewEncoder(), []byte(value))
+	if err != nil {
+		t.Fatalf("encode big5: %v", err)
 	}
 	return result
 }
