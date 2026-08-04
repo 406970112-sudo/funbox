@@ -109,6 +109,99 @@ func TestFeedbackValidationErrors(t *testing.T) {
 	}
 }
 
+func TestFeatureFeedbackSubmitNotifyResolveAndRead(t *testing.T) {
+	server, normalToken, adminToken := newFeedbackHTTPTestServer(t)
+
+	body, contentType := featureFeedbackMultipart(
+		t,
+		"发票识别工具",
+		"tool",
+		"希望增加发票识别工具，上传或拍照后自动识别发票金额、抬头和税号",
+		[][]byte{feedbackPNGBytes(t)},
+	)
+	created := performFeedbackRequest(t, server, "POST", "/api/v1/feedback", body, normalToken, contentType)
+	created.Body.Close()
+	if created.StatusCode != http.StatusCreated {
+		t.Fatalf("status=%d", created.StatusCode)
+	}
+
+	emptyNotifications := performFeedbackRequest(t, server, "GET", "/api/v1/feedback/notifications", nil, normalToken, "")
+	emptyBody, err := io.ReadAll(emptyNotifications.Body)
+	emptyNotifications.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if emptyNotifications.StatusCode != http.StatusOK || !bytes.Contains(emptyBody, []byte(`"unreadCount":0`)) {
+		t.Fatalf("empty notifications body=%s status=%d", emptyBody, emptyNotifications.StatusCode)
+	}
+
+	filtered := performFeedbackRequest(
+		t,
+		server,
+		"GET",
+		"/api/v1/admin/feedback?kind=feature_request&status=pending",
+		nil,
+		adminToken,
+		"",
+	)
+	filteredBody, err := io.ReadAll(filtered.Body)
+	filtered.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filtered.StatusCode != http.StatusOK || !bytes.Contains(filteredBody, []byte("发票识别")) {
+		t.Fatalf("filtered body=%s status=%d", filteredBody, filtered.StatusCode)
+	}
+
+	resolveResponse := performFeedbackRequest(
+		t,
+		server,
+		"POST",
+		"/api/v1/admin/feedback/"+feedbackIDFromBody(t, filteredBody)+"/resolve",
+		strings.NewReader(`{"status":"resolved","reply":"已评估，计划加入工具分类，先做拍照识别"}`),
+		adminToken,
+		"application/json",
+	)
+	resolveBody, err := io.ReadAll(resolveResponse.Body)
+	resolveResponse.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolveResponse.StatusCode != http.StatusOK || !bytes.Contains(resolveBody, []byte("resolved")) {
+		t.Fatalf("resolve body=%s status=%d", resolveBody, resolveResponse.StatusCode)
+	}
+
+	notifications := performFeedbackRequest(t, server, "GET", "/api/v1/feedback/notifications", nil, normalToken, "")
+	notificationBody, err := io.ReadAll(notifications.Body)
+	notifications.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if notifications.StatusCode != http.StatusOK ||
+		!bytes.Contains(notificationBody, []byte(`"unreadCount":1`)) ||
+		!bytes.Contains(notificationBody, []byte("已评估")) {
+		t.Fatalf("notification body=%s status=%d", notificationBody, notifications.StatusCode)
+	}
+
+	readResponse := performFeedbackRequest(
+		t,
+		server,
+		"POST",
+		"/api/v1/feedback/notifications/read",
+		strings.NewReader(`{}`),
+		normalToken,
+		"application/json",
+	)
+	readBody, err := io.ReadAll(readResponse.Body)
+	readResponse.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if readResponse.StatusCode != http.StatusOK || !bytes.Contains(readBody, []byte(`"unreadCount":0`)) {
+		t.Fatalf("read body=%s status=%d", readBody, readResponse.StatusCode)
+	}
+}
+
 func newFeedbackHTTPTestServer(t *testing.T) (*httptest.Server, string, string) {
 	t.Helper()
 	tempDir := t.TempDir()
@@ -249,6 +342,43 @@ func feedbackMultipart(t *testing.T, description string, images [][]byte) (*byte
 	return body, writer.FormDataContentType()
 }
 
+func featureFeedbackMultipart(
+	t *testing.T,
+	title string,
+	category string,
+	description string,
+	images [][]byte,
+) (*bytes.Buffer, string) {
+	t.Helper()
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	if err := writer.WriteField("kind", "feature_request"); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteField("title", title); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteField("category", category); err != nil {
+		t.Fatal(err)
+	}
+	if err := writer.WriteField("description", description); err != nil {
+		t.Fatal(err)
+	}
+	for index, imageBytes := range images {
+		part, err := writer.CreateFormFile("images", fmt.Sprintf("design-%d.png", index))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := part.Write(imageBytes); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return body, writer.FormDataContentType()
+}
+
 func feedbackPNGBytes(t *testing.T) []byte {
 	t.Helper()
 	buffer := &bytes.Buffer{}
@@ -274,4 +404,20 @@ func decodeFirstFeedbackImagePath(t *testing.T, body []byte) string {
 		t.Fatal("feedback image missing")
 	}
 	return page.Items[0].Images[0].Path
+}
+
+func feedbackIDFromBody(t *testing.T, body []byte) string {
+	t.Helper()
+	var page struct {
+		Items []struct {
+			ID string `json:"id"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(body, &page); err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Items) == 0 {
+		t.Fatal("feedback item missing")
+	}
+	return page.Items[0].ID
 }

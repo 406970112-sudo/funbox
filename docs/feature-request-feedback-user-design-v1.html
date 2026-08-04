@@ -1,0 +1,1457 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FunBox 功能建议与问题反馈一体化 · 用户端设计</title>
+  <style>
+    :root {
+      --page: #e6ecf5;
+      --board: #eef4ff;
+      --ink: #18233d;
+      --muted: #7483a2;
+      --line: #d9e3f2;
+      --surface: #ffffff;
+      --primary: #4b6bff;
+      --primarySoft: #e7ecff;
+      --accent: #ff6b8f;
+      --green: #123a33;
+      --lime: #c9f36a;
+      --shadow: 0 18px 44px rgba(58, 86, 152, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    }
+
+    .board {
+      background: var(--board);
+      height: 1240px;
+      margin: 0 auto;
+      overflow: hidden;
+      position: relative;
+      width: 1760px;
+    }
+
+    .board::before {
+      border: 1px solid #d4dff1;
+      border-radius: 18px;
+      content: "";
+      inset: 18px;
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .header {
+      left: 48px;
+      position: absolute;
+      top: 34px;
+      width: 1664px;
+    }
+
+    .header-row {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .title-block { display: flex; gap: 16px; }
+
+    .brand-chip {
+      align-items: center;
+      background: var(--green);
+      border-radius: 14px;
+      color: var(--lime);
+      display: flex;
+      height: 52px;
+      justify-content: center;
+      width: 52px;
+    }
+
+    .brand-chip svg { height: 28px; width: 28px; }
+
+    .title-copy h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: 34px;
+      margin: 0;
+    }
+
+    .title-copy p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 20px;
+      margin: 5px 0 0;
+    }
+
+    .meta-chips {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+    }
+
+    .meta-chip {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #5b6884;
+      font-size: 11px;
+      font-weight: 800;
+      height: 30px;
+      line-height: 28px;
+      padding: 0 14px;
+    }
+
+    .meta-chip.accent {
+      background: #e9f7f2;
+      border-color: #bde6d8;
+      color: #1f7b63;
+    }
+
+    .rail {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      height: 988px;
+      left: 48px;
+      overflow: hidden;
+      padding: 22px 22px 18px;
+      position: absolute;
+      top: 112px;
+      width: 338px;
+    }
+
+    .rail h2 {
+      align-items: center;
+      display: flex;
+      font-size: 15px;
+      font-weight: 900;
+      gap: 8px;
+      margin: 0 0 10px;
+    }
+
+    .rail h2 .dot {
+      background: var(--primary);
+      border-radius: 4px;
+      height: 8px;
+      width: 8px;
+    }
+
+    .rail-section {
+      border-top: 1px solid #e9eef8;
+      padding-top: 16px;
+      margin-top: 14px;
+    }
+
+    .rail-section:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .rail ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .rail li {
+      color: #4d5870;
+      font-size: 12px;
+      line-height: 19px;
+      margin: 7px 0;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .rail li::before {
+      color: var(--primary);
+      content: "·";
+      font-size: 18px;
+      font-weight: 900;
+      left: 2px;
+      line-height: 16px;
+      position: absolute;
+      top: 1px;
+    }
+
+    .rail li.off::before { color: #b3bccd; }
+
+    .point-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .point {
+      align-items: flex-start;
+      display: flex;
+      gap: 9px;
+    }
+
+    .point-num {
+      align-items: center;
+      background: var(--green);
+      border-radius: 50%;
+      color: var(--lime);
+      display: flex;
+      flex: 0 0 20px;
+      font-size: 11px;
+      font-weight: 900;
+      height: 20px;
+      justify-content: center;
+      width: 20px;
+    }
+
+    .point p {
+      color: #4d5870;
+      font-size: 11.5px;
+      line-height: 18px;
+      margin: 1px 0 0;
+    }
+
+    .rail-note {
+      background: #f7f9ff;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 17px;
+      margin-top: 14px;
+      padding: 9px 11px;
+    }
+
+    .phone-wrap {
+      position: absolute;
+      top: 112px;
+      width: 398px;
+    }
+
+    .phone-wrap.one { left: 424px; }
+    .phone-wrap.two { left: 856px; }
+    .phone-wrap.three { left: 1288px; }
+
+    .phone-label {
+      align-items: center;
+      display: flex;
+      height: 30px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .phone-label span {
+      background: #18233d;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 7px 14px;
+    }
+
+    .phone-label span.blue { background: var(--primary); }
+    .phone-label span.green { background: #217a63; }
+
+    .phone {
+      background: #eef4ff;
+      border: 1px solid #c8d4e8;
+      border-radius: 44px;
+      box-shadow: var(--shadow);
+      height: 890px;
+      overflow: hidden;
+      position: relative;
+      width: 398px;
+    }
+
+    .status {
+      align-items: center;
+      color: #18233d;
+      display: flex;
+      font-size: 13px;
+      font-weight: 800;
+      height: 38px;
+      justify-content: space-between;
+      padding: 8px 24px 0;
+    }
+
+    .status-right {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+    }
+
+    .signal {
+      align-items: flex-end;
+      display: flex;
+      gap: 2px;
+      height: 12px;
+    }
+
+    .signal i {
+      background: #18233d;
+      border-radius: 2px;
+      display: block;
+      width: 3px;
+    }
+
+    .signal i:nth-child(1) { height: 4px; }
+    .signal i:nth-child(2) { height: 7px; }
+    .signal i:nth-child(3) { height: 10px; }
+    .signal i:nth-child(4) { height: 13px; }
+
+    .wifi {
+      border: 1.6px solid #18233d;
+      border-radius: 50%;
+      height: 9px;
+      position: relative;
+      transform: rotate(-45deg);
+      width: 14px;
+    }
+
+    .battery {
+      border: 1.6px solid #18233d;
+      border-radius: 4px;
+      height: 13px;
+      padding: 2px;
+      position: relative;
+      width: 23px;
+    }
+
+    .battery::before {
+      background: #18233d;
+      border-radius: 1px;
+      content: "";
+      inset: 2px 5px 2px 2px;
+      position: absolute;
+    }
+
+    .battery::after {
+      background: #18233d;
+      border-radius: 0 2px 2px 0;
+      content: "";
+      height: 5px;
+      right: -4px;
+      top: 2px;
+      width: 2px;
+    }
+
+    .screen {
+      height: 852px;
+      padding: 10px 16px 0;
+      position: relative;
+    }
+
+    .top-bar {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .brand {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      align-items: center;
+      background: #18211f;
+      border-radius: 12px;
+      color: #fff;
+      display: flex;
+      height: 40px;
+      justify-content: center;
+      width: 40px;
+    }
+
+    .brand-mark svg { height: 22px; width: 22px; }
+
+    .brand-name {
+      font-family: Georgia, serif;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 25px;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 14px;
+      margin-top: 1px;
+    }
+
+    .count {
+      color: #66758a;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .back-button,
+    .icon-button {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: #4d5870;
+      display: flex;
+      height: 40px;
+      justify-content: center;
+      width: 40px;
+    }
+
+    .back-button svg,
+    .icon-button svg { height: 20px; width: 20px; }
+
+    .title-center {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .spacer {
+      height: 40px;
+      width: 40px;
+    }
+
+    .search-shell {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      display: flex;
+      gap: 8px;
+      height: 42px;
+      padding: 0 12px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .search-shell.focused {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(75, 107, 255, 0.14);
+    }
+
+    .search-shell svg.search-ic {
+      color: #7f8ca6;
+      flex: 0 0 18px;
+      height: 18px;
+      width: 18px;
+    }
+
+    .search-input {
+      color: var(--ink);
+      flex: 1;
+      font-size: 13px;
+      font-weight: 700;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .clear-ic {
+      align-items: center;
+      color: #9aa5ba;
+      display: flex;
+      height: 24px;
+      justify-content: center;
+      width: 24px;
+    }
+
+    .clear-ic svg { height: 16px; width: 16px; }
+
+    .empty-panel {
+      background: var(--surface);
+      border: 1px solid #d5e0f3;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(58, 86, 152, 0.16);
+      margin-top: 6px;
+      padding: 18px 14px 14px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .empty-icon {
+      align-items: center;
+      background: #f2f5ff;
+      border-radius: 12px;
+      color: #8592ad;
+      display: flex;
+      height: 40px;
+      justify-content: center;
+      margin: 0 auto 10px;
+      width: 40px;
+    }
+
+    .empty-icon svg { height: 21px; width: 21px; }
+
+    .empty-title {
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 19px;
+      text-align: center;
+    }
+
+    .empty-sub {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 16px;
+      margin-top: 5px;
+      text-align: center;
+    }
+
+    .empty-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 13px;
+    }
+
+    .empty-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #55617c;
+      font-size: 10.5px;
+      font-weight: 900;
+      line-height: 30px;
+      padding: 0 13px;
+    }
+
+    .empty-btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .feedback-entry {
+      align-items: center;
+      background: #fbf9ff;
+      border: 1.5px dashed #b9a7f5;
+      border-radius: 13px;
+      color: #6b5adb;
+      display: flex;
+      gap: 10px;
+      margin-top: 13px;
+      min-height: 48px;
+      padding: 9px 11px;
+    }
+
+    .feedback-entry .fe-icon {
+      align-items: center;
+      background: #f0ecff;
+      border-radius: 10px;
+      color: #6b5adb;
+      display: flex;
+      flex: 0 0 30px;
+      height: 30px;
+      justify-content: center;
+      width: 30px;
+    }
+
+    .feedback-entry .fe-icon svg { height: 17px; width: 17px; }
+
+    .feedback-entry .fe-copy { flex: 1; min-width: 0; }
+
+    .feedback-entry .fe-title {
+      color: #433a78;
+      font-size: 11.5px;
+      font-weight: 900;
+      line-height: 16px;
+    }
+
+    .feedback-entry .fe-sub {
+      color: #8b82b5;
+      font-size: 9.5px;
+      line-height: 14px;
+      margin-top: 2px;
+    }
+
+    .feedback-entry .fe-arrow {
+      align-items: center;
+      color: #6b5adb;
+      display: flex;
+      height: 26px;
+      justify-content: center;
+      width: 22px;
+    }
+
+    .feedback-entry .fe-arrow svg { height: 15px; width: 15px; }
+
+    .dim-body {
+      bottom: 0;
+      filter: blur(0.6px);
+      left: 0;
+      opacity: 0.34;
+      position: absolute;
+      right: 0;
+      top: 140px;
+      z-index: 1;
+    }
+
+    .dim-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      height: 86px;
+      margin-top: 14px;
+    }
+
+    .dim-grid {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 14px;
+    }
+
+    .dim-tile {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      height: 74px;
+    }
+
+    .segmented {
+      background: #e4ebf8;
+      border-radius: 11px;
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      padding: 4px;
+    }
+
+    .segmented .seg {
+      align-items: center;
+      border-radius: 8px;
+      color: #7483a2;
+      display: flex;
+      flex: 1;
+      font-size: 11.5px;
+      font-weight: 800;
+      height: 34px;
+      justify-content: center;
+    }
+
+    .segmented .seg.on {
+      background: var(--surface);
+      color: #18233d;
+      box-shadow: 0 2px 8px rgba(58, 86, 152, 0.12);
+    }
+
+    .form-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .field { display: grid; gap: 8px; }
+
+    .field-label {
+      align-items: center;
+      display: flex;
+      font-size: 12px;
+      font-weight: 800;
+      justify-content: space-between;
+    }
+
+    .field-label small {
+      color: #8f9bbb;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    .text-input,
+    .text-area {
+      background: #f4f7ff;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink);
+      font-size: 12px;
+      padding: 10px 12px;
+    }
+
+    .text-area {
+      height: 92px;
+      line-height: 18px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      background: #f4f7ff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #7483a2;
+      font-size: 10.5px;
+      font-weight: 800;
+      height: 28px;
+      line-height: 26px;
+      padding: 0 11px;
+    }
+
+    .chip.on {
+      background: var(--primarySoft);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .upload-grid {
+      display: flex;
+      gap: 8px;
+    }
+
+    .upload-tile {
+      align-items: center;
+      background: #f4f7ff;
+      border: 1.5px dashed #c8d5ef;
+      border-radius: 12px;
+      color: #8592ad;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      height: 70px;
+      justify-content: center;
+      width: 70px;
+    }
+
+    .upload-tile svg { height: 20px; width: 20px; }
+
+    .upload-tile span {
+      font-size: 8.5px;
+      font-weight: 800;
+    }
+
+    .submit-btn {
+      align-items: center;
+      background: #151b3b;
+      border-radius: 14px;
+      color: var(--lime);
+      display: flex;
+      font-size: 13px;
+      font-weight: 900;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 4px;
+      min-height: 46px;
+    }
+
+    .submit-btn svg { height: 17px; width: 17px; }
+
+    .form-hint {
+      color: #8592ad;
+      font-size: 9.5px;
+      line-height: 15px;
+      text-align: center;
+    }
+
+    .messages-tabs {
+      background: #e4ebf8;
+      border-radius: 11px;
+      display: flex;
+      gap: 4px;
+      margin-bottom: 4px;
+      padding: 4px;
+    }
+
+    .messages-tabs .tab {
+      align-items: center;
+      border-radius: 8px;
+      color: #7483a2;
+      display: flex;
+      flex: 1;
+      font-size: 10.5px;
+      font-weight: 800;
+      height: 34px;
+      justify-content: center;
+    }
+
+    .messages-tabs .tab.on {
+      background: var(--surface);
+      color: #18233d;
+      box-shadow: 0 2px 8px rgba(58, 86, 152, 0.12);
+    }
+
+    .notice-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .notice-head {
+      align-items: center;
+      border-bottom: 1px solid #edf1fa;
+      display: flex;
+      justify-content: space-between;
+      min-height: 42px;
+      padding: 0 13px;
+    }
+
+    .notice-head strong {
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .notice-head span {
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .notice-row {
+      align-items: center;
+      border-bottom: 1px solid #f0f3fa;
+      display: flex;
+      gap: 10px;
+      min-height: 72px;
+      padding: 10px 12px;
+    }
+
+    .notice-row:last-child { border-bottom: 0; }
+
+    .notice-avatar {
+      align-items: center;
+      background: #f0ecff;
+      border-radius: 13px;
+      color: #6b5adb;
+      display: flex;
+      flex: 0 0 40px;
+      height: 40px;
+      justify-content: center;
+      width: 40px;
+    }
+
+    .notice-avatar.green {
+      background: #e8f6f1;
+      color: #1f7b63;
+    }
+
+    .notice-avatar svg { height: 20px; width: 20px; }
+
+    .notice-copy { flex: 1; min-width: 0; }
+
+    .notice-title {
+      align-items: center;
+      display: flex;
+      font-size: 12.5px;
+      font-weight: 800;
+      gap: 6px;
+    }
+
+    .notice-title .badge {
+      border-radius: 999px;
+      font-size: 8.5px;
+      font-weight: 900;
+      line-height: 16px;
+      padding: 0 6px;
+    }
+
+    .badge.purple {
+      background: #f0ecff;
+      color: #6b5adb;
+    }
+
+    .badge.red {
+      background: #ffe9ee;
+      color: #d84b72;
+    }
+
+    .notice-preview {
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 16px;
+      margin-top: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .notice-side {
+      align-items: flex-end;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .notice-time {
+      color: #8f9bbb;
+      font-size: 9px;
+    }
+
+    .notice-dot {
+      background: var(--accent);
+      border-radius: 4px;
+      height: 8px;
+      width: 8px;
+    }
+
+    .bottom-nav {
+      align-items: center;
+      background: rgba(255, 255, 255, 0.98);
+      border-top: 1px solid #e3eaf5;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 62px;
+      left: 0;
+      position: absolute;
+      right: 0;
+    }
+
+    .nav-item {
+      align-items: center;
+      color: #98a3b8;
+      display: flex;
+      flex-direction: column;
+      font-size: 9.5px;
+      font-weight: 800;
+      gap: 3px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .nav-item.on { color: var(--primary); }
+
+    .nav-item svg { height: 19px; width: 19px; }
+
+    .nav-dot {
+      background: #f04444;
+      border: 1.5px solid #fff;
+      border-radius: 5px;
+      height: 9px;
+      position: absolute;
+      right: 34px;
+      top: 2px;
+      width: 9px;
+    }
+
+    .bottom-strip {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, 1fr);
+      left: 424px;
+      position: absolute;
+      top: 1052px;
+      width: 1262px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      min-height: 128px;
+      padding: 13px 14px;
+    }
+
+    .info-head {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .info-num {
+      align-items: center;
+      background: var(--green);
+      border-radius: 50%;
+      color: var(--lime);
+      display: flex;
+      flex: 0 0 20px;
+      font-size: 10px;
+      font-weight: 900;
+      height: 20px;
+      justify-content: center;
+      width: 20px;
+    }
+
+    .info-card h3 {
+      font-size: 12.5px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .info-card p {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 18px;
+      margin: 0;
+    }
+
+    .info-card .tag {
+      background: #f2f6ff;
+      border-radius: 999px;
+      color: var(--primary);
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 20px;
+      margin-top: 8px;
+      padding: 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <div class="header">
+      <div class="header-row">
+        <div class="title-block">
+          <div class="brand-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+              <rect x="13" y="13" width="7" height="7" rx="1.5" />
+            </svg>
+          </div>
+          <div class="title-copy">
+            <h1>FunBox 功能建议与问题反馈一体化 · 用户端设计</h1>
+            <p>搜索空态补上反馈入口，问题与建议同一套表单、状态与消息通知，全部使用真实数据。</p>
+          </div>
+        </div>
+        <div class="meta-chips">
+          <span class="meta-chip">2026-08-04</span>
+          <span class="meta-chip">一期交付</span>
+          <span class="meta-chip accent">真实数据</span>
+        </div>
+      </div>
+    </div>
+
+    <aside class="rail">
+      <div class="rail-section">
+        <h2><span class="dot"></span>问题</h2>
+        <ul>
+          <li>搜索无结果时只有清空和查看全部，需求无处表达。</li>
+          <li>功能建议与问题反馈分成两套心智，维护成本高。</li>
+          <li>管理员处理后结果无法回到用户。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>方案</h2>
+        <ul>
+          <li>空态新增“去反馈”整行入口，关键词自动带入。</li>
+          <li>反馈中心统一“问题反馈 / 功能建议”。</li>
+          <li>消息中心新增“系统通知”页签承载处理结果。</li>
+          <li>未读数、状态、回复全部来自服务端。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>真实数据红线</h2>
+        <ul>
+          <li>不写死任何反馈、回复、状态或未读数。</li>
+          <li>不向生产库 seed 演示数据。</li>
+          <li>空态出现与否由真实搜索结果决定。</li>
+          <li>设计图为真实上传文件，私有鉴权读取。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>设计要点</h2>
+        <div class="point-list">
+          <div class="point"><span class="point-num">1</span><p>空态保留两个主按钮，反馈入口独立成行，窄屏不拥挤。</p></div>
+          <div class="point"><span class="point-num">2</span><p>关键词预填“功能名称”，可编辑，不视为假数据。</p></div>
+          <div class="point"><span class="point-num">3</span><p>问题与建议共用表单、状态和消息通道。</p></div>
+          <div class="point"><span class="point-num">4</span><p>系统通知未读红点与消息 Tab 角标联动。</p></div>
+        </div>
+        <div class="rail-note">
+          设计稿中的昵称、时间和回复内容仅作版式示意；交付后页面只展示真实数据库与真实 API 返回的数据。
+        </div>
+      </div>
+    </aside>
+
+    <div class="phone-wrap one">
+      <div class="phone-label"><span>1 · 搜索空态加入口</span></div>
+      <div class="phone">
+        <div class="status">
+          <span>9:41</span>
+          <div class="status-right">
+            <div class="signal"><i></i><i></i><i></i><i></i></div>
+            <div class="wifi"></div>
+            <div class="battery"></div>
+          </div>
+        </div>
+        <div class="screen">
+          <div class="top-bar">
+            <div class="brand">
+              <div class="brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                </svg>
+              </div>
+              <div>
+                <div class="brand-name">FunBox</div>
+                <div class="brand-sub">工具与游戏，随手即用</div>
+              </div>
+            </div>
+            <div class="count">16 个工具 · 5 款游戏</div>
+          </div>
+
+          <div class="search-shell focused">
+            <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+              <circle cx="10.5" cy="10.5" r="6" />
+              <path d="m15 15 5 5" />
+            </svg>
+            <div class="search-input">发票识别</div>
+            <div class="clear-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="empty-panel">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="10.5" cy="10.5" r="6" />
+                <path d="m15 15 5 5M8 9h5M10.5 7.5v5" />
+              </svg>
+            </div>
+            <div class="empty-title">没有找到与「发票识别」匹配的工具或游戏</div>
+            <div class="empty-sub">换个关键词，或直接浏览全部工具；也可以告诉我们你想要的功能</div>
+            <div class="empty-actions">
+              <span class="empty-btn">清空关键词</span>
+              <span class="empty-btn primary">在全部工具中查看</span>
+            </div>
+            <div class="feedback-entry">
+              <div class="fe-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 18h6M10 21h4" />
+                  <path d="M12 3a6 6 0 0 0-4 10c1 1 1 2 1 3h6c0-1 0-2 1-3a6 6 0 0 0-4-10Z" />
+                </svg>
+              </div>
+              <div class="fe-copy">
+                <div class="fe-title">没有找到想要的功能？去反馈</div>
+                <div class="fe-sub">告诉我们你想要的工具或游戏</div>
+              </div>
+              <div class="fe-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="dim-body">
+            <div class="dim-card"></div>
+            <div class="dim-card"></div>
+            <div class="dim-grid">
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+              <div class="dim-tile"></div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item on">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1Z" />
+              </svg>
+              首页
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                <rect x="13" y="13" width="7" height="7" rx="1.5" />
+              </svg>
+              工具
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="15" rx="3" />
+                <path d="M8 10h8M8 14h5" />
+              </svg>
+              消息
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+              </svg>
+              我的
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-wrap two">
+      <div class="phone-label"><span class="blue">2 · 功能建议表单</span></div>
+      <div class="phone">
+        <div class="status">
+          <span>9:41</span>
+          <div class="status-right">
+            <div class="signal"><i></i><i></i><i></i><i></i></div>
+            <div class="wifi"></div>
+            <div class="battery"></div>
+          </div>
+        </div>
+        <div class="screen">
+          <div class="top-bar">
+            <div class="back-button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M11 18l-6-6 6-6" />
+              </svg>
+            </div>
+            <div class="title-center">反馈中心</div>
+            <div class="spacer"></div>
+          </div>
+
+          <div class="segmented">
+            <div class="seg">问题反馈</div>
+            <div class="seg on">功能建议</div>
+          </div>
+
+          <div class="form-panel">
+            <div class="field">
+              <div class="field-label">功能名称 <small>必填 · 5-40 字</small></div>
+              <div class="text-input">发票识别</div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">功能分类 <small>必填</small></div>
+              <div class="chip-row">
+                <span class="chip on">工具</span>
+                <span class="chip">游戏</span>
+                <span class="chip">社交</span>
+                <span class="chip">阅读</span>
+                <span class="chip">效率</span>
+                <span class="chip">其他</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">功能描述 <small>24/1000</small></div>
+              <div class="text-area">希望增加发票识别工具，上传或拍照后自动识别发票金额、抬头和税号，并支持保存为结构化记录。</div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">设计图 <small>可选 · JPG/PNG/WebP · 最多 3 张</small></div>
+              <div class="upload-grid">
+                <div class="upload-tile">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <path d="M8 10h.01M14 10h2M8 14h8" />
+                  </svg>
+                  <span>上传设计图</span>
+                </div>
+                <div class="upload-tile" style="opacity:0.45">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <path d="M8 10h.01M14 10h2M8 14h8" />
+                  </svg>
+                  <span>2/3</span>
+                </div>
+                <div class="upload-tile" style="opacity:0.45">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <path d="M8 10h.01M14 10h2M8 14h8" />
+                  </svg>
+                  <span>3/3</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="submit-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+              提交功能建议
+            </div>
+            <div class="form-hint">提交后可在 消息 > 系统通知 查看处理结果</div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item on">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1Z" />
+              </svg>
+              首页
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                <rect x="13" y="13" width="7" height="7" rx="1.5" />
+              </svg>
+              工具
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="15" rx="3" />
+                <path d="M8 10h8M8 14h5" />
+              </svg>
+              消息
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+              </svg>
+              我的
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-wrap three">
+      <div class="phone-label"><span class="green">3 · 消息系统通知</span></div>
+      <div class="phone">
+        <div class="status">
+          <span>9:41</span>
+          <div class="status-right">
+            <div class="signal"><i></i><i></i><i></i><i></i></div>
+            <div class="wifi"></div>
+            <div class="battery"></div>
+          </div>
+        </div>
+        <div class="screen">
+          <div class="top-bar">
+            <div>
+              <div style="font-size:24px;font-weight:900;line-height:29px">消息</div>
+              <div style="color:var(--muted);font-size:10px;font-weight:700;margin-top:3px">好友与系统通知</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div class="icon-button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+                  <circle cx="10.5" cy="10.5" r="6" />
+                  <path d="m15 15 5 5" />
+                </svg>
+              </div>
+              <div class="icon-button" style="background:#151b3b;border-color:#151b3b;color:var(--lime)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="messages-tabs">
+            <div class="tab">聊天</div>
+            <div class="tab">互动通知</div>
+            <div class="tab on">系统通知</div>
+          </div>
+
+          <div class="notice-panel">
+            <div class="notice-head">
+              <strong>反馈处理结果</strong>
+              <span>全部已读</span>
+            </div>
+            <div class="notice-row">
+              <div class="notice-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 18h6M10 21h4" />
+                  <path d="M12 3a6 6 0 0 0-4 10c1 1 1 2 1 3h6c0-1 0-2 1-3a6 6 0 0 0-4-10Z" />
+                </svg>
+              </div>
+              <div class="notice-copy">
+                <div class="notice-title">功能建议已处理 <span class="badge purple">已处理</span></div>
+                <div class="notice-preview">已评估，计划加入“工具”分类，可在“我的反馈”查看完整结果。</div>
+              </div>
+              <div class="notice-side">
+                <span class="notice-time">刚刚</span>
+                <span class="notice-dot"></span>
+              </div>
+            </div>
+            <div class="notice-row">
+              <div class="notice-avatar green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6M12 17V4M8 8l4-4 4 4" />
+                </svg>
+              </div>
+              <div class="notice-copy">
+                <div class="notice-title">问题反馈已处理 <span class="badge red">已处理</span></div>
+                <div class="notice-preview">问题已定位并修复，感谢反馈。</div>
+              </div>
+              <div class="notice-side">
+                <span class="notice-time">昨天</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:18px;margin-top:12px;padding:13px">
+            <div style="font-size:12.5px;font-weight:900">我的反馈</div>
+            <div style="color:var(--muted);font-size:10.5px;line-height:16px;margin-top:5px">功能建议“发票识别”已处理，点击可查看完整结果。</div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1Z" />
+              </svg>
+              首页
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                <rect x="13" y="13" width="7" height="7" rx="1.5" />
+              </svg>
+              工具
+            </div>
+            <div class="nav-item on">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="16" height="15" rx="3" />
+                <path d="M8 10h8M8 14h5" />
+              </svg>
+              消息
+              <span class="nav-dot"></span>
+            </div>
+            <div class="nav-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+              </svg>
+              我的
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-strip">
+      <div class="info-card">
+        <div class="info-head">
+          <span class="info-num">1</span>
+          <h3>入口只在真实空态出现</h3>
+        </div>
+        <p>“去反馈”由真实搜索结果驱动；有结果时不展示，避免打扰正常搜索。</p>
+        <span class="tag">真实数据</span>
+      </div>
+      <div class="info-card">
+        <div class="info-head">
+          <span class="info-num">2</span>
+          <h3>关键词自动带入</h3>
+        </div>
+        <p>当前搜索词预填到功能名称，用户可修改；未登录先登录，登录后带回。</p>
+        <span class="tag">可编辑</span>
+      </div>
+      <div class="info-card">
+        <div class="info-head">
+          <span class="info-num">3</span>
+          <h3>结果回到消息中心</h3>
+        </div>
+        <p>管理员处理后，系统通知未读 +1，打开详情即已读，消息 Tab 角标同步清零。</p>
+        <span class="tag">实时同步</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

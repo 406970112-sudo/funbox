@@ -10,6 +10,7 @@ type SearchResultPanelProps = {
   entries: HomeSearchEntry[];
   gameCount: number;
   onClear: () => void;
+  onFeedback: () => void;
   onOpen: (entry: HomeSearchEntry) => void;
   onSelect: (index: number) => void;
   onViewAll: () => void;
@@ -25,6 +26,7 @@ export function SearchResultPanel({
   entries,
   gameCount,
   onClear,
+  onFeedback,
   onOpen,
   onSelect,
   onViewAll,
@@ -131,6 +133,26 @@ export function SearchResultPanel({
               <ThemedText style={[styles.emptyButtonText, { color: '#ffffff' }]}>
                 在全部工具中查看
               </ThemedText>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="没有找到想要的功能，去反馈"
+              accessibilityRole="button"
+              onPress={onFeedback}
+              style={({ pressed }) => [
+                styles.emptyFeedback,
+                { borderColor: '#b9a7f5', backgroundColor: '#fbf9ff' },
+                pressed && styles.pressed,
+              ]}>
+              <View style={styles.emptyFeedbackIcon}>
+                <MaterialCommunityIcons name="lightbulb-on-outline" size={17} color="#6b5adb" />
+              </View>
+              <View style={styles.emptyFeedbackCopy}>
+                <ThemedText style={styles.emptyFeedbackTitle}>没有找到想要的功能？去反馈</ThemedText>
+                <ThemedText style={[styles.emptyFeedbackSubtitle, { color: colors.mutedText }]}>
+                  告诉我们你想要的工具或游戏
+                </ThemedText>
+              </View>
+              <MaterialCommunityIcons name="arrow-right" size={16} color="#6b5adb" />
             </Pressable>
           </View>
         </View>
@@ -342,6 +364,41 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: 11,
     fontWeight: '900',
+  },
+  emptyFeedback: {
+    alignItems: 'center',
+    borderRadius: 13,
+    borderStyle: 'dashed',
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    gap: 9,
+    marginTop: 13,
+    minHeight: 48,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+  },
+  emptyFeedbackIcon: {
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#f0ecff',
+    height: 30,
+    justifyContent: 'center',
+    width: 30,
+  },
+  emptyFeedbackCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  emptyFeedbackTitle: {
+    color: '#433a78',
+    fontSize: 11.5,
+    fontWeight: '900',
+    lineHeight: 16,
+  },
+  emptyFeedbackSubtitle: {
+    fontSize: 9.5,
+    lineHeight: 14,
+    marginTop: 2,
   },
   pressed: {
     opacity: 0.72,

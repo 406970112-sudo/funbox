@@ -291,7 +291,7 @@ export function ProfileScreen() {
             />
             <AccountAction
               icon="message-alert-outline"
-              label="问题反馈"
+              label="反馈中心"
               onPress={() => router.push('/profile/feedback' as Href)}
             />
             <AccountAction

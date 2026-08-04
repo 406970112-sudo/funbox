@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FunBox 功能建议与问题反馈一体化 · 管理端设计</title>
+  <style>
+    :root {
+      --page: #e6ecf5;
+      --board: #eef4ff;
+      --ink: #18233d;
+      --muted: #7483a2;
+      --line: #d9e3f2;
+      --surface: #ffffff;
+      --primary: #4b6bff;
+      --primarySoft: #e7ecff;
+      --accent: #ff6b8f;
+      --green: #123a33;
+      --lime: #c9f36a;
+      --shadow: 0 18px 44px rgba(58, 86, 152, 0.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    }
+
+    .board {
+      background: var(--board);
+      height: 1240px;
+      margin: 0 auto;
+      overflow: hidden;
+      position: relative;
+      width: 1760px;
+    }
+
+    .board::before {
+      border: 1px solid #d4dff1;
+      border-radius: 18px;
+      content: "";
+      inset: 18px;
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .header {
+      left: 48px;
+      position: absolute;
+      top: 34px;
+      width: 1664px;
+    }
+
+    .header-row {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .title-block { display: flex; gap: 16px; }
+
+    .brand-chip {
+      align-items: center;
+      background: var(--green);
+      border-radius: 14px;
+      color: var(--lime);
+      display: flex;
+      height: 52px;
+      justify-content: center;
+      width: 52px;
+    }
+
+    .brand-chip svg { height: 28px; width: 28px; }
+
+    .title-copy h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: 34px;
+      margin: 0;
+    }
+
+    .title-copy p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 20px;
+      margin: 5px 0 0;
+    }
+
+    .meta-chips {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+    }
+
+    .meta-chip {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #5b6884;
+      font-size: 11px;
+      font-weight: 800;
+      height: 30px;
+      line-height: 28px;
+      padding: 0 14px;
+    }
+
+    .meta-chip.accent {
+      background: #fff0f4;
+      border-color: #ffd3df;
+      color: #d84b72;
+    }
+
+    .rail {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      height: 988px;
+      left: 48px;
+      overflow: hidden;
+      padding: 22px 22px 18px;
+      position: absolute;
+      top: 112px;
+      width: 320px;
+    }
+
+    .rail h2 {
+      align-items: center;
+      display: flex;
+      font-size: 15px;
+      font-weight: 900;
+      gap: 8px;
+      margin: 0 0 10px;
+    }
+
+    .rail h2 .dot {
+      background: var(--primary);
+      border-radius: 4px;
+      height: 8px;
+      width: 8px;
+    }
+
+    .rail-section {
+      border-top: 1px solid #e9eef8;
+      padding-top: 16px;
+      margin-top: 14px;
+    }
+
+    .rail-section:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .rail ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .rail li {
+      color: #4d5870;
+      font-size: 12px;
+      line-height: 19px;
+      margin: 7px 0;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .rail li::before {
+      color: var(--primary);
+      content: "·";
+      font-size: 18px;
+      font-weight: 900;
+      left: 2px;
+      line-height: 16px;
+      position: absolute;
+      top: 1px;
+    }
+
+    .point-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .point {
+      align-items: flex-start;
+      display: flex;
+      gap: 9px;
+    }
+
+    .point-num {
+      align-items: center;
+      background: var(--green);
+      border-radius: 50%;
+      color: var(--lime);
+      display: flex;
+      flex: 0 0 20px;
+      font-size: 11px;
+      font-weight: 900;
+      height: 20px;
+      justify-content: center;
+      width: 20px;
+    }
+
+    .point p {
+      color: #4d5870;
+      font-size: 11.5px;
+      line-height: 18px;
+      margin: 1px 0 0;
+    }
+
+    .rail-note {
+      background: #f7f9ff;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 10.5px;
+      line-height: 17px;
+      margin-top: 14px;
+      padding: 9px 11px;
+    }
+
+    .desk-wrap {
+      position: absolute;
+      top: 112px;
+      width: 744px;
+    }
+
+    .desk-wrap.left { left: 392px; }
+    .desk-wrap.right { left: 1160px; }
+
+    .desk-label {
+      align-items: center;
+      display: flex;
+      height: 30px;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .desk-label span {
+      background: var(--green);
+      border-radius: 999px;
+      color: var(--lime);
+      font-size: 11px;
+      font-weight: 900;
+      padding: 7px 14px;
+    }
+
+    .desk-label span.blue { background: var(--primary); color: #fff; }
+
+    .desk-panel {
+      background: #f4f7ff;
+      border: 1px solid #c8d4e8;
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      height: 920px;
+      overflow: hidden;
+      position: relative;
+      width: 744px;
+    }
+
+    .window-bar {
+      align-items: center;
+      background: #ffffff;
+      border-bottom: 1px solid #e3eaf5;
+      display: flex;
+      height: 42px;
+      padding: 0 14px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+      margin-right: 12px;
+    }
+
+    .window-dots i {
+      border-radius: 50%;
+      height: 10px;
+      width: 10px;
+    }
+
+    .window-dots i:nth-child(1) { background: #ff6b8f; }
+    .window-dots i:nth-child(2) { background: #f4b860; }
+    .window-dots i:nth-child(3) { background: #56c596; }
+
+    .window-title {
+      color: #5b6884;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .panel-body {
+      height: 878px;
+      overflow: hidden;
+      padding: 16px;
+      position: relative;
+    }
+
+    .panel-head {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .panel-head .pt {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .panel-head .pm {
+      color: var(--muted);
+      font-size: 10.5px;
+      margin-top: 3px;
+    }
+
+    .panel-action {
+      align-items: center;
+      background: var(--primarySoft);
+      border-radius: 999px;
+      color: var(--primary);
+      display: flex;
+      font-size: 10.5px;
+      font-weight: 900;
+      gap: 5px;
+      padding: 8px 11px;
+    }
+
+    .panel-action svg { height: 14px; width: 14px; }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+
+    .filter-pill {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #66758a;
+      font-size: 10.5px;
+      font-weight: 800;
+      line-height: 28px;
+      padding: 0 12px;
+    }
+
+    .filter-pill.on {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .search-box {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: #8592ad;
+      display: flex;
+      gap: 7px;
+      height: 36px;
+      margin-bottom: 12px;
+      padding: 0 11px;
+    }
+
+    .search-box svg { height: 16px; width: 16px; }
+
+    .search-box span {
+      color: #66758a;
+      flex: 1;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .stat-row {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: repeat(3, 1fr);
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 9px 10px;
+    }
+
+    .stat .num {
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 9.5px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .feedback-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      gap: 8px;
+      margin-bottom: 9px;
+      padding: 11px;
+    }
+
+    .feedback-card.active {
+      background: #f2f6ff;
+      border-color: var(--primary);
+    }
+
+    .card-top {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    .card-user {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .avatar {
+      align-items: center;
+      background: #eef1ff;
+      border-radius: 12px;
+      color: var(--primary);
+      display: flex;
+      height: 34px;
+      justify-content: center;
+      width: 34px;
+    }
+
+    .avatar svg { height: 18px; width: 18px; }
+
+    .card-user-copy { min-width: 0; }
+
+    .card-name {
+      font-size: 11.5px;
+      font-weight: 800;
+    }
+
+    .card-meta {
+      color: var(--muted);
+      font-size: 9.5px;
+      margin-top: 2px;
+    }
+
+    .type-badge {
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 18px;
+      padding: 0 8px;
+    }
+
+    .type-badge.purple {
+      background: #f0ecff;
+      color: #6b5adb;
+    }
+
+    .type-badge.red {
+      background: #ffe9ee;
+      color: #d84b72;
+    }
+
+    .status-badge {
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 18px;
+      padding: 0 8px;
+    }
+
+    .status-badge.pending { background: #fff3e0; color: #c76a2a; }
+    .status-badge.processing { background: #e7ecff; color: #4b6bff; }
+    .status-badge.resolved { background: #e8f6f1; color: #1f7b63; }
+
+    .card-title {
+      font-size: 12.5px;
+      font-weight: 900;
+      line-height: 18px;
+      margin-top: 4px;
+    }
+
+    .card-desc {
+      color: #5b6884;
+      font-size: 10.5px;
+      line-height: 16px;
+      margin-top: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-foot {
+      align-items: center;
+      color: #8f9bbb;
+      display: flex;
+      font-size: 9.5px;
+      gap: 10px;
+      margin-top: 7px;
+    }
+
+    .card-foot .img-count {
+      align-items: center;
+      display: flex;
+      gap: 3px;
+    }
+
+    .card-foot svg { height: 13px; width: 13px; }
+
+    .detail-scroll {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .detail-user {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .detail-user .avatar {
+      border-radius: 16px;
+      height: 50px;
+      width: 50px;
+    }
+
+    .detail-user .avatar svg { height: 24px; width: 24px; }
+
+    .detail-user-copy { flex: 1; min-width: 0; }
+
+    .detail-user-name {
+      align-items: center;
+      display: flex;
+      font-size: 14px;
+      font-weight: 900;
+      gap: 7px;
+    }
+
+    .detail-user-meta {
+      color: var(--muted);
+      font-size: 10.5px;
+      margin-top: 3px;
+    }
+
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 13px;
+    }
+
+    .section-label {
+      align-items: center;
+      display: flex;
+      font-size: 11.5px;
+      font-weight: 900;
+      justify-content: space-between;
+    }
+
+    .section-label small {
+      color: #8f9bbb;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    .desc-text {
+      color: #2f3c5c;
+      font-size: 12px;
+      line-height: 20px;
+    }
+
+    .image-thumbs {
+      display: flex;
+      gap: 8px;
+      margin-top: 3px;
+    }
+
+    .image-thumb {
+      align-items: center;
+      background: #f0ecff;
+      border: 1px solid #ddd2fb;
+      border-radius: 10px;
+      color: #8b82b5;
+      display: flex;
+      flex-direction: column;
+      font-size: 8.5px;
+      font-weight: 800;
+      gap: 4px;
+      height: 72px;
+      justify-content: center;
+      width: 72px;
+    }
+
+    .image-thumb svg { height: 20px; width: 20px; }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      align-items: center;
+      border-radius: 12px;
+      display: flex;
+      font-size: 11px;
+      font-weight: 900;
+      gap: 6px;
+      justify-content: center;
+      min-height: 38px;
+    }
+
+    .action-btn.secondary {
+      background: var(--primarySoft);
+      color: var(--primary);
+      flex: 1;
+    }
+
+    .action-btn.primary {
+      background: #151b3b;
+      color: var(--lime);
+      flex: 1.3;
+    }
+
+    .action-btn svg { height: 15px; width: 15px; }
+
+    .reply-area {
+      background: #f4f7ff;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: #3a4563;
+      font-size: 11.5px;
+      height: 84px;
+      line-height: 18px;
+      padding: 10px 12px;
+    }
+
+    .bottom-strip {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, 1fr);
+      left: 392px;
+      position: absolute;
+      top: 1052px;
+      width: 1320px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      min-height: 128px;
+      padding: 13px 14px;
+    }
+
+    .info-head {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .info-num {
+      align-items: center;
+      background: var(--green);
+      border-radius: 50%;
+      color: var(--lime);
+      display: flex;
+      flex: 0 0 20px;
+      font-size: 10px;
+      font-weight: 900;
+      height: 20px;
+      justify-content: center;
+      width: 20px;
+    }
+
+    .info-card h3 {
+      font-size: 12.5px;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .info-card p {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 18px;
+      margin: 0;
+    }
+
+    .info-card .tag {
+      background: #f2f6ff;
+      border-radius: 999px;
+      color: var(--primary);
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 20px;
+      margin-top: 8px;
+      padding: 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <div class="header">
+      <div class="header-row">
+        <div class="title-block">
+          <div class="brand-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+              <rect x="13" y="13" width="7" height="7" rx="1.5" />
+            </svg>
+          </div>
+          <div class="title-copy">
+            <h1>FunBox 功能建议与问题反馈一体化 · 管理端设计</h1>
+            <p>反馈管理统一承载问题与建议，列表可筛可搜，详情可处理并回写真实结果。</p>
+          </div>
+        </div>
+        <div class="meta-chips">
+          <span class="meta-chip">2026-08-04</span>
+          <span class="meta-chip">一期交付</span>
+          <span class="meta-chip accent">真实数据</span>
+        </div>
+      </div>
+    </div>
+
+    <aside class="rail">
+      <div class="rail-section">
+        <h2><span class="dot"></span>现状</h2>
+        <ul>
+          <li>管理后台只能查看反馈，不能筛选、处理或回复。</li>
+          <li>问题反馈与功能建议没有统一工作台。</li>
+          <li>处理结果无法回到用户消息中心。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>方案</h2>
+        <ul>
+          <li>后台首页入口改为“反馈管理”。</li>
+          <li>类型、状态、关键词筛选均由服务端真实统计。</li>
+          <li>详情支持开始处理、提交结果、修改结果。</li>
+          <li>提交结果后推送 feedback.resolved 并生成未读通知。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>真实数据红线</h2>
+        <ul>
+          <li>筛选项数量来自数据库，不写死。</li>
+          <li>处理人、处理时间、回复来自真实管理员操作。</li>
+          <li>用户已读时间由用户打开详情触发。</li>
+          <li>设计图为真实上传文件，私有鉴权读取。</li>
+        </ul>
+      </div>
+      <div class="rail-section">
+        <h2><span class="dot"></span>设计要点</h2>
+        <div class="point-list">
+          <div class="point"><span class="point-num">1</span><p>桌面双栏：左侧列表，右侧详情，沿用现有后台布局。</p></div>
+          <div class="point"><span class="point-num">2</span><p>类型与状态徽标帮助快速识别。</p></div>
+          <div class="point"><span class="point-num">3</span><p>处理结果必填 10-1000 字，提交后状态与通知一起更新。</p></div>
+          <div class="point"><span class="point-num">4</span><p>移动端复用同一列表/详情组件，仅改排列方式。</p></div>
+        </div>
+        <div class="rail-note">
+          设计稿中的用户、时间和回复内容仅作版式示意；交付后页面只展示真实数据库与真实 API 返回的数据。
+        </div>
+      </div>
+    </aside>
+
+    <div class="desk-wrap left">
+      <div class="desk-label"><span>1 · 反馈管理列表</span></div>
+      <div class="desk-panel">
+        <div class="window-bar">
+          <div class="window-dots"><i></i><i></i><i></i></div>
+          <span class="window-title">admin / feedback</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-head">
+            <div>
+              <div class="pt">反馈管理</div>
+              <div class="pm">问题与功能建议统一处理</div>
+            </div>
+            <div class="panel-action">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12h16M12 4v16" />
+              </svg>
+              导出概览
+            </div>
+          </div>
+
+          <div class="filter-row">
+            <span class="filter-pill on">全部</span>
+            <span class="filter-pill">问题</span>
+            <span class="filter-pill">功能建议</span>
+            <span class="filter-pill">待处理</span>
+            <span class="filter-pill">处理中</span>
+            <span class="filter-pill">已处理</span>
+          </div>
+
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+              <circle cx="10.5" cy="10.5" r="6" />
+              <path d="m15 15 5 5" />
+            </svg>
+            <span>搜索标题、描述或用户昵称</span>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat"><div class="num">18</div><div class="label">全部</div></div>
+            <div class="stat"><div class="num">3</div><div class="label">待处理</div></div>
+            <div class="stat"><div class="num">2</div><div class="label">处理中</div></div>
+          </div>
+
+          <div class="feedback-card active">
+            <div class="card-top">
+              <div class="card-user">
+                <div class="avatar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+                  </svg>
+                </div>
+                <div class="card-user-copy">
+                  <div class="card-name">阿岚</div>
+                  <div class="card-meta">@alan · 10 分钟前</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span class="type-badge purple">功能建议</span>
+                <span class="status-badge pending">待处理</span>
+              </div>
+            </div>
+            <div class="card-title">发票识别</div>
+            <div class="card-desc">希望增加发票识别工具，上传或拍照后自动识别发票金额、抬头和税号，并保存为结构化记录。</div>
+            <div class="card-foot">
+              <span>工具 · 效率</span>
+              <span class="img-count">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                  <circle cx="9" cy="9" r="1.6" />
+                  <path d="m5 18 5-5 3 3 3-3 3 3" />
+                </svg>
+                2 张设计图
+              </span>
+            </div>
+          </div>
+
+          <div class="feedback-card">
+            <div class="card-top">
+              <div class="card-user">
+                <div class="avatar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+                  </svg>
+                </div>
+                <div class="card-user-copy">
+                  <div class="card-name">木木</div>
+                  <div class="card-meta">@mumu · 昨天</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span class="type-badge red">问题反馈</span>
+                <span class="status-badge processing">处理中</span>
+              </div>
+            </div>
+            <div class="card-title">图片压缩上传失败</div>
+            <div class="card-desc">选择图片后一直显示加载中，无法提交。</div>
+            <div class="card-foot">
+              <span>问题</span>
+              <span class="img-count">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="16" height="16" rx="2" />
+                  <circle cx="9" cy="9" r="1.6" />
+                  <path d="m5 18 5-5 3 3 3-3 3 3" />
+                </svg>
+                1 张截图
+              </span>
+            </div>
+          </div>
+
+          <div class="feedback-card">
+            <div class="card-top">
+              <div class="card-user">
+                <div class="avatar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+                  </svg>
+                </div>
+                <div class="card-user-copy">
+                  <div class="card-name">老周</div>
+                  <div class="card-meta">@zhou · 昨天</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span class="type-badge purple">功能建议</span>
+                <span class="status-badge resolved">已处理</span>
+              </div>
+            </div>
+            <div class="card-title">双色球历史导入 Excel</div>
+            <div class="card-desc">希望把开奖记录导出为 Excel 文件。</div>
+            <div class="card-foot">
+              <span>工具 · 数据</span>
+              <span>已回复</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desk-wrap right">
+      <div class="desk-label"><span class="blue">2 · 详情与处理结果</span></div>
+      <div class="desk-panel">
+        <div class="window-bar">
+          <div class="window-dots"><i></i><i></i><i></i></div>
+          <span class="window-title">admin / feedback / detail</span>
+        </div>
+        <div class="panel-body">
+          <div class="detail-scroll">
+            <div class="detail-user">
+              <div class="avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21c1-4 4.2-6 8-6s7 2 8 6" />
+                </svg>
+              </div>
+              <div class="detail-user-copy">
+                <div class="detail-user-name">阿岚 <span class="type-badge purple">功能建议</span> <span class="status-badge pending">待处理</span></div>
+                <div class="detail-user-meta">@alan · 2026-08-04 09:12 · 工具 / 效率</div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-label">功能名称 <small>来自真实提交</small></div>
+              <div style="font-size:16px;font-weight:900">发票识别</div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-label">功能描述 <small>24/1000</small></div>
+              <div class="desc-text">希望增加发票识别工具，上传或拍照后自动识别发票金额、抬头和税号，并支持保存为结构化记录。</div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-label">设计图 <small>2 张</small></div>
+              <div class="image-thumbs">
+                <div class="image-thumb">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <circle cx="9" cy="9" r="1.6" />
+                    <path d="m5 18 5-5 3 3 3-3 3 3" />
+                  </svg>
+                  设计稿 1
+                </div>
+                <div class="image-thumb">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <circle cx="9" cy="9" r="1.6" />
+                    <path d="m5 18 5-5 3 3 3-3 3 3" />
+                  </svg>
+                  流程图
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-label">处理结果 <small>10-1000 字</small></div>
+              <div class="reply-area">已评估，计划加入“工具”分类，先做拍照识别发票金额、抬头与税号，后续再支持批量导入。</div>
+            </div>
+
+            <div class="section-card" style="margin-top:12px">
+              <div class="action-buttons">
+                <div class="action-btn secondary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  开始处理
+                </div>
+                <div class="action-btn primary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                  提交处理结果
+                </div>
+              </div>
+              <div style="color:#8592ad;font-size:9.5px;line-height:15px;margin-top:9px;text-align:center">提交后将向用户推送反馈处理结果，并生成系统通知未读</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-strip">
+      <div class="info-card">
+        <div class="info-head">
+          <span class="info-num">1</span>
+          <h3>筛选数量真实统计</h3>
+        </div>
+        <p>类型、状态筛选项的数量由服务端聚合返回，不是前端估算。</p>
+        <span class="tag">真实数据</span>
+      </div>
+      <div class="info-card">
+        <div class="info-head">
+          <span class="info-num">2</span>
+          <h3>结果回写闭环</h3>
+        </div>
+        <p>状态、处理人、回复、处理时间一次写入；用户消息中心立即收到未读。</p>
+        <span class="tag">服务端事务</span>
+      </div>
+      <div class="info-card">
+        <div class="info-head">
+          <span class="info-num">3</span>
+          <h3>移动端自适应</h3>
+        </div>
+        <p>窄屏复用同一列表与详情组件，点击卡片进入详情，返回保留筛选状态。</p>
+        <span class="tag">响应式</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

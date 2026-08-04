@@ -60,9 +60,14 @@ export function AuthScreen() {
   const [newPasswordConfirmVisible, setNewPasswordConfirmVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<FormMessage | null>(null);
-  const returnTo = typeof params.returnTo === 'string' && params.returnTo.startsWith('/tools/')
-    ? params.returnTo as Href
-    : '/profile';
+  const rawReturnTo =
+    typeof params.returnTo === 'string' &&
+    (params.returnTo.startsWith('/tools/') ||
+      params.returnTo.startsWith('/profile/feedback') ||
+      params.returnTo.startsWith('/admin'))
+      ? params.returnTo
+      : '/profile';
+  const returnTo = rawReturnTo as unknown as Href;
 
   if (status === 'authenticated') {
     return <Redirect href={returnTo} />;

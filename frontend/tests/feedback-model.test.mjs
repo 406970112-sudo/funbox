@@ -3,11 +3,14 @@ import test from 'node:test';
 
 import {
   FEEDBACK_MAX_IMAGE_BYTES,
+  FEEDBACK_MAX_TITLE,
   feedbackLayoutForWidth,
+  feedbackStatusLabel,
   mergeFeedbackPages,
   resolveFeedbackSelection,
   shouldShowFeedbackEntry,
   validateFeedback,
+  validateFeatureFeedback,
 } from '../lib/feedback-model.ts';
 
 function makeAsset(overrides = {}) {
@@ -36,6 +39,46 @@ test('validates normalized description and image constraints', () => {
     validateFeedback('这是一个有效的问题描述文本', [makeAsset({ mimeType: 'image/gif' })]).error,
     'feedback_image_type_invalid',
   );
+});
+
+test('validates feature request title, category and description', () => {
+  const valid = validateFeatureFeedback('发票识别工具', 'tool', '希望增加发票识别工具，自动识别发票金额', []);
+  assert.equal(valid.error, undefined);
+  assert.equal(valid.title, '发票识别工具');
+  assert.equal(valid.category, 'tool');
+
+  assert.equal(
+    validateFeatureFeedback('短', 'tool', '希望增加发票识别工具，自动识别发票金额', []).error,
+    'feedback_title_invalid',
+  );
+  assert.equal(
+    validateFeatureFeedback(
+      'x'.repeat(FEEDBACK_MAX_TITLE + 1),
+      'tool',
+      '希望增加发票识别工具，自动识别发票金额',
+      [],
+    ).error,
+    'feedback_title_invalid',
+  );
+  assert.equal(
+    validateFeatureFeedback(
+      '发票识别工具',
+      'unknown',
+      '希望增加发票识别工具，自动识别发票金额',
+      [],
+    ).error,
+    'feedback_category_invalid',
+  );
+  assert.equal(
+    validateFeatureFeedback('发票识别工具', 'tool', '太短', []).error,
+    'description_invalid',
+  );
+});
+
+test('maps feedback status labels', () => {
+  assert.equal(feedbackStatusLabel('pending'), '待处理');
+  assert.equal(feedbackStatusLabel('processing'), '处理中');
+  assert.equal(feedbackStatusLabel('resolved'), '已处理');
 });
 
 test('selects responsive layout at 768px', () => {

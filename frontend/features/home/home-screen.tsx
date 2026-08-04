@@ -446,6 +446,19 @@ export function HomeScreen() {
     });
   }
 
+  function handleFeedbackRequest() {
+    setSearchFocused(false);
+    setSelectedSearchIndex(-1);
+    searchInputRef.current?.blur();
+    router.push({
+      pathname: '/profile/feedback',
+      params: {
+        keyword: searchQuery,
+        type: 'feature',
+      },
+    });
+  }
+
   function handleSearchKeyPress(event: NativeSyntheticEvent<TextInputKeyPressEventData>) {
     if (!searchMode) return;
     const key = event.nativeEvent.key;
@@ -550,6 +563,7 @@ export function HomeScreen() {
             entries={panelSearchEntries}
             gameCount={gameResultCount}
             onClear={handleClearSearch}
+            onFeedback={handleFeedbackRequest}
             onOpen={handleOpenSearchEntry}
             onSelect={setSelectedSearchIndex}
             onViewAll={handleViewAllResults}
@@ -562,6 +576,7 @@ export function HomeScreen() {
             entries={quickSearchEntries}
             gameCount={quickSearchEntries.filter((entry) => entry.kind === 'game').length}
             onClear={handleClearSearch}
+            onFeedback={handleFeedbackRequest}
             onOpen={handleOpenSearchEntry}
             onSelect={setSelectedSearchIndex}
             onViewAll={handleViewAllResults}

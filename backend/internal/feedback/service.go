@@ -15,8 +15,17 @@ import (
 )
 
 const (
-	MinDescriptionRunes = 10
-	MaxDescriptionRunes = 1000
+	MinDescriptionRunes  = 10
+	MaxDescriptionRunes  = 1000
+	MinFeatureTitleRunes = 5
+	MaxFeatureTitleRunes = 40
+	MinAdminReplyRunes   = 10
+	MaxAdminReplyRunes   = 1000
+	KindProblem          = "problem"
+	KindFeatureRequest   = "feature_request"
+	StatusPending        = "pending"
+	StatusProcessing     = "processing"
+	StatusResolved       = "resolved"
 )
 
 var (
@@ -24,7 +33,21 @@ var (
 	ErrImageTypeInvalid   = errors.New("feedback image type is invalid")
 	ErrImageTooLarge      = errors.New("feedback image is too large")
 	ErrImagesTooMany      = errors.New("feedback has too many images")
+	ErrKindInvalid        = errors.New("feedback kind is invalid")
+	ErrTitleInvalid       = errors.New("feedback title is invalid")
+	ErrCategoryInvalid    = errors.New("feedback category is invalid")
+	ErrStatusInvalid      = errors.New("feedback status is invalid")
+	ErrReplyInvalid       = errors.New("feedback reply is invalid")
 )
+
+var allowedFeedbackCategories = map[string]bool{
+	"tool":       true,
+	"game":       true,
+	"social":     true,
+	"reading":    true,
+	"efficiency": true,
+	"other":      true,
+}
 
 type Upload struct {
 	Reader io.Reader
@@ -55,12 +78,68 @@ func NormalizeDescription(value string) (string, error) {
 	return normalized, nil
 }
 
+func NormalizeKind(value string) (string, error) {
+	normalized := strings.TrimSpace(value)
+	if normalized == "" {
+		return KindProblem, nil
+	}
+	if normalized != KindProblem && normalized != KindFeatureRequest {
+		return "", ErrKindInvalid
+	}
+	return normalized, nil
+}
+
+func NormalizeFeatureTitle(value string) (string, error) {
+	normalized := strings.TrimSpace(value)
+	length := utf8.RuneCountInString(normalized)
+	if length < MinFeatureTitleRunes || length > MaxFeatureTitleRunes {
+		return "", ErrTitleInvalid
+	}
+	return normalized, nil
+}
+
+func NormalizeCategory(value string) (string, error) {
+	normalized := strings.TrimSpace(value)
+	if !allowedFeedbackCategories[normalized] {
+		return "", ErrCategoryInvalid
+	}
+	return normalized, nil
+}
+
+func NormalizeAdminReply(value string) (string, error) {
+	normalized := strings.TrimSpace(value)
+	length := utf8.RuneCountInString(normalized)
+	if length < MinAdminReplyRunes || length > MaxAdminReplyRunes {
+		return "", ErrReplyInvalid
+	}
+	return normalized, nil
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	userID string,
+	kind string,
+	title string,
+	category string,
 	description string,
 	uploads []Upload,
 ) (Submission, error) {
+	normalizedKind, err := NormalizeKind(kind)
+	if err != nil {
+		return Submission{}, err
+	}
+	normalizedTitle := ""
+	normalizedCategory := ""
+	if normalizedKind == KindFeatureRequest {
+		normalizedTitle, err = NormalizeFeatureTitle(title)
+		if err != nil {
+			return Submission{}, err
+		}
+		normalizedCategory, err = NormalizeCategory(category)
+		if err != nil {
+			return Submission{}, err
+		}
+	}
 	normalized, err := NormalizeDescription(description)
 	if err != nil {
 		return Submission{}, err
@@ -116,7 +195,15 @@ func (s *Service) Create(
 		images = append(images, image)
 	}
 
-	created, err := s.store.Create(ctx, userID, normalized, images)
+	created, err := s.store.CreateWithType(
+		ctx,
+		userID,
+		normalizedKind,
+		normalizedTitle,
+		normalizedCategory,
+		normalized,
+		images,
+	)
 	if err != nil {
 		cleanup()
 		return Submission{}, fmt.Errorf("store feedback submission: %w", err)
@@ -124,8 +211,59 @@ func (s *Service) Create(
 	return created, nil
 }
 
-func (s *Service) List(ctx context.Context, limit, offset int) (Page, error) {
-	return s.store.List(ctx, limit, offset)
+func (s *Service) List(ctx context.Context, opts ListOptions) (Page, error) {
+	return s.store.ListFiltered(ctx, opts)
+}
+
+func (s *Service) ListByUser(ctx context.Context, userID string, limit, offset int) (Page, error) {
+	return s.store.ListByUser(ctx, userID, limit, offset)
+}
+
+func (s *Service) ListNotifications(ctx context.Context, userID string, limit, offset int) (Page, error) {
+	return s.store.ListNotifications(ctx, userID, limit, offset)
+}
+
+func (s *Service) Get(ctx context.Context, feedbackID string) (Submission, error) {
+	return s.store.Get(ctx, feedbackID)
+}
+
+func (s *Service) GetByUser(ctx context.Context, userID string, feedbackID string) (Submission, error) {
+	return s.store.GetByUser(ctx, userID, feedbackID)
+}
+
+func (s *Service) UnreadCount(ctx context.Context, userID string) (int, error) {
+	return s.store.UnreadCount(ctx, userID)
+}
+
+func (s *Service) MarkNotificationsRead(ctx context.Context, userID string, feedbackIDs []string) error {
+	return s.store.MarkNotificationsRead(ctx, userID, feedbackIDs)
+}
+
+func (s *Service) Resolve(
+	ctx context.Context,
+	feedbackID string,
+	adminUserID string,
+	status string,
+	reply string,
+) (Submission, error) {
+	if status != StatusProcessing && status != StatusResolved {
+		return Submission{}, ErrStatusInvalid
+	}
+	current, err := s.store.Get(ctx, feedbackID)
+	if err != nil {
+		return Submission{}, err
+	}
+	if status == StatusProcessing && current.Status == StatusResolved {
+		return Submission{}, ErrStatusInvalid
+	}
+	normalizedReply := ""
+	if status == StatusResolved {
+		normalizedReply, err = NormalizeAdminReply(reply)
+		if err != nil {
+			return Submission{}, err
+		}
+	}
+	return s.store.Resolve(ctx, feedbackID, adminUserID, status, normalizedReply)
 }
 
 func (s *Service) GetImage(ctx context.Context, feedbackID, imageID string) (Image, error) {

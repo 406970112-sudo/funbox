@@ -63,10 +63,10 @@ export function AdminHomeScreen() {
             tone="#4b6bff"
           />
           <AdminEntry
-            description="查看用户提交的文字与图片"
+            description="查看并处理问题反馈与功能建议"
             desktop={isDesktop}
-            icon="message-alert-outline"
-            label="问题反馈"
+            icon="message-cog-outline"
+            label="反馈管理"
             onPress={() => router.push('/admin/feedback')}
             tone="#e8667a"
           />

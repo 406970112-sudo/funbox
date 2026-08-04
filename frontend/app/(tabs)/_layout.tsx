@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { HapticTab } from '@/components/haptic-tab';
 import { appLayout } from '@/constants/app-theme';
 import { useBlog } from '@/features/blog/blog-provider';
+import { useFeedback } from '@/features/feedback/feedback-provider';
 import { useMoments } from '@/features/moments/moments-provider';
 import { useSocial } from '@/features/social/social-provider';
 import { getUnreadMessageState } from '@/features/social/unread-message-state';
@@ -16,7 +17,11 @@ export default function TabLayout() {
   const { conversations } = useSocial();
   const { unreadCount: momentUnreadCount } = useMoments();
   const { unreadCount: blogUnreadCount } = useBlog();
-  const unreadState = getUnreadMessageState(conversations, momentUnreadCount + blogUnreadCount);
+  const { unreadCount: feedbackUnreadCount } = useFeedback();
+  const unreadState = getUnreadMessageState(
+    conversations,
+    momentUnreadCount + blogUnreadCount + feedbackUnreadCount,
+  );
 
   return (
     <Tabs

@@ -12,6 +12,7 @@ import 'react-native-reanimated';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { FeatureAccessProvider } from '@/features/access/feature-access-provider';
 import { BlogProvider } from '@/features/blog/blog-provider';
+import { FeedbackProvider } from '@/features/feedback/feedback-provider';
 import { GameSocialProvider } from '@/features/games/game-social-provider';
 import { MomentsProvider } from '@/features/moments/moments-provider';
 import { SocialProvider } from '@/features/social/social-provider';
@@ -94,7 +95,8 @@ export default function RootLayout() {
           <SocialProvider>
             <MomentsProvider>
               <BlogProvider>
-                <GameSocialProvider>
+                <FeedbackProvider>
+                  <GameSocialProvider>
                 <Stack
                   screenOptions={{
                     animation: 'slide_from_right',
@@ -106,6 +108,11 @@ export default function RootLayout() {
             <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/feedback" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="profile/feedback/history" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen
+              name="profile/feedback/result/[id]"
+              options={{ animation: 'slide_from_right' }}
+            />
             <Stack.Screen name="profile/membership" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/membership/payment" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="admin" options={{ animation: 'slide_from_right' }} />
@@ -135,7 +142,8 @@ export default function RootLayout() {
             />
                 </Stack>
                 <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-                </GameSocialProvider>
+                  </GameSocialProvider>
+                </FeedbackProvider>
               </BlogProvider>
             </MomentsProvider>
           </SocialProvider>

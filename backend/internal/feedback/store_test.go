@@ -67,6 +67,90 @@ func TestStoreGetImageChecksFeedbackOwnership(t *testing.T) {
 	}
 }
 
+func TestStoreFiltersResolvesAndTracksNotifications(t *testing.T) {
+	store, userID := openFeedbackTestStore(t)
+	created, err := store.CreateWithType(
+		context.Background(),
+		userID,
+		"feature_request",
+		"发票识别",
+		"tool",
+		"希望增加发票识别工具，上传或拍照后自动识别发票金额、抬头和税号",
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	featurePage, err := store.ListFiltered(context.Background(), ListOptions{
+		Kind:   "feature_request",
+		Limit:  30,
+		Offset: 0,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if featurePage.Total != 1 || featurePage.Items[0].Title != "发票识别" {
+		t.Fatalf("unexpected feature page: %#v", featurePage)
+	}
+
+	notifications, err := store.ListNotifications(context.Background(), userID, 30, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if notifications.Total != 0 {
+		t.Fatalf("pending feedback should not be a notification: %#v", notifications)
+	}
+
+	resolved, err := store.Resolve(
+		context.Background(),
+		created.ID,
+		"admin-user",
+		"resolved",
+		"已评估，计划加入工具分类，先做拍照识别",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolved.Status != "resolved" || resolved.AdminReply == "" || resolved.AdminUserID != "admin-user" {
+		t.Fatalf("unexpected resolved feedback: %#v", resolved)
+	}
+
+	unread, err := store.UnreadCount(context.Background(), userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if unread != 1 {
+		t.Fatalf("unread count = %d", unread)
+	}
+
+	notifications, err = store.ListNotifications(context.Background(), userID, 30, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if notifications.Total != 1 || notifications.Items[0].ID != created.ID {
+		t.Fatalf("unexpected notifications: %#v", notifications)
+	}
+
+	if err := store.MarkNotificationsRead(context.Background(), userID, nil); err != nil {
+		t.Fatal(err)
+	}
+	unread, err = store.UnreadCount(context.Background(), userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if unread != 0 {
+		t.Fatalf("unread after read = %d", unread)
+	}
+
+	if _, err := store.GetByUser(context.Background(), userID, created.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.GetByUser(context.Background(), "other-user", created.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected not found for other user, got %v", err)
+	}
+}
+
 func openFeedbackTestStore(t *testing.T) (*Store, string) {
 	t.Helper()
 	databasePath := filepath.Join(t.TempDir(), "app.db")

@@ -48,6 +48,7 @@ export type RealtimeEvent = {
     | 'friend.accepted'
     | 'friend.rejected'
     | 'friend.requested'
+    | 'feedback.resolved'
     | 'game.match.finished'
     | 'game.match.invited'
     | 'game.match.updated'

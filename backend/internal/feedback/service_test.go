@@ -16,13 +16,16 @@ import (
 
 func TestServiceRejectsInvalidDescriptionAndImages(t *testing.T) {
 	service, userID, _ := openFeedbackTestService(t, 16, 3)
-	if _, err := service.Create(context.Background(), userID, "  too short ", nil); !errors.Is(err, ErrDescriptionInvalid) {
+	if _, err := service.Create(context.Background(), userID, "problem", "", "", "  too short ", nil); !errors.Is(err, ErrDescriptionInvalid) {
 		t.Fatalf("got %v", err)
 	}
 	bad := Upload{Reader: strings.NewReader("not-an-image")}
 	if _, err := service.Create(
 		context.Background(),
 		userID,
+		"problem",
+		"",
+		"",
 		"this is a valid feedback description",
 		[]Upload{bad},
 	); !errors.Is(err, ErrImageTypeInvalid) {
@@ -32,6 +35,9 @@ func TestServiceRejectsInvalidDescriptionAndImages(t *testing.T) {
 	if _, err := service.Create(
 		context.Background(),
 		userID,
+		"problem",
+		"",
+		"",
 		"this is a valid feedback description",
 		[]Upload{tooLarge},
 	); !errors.Is(err, ErrImageTooLarge) {
@@ -41,7 +47,7 @@ func TestServiceRejectsInvalidDescriptionAndImages(t *testing.T) {
 
 func TestServicePersistsMultipleImagesInSelectionOrder(t *testing.T) {
 	service, userID, storageDir := openFeedbackTestService(t, 5<<20, 3)
-	created, err := service.Create(context.Background(), userID, "images keep selection order", []Upload{
+	created, err := service.Create(context.Background(), userID, "problem", "", "", "images keep selection order", []Upload{
 		{Reader: bytes.NewReader(encodeTestImage(t, "png"))},
 		{Reader: bytes.NewReader(encodeTestImage(t, "jpeg"))},
 	})
@@ -60,7 +66,7 @@ func TestServicePersistsMultipleImagesInSelectionOrder(t *testing.T) {
 
 func TestServiceCleansUpFilesWhenStoreFails(t *testing.T) {
 	service, _, storageDir := openFeedbackTestService(t, 5<<20, 3)
-	if _, err := service.Create(context.Background(), "missing-user", "valid feedback description here", []Upload{
+	if _, err := service.Create(context.Background(), "missing-user", "problem", "", "", "valid feedback description here", []Upload{
 		{Reader: bytes.NewReader(encodeTestImage(t, "png"))},
 	}); err == nil {
 		t.Fatal("expected store failure for missing user")
@@ -105,13 +111,13 @@ func pngHeader(t *testing.T) []byte {
 
 func TestServiceListAndGetImageProxies(t *testing.T) {
 	service, userID, _ := openFeedbackTestService(t, 5<<20, 3)
-	created, err := service.Create(context.Background(), userID, "proxy list and image lookup", []Upload{
+	created, err := service.Create(context.Background(), userID, "problem", "", "", "proxy list and image lookup", []Upload{
 		{Reader: bytes.NewReader(encodeTestImage(t, "png"))},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	page, err := service.List(context.Background(), 30, 0)
+	page, err := service.List(context.Background(), ListOptions{Limit: 30, Offset: 0})
 	if err != nil {
 		t.Fatal(err)
 	}

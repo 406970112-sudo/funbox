@@ -5,6 +5,18 @@ export type FeedbackAsset = {
   uri: string;
 };
 
+export type FeedbackKind = 'problem' | 'feature_request';
+
+export type FeedbackStatus = 'pending' | 'processing' | 'resolved';
+
+export type FeedbackCategory =
+  | 'efficiency'
+  | 'game'
+  | 'other'
+  | 'reading'
+  | 'social'
+  | 'tool';
+
 export type FeedbackUser = {
   avatarUrl: string;
   displayName: string;
@@ -21,10 +33,18 @@ export type FeedbackImage = {
 };
 
 export type FeedbackSubmission = {
+  adminReply: string | null;
+  category: string | null;
   createdAt: string;
   description: string;
   id: string;
   images: FeedbackImage[];
+  kind: FeedbackKind;
+  processedAt: string | null;
+  read: boolean;
+  replyUpdatedAt: string | null;
+  status: FeedbackStatus;
+  title: string | null;
   user: FeedbackUser;
 };
 
@@ -33,6 +53,7 @@ export type FeedbackPage = {
   limit: number;
   offset: number;
   total: number;
+  unreadCount: number;
 };
 
 export type FeedbackCreated = {

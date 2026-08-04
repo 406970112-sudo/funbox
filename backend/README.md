@@ -42,9 +42,17 @@
 - `POST /api/v1/users/me/avatar`
   上传 JPG 或 PNG 头像，文件字段名为 `avatar`。
 - `POST /api/v1/feedback`
-  已登录用户提交问题反馈，`multipart/form-data` 包含 `description` 和可选的 `images` 图片字段。
-- `GET /api/v1/admin/feedback?limit=30&offset=0`
-  管理员分页查看反馈、用户信息和图片元数据。
+  已登录用户提交问题反馈或功能建议，`multipart/form-data` 包含 `kind`、`title`、`category`、`description` 和可选的 `images` 图片字段；功能建议需填写标题与分类。
+- `GET /api/v1/feedback/mine?limit=30&offset=0`
+  当前用户查看自己的反馈记录、状态、回复与未读信息。
+- `GET /api/v1/feedback/notifications?limit=30&offset=0`
+  当前用户查看已处理反馈通知与未读数。
+- `POST /api/v1/feedback/notifications/read`
+  标记一条或全部反馈通知已读。
+- `GET /api/v1/admin/feedback?kind=&status=&q=&limit=30&offset=0`
+  管理员按类型、状态和关键词分页查看反馈、用户信息和图片元数据。
+- `POST /api/v1/admin/feedback/{feedbackID}/resolve`
+  管理员将反馈置为处理中或提交处理结果，提交后向用户推送系统通知。
 - `GET /api/v1/admin/feedback/{feedbackID}/images/{imageID}`
   管理员读取反馈图片，需携带 Bearer Token。
 - `PATCH /api/v1/users/me/password`

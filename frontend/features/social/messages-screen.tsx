@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
@@ -7,6 +7,8 @@ import { IdentityPill } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useBlog } from '@/features/blog/blog-provider';
+import { useFeedback } from '@/features/feedback/feedback-provider';
+import { feedbackKindLabel, feedbackNotificationTitle } from '@/lib/feedback-model';
 import { useMoments } from '@/features/moments/moments-provider';
 import { SocialAvatar, SocialEmptyState } from '@/features/social/social-ui';
 import { useSocial } from '@/features/social/social-provider';
@@ -14,6 +16,7 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { MomentNotification } from '@/types/moments';
 import type { BlogNotification } from '@/types/blog';
+import type { FeedbackSubmission } from '@/types/feedback';
 import type { Conversation } from '@/types/social';
 
 export function MessagesScreen() {
@@ -21,6 +24,14 @@ export function MessagesScreen() {
   const { colors } = useAppTheme();
   const { status } = useAuth();
   const { connectionStatus, conversations, error, friends, loading } = useSocial();
+  const {
+    error: feedbackError,
+    loading: feedbackLoading,
+    markRead: feedbackMarkRead,
+    notifications: feedbackNotifications,
+    refreshNotifications: refreshFeedbackNotifications,
+    unreadCount: feedbackUnreadCount,
+  } = useFeedback();
   const {
     error: momentsError,
     loading: momentsLoading,
@@ -37,7 +48,7 @@ export function MessagesScreen() {
     refreshNotifications: refreshBlogNotifications,
     unreadCount: blogUnreadCount,
   } = useBlog();
-  const [activeTab, setActiveTab] = useState<'chat' | 'notifications'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'notifications' | 'system'>('chat');
   const onlineFriends = friends.filter((friend) => friend.user.online).slice(0, 5);
   const chatUnreadCount = conversations.reduce(
     (total, conversation) => total + Math.max(0, conversation.unreadCount || 0),
@@ -48,7 +59,8 @@ export function MessagesScreen() {
     useCallback(() => {
       void refreshNotifications();
       void refreshBlogNotifications();
-    }, [refreshBlogNotifications, refreshNotifications]),
+      void refreshFeedbackNotifications();
+    }, [refreshBlogNotifications, refreshFeedbackNotifications, refreshNotifications]),
   );
 
   if (status !== 'authenticated') {
@@ -113,6 +125,12 @@ export function MessagesScreen() {
           badge={momentUnreadCount + blogUnreadCount}
           label="互动通知"
           onPress={() => setActiveTab('notifications')}
+        />
+        <TabButton
+          active={activeTab === 'system'}
+          badge={feedbackUnreadCount}
+          label="系统通知"
+          onPress={() => setActiveTab('system')}
         />
       </View>
 
@@ -185,7 +203,7 @@ export function MessagesScreen() {
         {error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
       </View>
         </>
-      ) : (
+      ) : activeTab === 'notifications' ? (
         <View style={[styles.conversationPanel, { backgroundColor: colors.surface }]}>
           <View style={styles.sectionHeading}>
             <ThemedText style={styles.sectionTitle}>互动通知</ThemedText>
@@ -271,6 +289,48 @@ export function MessagesScreen() {
             )}
             {blogError ? <ThemedText style={styles.errorText}>{blogError}</ThemedText> : null}
           </View>
+        </View>
+      ) : (
+        <View style={[styles.conversationPanel, { backgroundColor: colors.surface }]}>
+          <View style={styles.sectionHeading}>
+            <ThemedText style={styles.sectionTitle}>反馈处理结果</ThemedText>
+            <Pressable
+              accessibilityRole="button"
+              disabled={feedbackUnreadCount === 0}
+              onPress={() => void feedbackMarkRead()}
+              style={styles.markReadButton}>
+              <MaterialCommunityIcons name="check-all" size={15} color={colors.primary} />
+              <ThemedText style={styles.markReadText}>全部已读</ThemedText>
+            </Pressable>
+          </View>
+          {feedbackLoading ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : feedbackNotifications.length > 0 ? (
+            <View>
+              {feedbackNotifications.map((notification) => (
+                <FeedbackNoticeRow
+                  key={notification.id}
+                  notification={notification}
+                  onPress={() => {
+                    void feedbackMarkRead(notification.id);
+                    router.push({
+                      pathname: '/profile/feedback/result/[id]',
+                      params: { id: notification.id },
+                    } as unknown as Href);
+                  }}
+                />
+              ))}
+            </View>
+          ) : (
+            <SocialEmptyState
+              description="问题反馈或功能建议被处理后，结果会显示在这里。"
+              icon="bell-outline"
+              title="还没有系统通知"
+            />
+          )}
+          {feedbackError ? <ThemedText style={styles.errorText}>{feedbackError}</ThemedText> : null}
         </View>
       )}
     </MobileScreen>
@@ -434,6 +494,53 @@ function BlogNoticeRow({
       <View style={styles.noticeSide}>
         <ThemedText style={[styles.conversationTime, { color: colors.mutedText }]}>
           {formatMomentNoticeTime(notification.createdAt)}
+        </ThemedText>
+        {!notification.read ? <View style={styles.noticeDot} /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+function FeedbackNoticeRow({
+  notification,
+  onPress,
+}: {
+  notification: FeedbackSubmission;
+  onPress: () => void;
+}) {
+  const { colors } = useAppTheme();
+  const tone = notification.kind === 'feature_request' ? '#6b5adb' : '#d86f5b';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.noticeRow,
+        {
+          borderBottomColor: colors.line,
+          opacity: pressed ? 0.68 : 1,
+        },
+      ]}>
+      <View style={[styles.systemNoticeIcon, { backgroundColor: `${tone}18` }]}>
+        <MaterialCommunityIcons
+          name={notification.kind === 'feature_request' ? 'lightbulb-on-outline' : 'alert-circle-outline'}
+          size={20}
+          color={tone}
+        />
+      </View>
+      <View style={styles.conversationCopy}>
+        <ThemedText numberOfLines={1} style={styles.noticeTitle}>
+          {feedbackNotificationTitle(notification.kind)}
+        </ThemedText>
+        <ThemedText
+          numberOfLines={1}
+          style={[styles.conversationPreview, { color: colors.mutedText }]}>
+          {notification.adminReply || '管理员已处理你的反馈'}
+        </ThemedText>
+      </View>
+      <View style={styles.noticeSide}>
+        <ThemedText style={[styles.conversationTime, { color: colors.mutedText }]}>
+          {formatMomentNoticeTime(notification.replyUpdatedAt || notification.createdAt)}
         </ThemedText>
         {!notification.read ? <View style={styles.noticeDot} /> : null}
       </View>
@@ -735,6 +842,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     height: 8,
     width: 8,
+  },
+  systemNoticeIcon: {
+    alignItems: 'center',
+    borderRadius: 13,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   noticeRow: {
     alignItems: 'center',

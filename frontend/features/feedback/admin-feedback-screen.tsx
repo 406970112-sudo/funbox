@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -19,6 +20,7 @@ import {
 } from '@/lib/feedback-api';
 import {
   feedbackLayoutForWidth,
+  feedbackStatusLabel,
   mergeFeedbackPages,
   resolveFeedbackSelection,
 } from '@/lib/feedback-model';
@@ -34,9 +36,12 @@ export function AdminFeedbackScreen() {
     status === 'authenticated' && user?.role === 'admin' && accessToken ? accessToken : null;
   const [error, setError] = useState('');
   const [items, setItems] = useState<FeedbackSubmission[]>([]);
+  const [kindFilter, setKindFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [query, setQuery] = useState('');
   const [selectedID, setSelectedID] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState('');
   const [total, setTotal] = useState(0);
 
   const loadFirstPage = useCallback(async () => {
@@ -44,7 +49,13 @@ export function AdminFeedbackScreen() {
     setLoading(true);
     setError('');
     try {
-      const page = await listAdminFeedback(adminToken, 30, 0);
+      const page = await listAdminFeedback(adminToken, {
+        kind: kindFilter,
+        limit: 30,
+        offset: 0,
+        q: query,
+        status: statusFilter,
+      });
       setItems(page.items);
       setTotal(page.total);
       setSelectedID((current) =>
@@ -57,7 +68,7 @@ export function AdminFeedbackScreen() {
     } finally {
       setLoading(false);
     }
-  }, [adminToken]);
+  }, [adminToken, kindFilter, query, statusFilter]);
 
   useEffect(() => {
     void loadFirstPage();
@@ -68,7 +79,13 @@ export function AdminFeedbackScreen() {
     setLoadingMore(true);
     setError('');
     try {
-      const page = await listAdminFeedback(adminToken, 30, items.length);
+      const page = await listAdminFeedback(adminToken, {
+        kind: kindFilter,
+        limit: 30,
+        offset: items.length,
+        q: query,
+        status: statusFilter,
+      });
       setItems((current) => mergeFeedbackPages(current, page.items));
       setTotal(page.total);
     } catch (loadError) {
@@ -113,11 +130,26 @@ export function AdminFeedbackScreen() {
           <View style={[styles.desktopList, { borderRightColor: colors.line }]}>
             <FeedbackListPanel
               items={items}
+              kindFilter={kindFilter}
               loadingMore={loadingMore}
               onLoadMore={() => void loadMore()}
+              onKindFilterChange={(value) => {
+                setKindFilter(value);
+                setItems([]);
+                setSelectedID(null);
+              }}
+              onQueryChange={(value) => setQuery(value)}
+              onQuerySubmit={() => void loadFirstPage()}
               onSelect={setSelectedID}
+              onStatusFilterChange={(value) => {
+                setStatusFilter(value);
+                setItems([]);
+                setSelectedID(null);
+              }}
               selectedID={effectiveSelectedID}
+              statusFilter={statusFilter}
               total={total}
+              query={query}
             />
           </View>
           <View style={styles.desktopDetail}>
@@ -142,11 +174,26 @@ export function AdminFeedbackScreen() {
       ) : (
         <FeedbackListPanel
           items={items}
+          kindFilter={kindFilter}
           loadingMore={loadingMore}
           onLoadMore={() => void loadMore()}
+          onKindFilterChange={(value) => {
+            setKindFilter(value);
+            setItems([]);
+            setSelectedID(null);
+          }}
+          onQueryChange={(value) => setQuery(value)}
+          onQuerySubmit={() => void loadFirstPage()}
           onSelect={setSelectedID}
+          onStatusFilterChange={(value) => {
+            setStatusFilter(value);
+            setItems([]);
+            setSelectedID(null);
+          }}
           selectedID={null}
+          statusFilter={statusFilter}
           total={total}
+          query={query}
         />
       )}
     </View>
@@ -155,20 +202,34 @@ export function AdminFeedbackScreen() {
 
 type FeedbackListPanelProps = {
   items: FeedbackSubmission[];
+  kindFilter: string;
   loadingMore: boolean;
   onLoadMore: () => void;
+  onKindFilterChange: (value: string) => void;
+  onQueryChange: (value: string) => void;
+  onQuerySubmit: () => void;
   onSelect: (id: string) => void;
+  onStatusFilterChange: (value: string) => void;
   selectedID: string | null;
+  statusFilter: string;
   total: number;
+  query: string;
 };
 
 function FeedbackListPanel({
   items,
+  kindFilter,
   loadingMore,
   onLoadMore,
+  onKindFilterChange,
+  onQueryChange,
+  onQuerySubmit,
   onSelect,
+  onStatusFilterChange,
   selectedID,
+  statusFilter,
   total,
+  query,
 }: FeedbackListPanelProps) {
   const { colors } = useAppTheme();
 
@@ -188,6 +249,51 @@ function FeedbackListPanel({
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
       style={styles.listScroll}>
+      <View style={styles.filterRow}>
+        <FilterChip
+          active={kindFilter === ''}
+          label="全部"
+          onPress={() => onKindFilterChange('')}
+        />
+        <FilterChip
+          active={kindFilter === 'problem'}
+          label="问题"
+          onPress={() => onKindFilterChange('problem')}
+        />
+        <FilterChip
+          active={kindFilter === 'feature_request'}
+          label="功能建议"
+          onPress={() => onKindFilterChange('feature_request')}
+        />
+        <FilterChip
+          active={statusFilter === 'pending'}
+          label="待处理"
+          onPress={() => onStatusFilterChange('pending')}
+        />
+        <FilterChip
+          active={statusFilter === 'processing'}
+          label="处理中"
+          onPress={() => onStatusFilterChange('processing')}
+        />
+        <FilterChip
+          active={statusFilter === 'resolved'}
+          label="已处理"
+          onPress={() => onStatusFilterChange('resolved')}
+        />
+      </View>
+      <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+        <MaterialCommunityIcons name="magnify" size={18} color={colors.mutedText} />
+        <TextInput
+          accessibilityLabel="搜索反馈"
+          onChangeText={onQueryChange}
+          onSubmitEditing={onQuerySubmit}
+          placeholder="搜索标题、描述或用户"
+          placeholderTextColor={colors.mutedText}
+          returnKeyType="search"
+          style={[styles.searchInput, { color: colors.text }]}
+          value={query}
+        />
+      </View>
       {items.map((item) => {
         const selected = item.id === selectedID;
         return (
@@ -226,8 +332,24 @@ function FeedbackListPanel({
                 </View>
               ) : null}
             </View>
+            <View style={styles.cardBadges}>
+              <Badge
+                color={item.kind === 'feature_request' ? '#6b5adb' : '#d86f5b'}
+                label={item.kind === 'feature_request' ? '功能建议' : '问题反馈'}
+              />
+              <Badge
+                color={
+                  item.status === 'resolved'
+                    ? '#1db991'
+                    : item.status === 'processing'
+                      ? colors.primary
+                      : '#c76a2a'
+                }
+                label={feedbackStatusLabel(item.status)}
+              />
+            </View>
             <ThemedText numberOfLines={3} style={styles.cardDescription}>
-              {item.description}
+              {item.kind === 'feature_request' && item.title ? `${item.title} · ${item.description}` : item.description}
             </ThemedText>
           </Pressable>
         );
@@ -256,6 +378,46 @@ function FeedbackListPanel({
         </Pressable>
       ) : null}
     </ScrollView>
+  );
+}
+
+function FilterChip({
+  active,
+  label,
+  onPress,
+}: {
+  active: boolean;
+  label: string;
+  onPress: () => void;
+}) {
+  const { colors } = useAppTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.filterChip,
+        {
+          backgroundColor: active ? colors.primary : colors.surface,
+          borderColor: active ? colors.primary : colors.line,
+        },
+        pressed && styles.pressed,
+      ]}>
+      <ThemedText
+        style={[styles.filterChipText, { color: active ? '#ffffff' : colors.mutedText }]}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+function Badge({ color, label }: { color: string; label: string }) {
+  const { colors } = useAppTheme();
+  return (
+    <View style={[styles.cardBadge, { backgroundColor: `${color}18` }]}>
+      <ThemedText style={[styles.cardBadgeText, { color }]}>{label}</ThemedText>
+    </View>
   );
 }
 
@@ -352,6 +514,38 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 16,
   },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+  },
+  filterChip: {
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 30,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  filterChipText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  searchBox: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    height: 38,
+    paddingHorizontal: 11,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 12,
+    minWidth: 0,
+    paddingVertical: 8,
+  },
   feedbackCard: {
     borderRadius: 16,
     borderWidth: 1,
@@ -389,6 +583,20 @@ const styles = StyleSheet.create({
   cardMeta: {
     fontSize: 11,
     marginTop: 2,
+  },
+  cardBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 7,
+  },
+  cardBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  cardBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
   },
   imageCountBadge: {
     alignItems: 'center',
@@ -436,5 +644,8 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 14,
     fontWeight: '800',
+  },
+  pressed: {
+    opacity: 0.72,
   },
 });

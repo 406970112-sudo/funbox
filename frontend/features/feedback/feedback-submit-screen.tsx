@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,11 +19,14 @@ import {
   submitFeedback,
 } from '@/lib/feedback-api';
 import {
+  FEEDBACK_CATEGORIES,
   FEEDBACK_IMAGE_TYPES,
   FEEDBACK_MAX_DESCRIPTION,
   FEEDBACK_MAX_IMAGE_BYTES,
   FEEDBACK_MAX_IMAGES,
+  FEEDBACK_MAX_TITLE,
   validateFeedback,
+  validateFeatureFeedback,
 } from '@/lib/feedback-model';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
@@ -38,17 +41,24 @@ export function FeedbackSubmitScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
   const { accessToken, status, user } = useAuth();
+  const { keyword, type } = useLocalSearchParams<{ keyword?: string; type?: string }>();
+  const featureMode = type === 'feature';
   const [assets, setAssets] = useState<FeedbackAsset[]>([]);
+  const [category, setCategory] = useState('tool');
   const [description, setDescription] = useState('');
   const [message, setMessage] = useState<FormMessage | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [title, setTitle] = useState(() => (typeof keyword === 'string' ? keyword : ''));
 
   if (status === 'loading' || !user) {
     return <AppLoadingScreen />;
   }
   if (status === 'anonymous' || !accessToken) {
-    return <Redirect href="/auth" />;
+    const returnTo = featureMode
+      ? `/profile/feedback?type=feature&keyword=${encodeURIComponent(keyword || '')}`
+      : '/profile/feedback';
+    return <Redirect href={{ pathname: '/auth', params: { returnTo } } as unknown as Href} />;
   }
   const token = accessToken;
 
@@ -95,16 +105,30 @@ export function FeedbackSubmitScreen() {
 
   async function handleSubmit() {
     setMessage(null);
-    const validation = validateFeedback(description, assets);
+    const validation = featureMode
+      ? validateFeatureFeedback(title, category, description, assets)
+      : validateFeedback(description, assets);
     if (validation.error || !validation.description) {
-      setMessage({ text: '问题描述需要填写 10 到 1000 个字符。', tone: 'error' });
+      setMessage({
+        text: featureMode
+          ? '功能名称或描述不符合要求，请检查后重试。'
+          : '问题描述需要填写 10 到 1000 个字符。',
+        tone: 'error',
+      });
       return;
     }
     setSubmitting(true);
     try {
-      await submitFeedback(token, validation.description, assets);
+      await submitFeedback(token, {
+        assets,
+        category: validation.category,
+        description: validation.description,
+        kind: featureMode ? 'feature_request' : 'problem',
+        title: validation.title,
+      });
       setSubmitted(true);
       setDescription('');
+      setTitle('');
       setAssets([]);
     } catch (error) {
       setMessage({ text: getFeedbackErrorMessage(error), tone: 'error' });
@@ -120,19 +144,23 @@ export function FeedbackSubmitScreen() {
           <View style={[styles.successIcon, { backgroundColor: colors.primarySoft }]}>
             <MaterialCommunityIcons name="check-circle-outline" size={44} color={colors.success} />
           </View>
-          <ThemedText style={styles.successTitle}>反馈已提交</ThemedText>
+          <ThemedText style={styles.successTitle}>
+            {featureMode ? '功能建议已提交' : '反馈已提交'}
+          </ThemedText>
           <ThemedText style={[styles.successBody, { color: colors.mutedText }]}>
-            我们已收到你的问题描述和图片。
+            {featureMode
+              ? '我们会评估你的建议，处理结果将发送到消息中心。'
+              : '我们已收到你的问题描述和图片。'}
           </ThemedText>
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.replace('/profile')}
+            onPress={() => router.replace('/profile/feedback/history' as Href)}
             style={({ pressed }) => [
               styles.successButton,
               { backgroundColor: colors.hero, opacity: pressed ? 0.75 : 1 },
             ]}>
-            <MaterialCommunityIcons name="account-outline" size={19} color="#ffffff" />
-            <ThemedText style={styles.successButtonText}>返回我的</ThemedText>
+            <MaterialCommunityIcons name="history" size={19} color="#ffffff" />
+            <ThemedText style={styles.successButtonText}>查看我的反馈</ThemedText>
           </Pressable>
         </View>
       </MobileScreen>
@@ -149,23 +177,94 @@ export function FeedbackSubmitScreen() {
           style={[styles.iconButton, { backgroundColor: colors.surface }]}>
           <MaterialCommunityIcons name="arrow-left" size={21} color={colors.text} />
         </Pressable>
-        <ThemedText style={styles.topBarTitle}>问题反馈</ThemedText>
-        <View style={styles.iconButtonSpacer} />
+        <ThemedText style={styles.topBarTitle}>
+          {featureMode ? '功能建议' : '问题反馈'}
+        </ThemedText>
+        <Pressable
+          accessibilityLabel="我的反馈"
+          accessibilityRole="button"
+          onPress={() => router.push('/profile/feedback/history' as Href)}
+          style={({ pressed }) => [styles.historyLink, pressed && styles.pressed]}>
+          <MaterialCommunityIcons name="history" size={16} color={colors.primary} />
+          <ThemedText style={[styles.historyLinkText, { color: colors.primary }]}>我的反馈</ThemedText>
+        </Pressable>
       </View>
 
       <View style={[styles.formPanel, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+        {featureMode ? (
+          <>
+            <View style={styles.fieldGroup}>
+              <View style={styles.fieldHeader}>
+                <ThemedText style={styles.fieldLabel}>功能名称</ThemedText>
+                <ThemedText style={[styles.fieldCount, { color: colors.mutedText }]}>
+                  {Array.from(title).length}/{FEEDBACK_MAX_TITLE}
+                </ThemedText>
+              </View>
+              <TextInput
+                accessibilityLabel="功能名称"
+                maxLength={FEEDBACK_MAX_TITLE}
+                onChangeText={setTitle}
+                placeholder="例如：发票识别工具"
+                placeholderTextColor={colors.mutedText}
+                selectionColor={colors.primary}
+                style={[
+                  styles.titleInput,
+                  {
+                    backgroundColor: colors.surfaceMuted,
+                    borderColor: colors.line,
+                    color: colors.text,
+                  },
+                ]}
+                value={title}
+              />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <ThemedText style={styles.fieldLabel}>功能分类</ThemedText>
+              <View style={styles.categoryRow}>
+                {FEEDBACK_CATEGORIES.map((item) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: category === item.key }}
+                    key={item.key}
+                    onPress={() => setCategory(item.key)}
+                    style={({ pressed }) => [
+                      styles.categoryChip,
+                      {
+                        backgroundColor: category === item.key ? colors.primary : colors.surfaceMuted,
+                        borderColor: category === item.key ? colors.primary : colors.line,
+                      },
+                      pressed && styles.pressed,
+                    ]}>
+                    <ThemedText
+                      style={[
+                        styles.categoryChipText,
+                        { color: category === item.key ? '#ffffff' : colors.mutedText },
+                      ]}>
+                      {item.label}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </>
+        ) : null}
+
         <View style={styles.fieldGroup}>
           <View style={styles.fieldHeader}>
-            <ThemedText style={styles.fieldLabel}>问题描述</ThemedText>
+            <ThemedText style={styles.fieldLabel}>
+              {featureMode ? '功能描述' : '问题描述'}
+            </ThemedText>
             <ThemedText style={[styles.fieldCount, { color: colors.mutedText }]}>
               {Array.from(description).length}/{FEEDBACK_MAX_DESCRIPTION}
             </ThemedText>
           </View>
           <TextInput
+            accessibilityLabel={featureMode ? '功能描述' : '问题描述'}
             maxLength={FEEDBACK_MAX_DESCRIPTION}
             multiline
             onChangeText={setDescription}
-            placeholder="描述你遇到的问题"
+            placeholder={featureMode ? '描述你期望的功能和使用场景' : '描述你遇到的问题'}
             placeholderTextColor={colors.mutedText}
             selectionColor={colors.primary}
             style={[
@@ -182,7 +281,7 @@ export function FeedbackSubmitScreen() {
         </View>
 
         <View style={styles.fieldGroup}>
-          <ThemedText style={styles.fieldLabel}>截图</ThemedText>
+          <ThemedText style={styles.fieldLabel}>{featureMode ? '设计图' : '截图'}</ThemedText>
           <View style={styles.imageGrid}>
             {assets.map((asset, index) => (
               <View key={`${asset.uri}-${index}`} style={styles.imageTile}>
@@ -250,7 +349,7 @@ export function FeedbackSubmitScreen() {
             <MaterialCommunityIcons name="send-outline" size={19} color="#ffffff" />
           )}
           <ThemedText style={styles.submitText}>
-            {submitting ? '正在提交' : '提交反馈'}
+            {submitting ? '正在提交' : featureMode ? '提交功能建议' : '提交反馈'}
           </ThemedText>
         </Pressable>
       </View>
@@ -283,6 +382,18 @@ const styles = StyleSheet.create({
     height: 42,
     width: 42,
   },
+  historyLink: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+    height: 42,
+    justifyContent: 'center',
+    minWidth: 72,
+  },
+  historyLinkText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
   formPanel: {
     borderRadius: 20,
     borderWidth: 1,
@@ -311,6 +422,30 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     minHeight: 148,
     padding: 14,
+  },
+  titleInput: {
+    borderRadius: 16,
+    borderWidth: 1,
+    fontSize: 15,
+    height: 48,
+    paddingHorizontal: 14,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryChip: {
+    alignItems: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 32,
+    justifyContent: 'center',
+    paddingHorizontal: 13,
+  },
+  categoryChipText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   imageGrid: {
     flexDirection: 'row',
@@ -413,5 +548,8 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '800',
+  },
+  pressed: {
+    opacity: 0.72,
   },
 });
