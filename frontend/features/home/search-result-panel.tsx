@@ -107,33 +107,35 @@ export function SearchResultPanel({
             换个关键词，或直接浏览全部工具
           </ThemedText>
           <View style={styles.emptyActions}>
-            <Pressable
-              accessibilityLabel="清空关键词"
-              accessibilityRole="button"
-              onPress={onClear}
-              style={({ pressed }) => [
-                styles.emptyButton,
-                { borderColor: colors.line },
-                pressed && styles.pressed,
-              ]}>
-              <ThemedText style={[styles.emptyButtonText, { color: colors.text }]}>
-                清空关键词
-              </ThemedText>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="在全部工具中查看"
-              accessibilityRole="button"
-              onPress={onViewAll}
-              style={({ pressed }) => [
-                styles.emptyButton,
-                styles.emptyButtonPrimary,
-                { backgroundColor: colors.primary },
-                pressed && styles.pressed,
-              ]}>
-              <ThemedText style={[styles.emptyButtonText, { color: '#ffffff' }]}>
-                在全部工具中查看
-              </ThemedText>
-            </Pressable>
+            <View style={styles.emptyButtonRow}>
+              <Pressable
+                accessibilityLabel="清空关键词"
+                accessibilityRole="button"
+                onPress={onClear}
+                style={({ pressed }) => [
+                  styles.emptyButton,
+                  { borderColor: colors.line },
+                  pressed && styles.pressed,
+                ]}>
+                <ThemedText style={[styles.emptyButtonText, { color: colors.text }]}>
+                  清空关键词
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                accessibilityLabel="在全部工具中查看"
+                accessibilityRole="button"
+                onPress={onViewAll}
+                style={({ pressed }) => [
+                  styles.emptyButton,
+                  styles.emptyButtonPrimary,
+                  { backgroundColor: colors.primary },
+                  pressed && styles.pressed,
+                ]}>
+                <ThemedText style={[styles.emptyButtonText, { color: '#ffffff' }]}>
+                  在全部工具中查看
+                </ThemedText>
+              </Pressable>
+            </View>
             <Pressable
               accessibilityLabel="没有找到想要的功能，去反馈"
               accessibilityRole="button"
@@ -346,9 +348,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyActions: {
+    alignItems: 'center',
+    marginTop: 13,
+    width: '100%',
+  },
+  emptyButtonRow: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 13,
+    justifyContent: 'center',
   },
   emptyButton: {
     alignItems: 'center',
@@ -373,9 +380,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 9,
     marginTop: 13,
+    maxWidth: 300,
     minHeight: 48,
     paddingHorizontal: 11,
     paddingVertical: 9,
+    width: '100%',
   },
   emptyFeedbackIcon: {
     alignItems: 'center',

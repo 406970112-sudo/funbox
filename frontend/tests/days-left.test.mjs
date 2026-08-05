@@ -6,10 +6,15 @@ import {
   computeDaysLeft,
   cycleUnitLabel,
   formatDateCN,
+  iconForCategory,
   recordTypeLabel,
   riskLabel,
   sourceLabel,
 } from '../lib/days-left.ts';
+
+test('category icons map to supported Material Community Icons', () => {
+  assert.equal(iconForCategory('id-card'), 'card-account-details-outline');
+});
 
 test('days left labels stay stable', () => {
   assert.equal(recordTypeLabel('fixed'), '固定到期');

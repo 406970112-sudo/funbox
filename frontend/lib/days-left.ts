@@ -102,7 +102,7 @@ export function riskColor(level: DaysLeftRiskLevel) {
 
 export function iconForCategory(icon: string) {
   const fallback: Record<string, string> = {
-    'id-card': 'id-card-outline',
+    'id-card': 'card-account-details-outline',
     'credit-card': 'credit-card-outline',
     package: 'package-variant-closed',
     server: 'server-outline',
