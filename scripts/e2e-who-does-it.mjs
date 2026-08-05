@@ -195,6 +195,35 @@ try {
   if (!winner || !resultBody.includes("去洗碗")) {
     throw new Error(`winner missing: ${resultBody.slice(0, 500)}`);
   }
+  const wheelDebug = await evaluate(`JSON.stringify({
+    wheelTransform: [...document.querySelectorAll('div')]
+      .filter((div) => div.firstElementChild?.tagName === 'svg' && div.style.transform)
+      .map((div) => ({ width: div.style.width, height: div.style.height, transform: div.style.transform })),
+    allTransforms: [...document.querySelectorAll('div')]
+      .filter((div) => div.style.transform)
+      .map((div) => ({ width: div.style.width, height: div.style.height, transform: div.style.transform }))
+  })`);
+  const debug = JSON.parse(wheelDebug);
+  const transforms = debug.wheelTransform.length > 0 ? debug.wheelTransform : debug.allTransforms;
+  const wheelEntry = transforms.find(
+    (entry) => entry.width === "292px" || entry.transform.includes("deg"),
+  );
+  const rotateValue = wheelEntry
+    ? Number(wheelEntry.transform.match(/rotate\((-?[\d.]+)deg\)/)?.[1])
+    : NaN;
+  if (!Number.isFinite(rotateValue)) {
+    throw new Error(`wheel transform missing: ${JSON.stringify(debug)}`);
+  }
+  const participants = ["阿伟", "小红", "小蓝", "小北"];
+  const winnerIndex = participants.indexOf(winner);
+  const expectedAngle = (360 - ((winnerIndex + 0.5) * 360) / participants.length) % 360;
+  const actualAngle = ((rotateValue % 360) + 360) % 360;
+  if (Math.abs(actualAngle - expectedAngle) > 5 && Math.abs(actualAngle - expectedAngle - 360) > 5) {
+    throw new Error(
+      `wheel not aligned: actual=${actualAngle} expected=${expectedAngle} transform=${rotateValue}`,
+    );
+  }
+  console.log("WHEEL_ALIGN_OK", actualAngle, expectedAngle);
   console.log("SPIN_OK", winner);
 
   await clickByText("完成");

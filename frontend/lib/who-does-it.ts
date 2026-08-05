@@ -244,7 +244,7 @@ export function resolveSpinTarget(
   random: () => number,
 ) {
   const offset = 360 - ((winnerIndex + 0.5) * 360) / participantCount;
-  const fullTurns = 3 + random() * 2;
+  const fullTurns = 3 + Math.floor(random() * 3);
   return fullTurns * 360 + offset;
 }
 

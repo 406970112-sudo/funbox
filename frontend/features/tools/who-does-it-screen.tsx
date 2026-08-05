@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { G, Path, Text as SvgText } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { appLayout } from '@/constants/app-theme';
@@ -91,6 +91,7 @@ export function WhoDoesItScreen() {
   const [expandedRecordID, setExpandedRecordID] = useState<string | null>(null);
   const rotation = useRef(new Animated.Value(0)).current;
   const rotationBase = useRef(0);
+  const spinLockRef = useRef(false);
   const stateRef = useRef(state);
   const syncQueueRef = useRef<Promise<void>>(Promise.resolve());
 
@@ -207,7 +208,8 @@ export function WhoDoesItScreen() {
   }
 
   function handleSpin() {
-    if (!canSpin || spinning) return;
+    if (!canSpin || spinning || spinLockRef.current) return;
+    spinLockRef.current = true;
     const result = runSpin(stateRef.current, Math.random);
     const target = rotationBase.current + result.targetRotation;
     rotationBase.current = target;
@@ -217,10 +219,13 @@ export function WhoDoesItScreen() {
       toValue: target,
       duration: 3200,
       useNativeDriver: false,
-    }).start(() => {
-      setSpinning(false);
-      setSpinResult(result);
-      persistAndSync(appendRecord(stateRef.current, result.record));
+    }).start(({ finished }) => {
+      spinLockRef.current = false;
+      if (finished) {
+        setSpinning(false);
+        setSpinResult(result);
+        persistAndSync(appendRecord(stateRef.current, result.record));
+      }
     });
   }
 
@@ -447,25 +452,29 @@ function WheelTab({
             </Pressable>
           </View>
         ) : (
-          <View style={styles.wheelStage}>
-            <View style={styles.wheelFrame}>
-              <View style={[styles.pointer, { backgroundColor: colors.accent }]} />
-              <Animated.View
-                style={{
-                  width: WHEEL_SIZE,
-                  height: WHEEL_SIZE,
-                  transform: [
-                    {
-                      rotate: rotation.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '360deg'],
-                      }),
-                    },
-                  ],
-                }}>
-                <WheelSvg sectors={sectors} />
-              </Animated.View>
-            </View>
+            <View style={styles.wheelStage}>
+              <View style={styles.wheelFrame}>
+                <View style={[styles.pointer, { borderBottomColor: colors.accent }]} />
+                <Animated.View
+                  style={{
+                    width: WHEEL_SIZE,
+                    height: WHEEL_SIZE,
+                    transform: [
+                      {
+                        rotate: rotation.interpolate({
+                          inputRange: [0, 360],
+                          outputRange: ['0deg', '360deg'],
+                        }),
+                      },
+                    ],
+                  }}>
+                  <WheelSvg sectors={sectors} />
+                </Animated.View>
+                <View style={[styles.wheelCenter, { backgroundColor: colors.hero }]}>
+                  <MaterialCommunityIcons name="auto-fix" size={19} color="#c9f36a" />
+                  <ThemedText style={styles.wheelCenterText}>开抽</ThemedText>
+                </View>
+              </View>
             <ThemedText style={[styles.wheelCount, { color: colors.mutedText }]}>
               <ThemedText style={styles.wheelCountStrong}>{state.participants.length}</ThemedText> 人参与 · 每人 1 个扇区
             </ThemedText>
@@ -578,7 +587,6 @@ function WheelSvg({ sectors }: { sectors: WhoDoesItWheelSector[] }) {
   const fontSize = Math.max(10, Math.min(16, Math.floor(150 / Math.max(1, sectors.length))));
   return (
     <Svg width={WHEEL_SIZE} height={WHEEL_SIZE} viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`}>
-      <Circle cx={center} cy={center} r={radius} fill="#ffffff" stroke="#dce5f6" strokeWidth={2} />
       {sectors.map((sector) => {
         const start = toRadians(sector.startAngle);
         const end = toRadians(sector.endAngle);
@@ -607,16 +615,6 @@ function WheelSvg({ sectors }: { sectors: WhoDoesItWheelSector[] }) {
           </G>
         );
       })}
-      <Circle cx={center} cy={center} r={54} fill="#151b3b" />
-      <SvgText
-        x={center}
-        y={center + 5}
-        fill="#c9f36a"
-        fontSize={15}
-        fontWeight="900"
-        textAnchor="middle">
-        开抽
-      </SvgText>
     </Svg>
   );
 }
@@ -1028,15 +1026,36 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   pointer: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 6,
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    height: 18,
+    borderBottomWidth: 20,
+    borderLeftColor: 'transparent',
+    borderLeftWidth: 13,
+    borderRightColor: 'transparent',
+    borderRightWidth: 13,
+    borderTopWidth: 0,
+    height: 0,
+    left: '50%',
+    marginLeft: -13,
     position: 'absolute',
     top: 0,
-    width: 26,
+    width: 0,
     zIndex: 3,
+  },
+  wheelCenter: {
+    alignItems: 'center',
+    borderRadius: 999,
+    height: 104,
+    justifyContent: 'center',
+    left: 94,
+    position: 'absolute',
+    top: 105,
+    width: 104,
+    zIndex: 4,
+  },
+  wheelCenterText: {
+    color: '#c9f36a',
+    fontSize: 13,
+    fontWeight: '900',
+    marginTop: 2,
   },
   wheelCount: {
     fontSize: 10,
