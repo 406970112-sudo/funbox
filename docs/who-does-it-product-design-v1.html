@@ -1,0 +1,1919 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 谁来干 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --canvas: #eef4ff;
+        --board: #e4ebf6;
+        --surface: #ffffff;
+        --surface-muted: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --green: #1db991;
+        --green-soft: #e4f7ee;
+        --amber: #f1a33b;
+        --amber-soft: #fff2df;
+        --coral: #ff6b8f;
+        --coral-soft: #ffe9ef;
+        --dark: #091126;
+        --white: #ffffff;
+        --shadow: 0 22px 46px rgba(58, 86, 152, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+        min-width: 1760px;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--board);
+        background-size: 32px 32px;
+        margin: 0 auto;
+        min-height: 2360px;
+        padding: 28px 34px 34px;
+        width: 1760px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark i {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--coral);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .overview-card .oc-icon.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 320px repeat(3, 420px);
+        margin-bottom: 22px;
+      }
+
+      .strategy {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .strategy h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .strategy p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .flow-item {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 26px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .rule-box {
+        background: var(--green-soft);
+        border-left: 3px solid var(--green);
+        border-radius: 10px;
+        color: #1c5b3c;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.7;
+        margin-top: 12px;
+        padding: 10px 11px;
+      }
+
+      .principle-list,
+      .scope-list {
+        display: grid;
+        gap: 9px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .principle-list li,
+      .scope-list li {
+        align-items: flex-start;
+        color: #4d5a75;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        line-height: 1.55;
+      }
+
+      .principle-list i,
+      .scope-list i {
+        color: var(--coral);
+        flex: 0 0 auto;
+        height: 14px;
+        margin-top: 2px;
+        width: 14px;
+      }
+
+      .scope-list i {
+        color: var(--green);
+      }
+
+      .entry-chip {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 12px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        margin-top: 18px;
+        min-height: 42px;
+        padding: 9px 11px;
+      }
+
+      .entry-chip i {
+        height: 15px;
+        stroke-width: 2.4;
+        width: 15px;
+      }
+
+      .entry-chip span {
+        color: #8a80b8;
+        font-weight: 600;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 1000px;
+        padding: 10px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone-screen {
+        background: var(--surface-muted);
+        border-radius: 29px;
+        display: flex;
+        flex-direction: column;
+        height: 980px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 22px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 22px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-content {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        height: 50px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 9px;
+        color: var(--lime);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .icon-btn.coral {
+        background: var(--coral-soft);
+        border-color: transparent;
+        color: var(--coral);
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 62px;
+        justify-content: space-around;
+      }
+
+      .bottom-nav span {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .bottom-nav span.active {
+        color: var(--blue);
+      }
+
+      .bottom-nav i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .search-shell {
+        padding: 4px 16px 0;
+      }
+
+      .search-field {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 8px;
+        height: 42px;
+        padding: 0 12px;
+      }
+
+      .search-field i {
+        color: var(--blue);
+        height: 16px;
+        width: 16px;
+      }
+
+      .search-field input {
+        background: transparent;
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 11px;
+        font-weight: 700;
+        outline: none;
+      }
+
+      .search-field input::placeholder {
+        color: #9aa7c2;
+      }
+
+      .search-meta {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+        margin: 8px 2px 10px;
+      }
+
+      .search-result {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 13px 13px 12px;
+      }
+
+      .search-result .result-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .result-icon {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 11px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 40px;
+        height: 40px;
+        justify-content: center;
+        width: 40px;
+      }
+
+      .result-icon i {
+        height: 18px;
+        width: 18px;
+      }
+
+      .result-title {
+        flex: 1;
+      }
+
+      .result-title strong {
+        display: block;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .result-title .hit {
+        color: var(--coral);
+      }
+
+      .result-title span {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin: 10px 0 0;
+      }
+
+      .badge {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 999px;
+        color: #3d54b8;
+        display: inline-flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 4px;
+        padding: 5px 8px;
+      }
+
+      .badge.green {
+        background: var(--green-soft);
+        color: #1c5b3c;
+      }
+
+      .badge i {
+        height: 10px;
+        width: 10px;
+      }
+
+      .keyword-row {
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 10px;
+        padding-top: 9px;
+      }
+
+      .keyword {
+        background: var(--surface-muted);
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 800;
+        padding: 4px 7px;
+      }
+
+      .keyword.hot {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .result-cta {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 10px;
+        color: var(--lime);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        height: 38px;
+        justify-content: center;
+        margin-top: 11px;
+      }
+
+      .result-cta i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .suggestion-block {
+        margin: 14px 16px 0;
+      }
+
+      .suggestion-block .section-head {
+        margin-bottom: 8px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .section-head h3 {
+        font-size: 12px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .suggestion-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .suggestion-chip {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #4d5a75;
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 5px;
+        padding: 7px 10px;
+      }
+
+      .suggestion-chip i {
+        color: var(--blue);
+        height: 11px;
+        width: 11px;
+      }
+
+      .real-note {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 6px;
+        margin: 12px 16px 0;
+        padding: 9px 11px;
+      }
+
+      .real-note i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .empty-hero {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        margin: 16px;
+        padding: 30px 18px 26px;
+        text-align: center;
+      }
+
+      .dashed-wheel {
+        align-items: center;
+        border: 2px dashed #c6d2ec;
+        border-radius: 50%;
+        color: #9aa7c2;
+        display: flex;
+        height: 210px;
+        justify-content: center;
+        margin-bottom: 16px;
+        position: relative;
+        width: 210px;
+      }
+
+      .dashed-wheel::before {
+        background: var(--coral);
+        border-radius: 4px;
+        content: "";
+        height: 26px;
+        left: 50%;
+        position: absolute;
+        top: -6px;
+        transform: translateX(-50%);
+        width: 8px;
+      }
+
+      .dashed-wheel i {
+        height: 44px;
+        stroke-width: 1.5;
+        width: 44px;
+      }
+
+      .empty-hero h2 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .empty-hero p {
+        color: var(--muted);
+        font-size: 9.5px;
+        line-height: 1.7;
+        margin: 7px 0 14px;
+      }
+
+      .cta {
+        align-items: center;
+        border: 0;
+        border-radius: 10px;
+        display: inline-flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 6px;
+        height: 38px;
+        justify-content: center;
+        padding: 0 14px;
+      }
+
+      .cta i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .cta.primary {
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      .cta.ghost {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .cta.dark {
+        background: var(--navy);
+        color: var(--white);
+      }
+
+      .cta.coral {
+        background: var(--coral);
+        color: var(--white);
+      }
+
+      .input-shell {
+        margin: 4px 16px 0;
+      }
+
+      .add-field {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 8px;
+        height: 46px;
+        padding: 0 8px 0 12px;
+      }
+
+      .add-field i {
+        color: var(--blue);
+        height: 16px;
+        width: 16px;
+      }
+
+      .add-field input {
+        background: transparent;
+        border: 0;
+        color: var(--ink);
+        flex: 1;
+        font-size: 11px;
+        font-weight: 700;
+        min-width: 0;
+        outline: none;
+      }
+
+      .add-field input::placeholder {
+        color: #9aa7c2;
+      }
+
+      .add-button {
+        align-items: center;
+        background: var(--navy);
+        border: 0;
+        border-radius: 9px;
+        color: var(--lime);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 5px;
+        height: 32px;
+        justify-content: center;
+        padding: 0 11px;
+      }
+
+      .add-button i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .input-hint {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+        margin: 7px 2px 0;
+      }
+
+      .section {
+        margin: 16px 16px 0;
+      }
+
+      .people-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .person-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        padding: 9px 11px;
+      }
+
+      .person-avatar {
+        align-items: center;
+        border-radius: 9px;
+        display: flex;
+        flex: 0 0 34px;
+        font-size: 12px;
+        font-weight: 900;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .person-row strong {
+        flex: 1;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .person-row .sub {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .person-actions {
+        align-items: center;
+        display: flex;
+        gap: 4px;
+      }
+
+      .person-actions i {
+        color: var(--muted);
+        height: 14px;
+        width: 14px;
+      }
+
+      .wheel-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        margin: 10px 16px 0;
+        padding: 12px 12px 10px;
+        position: relative;
+      }
+
+      .wheel-stage {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        padding: 4px 0 0;
+      }
+
+      .wheel-svg {
+        display: block;
+        height: 278px;
+        width: 278px;
+      }
+
+      .wheel-pointer {
+        background: var(--coral);
+        clip-path: polygon(50% 0, 100% 100%, 0 100%);
+        height: 20px;
+        left: 50%;
+        position: absolute;
+        top: -6px;
+        transform: translateX(-50%);
+        width: 26px;
+        z-index: 2;
+      }
+
+      .wheel-count {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        margin: 7px 0 2px;
+      }
+
+      .wheel-count b {
+        color: var(--blue);
+      }
+
+      .task-panel {
+        background: var(--surface-muted);
+        border-radius: 13px;
+        margin: 8px 16px 0;
+        padding: 10px 11px;
+      }
+
+      .segmented {
+        background: #e7edfa;
+        border-radius: 10px;
+        display: grid;
+        gap: 4px;
+        grid-template-columns: 1fr 1fr 1fr;
+        padding: 4px;
+      }
+
+      .segmented span {
+        align-items: center;
+        border-radius: 8px;
+        color: #6b7892;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: center;
+      }
+
+      .segmented span.active {
+        background: var(--surface);
+        box-shadow: 0 2px 7px rgba(58, 86, 152, 0.13);
+        color: var(--ink);
+      }
+
+      .task-input {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        gap: 7px;
+        height: 38px;
+        margin-top: 8px;
+        padding: 0 10px;
+      }
+
+      .task-input i {
+        color: var(--coral);
+        height: 14px;
+        width: 14px;
+      }
+
+      .task-input span {
+        color: var(--ink);
+        flex: 1;
+        font-size: 9.5px;
+        font-weight: 800;
+      }
+
+      .task-input .save {
+        align-items: center;
+        background: var(--coral-soft);
+        border-radius: 7px;
+        color: var(--coral);
+        display: flex;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .task-input .save i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .spin-cta {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 12px;
+        color: var(--lime);
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 7px;
+        height: 44px;
+        justify-content: center;
+        margin: 10px 16px 0;
+      }
+
+      .spin-cta i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .result-overlay {
+        align-items: center;
+        background: rgba(9, 17, 38, 0.62);
+        display: flex;
+        flex-direction: column;
+        inset: 0;
+        justify-content: center;
+        padding: 30px;
+        position: absolute;
+        z-index: 5;
+      }
+
+      .result-card {
+        background: var(--surface);
+        border-radius: 22px;
+        padding: 24px 22px 18px;
+        text-align: center;
+        width: 100%;
+      }
+
+      .result-kicker {
+        align-items: center;
+        color: var(--coral);
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        justify-content: center;
+      }
+
+      .result-kicker i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .winner-avatar {
+        align-items: center;
+        background: var(--coral);
+        border: 4px solid var(--coral-soft);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        font-size: 26px;
+        font-weight: 900;
+        height: 84px;
+        justify-content: center;
+        margin: 16px auto 10px;
+        width: 84px;
+      }
+
+      .result-card h2 {
+        font-size: 24px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .task-line {
+        align-items: center;
+        background: var(--amber-soft);
+        border-radius: 10px;
+        color: #9a5b0f;
+        display: inline-flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 6px;
+        margin-top: 10px;
+        padding: 8px 12px;
+      }
+
+      .task-line i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .result-actions {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 18px;
+      }
+
+      .history-stats {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 12px 16px 0;
+      }
+
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 11px 12px;
+      }
+
+      .stat-card b {
+        color: var(--blue);
+        display: block;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 21px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .stat-card.coral b {
+        color: var(--coral);
+      }
+
+      .stat-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 5px;
+      }
+
+      .history-list {
+        display: grid;
+        gap: 8px;
+        margin: 10px 16px 0;
+      }
+
+      .history-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--blue);
+        border-radius: 12px;
+        padding: 11px 12px;
+      }
+
+      .history-card.green {
+        border-left-color: var(--green);
+      }
+
+      .history-card.coral {
+        border-left-color: var(--coral);
+      }
+
+      .history-head {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .history-head .time {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 4px;
+      }
+
+      .history-head .time i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .history-head .people {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+        margin-left: auto;
+      }
+
+      .history-result {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .mini-avatar {
+        align-items: center;
+        border-radius: 8px;
+        display: flex;
+        flex: 0 0 28px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .history-result strong {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .history-result .task {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 6px;
+        color: #4d5a75;
+        display: inline-flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 4px;
+        margin-left: auto;
+        padding: 4px 7px;
+      }
+
+      .history-result .task i {
+        height: 10px;
+        width: 10px;
+      }
+
+      .history-result .task.none {
+        color: var(--muted);
+      }
+
+      .history-more {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        color: var(--blue);
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 5px;
+        margin-top: 9px;
+        padding-top: 8px;
+      }
+
+      .history-more i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .clear-history {
+        align-items: center;
+        background: var(--coral-soft);
+        border: 1px solid #ffc4d3;
+        border-radius: 10px;
+        color: var(--coral);
+        display: flex;
+        font-size: 9.5px;
+        font-weight: 900;
+        gap: 6px;
+        height: 36px;
+        justify-content: center;
+        margin: 12px 16px 0;
+      }
+
+      .clear-history i {
+        height: 13px;
+        width: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="loader-circle"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox 谁来干 · 产品设计</h1>
+            <p class="brand-subtitle">大转盘随机抽人，真实名单、真实结果、真实历史，一期一次交付</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>V1 完整一期</strong>
+          2026-08-05 · FunBox Tools
+        </div>
+      </header>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="database"></i></div>
+          <div>
+            <strong>真实数据</strong>
+            <p>首启为空态，不预置名单、任务或记录；所有内容来自用户真实输入与真实抽签。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon blue"><i data-lucide="circle-check"></i></div>
+          <div>
+            <strong>一期完整</strong>
+            <p>人员管理、任务设置、转盘抽人、结果浮层、历史记录、搜索直达全部本期交付。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon coral"><i data-lucide="search"></i></div>
+          <div>
+            <strong>模糊搜索</strong>
+            <p>“大转盘”“抽奖”“抽签”“谁来干”等关键词均可命中，点击直达功能。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>核心流程</h3>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div>
+              <strong>添加真实人员</strong>
+              <span>单个或批量粘贴，2-36 人，支持去重、编辑、删除</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div>
+              <strong>设置本次任务</strong>
+              <span>只抽人 / 自定义任务 / 常用任务（来自真实历史）</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div>
+              <strong>转动转盘</strong>
+              <span>真实随机锁定结果，动画只做呈现，约 3 秒停止</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div>
+              <strong>结果与历史</strong>
+              <span>中选人与任务同屏展示，每次结果真实入档</span>
+            </div>
+          </div>
+          <div class="rule-box">
+            人数少于 2 人时禁止开抽；历史保存参与人快照，名单后续变化不影响记录真实性。
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">20:08</span>
+                <span class="dynamic-island"></span>
+                <span class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </span>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <div class="mark"><i data-lucide="box"></i></div>
+                    <strong>FunBox</strong>
+                  </div>
+                  <div class="app-actions">
+                    <div class="icon-btn"><i data-lucide="bell"></i></div>
+                  </div>
+                </div>
+                <div class="search-shell">
+                  <div class="search-field">
+                    <i data-lucide="search"></i>
+                    <input value="大转盘" readonly />
+                    <i data-lucide="x"></i>
+                  </div>
+                  <p class="search-meta">工具与游戏 · 2 个结果</p>
+                  <div class="search-result">
+                    <div class="result-head">
+                      <div class="result-icon"><i data-lucide="loader-circle"></i></div>
+                      <div class="result-title">
+                        <strong>谁<span class="hit">来干</span></strong>
+                        <span>大转盘随机抽人，结果真实记录</span>
+                      </div>
+                    </div>
+                    <div class="badge-row">
+                      <span class="badge"><i data-lucide="shuffle"></i>随机抽取</span>
+                      <span class="badge green"><i data-lucide="check"></i>真实记录</span>
+                    </div>
+                    <div class="keyword-row">
+                      <span class="keyword hot">大转盘</span>
+                      <span class="keyword hot">抽奖</span>
+                      <span class="keyword">抽签</span>
+                      <span class="keyword">选人</span>
+                      <span class="keyword">谁来干</span>
+                    </div>
+                    <div class="result-cta"><i data-lucide="arrow-right"></i>开始抽人</div>
+                  </div>
+                </div>
+                <div class="suggestion-block">
+                  <div class="section-head">
+                    <h3>搜索建议</h3>
+                    <span>真实匹配</span>
+                  </div>
+                  <div class="suggestion-chips">
+                    <span class="suggestion-chip"><i data-lucide="search"></i>抽奖</span>
+                    <span class="suggestion-chip"><i data-lucide="search"></i>抽签</span>
+                    <span class="suggestion-chip"><i data-lucide="search"></i>随机选人</span>
+                  </div>
+                </div>
+                <div class="real-note">
+                  <i data-lucide="database"></i>
+                  搜索命中基于真实工具注册关键词，非预置推荐。
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <span class="active"><i data-lucide="home"></i>首页</span>
+                <span><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="message-circle"></i>消息</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>首页搜索</b> · 大转盘 / 抽奖 / 抽签模糊命中</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">20:09</span>
+                <span class="dynamic-island"></span>
+                <span class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </span>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <div class="icon-btn plain"><i data-lucide="chevron-left"></i></div>
+                    <div class="mark"><i data-lucide="loader-circle"></i></div>
+                    <strong>谁来干</strong>
+                  </div>
+                  <div class="app-actions">
+                    <div class="icon-btn"><i data-lucide="history"></i></div>
+                  </div>
+                </div>
+                <div class="empty-hero">
+                  <div class="dashed-wheel"><i data-lucide="users"></i></div>
+                  <h2>还没有人</h2>
+                  <p>添加 2 位以上真实姓名后即可开转，<br />名单、任务与结果都会真实保存。</p>
+                  <button class="cta primary"><i data-lucide="user-plus"></i>添加人员</button>
+                </div>
+                <div class="real-note">
+                  <i data-lucide="database"></i>
+                  首启为空态，不预置任何名单、任务或抽奖记录。
+                </div>
+                <div class="section">
+                  <div class="section-head">
+                    <h3>功能说明</h3>
+                    <span>一期完整</span>
+                  </div>
+                  <ul class="scope-list">
+                    <li><i data-lucide="check"></i>2-36 人真实名单，支持批量粘贴</li>
+                    <li><i data-lucide="check"></i>只抽人 / 自定义任务 / 常用任务</li>
+                    <li><i data-lucide="check"></i>每次抽签真实记录，可查看参与人快照</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <span><i data-lucide="home"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="message-circle"></i>消息</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>首次进入</b> · 真实空态，无 mock 数据</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">20:10</span>
+                <span class="dynamic-island"></span>
+                <span class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </span>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <div class="icon-btn plain"><i data-lucide="chevron-left"></i></div>
+                    <strong>添加人员</strong>
+                  </div>
+                  <div class="app-actions">
+                    <div class="icon-btn coral"><i data-lucide="trash-2"></i></div>
+                  </div>
+                </div>
+                <div class="input-shell">
+                  <div class="add-field">
+                    <i data-lucide="user-plus"></i>
+                    <input value="小红" readonly />
+                    <button class="add-button"><i data-lucide="plus"></i>添加</button>
+                  </div>
+                  <p class="input-hint">批量粘贴支持换行、逗号、顿号、空格分隔，重复姓名会自动拦截。</p>
+                </div>
+                <div class="section">
+                  <div class="section-head">
+                    <h3>已添加 4 人</h3>
+                    <span>真实录入</span>
+                  </div>
+                  <div class="people-list">
+                    <div class="person-row">
+                      <div class="person-avatar" style="background: var(--blue-soft); color: var(--blue);">阿</div>
+                      <div>
+                        <strong>阿伟</strong>
+                        <span class="sub">真实姓名 · 刚刚</span>
+                      </div>
+                      <div class="person-actions">
+                        <i data-lucide="pencil"></i>
+                        <i data-lucide="x"></i>
+                      </div>
+                    </div>
+                    <div class="person-row">
+                      <div class="person-avatar" style="background: var(--coral-soft); color: var(--coral);">小</div>
+                      <div>
+                        <strong>小红</strong>
+                        <span class="sub">真实姓名 · 刚刚</span>
+                      </div>
+                      <div class="person-actions">
+                        <i data-lucide="pencil"></i>
+                        <i data-lucide="x"></i>
+                      </div>
+                    </div>
+                    <div class="person-row">
+                      <div class="person-avatar" style="background: var(--green-soft); color: var(--green);">小</div>
+                      <div>
+                        <strong>小蓝</strong>
+                        <span class="sub">真实姓名 · 刚刚</span>
+                      </div>
+                      <div class="person-actions">
+                        <i data-lucide="pencil"></i>
+                        <i data-lucide="x"></i>
+                      </div>
+                    </div>
+                    <div class="person-row">
+                      <div class="person-avatar" style="background: var(--amber-soft); color: var(--amber);">小</div>
+                      <div>
+                        <strong>小北</strong>
+                        <span class="sub">真实姓名 · 刚刚</span>
+                      </div>
+                      <div class="person-actions">
+                        <i data-lucide="pencil"></i>
+                        <i data-lucide="x"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="real-note">
+                  <i data-lucide="database"></i>
+                  设计稿演示用户已真实录入 4 人；正式产品首启为空。
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <span><i data-lucide="home"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="message-circle"></i>消息</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>添加人员</b> · 单个输入 + 批量粘贴 + 去重</div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>任务与记录规则</h3>
+          <div class="flow-item">
+            <div class="flow-num">A</div>
+            <div>
+              <strong>三种任务模式</strong>
+              <span>只抽人 / 自定义任务 / 常用任务，常用任务只来自用户真实输入</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">B</div>
+            <div>
+              <strong>结果真实锁定</strong>
+              <span>开始抽奖瞬间用真实随机数确定结果，动画不改变结果</span>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">C</div>
+            <div>
+              <strong>历史可追溯</strong>
+              <span>保存时间、完整参与人快照、中选人与任务，名单变化不影响历史</span>
+            </div>
+          </div>
+          <div class="entry-chip">
+            <i data-lucide="search"></i>
+            注册关键词：大转盘、抽奖、抽签、随机选人、谁来干
+            <span>全部可搜</span>
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">20:11</span>
+                <span class="dynamic-island"></span>
+                <span class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </span>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <div class="icon-btn plain"><i data-lucide="chevron-left"></i></div>
+                    <div class="mark"><i data-lucide="loader-circle"></i></div>
+                    <strong>谁来干</strong>
+                  </div>
+                  <div class="app-actions">
+                    <div class="icon-btn"><i data-lucide="history"></i></div>
+                  </div>
+                </div>
+                <div class="wheel-card">
+                  <div class="wheel-stage">
+                    <svg class="wheel-svg" viewBox="0 0 278 278" aria-label="4 人转盘">
+                      <circle cx="139" cy="139" r="128" fill="#ffffff" stroke="#dce5f6" stroke-width="2" />
+                      <path d="M139 139 L139 11 A128 128 0 0 1 267 139 Z" fill="#4b6bff" />
+                      <path d="M139 139 L267 139 A128 128 0 0 1 139 267 Z" fill="#ff6b8f" />
+                      <path d="M139 139 L139 267 A128 128 0 0 1 11 139 Z" fill="#1db991" />
+                      <path d="M139 139 L11 139 A128 128 0 0 1 139 11 Z" fill="#f1a33b" />
+                      <circle cx="139" cy="139" r="52" fill="#151b3b" />
+                      <text x="139" y="72" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">阿伟</text>
+                      <text x="198" y="165" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">小红</text>
+                      <text x="139" y="230" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">小蓝</text>
+                      <text x="80" y="165" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">小北</text>
+                      <text x="139" y="146" fill="#c9f36a" font-size="15" font-weight="900" text-anchor="middle">开抽</text>
+                    </svg>
+                    <div class="wheel-pointer"></div>
+                    <p class="wheel-count"><b>4</b> 人参与 · 每人 1 个扇区</p>
+                  </div>
+                </div>
+                <div class="task-panel">
+                  <div class="segmented">
+                    <span>只抽人</span>
+                    <span class="active">自定义</span>
+                    <span>常用</span>
+                  </div>
+                  <div class="task-input">
+                    <i data-lucide="clipboard-list"></i>
+                    <span>抽中的人去洗碗</span>
+                    <div class="save"><i data-lucide="check"></i></div>
+                  </div>
+                </div>
+                <div class="spin-cta"><i data-lucide="sparkles"></i>开始抽</div>
+              </div>
+              <div class="bottom-nav">
+                <span><i data-lucide="home"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="message-circle"></i>消息</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>转盘主页</b> · 名单就绪 + 自定义任务</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">20:12</span>
+                <span class="dynamic-island"></span>
+                <span class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </span>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <div class="icon-btn plain"><i data-lucide="chevron-left"></i></div>
+                    <div class="mark"><i data-lucide="loader-circle"></i></div>
+                    <strong>谁来干</strong>
+                  </div>
+                  <div class="app-actions">
+                    <div class="icon-btn"><i data-lucide="history"></i></div>
+                  </div>
+                </div>
+                <div class="wheel-card">
+                  <div class="wheel-stage">
+                    <svg class="wheel-svg" viewBox="0 0 278 278" aria-label="结果后的转盘">
+                      <circle cx="139" cy="139" r="128" fill="#eef2fb" stroke="#dce5f6" stroke-width="2" />
+                      <path d="M139 139 L139 11 A128 128 0 0 1 267 139 Z" fill="#a9b9f5" />
+                      <path d="M139 139 L267 139 A128 128 0 0 1 139 267 Z" fill="#ff6b8f" opacity="0.92" />
+                      <path d="M139 139 L139 267 A128 128 0 0 1 11 139 Z" fill="#b8e3d8" />
+                      <path d="M139 139 L11 139 A128 128 0 0 1 139 11 Z" fill="#f4d6a2" />
+                      <circle cx="139" cy="139" r="52" fill="#151b3b" />
+                      <text x="139" y="72" fill="#5f6a86" font-size="16" font-weight="800" text-anchor="middle">阿伟</text>
+                      <text x="198" y="165" fill="#ffffff" font-size="17" font-weight="900" text-anchor="middle">小红</text>
+                      <text x="139" y="230" fill="#4f7a69" font-size="16" font-weight="800" text-anchor="middle">小蓝</text>
+                      <text x="80" y="165" fill="#7d5d22" font-size="16" font-weight="800" text-anchor="middle">小北</text>
+                      <text x="139" y="146" fill="#c9f36a" font-size="14" font-weight="900" text-anchor="middle">完成</text>
+                    </svg>
+                    <div class="wheel-pointer"></div>
+                    <p class="wheel-count"><b>4</b> 人参与 · 指针命中小红</p>
+                  </div>
+                </div>
+                <div class="task-panel">
+                  <div class="segmented">
+                    <span>只抽人</span>
+                    <span class="active">自定义</span>
+                    <span>常用</span>
+                  </div>
+                  <div class="task-input">
+                    <i data-lucide="clipboard-list"></i>
+                    <span>抽中的人去洗碗</span>
+                    <div class="save"><i data-lucide="check"></i></div>
+                  </div>
+                </div>
+                <div class="result-overlay">
+                  <div class="result-card">
+                    <div class="result-kicker"><i data-lucide="trophy"></i>本次结果</div>
+                    <div class="winner-avatar">小</div>
+                    <h2>小红</h2>
+                    <div class="task-line"><i data-lucide="clipboard-list"></i>去洗碗</div>
+                    <div class="result-actions">
+                      <button class="cta primary"><i data-lucide="rotate-cw"></i>再抽一次</button>
+                      <button class="cta ghost"><i data-lucide="check"></i>完成</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <span><i data-lucide="home"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="message-circle"></i>消息</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>结果浮层</b> · 真实结果与任务同屏</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">20:16</span>
+                <span class="dynamic-island"></span>
+                <span class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </span>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title">
+                    <div class="icon-btn plain"><i data-lucide="chevron-left"></i></div>
+                    <strong>抽签历史</strong>
+                  </div>
+                  <div class="app-actions">
+                    <div class="icon-btn coral"><i data-lucide="trash-2"></i></div>
+                  </div>
+                </div>
+                <div class="history-stats">
+                  <div class="stat-card">
+                    <b>3</b>
+                    <span>今日真实抽签</span>
+                  </div>
+                  <div class="stat-card coral">
+                    <b>8</b>
+                    <span>累计真实抽签</span>
+                  </div>
+                </div>
+                <div class="history-list">
+                  <div class="section-head">
+                    <h3>今天</h3>
+                    <span>按时间倒序</span>
+                  </div>
+                  <div class="history-card coral">
+                    <div class="history-head">
+                      <span class="time"><i data-lucide="clock"></i>20:16</span>
+                      <span class="people">4 人参与</span>
+                    </div>
+                    <div class="history-result">
+                      <div class="mini-avatar" style="background: var(--coral-soft); color: var(--coral);">小</div>
+                      <strong>小红</strong>
+                      <span class="task"><i data-lucide="clipboard-list"></i>去洗碗</span>
+                    </div>
+                    <div class="history-more"><i data-lucide="chevron-down"></i>查看参与人快照</div>
+                  </div>
+                  <div class="history-card">
+                    <div class="history-head">
+                      <span class="time"><i data-lucide="clock"></i>20:05</span>
+                      <span class="people">4 人参与</span>
+                    </div>
+                    <div class="history-result">
+                      <div class="mini-avatar" style="background: var(--blue-soft); color: var(--blue);">阿</div>
+                      <strong>阿伟</strong>
+                      <span class="task"><i data-lucide="sparkles"></i>大冒险</span>
+                    </div>
+                    <div class="history-more"><i data-lucide="chevron-down"></i>查看参与人快照</div>
+                  </div>
+                  <div class="history-card green">
+                    <div class="history-head">
+                      <span class="time"><i data-lucide="clock"></i>19:52</span>
+                      <span class="people">5 人参与</span>
+                    </div>
+                    <div class="history-result">
+                      <div class="mini-avatar" style="background: var(--green-soft); color: var(--green);">小</div>
+                      <strong>小蓝</strong>
+                      <span class="task none"><i data-lucide="user-check"></i>只抽人</span>
+                    </div>
+                    <div class="history-more"><i data-lucide="chevron-down"></i>查看参与人快照</div>
+                  </div>
+                </div>
+                <div class="clear-history"><i data-lucide="trash-2"></i>清空全部历史</div>
+              </div>
+              <div class="bottom-nav">
+                <span><i data-lucide="home"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="message-circle"></i>消息</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label"><b>历史记录</b> · 来自真实抽签，保存参与人快照</div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

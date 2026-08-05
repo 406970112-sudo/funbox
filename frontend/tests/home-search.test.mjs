@@ -112,6 +112,30 @@ test('ranks name prefix matches above description matches', () => {
   );
 });
 
+test('matches tool keywords with fuzzy terms like 大转盘 and 抽奖', () => {
+  const keywordTools = [
+    ...tools,
+    {
+      id: 'who-does-it',
+      name: '谁来干',
+      tagline: '大转盘随机抽人',
+      description: '圆形转盘随机抽人',
+      category: '生活',
+      badges: ['随机抽取', '真实记录'],
+      keywords: ['大转盘', '转盘', '抽奖', '抽签', '随机选人', '谁来干'],
+      route: '/tools/who-does-it',
+      icon: 'refresh',
+      accentColor: '#ff6b8f',
+      usageLabel: '开始抽人',
+      status: 'available',
+    },
+  ];
+  for (const query of ['大转盘', '抽奖', '抽签', '随机选人', '谁来干']) {
+    const result = searchHomeEntries(keywordTools, games, query);
+    assert.equal(result.some((entry) => entry.id === 'who-does-it'), true, `${query} 应命中`);
+  }
+});
+
 test('mixes tools and games and keeps match rank stable', () => {
   const result = searchHomeEntries(tools, games, '棋');
   assert.deepEqual(

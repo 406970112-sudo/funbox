@@ -28,6 +28,7 @@ export type AppTool = {
   route: `/tools/${string}`;
   accentColor: string;
   badges: string[];
+  keywords?: string[];
   usageLabel: string;
   status: ToolStatus;
   featured?: boolean;

@@ -42,6 +42,7 @@ import (
 	"my-first-expo-app/backend/internal/stockalert"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
+	"my-first-expo-app/backend/internal/whodoesit"
 )
 
 type Server struct {
@@ -76,6 +77,7 @@ type Server struct {
 	stockAlertService         stockAlertService
 	translationService        *translation.Service
 	ttsService                *tts.Service
+	whoDoesItStore            *whodoesit.Store
 }
 
 func NewServer(
@@ -610,6 +612,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open days left database failed: %v", err)
 	}
+	var whoDoesItStore *whodoesit.Store
+	whoDoesItStore, err = whodoesit.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open who does it database failed: %v", err)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
@@ -642,6 +649,7 @@ func newServer(
 		stockAlertService:         stockAlertService,
 		translationService:        translationService,
 		ttsService:                ttsService,
+		whoDoesItStore:            whoDoesItStore,
 	}
 
 	mux := http.NewServeMux()
@@ -679,6 +687,7 @@ func newServer(
 	registerCookingGuideRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
+	registerWhoDoesItRoutes(mux, api)
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
@@ -742,6 +751,11 @@ func newServer(
 	if daysLeftStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = daysLeftStore.Close()
+		})
+	}
+	if whoDoesItStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = whoDoesItStore.Close()
 		})
 	}
 	if plantIDStore != nil {

@@ -63,7 +63,7 @@ function getToolMatchRank(tool: AppTool, normalizedQuery: string): number | null
   if (name.startsWith(normalizedQuery)) return 1;
   if (name.includes(normalizedQuery)) return 2;
 
-  const haystack = [tool.tagline, tool.description, tool.category, ...tool.badges]
+  const haystack = [tool.tagline, tool.description, tool.category, ...tool.badges, ...(tool.keywords ?? [])]
     .join(' ')
     .toLowerCase();
   return haystack.includes(normalizedQuery) ? 3 : null;

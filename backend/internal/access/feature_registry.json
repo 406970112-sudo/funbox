@@ -363,6 +363,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "who-does-it",
+    "name": "谁来干",
+    "tagline": "大转盘随机抽人",
+    "description": "圆形转盘随机抽人，支持抽奖、抽签、选人与自定义任务，名单与历史全部使用真实数据。",
+    "icon": "refresh",
+    "category": "生活",
+    "route": "/tools/who-does-it",
+    "accentColor": "#ff6b8f",
+    "badges": ["随机抽取", "真实记录"],
+    "keywords": ["大转盘", "转盘", "抽奖", "抽签", "随机抽人", "随机选人", "抽人", "选人", "谁来干", "谁去", "抽中谁"],
+    "usageLabel": "开始抽人",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "snake-brawl",
     "name": "贪吃蛇大作战",
     "tagline": "经典、无尽、闯关三种模式",

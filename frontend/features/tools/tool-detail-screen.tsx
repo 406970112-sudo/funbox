@@ -29,6 +29,7 @@ import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assi
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
+import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
 import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
 import { BlogFeedScreen } from '@/features/blog/blog-feed-screen';
@@ -328,6 +329,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <DaysLeftScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'who-does-it') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <WhoDoesItScreen />
       </>
     );
   }
