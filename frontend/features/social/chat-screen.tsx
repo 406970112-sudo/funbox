@@ -41,6 +41,8 @@ export function ChatScreen() {
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<SocialMessage[]>([]);
   const [sending, setSending] = useState(false);
+  const presenceIsFresh = connectionStatus === 'connected';
+  const peerIsOnline = presenceIsFresh && conversation?.peer.online;
 
   useEffect(() => {
     if (!accessToken || !conversationId) return;
@@ -150,15 +152,15 @@ export function ChatScreen() {
               <View
                 style={[
                   styles.presenceDot,
-                  { backgroundColor: conversation.peer.online ? colors.success : colors.mutedText },
+                  { backgroundColor: peerIsOnline ? colors.success : colors.mutedText },
                 ]}
               />
               <ThemedText
                 style={[
                   styles.presenceText,
-                  { color: conversation.peer.online ? colors.success : colors.mutedText },
+                  { color: peerIsOnline ? colors.success : colors.mutedText },
                 ]}>
-                {conversation.peer.online ? '在线' : '离线'}
+                {presenceIsFresh ? (conversation.peer.online ? '在线' : '离线') : '同步中'}
               </ThemedText>
             </View>
           </View>

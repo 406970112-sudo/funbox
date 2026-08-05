@@ -18,6 +18,7 @@
     "test:json-workbench": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/json-workbench.test.mjs",
     "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
     "test:social-refresh": "node --test --experimental-strip-types tests/latest-request-gate.test.mjs",
+    "test:social-friends": "node --test --experimental-strip-types tests/friend-list-model.test.mjs",
     "test:social-unread": "node --test --experimental-strip-types tests/unread-message-state.test.mjs",
     "test:ssq": "node --test --experimental-strip-types tests/double-color-ball.test.mjs",
     "test:auth": "node --test --experimental-strip-types tests/auth-validation.test.mjs",

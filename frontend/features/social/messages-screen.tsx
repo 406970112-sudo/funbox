@@ -1,15 +1,29 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { IdentityPill } from '@/components/identity-ui';
 import { ThemedText } from '@/components/themed-text';
+import { appLayout } from '@/constants/app-theme';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useBlog } from '@/features/blog/blog-provider';
 import { useFeedback } from '@/features/feedback/feedback-provider';
 import { feedbackKindLabel, feedbackNotificationTitle } from '@/lib/feedback-model';
 import { useMoments } from '@/features/moments/moments-provider';
+import {
+  findFriendConversation,
+  getOnlineFriendCount,
+} from '@/features/social/friend-list-model';
+import { FriendsPanel } from '@/features/social/friends-panel';
 import { SocialAvatar, SocialEmptyState } from '@/features/social/social-ui';
 import { useSocial } from '@/features/social/social-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
@@ -17,13 +31,15 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { MomentNotification } from '@/types/moments';
 import type { BlogNotification } from '@/types/blog';
 import type { FeedbackSubmission } from '@/types/feedback';
-import type { Conversation } from '@/types/social';
+import type { Conversation, Friend } from '@/types/social';
+
+type MessageTab = 'chat' | 'friends' | 'notifications' | 'system';
 
 export function MessagesScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
   const { status } = useAuth();
-  const { connectionStatus, conversations, error, friends, loading } = useSocial();
+  const { connectionStatus, conversations, error, friends, loading, refresh } = useSocial();
   const {
     error: feedbackError,
     loading: feedbackLoading,
@@ -48,8 +64,17 @@ export function MessagesScreen() {
     refreshNotifications: refreshBlogNotifications,
     unreadCount: blogUnreadCount,
   } = useBlog();
-  const [activeTab, setActiveTab] = useState<'chat' | 'notifications' | 'system'>('chat');
-  const onlineFriends = friends.filter((friend) => friend.user.online).slice(0, 5);
+  const [activeTab, setActiveTab] = useState<MessageTab>('chat');
+  const [friendActionError, setFriendActionError] = useState('');
+  const [friendQuery, setFriendQuery] = useState('');
+  const [focusFriendSearch, setFocusFriendSearch] = useState(false);
+  const [openingFriendId, setOpeningFriendId] = useState('');
+  const friendSearchInputRef = useRef<TextInput>(null);
+  const onlineFriendCount = getOnlineFriendCount(friends);
+  const onlineFriends =
+    connectionStatus === 'connected'
+      ? friends.filter((friend) => friend.user.online).slice(0, 5)
+      : [];
   const chatUnreadCount = conversations.reduce(
     (total, conversation) => total + Math.max(0, conversation.unreadCount || 0),
     0,
@@ -57,11 +82,54 @@ export function MessagesScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      setActiveTab('chat');
       void refreshNotifications();
       void refreshBlogNotifications();
       void refreshFeedbackNotifications();
     }, [refreshBlogNotifications, refreshFeedbackNotifications, refreshNotifications]),
   );
+
+  useEffect(() => {
+    if (activeTab !== 'friends' || !focusFriendSearch) return;
+    const frame = requestAnimationFrame(() => {
+      friendSearchInputRef.current?.focus();
+      setFocusFriendSearch(false);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activeTab, focusFriendSearch]);
+
+  function openFriendSearch() {
+    setActiveTab('friends');
+    setFocusFriendSearch(true);
+  }
+
+  async function openFriendConversation(friend: Friend) {
+    if (openingFriendId) return;
+    setFriendActionError('');
+    const currentConversation = findFriendConversation(conversations, friend.user.id);
+    if (currentConversation) {
+      navigateToConversation(currentConversation.id);
+      return;
+    }
+
+    setOpeningFriendId(friend.user.id);
+    const snapshot = await refresh().finally(() => setOpeningFriendId(''));
+    const refreshedConversation = snapshot
+      ? findFriendConversation(snapshot.conversations, friend.user.id)
+      : undefined;
+    if (refreshedConversation) {
+      navigateToConversation(refreshedConversation.id);
+      return;
+    }
+    setFriendActionError('会话暂时无法打开，请稍后重试。');
+  }
+
+  function navigateToConversation(conversationId: string) {
+    router.push({
+      pathname: '/social/chat/[conversationId]',
+      params: { conversationId },
+    });
+  }
 
   if (status !== 'authenticated') {
     return (
@@ -86,55 +154,90 @@ export function MessagesScreen() {
   }
 
   return (
-    <MobileScreen contentContainerStyle={styles.pageContent}>
-      <View style={styles.topBar}>
-        <View>
-          <ThemedText style={styles.pageTitle}>消息</ThemedText>
-          <ThemedText style={[styles.pageMeta, { color: colors.mutedText }]}>
-            {onlineFriends.length} 位好友在线
-            {connectionStatus === 'connected' ? '' : ' · 正在重连'}
-          </ThemedText>
-        </View>
-        <View style={styles.topActions}>
-          <Pressable
-            accessibilityLabel="搜索好友"
-            accessibilityRole="button"
-            onPress={() => router.push('/social/add-friend')}
-            style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-            <MaterialCommunityIcons name="magnify" size={21} color={colors.text} />
-          </Pressable>
-          <Pressable
-            accessibilityLabel="添加好友"
-            accessibilityRole="button"
-            onPress={() => router.push('/social/add-friend')}
-            style={styles.addButton}>
-            <MaterialCommunityIcons name="account-plus-outline" size={20} color="#c9f36a" />
-          </Pressable>
-        </View>
-      </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <View style={[styles.authenticatedPage, { maxWidth: appLayout.screenMaxWidth }]}>
+        <View style={styles.pageHeader}>
+          <View style={styles.topBar}>
+            <View>
+              <ThemedText style={styles.pageTitle}>消息</ThemedText>
+              <ThemedText style={[styles.pageMeta, { color: colors.mutedText }]}>
+                {loading && friends.length === 0
+                  ? '正在同步好友'
+                  : connectionStatus === 'connected'
+                    ? `${onlineFriendCount} 位好友在线`
+                    : '在线状态同步中'}
+              </ThemedText>
+            </View>
+            <View style={styles.topActions}>
+              <Pressable
+                accessibilityLabel="搜索好友"
+                accessibilityRole="button"
+                onPress={openFriendSearch}
+                style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+                <MaterialCommunityIcons name="magnify" size={21} color={colors.text} />
+              </Pressable>
+              <Pressable
+                accessibilityLabel="添加好友"
+                accessibilityRole="button"
+                onPress={() => router.push('/social/add-friend')}
+                style={styles.addButton}>
+                <MaterialCommunityIcons name="account-plus-outline" size={20} color="#c9f36a" />
+              </Pressable>
+            </View>
+          </View>
 
-      <View style={[styles.tabs, { backgroundColor: colors.surfaceMuted }]}>
-        <TabButton
-          active={activeTab === 'chat'}
-          badge={chatUnreadCount}
-          label="聊天"
-          onPress={() => setActiveTab('chat')}
-        />
-        <TabButton
-          active={activeTab === 'notifications'}
-          badge={momentUnreadCount + blogUnreadCount}
-          label="互动通知"
-          onPress={() => setActiveTab('notifications')}
-        />
-        <TabButton
-          active={activeTab === 'system'}
-          badge={feedbackUnreadCount}
-          label="系统通知"
-          onPress={() => setActiveTab('system')}
-        />
-      </View>
+          <View style={[styles.tabs, { backgroundColor: colors.surfaceMuted }]}>
+            <TabButton
+              active={activeTab === 'chat'}
+              badge={chatUnreadCount}
+              label="聊天"
+              onPress={() => setActiveTab('chat')}
+            />
+            <TabButton
+              active={activeTab === 'friends'}
+              badge={0}
+              label="好友"
+              onPress={() => setActiveTab('friends')}
+            />
+            <TabButton
+              active={activeTab === 'notifications'}
+              badge={momentUnreadCount + blogUnreadCount}
+              label="互动通知"
+              onPress={() => setActiveTab('notifications')}
+            />
+            <TabButton
+              active={activeTab === 'system'}
+              badge={feedbackUnreadCount}
+              label="系统通知"
+              onPress={() => setActiveTab('system')}
+            />
+          </View>
+        </View>
 
-      {activeTab === 'chat' ? (
+        {activeTab === 'friends' ? (
+          <FriendsPanel
+            actionError={friendActionError}
+            connectionStatus={connectionStatus}
+            error={error}
+            friends={friends}
+            loading={loading}
+            onAddFriend={() => router.push('/social/add-friend')}
+            onOpenFriend={(friend) => void openFriendConversation(friend)}
+            onQueryChange={(query) => {
+              setFriendActionError('');
+              setFriendQuery(query);
+            }}
+            onRetry={() => void refresh()}
+            openingFriendId={openingFriendId}
+            query={friendQuery}
+            searchInputRef={friendSearchInputRef}
+          />
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.tabScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+          {activeTab === 'chat' ? (
         <>
       <View style={styles.onlineStrip}>
         <View pointerEvents="none" style={styles.onlineAccent} />
@@ -159,7 +262,9 @@ export function MessagesScreen() {
             ))}
           </View>
         ) : (
-          <ThemedText style={styles.onlineEmpty}>好友上线后会显示在这里</ThemedText>
+          <ThemedText style={styles.onlineEmpty}>
+            {connectionStatus === 'connected' ? '好友上线后会显示在这里' : '在线状态同步中'}
+          </ThemedText>
         )}
       </View>
 
@@ -178,6 +283,7 @@ export function MessagesScreen() {
               <ConversationRow
                 conversation={conversation}
                 key={conversation.id}
+                presenceIsFresh={connectionStatus === 'connected'}
                 onPress={() =>
                   router.push({
                     pathname: '/social/chat/[conversationId]',
@@ -332,12 +438,23 @@ export function MessagesScreen() {
           )}
           {feedbackError ? <ThemedText style={styles.errorText}>{feedbackError}</ThemedText> : null}
         </View>
-      )}
-    </MobileScreen>
+          )}
+          </ScrollView>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
-function ConversationRow({ conversation, onPress }: { conversation: Conversation; onPress: () => void }) {
+function ConversationRow({
+  conversation,
+  onPress,
+  presenceIsFresh,
+}: {
+  conversation: Conversation;
+  onPress: () => void;
+  presenceIsFresh: boolean;
+}) {
   const { colors } = useAppTheme();
   const lastMessage = conversation.lastMessage;
   return (
@@ -349,7 +466,7 @@ function ConversationRow({ conversation, onPress }: { conversation: Conversation
         styles.conversationRow,
         { borderBottomColor: colors.line, opacity: pressed ? 0.68 : 1 },
       ]}>
-      <SocialAvatar showOnline size={48} user={conversation.peer} />
+      <SocialAvatar showOnline={presenceIsFresh} size={48} user={conversation.peer} />
       <View style={styles.conversationCopy}>
         <View style={styles.conversationNameRow}>
           <ThemedText numberOfLines={1} style={styles.conversationName}>
@@ -609,6 +726,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 40,
   },
+  authenticatedPage: {
+    alignSelf: 'center',
+    flex: 1,
+    width: '100%',
+  },
   blogSection: {
     borderTopColor: '#dce5f4',
     borderTopWidth: 1,
@@ -745,8 +867,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  pageContent: {
+  pageHeader: {
     gap: 14,
+    paddingHorizontal: 16,
     paddingTop: 14,
   },
   pageMeta: {
@@ -773,6 +896,9 @@ const styles = StyleSheet.create({
     color: '#151b3b',
     fontSize: 12,
     fontWeight: '800',
+  },
+  safeArea: {
+    flex: 1,
   },
   secondaryButton: {
     alignItems: 'center',
@@ -900,6 +1026,12 @@ const styles = StyleSheet.create({
     gap: 4,
     marginBottom: 4,
     padding: 4,
+  },
+  tabScrollContent: {
+    gap: 14,
+    paddingBottom: 36,
+    paddingHorizontal: 16,
+    paddingTop: 14,
   },
   unreadPreview: {
     fontWeight: '700',

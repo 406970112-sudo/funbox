@@ -10,6 +10,12 @@ import {
 } from 'react';
 
 import { useAuth } from '@/features/auth/auth-provider';
+import {
+  applyConversationPresence,
+  applyFriendPresence,
+  readPresenceChange,
+  type PresenceChange,
+} from '@/features/social/friend-list-model';
 import { createLatestRequestGate } from '@/features/social/latest-request-gate';
 import { clearConversationUnreadCount } from '@/features/social/unread-message-state';
 import {
@@ -30,14 +36,20 @@ import type {
   Friend,
   FriendRequest,
   RealtimeEvent,
+  SocialConnectionStatus,
   SocialMessage,
   SocialUser,
 } from '@/types/social';
 
-type ConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'idle';
+type SocialRefreshSnapshot = {
+  conversations: Conversation[];
+  friends: Friend[];
+  incomingRequests: FriendRequest[];
+  outgoingRequests: FriendRequest[];
+};
 
 type SocialContextValue = {
-  connectionStatus: ConnectionStatus;
+  connectionStatus: SocialConnectionStatus;
   conversations: Conversation[];
   error: string;
   friends: Friend[];
@@ -48,7 +60,7 @@ type SocialContextValue = {
   loadMessages: (conversationId: string) => Promise<SocialMessage[]>;
   markRead: (conversationId: string) => Promise<void>;
   outgoingRequests: FriendRequest[];
-  refresh: () => Promise<void>;
+  refresh: () => Promise<SocialRefreshSnapshot | undefined>;
   respondToRequest: (requestId: string, action: 'accept' | 'reject') => Promise<void>;
   searchUsers: (query: string) => Promise<SocialUser[]>;
   sendFriendRequest: (userId: string) => Promise<void>;
@@ -59,7 +71,7 @@ const SocialContext = createContext<SocialContextValue | undefined>(undefined);
 
 export function SocialProvider({ children }: PropsWithChildren) {
   const { accessToken } = useAuth();
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle');
+  const [connectionStatus, setConnectionStatus] = useState<SocialConnectionStatus>('idle');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [error, setError] = useState('');
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -68,6 +80,10 @@ export function SocialProvider({ children }: PropsWithChildren) {
   const [lastEventSequence, setLastEventSequence] = useState(0);
   const [loading, setLoading] = useState(false);
   const [outgoingRequests, setOutgoingRequests] = useState<FriendRequest[]>([]);
+  const presenceEventVersionRef = useRef(0);
+  const presenceEventsRef = useRef(
+    new Map<string, { change: PresenceChange; version: number }>(),
+  );
   const refreshGateRef = useRef<ReturnType<typeof createLatestRequestGate> | null>(null);
   if (refreshGateRef.current === null) {
     refreshGateRef.current = createLatestRequestGate();
@@ -75,6 +91,7 @@ export function SocialProvider({ children }: PropsWithChildren) {
   const refreshGate = refreshGateRef.current;
 
   async function refreshForToken(token: string, showLoading = false) {
+    const presenceVersionAtStart = presenceEventVersionRef.current;
     if (showLoading) setLoading(true);
     try {
       const nextState = await refreshGate.run(() =>
@@ -82,15 +99,29 @@ export function SocialProvider({ children }: PropsWithChildren) {
       );
       if (!nextState) return;
       const [nextFriends, nextRequests, nextConversations] = nextState;
+      const changesSinceRequestStarted = Array.from(presenceEventsRef.current.values())
+        .filter(({ version }) => version > presenceVersionAtStart)
+        .map(({ change }) => change);
+      const snapshot = {
+        conversations: changesSinceRequestStarted.reduce(
+          applyConversationPresence,
+          nextConversations,
+        ),
+        friends: changesSinceRequestStarted.reduce(applyFriendPresence, nextFriends),
+        incomingRequests: nextRequests.incoming,
+        outgoingRequests: nextRequests.outgoing,
+      };
       startTransition(() => {
-        setFriends(nextFriends);
-        setIncomingRequests(nextRequests.incoming);
-        setOutgoingRequests(nextRequests.outgoing);
-        setConversations(nextConversations);
+        setFriends(snapshot.friends);
+        setIncomingRequests(snapshot.incomingRequests);
+        setOutgoingRequests(snapshot.outgoingRequests);
+        setConversations(snapshot.conversations);
         setError('');
       });
+      return snapshot;
     } catch {
       setError('消息列表暂时无法同步。');
+      return undefined;
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -99,6 +130,8 @@ export function SocialProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!accessToken) {
       refreshGate.invalidate();
+      presenceEventVersionRef.current = 0;
+      presenceEventsRef.current.clear();
       setConnectionStatus('idle');
       setConversations([]);
       setFriends([]);
@@ -108,6 +141,9 @@ export function SocialProvider({ children }: PropsWithChildren) {
       setLastEventSequence(0);
       return;
     }
+
+    presenceEventVersionRef.current = 0;
+    presenceEventsRef.current.clear();
 
     let active = true;
     let reconnectAttempt = 0;
@@ -133,6 +169,19 @@ export function SocialProvider({ children }: PropsWithChildren) {
             const event = JSON.parse(String(message.data)) as RealtimeEvent;
             setLastEvent(event);
             setLastEventSequence((value) => value + 1);
+            if (event.type === 'presence.changed') {
+              const change = readPresenceChange(event.data);
+              if (change) {
+                presenceEventVersionRef.current += 1;
+                presenceEventsRef.current.set(change.userId, {
+                  change,
+                  version: presenceEventVersionRef.current,
+                });
+                setFriends((items) => applyFriendPresence(items, change));
+                setConversations((items) => applyConversationPresence(items, change));
+              }
+              return;
+            }
             void refreshForToken(accessToken as string);
           } catch {
             // Ignore malformed events and keep the live connection available.
@@ -165,8 +214,8 @@ export function SocialProvider({ children }: PropsWithChildren) {
   }, [accessToken, refreshGate]);
 
   async function refresh() {
-    if (!accessToken) return;
-    await refreshForToken(accessToken, true);
+    if (!accessToken) return undefined;
+    return refreshForToken(accessToken, true);
   }
 
   async function searchUsers(query: string) {

@@ -63,3 +63,5 @@ export type RealtimeEvent = {
     | 'moment.notification.read'
     | 'presence.changed';
 };
+
+export type SocialConnectionStatus = 'connected' | 'connecting' | 'disconnected' | 'idle';
