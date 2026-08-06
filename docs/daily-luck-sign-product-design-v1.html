@@ -1,0 +1,1731 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 今日运气签 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --canvas: #eef4ff;
+        --board: #e4ebf6;
+        --surface: #ffffff;
+        --surface-muted: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --green: #1db991;
+        --green-soft: #e4f7ee;
+        --amber: #f1a33b;
+        --amber-soft: #fff2df;
+        --coral: #ff6b8f;
+        --coral-soft: #ffe9ef;
+        --teal: #2f9b8f;
+        --teal-soft: #e2f4f1;
+        --dark: #091126;
+        --white: #ffffff;
+        --shadow: 0 22px 46px rgba(58, 86, 152, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+        min-width: 1760px;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--board);
+        background-size: 32px 32px;
+        margin: 0 auto;
+        min-height: 2420px;
+        padding: 28px 34px 34px;
+        width: 1760px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark i {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--teal);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .data-note {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        color: #4d5a75;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 700;
+        gap: 9px;
+        margin-bottom: 18px;
+        padding: 10px 13px;
+      }
+
+      .data-note i {
+        color: var(--teal);
+        flex: 0 0 auto;
+        height: 15px;
+        width: 15px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        border-radius: 9px;
+        color: var(--teal);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .overview-card .oc-icon.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 320px repeat(3, 420px);
+        margin-bottom: 24px;
+      }
+
+      .strategy {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .strategy h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .strategy p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .flow-item {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 26px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .rule-box {
+        background: var(--teal-soft);
+        border-left: 3px solid var(--teal);
+        border-radius: 10px;
+        color: #185d55;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.7;
+        margin-top: 12px;
+        padding: 10px 11px;
+      }
+
+      .principle-list,
+      .scope-list {
+        display: grid;
+        gap: 9px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .principle-list li,
+      .scope-list li {
+        align-items: flex-start;
+        color: #4d5a75;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        line-height: 1.55;
+      }
+
+      .principle-list i,
+      .scope-list i {
+        color: var(--coral);
+        flex: 0 0 auto;
+        height: 14px;
+        margin-top: 2px;
+        width: 14px;
+      }
+
+      .scope-list i {
+        color: var(--teal);
+      }
+
+      .entry-chip {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 12px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        margin-top: 18px;
+        min-height: 42px;
+        padding: 9px 11px;
+      }
+
+      .entry-chip i {
+        height: 15px;
+        stroke-width: 2.4;
+        width: 15px;
+      }
+
+      .entry-chip span {
+        color: #8a80b8;
+        font-weight: 600;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 1000px;
+        padding: 10px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone-screen {
+        background: var(--surface-muted);
+        border-radius: 29px;
+        display: flex;
+        flex-direction: column;
+        height: 980px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 22px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 22px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-content {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        flex: 0 0 50px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--teal);
+        border-radius: 9px;
+        color: var(--white);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .icon-btn.coral {
+        background: var(--coral-soft);
+        border-color: transparent;
+        color: var(--coral);
+      }
+
+      .icon-btn.teal {
+        background: var(--teal-soft);
+        border-color: transparent;
+        color: var(--teal);
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 62px;
+        justify-content: space-around;
+      }
+
+      .bottom-nav span {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .bottom-nav span.active {
+        color: var(--teal);
+      }
+
+      .bottom-nav i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .screen-body {
+        flex: 1;
+        overflow: hidden;
+        padding: 0 16px;
+        position: relative;
+      }
+
+      .date-strip {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 9px;
+      }
+
+      .date-main {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .date-main small {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .date-chip {
+        background: var(--amber-soft);
+        border-radius: 999px;
+        color: #9a5b0f;
+        font-size: 8.5px;
+        font-weight: 900;
+        padding: 6px 9px;
+      }
+
+      .location-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        height: 40px;
+        justify-content: space-between;
+        padding: 0 11px;
+      }
+
+      .location-row .loc {
+        align-items: center;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .location-row .loc i {
+        color: var(--teal);
+        height: 14px;
+        width: 14px;
+      }
+
+      .status-pill {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 999px;
+        color: #1c5b3c;
+        display: flex;
+        font-size: 8px;
+        font-weight: 900;
+        gap: 4px;
+        padding: 5px 8px;
+      }
+
+      .status-pill.warn {
+        background: var(--amber-soft);
+        color: #9a5b0f;
+      }
+
+      .status-pill i {
+        height: 10px;
+        width: 10px;
+      }
+
+      .color-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+
+      .color-swatch {
+        align-items: center;
+        background: var(--teal);
+        color: var(--white);
+        display: flex;
+        height: 128px;
+        justify-content: space-between;
+        padding: 15px 16px;
+      }
+
+      .color-copy strong {
+        display: block;
+        font-size: 19px;
+        font-weight: 900;
+      }
+
+      .color-copy span {
+        color: rgba(255, 255, 255, 0.76);
+        display: block;
+        font-size: 9.5px;
+        font-weight: 800;
+        margin-top: 4px;
+      }
+
+      .color-hex {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 9px;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 7px 9px;
+      }
+
+      .color-reason {
+        align-items: center;
+        color: #4d5a75;
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 6px;
+        padding: 9px 12px;
+      }
+
+      .color-reason i {
+        color: var(--teal);
+        height: 12px;
+        width: 12px;
+      }
+
+      .weather-grid {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: repeat(4, 1fr);
+        margin-top: 9px;
+      }
+
+      .weather-tile {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 8px 7px;
+      }
+
+      .weather-tile span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 800;
+      }
+
+      .weather-tile strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+        margin-top: 4px;
+      }
+
+      .weather-tile strong small {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .block {
+        margin-top: 13px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .section-head h3 {
+        font-size: 12px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .tip-row {
+        align-items: flex-start;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 7px;
+        padding: 9px 10px;
+      }
+
+      .tip-icon {
+        align-items: center;
+        background: var(--teal-soft);
+        border-radius: 9px;
+        color: var(--teal);
+        display: flex;
+        flex: 0 0 30px;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .tip-icon.amber {
+        background: var(--amber-soft);
+        color: #b06c0e;
+      }
+
+      .tip-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .tip-icon i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .tip-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .tip-copy strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .tip-copy p {
+        color: var(--muted);
+        font-size: 8px;
+        line-height: 1.5;
+        margin: 3px 0 0;
+      }
+
+      .source-tag {
+        align-items: center;
+        color: var(--teal);
+        display: inline-flex;
+        font-size: 7.5px;
+        font-weight: 900;
+        gap: 3px;
+      }
+
+      .source-tag i {
+        height: 9px;
+        width: 9px;
+      }
+
+      .segmented {
+        background: #e7edfa;
+        border-radius: 10px;
+        display: grid;
+        gap: 4px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 10px;
+        padding: 4px;
+      }
+
+      .segmented span {
+        align-items: center;
+        border-radius: 8px;
+        color: #6b7892;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: center;
+      }
+
+      .segmented span.active {
+        background: var(--surface);
+        box-shadow: 0 2px 7px rgba(58, 86, 152, 0.13);
+        color: var(--ink);
+      }
+
+      .detail-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        margin-bottom: 10px;
+        padding: 11px;
+      }
+
+      .detail-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .detail-head strong {
+        align-items: center;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .detail-head i {
+        color: var(--teal);
+        height: 14px;
+        width: 14px;
+      }
+
+      .detail-head span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 800;
+      }
+
+      .field-row {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        justify-content: space-between;
+        min-height: 27px;
+        padding: 4px 0;
+      }
+
+      .field-row span {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .field-row strong {
+        font-size: 8.5px;
+        font-weight: 900;
+      }
+
+      .field-row strong small {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 700;
+      }
+
+      .rule-line {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 9px;
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 7px 9px;
+      }
+
+      .rule-line i {
+        color: var(--teal);
+        height: 11px;
+        width: 11px;
+      }
+
+      .rule-line span {
+        color: #4d5a75;
+        flex: 1;
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .stats-row {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 12px;
+      }
+
+      .stat-tile {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 10px 8px;
+        text-align: center;
+      }
+
+      .stat-tile strong {
+        display: block;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .stat-tile span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 800;
+        margin-top: 3px;
+      }
+
+      .empty-state {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        padding: 30px 18px 26px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: var(--teal-soft);
+        border-radius: 16px;
+        color: var(--teal);
+        display: flex;
+        height: 58px;
+        justify-content: center;
+        margin-bottom: 13px;
+        width: 58px;
+      }
+
+      .empty-icon i {
+        height: 26px;
+        width: 26px;
+      }
+
+      .empty-state h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .empty-state p {
+        color: var(--muted);
+        font-size: 9px;
+        line-height: 1.7;
+        margin: 7px 0 0;
+      }
+
+      .setting-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 9px;
+        padding: 11px;
+      }
+
+      .setting-icon {
+        align-items: center;
+        background: var(--teal-soft);
+        border-radius: 10px;
+        color: var(--teal);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .setting-icon i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .setting-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .setting-copy strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .setting-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .switch {
+        align-items: center;
+        background: var(--line);
+        border-radius: 999px;
+        display: flex;
+        height: 20px;
+        justify-content: flex-end;
+        padding: 2px;
+        width: 34px;
+      }
+
+      .switch.on {
+        background: var(--teal);
+      }
+
+      .switch i {
+        background: var(--white);
+        border-radius: 50%;
+        height: 16px;
+        width: 16px;
+      }
+
+      .health-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 7px;
+        padding: 8px 10px;
+      }
+
+      .health-dot {
+        background: var(--green);
+        border-radius: 50%;
+        flex: 0 0 8px;
+        height: 8px;
+        width: 8px;
+      }
+
+      .health-dot.warn {
+        background: var(--amber);
+      }
+
+      .health-row strong {
+        flex: 1;
+        font-size: 9px;
+        font-weight: 900;
+      }
+
+      .health-row span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 700;
+      }
+
+      .privacy-note {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 6px;
+        margin-top: 9px;
+        padding: 8px 10px;
+      }
+
+      .privacy-note i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .warn-banner {
+        align-items: flex-start;
+        background: var(--amber-soft);
+        border-left: 3px solid var(--amber);
+        border-radius: 11px;
+        color: #7d4b0c;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 8px;
+        line-height: 1.55;
+        margin-bottom: 10px;
+        padding: 9px 10px;
+      }
+
+      .warn-banner i {
+        flex: 0 0 auto;
+        height: 14px;
+        margin-top: 1px;
+        width: 14px;
+      }
+
+      .missing-grid {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: repeat(3, 1fr);
+        margin: 9px 0 10px;
+      }
+
+      .missing-tile {
+        background: var(--surface);
+        border: 1px dashed #c7d2e8;
+        border-radius: 11px;
+        color: #9aa7c2;
+        font-size: 8px;
+        font-weight: 800;
+        padding: 9px 6px;
+        text-align: center;
+      }
+
+      .missing-tile span {
+        display: block;
+        font-size: 7px;
+        margin-top: 3px;
+      }
+
+      .cta {
+        align-items: center;
+        border: 0;
+        border-radius: 11px;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        height: 40px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .cta i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .cta.dark {
+        background: var(--navy);
+        color: var(--lime);
+      }
+
+      .cta.teal {
+        background: var(--teal);
+        color: var(--white);
+      }
+
+      .cta.ghost {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .rule-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        margin-bottom: 9px;
+        padding: 11px;
+      }
+
+      .rule-card .rule-title {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .rule-card .rule-title strong {
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .rule-card .rule-title span {
+        color: var(--muted);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 7.5px;
+        font-weight: 800;
+      }
+
+      .rule-card p {
+        color: var(--muted);
+        font-size: 8.5px;
+        line-height: 1.55;
+        margin: 5px 0 0;
+      }
+
+      .rule-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 8px;
+      }
+
+      .rule-meta em {
+        background: var(--teal-soft);
+        border-radius: 6px;
+        color: #185d55;
+        font-size: 7.5px;
+        font-style: normal;
+        font-weight: 900;
+        padding: 4px 6px;
+      }
+
+      .rule-meta em.blue {
+        background: var(--blue-soft);
+        color: #3d54b8;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="palette"></i></div>
+          <div>
+            <h1 class="brand-title">今日运气签 · 产品设计</h1>
+            <p class="brand-subtitle">真实数据驱动的轻娱乐每日签，不测吉凶，不造数据</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>V1 完整一期</strong>
+          FunBox · 2026-08-06 · 待评审
+        </div>
+      </header>
+
+      <div class="data-note">
+        <i data-lucide="badge-check"></i>
+        手机画面为界面示意；数值使用 2026-08-06 上海真实公开数据（Open-Meteo 天气 / Open-Meteo Air Quality / 农历算法 / 节假日表）。
+        正式产品运行时实时拉取，数据缺失时不补造。
+      </div>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="sparkles"></i></div>
+          <div>
+            <strong>轻娱乐，不是预测</strong>
+            <p>不做吉凶、宜忌、命理或星座结论，只把今天的真实数据变成可执行的小灵感。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon blue"><i data-lucide="database"></i></div>
+          <div>
+            <strong>字段级真实数据</strong>
+            <p>天气、AQI、农历、节假日和位置逐项带 source、fetchedAt、license，缺失字段直接隐藏。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon coral"><i data-lucide="package-check"></i></div>
+          <div>
+            <strong>一期完整交付</strong>
+            <p>首页、行动挑战、数据明细、我的完成、位置设置和降级状态一次做完，不拆二期。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>核心机制</h3>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div><strong>确认位置</strong><span>手动选择城市或系统定位，不做默认城市。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div><strong>拉取真实数据</strong><span>按日期和坐标调用天气、空气、农历、节假日接口。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div><strong>规则引擎生成</strong><span>纯函数匹配真实字段，产出灵感色、小事、挑战与鼓励。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div><strong>展示与打卡</strong><span>每条建议可溯源，用户完成挑战后写入真实记录。</span></div>
+          </div>
+          <div class="rule-box">
+            同一位置同一天结果确定，不随机、不预测、不生成假数据。
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="palette"></i></div>
+                  <strong>今日运气签</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn plain"><i data-lucide="database"></i></button>
+                  <button class="icon-btn teal"><i data-lucide="share-2"></i></button>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="date-strip">
+                  <div class="date-main">8月6日 周四<small>农历六月廿四 · 明日立秋</small></div>
+                  <span class="date-chip">完整可用</span>
+                </div>
+                <div class="location-row">
+                  <span class="loc"><i data-lucide="map-pin"></i>上海市</span>
+                  <span class="status-pill"><i data-lucide="refresh-cw"></i>今日已更新</span>
+                </div>
+                <div class="color-card">
+                  <div class="color-swatch">
+                    <div class="color-copy">
+                      <strong>今日灵感色</strong>
+                      <span>雨雾青 · 来自真实天气与空气</span>
+                    </div>
+                    <span class="color-hex">#2F9B8F</span>
+                  </div>
+                  <div class="color-reason">
+                    <i data-lucide="pencil-ruler"></i>
+                    AQI 37 优 + 毛毛雨 → 雨雾青
+                  </div>
+                </div>
+                <div class="weather-grid">
+                  <div class="weather-tile"><span>气温</span><strong>34.3°<small>/28.9°</small></strong></div>
+                  <div class="weather-tile"><span>降雨</span><strong>52%</strong></div>
+                  <div class="weather-tile"><span>UV</span><strong>8.3</strong></div>
+                  <div class="weather-tile"><span>AQI</span><strong>37 <small>优</small></strong></div>
+                </div>
+                <div class="block">
+                  <div class="section-head"><h3>今日小事</h3><span>3 项真实依据</span></div>
+                  <div class="tip-row">
+                    <div class="tip-icon"><i data-lucide="wind"></i></div>
+                    <div class="tip-copy">
+                      <strong>开窗透气 15 分钟</strong>
+                      <p>AQI 37，空气质量为优</p>
+                      <span class="source-tag"><i data-lucide="badge-check"></i>Open-Meteo Air Quality</span>
+                    </div>
+                  </div>
+                  <div class="tip-row">
+                    <div class="tip-icon blue"><i data-lucide="cloud-rain"></i></div>
+                    <div class="tip-copy">
+                      <strong>带伞散步 20 分钟</strong>
+                      <p>降雨概率 52%，气温 28-34°C</p>
+                      <span class="source-tag"><i data-lucide="badge-check"></i>Open-Meteo Forecast</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="block">
+                  <div class="section-head"><h3>今日挑战</h3><span>1 项可选</span></div>
+                  <div class="tip-row">
+                    <div class="tip-icon amber"><i data-lucide="droplets"></i></div>
+                    <div class="tip-copy">
+                      <strong>今天喝够 6 杯水</strong>
+                      <p>34.3°C，湿度 80%，体感 35.1°C</p>
+                    </div>
+                    <span class="source-tag"><i data-lucide="check-circle-2"></i>完成打卡</span>
+                  </div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>今日签首页</b> · 10 秒看完今天</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>行动与挑战</strong>
+                </div>
+                <button class="icon-btn"><i data-lucide="info"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="segmented">
+                  <span class="active">今日小事</span>
+                  <span>今日挑战</span>
+                  <span>今日鼓励</span>
+                </div>
+                <div class="rule-card">
+                  <div class="rule-title"><strong>开窗透气 15 分钟</strong><span>ventilate</span></div>
+                  <p>今天 AQI 为 37，空气质量属于“优”，适合开窗换气。</p>
+                  <div class="rule-meta">
+                    <em>Open-Meteo Air Quality</em>
+                    <em class="blue">08-06 21:00</em>
+                  </div>
+                </div>
+                <div class="rule-card">
+                  <div class="rule-title"><strong>带伞散步 20 分钟</strong><span>walk-umbrella</span></div>
+                  <p>今日最高 34.3°C，降雨概率 52%，适合带伞出门透气。</p>
+                  <div class="rule-meta">
+                    <em>Open-Meteo Forecast</em>
+                    <em class="blue">08-06 00:00</em>
+                  </div>
+                </div>
+                <div class="rule-card">
+                  <div class="rule-title"><strong>10 点后外出记得防晒</strong><span>uv-protect</span></div>
+                  <p>今日最大 UV 指数 8.3，属于高强度紫外线。</p>
+                  <div class="rule-meta">
+                    <em>Open-Meteo Forecast</em>
+                    <em class="blue">08-06 00:00</em>
+                  </div>
+                </div>
+                <div class="rule-card">
+                  <div class="rule-title"><strong>给夏天一个温柔收尾</strong><span>solar-term-eve</span></div>
+                  <p>明天是立秋，适合今晚早点休息，整理一下夏天的照片。</p>
+                  <div class="rule-meta">
+                    <em>lunar-go 节气</em>
+                    <em class="blue">08-07 立秋</em>
+                  </div>
+                </div>
+                <button class="cta dark"><i data-lucide="check"></i>完成 1 项今日挑战</button>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>行动与挑战</b> · 每条建议可溯源</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>数据明细</strong>
+                </div>
+                <button class="icon-btn teal"><i data-lucide="refresh-cw"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="detail-card">
+                  <div class="detail-head"><strong><i data-lucide="cloud-sun"></i>天气</strong><span>Open-Meteo Forecast</span></div>
+                  <div class="field-row"><span>今日最高 / 最低</span><strong>34.3°C / 28.9°C</strong></div>
+                  <div class="field-row"><span>降雨概率</span><strong>52%</strong></div>
+                  <div class="field-row"><span>最大 UV</span><strong>8.3</strong></div>
+                  <div class="field-row"><span>日出 / 日落</span><strong>05:13 / 18:46</strong></div>
+                  <div class="field-row"><span>白天时长</span><strong>13 小时 32 分</strong></div>
+                  <div class="field-row"><span>抓取时间</span><strong>08-06 00:00</strong></div>
+                </div>
+                <div class="detail-card">
+                  <div class="detail-head"><strong><i data-lucide="gauge"></i>空气质量</strong><span>Open-Meteo Air Quality</span></div>
+                  <div class="field-row"><span>EAQI</span><strong>37 <small>优</small></strong></div>
+                  <div class="field-row"><span>PM2.5</span><strong>20.1 μg/m³</strong></div>
+                  <div class="field-row"><span>PM10</span><strong>23.8 μg/m³</strong></div>
+                  <div class="field-row"><span>臭氧</span><strong>70.0 μg/m³</strong></div>
+                  <div class="field-row"><span>抓取时间</span><strong>08-06 21:00</strong></div>
+                </div>
+                <div class="detail-card">
+                  <div class="detail-head"><strong><i data-lucide="calendar-days"></i>日历</strong><span>lunar-go + 节假日表</span></div>
+                  <div class="field-row"><span>农历</span><strong>六月廿四</strong></div>
+                  <div class="field-row"><span>节气</span><strong>明日立秋 08-07</strong></div>
+                  <div class="field-row"><span>节假日</span><strong>非节假日</strong></div>
+                </div>
+                <div class="rule-line"><i data-lucide="shield-check"></i><span>所有字段可溯源，缺字段不补造</span></div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>真实数据明细</b> · 字段级来源</div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>真实数据与状态</h3>
+          <ul class="scope-list">
+            <li><i data-lucide="badge-check"></i>首次进入无默认城市、无默认签文、无完成记录。</li>
+            <li><i data-lucide="badge-check"></i>每个字段带 source、fetchedAt、license。</li>
+            <li><i data-lucide="badge-check"></i>数据源失败时隐藏依赖字段，不补造。</li>
+            <li><i data-lucide="badge-check"></i>完成记录只来自用户真实打卡。</li>
+            <li><i data-lucide="badge-check"></i>定位只保存城市与近似坐标，不保存精确位置。</li>
+            <li><i data-lucide="badge-check"></i>当日缓存也标注 cachedAt，缓存即真实数据。</li>
+          </ul>
+          <div class="entry-chip">
+            <i data-lucide="palette"></i>
+            注册名 daily-luck-sign · 路由 /tools/daily-luck-sign
+            <span>一期</span>
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>我的完成</strong>
+                </div>
+                <button class="icon-btn"><i data-lucide="history"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="stats-row">
+                  <div class="stat-tile"><strong>0</strong><span>今日完成</span></div>
+                  <div class="stat-tile"><strong>0</strong><span>本月完成</span></div>
+                  <div class="stat-tile"><strong>0</strong><span>连续天数</span></div>
+                </div>
+                <div class="empty-state">
+                  <div class="empty-icon"><i data-lucide="notebook-pen"></i></div>
+                  <h3>还没有完成记录</h3>
+                  <p>完成一项今日挑战后，真实打卡会出现在这里。不会预置任何演示记录。</p>
+                </div>
+                <div class="block">
+                  <div class="section-head"><h3>今日挑战</h3><span>可选完成</span></div>
+                  <div class="tip-row">
+                    <div class="tip-icon amber"><i data-lucide="droplets"></i></div>
+                    <div class="tip-copy">
+                      <strong>今天喝够 6 杯水</strong>
+                      <p>34.3°C，湿度 80%</p>
+                    </div>
+                    <span class="source-tag"><i data-lucide="check-circle-2"></i>去完成</span>
+                  </div>
+                  <div class="tip-row">
+                    <div class="tip-icon blue"><i data-lucide="camera"></i></div>
+                    <div class="tip-copy">
+                      <strong>拍一张今天的天空</strong>
+                      <p>毛毛雨天气与明日立秋</p>
+                    </div>
+                    <span class="source-tag"><i data-lucide="check-circle-2"></i>去完成</span>
+                  </div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>我的完成</b> · 只有真实打卡</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>位置与数据源</strong>
+                </div>
+                <button class="icon-btn teal"><i data-lucide="settings"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="setting-row">
+                  <div class="setting-icon"><i data-lucide="map-pin"></i></div>
+                  <div class="setting-copy"><strong>上海市</strong><span>手动选择 · 31.23°N 121.47°E</span></div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-icon"><i data-lucide="navigation"></i></div>
+                  <div class="setting-copy"><strong>系统定位</strong><span>当前未开启，保留手动城市</span></div>
+                  <div class="switch"><i></i></div>
+                </div>
+                <div class="section-head"><h3>数据源健康</h3><span>4 个来源</span></div>
+                <div class="health-row"><span class="health-dot"></span><strong>Open-Meteo Forecast</strong><span>正常 · 08-06</span></div>
+                <div class="health-row"><span class="health-dot"></span><strong>Open-Meteo Air Quality</strong><span>正常 · 08-06</span></div>
+                <div class="health-row"><span class="health-dot"></span><strong>lunar-go 农历节气</strong><span>正常 · 08-06</span></div>
+                <div class="health-row"><span class="health-dot warn"></span><strong>节假日表</strong><span>版本 2026 · 已核验</span></div>
+                <div class="privacy-note">
+                  <i data-lucide="lock"></i>
+                  不保存精确坐标，只保存城市名、时区和近似查询坐标。
+                </div>
+                <button class="cta ghost"><i data-lucide="refresh-cw"></i>刷新数据源状态</button>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>位置与数据源</b> · 隐私克制</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="palette"></i></div>
+                  <strong>今日运气签</strong>
+                </div>
+                <button class="icon-btn"><i data-lucide="refresh-cw"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="location-row">
+                  <span class="loc"><i data-lucide="map-pin"></i>上海市</span>
+                  <span class="status-pill warn"><i data-lucide="alert-triangle"></i>部分可用</span>
+                </div>
+                <div class="warn-banner">
+                  <i data-lucide="cloud-off"></i>
+                  天气数据暂未获取，已隐藏依赖天气与 UV 的建议；空气和日历字段保持真实。
+                </div>
+                <div class="color-card">
+                  <div class="color-swatch">
+                    <div class="color-copy">
+                      <strong>今日灵感色</strong>
+                      <span>雨雾青 · 依据空气与日历生成</span>
+                    </div>
+                    <span class="color-hex">#2F9B8F</span>
+                  </div>
+                  <div class="color-reason">
+                    <i data-lucide="pencil-ruler"></i>
+                    AQI 37 优 + 明日立秋 → 雨雾青
+                  </div>
+                </div>
+                <div class="missing-grid">
+                  <div class="missing-tile">气温<span>暂未获取</span></div>
+                  <div class="missing-tile">降雨<span>暂未获取</span></div>
+                  <div class="missing-tile">UV<span>暂未获取</span></div>
+                </div>
+                <div class="block">
+                  <div class="section-head"><h3>今日鼓励</h3><span>来自可用真实字段</span></div>
+                  <div class="tip-row">
+                    <div class="tip-icon blue"><i data-lucide="wind"></i></div>
+                    <div class="tip-copy">
+                      <strong>AQI 37 优</strong>
+                      <p>开窗换气是对身体的小礼物。</p>
+                    </div>
+                  </div>
+                  <div class="tip-row">
+                    <div class="tip-icon amber"><i data-lucide="moon-star"></i></div>
+                    <div class="tip-copy">
+                      <strong>明天立秋</strong>
+                      <p>今晚早点休息，给夏天一个温柔的收尾。</p>
+                    </div>
+                  </div>
+                </div>
+                <button class="cta teal"><i data-lucide="refresh-cw"></i>重新获取</button>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>部分可用降级</b> · 缺字段不补造</div>
+        </div>
+      </section>
+    </main>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

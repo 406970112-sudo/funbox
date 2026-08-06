@@ -1,4 +1,4 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+﻿import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -20,6 +20,7 @@ import { PriceRadarScreen } from '@/features/tools/price-radar-screen';
 import { StockTradeAlertScreen } from '@/features/tools/stock-trade-alert-screen';
 import { DnfMobileActivityScreen } from '@/features/tools/dnf-mobile-activity-screen';
 import { DaysLeftScreen } from '@/features/tools/days-left-screen';
+import { DailyLuckSignScreen } from '@/features/tools/daily-luck-sign-screen';
 import { HomeConsumablesScreen } from '@/features/tools/home-consumables-screen';
 import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
 import { DoubleColorBallHistoryScreen } from '@/features/tools/double-color-ball-history-screen';
@@ -341,6 +342,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <DaysLeftScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'daily-luck-sign') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DailyLuckSignScreen />
       </>
     );
   }
