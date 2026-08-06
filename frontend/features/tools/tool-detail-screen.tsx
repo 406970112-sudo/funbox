@@ -39,6 +39,7 @@ import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
 import { GoOutChecklistScreen } from '@/features/tools/go-out-checklist-screen';
 import { PartyMemoryCardScreen } from '@/features/tools/party-memory-card-screen';
+import { HomeManualScreen } from '@/features/tools/home-manual-screen';
 import { ParkingLocationScreen } from '@/features/tools/parking-location-screen';
 import { QuietHomeScreen } from '@/features/tools/quiet-home-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
@@ -412,6 +413,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <PartyMemoryCardScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'home-manual') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <HomeManualScreen />
       </>
     );
   }

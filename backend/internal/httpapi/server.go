@@ -29,6 +29,7 @@ import (
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
 	"my-first-expo-app/backend/internal/gooutchecklist"
+	"my-first-expo-app/backend/internal/homemanual"
 	"my-first-expo-app/backend/internal/homerecommendation"
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/lotterylab"
@@ -71,6 +72,7 @@ type Server struct {
 	focusStore                *focus.Store
 	homeRecommendationService *homerecommendation.Service
 	goOutChecklistService     *gooutchecklist.Service
+	homeManualStore           *homemanual.Store
 	rateLimiter               *RateLimiter
 	realtimeHub               *realtime.Hub
 	lotteryService            lotteryHistoryService
@@ -687,6 +689,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open party memory card database failed: %v", err)
 	}
+	var homeManualStore *homemanual.Store
+	homeManualStore, err = homemanual.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open home manual database failed: %v", err)
+	}
 	var borrowLedgerStore *borrowledger.Store
 	borrowLedgerStore, err = borrowledger.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -719,6 +726,7 @@ func newServer(
 		goOutChecklistService:     goOutChecklistService,
 		focusStore:                focusStore,
 		homeRecommendationService: homeRecommendationService,
+		homeManualStore:           homeManualStore,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:               realtimeHub,
 		lotteryService:            lottery.NewService(cfg.Lottery),
@@ -795,6 +803,7 @@ func newServer(
 	registerTimeCapsuleRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
 	registerPartyMemoryCardRoutes(mux, api)
+	registerHomeManualRoutes(mux, api)
 	registerBorrowLedgerRoutes(mux, api)
 	registerParkingLocationRoutes(mux, api)
 	registerQuietHomeRoutes(mux, api)
@@ -910,6 +919,11 @@ func newServer(
 	if partyMemoryCardStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = partyMemoryCardStore.Close()
+		})
+	}
+	if homeManualStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = homeManualStore.Close()
 		})
 	}
 	if parkingLocationStore != nil {
@@ -1216,7 +1230,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Diary-Unlock-Token")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Diary-Unlock-Token,X-Home-Manual-Unlock-Token")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,Retry-After,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }
 

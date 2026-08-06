@@ -44,6 +44,7 @@
     "test:featured-carousel": "node --test --experimental-strip-types tests/featured-carousel-sequence.test.mjs",
     "test:featured-tools": "node --test --experimental-strip-types tests/featured-tools.test.mjs",
     "test:home-catalog": "node --test --experimental-strip-types tests/home-tools-catalog.test.mjs",
+    "test:home-manual": "node --test --experimental-strip-types tests/home-manual.test.mjs",
     "test:home-search": "node --test --experimental-strip-types tests/home-search.test.mjs",
     "test:recent-usage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/recent-usage.test.mjs",
     "test:reading": "node --test --experimental-strip-types tests/reading-local-import.test.mjs tests/reading-state.test.mjs",
