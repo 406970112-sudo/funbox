@@ -33,6 +33,7 @@ import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
+import { QuietHomeScreen } from '@/features/tools/quiet-home-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
 import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
 import { BlogFeedScreen } from '@/features/blog/blog-feed-screen';
@@ -359,6 +360,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SizeLibraryScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'quiet-home') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <QuietHomeScreen />
       </>
     );
   }

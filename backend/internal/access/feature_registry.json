@@ -411,6 +411,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "quiet-home",
+    "name": "安静到家",
+    "tagline": "报平安，不追踪",
+    "description": "设置出发地点和预计到家时间，到家后一键报平安；超时先提醒本人，较久未报平安再按授权提醒指定联系人。",
+    "icon": "home-heart",
+    "category": "生活",
+    "route": "/tools/quiet-home",
+    "accentColor": "#f1a33b",
+    "badges": ["真实数据", "隐私克制", "晚归提醒"],
+    "keywords": ["到家", "报平安", "晚归", "安全到家", "回家提醒", "到家提醒", "联系人提醒"],
+    "usageLabel": "开始安心到家",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "borrow-ledger",
     "name": "借还记录",
     "tagline": "谁借了我什么，一记就懂",

@@ -156,6 +156,26 @@ test('real registry matches size library search keywords', () => {
   }
 });
 
+test('real registry matches quiet home search keywords', () => {
+  const realTools = featureRegistry.filter(
+    (entry) =>
+      entry.route.startsWith('/tools/') &&
+      entry.status === 'available' &&
+      !entry.hiddenFromList,
+  );
+  const realGames = featureRegistry.filter(
+    (entry) => entry.route.startsWith('/games/') && entry.status === 'playable',
+  );
+  for (const query of ['到家', '报平安', '晚归', '回家提醒', '联系人提醒']) {
+    const result = searchHomeEntries(realTools, realGames, query);
+    assert.equal(
+      result.some((entry) => entry.id === 'quiet-home'),
+      true,
+      `${query} 应命中 quiet-home`,
+    );
+  }
+});
+
 test('real registry matches borrow ledger search keywords', () => {
   const realTools = featureRegistry.filter(
     (entry) =>
