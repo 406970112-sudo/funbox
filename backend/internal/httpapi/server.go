@@ -651,13 +651,6 @@ func newServer(
 	} else {
 		dailyLuckSignService = dailylucksign.NewService(dailyLuckSignStore, dailylucksign.NewOpenMeteoProvider(15*time.Second))
 	}
-	var goOutChecklistService *gooutchecklist.Service
-	goOutChecklistStore, goOutErr := gooutchecklist.OpenStore(cfg.Database.Path)
-	if goOutErr != nil {
-		log.Printf("open go out checklist database failed: %v", goOutErr)
-	} else {
-		goOutChecklistService = gooutchecklist.NewService(goOutChecklistStore, dailylucksign.NewOpenMeteoProvider(15*time.Second))
-	}
 	var whoDoesItStore *whodoesit.Store
 	whoDoesItStore, err = whodoesit.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -682,6 +675,11 @@ func newServer(
 	var goOutChecklistService *gooutchecklist.Service
 	if goOutChecklistStore != nil {
 		goOutChecklistService = gooutchecklist.NewService(goOutChecklistStore, openMeteoProvider)
+	}
+	var leftoverManagerStore *leftovermanager.Store
+	leftoverManagerStore, err = leftovermanager.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open leftover manager database failed: %v", err)
 	}
 	var timeCapsuleStore *timecapsule.Store
 	timeCapsuleStore, err = timecapsule.OpenStore(cfg.Database.Path)
@@ -807,7 +805,6 @@ func newServer(
 	registerLeftoverManagerRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
-	registerGoOutChecklistRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
 	registerWhereIsItRoutes(mux, api)

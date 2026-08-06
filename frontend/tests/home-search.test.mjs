@@ -176,6 +176,26 @@ test('real registry matches home manual search keywords', () => {
   }
 });
 
+test('real registry matches leftover manager search keywords', () => {
+  const realTools = featureRegistry.filter(
+    (entry) =>
+      entry.route.startsWith('/tools/') &&
+      entry.status === 'available' &&
+      !entry.hiddenFromList,
+  );
+  const realGames = featureRegistry.filter(
+    (entry) => entry.route.startsWith('/games/') && entry.status === 'playable',
+  );
+  for (const query of ['冰箱', '剩菜', '外卖', '优先吃掉', '食材', '清理冰箱']) {
+    const result = searchHomeEntries(realTools, realGames, query);
+    assert.equal(
+      result.some((entry) => entry.id === 'leftover-manager'),
+      true,
+      `${query} 应命中 leftover-manager`,
+    );
+  }
+});
+
 test('real registry matches quiet home search keywords', () => {
   const realTools = featureRegistry.filter(
     (entry) =>
