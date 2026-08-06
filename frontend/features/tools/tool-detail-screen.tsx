@@ -20,6 +20,7 @@ import { PriceRadarScreen } from '@/features/tools/price-radar-screen';
 import { StockTradeAlertScreen } from '@/features/tools/stock-trade-alert-screen';
 import { DnfMobileActivityScreen } from '@/features/tools/dnf-mobile-activity-screen';
 import { DaysLeftScreen } from '@/features/tools/days-left-screen';
+import { HomeConsumablesScreen } from '@/features/tools/home-consumables-screen';
 import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
 import { DoubleColorBallHistoryScreen } from '@/features/tools/double-color-ball-history-screen';
 import { DoubleColorBallLabScreen } from '@/features/tools/double-color-ball-lab-screen';
@@ -35,6 +36,7 @@ import { WhereIsItScreen } from '@/features/tools/where-is-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
+import { GoOutChecklistScreen } from '@/features/tools/go-out-checklist-screen';
 import { PartyMemoryCardScreen } from '@/features/tools/party-memory-card-screen';
 import { ParkingLocationScreen } from '@/features/tools/parking-location-screen';
 import { QuietHomeScreen } from '@/features/tools/quiet-home-screen';
@@ -341,6 +343,15 @@ export function ToolDetailScreen() {
     );
   }
 
+  if (tool?.id === 'home-consumables') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <HomeConsumablesScreen />
+      </>
+    );
+  }
+
   if (tool?.id === 'who-does-it') {
     return (
       <>
@@ -373,6 +384,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SizeLibraryScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'go-out-checklist') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <GoOutChecklistScreen />
       </>
     );
   }

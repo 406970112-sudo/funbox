@@ -395,6 +395,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "go-out-checklist",
+    "name": "出门检查清单",
+    "tagline": "出门前一键确认，天气自动补充",
+    "description": "创建真实物品与场景，出门前逐项确认；按设定时间自动切换场景，并根据真实天气加入雨伞等已有物品。",
+    "icon": "door-open",
+    "category": "生活",
+    "route": "/tools/go-out-checklist",
+    "accentColor": "#4b6bff",
+    "badges": ["真实天气", "场景切换", "出门自查"],
+    "keywords": ["出门", "检查清单", "带什么", "雨伞", "场景", "门窗燃气", "提醒"],
+    "usageLabel": "开始检查",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "size-library",
     "name": "我的尺寸库",
     "tagline": "家人尺寸与家居尺寸一站记录",

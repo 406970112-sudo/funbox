@@ -1,0 +1,2144 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 出门检查清单 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --canvas: #eef4ff;
+        --board: #e4ebf6;
+        --surface: #ffffff;
+        --surface-muted: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --green: #1db991;
+        --green-soft: #e4f7ee;
+        --amber: #f1a33b;
+        --amber-soft: #fff2df;
+        --coral: #ff5d6c;
+        --coral-soft: #ffe8eb;
+        --dark: #091126;
+        --white: #ffffff;
+        --shadow: 0 22px 46px rgba(58, 86, 152, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+        min-width: 1760px;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--board);
+        background-size: 32px 32px;
+        margin: 0 auto;
+        min-height: 2800px;
+        padding: 28px 34px 34px;
+        width: 1760px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark i {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--blue);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .data-note {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 13px;
+        color: #5f6c88;
+        display: flex;
+        font-size: 11px;
+        font-weight: 700;
+        gap: 9px;
+        line-height: 1.65;
+        margin-bottom: 16px;
+        padding: 10px 13px;
+      }
+
+      .data-note i {
+        color: var(--green);
+        flex: 0 0 auto;
+        height: 15px;
+        margin-top: 2px;
+        width: 15px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .overview-card .oc-icon.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 320px repeat(3, 420px);
+        margin-bottom: 24px;
+      }
+
+      .strategy {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .strategy h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .strategy p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .flow-item {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 26px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .rule-box {
+        background: var(--green-soft);
+        border-left: 3px solid var(--green);
+        border-radius: 10px;
+        color: #185d55;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.7;
+        margin-top: 12px;
+        padding: 10px 11px;
+      }
+
+      .principle-list,
+      .scope-list {
+        display: grid;
+        gap: 9px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .principle-list li,
+      .scope-list li {
+        align-items: flex-start;
+        color: #4d5a75;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        line-height: 1.55;
+      }
+
+      .principle-list i,
+      .scope-list i {
+        color: var(--coral);
+        flex: 0 0 auto;
+        height: 14px;
+        margin-top: 2px;
+        width: 14px;
+      }
+
+      .scope-list i {
+        color: var(--green);
+      }
+
+      .entry-chip {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 12px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        margin-top: 18px;
+        min-height: 42px;
+        padding: 9px 11px;
+      }
+
+      .entry-chip i {
+        height: 15px;
+        stroke-width: 2.4;
+        width: 15px;
+      }
+
+      .entry-chip span {
+        color: #8a80b8;
+        font-weight: 600;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 1000px;
+        padding: 10px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone-screen {
+        background: var(--surface-muted);
+        border-radius: 29px;
+        display: flex;
+        flex-direction: column;
+        height: 980px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 22px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 22px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-content {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        flex: 0 0 50px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--blue);
+        border-radius: 9px;
+        color: var(--white);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .icon-btn.blue {
+        background: var(--blue-soft);
+        border-color: transparent;
+        color: var(--blue);
+      }
+
+      .icon-btn.green {
+        background: var(--green-soft);
+        border-color: transparent;
+        color: var(--green);
+      }
+
+      .icon-btn.amber {
+        background: var(--amber-soft);
+        border-color: transparent;
+        color: #b06c0e;
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 62px;
+        justify-content: space-around;
+      }
+
+      .bottom-nav span {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .bottom-nav span.active {
+        color: var(--blue);
+      }
+
+      .bottom-nav i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .screen-body {
+        flex: 1;
+        overflow: hidden;
+        padding: 0 16px;
+        position: relative;
+      }
+
+      .date-strip {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 9px;
+      }
+
+      .date-main {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .date-main small {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .date-chip {
+        background: var(--blue-soft);
+        border-radius: 999px;
+        color: #3d54b8;
+        font-size: 8.5px;
+        font-weight: 900;
+        padding: 6px 9px;
+      }
+
+      .weather-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        margin-bottom: 9px;
+        overflow: hidden;
+      }
+
+      .weather-top {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 11px 8px;
+      }
+
+      .weather-main {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+      }
+
+      .weather-main .temp {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 25px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .weather-main .temp small {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .weather-main .desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 800;
+        line-height: 1.45;
+      }
+
+      .weather-main .desc strong {
+        color: var(--ink);
+        display: block;
+        font-size: 9.5px;
+      }
+
+      .weather-source {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 999px;
+        color: #1c5b3c;
+        display: flex;
+        font-size: 7.5px;
+        font-weight: 900;
+        gap: 4px;
+        padding: 5px 8px;
+      }
+
+      .weather-source i {
+        height: 10px;
+        width: 10px;
+      }
+
+      .weather-grid {
+        border-top: 1px solid #edf1f8;
+        display: grid;
+        gap: 0;
+        grid-template-columns: repeat(3, 1fr);
+        padding: 7px 3px;
+      }
+
+      .weather-grid div {
+        text-align: center;
+      }
+
+      .weather-grid span {
+        color: var(--muted);
+        display: block;
+        font-size: 7px;
+        font-weight: 800;
+      }
+
+      .weather-grid strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+        margin-top: 3px;
+      }
+
+      .weather-grid strong small {
+        color: var(--muted);
+        font-size: 7px;
+      }
+
+      .scene-tabs {
+        background: #e7edfa;
+        border-radius: 10px;
+        display: grid;
+        gap: 4px;
+        grid-template-columns: repeat(4, 1fr);
+        margin-bottom: 8px;
+        padding: 4px;
+      }
+
+      .scene-tabs span {
+        align-items: center;
+        border-radius: 8px;
+        color: #6b7892;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 900;
+        height: 29px;
+        justify-content: center;
+      }
+
+      .scene-tabs span.active {
+        background: var(--surface);
+        box-shadow: 0 2px 7px rgba(58, 86, 152, 0.13);
+        color: var(--ink);
+      }
+
+      .schedule-chip {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 9px;
+        color: #5f6c88;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 5px;
+        margin-bottom: 10px;
+        padding: 7px 9px;
+      }
+
+      .schedule-chip i {
+        color: var(--blue);
+        height: 11px;
+        width: 11px;
+      }
+
+      .check-group {
+        margin-bottom: 10px;
+      }
+
+      .group-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+
+      .group-head h3 {
+        font-size: 10.5px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .group-head span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 800;
+      }
+
+      .check-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+        min-height: 38px;
+        padding: 6px 9px;
+      }
+
+      .check-row.weather {
+        background: var(--amber-soft);
+        border-color: #f4d8a8;
+      }
+
+      .check-row.safety {
+        background: var(--coral-soft);
+        border-color: #f7c8cf;
+      }
+
+      .check-icon {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 8px;
+        color: #7d8caa;
+        display: flex;
+        flex: 0 0 26px;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .check-row.weather .check-icon {
+        background: var(--white);
+        color: #b06c0e;
+      }
+
+      .check-row.safety .check-icon {
+        background: var(--white);
+        color: var(--coral);
+      }
+
+      .check-icon i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .check-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .check-copy strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .check-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 7px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .check-state {
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        color: #9aa7c2;
+        display: flex;
+        flex: 0 0 20px;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+
+      .check-state i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .check-state.on {
+        background: var(--green);
+        border-color: var(--green);
+        color: var(--white);
+      }
+
+      .confirm-bar {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+        padding: 7px;
+      }
+
+      .confirm-progress {
+        color: var(--muted);
+        flex: 1;
+        font-size: 8px;
+        font-weight: 800;
+        padding-left: 4px;
+      }
+
+      .confirm-btn {
+        align-items: center;
+        background: var(--navy);
+        border: 0;
+        border-radius: 10px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 auto;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 34px;
+        padding: 0 11px;
+      }
+
+      .confirm-btn i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .success-hero {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        padding: 22px 8px 12px;
+        text-align: center;
+      }
+
+      .success-ring {
+        align-items: center;
+        background: var(--green-soft);
+        border: 8px solid #d6f2e6;
+        border-radius: 50%;
+        color: var(--green);
+        display: flex;
+        height: 92px;
+        justify-content: center;
+        margin-bottom: 14px;
+        width: 92px;
+      }
+
+      .success-ring i {
+        height: 38px;
+        stroke-width: 2.4;
+        width: 38px;
+      }
+
+      .success-hero h2 {
+        font-size: 18px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .success-hero p {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin: 7px 0 0;
+      }
+
+      .success-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        margin-top: 8px;
+        padding: 11px;
+      }
+
+      .success-line {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        justify-content: space-between;
+        min-height: 30px;
+        padding: 5px 0;
+      }
+
+      .success-line span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .success-line strong {
+        font-size: 9px;
+        font-weight: 900;
+      }
+
+      .summary-grid {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 9px;
+      }
+
+      .summary-tile {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 9px 6px;
+        text-align: center;
+      }
+
+      .summary-tile strong {
+        display: block;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .summary-tile span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 800;
+        margin-top: 3px;
+      }
+
+      .weather-note {
+        align-items: flex-start;
+        background: var(--amber-soft);
+        border-radius: 11px;
+        color: #7d4b0c;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 7px;
+        line-height: 1.5;
+        margin-top: 9px;
+        padding: 8px 9px;
+      }
+
+      .weather-note i {
+        flex: 0 0 auto;
+        height: 12px;
+        margin-top: 1px;
+        width: 12px;
+      }
+
+      .action-row {
+        display: flex;
+        gap: 7px;
+        margin-top: 10px;
+      }
+
+      .cta {
+        align-items: center;
+        border: 0;
+        border-radius: 11px;
+        display: flex;
+        font-size: 9.5px;
+        font-weight: 900;
+        gap: 6px;
+        height: 38px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .cta i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .cta.dark {
+        background: var(--navy);
+        color: var(--lime);
+      }
+
+      .cta.green {
+        background: var(--green);
+        color: var(--white);
+      }
+
+      .cta.ghost {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .cta.blue {
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      .template-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-bottom: 8px;
+        padding: 10px;
+      }
+
+      .template-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 7px;
+      }
+
+      .template-head strong {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 5px;
+      }
+
+      .template-head i {
+        color: var(--blue);
+        height: 13px;
+        width: 13px;
+      }
+
+      .template-head button {
+        background: var(--blue-soft);
+        border: 0;
+        border-radius: 8px;
+        color: var(--blue);
+        font-size: 7.5px;
+        font-weight: 900;
+        padding: 5px 8px;
+      }
+
+      .template-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .template-items span {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 7px;
+        color: #5f6c88;
+        display: flex;
+        font-size: 7.5px;
+        font-weight: 800;
+        gap: 3px;
+        padding: 4px 6px;
+      }
+
+      .template-items i {
+        height: 9px;
+        width: 9px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0 7px;
+      }
+
+      .section-head h3 {
+        font-size: 10.5px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 800;
+      }
+
+      .scene-item {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+        padding: 8px 10px;
+      }
+
+      .scene-item .scene-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 8px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 28px;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .scene-item .scene-icon i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .scene-item .copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .scene-item .copy strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .scene-item .copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .scene-item .active-chip {
+        background: var(--green-soft);
+        border-radius: 999px;
+        color: #1c5b3c;
+        font-size: 7px;
+        font-weight: 900;
+        padding: 4px 7px;
+      }
+
+      .template-note {
+        align-items: flex-start;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 6px;
+        line-height: 1.5;
+        margin-top: 9px;
+        padding: 8px 9px;
+      }
+
+      .template-note i {
+        flex: 0 0 auto;
+        height: 12px;
+        margin-top: 1px;
+        width: 12px;
+      }
+
+      .setting-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 8px;
+        padding: 9px 10px;
+      }
+
+      .setting-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 30px;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .setting-icon i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .setting-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .setting-copy strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .setting-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .rule-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 7px;
+        padding: 9px 10px;
+      }
+
+      .rule-icon {
+        align-items: center;
+        background: var(--amber-soft);
+        border-radius: 9px;
+        color: #b06c0e;
+        display: flex;
+        flex: 0 0 30px;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .rule-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .rule-icon.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .rule-icon i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .rule-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .rule-copy strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .rule-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        line-height: 1.45;
+        margin-top: 2px;
+      }
+
+      .switch {
+        align-items: center;
+        background: var(--line);
+        border-radius: 999px;
+        display: flex;
+        flex: 0 0 32px;
+        height: 19px;
+        justify-content: flex-end;
+        padding: 2px;
+        width: 32px;
+      }
+
+      .switch.on {
+        background: var(--green);
+      }
+
+      .switch.off {
+        justify-content: flex-start;
+      }
+
+      .switch i {
+        background: var(--white);
+        border-radius: 50%;
+        height: 15px;
+        width: 15px;
+      }
+
+      .health-row {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 9px;
+        display: flex;
+        gap: 6px;
+        margin-bottom: 6px;
+        padding: 7px 9px;
+      }
+
+      .health-dot {
+        background: var(--green);
+        border-radius: 50%;
+        flex: 0 0 8px;
+        height: 8px;
+        width: 8px;
+      }
+
+      .health-dot.warn {
+        background: var(--amber);
+      }
+
+      .health-row strong {
+        flex: 1;
+        font-size: 8.5px;
+        font-weight: 900;
+      }
+
+      .health-row span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 700;
+      }
+
+      .privacy-note {
+        align-items: flex-start;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 6px;
+        line-height: 1.5;
+        margin-top: 8px;
+        padding: 8px 9px;
+      }
+
+      .privacy-note i {
+        flex: 0 0 auto;
+        height: 12px;
+        margin-top: 1px;
+        width: 12px;
+      }
+
+      .permission-chip {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 999px;
+        color: #1c5b3c;
+        display: flex;
+        font-size: 7.5px;
+        font-weight: 900;
+        gap: 4px;
+        padding: 5px 8px;
+      }
+
+      .permission-chip i {
+        height: 10px;
+        width: 10px;
+      }
+
+      .schedule-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 8px;
+        padding: 10px;
+      }
+
+      .schedule-card .sched-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 32px;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .schedule-card .sched-icon i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .schedule-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .schedule-copy strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .schedule-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .stats-row {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 10px;
+      }
+
+      .stat-tile {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 10px 7px;
+        text-align: center;
+      }
+
+      .stat-tile strong {
+        display: block;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .stat-tile span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 800;
+        margin-top: 3px;
+      }
+
+      .filter-row {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 9px;
+      }
+
+      .filter-row span {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: #6b7892;
+        display: flex;
+        font-size: 7.5px;
+        font-weight: 900;
+        padding: 5px 9px;
+      }
+
+      .filter-row span.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--lime);
+      }
+
+      .history-item {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        margin-bottom: 7px;
+        padding: 9px 10px;
+      }
+
+      .history-top {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .history-top strong {
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .history-top span {
+        background: var(--blue-soft);
+        border-radius: 7px;
+        color: var(--blue);
+        font-size: 7px;
+        font-weight: 900;
+        padding: 4px 7px;
+      }
+
+      .history-meta {
+        color: var(--muted);
+        display: flex;
+        font-size: 7.5px;
+        font-weight: 700;
+        gap: 7px;
+        margin-top: 5px;
+      }
+
+      .history-weather {
+        align-items: center;
+        background: var(--amber-soft);
+        border-radius: 7px;
+        color: #7d4b0c;
+        display: inline-flex;
+        font-size: 7px;
+        font-weight: 900;
+        gap: 3px;
+        margin-top: 6px;
+        padding: 4px 6px;
+      }
+
+      .history-weather i {
+        height: 9px;
+        width: 9px;
+      }
+
+      .export-row {
+        display: flex;
+        gap: 7px;
+        margin-top: 9px;
+      }
+
+      .empty-state {
+        align-items: center;
+        background: var(--surface);
+        border: 1px dashed #c7d2e8;
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        padding: 22px 15px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 14px;
+        color: var(--muted);
+        display: flex;
+        height: 46px;
+        justify-content: center;
+        margin-bottom: 9px;
+        width: 46px;
+      }
+
+      .empty-icon i {
+        height: 20px;
+        width: 20px;
+      }
+
+      .empty-state h3 {
+        font-size: 11px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .empty-state p {
+        color: var(--muted);
+        font-size: 8px;
+        line-height: 1.6;
+        margin: 5px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="door-open"></i></div>
+          <div>
+            <h1 class="brand-title">出门检查清单 · 产品设计</h1>
+            <p class="brand-subtitle">出门前一键确认，真实天气自动补充，不预置、不编造</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>V1 完整一期</strong>
+          FunBox · 2026-08-06 · 待评审
+        </div>
+      </header>
+
+      <div class="data-note">
+        <i data-lucide="badge-check"></i>
+        手机画面为界面示意；天气数值来自 2026-08-06 上海 Open-Meteo Forecast 与 Open-Meteo Air Quality 真实公开接口。
+        清单物品、场景和完成记录为布局示意，正式产品首次进入为空状态，全部数据来自用户真实创建与确认。
+      </div>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="clipboard-check"></i></div>
+          <div>
+            <strong>真检查，不是摆设</strong>
+            <p>物品、场景、完成记录全部来自用户真实操作；一键确认前必须完成逐项确认。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon green"><i data-lucide="cloud-sun"></i></div>
+          <div>
+            <strong>真实天气联动</strong>
+            <p>Open-Meteo 真实数据触发雨伞、防晒、水杯等规则，只加入用户已有物品。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon coral"><i data-lucide="package-check"></i></div>
+          <div>
+            <strong>一期完整交付</strong>
+            <p>首页、完成反馈、模板场景、天气规则、定时提醒、历史记录一次做完。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>核心机制</h3>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div><strong>确认场景</strong><span>手动切换，或按用户配置的星期和时间自动切换。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div><strong>拉取真实天气</strong><span>按保存城市调用 Open-Meteo 天气与空气质量接口。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div><strong>规则自动补充</strong><span>命中天气规则且用户已有物品时，加入“天气补充”组。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div><strong>逐项确认并完成</strong><span>全部确认后生成“没有遗漏”并写入真实记录。</span></div>
+          </div>
+          <div class="rule-box">
+            无预置物品、无种子记录、无 AI 猜测；天气缺字段时不补造。
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="door-open"></i></div>
+                  <strong>出门检查清单</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn amber"><i data-lucide="cloud-sun"></i></button>
+                  <button class="icon-btn blue"><i data-lucide="settings"></i></button>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="date-strip">
+                  <div class="date-main">8月6日 周四<small>09:00 · 上海市</small></div>
+                  <span class="date-chip">上班模式</span>
+                </div>
+                <div class="weather-card">
+                  <div class="weather-top">
+                    <div class="weather-main">
+                      <span class="temp">32.6°<small>C</small></span>
+                      <span class="desc"><strong>多云转小雨</strong>最高 34.3° / 最低 28.9°</span>
+                    </div>
+                    <span class="weather-source"><i data-lucide="badge-check"></i>真实天气 09:00</span>
+                  </div>
+                  <div class="weather-grid">
+                    <div><span>降雨概率</span><strong>52%</strong></div>
+                    <div><span>最大 UV</span><strong>8.3</strong></div>
+                    <div><span>AQI</span><strong>37 <small>优</small></strong></div>
+                  </div>
+                </div>
+                <div class="scene-tabs">
+                  <span class="active">上班</span>
+                  <span>旅行</span>
+                  <span>运动</span>
+                  <span>自定义</span>
+                </div>
+                <div class="schedule-chip">
+                  <i data-lucide="calendar-clock"></i>
+                  周一至周五 08:20 自动切换到上班模式
+                </div>
+                <div class="check-group">
+                  <div class="group-head"><h3>常备物品</h3><span>用户已创建</span></div>
+                  <div class="check-row">
+                    <div class="check-icon"><i data-lucide="smartphone"></i></div>
+                    <div class="check-copy"><strong>手机</strong><span>常备</span></div>
+                    <span class="check-state on"><i data-lucide="check"></i></span>
+                  </div>
+                  <div class="check-row">
+                    <div class="check-icon"><i data-lucide="key-round"></i></div>
+                    <div class="check-copy"><strong>钥匙</strong><span>常备</span></div>
+                    <span class="check-state on"><i data-lucide="check"></i></span>
+                  </div>
+                  <div class="check-row">
+                    <div class="check-icon"><i data-lucide="wallet"></i></div>
+                    <div class="check-copy"><strong>钱包</strong><span>常备</span></div>
+                    <span class="check-state"></span>
+                  </div>
+                  <div class="check-row">
+                    <div class="check-icon"><i data-lucide="headphones"></i></div>
+                    <div class="check-copy"><strong>耳机</strong><span>常备</span></div>
+                    <span class="check-state"></span>
+                  </div>
+                  <div class="check-row">
+                    <div class="check-icon"><i data-lucide="battery-charging"></i></div>
+                    <div class="check-copy"><strong>充电宝</strong><span>常备</span></div>
+                    <span class="check-state"></span>
+                  </div>
+                </div>
+                <div class="check-group">
+                  <div class="group-head"><h3>上班模式</h3><span>场景物品</span></div>
+                  <div class="check-row">
+                    <div class="check-icon"><i data-lucide="id-card"></i></div>
+                    <div class="check-copy"><strong>工牌</strong><span>上班场景</span></div>
+                    <span class="check-state"></span>
+                  </div>
+                </div>
+                <div class="check-group">
+                  <div class="group-head"><h3>天气补充</h3><span>降雨概率 52%</span></div>
+                  <div class="check-row weather">
+                    <div class="check-icon"><i data-lucide="umbrella"></i></div>
+                    <div class="check-copy"><strong>雨伞</strong><span>规则 rain-umbrella · Open-Meteo</span></div>
+                    <span class="check-state"></span>
+                  </div>
+                </div>
+                <div class="check-group">
+                  <div class="group-head"><h3>离家安全</h3><span>出门前必查</span></div>
+                  <div class="check-row safety">
+                    <div class="check-icon"><i data-lucide="door-closed"></i></div>
+                    <div class="check-copy"><strong>门窗关闭</strong><span>安全确认项</span></div>
+                    <span class="check-state"></span>
+                  </div>
+                  <div class="check-row safety">
+                    <div class="check-icon"><i data-lucide="flame"></i></div>
+                    <div class="check-copy"><strong>燃气关闭</strong><span>安全确认项</span></div>
+                    <span class="check-state"></span>
+                  </div>
+                </div>
+                <div class="confirm-bar">
+                  <span class="confirm-progress">2 / 9 已确认 · 7 项待确认</span>
+                  <button class="confirm-btn"><i data-lucide="check-check"></i>确认全部已带</button>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>一键检查首页</b> · 真实天气 + 场景清单</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>完成反馈</strong>
+                </div>
+                <button class="icon-btn green"><i data-lucide="share-2"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="success-hero">
+                  <div class="success-ring"><i data-lucide="check-check"></i></div>
+                  <h2>今日出门检查完成，没有遗漏。</h2>
+                  <p>8月6日 09:02 · 上班模式 · 9/9 已确认</p>
+                </div>
+                <div class="success-card">
+                  <div class="success-line"><span>完成时间</span><strong>2026-08-06 09:02:34</strong></div>
+                  <div class="success-line"><span>当前场景</span><strong>上班模式</strong></div>
+                  <div class="success-line"><span>确认项目</span><strong>9 / 9</strong></div>
+                  <div class="success-line"><span>天气补充</span><strong>雨伞 1 项</strong></div>
+                </div>
+                <div class="summary-grid">
+                  <div class="summary-tile"><strong>9</strong><span>已确认</span></div>
+                  <div class="summary-tile"><strong>1</strong><span>天气补充</span></div>
+                  <div class="summary-tile"><strong>18s</strong><span>检查用时</span></div>
+                </div>
+                <div class="weather-note">
+                  <i data-lucide="umbrella"></i>
+                  雨伞由真实天气规则加入：未来 12 小时最高降雨概率 52%，Open-Meteo 08-06 09:00。
+                </div>
+                <div class="action-row">
+                  <button class="cta dark"><i data-lucide="house"></i>返回首页</button>
+                  <button class="cta ghost"><i data-lucide="history"></i>查看今日记录</button>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>完成反馈</b> · 只有全部确认才生成</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>场景与模板</strong>
+                </div>
+                <button class="icon-btn blue"><i data-lucide="plus"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="section-head"><h3>模板库</h3><span>选择后才写入真实数据</span></div>
+                <div class="template-card">
+                  <div class="template-head">
+                    <strong><i data-lucide="briefcase"></i>上班模式</strong>
+                    <button>使用模板</button>
+                  </div>
+                  <div class="template-items">
+                    <span><i data-lucide="smartphone"></i>手机</span>
+                    <span><i data-lucide="key-round"></i>钥匙</span>
+                    <span><i data-lucide="id-card"></i>工牌</span>
+                    <span><i data-lucide="headphones"></i>耳机</span>
+                  </div>
+                </div>
+                <div class="template-card">
+                  <div class="template-head">
+                    <strong><i data-lucide="luggage"></i>旅行模式</strong>
+                    <button>使用模板</button>
+                  </div>
+                  <div class="template-items">
+                    <span><i data-lucide="id-card"></i>身份证</span>
+                    <span><i data-lucide="plug"></i>充电器</span>
+                    <span><i data-lucide="pill"></i>药品</span>
+                    <span><i data-lucide="shirt"></i>换洗衣物</span>
+                  </div>
+                </div>
+                <div class="template-card">
+                  <div class="template-head">
+                    <strong><i data-lucide="dumbbell"></i>运动模式</strong>
+                    <button>使用模板</button>
+                  </div>
+                  <div class="template-items">
+                    <span><i data-lucide="cup-soda"></i>水杯</span>
+                    <span><i data-lucide="droplets"></i>毛巾</span>
+                    <span><i data-lucide="headphones"></i>耳机</span>
+                    <span><i data-lucide="credit-card"></i>门禁卡</span>
+                  </div>
+                </div>
+                <div class="section-head"><h3>我的场景</h3><span>2 个真实场景</span></div>
+                <div class="scene-item">
+                  <div class="scene-icon"><i data-lucide="briefcase"></i></div>
+                  <div class="copy"><strong>上班模式</strong><span>6 个物品 · 周一至周五 08:20</span></div>
+                  <span class="active-chip">当前</span>
+                </div>
+                <div class="scene-item">
+                  <div class="scene-icon"><i data-lucide="backpack"></i></div>
+                  <div class="copy"><strong>自定义通勤</strong><span>4 个物品 · 未设置提醒</span></div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="template-note">
+                  <i data-lucide="shield-check"></i>
+                  模板不会自动写入。选择“使用模板”后，系统才创建真实物品与场景。
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>场景与模板</b> · 用户主动创建</div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>真实数据与状态</h3>
+          <ul class="scope-list">
+            <li><i data-lucide="badge-check"></i>首次进入无物品、无场景记录、无完成记录。</li>
+            <li><i data-lucide="badge-check"></i>天气值来自 Open-Meteo，带 source 与 fetchedAt。</li>
+            <li><i data-lucide="badge-check"></i>只自动加入用户已有物品，未创建只提示添加。</li>
+            <li><i data-lucide="badge-check"></i>定时切换只按用户配置的星期和时间执行。</li>
+            <li><i data-lucide="badge-check"></i>通知权限显示系统真实状态。</li>
+            <li><i data-lucide="badge-check"></i>历史统计只统计真实完成记录。</li>
+          </ul>
+          <div class="entry-chip">
+            <i data-lucide="door-open"></i>
+            注册名 go-out-checklist · 路由 /tools/go-out-checklist
+            <span>一期</span>
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>天气联动</strong>
+                </div>
+                <button class="icon-btn amber"><i data-lucide="refresh-cw"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="setting-row">
+                  <div class="setting-icon"><i data-lucide="map-pin"></i></div>
+                  <div class="setting-copy"><strong>上海市</strong><span>31.23°N 121.47°E · 手动选择</span></div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="weather-card">
+                  <div class="weather-top">
+                    <div class="weather-main">
+                      <span class="temp">32.6°<small>C</small></span>
+                      <span class="desc"><strong>真实天气已更新</strong>降雨 52% · UV 8.3 · AQI 37</span>
+                    </div>
+                    <span class="weather-source"><i data-lucide="badge-check"></i>08-06 09:00</span>
+                  </div>
+                </div>
+                <div class="section-head"><h3>天气规则</h3><span>只补充已有物品</span></div>
+                <div class="rule-card">
+                  <div class="rule-icon"><i data-lucide="umbrella"></i></div>
+                  <div class="rule-copy"><strong>雨伞</strong><span>降雨概率 >= 40% 时自动加入</span></div>
+                  <span class="switch on"><i></i></span>
+                </div>
+                <div class="rule-card">
+                  <div class="rule-icon blue"><i data-lucide="sun"></i></div>
+                  <div class="rule-copy"><strong>防晒霜</strong><span>当日最大 UV >= 6 时自动加入</span></div>
+                  <span class="switch on"><i></i></span>
+                </div>
+                <div class="rule-card">
+                  <div class="rule-icon green"><i data-lucide="cup-soda"></i></div>
+                  <div class="rule-copy"><strong>水杯</strong><span>最高温 >= 32°C 时自动加入</span></div>
+                  <span class="switch on"><i></i></span>
+                </div>
+                <div class="rule-card">
+                  <div class="rule-icon amber"><i data-lucide="shield"></i></div>
+                  <div class="rule-copy"><strong>口罩</strong><span>EAQI > 100 时自动加入</span></div>
+                  <span class="switch off"><i></i></span>
+                </div>
+                <div class="health-row"><span class="health-dot"></span><strong>Open-Meteo Forecast</strong><span>正常 · 08-06 09:00</span></div>
+                <div class="health-row"><span class="health-dot"></span><strong>Open-Meteo Air Quality</strong><span>正常 · 08-06 09:00</span></div>
+                <div class="privacy-note">
+                  <i data-lucide="lock"></i>
+                  只保存城市与近似坐标。未创建的天气物品不会自动出现，只会提示添加。
+                </div>
+                <button class="cta blue"><i data-lucide="refresh-cw"></i>刷新真实天气</button>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>天气联动</b> · 规则可解释</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>提醒与自动切换</strong>
+                </div>
+                <span class="permission-chip"><i data-lucide="bell-ring"></i>通知已开启</span>
+              </div>
+              <div class="screen-body">
+                <div class="section-head"><h3>定时切换</h3><span>按真实星期与时间</span></div>
+                <div class="schedule-card">
+                  <div class="sched-icon"><i data-lucide="briefcase"></i></div>
+                  <div class="schedule-copy"><strong>上班模式</strong><span>周一至周五 · 08:20</span></div>
+                  <span class="switch on"><i></i></span>
+                </div>
+                <div class="schedule-card">
+                  <div class="sched-icon"><i data-lucide="dumbbell"></i></div>
+                  <div class="schedule-copy"><strong>运动模式</strong><span>周六 · 07:30</span></div>
+                  <span class="switch off"><i></i></span>
+                </div>
+                <div class="schedule-card">
+                  <div class="sched-icon"><i data-lucide="luggage"></i></div>
+                  <div class="schedule-copy"><strong>旅行模式</strong><span>未设置定时提醒</span></div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="section-head"><h3>行为说明</h3><span>不做位置猜测</span></div>
+                <div class="privacy-note">
+                  <i data-lucide="calendar-clock"></i>
+                  到配置时间后切换当前场景并发送本地提醒；没有配置时不改变场景，不做任何推断。
+                </div>
+                <div class="health-row"><span class="health-dot"></span><strong>通知权限</strong><span>已授权 · 系统返回</span></div>
+                <button class="cta dark"><i data-lucide="save"></i>保存提醒设置</button>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>提醒与自动切换</b> · 用户配置优先</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">9:41</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>历史记录</strong>
+                </div>
+                <button class="icon-btn blue"><i data-lucide="download"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="stats-row">
+                  <div class="stat-tile"><strong>1</strong><span>今日完成</span></div>
+                  <div class="stat-tile"><strong>5</strong><span>本周完成</span></div>
+                  <div class="stat-tile"><strong>3</strong><span>连续天数</span></div>
+                </div>
+                <div class="filter-row">
+                  <span class="active">全部</span>
+                  <span>上班</span>
+                  <span>旅行</span>
+                  <span>运动</span>
+                </div>
+                <div class="history-item">
+                  <div class="history-top"><strong>今天 09:02</strong><span>上班模式</span></div>
+                  <div class="history-meta"><span>9/9 已确认</span><span>检查用时 18s</span></div>
+                  <div class="history-weather"><i data-lucide="umbrella"></i>雨伞 · 降雨概率 52%</div>
+                </div>
+                <div class="history-item">
+                  <div class="history-top"><strong>08-05 08:46</strong><span>上班模式</span></div>
+                  <div class="history-meta"><span>8/8 已确认</span><span>检查用时 12s</span></div>
+                  <div class="history-weather"><i data-lucide="cloud-sun"></i>无天气补充</div>
+                </div>
+                <div class="history-item">
+                  <div class="history-top"><strong>08-04 08:51</strong><span>上班模式</span></div>
+                  <div class="history-meta"><span>8/8 已确认</span><span>检查用时 15s</span></div>
+                  <div class="history-weather"><i data-lucide="cloud-sun"></i>无天气补充</div>
+                </div>
+                <div class="empty-state">
+                  <div class="empty-icon"><i data-lucide="clipboard-list"></i></div>
+                  <h3>示例记录仅用于展示布局</h3>
+                  <p>正式版首次进入为空状态，完成一次检查后才出现真实记录。</p>
+                </div>
+                <div class="export-row">
+                  <button class="cta ghost"><i data-lucide="download"></i>导出 CSV</button>
+                  <button class="cta ghost"><i data-lucide="trash-2"></i>清空数据</button>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>历史记录</b> · 只统计真实完成</div>
+        </div>
+      </section>
+    </main>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
