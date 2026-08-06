@@ -411,6 +411,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "leftover-manager",
+    "name": "冰箱剩菜管家",
+    "tagline": "剩菜、外卖与食材，按真实到期时间吃",
+    "description": "记录冰箱里的剩菜、外卖和食材，保存名称、放入时间、预计食用期限、照片、加热状态与剩余分量；首页按真实到期时间优先吃掉，并根据冰箱真实食材匹配菜谱建议。",
+    "icon": "fridge-outline",
+    "category": "生活",
+    "route": "/tools/leftover-manager",
+    "accentColor": "#18a78f",
+    "badges": ["真实数据", "到期提醒", "食材匹配"],
+    "keywords": ["冰箱", "剩菜", "外卖", "过期", "保质期", "优先吃掉", "食材", "菜谱建议", "清理冰箱"],
+    "usageLabel": "管理冰箱",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "size-library",
     "name": "我的尺寸库",
     "tagline": "家人尺寸与家居尺寸一站记录",

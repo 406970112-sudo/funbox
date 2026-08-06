@@ -36,6 +36,7 @@ import { WhereIsItScreen } from '@/features/tools/where-is-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
+import { LeftoverManagerScreen } from '@/features/tools/leftover-manager-screen';
 import { GoOutChecklistScreen } from '@/features/tools/go-out-checklist-screen';
 import { PartyMemoryCardScreen } from '@/features/tools/party-memory-card-screen';
 import { ParkingLocationScreen } from '@/features/tools/parking-location-screen';
@@ -384,6 +385,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SizeLibraryScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'leftover-manager') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <LeftoverManagerScreen />
       </>
     );
   }

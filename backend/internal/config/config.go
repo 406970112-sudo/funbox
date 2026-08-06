@@ -127,36 +127,41 @@ type NewsConfig struct {
 }
 
 type StorageConfig struct {
-	AudioDir                 string
-	AvatarDir                string
-	BlogDir                  string
-	CoolingDir               string
-	DaysLeftDir              string
-	DiaryDir                 string
-	FeedbackDir              string
-	MomentDir                string
-	PartyMemoryCardDir       string
-	PaymentQRDir             string
-	ReadingDir               string
-	TimeCapsuleDir           string
-	WhereIsItDir             string
-	MaxAvatarBytes           int64
-	MaxBlogCoverBytes        int64
-	MaxCoolingImageBytes     int64
-	MaxCoolingImages         int
-	MaxDaysLeftImageBytes    int64
-	MaxDaysLeftImages        int
-	MaxDiaryImageBytes       int64
-	MaxDiaryImages           int
-	MaxFeedbackImageBytes    int64
-	MaxFeedbackImages        int
-	MaxMomentImageBytes      int64
-	MaxMomentImages          int
-	MaxPaymentQRBytes        int64
-	MaxReadingUploadBytes    int64
-	MaxReadingExtractedBytes int64
-	MaxWhereIsItImageBytes   int64
-	MaxWhereIsItImages       int
+	AudioDir                     string
+	AvatarDir                    string
+	BlogDir                      string
+	CoolingDir                   string
+	DaysLeftDir                  string
+	DiaryDir                     string
+	FeedbackDir                  string
+	LeftoverDir                  string
+	MomentDir                    string
+	PartyMemoryCardDir           string
+	PaymentQRDir                 string
+	ReadingDir                   string
+	TimeCapsuleDir               string
+	WhereIsItDir                 string
+	MaxAvatarBytes               int64
+	MaxBlogCoverBytes            int64
+	MaxCoolingImageBytes         int64
+	MaxCoolingImages             int
+	MaxDaysLeftImageBytes        int64
+	MaxDaysLeftImages            int
+	MaxDiaryImageBytes           int64
+	MaxDiaryImages               int
+	MaxFeedbackImageBytes        int64
+	MaxFeedbackImages            int
+	MaxLeftoverImageBytes        int64
+	MaxLeftoverImages            int
+	MaxMomentImageBytes          int64
+	MaxMomentImages              int
+	MaxPartyMemoryCardImageBytes int64
+	MaxPartyMemoryCardImages     int
+	MaxPaymentQRBytes            int64
+	MaxReadingUploadBytes        int64
+	MaxReadingExtractedBytes     int64
+	MaxWhereIsItImageBytes       int64
+	MaxWhereIsItImages           int
 }
 
 type ReadingConfig struct {
@@ -246,36 +251,41 @@ func Load() (Config, error) {
 			RateLimitWindow:     durationFromMs("RATE_LIMIT_WINDOW_MS", "VOICE_RATE_LIMIT_WINDOW_MS", "900000"),
 		},
 		Storage: StorageConfig{
-			AudioDir:                 envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
-			AvatarDir:                envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
-			BlogDir:                  envFirst("STORAGE_BLOG_DIR", "data/blog"),
-			CoolingDir:               envFirst("STORAGE_COOLING_DIR", "data/cooling-evidence"),
-			DaysLeftDir:              envFirst("STORAGE_DAYS_LEFT_DIR", "data/days-left-evidence"),
-			DiaryDir:                 envFirst("STORAGE_DIARY_DIR", "data/diary-images"),
-			FeedbackDir:              envFirst("STORAGE_FEEDBACK_DIR", "data/feedback-images"),
-			MomentDir:                envFirst("STORAGE_MOMENT_DIR", "data/moments"),
-			PartyMemoryCardDir:       envFirst("STORAGE_PARTY_MEMORY_CARD_DIR", "data/party-memory-card-photos"),
-			PaymentQRDir:             envFirst("STORAGE_PAYMENT_QR_DIR", "data/payment-qr"),
-			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
-			TimeCapsuleDir:           envFirst("STORAGE_TIME_CAPSULE_DIR", "data/time-capsule-media"),
-			WhereIsItDir:             envFirst("STORAGE_WHERE_IS_IT_DIR", "data/where-is-it-photos"),
-			MaxAvatarBytes:           int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
-			MaxBlogCoverBytes:        int64(intFirst("STORAGE_MAX_BLOG_COVER_BYTES", "", "2097152")),
-			MaxCoolingImageBytes:     int64(intFirst("STORAGE_MAX_COOLING_IMAGE_BYTES", "", "5242880")),
-			MaxCoolingImages:         intFirst("STORAGE_MAX_COOLING_IMAGES", "", "3"),
-			MaxDaysLeftImageBytes:    int64(intFirst("STORAGE_MAX_DAYS_LEFT_IMAGE_BYTES", "", "5242880")),
-			MaxDaysLeftImages:        intFirst("STORAGE_MAX_DAYS_LEFT_IMAGES", "", "5"),
-			MaxDiaryImageBytes:       int64(intFirst("STORAGE_MAX_DIARY_IMAGE_BYTES", "", "5242880")),
-			MaxDiaryImages:           intFirst("STORAGE_MAX_DIARY_IMAGES", "", "9"),
-			MaxFeedbackImageBytes:    int64(intFirst("STORAGE_MAX_FEEDBACK_IMAGE_BYTES", "", "5242880")),
-			MaxFeedbackImages:        intFirst("STORAGE_MAX_FEEDBACK_IMAGES", "", "3"),
-			MaxMomentImageBytes:      int64(intFirst("STORAGE_MAX_MOMENT_IMAGE_BYTES", "", "5242880")),
-			MaxMomentImages:          intFirst("STORAGE_MAX_MOMENT_IMAGES", "", "9"),
-			MaxPaymentQRBytes:        int64(intFirst("STORAGE_MAX_PAYMENT_QR_BYTES", "", "2097152")),
-			MaxReadingUploadBytes:    int64(intFirst("STORAGE_MAX_READING_UPLOAD_BYTES", "", "52428800")),
-			MaxReadingExtractedBytes: int64(intFirst("STORAGE_MAX_READING_EXTRACTED_BYTES", "", "209715200")),
-			MaxWhereIsItImageBytes:   int64(intFirst("STORAGE_MAX_WHERE_IS_IT_IMAGE_BYTES", "", "5242880")),
-			MaxWhereIsItImages:       intFirst("STORAGE_MAX_WHERE_IS_IT_IMAGES", "", "6"),
+			AudioDir:                     envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
+			AvatarDir:                    envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
+			BlogDir:                      envFirst("STORAGE_BLOG_DIR", "data/blog"),
+			CoolingDir:                   envFirst("STORAGE_COOLING_DIR", "data/cooling-evidence"),
+			DaysLeftDir:                  envFirst("STORAGE_DAYS_LEFT_DIR", "data/days-left-evidence"),
+			DiaryDir:                     envFirst("STORAGE_DIARY_DIR", "data/diary-images"),
+			FeedbackDir:                  envFirst("STORAGE_FEEDBACK_DIR", "data/feedback-images"),
+			LeftoverDir:                  envFirst("STORAGE_LEFTOVER_DIR", "data/leftover-photos"),
+			MomentDir:                    envFirst("STORAGE_MOMENT_DIR", "data/moments"),
+			PartyMemoryCardDir:           envFirst("STORAGE_PARTY_MEMORY_CARD_DIR", "data/party-memory-card-photos"),
+			PaymentQRDir:                 envFirst("STORAGE_PAYMENT_QR_DIR", "data/payment-qr"),
+			ReadingDir:                   envFirst("STORAGE_READING_DIR", "data/reading"),
+			TimeCapsuleDir:               envFirst("STORAGE_TIME_CAPSULE_DIR", "data/time-capsule-media"),
+			WhereIsItDir:                 envFirst("STORAGE_WHERE_IS_IT_DIR", "data/where-is-it-photos"),
+			MaxAvatarBytes:               int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
+			MaxBlogCoverBytes:            int64(intFirst("STORAGE_MAX_BLOG_COVER_BYTES", "", "2097152")),
+			MaxCoolingImageBytes:         int64(intFirst("STORAGE_MAX_COOLING_IMAGE_BYTES", "", "5242880")),
+			MaxCoolingImages:             intFirst("STORAGE_MAX_COOLING_IMAGES", "", "3"),
+			MaxDaysLeftImageBytes:        int64(intFirst("STORAGE_MAX_DAYS_LEFT_IMAGE_BYTES", "", "5242880")),
+			MaxDaysLeftImages:            intFirst("STORAGE_MAX_DAYS_LEFT_IMAGES", "", "5"),
+			MaxDiaryImageBytes:           int64(intFirst("STORAGE_MAX_DIARY_IMAGE_BYTES", "", "5242880")),
+			MaxDiaryImages:               intFirst("STORAGE_MAX_DIARY_IMAGES", "", "9"),
+			MaxFeedbackImageBytes:        int64(intFirst("STORAGE_MAX_FEEDBACK_IMAGE_BYTES", "", "5242880")),
+			MaxFeedbackImages:            intFirst("STORAGE_MAX_FEEDBACK_IMAGES", "", "3"),
+			MaxLeftoverImageBytes:        int64(intFirst("STORAGE_MAX_LEFTOVER_IMAGE_BYTES", "", "5242880")),
+			MaxLeftoverImages:            intFirst("STORAGE_MAX_LEFTOVER_IMAGES", "", "3"),
+			MaxMomentImageBytes:          int64(intFirst("STORAGE_MAX_MOMENT_IMAGE_BYTES", "", "5242880")),
+			MaxMomentImages:              intFirst("STORAGE_MAX_MOMENT_IMAGES", "", "9"),
+			MaxPartyMemoryCardImageBytes: int64(intFirst("STORAGE_MAX_PARTY_MEMORY_CARD_IMAGE_BYTES", "", "5242880")),
+			MaxPartyMemoryCardImages:     intFirst("STORAGE_MAX_PARTY_MEMORY_CARD_IMAGES", "", "30"),
+			MaxPaymentQRBytes:            int64(intFirst("STORAGE_MAX_PAYMENT_QR_BYTES", "", "2097152")),
+			MaxReadingUploadBytes:        int64(intFirst("STORAGE_MAX_READING_UPLOAD_BYTES", "", "52428800")),
+			MaxReadingExtractedBytes:     int64(intFirst("STORAGE_MAX_READING_EXTRACTED_BYTES", "", "209715200")),
+			MaxWhereIsItImageBytes:       int64(intFirst("STORAGE_MAX_WHERE_IS_IT_IMAGE_BYTES", "", "5242880")),
+			MaxWhereIsItImages:           intFirst("STORAGE_MAX_WHERE_IS_IT_IMAGES", "", "6"),
 		},
 		Reading: ReadingConfig{
 			LibraryEnabled:  boolFirst("READING_LIBRARY_ENABLED", libraryDefault),

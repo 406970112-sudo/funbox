@@ -30,6 +30,7 @@ import (
 	"my-first-expo-app/backend/internal/foodrecommendation"
 	"my-first-expo-app/backend/internal/gooutchecklist"
 	"my-first-expo-app/backend/internal/homerecommendation"
+	"my-first-expo-app/backend/internal/leftovermanager"
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/lotterylab"
 	"my-first-expo-app/backend/internal/marketradar"
@@ -73,6 +74,7 @@ type Server struct {
 	realtimeHub               *realtime.Hub
 	lotteryService            lotteryHistoryService
 	lotteryLabService         lotteryLabHistoryService
+	leftoverManagerStore      *leftovermanager.Store
 	marketRadarService        marketRadarSnapshotService
 	membershipService         *membership.Service
 	diaryService              *diary.Service
@@ -643,10 +645,22 @@ func newServer(
 	} else {
 		dailyLuckSignService = dailylucksign.NewService(dailyLuckSignStore, dailylucksign.NewOpenMeteoProvider(15*time.Second))
 	}
+	var goOutChecklistService *gooutchecklist.Service
+	goOutChecklistStore, goOutErr := gooutchecklist.OpenStore(cfg.Database.Path)
+	if goOutErr != nil {
+		log.Printf("open go out checklist database failed: %v", goOutErr)
+	} else {
+		goOutChecklistService = gooutchecklist.NewService(goOutChecklistStore, dailylucksign.NewOpenMeteoProvider(15*time.Second))
+	}
 	var whoDoesItStore *whodoesit.Store
 	whoDoesItStore, err = whodoesit.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Printf("open who does it database failed: %v", err)
+	}
+	var leftoverManagerStore *leftovermanager.Store
+	leftoverManagerStore, err = leftovermanager.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open leftover manager database failed: %v", err)
 	}
 	var timeCapsuleStore *timecapsule.Store
 	timeCapsuleStore, err = timecapsule.OpenStore(cfg.Database.Path)
@@ -694,10 +708,12 @@ func newServer(
 		foodRecommendationService: foodRecommendationService,
 		focusStore:                focusStore,
 		homeRecommendationService: homeRecommendationService,
+		goOutChecklistService:     goOutChecklistService,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:               realtimeHub,
 		lotteryService:            lottery.NewService(cfg.Lottery),
 		lotteryLabService:         lotterylab.NewService(lotterylab.Config{}),
+		leftoverManagerStore:      leftoverManagerStore,
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
 		membershipService:         membershipService,
 		diaryService:              diaryService,
@@ -758,6 +774,8 @@ func newServer(
 	registerFoodRecommendationRoutes(mux, api)
 	registerCookingGuideRoutes(mux, api)
 	registerDailyLuckSignRoutes(mux, api)
+	registerGoOutChecklistRoutes(mux, api)
+	registerLeftoverManagerRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
@@ -862,6 +880,11 @@ func newServer(
 			_ = sizeLibraryStore.Close()
 		})
 	}
+	if leftoverManagerStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = leftoverManagerStore.Close()
+		})
+	}
 	if partyMemoryCardStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = partyMemoryCardStore.Close()
@@ -905,6 +928,11 @@ func newServer(
 	if dailyLuckSignStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = dailyLuckSignStore.Close()
+		})
+	}
+	if goOutChecklistStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = goOutChecklistStore.Close()
 		})
 	}
 	server.RegisterOnShutdown(monitorCancel)
