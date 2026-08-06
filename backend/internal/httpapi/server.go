@@ -813,7 +813,6 @@ func newServer(
 	registerLeftoverManagerRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
-	registerGoOutChecklistRoutes(mux, api)
 	registerHomeConsumablesRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
