@@ -4,16 +4,21 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const apiBase = "http://127.0.0.1:3000";
-const appBase = "http://127.0.0.1:8084";
+const external = process.env.E2E_EXTERNAL === "1";
+const apiBase = process.env.E2E_BACKEND_BASE || "http://127.0.0.1:3000";
+const appBase = process.env.E2E_APP_BASE || "http://127.0.0.1:8084";
 const username = `138${String(Date.now()).slice(-8)}`;
 const password = "password-123";
-const backend = spawn("go.exe", ["run", "./cmd/api"], {
-  cwd: "C:/Users/Administrator/Documents/funbox/backend",
-  stdio: "ignore",
-});
+const backend = external
+  ? null
+  : spawn("go.exe", ["run", "./cmd/api"], {
+      cwd: "C:/Users/Administrator/Documents/funbox/backend",
+      stdio: "ignore",
+    });
 const staticServerScript = "C:/Users/Administrator/Documents/funbox/scripts/serve-static-spa.mjs";
-const staticServer = spawn(process.execPath, [staticServerScript], { stdio: "ignore" });
+const staticServer = external
+  ? null
+  : spawn(process.execPath, [staticServerScript], { stdio: "ignore" });
 
 async function waitForBackend() {
   for (let i = 0; i < 60; i++) {
@@ -217,14 +222,30 @@ await waitForExpression(`document.body.innerText.includes('确认全部已带')`
 const itemNames = ["手机", "钥匙", "工牌", "耳机"];
 let clicked = 0;
 for (const name of itemNames) {
-  const didClick = await evaluate(`(() => {
+  const point = await evaluate(`(() => {
     const textEl = [...document.querySelectorAll('*')].find((el) => el.children.length === 0 && el.textContent.trim() === name);
     const clickable = textEl?.closest('[role="button"], button') || textEl?.parentElement?.parentElement || textEl?.parentElement;
-    if (!clickable) return false;
-    clickable.click();
-    return true;
+    if (!clickable) return null;
+    clickable.scrollIntoView({ block: "center" });
+    const rect = clickable.getBoundingClientRect();
+    return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
   })()`);
-  if (didClick) clicked++;
+  if (point) {
+    await sleep(150);
+    await send("Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y });
+    await send("Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button: "left", clickCount: 1 });
+    await send("Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button: "left", clickCount: 1 });
+    await evaluate(`(() => {
+      const textEl = [...document.querySelectorAll('*')].find((el) => el.children.length === 0 && el.textContent.trim() === ${JSON.stringify(name)});
+      const clickable = textEl?.closest('[role="button"], button') || textEl?.parentElement?.parentElement || textEl?.parentElement;
+      if (!clickable) return false;
+      clickable.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'touch', isPrimary: true, button: 0 }));
+      clickable.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'touch', isPrimary: true, button: 0 }));
+      clickable.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+      return true;
+    })()`);
+    clicked++;
+  }
   await sleep(300);
 }
 if (clicked !== itemNames.length) throw new Error(`clicked ${clicked} items, expected ${itemNames.length}; body=${JSON.stringify((await evaluate(`document.body.innerText`)).slice(0, 500))}`);
@@ -289,7 +310,7 @@ console.log(JSON.stringify({
 
 ws.close();
 child.kill();
-staticServer.kill();
-backend.kill();
+if (staticServer) staticServer.kill();
+if (backend) backend.kill();
 await sleep(500);
 rmSync(userData, { recursive: true, force: true });

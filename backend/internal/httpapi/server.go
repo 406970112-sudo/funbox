@@ -29,6 +29,7 @@ import (
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
 	"my-first-expo-app/backend/internal/gooutchecklist"
+	"my-first-expo-app/backend/internal/homeconsumables"
 	"my-first-expo-app/backend/internal/homemanual"
 	"my-first-expo-app/backend/internal/homerecommendation"
 	"my-first-expo-app/backend/internal/leftovermanager"
@@ -71,6 +72,7 @@ type Server struct {
 	feedbackService           *feedback.Service
 	foodRecommendationService *foodrecommendation.Service
 	focusStore                *focus.Store
+	homeConsumablesStore      *homeconsumables.Store
 	homeRecommendationService *homerecommendation.Service
 	goOutChecklistService     *gooutchecklist.Service
 	homeManualStore           *homemanual.Store
@@ -639,6 +641,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open days left database failed: %v", err)
 	}
+	var homeConsumablesStore *homeconsumables.Store
+	homeConsumablesStore, err = homeconsumables.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open home consumables database failed: %v", err)
+	}
 	var coolingStore *cooling.Store
 	coolingStore, err = cooling.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -732,6 +739,7 @@ func newServer(
 		foodRecommendationService: foodRecommendationService,
 		goOutChecklistService:     goOutChecklistService,
 		focusStore:                focusStore,
+		homeConsumablesStore:      homeConsumablesStore,
 		homeRecommendationService: homeRecommendationService,
 		homeManualStore:           homeManualStore,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
@@ -805,6 +813,8 @@ func newServer(
 	registerLeftoverManagerRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
+	registerGoOutChecklistRoutes(mux, api)
+	registerHomeConsumablesRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
 	registerWhereIsItRoutes(mux, api)
@@ -893,6 +903,11 @@ func newServer(
 	if daysLeftStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = daysLeftStore.Close()
+		})
+	}
+	if homeConsumablesStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = homeConsumablesStore.Close()
 		})
 	}
 	if coolingStore != nil {
