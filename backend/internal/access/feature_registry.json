@@ -379,6 +379,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "impulse-cooler",
+    "name": "冲动消费冷静器",
+    "tagline": "不拦你买，只让你多想 24 小时",
+    "description": "记录想买的商品和价格，回答五个问题，用真实时薪换算等价工时，24 小时后再次决定是否购买。",
+    "icon": "snowflake",
+    "category": "生活",
+    "route": "/tools/impulse-cooler",
+    "accentColor": "#4b6bff",
+    "badges": ["24h 冷静", "真实时薪", "决策记录"],
+    "keywords": ["冲动消费", "冷静", "买前", "消费决策", "等价工时", "24小时", "不买", "剁手"],
+    "usageLabel": "开始冷静",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "size-library",
     "name": "我的尺寸库",
     "tagline": "家人尺寸与家居尺寸一站记录",

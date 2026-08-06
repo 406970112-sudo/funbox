@@ -1,0 +1,1801 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 冲动消费冷静器 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --canvas: #eef4ff;
+        --board: #e4ebf6;
+        --surface: #ffffff;
+        --surface-muted: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --green: #1db991;
+        --green-soft: #e4f7ee;
+        --amber: #f1a33b;
+        --amber-soft: #fff2df;
+        --coral: #ff5d6c;
+        --coral-soft: #ffe8eb;
+        --dark: #091126;
+        --white: #ffffff;
+        --shadow: 0 22px 46px rgba(58, 86, 152, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+        min-width: 1760px;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--board);
+        background-size: 32px 32px;
+        margin: 0 auto;
+        min-height: 3200px;
+        padding: 28px 34px 34px;
+        width: 1760px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark i {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--blue);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .overview-card .oc-icon.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 320px repeat(3, 420px);
+        margin-bottom: 22px;
+      }
+
+      .stage.two {
+        grid-template-columns: 420px 420px 1fr;
+      }
+
+      .strategy {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .strategy h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .strategy p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .flow-item {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 26px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .rule-box {
+        background: var(--green-soft);
+        border-left: 3px solid var(--green);
+        border-radius: 10px;
+        color: #1c5b3c;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.7;
+        margin-top: 12px;
+        padding: 10px 11px;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 1040px;
+        padding: 10px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone-screen {
+        background: var(--surface-muted);
+        border-radius: 29px;
+        height: 1020px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 22px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 22px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .screen-content {
+        height: 982px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        height: 50px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--blue);
+        border-radius: 9px;
+        color: var(--white);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .hero-card {
+        background: var(--navy);
+        border-radius: 14px;
+        color: var(--white);
+        margin: 0 16px 12px;
+        padding: 14px;
+      }
+
+      .hero-eyebrow {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 6px;
+        margin-bottom: 9px;
+      }
+
+      .hero-eyebrow i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .hero-card h2 {
+        font-size: 21px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 0 0 7px;
+      }
+
+      .hero-card p {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .metric-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, 1fr);
+        margin: 0 16px 12px;
+      }
+
+      .metric {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 10px;
+      }
+
+      .metric span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+
+      .metric b {
+        display: block;
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .metric b small {
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .metric.green b {
+        color: var(--green);
+      }
+
+      .metric.coral b {
+        color: var(--coral);
+      }
+
+      .empty {
+        align-items: center;
+        background: var(--surface);
+        border: 1px dashed #b9c7e2;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin: 0 16px 12px;
+        padding: 24px 14px;
+        text-align: center;
+      }
+
+      .empty .empty-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 50%;
+        color: var(--blue);
+        display: flex;
+        height: 44px;
+        justify-content: center;
+        margin-bottom: 10px;
+        width: 44px;
+      }
+
+      .empty .empty-icon i {
+        height: 19px;
+        width: 19px;
+      }
+
+      .empty strong {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .empty p {
+        color: var(--muted);
+        font-size: 8.5px;
+        line-height: 1.6;
+        margin: 5px 0 0;
+      }
+
+      .cta {
+        align-items: center;
+        background: var(--blue);
+        border: 0;
+        border-radius: 12px;
+        color: var(--white);
+        display: flex;
+        font-size: 11.5px;
+        font-weight: 900;
+        gap: 6px;
+        height: 44px;
+        justify-content: center;
+        margin: 0 16px;
+        width: calc(100% - 32px);
+      }
+
+      .cta i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .cta.secondary {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .cta.green {
+        background: var(--green);
+      }
+
+      .cta.coral {
+        background: var(--coral);
+      }
+
+      .section-title {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 16px 8px;
+      }
+
+      .section-title strong {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .section-title span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 800;
+      }
+
+      .form-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        padding: 12px 13px;
+      }
+
+      .field {
+        margin-bottom: 11px;
+      }
+
+      .field label {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+
+      .field input {
+        background: var(--surface-muted);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 800;
+        height: 38px;
+        outline: 0;
+        padding: 0 11px;
+        width: 100%;
+      }
+
+      .field input::placeholder {
+        color: #9aa6bd;
+        font-weight: 600;
+      }
+
+      .price-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .price-row .field {
+        flex: 1;
+      }
+
+      .price-row .unit {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+        padding-right: 4px;
+      }
+
+      .upload-zone {
+        align-items: center;
+        background: var(--surface);
+        border: 1.5px dashed #b9c7e2;
+        border-radius: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin: 0 16px 10px;
+        padding: 18px 12px;
+      }
+
+      .upload-zone .up-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 50%;
+        color: var(--blue);
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        margin-bottom: 8px;
+        width: 38px;
+      }
+
+      .upload-zone .up-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .upload-zone strong {
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .upload-zone span {
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .source-strip {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8px;
+        font-weight: 700;
+        gap: 6px;
+        margin: 0 16px 10px;
+      }
+
+      .source-strip i {
+        color: var(--blue);
+        height: 12px;
+        width: 12px;
+      }
+
+      .question {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        padding: 11px 12px;
+      }
+
+      .q-head {
+        align-items: flex-start;
+        display: flex;
+        gap: 8px;
+      }
+
+      .q-num {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 8px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 24px;
+        font-size: 9px;
+        font-weight: 900;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .q-head strong {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .q-head span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .choice-grid {
+        display: grid;
+        gap: 6px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 9px;
+      }
+
+      .choice {
+        align-items: center;
+        background: var(--surface-muted);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        color: var(--muted);
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        height: 32px;
+        justify-content: center;
+        padding: 0 5px;
+      }
+
+      .choice.active {
+        background: var(--blue-soft);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+
+      .choice.coral-active {
+        background: var(--coral-soft);
+        border-color: var(--coral);
+        color: var(--coral);
+      }
+
+      .choice.wide {
+        grid-column: span 2;
+      }
+
+      .calc-card {
+        background: var(--navy);
+        border-radius: 12px;
+        color: var(--white);
+        margin: 0 16px 10px;
+        padding: 12px 13px;
+      }
+
+      .calc-head {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 6px;
+        margin-bottom: 9px;
+      }
+
+      .calc-head i {
+        height: 13px;
+        width: 13px;
+      }
+
+      .calc-number {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .calc-number span {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 10px;
+        font-weight: 800;
+        margin-left: 3px;
+      }
+
+      .calc-formula {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 8.5px;
+        line-height: 1.6;
+        margin-top: 8px;
+      }
+
+      .notice {
+        align-items: center;
+        background: var(--amber-soft);
+        border: 1px solid #f7e1bd;
+        border-radius: 10px;
+        color: #9a6418;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 6px;
+        line-height: 1.5;
+        margin: 0 16px 12px;
+        padding: 9px 11px;
+      }
+
+      .notice i {
+        flex: 0 0 14px;
+        height: 14px;
+        width: 14px;
+      }
+
+      .item-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        padding: 12px 13px;
+      }
+
+      .item-main {
+        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .item-main strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        line-height: 1.4;
+      }
+
+      .item-main span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .item-main b {
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 21px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .item-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 9px;
+      }
+
+      .tag {
+        align-items: center;
+        background: var(--surface-muted);
+        border-radius: 999px;
+        color: var(--muted);
+        display: inline-flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 4px;
+        height: 22px;
+        padding: 0 8px;
+      }
+
+      .tag i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .tag.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .tag.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .tag.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .timer-card {
+        background: var(--navy);
+        border-radius: 14px;
+        color: var(--white);
+        margin: 0 16px 10px;
+        padding: 14px;
+      }
+
+      .timer-top {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .timer-top span {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 8.5px;
+        font-weight: 800;
+      }
+
+      .timer-top .live-chip {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.16);
+        border: 1px solid rgba(201, 243, 106, 0.35);
+        border-radius: 999px;
+        color: var(--lime);
+        display: inline-flex;
+        font-size: 8px;
+        font-weight: 900;
+        gap: 4px;
+        height: 22px;
+        padding: 0 8px;
+      }
+
+      .timer-top .live-chip i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .timer-value {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        line-height: 1;
+      }
+
+      .timer-meta {
+        color: rgba(255, 255, 255, 0.68);
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 8px;
+      }
+
+      .answer-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        overflow: hidden;
+      }
+
+      .answer-row {
+        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 13px;
+      }
+
+      .answer-row + .answer-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .answer-row span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 800;
+      }
+
+      .answer-row b {
+        font-size: 9.5px;
+        font-weight: 900;
+        max-width: 160px;
+        text-align: right;
+      }
+
+      .decision-stage {
+        background: var(--coral-soft);
+        border: 1px solid #f7c4cc;
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        padding: 12px 13px;
+      }
+
+      .decision-stage .ds-icon {
+        align-items: center;
+        background: var(--coral);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        margin-bottom: 9px;
+        width: 34px;
+      }
+
+      .decision-stage .ds-icon i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .decision-stage strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .decision-stage p {
+        color: #8c3e47;
+        font-size: 8.5px;
+        line-height: 1.6;
+        margin: 5px 0 0;
+      }
+
+      .decision-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 0 16px;
+      }
+
+      .decision-grid .cta {
+        margin: 0;
+        width: 100%;
+      }
+
+      .decision-grid .wide {
+        grid-column: span 2;
+      }
+
+      .history-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        overflow: hidden;
+      }
+
+      .history-row {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+
+      .history-row + .history-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .history-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .history-icon i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .history-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .history-copy strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .history-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .history-row > b {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .settings-list {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        margin: 0 16px 10px;
+        overflow: hidden;
+      }
+
+      .settings-row {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        padding: 11px 13px;
+      }
+
+      .settings-row + .settings-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .settings-row .s-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 32px;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .settings-row .s-icon i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .settings-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .settings-copy strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .settings-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .toggle {
+        align-items: center;
+        background: var(--green);
+        border-radius: 999px;
+        display: flex;
+        height: 24px;
+        justify-content: flex-end;
+        padding: 3px;
+        width: 42px;
+      }
+
+      .toggle.off {
+        background: #c8d0de;
+      }
+
+      .toggle::after {
+        background: var(--white);
+        border-radius: 50%;
+        content: "";
+        height: 18px;
+        width: 18px;
+      }
+
+      .data-card {
+        background: var(--green-soft);
+        border: 1px solid #bfe9d1;
+        border-radius: 12px;
+        color: #1c5b3c;
+        margin: 0 16px 10px;
+        padding: 12px 13px;
+      }
+
+      .data-card strong {
+        align-items: center;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .data-card strong i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .data-card p {
+        font-size: 8.5px;
+        line-height: 1.7;
+        margin: 6px 0 0;
+      }
+
+      .annotation-card {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .annotation-card h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 12px;
+      }
+
+      .annotation-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .check-list {
+        display: grid;
+        gap: 9px;
+      }
+
+      .check-item {
+        align-items: flex-start;
+        display: flex;
+        gap: 9px;
+      }
+
+      .check-item .check {
+        align-items: center;
+        background: var(--green);
+        border-radius: 50%;
+        color: var(--white);
+        display: flex;
+        flex: 0 0 22px;
+        height: 22px;
+        justify-content: center;
+        margin-top: 1px;
+        width: 22px;
+      }
+
+      .check-item .check i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .check-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .check-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .chart-empty {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin: 0 16px 12px;
+        min-height: 142px;
+        padding: 16px;
+      }
+
+      .chart-empty .bars {
+        align-items: flex-end;
+        display: flex;
+        gap: 7px;
+        height: 58px;
+        margin-bottom: 8px;
+        opacity: 0.42;
+      }
+
+      .chart-empty .bars i {
+        background: var(--line);
+        border-radius: 4px 4px 0 0;
+        display: block;
+        height: 38px;
+        width: 16px;
+      }
+
+      .chart-empty .bars i:nth-child(2) {
+        height: 25px;
+      }
+
+      .chart-empty .bars i:nth-child(3) {
+        height: 48px;
+      }
+
+      .chart-empty strong {
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .chart-empty p {
+        color: var(--muted);
+        font-size: 8.5px;
+        margin: 5px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="snowflake"></i></div>
+          <div>
+            <h1 class="brand-title">FunBox 冲动消费冷静器</h1>
+            <p class="brand-subtitle">不拦你买，只让你多想 24 小时</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>产品设计 V1 · 一期全量</strong>
+          2026-08-06 · 待评审 · 无 mock / 无分期
+        </div>
+      </header>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="list-checks"></i></div>
+          <div>
+            <strong>五问 + 真实回看</strong>
+            <p>购买原因、同类、使用频率、等价工时、24 小时后答案全部原样保存。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon coral"><i data-lucide="timer"></i></div>
+          <div>
+            <strong>24 小时服务端冷静期</strong>
+            <p>截止时间由服务端计算，到期通知只触发一次，支持再想想延长 3 次。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon green"><i data-lucide="shield-check"></i></div>
+          <div>
+            <strong>真实数据优先</strong>
+            <p>价格、时薪、统计只来自用户填写与真实记录，空态就是真实空态。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>核心闭环</h3>
+          <p>一次“想买”被拆成可回看的答案、可计算的成本和一次二次决定。</p>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div><strong>记录商品与价格</strong><span>用户手写，可选订单截图/链接，不抓第三方价格。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div><strong>完成五个问题</strong><span>答案原样保存，冷静期内可回看。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div><strong>计算真实成本</strong><span>等价工时与月收入占比由用户时薪计算。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div><strong>开始 24 小时冷静</strong><span>服务端写 cool_ends_at，前端只展示倒计时。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">5</div>
+            <div><strong>做最终决定</strong><span>仍要买 / 不买了 / 再想想，事件可追溯。</span></div>
+          </div>
+          <div class="rule-box">提示等级由公开条件计算：同类且不用、等价工时 ≥ 20、24 小时后不确定等，触发项全部展示。</div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:45</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title"><span class="mark"><i data-lucide="snowflake"></i></span><strong>冲动消费冷静器</strong></div>
+                  <div class="app-actions">
+                    <button class="icon-btn"><i data-lucide="bell"></i></button>
+                    <button class="icon-btn plain"><i data-lucide="settings"></i></button>
+                  </div>
+                </div>
+                <div class="hero-card">
+                  <div class="hero-eyebrow"><i data-lucide="shield-check"></i>真实空态 · 当前没有记录</div>
+                  <h2>冷静舱</h2>
+                  <p>所有数字只来自你的填写和真实记录。完成第一次冷静后，这里才会出现摘要。</p>
+                </div>
+                <div class="metric-grid">
+                  <div class="metric"><span>冷静中</span><b>0<small> 件</small></b></div>
+                  <div class="metric coral"><span>待决定</span><b>0<small> 件</small></b></div>
+                  <div class="metric green"><span>已放弃</span><b>¥0</b></div>
+                </div>
+                <div class="empty">
+                  <div class="empty-icon"><i data-lucide="package-open"></i></div>
+                  <strong>还没有冷静记录</strong>
+                  <p>输入想买的东西和价格，开始你的第一次 24 小时冷静。</p>
+                </div>
+                <button class="cta"><i data-lucide="plus"></i>新增冷静记录</button>
+                <div class="section-title" style="margin-top: 14px"><strong>最近记录</strong><span>仅展示真实数据</span></div>
+                <div class="empty compact" style="min-height: 72px; padding: 14px">
+                  <strong style="font-size: 9.5px">暂无最近记录</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>01 首页“冷静舱”</b> · 真实空态 + 0 统计</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:45</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title"><button class="icon-btn plain"><i data-lucide="arrow-left"></i></button><strong>新增冷静记录</strong></div>
+                  <button class="icon-btn"><i data-lucide="more-vertical"></i></button>
+                </div>
+                <div class="form-card">
+                  <div class="field">
+                    <label>商品名称 *</label>
+                    <input placeholder="填写你想买的商品" />
+                  </div>
+                  <div class="price-row">
+                    <div class="field"><label>价格 *</label><input placeholder="0.00" inputmode="decimal" /></div>
+                    <span class="unit">元</span>
+                  </div>
+                </div>
+                <div class="upload-zone">
+                  <div class="up-icon"><i data-lucide="image-plus"></i></div>
+                  <strong>上传订单截图 / 支付截图</strong>
+                  <span>最多 3 张 · 仅作为你自己的真实凭证</span>
+                </div>
+                <div class="form-card">
+                  <div class="field">
+                    <label>商品链接（可选）</label>
+                    <input placeholder="粘贴真实商品链接" />
+                  </div>
+                </div>
+                <div class="source-strip"><i data-lucide="badge-check"></i>来源标记：手动填写 / 订单截图 / 商品链接</div>
+                <div class="notice"><i data-lucide="info"></i>价格由你填写，保存为整数分；系统不抓取任何第三方价格。</div>
+                <button class="cta"><i data-lucide="arrow-right"></i>下一步：回答五个问题</button>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>02 新增第一步</b> · 商品、价格与真实凭证</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:46</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title"><button class="icon-btn plain"><i data-lucide="arrow-left"></i></button><strong>五个问题</strong></div>
+                  <span style="color: var(--muted); font-size: 8px; font-weight: 800">评审输入示例</span>
+                </div>
+                <div class="question">
+                  <div class="q-head">
+                    <div class="q-num">1</div>
+                    <div><strong>为什么想买</strong><span>选择最接近的真实原因</span></div>
+                  </div>
+                  <div class="choice-grid">
+                    <div class="choice">需要</div>
+                    <div class="choice">奖励自己</div>
+                    <div class="choice coral-active">被促销吸引</div>
+                    <div class="choice">跟风</div>
+                    <div class="choice">情绪缓解</div>
+                    <div class="choice">其他</div>
+                  </div>
+                </div>
+                <div class="question">
+                  <div class="q-head">
+                    <div class="q-num">2</div>
+                    <div><strong>是否已有类似物品</strong><span>有的话，是否经常使用</span></div>
+                  </div>
+                  <div class="choice-grid">
+                    <div class="choice">没有</div>
+                    <div class="choice active">有 1 件</div>
+                    <div class="choice">有多件</div>
+                    <div class="choice wide active">同类物品当前：不经常使用</div>
+                  </div>
+                </div>
+                <div class="question">
+                  <div class="q-head">
+                    <div class="q-num">3</div>
+                    <div><strong>预计使用频率</strong><span>按照真实生活场景判断</span></div>
+                  </div>
+                  <div class="choice-grid">
+                    <div class="choice">每天</div>
+                    <div class="choice">每周</div>
+                    <div class="choice">每月</div>
+                    <div class="choice active">偶尔</div>
+                    <div class="choice">可能不用</div>
+                  </div>
+                </div>
+                <div class="question">
+                  <div class="q-head">
+                    <div class="q-num">4</div>
+                    <div><strong>相当于多少小时工资</strong><span>时薪未设置，不调用平均工资</span></div>
+                  </div>
+                  <div class="calc-card" style="margin: 10px 0 0">
+                    <div class="calc-head"><i data-lucide="calculator"></i>待填写</div>
+                    <div class="calc-number">--<span>小时</span></div>
+                    <div class="calc-formula">设置你的真实时薪后自动计算：价格 / 时薪</div>
+                  </div>
+                </div>
+                <button class="cta secondary" style="margin-top: 2px"><i data-lucide="settings-2"></i>先设置真实时薪</button>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>03 五问 + 真实计算</b> · 缺时薪时显示“待填写”</p>
+        </div>
+      </section>
+
+      <section class="stage two">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:47</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title"><button class="icon-btn plain"><i data-lucide="arrow-left"></i></button><strong>冷静详情</strong></div>
+                  <div class="app-actions"><button class="icon-btn"><i data-lucide="share-2"></i></button><button class="icon-btn"><i data-lucide="trash-2"></i></button></div>
+                </div>
+                <div class="item-card">
+                  <div class="item-main">
+                    <div><strong>无线降噪耳机</strong><span>评审输入示例 · 2026-08-06 21:47 创建</span></div>
+                    <b>¥1299</b>
+                  </div>
+                  <div class="item-tags">
+                    <span class="tag blue"><i data-lucide="image"></i>用户上传截图</span>
+                    <span class="tag coral"><i data-lucide="flame"></i>高提醒</span>
+                  </div>
+                </div>
+                <div class="timer-card">
+                  <div class="timer-top"><span>真实服务端倒计时</span><span class="live-chip"><i data-lucide="radio"></i>进行中</span></div>
+                  <div class="timer-value">23:41:02</div>
+                  <div class="timer-meta">截止：2026-08-07 21:47 · 服务端时间 2026-08-06 21:47</div>
+                </div>
+                <div class="calc-card">
+                  <div class="calc-head"><i data-lucide="calculator"></i>真实成本</div>
+                  <div class="calc-number">30.4<span>小时</span></div>
+                  <div class="calc-formula">1299 元 / 42.8 元/小时 = 30.4 小时 · 评审输入示例</div>
+                </div>
+                <div class="answer-list">
+                  <div class="answer-row"><span>为什么想买</span><b>被促销吸引</b></div>
+                  <div class="answer-row"><span>同类物品</span><b>有 1 件，不常用</b></div>
+                  <div class="answer-row"><span>使用频率</span><b>偶尔</b></div>
+                  <div class="answer-row"><span>24 小时后</span><b>不确定</b></div>
+                </div>
+                <button class="cta"><i data-lucide="timer"></i>等待 24 小时</button>
+                <div class="decision-grid" style="margin-top: 8px">
+                  <button class="cta secondary"><i data-lucide="x"></i>现在放弃</button>
+                  <button class="cta secondary"><i data-lucide="credit-card"></i>仍然现在买</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>04 冷静详情</b> · 倒计时 + 五问回看 + 计算过程</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:47</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title"><button class="icon-btn plain"><i data-lucide="arrow-left"></i></button><strong>待决定</strong></div>
+                  <button class="icon-btn"><i data-lucide="more-vertical"></i></button>
+                </div>
+                <div class="decision-stage">
+                  <div class="ds-icon"><i data-lucide="bell-ring"></i></div>
+                  <strong>24 小时冷静期已结束</strong>
+                  <p>系统通知已触发，当前状态为待决定。只有你做出选择后，记录才会计入购买或已省金额。</p>
+                </div>
+                <div class="item-card">
+                  <div class="item-main">
+                    <div><strong>无线降噪耳机</strong><span>评审输入示例 · 原价 ¥1299</span></div>
+                    <b>¥1299</b>
+                  </div>
+                  <div class="item-tags"><span class="tag coral"><i data-lucide="clock"></i>24h 后仍不确定</span></div>
+                </div>
+                <div class="notice"><i data-lucide="info"></i>选择“仍要买”可修改最终成交价；选择“不买了”将累计到已放弃金额。</div>
+                <button class="cta"><i data-lucide="credit-card"></i>仍要买</button>
+                <div class="decision-grid" style="margin-top: 8px">
+                  <button class="cta green"><i data-lucide="check"></i>不买了</button>
+                  <button class="cta secondary"><i data-lucide="rotate-ccw"></i>再想想 24h</button>
+                </div>
+                <div class="notice" style="margin-top: 12px; background: var(--surface); border-color: var(--line); color: var(--muted)">
+                  <i data-lucide="undo-2"></i>决策后 5 分钟内可撤销，撤销记录写入事件流。
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>05 24h 后待决定</b> · 仍要买 / 不买了 / 再想想</p>
+        </div>
+
+        <aside class="annotation-card">
+          <h3>真实数据规则</h3>
+          <p>以下约束在产品运行时强制执行，设计稿中的“评审输入示例”只用于展示交互位置，不进入系统。</p>
+          <div class="check-list">
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div><strong>无种子数据</strong><span>不预置商品、价格、时薪或统计；首次使用为空态。</span></div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div><strong>无平均工资替代</strong><span>等价工时只使用用户填写的真实时薪；未填写时显示待填写。</span></div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div><strong>无第三方价格抓取</strong><span>价格来自用户输入，订单截图/链接只作为自己的证据。</span></div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div><strong>无假推送</strong><span>通知按服务端时间和系统授权状态展示，未授权不显示已通知。</span></div>
+            </div>
+            <div class="check-item">
+              <div class="check"><i data-lucide="check"></i></div>
+              <div><strong>统计口径真实</strong><span>已省金额只累计确认不买的记录，待决定不计入。</span></div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="stage">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:48</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title"><button class="icon-btn plain"><i data-lucide="arrow-left"></i></button><strong>历史与统计</strong></div>
+                  <button class="icon-btn"><i data-lucide="download"></i></button>
+                </div>
+                <div class="metric-grid">
+                  <div class="metric"><span>累计冷静金额</span><b>¥0</b></div>
+                  <div class="metric green"><span>已放弃</span><b>¥0</b></div>
+                  <div class="metric coral"><span>最终购买</span><b>¥0</b></div>
+                </div>
+                <div class="chart-empty">
+                  <div class="bars"><i></i><i></i><i></i></div>
+                  <strong>近 30 天图表暂无数据</strong>
+                  <p>完成第一次冷静后，按真实记录日期生成，不绘制占位曲线。</p>
+                </div>
+                <div class="history-list">
+                  <div class="history-row">
+                    <div class="history-icon"><i data-lucide="package-open"></i></div>
+                    <div class="history-copy"><strong>还没有任何记录</strong><span>新增冷静记录后会出现在这里</span></div>
+                  </div>
+                </div>
+                <button class="cta"><i data-lucide="plus"></i>新增冷静记录</button>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>06 历史与统计</b> · 真实空态 + 真实口径</p>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:48</span>
+                <div class="dynamic-island"></div>
+                <div class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></div>
+              </div>
+              <div class="screen-content">
+                <div class="app-header">
+                  <div class="app-title"><button class="icon-btn plain"><i data-lucide="arrow-left"></i></button><strong>设置与数据来源</strong></div>
+                  <button class="icon-btn"><i data-lucide="more-vertical"></i></button>
+                </div>
+                <div class="form-card">
+                  <div class="field">
+                    <label>税后月收入（可选）</label>
+                    <input placeholder="待填写" />
+                  </div>
+                  <div class="price-row">
+                    <div class="field"><label>月工作小时</label><input placeholder="待填写" /></div>
+                    <div class="field"><label>直接时薪</label><input placeholder="待填写" /></div>
+                  </div>
+                </div>
+                <div class="notice"><i data-lucide="info"></i>时薪 = 税后月收入 / 月工作小时；旧记录保存创建时的时薪快照。</div>
+                <div class="settings-list">
+                  <div class="settings-row">
+                    <div class="s-icon"><i data-lucide="bell"></i></div>
+                    <div class="settings-copy"><strong>24 小时结束通知</strong><span>当前系统授权：未开启</span></div>
+                    <div class="toggle off"></div>
+                  </div>
+                  <div class="settings-row">
+                    <div class="s-icon"><i data-lucide="clock-3"></i></div>
+                    <div class="settings-copy"><strong>结束前 1 小时提醒</strong><span>按真实 cool_ends_at 提前触发</span></div>
+                    <div class="toggle off"></div>
+                  </div>
+                </div>
+                <div class="data-card">
+                  <strong><i data-lucide="shield-check"></i>真实数据说明</strong>
+                  <p>无 mock、无种子数据、无第三方价格抓取。价格、时薪、答案和统计全部来自当前用户或系统时间。</p>
+                </div>
+                <button class="cta secondary"><i data-lucide="download"></i>导出 CSV / JSON</button>
+                <button class="cta secondary" style="margin-top: 8px"><i data-lucide="trash-2"></i>清空全部数据</button>
+              </div>
+            </div>
+          </div>
+          <p class="phone-label"><b>07 设置与数据来源</b> · 时薪 + 通知 + 无 mock 保障</p>
+        </div>
+
+        <aside class="strategy" style="border-radius: 16px">
+          <h3>一期全量验收</h3>
+          <p>首页、五问、24 小时提醒、决策、统计、设置、导出和清空在一次版本内交付。</p>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div><strong>五问必答</strong><span>缺少商品、价格或任一答案不允许提交。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div><strong>服务端到期</strong><span>到期扫描只执行一次，生成 notified 事件。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div><strong>决策可撤销</strong><span>5 分钟撤销窗口，恢复决策前状态。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div><strong>导出与清空</strong><span>用户可导出自己的真实数据，也可清空全部记录。</span></div>
+          </div>
+          <div class="rule-box">验收覆盖 320px、390px、430px 视口；浅色与深色主题均无重叠、无空白、无控件错位。</div>
+        </aside>
+      </section>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

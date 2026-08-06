@@ -129,6 +129,7 @@ type StorageConfig struct {
 	AudioDir                 string
 	AvatarDir                string
 	BlogDir                  string
+	CoolingDir               string
 	DaysLeftDir              string
 	DiaryDir                 string
 	FeedbackDir              string
@@ -137,6 +138,8 @@ type StorageConfig struct {
 	ReadingDir               string
 	MaxAvatarBytes           int64
 	MaxBlogCoverBytes        int64
+	MaxCoolingImageBytes     int64
+	MaxCoolingImages         int
 	MaxDaysLeftImageBytes    int64
 	MaxDaysLeftImages        int
 	MaxDiaryImageBytes       int64
@@ -239,6 +242,7 @@ func Load() (Config, error) {
 			AudioDir:                 envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),
 			AvatarDir:                envFirst("STORAGE_AVATAR_DIR", "data/avatars"),
 			BlogDir:                  envFirst("STORAGE_BLOG_DIR", "data/blog"),
+			CoolingDir:               envFirst("STORAGE_COOLING_DIR", "data/cooling-evidence"),
 			DaysLeftDir:              envFirst("STORAGE_DAYS_LEFT_DIR", "data/days-left-evidence"),
 			DiaryDir:                 envFirst("STORAGE_DIARY_DIR", "data/diary-images"),
 			FeedbackDir:              envFirst("STORAGE_FEEDBACK_DIR", "data/feedback-images"),
@@ -247,6 +251,8 @@ func Load() (Config, error) {
 			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
 			MaxAvatarBytes:           int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
 			MaxBlogCoverBytes:        int64(intFirst("STORAGE_MAX_BLOG_COVER_BYTES", "", "2097152")),
+			MaxCoolingImageBytes:     int64(intFirst("STORAGE_MAX_COOLING_IMAGE_BYTES", "", "5242880")),
+			MaxCoolingImages:         intFirst("STORAGE_MAX_COOLING_IMAGES", "", "3"),
 			MaxDaysLeftImageBytes:    int64(intFirst("STORAGE_MAX_DAYS_LEFT_IMAGE_BYTES", "", "5242880")),
 			MaxDaysLeftImages:        intFirst("STORAGE_MAX_DAYS_LEFT_IMAGES", "", "5"),
 			MaxDiaryImageBytes:       int64(intFirst("STORAGE_MAX_DIARY_IMAGE_BYTES", "", "5242880")),

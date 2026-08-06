@@ -18,6 +18,7 @@ import (
 	"my-first-expo-app/backend/internal/blog"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/cookingguide"
+	"my-first-expo-app/backend/internal/cooling"
 	"my-first-expo-app/backend/internal/daysleft"
 	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/dnfactivity"
@@ -51,6 +52,7 @@ type Server struct {
 	authService               *auth.Service
 	blogService               *blog.Service
 	cfg                       config.Config
+	coolingStore              *cooling.Store
 	cookingGuideService       *cookingguide.Service
 	feedbackService           *feedback.Service
 	foodRecommendationService *foodrecommendation.Service
@@ -614,6 +616,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open days left database failed: %v", err)
 	}
+	var coolingStore *cooling.Store
+	coolingStore, err = cooling.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open cooling database failed: %v", err)
+	}
 	var whoDoesItStore *whodoesit.Store
 	whoDoesItStore, err = whodoesit.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -629,6 +636,7 @@ func newServer(
 		authService:               authService,
 		blogService:               blogService,
 		cfg:                       cfg,
+		coolingStore:              coolingStore,
 		cookingGuideService:       cookingGuideService,
 		feedbackService:           feedbackService,
 		foodRecommendationService: foodRecommendationService,
@@ -694,6 +702,7 @@ func newServer(
 	registerFoodRecommendationRoutes(mux, api)
 	registerCookingGuideRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
+	registerCoolingRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
@@ -751,6 +760,9 @@ func newServer(
 	if dnfActivitySvc != nil {
 		go dnfActivitySvc.Run(monitorContext)
 	}
+	if coolingStore != nil {
+		go coolingStore.Run(monitorContext)
+	}
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler:      handler,
@@ -760,6 +772,11 @@ func newServer(
 	if daysLeftStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = daysLeftStore.Close()
+		})
+	}
+	if coolingStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = coolingStore.Close()
 		})
 	}
 	if whoDoesItStore != nil {

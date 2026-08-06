@@ -30,6 +30,7 @@ import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
+import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
 import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
@@ -339,6 +340,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <WhoDoesItScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'impulse-cooler') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ImpulseCoolerScreen />
       </>
     );
   }

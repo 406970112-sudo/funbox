@@ -71,6 +71,7 @@
           "savePhotosPermission": "用于把生成的二维码保存到相册"
         }
       ],
+      "expo-notifications",
       "expo-secure-store"
     ],
     "experiments": {
