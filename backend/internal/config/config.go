@@ -139,6 +139,7 @@ type StorageConfig struct {
 	PaymentQRDir             string
 	ReadingDir               string
 	TimeCapsuleDir           string
+	WhereIsItDir             string
 	MaxAvatarBytes           int64
 	MaxBlogCoverBytes        int64
 	MaxCoolingImageBytes     int64
@@ -257,6 +258,7 @@ func Load() (Config, error) {
 			PaymentQRDir:             envFirst("STORAGE_PAYMENT_QR_DIR", "data/payment-qr"),
 			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
 			TimeCapsuleDir:           envFirst("STORAGE_TIME_CAPSULE_DIR", "data/time-capsule-media"),
+			WhereIsItDir:             envFirst("STORAGE_WHERE_IS_IT_DIR", "data/where-is-it-photos"),
 			MaxAvatarBytes:           int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
 			MaxBlogCoverBytes:        int64(intFirst("STORAGE_MAX_BLOG_COVER_BYTES", "", "2097152")),
 			MaxCoolingImageBytes:     int64(intFirst("STORAGE_MAX_COOLING_IMAGE_BYTES", "", "5242880")),
