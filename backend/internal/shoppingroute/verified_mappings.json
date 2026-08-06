@@ -1,0 +1,98 @@
+[
+  {
+    "productKey": "tomato",
+    "names": ["西红柿", "番茄"],
+    "zoneType": "produce",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "potato",
+    "names": ["土豆", "马铃薯"],
+    "zoneType": "produce",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "green-pepper",
+    "names": ["青椒", "甜椒"],
+    "zoneType": "produce",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "milk",
+    "names": ["牛奶"],
+    "zoneType": "dairy",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "egg",
+    "names": ["鸡蛋"],
+    "zoneType": "meat",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "yogurt",
+    "names": ["酸奶"],
+    "zoneType": "dairy",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "laundry-detergent",
+    "names": ["洗衣液", "洗衣粉"],
+    "zoneType": "household",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "garbage-bag",
+    "names": ["垃圾袋"],
+    "zoneType": "household",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "tofu",
+    "names": ["豆腐"],
+    "zoneType": "produce",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "beef-mince",
+    "names": ["牛肉末"],
+    "zoneType": "meat",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "doubanjiang",
+    "names": ["郫县豆瓣"],
+    "zoneType": "grain",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  },
+  {
+    "productKey": "sichuan-pepper",
+    "names": ["花椒面", "花椒"],
+    "zoneType": "grain",
+    "source": "funbox-curated-mapping-2026-08-06",
+    "sourceRef": "shopping-route-v1",
+    "reviewedAt": "2026-08-06T00:00:00+08:00"
+  }
+]

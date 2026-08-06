@@ -1,4 +1,4 @@
-﻿import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -39,6 +39,7 @@ import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
 import { LeftoverManagerScreen } from '@/features/tools/leftover-manager-screen';
+import { ShoppingRouteScreen } from '@/features/tools/shopping-route-screen';
 import { GoOutChecklistScreen } from '@/features/tools/go-out-checklist-screen';
 import { PartyMemoryCardScreen } from '@/features/tools/party-memory-card-screen';
 import { HomeManualScreen } from '@/features/tools/home-manual-screen';
@@ -415,6 +416,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <LeftoverManagerScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'shopping-route') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ShoppingRouteScreen />
       </>
     );
   }

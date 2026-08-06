@@ -1,0 +1,1878 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 购物路线 - 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce4f2;
+        --line-strong: #cdd8ea;
+        --canvas: #edf2fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --primary: #4568f2;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --green: #1d9c7c;
+        --green-dark: #11745d;
+        --green-soft: #e1f5ee;
+        --gold: #e8a33d;
+        --gold-soft: #fff2df;
+        --rose: #e8667a;
+        --rose-soft: #fdebed;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        margin: 0 auto;
+        max-width: 1560px;
+        padding: 36px 24px 54px;
+        width: min(1560px, calc(100vw - 24px));
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 24px;
+        width: 24px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .section {
+        background: var(--surface);
+        border: 1px solid rgba(205, 216, 234, 0.82);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        margin: 0 0 22px;
+        padding: 24px 26px 26px;
+      }
+
+      .section-head {
+        align-items: baseline;
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .section-kicker {
+        color: var(--primary);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin: 5px 0 0;
+      }
+
+      .section-note {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        max-width: 620px;
+        text-align: right;
+      }
+
+      .tokens {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .token-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .token-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .token-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .token-icon svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .token-name {
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .token-desc {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 18px;
+      }
+
+      .rules {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .rule {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        min-width: 0;
+        padding: 12px;
+      }
+
+      .rule-num {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 9px;
+        color: var(--green-dark);
+        display: flex;
+        flex: 0 0 30px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        height: 30px;
+        justify-content: center;
+      }
+
+      .rule-text {
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      .flow {
+        align-items: stretch;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+
+      .flow-node {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-height: 76px;
+        padding: 12px;
+      }
+
+      .flow-node .flow-icon {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--green);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .flow-node .flow-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .flow-node .flow-name {
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 9px;
+      }
+
+      .flow-node .flow-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 4px;
+      }
+
+      .flow-arrow {
+        align-items: center;
+        color: #b7c2d6;
+        display: flex;
+        justify-content: center;
+      }
+
+      .flow-arrow svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .demo-note {
+        align-items: center;
+        background: var(--gold-soft);
+        border: 1px solid #f4d6a5;
+        border-radius: 12px;
+        color: #8a5a19;
+        display: flex;
+        font-size: 11px;
+        font-weight: 700;
+        gap: 8px;
+        line-height: 18px;
+        margin-bottom: 20px;
+        padding: 12px 14px;
+      }
+
+      .demo-note svg {
+        flex: 0 0 auto;
+        height: 15px;
+        width: 15px;
+      }
+
+      .phones {
+        display: grid;
+        gap: 22px 20px;
+        grid-template-columns: repeat(3, 312px);
+        justify-content: center;
+        margin-top: 4px;
+      }
+
+      .phone-wrap {
+        width: 312px;
+      }
+
+      .phone-label {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding-top: 13px;
+      }
+
+      .phone-label .dot {
+        border-radius: 50%;
+        height: 8px;
+        width: 8px;
+      }
+
+      .phone-label span {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #f4f7fd;
+        border: 1px solid #c8d4e8;
+        border-radius: 42px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.22);
+        height: 880px;
+        overflow: hidden;
+        position: relative;
+        width: 312px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 42px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        padding: 10px 16px 0;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        color: #18233d;
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 0 5px;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        min-height: 46px;
+        padding: 4px 2px 8px;
+      }
+
+      .topbar-title {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .topbar-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .topbar-action {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .topbar-action svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .brand-mark-mini {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 32px;
+        padding: 0 9px;
+      }
+
+      .brand-mark-mini svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #151b3b, #166b59 92%, #1d9c7c);
+        border-radius: 18px;
+        color: #ffffff;
+        padding: 18px 16px 16px;
+        position: relative;
+      }
+
+      .hero .hero-icon {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.14);
+        border: 1px solid rgba(201, 243, 106, 0.28);
+        border-radius: 12px;
+        color: var(--lime);
+        display: flex;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .hero .hero-icon svg {
+        height: 21px;
+        width: 21px;
+      }
+
+      .hero-title {
+        font-size: 19px;
+        font-weight: 900;
+        margin-top: 14px;
+      }
+
+      .hero-sub {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 5px;
+      }
+
+      .hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .hero-meta-item {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        font-size: 9px;
+        font-weight: 700;
+        min-height: 28px;
+        padding: 6px 9px;
+      }
+
+      .empty-hero {
+        align-items: center;
+        background: #ffffff;
+        border: 1px dashed #c9d5ea;
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        margin-top: 22px;
+        padding: 38px 20px 30px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 50%;
+        color: var(--green-dark);
+        display: flex;
+        height: 72px;
+        justify-content: center;
+        width: 72px;
+      }
+
+      .empty-icon svg {
+        height: 32px;
+        width: 32px;
+      }
+
+      .empty-title {
+        font-size: 15px;
+        font-weight: 900;
+        margin-top: 18px;
+      }
+
+      .empty-sub {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 18px;
+        margin-top: 8px;
+        max-width: 230px;
+      }
+
+      .empty-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .btn {
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 7px;
+        height: 44px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .btn svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .btn.primary {
+        background: var(--green);
+        color: #ffffff;
+      }
+
+      .btn.ghost {
+        background: var(--soft);
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .empty-note {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 5px;
+        margin-top: 18px;
+      }
+
+      .empty-note svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .list-summary {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .list-summary-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 10px;
+        color: var(--green-dark);
+        display: flex;
+        flex: 0 0 38px;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .list-summary-icon svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .list-summary-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .list-summary-name {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .list-summary-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .panel {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px 10px;
+      }
+
+      .panel-title {
+        align-items: center;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+        min-height: 36px;
+      }
+
+      .panel-title .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .item-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 46px;
+      }
+
+      .item-icon {
+        align-items: center;
+        border-radius: 9px;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 28px;
+        font-size: 11px;
+        font-weight: 900;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .item-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .item-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .item-source {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .item-qty {
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .store-hero {
+        align-items: center;
+        background: linear-gradient(135deg, #e9f7f2, #eef2ff);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        display: flex;
+        gap: 11px;
+        margin-top: 12px;
+        padding: 13px;
+      }
+
+      .store-hero-icon {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 12px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 42px;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .store-hero-icon svg {
+        height: 20px;
+        width: 20px;
+      }
+
+      .store-hero-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .store-name {
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .store-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .zone-list {
+        margin-top: 12px;
+      }
+
+      .zone-row {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 9px;
+        margin-top: 8px;
+        min-height: 54px;
+        padding: 0 10px;
+      }
+
+      .zone-index {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 8px;
+        color: var(--green-dark);
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 800;
+        height: 26px;
+        justify-content: center;
+      }
+
+      .zone-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .zone-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .zone-type {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .drag {
+        color: #b7c2d6;
+      }
+
+      .drag svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .endpoint-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .endpoint-badge {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 9px;
+        color: #ffffff;
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+        height: 30px;
+        padding: 0 9px;
+      }
+
+      .endpoint-badge svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .endpoint-name {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .source-line {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8px;
+        font-weight: 600;
+        gap: 5px;
+        margin-top: 10px;
+      }
+
+      .source-line svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .row-arrow {
+        color: #b7c2d6;
+      }
+
+      .row-arrow svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .unassigned-head {
+        align-items: center;
+        background: var(--gold-soft);
+        border: 1px solid #f4d6a5;
+        border-radius: 14px;
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .unassigned-icon {
+        align-items: center;
+        background: #ffffff;
+        border-radius: 10px;
+        color: var(--gold);
+        display: flex;
+        flex: 0 0 36px;
+        height: 36px;
+        justify-content: center;
+        width: 36px;
+      }
+
+      .unassigned-icon svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .unassigned-title {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .unassigned-sub {
+        color: #8a5a19;
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .suggest-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .suggest-row {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+      }
+
+      .suggest-name {
+        flex: 1;
+        font-size: 11px;
+        font-weight: 900;
+        min-width: 0;
+      }
+
+      .suggest-qty {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .suggest-body {
+        align-items: center;
+        background: var(--soft);
+        border-radius: 10px;
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 9px 10px;
+      }
+
+      .suggest-zone {
+        flex: 1;
+        font-size: 9px;
+        font-weight: 800;
+        min-width: 0;
+      }
+
+      .suggest-source {
+        color: var(--muted);
+        font-size: 7px;
+        font-weight: 600;
+        text-align: right;
+      }
+
+      .suggest-action {
+        align-items: center;
+        background: var(--green-soft);
+        border: 1px solid #a7ddca;
+        border-radius: 9px;
+        color: var(--green-dark);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        height: 32px;
+        justify-content: center;
+        margin-top: 10px;
+        width: 100%;
+      }
+
+      .suggest-action svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .route-hero {
+        background: linear-gradient(135deg, #151b3b, #17745e 88%, #1d9c7c);
+        border-radius: 18px;
+        color: #ffffff;
+        margin-top: 12px;
+        padding: 16px;
+      }
+
+      .route-kicker {
+        color: var(--lime);
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .route-title {
+        font-size: 16px;
+        font-weight: 900;
+        margin-top: 6px;
+      }
+
+      .route-flow {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      .route-stop {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        font-size: 8px;
+        font-weight: 800;
+        min-height: 26px;
+        padding: 0 8px;
+      }
+
+      .route-arrow {
+        color: rgba(255, 255, 255, 0.55);
+      }
+
+      .route-arrow svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .route-meta {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 10px;
+      }
+
+      .zone-group {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        overflow: hidden;
+        padding: 4px 12px 8px;
+      }
+
+      .zone-group-head {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+        min-height: 34px;
+      }
+
+      .zone-group-head .zone-head-icon {
+        color: var(--green-dark);
+      }
+
+      .zone-group-head .zone-head-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .zone-group-head .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .zone-item-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 8px;
+        min-height: 38px;
+      }
+
+      .zone-item-name {
+        flex: 1;
+        font-size: 9px;
+        font-weight: 700;
+        min-width: 0;
+      }
+
+      .zone-item-qty {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+      }
+
+      .route-footer {
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 14px;
+      }
+
+      .progress-hero {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .progress-number {
+        color: var(--green-dark);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .progress-label {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .progress-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .progress-track {
+        background: #e8eef8;
+        border-radius: 999px;
+        height: 7px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: var(--green);
+        border-radius: 999px;
+        height: 100%;
+        width: 50%;
+      }
+
+      .route-mini {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 8px;
+        font-weight: 700;
+        gap: 5px;
+        margin-top: 8px;
+      }
+
+      .route-mini svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .done-row {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        min-height: 36px;
+      }
+
+      .done-check {
+        align-items: center;
+        background: var(--green);
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 18px;
+        height: 18px;
+        justify-content: center;
+        width: 18px;
+      }
+
+      .done-check svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .done-name {
+        color: var(--faint);
+        flex: 1;
+        font-size: 9px;
+        font-weight: 600;
+        text-decoration: line-through;
+      }
+
+      .pending-check {
+        align-items: center;
+        border: 1.5px solid #b7c2d6;
+        border-radius: 50%;
+        display: flex;
+        flex: 0 0 18px;
+        height: 18px;
+        justify-content: center;
+        width: 18px;
+      }
+
+      .matrix {
+        overflow-x: auto;
+      }
+
+      table {
+        border-collapse: collapse;
+        font-size: 11px;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--soft);
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      td strong {
+        color: var(--ink);
+      }
+
+      .tag {
+        border-radius: 999px;
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 4px 8px;
+      }
+
+      .tag.on {
+        background: var(--green-soft);
+        color: var(--green-dark);
+      }
+
+      .tag.warn {
+        background: var(--gold-soft);
+        color: #8a5a19;
+      }
+
+      .tag.off {
+        background: #eef1f7;
+        color: var(--muted);
+      }
+
+      .principles {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .principle {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .principle-num {
+        color: var(--green);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .principle-title {
+        font-size: 13px;
+        font-weight: 900;
+        margin-top: 7px;
+      }
+
+      .principle-desc {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 17px;
+        margin-top: 7px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="route"></i></div>
+          <div>
+            <h1 class="board-title">FunBox 购物路线</h1>
+            <p class="board-subtitle">按真实常去超市区域顺序，把购物清单变成一次走完的路线</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          完整一期
+          <strong>2026-08-06</strong>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Product Overview</div>
+            <h2 class="section-title">定位：清单按门店区域顺序走，不靠假数据猜</h2>
+          </div>
+          <p class="section-note">商品、超市、区域和归位关系都可溯源，未确认商品不会乱排。</p>
+        </div>
+        <div class="tokens">
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: var(--green-soft); color: var(--green-dark)">
+                <i data-lucide="shield-check"></i>
+              </div>
+              <div class="token-name">真实优先</div>
+            </div>
+            <div class="token-desc">首启为空，清单、超市、区域顺序和商品归位全部来自用户确认或已核实来源。</div>
+          </div>
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #e8edff; color: var(--primary)">
+                <i data-lucide="package-check"></i>
+              </div>
+              <div class="token-name">一期完整</div>
+            </div>
+            <div class="token-desc">清单、常去超市、区域顺序、未归位确认、路线、购物中、历史全部一次交付。</div>
+          </div>
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: var(--gold-soft); color: var(--gold)">
+                <i data-lucide="shopping-basket"></i>
+              </div>
+              <div class="token-name">菜谱导入</div>
+            </div>
+            <div class="token-desc">从跟做菜谱的真实食材购物清单导入，不重复录入，也不补造商品。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Real Data Principles</div>
+            <h2 class="section-title">真实数据原则：硬性要求</h2>
+          </div>
+          <p class="section-note">以下每一条都会进入验收标准，任何环节都不允许预置假数据。</p>
+        </div>
+        <div class="rules">
+          <div class="rule"><div class="rule-num">01</div><div class="rule-text">首次进入为空态，不展示任何预置商品、超市、区域或路线。</div></div>
+          <div class="rule"><div class="rule-num">02</div><div class="rule-text">清单商品只来自用户创建或菜谱真实食材导入。</div></div>
+          <div class="rule"><div class="rule-num">03</div><div class="rule-text">条码查询只展示 Open Food Facts 真实返回字段，失败时不补造。</div></div>
+          <div class="rule"><div class="rule-num">04</div><div class="rule-text">区域顺序只来自用户确认或门店官方数据导入。</div></div>
+          <div class="rule"><div class="rule-num">05</div><div class="rule-text">未归位商品不会被自动分配区域，也不会被隐藏。</div></div>
+          <div class="rule"><div class="rule-num">06</div><div class="rule-text">路线不展示无来源的距离、步行时间和最短路径。</div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Information Architecture</div>
+            <h2 class="section-title">信息架构</h2>
+          </div>
+          <p class="section-note">先有真实清单和超市，再生成可执行的区域顺序路线。</p>
+        </div>
+        <div class="flow">
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="list-checks"></i></div>
+            <div class="flow-name">购物清单</div>
+            <div class="flow-desc">手动添加或菜谱导入真实商品</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="store"></i></div>
+            <div class="flow-name">常去超市</div>
+            <div class="flow-desc">创建门店并确认区域顺序</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="map-pin"></i></div>
+            <div class="flow-name">商品归位</div>
+            <div class="flow-desc">已核实建议或用户确认</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="route"></i></div>
+            <div class="flow-name">生成路线</div>
+            <div class="flow-desc">入口到收银台的区域顺序</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="shopping-basket"></i></div>
+            <div class="flow-name">购物中</div>
+            <div class="flow-desc">逐项打勾，顺序不重排</div>
+          </div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="history"></i></div>
+            <div class="flow-name">历史</div>
+            <div class="flow-desc">真实完成记录与导出</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Core Screens</div>
+            <h2 class="section-title">核心界面</h2>
+          </div>
+          <p class="section-note">覆盖首启、清单、区域顺序、未归位、路线结果与购物进行中。</p>
+        </div>
+        <div class="demo-note">
+          <i data-lucide="info"></i>
+          <span>演示说明：设计稿中的清单、超市、区域和商品仅表达录入后界面结构；正式产品首启为空，所有数据由用户真实录入或确认。</span>
+        </div>
+        <div class="phones">
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--green)"></span><span>首启 · 空态</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">购物路线</div>
+                    <div class="topbar-sub">按真实区域顺序一次买齐</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+                <div class="empty-hero">
+                  <div class="empty-icon"><i data-lucide="shopping-basket"></i></div>
+                  <div class="empty-title">还没有真实购物清单</div>
+                  <div class="empty-sub">先建立清单并添加常去超市，系统才会按你确认的区域顺序生成路线。</div>
+                  <div class="empty-actions">
+                    <button class="btn primary" type="button"><i data-lucide="list-plus"></i>建立购物清单</button>
+                    <button class="btn ghost" type="button"><i data-lucide="store"></i>添加常去超市</button>
+                  </div>
+                  <div class="empty-note"><i data-lucide="shield-check"></i>不预置示例商品与区域</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--primary)"></span><span>购物清单 · 录入后</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">购物清单</div>
+                    <div class="topbar-sub">今天 09:12 更新</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="scan-barcode"></i></div>
+                </div>
+                <div class="list-summary">
+                  <div class="list-summary-icon"><i data-lucide="list-checks"></i></div>
+                  <div class="list-summary-copy">
+                    <div class="list-summary-name">家庭采购</div>
+                    <div class="list-summary-desc">8 项商品 · 来源均可追溯</div>
+                  </div>
+                  <span class="topbar-action" style="height: 28px; width: 28px"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>商品清单</span><span class="count">真实来源</span></div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #e8667a">西</div>
+                    <div class="item-copy"><div class="item-name">西红柿</div><div class="item-source">菜谱导入 · 08-06</div></div>
+                    <span class="item-qty">2 个</span>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #d9822b">土</div>
+                    <div class="item-copy"><div class="item-name">土豆</div><div class="item-source">用户录入 · 08-06</div></div>
+                    <span class="item-qty">1 kg</span>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #2f9b8f">青</div>
+                    <div class="item-copy"><div class="item-name">青椒</div><div class="item-source">用户录入 · 08-06</div></div>
+                    <span class="item-qty">300 g</span>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #4b6bff">牛</div>
+                    <div class="item-copy"><div class="item-name">牛奶</div><div class="item-source">条码查询 · Open Food Facts</div></div>
+                    <span class="item-qty">2 瓶</span>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #e8a33d">鸡</div>
+                    <div class="item-copy"><div class="item-name">鸡蛋</div><div class="item-source">菜谱导入 · 08-06</div></div>
+                    <span class="item-qty">12 枚</span>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #7e5bef">酸</div>
+                    <div class="item-copy"><div class="item-name">酸奶</div><div class="item-source">用户录入 · 08-06</div></div>
+                    <span class="item-qty">4 杯</span>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #18a78f">洗</div>
+                    <div class="item-copy"><div class="item-name">洗衣液</div><div class="item-source">用户录入 · 08-06</div></div>
+                    <span class="item-qty">1 桶</span>
+                  </div>
+                  <div class="item-row">
+                    <div class="item-icon" style="background: #7483a2">垃</div>
+                    <div class="item-copy"><div class="item-name">垃圾袋</div><div class="item-source">用户录入 · 08-06</div></div>
+                    <span class="item-qty">3 卷</span>
+                  </div>
+                </div>
+                <div style="margin-top: 14px">
+                  <button class="btn primary" type="button"><i data-lucide="route"></i>生成购物路线</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: #18a78f"></span><span>常去超市 · 区域顺序</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">常去超市</div>
+                    <div class="topbar-sub">区域顺序由你确认</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="plus"></i></div>
+                </div>
+                <div class="store-hero">
+                  <div class="store-hero-icon"><i data-lucide="store"></i></div>
+                  <div class="store-hero-copy">
+                    <div class="store-name">常去超市</div>
+                    <div class="store-desc">已录入 3 个区域 · 最近更新 08-06</div>
+                  </div>
+                  <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="zone-list">
+                  <div class="zone-row">
+                    <div class="zone-index">1</div>
+                    <div class="zone-copy"><div class="zone-name">蔬菜区</div><div class="zone-type">蔬菜水果 · produce</div></div>
+                    <span class="drag"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+                  <div class="zone-row">
+                    <div class="zone-index">2</div>
+                    <div class="zone-copy"><div class="zone-name">冷藏区</div><div class="zone-type">冷藏冷冻 · dairy</div></div>
+                    <span class="drag"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+                  <div class="zone-row">
+                    <div class="zone-index">3</div>
+                    <div class="zone-copy"><div class="zone-name">日用品区</div><div class="zone-type">日用品 · household</div></div>
+                    <span class="drag"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+                </div>
+                <div class="endpoint-row">
+                  <div class="endpoint-badge"><i data-lucide="door-open"></i>入口</div>
+                  <div class="endpoint-name">蔬菜区前</div>
+                </div>
+                <div class="endpoint-row">
+                  <div class="endpoint-badge"><i data-lucide="receipt"></i>收银台</div>
+                  <div class="endpoint-name">日用品区后</div>
+                </div>
+                <div class="source-line"><i data-lucide="shield-check"></i>区域顺序由用户确认 · 08-06 09:12</div>
+                <div style="margin-top: 14px">
+                  <button class="btn primary" type="button"><i data-lucide="save"></i>保存区域顺序</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gold)"></span><span>未归位 · 用户确认</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">未归位确认</div>
+                    <div class="topbar-sub">系统不猜测，只给带来源建议</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="arrow-left"></i></div>
+                </div>
+                <div class="unassigned-head">
+                  <div class="unassigned-icon"><i data-lucide="map-pin-off"></i></div>
+                  <div>
+                    <div class="unassigned-title">还有 2 项商品未归位</div>
+                    <div class="unassigned-sub">确认后路线才完整，未确认项不参与排序</div>
+                  </div>
+                </div>
+                <div class="suggest-card">
+                  <div class="suggest-row">
+                    <span class="suggest-name">垃圾袋</span>
+                    <span class="suggest-qty">3 卷</span>
+                  </div>
+                  <div class="suggest-body">
+                    <div class="suggest-zone">日用品区</div>
+                    <div class="suggest-source">已核实映射库 · 08-06</div>
+                  </div>
+                  <button class="suggest-action" type="button"><i data-lucide="check"></i>使用建议</button>
+                </div>
+                <div class="suggest-card">
+                  <div class="suggest-row">
+                    <span class="suggest-name">酸奶</span>
+                    <span class="suggest-qty">4 杯</span>
+                  </div>
+                  <div class="suggest-body">
+                    <div class="suggest-zone">冷藏区</div>
+                    <div class="suggest-source">已核实映射库 · 08-06</div>
+                  </div>
+                  <button class="suggest-action" type="button"><i data-lucide="check"></i>使用建议</button>
+                </div>
+                <div class="source-line" style="margin-top: 12px"><i data-lucide="info"></i>建议仅供参考，确认后写入你的真实映射</div>
+                <div style="margin-top: 14px">
+                  <button class="btn primary" type="button"><i data-lucide="route"></i>确认并生成路线</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: #4568f2"></span><span>路线结果 · 区域顺序</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">购物路线</div>
+                    <div class="topbar-sub">常去超市 · 区域顺序</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="share-2"></i></div>
+                </div>
+                <div class="route-hero">
+                  <div class="route-kicker">Route</div>
+                  <div class="route-title">入口到收银台</div>
+                  <div class="route-flow">
+                    <span class="route-stop">入口</span>
+                    <span class="route-arrow"><i data-lucide="arrow-right"></i></span>
+                    <span class="route-stop">蔬菜区</span>
+                    <span class="route-arrow"><i data-lucide="arrow-right"></i></span>
+                    <span class="route-stop">冷藏区</span>
+                    <span class="route-arrow"><i data-lucide="arrow-right"></i></span>
+                    <span class="route-stop">日用品区</span>
+                    <span class="route-arrow"><i data-lucide="arrow-right"></i></span>
+                    <span class="route-stop">收银台</span>
+                  </div>
+                  <div class="route-meta">8 项已归位 · 路线完整性 100% · 顺序来自用户确认</div>
+                </div>
+                <div class="zone-group">
+                  <div class="zone-group-head"><span class="zone-head-icon"><i data-lucide="carrot"></i></span><span>蔬菜区</span><span class="count">3 项</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">西红柿</span><span class="zone-item-qty">2 个</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">土豆</span><span class="zone-item-qty">1 kg</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">青椒</span><span class="zone-item-qty">300 g</span></div>
+                </div>
+                <div class="zone-group">
+                  <div class="zone-group-head"><span class="zone-head-icon"><i data-lucide="refrigerator"></i></span><span>冷藏区</span><span class="count">3 项</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">牛奶</span><span class="zone-item-qty">2 瓶</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">鸡蛋</span><span class="zone-item-qty">12 枚</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">酸奶</span><span class="zone-item-qty">4 杯</span></div>
+                </div>
+                <div class="zone-group">
+                  <div class="zone-group-head"><span class="zone-head-icon"><i data-lucide="shirt"></i></span><span>日用品区</span><span class="count">2 项</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">洗衣液</span><span class="zone-item-qty">1 桶</span></div>
+                  <div class="zone-item-row"><span class="zone-item-name">垃圾袋</span><span class="zone-item-qty">3 卷</span></div>
+                </div>
+                <div class="route-footer">
+                  <button class="btn ghost" type="button"><i data-lucide="copy"></i>复制路线</button>
+                  <button class="btn primary" type="button"><i data-lucide="shopping-basket"></i>开始购物</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--lime)"></span><span>购物进行中 · 逐项打勾</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">购物进行中</div>
+                    <div class="topbar-sub">常去超市 · 当前路线</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="more-horizontal"></i></div>
+                </div>
+                <div class="progress-hero">
+                  <div>
+                    <div class="progress-number">5/8</div>
+                    <div class="progress-label">已购买</div>
+                  </div>
+                  <div class="progress-copy">
+                    <div class="progress-track"><div class="progress-fill"></div></div>
+                    <div class="route-mini"><i data-lucide="route"></i>蔬菜区 → 冷藏区 → 日用品区</div>
+                  </div>
+                </div>
+                <div class="zone-group">
+                  <div class="zone-group-head"><span class="zone-head-icon"><i data-lucide="carrot"></i></span><span>蔬菜区</span><span class="count">已完成</span></div>
+                  <div class="done-row"><span class="done-check"><i data-lucide="check"></i></span><span class="done-name">西红柿 2 个</span></div>
+                  <div class="done-row"><span class="done-check"><i data-lucide="check"></i></span><span class="done-name">土豆 1 kg</span></div>
+                  <div class="done-row"><span class="done-check"><i data-lucide="check"></i></span><span class="done-name">青椒 300 g</span></div>
+                </div>
+                <div class="zone-group">
+                  <div class="zone-group-head"><span class="zone-head-icon"><i data-lucide="refrigerator"></i></span><span>冷藏区</span><span class="count">当前</span></div>
+                  <div class="done-row"><span class="done-check"><i data-lucide="check"></i></span><span class="done-name">牛奶 2 瓶</span></div>
+                  <div class="item-row" style="border-top: 1px solid var(--line); min-height: 38px">
+                    <span class="pending-check"></span>
+                    <span class="zone-item-name">鸡蛋 12 枚</span>
+                  </div>
+                  <div class="item-row" style="border-top: 1px solid var(--line); min-height: 38px">
+                    <span class="pending-check"></span>
+                    <span class="zone-item-name">酸奶 4 杯</span>
+                  </div>
+                </div>
+                <div class="zone-group">
+                  <div class="zone-group-head"><span class="zone-head-icon"><i data-lucide="shirt"></i></span><span>日用品区</span><span class="count">待购买</span></div>
+                  <div class="item-row" style="border-top: 1px solid var(--line); min-height: 38px">
+                    <span class="pending-check"></span>
+                    <span class="zone-item-name">洗衣液 1 桶</span>
+                  </div>
+                  <div class="item-row" style="border-top: 1px solid var(--line); min-height: 38px">
+                    <span class="pending-check"></span>
+                    <span class="zone-item-name">垃圾袋 3 卷</span>
+                  </div>
+                </div>
+                <div style="margin-top: 14px">
+                  <button class="btn primary" type="button"><i data-lucide="check-check"></i>完成本次购物</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Data Model & Validation</div>
+            <h2 class="section-title">数据模型与校验</h2>
+          </div>
+          <p class="section-note">清单、超市、区域、映射与路线分离，来源字段贯穿全部数据。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 18%">对象</th>
+                <th style="width: 32%">主要字段</th>
+                <th style="width: 24%">来源</th>
+                <th>校验规则</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>购物清单</strong></td>
+                <td>名称、商品、数量、来源</td>
+                <td>用户 / 菜谱导入</td>
+                <td>名称 1-20 字符；商品名 1-30 字符；数量必须为真实输入</td>
+              </tr>
+              <tr>
+                <td><strong>常去超市</strong></td>
+                <td>名称、地址、可选坐标、备注</td>
+                <td>用户</td>
+                <td>名称 1-30 字符；同一用户不可创建同名超市</td>
+              </tr>
+              <tr>
+                <td><strong>区域</strong></td>
+                <td>名称、区域类型、顺序</td>
+                <td>用户 / 门店官方</td>
+                <td>名称 1-12 字符；同店不可重名；顺序唯一</td>
+              </tr>
+              <tr>
+                <td><strong>商品归位</strong></td>
+                <td>商品名、区域类型、区域、来源</td>
+                <td>用户 / 已核实映射</td>
+                <td>系统建议必须有 source 和 reviewedAt；用户确认写入 confirmedAt</td>
+              </tr>
+              <tr>
+                <td><strong>路线</strong></td>
+                <td>清单快照、区域顺序快照、完整性</td>
+                <td>系统生成</td>
+                <td>不展示无来源距离和时间；未归位商品独立分组</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">States & Constraints</div>
+            <h2 class="section-title">状态与约束</h2>
+          </div>
+          <p class="section-note">空态、未归位、数据源失败与购物中断都明确处理。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 20%">状态</th>
+                <th>行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="tag off">空态</span></td><td>首次进入不出现任何预置商品、超市、区域或路线，只提供建立清单和添加超市。</td></tr>
+              <tr><td><span class="tag warn">需归位</span></td><td>未归位商品独立展示，路线完整性明确标注，不隐藏、不自动分配。</td></tr>
+              <tr><td><span class="tag on">可生成</span></td><td>清单、超市、区域顺序和已归位商品齐备时，一键生成路线。</td></tr>
+              <tr><td><span class="tag off">数据源失败</span></td><td>Open Food Facts 失败时只保留用户输入，不展示伪造元数据。</td></tr>
+              <tr><td><span class="tag on">购物中断</span></td><td>已打勾状态保存，下次进入继续，不重排路线。</td></tr>
+              <tr><td><span class="tag off">删除</span></td><td>删除超市或清空清单前二次确认；商品归位映射保留。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Design Principles</div>
+            <h2 class="section-title">方案要点</h2>
+          </div>
+          <p class="section-note">五条原则约束所有排序、归位与路线展示。</p>
+        </div>
+        <div class="principles">
+          <div class="principle">
+            <div class="principle-num">01</div>
+            <div class="principle-title">真实归位</div>
+            <div class="principle-desc">商品归位必须来自已核实映射或用户确认，系统不猜。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">02</div>
+            <div class="principle-title">门店真实</div>
+            <div class="principle-desc">区域名称和顺序按门店保存，通用区域类型只做翻译。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">03</div>
+            <div class="principle-title">不补数据</div>
+            <div class="principle-desc">条码、距离、时间、最短路径均不无中生有。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">04</div>
+            <div class="principle-title">可解释</div>
+            <div class="principle-desc">每个自动建议都显示来源、更新时间与确认入口。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">05</div>
+            <div class="principle-title">一期全量</div>
+            <div class="principle-desc">清单、导入、区域、归位、路线、购物和历史一次交付。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">06</div>
+            <div class="principle-title">购物不跳</div>
+            <div class="principle-desc">打勾不重排路线，已完成商品固定展示，减少干扰。</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        if (window.lucide) window.lucide.createIcons();
+      });
+    </script>
+  </body>
+</html>

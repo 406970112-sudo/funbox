@@ -50,6 +50,7 @@ import (
 	"my-first-expo-app/backend/internal/recommendation"
 	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/score"
+	"my-first-expo-app/backend/internal/shoppingroute"
 	"my-first-expo-app/backend/internal/sizelibrary"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/stockalert"
@@ -101,6 +102,8 @@ type Server struct {
 	scoreService              *score.Service
 	socialStore               *social.Store
 	sizeLibraryStore          *sizelibrary.Store
+	shoppingRouteStore        *shoppingroute.DB
+	shoppingRouteProvider     *shoppingroute.OpenFoodFactsProvider
 	stockAlertService         stockAlertService
 	timeCapsuleStore          *timecapsule.Store
 	translationService        *translation.Service
@@ -698,6 +701,12 @@ func newServer(
 	if err != nil {
 		log.Printf("open size library database failed: %v", err)
 	}
+	var shoppingRouteStore *shoppingroute.DB
+	shoppingRouteStore, err = shoppingroute.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open shopping route database failed: %v", err)
+	}
+	shoppingRouteProvider := shoppingroute.NewOpenFoodFactsProvider(nil)
 	var partyMemoryCardStore *partymemorycard.Store
 	partyMemoryCardStore, err = partymemorycard.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -767,6 +776,8 @@ func newServer(
 		scoreService:              scoreService,
 		socialStore:               socialStore,
 		sizeLibraryStore:          sizeLibraryStore,
+		shoppingRouteStore:        shoppingRouteStore,
+		shoppingRouteProvider:     shoppingRouteProvider,
 		stockAlertService:         stockAlertService,
 		timeCapsuleStore:          timeCapsuleStore,
 		translationService:        translationService,
@@ -820,6 +831,7 @@ func newServer(
 	registerProcrastinatorRoutes(mux, api)
 	registerTimeCapsuleRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
+	registerShoppingRouteRoutes(mux, api)
 	registerPartyMemoryCardRoutes(mux, api)
 	registerHomeManualRoutes(mux, api)
 	registerBorrowLedgerRoutes(mux, api)
@@ -942,6 +954,11 @@ func newServer(
 	if leftoverManagerStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = leftoverManagerStore.Close()
+		})
+	}
+	if shoppingRouteStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = shoppingRouteStore.Close()
 		})
 	}
 	if partyMemoryCardStore != nil {

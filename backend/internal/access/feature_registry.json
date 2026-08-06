@@ -491,6 +491,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "shopping-route",
+    "name": "购物路线",
+    "tagline": "按常去超市区域顺序一次买齐",
+    "description": "把真实购物清单按常去超市的真实区域顺序生成路线；商品、区域和归位关系都可溯源，未确认商品不会乱排。",
+    "icon": "routes",
+    "category": "生活",
+    "route": "/tools/shopping-route",
+    "accentColor": "#1d9c7c",
+    "badges": ["真实数据", "区域顺序", "菜谱导入"],
+    "keywords": ["购物", "超市", "购物清单", "区域", "路线", "蔬菜", "冷藏", "日用品", "菜谱"],
+    "usageLabel": "生成路线",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "quiet-home",
     "name": "安静到家",
     "tagline": "报平安，不追踪",
