@@ -379,6 +379,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "home-consumables",
+    "name": "家庭消耗品预测",
+    "tagline": "按真实使用速度预测补货时间",
+    "description": "记录家里常用物品的真实余量、购买和换新事件，用最近周期预测还能用几天，并自动生成补给清单与长期统计。",
+    "icon": "home-clock-outline",
+    "category": "生活",
+    "route": "/tools/home-consumables",
+    "accentColor": "#1db991",
+    "badges": ["真实数据", "智能补给", "长期周期"],
+    "keywords": ["消耗品", "补给", "洗衣液", "抽纸", "猫粮", "狗粮", "垃圾袋", "隐形眼镜", "净水器滤芯", "库存", "预测"],
+    "usageLabel": "开始预测",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "daily-luck-sign",
     "name": "今日运气签",
     "tagline": "真实数据的每日轻娱乐签",
