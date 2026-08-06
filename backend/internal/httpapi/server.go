@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
@@ -34,6 +35,7 @@ import (
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/plantid"
 	"my-first-expo-app/backend/internal/priceradar"
+	"my-first-expo-app/backend/internal/quiethome"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/recommendation"
@@ -71,6 +73,7 @@ type Server struct {
 	newsService               newsFeedService
 	plantIDService            *plantid.Service
 	priceRadarService         *priceradar.Service
+	quietHomeService          *quiethome.Service
 	readingService            *reading.Service
 	readingImporter           *reading.Importer
 	recommendationService     *recommendation.Service
@@ -631,6 +634,14 @@ func newServer(
 	if err != nil {
 		log.Printf("open size library database failed: %v", err)
 	}
+	realtimeHub := realtime.NewHub()
+	var quietHomeService *quiethome.Service
+	quietHomeStore, err := quiethome.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open quiet home database failed: %v", err)
+	} else {
+		quietHomeService = quiethome.NewService(quietHomeStore, socialStore, realtimeHub)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
@@ -643,7 +654,7 @@ func newServer(
 		focusStore:                focusStore,
 		homeRecommendationService: homeRecommendationService,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
-		realtimeHub:               realtime.NewHub(),
+		realtimeHub:               realtimeHub,
 		lotteryService:            lottery.NewService(cfg.Lottery),
 		lotteryLabService:         lotterylab.NewService(lotterylab.Config{}),
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
@@ -655,6 +666,7 @@ func newServer(
 		newsService:               newsService,
 		plantIDService:            plantIDService,
 		priceRadarService:         priceRadarService,
+		quietHomeService:          quietHomeService,
 		readingService:            readingService,
 		readingImporter:           readingImporter,
 		recommendationService:     recommendationService,
@@ -706,6 +718,7 @@ func newServer(
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
+	registerQuietHomeRoutes(mux, api)
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
@@ -754,6 +767,9 @@ func newServer(
 	handler := api.withGlobalMiddleware(mux)
 
 	monitorContext, monitorCancel := context.WithCancel(context.Background())
+	if quietHomeService != nil {
+		go quietHomeService.Run(monitorContext, 30*time.Second)
+	}
 	if stockAlertService != nil {
 		go stockAlertService.Run(monitorContext)
 	}
@@ -787,6 +803,11 @@ func newServer(
 	if sizeLibraryStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = sizeLibraryStore.Close()
+		})
+	}
+	if quietHomeStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = quietHomeStore.Close()
 		})
 	}
 	if plantIDStore != nil {

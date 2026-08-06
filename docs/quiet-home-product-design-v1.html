@@ -1,0 +1,1795 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 安静到家 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --canvas: #eef4ff;
+        --board: #e4ebf6;
+        --surface: #ffffff;
+        --surface-muted: #f3f6fb;
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e6ebff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --green: #1db991;
+        --green-soft: #e4f7ee;
+        --amber: #f1a33b;
+        --amber-soft: #fff2df;
+        --coral: #ff6b8f;
+        --coral-soft: #ffe9ef;
+        --teal: #2f9b8f;
+        --teal-soft: #e2f4f1;
+        --dark: #091126;
+        --white: #ffffff;
+        --shadow: 0 22px 46px rgba(58, 86, 152, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+        min-width: 1760px;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--board);
+        background-size: 32px 32px;
+        margin: 0 auto;
+        min-height: 2420px;
+        padding: 28px 34px 34px;
+        width: 1760px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 15px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .brand-mark i {
+        height: 24px;
+        stroke-width: 2.3;
+        width: 24px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--amber);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .data-note {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        color: #4d5a75;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 700;
+        gap: 9px;
+        margin-bottom: 18px;
+        padding: 10px 13px;
+      }
+
+      .data-note i {
+        color: var(--teal);
+        flex: 0 0 auto;
+        height: 15px;
+        width: 15px;
+      }
+
+      .overview {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 20px;
+      }
+
+      .overview-card {
+        align-items: flex-start;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 14px;
+        display: flex;
+        gap: 11px;
+        padding: 13px 15px;
+      }
+
+      .overview-card .oc-icon {
+        align-items: center;
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .overview-card .oc-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .overview-card .oc-icon.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .overview-card .oc-icon.amber {
+        background: var(--amber-soft);
+        color: #a96a14;
+      }
+
+      .overview-card .oc-icon i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .overview-card strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .overview-card p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .stage {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 320px repeat(3, 420px);
+        margin-bottom: 24px;
+      }
+
+      .strategy {
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .strategy h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 0 0 14px;
+      }
+
+      .strategy p {
+        color: var(--muted);
+        font-size: 10.5px;
+        line-height: 1.7;
+        margin: 0 0 14px;
+      }
+
+      .flow-item {
+        align-items: flex-start;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        padding: 11px 0;
+      }
+
+      .flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 8px;
+        color: var(--lime);
+        display: flex;
+        flex: 0 0 26px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .flow-item strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .flow-item span {
+        color: var(--muted);
+        display: block;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 3px;
+      }
+
+      .rule-box {
+        background: var(--teal-soft);
+        border-left: 3px solid var(--teal);
+        border-radius: 10px;
+        color: #185d55;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.7;
+        margin-top: 12px;
+        padding: 10px 11px;
+      }
+
+      .principle-list,
+      .scope-list {
+        display: grid;
+        gap: 9px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .principle-list li,
+      .scope-list li {
+        align-items: flex-start;
+        color: #4d5a75;
+        display: flex;
+        font-size: 10.5px;
+        gap: 8px;
+        line-height: 1.55;
+      }
+
+      .principle-list i,
+      .scope-list i {
+        color: var(--coral);
+        flex: 0 0 auto;
+        height: 14px;
+        margin-top: 2px;
+        width: 14px;
+      }
+
+      .scope-list i {
+        color: var(--teal);
+      }
+
+      .entry-chip {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 12px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        margin-top: 18px;
+        min-height: 42px;
+        padding: 9px 11px;
+      }
+
+      .entry-chip i {
+        height: 15px;
+        stroke-width: 2.4;
+        width: 15px;
+      }
+
+      .entry-chip span {
+        color: #8a80b8;
+        font-weight: 600;
+      }
+
+      .phone-wrap {
+        align-self: start;
+      }
+
+      .phone {
+        background: var(--dark);
+        border-radius: 38px;
+        box-shadow: var(--shadow);
+        height: 1000px;
+        padding: 10px;
+        position: relative;
+        width: 410px;
+      }
+
+      .phone-screen {
+        background: var(--surface-muted);
+        border-radius: 29px;
+        display: flex;
+        flex-direction: column;
+        height: 980px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-row {
+        align-items: center;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 22px;
+        position: relative;
+      }
+
+      .status-time {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .dynamic-island {
+        background: var(--dark);
+        border-radius: 14px;
+        height: 22px;
+        left: 50%;
+        position: absolute;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 92px;
+      }
+
+      .phone-label {
+        color: #64728e;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .phone-label b {
+        color: var(--ink);
+      }
+
+      .app-header {
+        align-items: center;
+        display: flex;
+        flex: 0 0 50px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+
+      .app-title {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .app-title .mark {
+        align-items: center;
+        background: var(--amber);
+        border-radius: 9px;
+        color: var(--white);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .app-title .mark i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .app-title strong {
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .app-actions {
+        align-items: center;
+        display: flex;
+        gap: 6px;
+      }
+
+      .icon-btn {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .icon-btn i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .icon-btn.plain {
+        background: transparent;
+        border-color: transparent;
+      }
+
+      .icon-btn.coral {
+        background: var(--coral-soft);
+        border-color: transparent;
+        color: var(--coral);
+      }
+
+      .icon-btn.teal {
+        background: var(--teal-soft);
+        border-color: transparent;
+        color: var(--teal);
+      }
+
+      .icon-btn.amber {
+        background: var(--amber-soft);
+        border-color: transparent;
+        color: #a96a14;
+      }
+
+      .bottom-nav {
+        align-items: center;
+        background: var(--surface);
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex: 0 0 62px;
+        justify-content: space-around;
+      }
+
+      .bottom-nav span {
+        align-items: center;
+        color: #8f9bbb;
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 3px;
+      }
+
+      .bottom-nav span.active {
+        color: var(--amber);
+      }
+
+      .bottom-nav i {
+        height: 17px;
+        width: 17px;
+      }
+
+      .screen-body {
+        flex: 1;
+        overflow: hidden;
+        padding: 0 16px;
+        position: relative;
+      }
+
+      .date-strip {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .date-main {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .date-main small {
+        color: var(--muted);
+        display: block;
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .date-chip {
+        background: var(--amber-soft);
+        border-radius: 999px;
+        color: #9a5b0f;
+        font-size: 8.5px;
+        font-weight: 900;
+        padding: 6px 9px;
+      }
+
+      .empty-card {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        padding: 28px 18px 24px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: var(--amber-soft);
+        border-radius: 16px;
+        color: #a96a14;
+        display: flex;
+        height: 58px;
+        justify-content: center;
+        margin-bottom: 13px;
+        width: 58px;
+      }
+
+      .empty-icon i {
+        height: 26px;
+        width: 26px;
+      }
+
+      .empty-card h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .empty-card p {
+        color: var(--muted);
+        font-size: 9px;
+        line-height: 1.7;
+        margin: 7px 0 0;
+      }
+
+      .privacy-strip {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+
+      .privacy-strip .strip-head {
+        align-items: center;
+        color: #4d5a75;
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 6px;
+        padding: 9px 10px 5px;
+      }
+
+      .privacy-strip .strip-head i {
+        color: var(--teal);
+        height: 12px;
+        width: 12px;
+      }
+
+      .mini-row {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        justify-content: space-between;
+        min-height: 29px;
+        padding: 4px 10px;
+      }
+
+      .mini-row span {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .mini-row strong {
+        font-size: 8.5px;
+        font-weight: 900;
+      }
+
+      .mini-row strong.off {
+        color: #9aa7c2;
+      }
+
+      .cta {
+        align-items: center;
+        border: 0;
+        border-radius: 11px;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        height: 40px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .cta i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .cta.dark {
+        background: var(--navy);
+        color: var(--lime);
+      }
+
+      .cta.teal {
+        background: var(--teal);
+        color: var(--white);
+      }
+
+      .cta.green {
+        background: var(--green);
+        color: var(--white);
+      }
+
+      .cta.ghost {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .cta.amber {
+        background: var(--amber);
+        color: var(--white);
+      }
+
+      .form-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .field {
+        border-top: 1px solid #edf1f8;
+        padding: 10px 11px;
+      }
+
+      .field:first-child {
+        border-top: 0;
+      }
+
+      .field label {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 800;
+        margin-bottom: 5px;
+      }
+
+      .field-input {
+        align-items: center;
+        background: var(--surface-muted);
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        display: flex;
+        height: 38px;
+        justify-content: space-between;
+        padding: 0 10px;
+      }
+
+      .field-input span {
+        color: #46526b;
+        font-size: 9.5px;
+        font-weight: 800;
+      }
+
+      .field-input span.placeholder {
+        color: #a3afc6;
+        font-weight: 600;
+      }
+
+      .field-input i {
+        color: var(--amber);
+        height: 14px;
+        width: 14px;
+      }
+
+      .field-hint {
+        color: #8a97b2;
+        display: block;
+        font-size: 7.5px;
+        font-weight: 700;
+        margin-top: 5px;
+      }
+
+      .contact-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 9px;
+        margin-top: 10px;
+        padding: 10px;
+      }
+
+      .contact-avatar {
+        align-items: center;
+        background: var(--amber-soft);
+        border-radius: 10px;
+        color: #a96a14;
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .contact-avatar i {
+        height: 16px;
+        width: 16px;
+      }
+
+      .contact-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .contact-copy strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .contact-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .status-pill {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 999px;
+        color: #1c5b3c;
+        display: flex;
+        font-size: 8px;
+        font-weight: 900;
+        gap: 4px;
+        padding: 5px 8px;
+      }
+
+      .status-pill.warn {
+        background: var(--amber-soft);
+        color: #9a5b0f;
+      }
+
+      .status-pill.neutral {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: #6b7892;
+      }
+
+      .status-pill i {
+        height: 10px;
+        width: 10px;
+      }
+
+      .route-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+
+      .route-main {
+        padding: 13px 13px 9px;
+      }
+
+      .route-stop {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        min-height: 26px;
+      }
+
+      .route-dot {
+        align-items: center;
+        color: var(--amber);
+        display: flex;
+        flex-direction: column;
+        flex: 0 0 14px;
+        gap: 3px;
+      }
+
+      .route-dot i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .route-line {
+        background: var(--line);
+        height: 14px;
+        margin-left: 6px;
+        width: 2px;
+      }
+
+      .route-stop strong {
+        font-size: 10.5px;
+        font-weight: 900;
+      }
+
+      .route-stop span {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .route-meta {
+        align-items: center;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 13px;
+      }
+
+      .route-meta span {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .route-meta strong {
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .eta-hero {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 18px;
+        color: var(--white);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-top: 10px;
+        padding: 18px 14px;
+        text-align: center;
+      }
+
+      .eta-hero .eta-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .eta-hero strong {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        margin-top: 3px;
+      }
+
+      .eta-hero span {
+        color: var(--lime);
+        font-size: 9px;
+        font-weight: 900;
+        margin-top: 6px;
+      }
+
+      .detect-chip {
+        align-items: center;
+        background: var(--teal-soft);
+        border-radius: 10px;
+        color: #185d55;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 6px;
+        margin-top: 9px;
+        padding: 8px 10px;
+      }
+
+      .detect-chip i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .action-stack {
+        display: grid;
+        gap: 7px;
+        margin-top: 10px;
+      }
+
+      .success-hero {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        padding: 22px 16px;
+        text-align: center;
+      }
+
+      .success-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 18px;
+        color: var(--green);
+        display: flex;
+        height: 62px;
+        justify-content: center;
+        width: 62px;
+      }
+
+      .success-icon i {
+        height: 28px;
+        width: 28px;
+      }
+
+      .success-hero h3 {
+        font-size: 15px;
+        font-weight: 900;
+        margin: 11px 0 0;
+      }
+
+      .success-hero p {
+        color: var(--muted);
+        font-size: 9px;
+        line-height: 1.6;
+        margin: 5px 0 0;
+      }
+
+      .fact-grid {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: repeat(3, 1fr);
+        margin-top: 10px;
+      }
+
+      .fact-tile {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 8px 7px;
+      }
+
+      .fact-tile span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 800;
+      }
+
+      .fact-tile strong {
+        display: block;
+        font-size: 11px;
+        font-weight: 900;
+        margin-top: 4px;
+      }
+
+      .sync-box {
+        margin-top: 10px;
+      }
+
+      .sync-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 9px;
+        margin-bottom: 7px;
+        padding: 10px;
+      }
+
+      .sync-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 32px;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .sync-icon.ghost {
+        background: var(--surface-muted);
+        color: #8a97b2;
+      }
+
+      .sync-icon i {
+        height: 14px;
+        width: 14px;
+      }
+
+      .sync-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .sync-copy strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .sync-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .warn-banner {
+        align-items: flex-start;
+        background: var(--amber-soft);
+        border-left: 3px solid var(--amber);
+        border-radius: 11px;
+        color: #7d4b0c;
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 800;
+        gap: 8px;
+        line-height: 1.55;
+        margin-bottom: 10px;
+        padding: 9px 10px;
+      }
+
+      .warn-banner i {
+        flex: 0 0 auto;
+        height: 14px;
+        margin-top: 1px;
+        width: 14px;
+      }
+
+      .timeline-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        padding: 11px;
+      }
+
+      .timeline-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .timeline-head strong {
+        align-items: center;
+        display: flex;
+        font-size: 10.5px;
+        font-weight: 900;
+        gap: 6px;
+      }
+
+      .timeline-head i {
+        color: var(--amber);
+        height: 14px;
+        width: 14px;
+      }
+
+      .timeline-head span {
+        color: var(--muted);
+        font-size: 7.5px;
+        font-weight: 800;
+      }
+
+      .timeline-step {
+        align-items: flex-start;
+        border-top: 1px solid #edf1f8;
+        display: flex;
+        gap: 9px;
+        padding: 8px 0;
+      }
+
+      .step-dot {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 50%;
+        color: var(--green);
+        display: flex;
+        flex: 0 0 20px;
+        height: 20px;
+        justify-content: center;
+        margin-top: 1px;
+        width: 20px;
+      }
+
+      .step-dot.pending {
+        background: var(--surface-muted);
+        color: #9aa7c2;
+      }
+
+      .step-dot.warn {
+        background: var(--amber-soft);
+        color: #a96a14;
+      }
+
+      .step-dot i {
+        height: 11px;
+        width: 11px;
+      }
+
+      .step-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .step-copy strong {
+        display: block;
+        font-size: 9.5px;
+        font-weight: 900;
+      }
+
+      .step-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 7.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .contact-status {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 9px;
+        margin-top: 10px;
+        padding: 10px;
+      }
+
+      .contact-status .contact-copy span.good {
+        color: var(--green);
+      }
+
+      .setting-row {
+        align-items: center;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 9px;
+        padding: 11px;
+      }
+
+      .setting-icon {
+        align-items: center;
+        background: var(--amber-soft);
+        border-radius: 10px;
+        color: #a96a14;
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .setting-icon.teal {
+        background: var(--teal-soft);
+        color: var(--teal);
+      }
+
+      .setting-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .setting-icon i {
+        height: 15px;
+        width: 15px;
+      }
+
+      .setting-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .setting-copy strong {
+        display: block;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .setting-copy span {
+        color: var(--muted);
+        display: block;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .switch {
+        align-items: center;
+        background: var(--line);
+        border-radius: 999px;
+        display: flex;
+        height: 20px;
+        justify-content: flex-end;
+        padding: 2px;
+        width: 34px;
+      }
+
+      .switch.on {
+        background: var(--green);
+      }
+
+      .switch i {
+        background: var(--white);
+        border-radius: 50%;
+        height: 16px;
+        width: 16px;
+      }
+
+      .privacy-note {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: #3d54b8;
+        display: flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 6px;
+        margin-top: 9px;
+        padding: 8px 10px;
+      }
+
+      .privacy-note i {
+        height: 12px;
+        width: 12px;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 13px 0 8px;
+      }
+
+      .section-head h3 {
+        font-size: 12px;
+        font-weight: 900;
+        margin: 0;
+      }
+
+      .section-head span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="home"></i></div>
+          <div>
+            <h1 class="brand-title">安静到家 · 产品设计</h1>
+            <p class="brand-subtitle">报平安，不追踪；真实输入，真实事件，一期交付</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>V1 完整一期</strong>
+          FunBox · 2026-08-06 · 待评审
+        </div>
+      </header>
+
+      <div class="data-note">
+        <i data-lucide="badge-check"></i>
+        手机画面为界面状态示意。正式产品首次进入为空态，不预置行程、联系人、历史或默认家；所有内容由用户真实输入和系统真实事件生成。
+      </div>
+
+      <section class="overview">
+        <div class="overview-card">
+          <div class="oc-icon"><i data-lucide="shield-check"></i></div>
+          <div>
+            <strong>报平安，不追踪</strong>
+            <p>默认不读取位置；只保存本次行程的用户输入与真实事件，行程结束即停止。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon amber"><i data-lucide="bell-ring"></i></div>
+          <div>
+            <strong>升级提醒</strong>
+            <p>到点提醒本人，宽限后按授权提醒联系人，每条通知展示真实发送状态。</p>
+          </div>
+        </div>
+        <div class="overview-card">
+          <div class="oc-icon coral"><i data-lucide="package-check"></i></div>
+          <div>
+            <strong>一期完整交付</strong>
+            <p>首页、创建、进行中、报平安、超时提醒、联系人与隐私一次做完。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>核心机制</h3>
+          <div class="flow-item">
+            <div class="flow-num">1</div>
+            <div><strong>用户主动创建</strong><span>出发地点、到达地点、预计到家时间全部来自真实输入。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">2</div>
+            <div><strong>到点提醒本人</strong><span>系统通知与应用内状态同时触达，不伪装发送成功。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">3</div>
+            <div><strong>宽限后提醒联系人</strong><span>仅提醒已同意接收的真实 FunBox 好友。</span></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-num">4</div>
+            <div><strong>报平安即结束</strong><span>写入真实到达时间，撤销未触发提醒，停止位置监听。</span></div>
+          </div>
+          <div class="rule-box">
+            默认不读取位置、不保存轨迹、不自动通知联系人。所有数据只来自真实用户操作与系统事件。
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:32</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="home"></i></div>
+                  <strong>安静到家</strong>
+                </div>
+                <div class="app-actions">
+                  <button class="icon-btn"><i data-lucide="history"></i></button>
+                  <button class="icon-btn amber"><i data-lucide="settings"></i></button>
+                </div>
+              </div>
+              <div class="screen-body">
+                <div class="date-strip">
+                  <div class="date-main">8月6日 周四<small>晚归报平安 · 今日暂无行程</small></div>
+                  <span class="date-chip">空状态</span>
+                </div>
+                <div class="empty-card">
+                  <div class="empty-icon"><i data-lucide="moon-star"></i></div>
+                  <h3>还没有到家行程</h3>
+                  <p>首次使用不会预置示例行程、联系人或历史记录。今晚需要报平安吗？</p>
+                </div>
+                <button class="cta dark" style="margin-top: 10px;"><i data-lucide="plus"></i>开始安心到家</button>
+                <div class="privacy-strip">
+                  <div class="strip-head"><i data-lucide="lock"></i>本次隐私状态</div>
+                  <div class="mini-row"><span>系统通知</span><strong class="off">未开启</strong></div>
+                  <div class="mini-row"><span>定位权限</span><strong class="off">未请求</strong></div>
+                  <div class="mini-row"><span>联系人授权</span><strong class="off">0 位已同意</strong></div>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>首页空态</b> · 无预置数据</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:32</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>创建行程</strong>
+                </div>
+                <button class="icon-btn"><i data-lucide="info"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="form-card">
+                  <div class="field">
+                    <label>出发地点</label>
+                    <div class="field-input">
+                      <span>用户输入的真实出发地点</span>
+                      <i data-lucide="locate-fixed"></i>
+                    </div>
+                    <span class="field-hint">点击“使用当前位置”只读取一次，不启动持续定位。</span>
+                  </div>
+                  <div class="field">
+                    <label>到达地点</label>
+                    <div class="field-input">
+                      <span class="placeholder">输入到达地点</span>
+                      <i data-lucide="chevron-down"></i>
+                    </div>
+                    <span class="field-hint">“我的家”首次使用为空，不预置默认家。</span>
+                  </div>
+                  <div class="field">
+                    <label>预计到家时间</label>
+                    <div class="field-input">
+                      <span class="placeholder">选择时间（必须晚于现在）</span>
+                      <i data-lucide="calendar-clock"></i>
+                    </div>
+                    <span class="field-hint">精确到分钟，创建后进入行程进行中。</span>
+                  </div>
+                </div>
+                <div class="contact-row">
+                  <div class="contact-avatar"><i data-lucide="user-plus"></i></div>
+                  <div class="contact-copy">
+                    <strong>升级提醒联系人</strong>
+                    <span>从真实 FunBox 好友中选择，对方需同意接收</span>
+                  </div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="contact-row">
+                  <div class="contact-avatar"><i data-lucide="timer"></i></div>
+                  <div class="contact-copy">
+                    <strong>宽限时间 30 分钟</strong>
+                    <span>超过预计时间 30 分钟后提醒联系人</span>
+                  </div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="privacy-note">
+                  <i data-lucide="lock"></i>
+                  默认不读取位置、不保存轨迹。位置能力需逐次开启。
+                </div>
+                <button class="cta dark" style="margin-top: 10px;"><i data-lucide="check"></i>开始本次行程</button>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>创建行程</b> · 真实输入</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:38</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <div class="mark"><i data-lucide="home"></i></div>
+                  <strong>本次行程</strong>
+                </div>
+                <span class="status-pill"><i data-lucide="shield-check"></i>等待报平安</span>
+              </div>
+              <div class="screen-body">
+                <div class="route-card">
+                  <div class="route-main">
+                    <div class="route-stop">
+                      <div class="route-dot"><i data-lucide="circle"></i></div>
+                      <div><strong>用户输入的出发地点</strong><span>本次出发地</span></div>
+                    </div>
+                    <div class="route-line"></div>
+                    <div class="route-stop">
+                      <div class="route-dot"><i data-lucide="map-pin"></i></div>
+                      <div><strong>用户设置的到家地点</strong><span>本次目的地</span></div>
+                    </div>
+                  </div>
+                  <div class="route-meta">
+                    <span>预计到家时间</span>
+                    <strong>今晚 23:20</strong>
+                  </div>
+                </div>
+                <div class="eta-hero">
+                  <span class="eta-label">距离预计到家时间</span>
+                  <strong>1 小时 42 分</strong>
+                  <span>到点会先提醒本人，请放心</span>
+                </div>
+                <div class="detect-chip">
+                  <i data-lucide="locate-fixed"></i>
+                  仅本次到达检测已开启 · 报平安或取消后自动停止
+                </div>
+                <button class="cta green" style="margin-top: 10px;"><i data-lucide="check"></i>我已到家</button>
+                <div class="action-stack">
+                  <button class="cta ghost"><i data-lucide="clock-3"></i>延后到家</button>
+                  <button class="cta ghost"><i data-lucide="x-circle"></i>取消行程</button>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>行程进行中</b> · 一键报平安</div>
+        </div>
+      </section>
+
+      <section class="stage">
+        <aside class="strategy">
+          <h3>真实数据与隐私</h3>
+          <ul class="scope-list">
+            <li><i data-lucide="badge-check"></i>首次进入无默认行程、联系人、历史或默认家。</li>
+            <li><i data-lucide="badge-check"></i>位置默认不读取，位置能力按次开启并自动失效。</li>
+            <li><i data-lucide="badge-check"></i>联系人必须为真实好友且双向授权，可随时撤回。</li>
+            <li><i data-lucide="badge-check"></i>每条通知展示真实发送状态，失败不伪装成功。</li>
+            <li><i data-lucide="badge-check"></i>历史与统计只来自用户真实创建并结束的行程。</li>
+            <li><i data-lucide="badge-check"></i>数据默认保留 30 天，可清除或缩短保留期。</li>
+          </ul>
+          <div class="entry-chip">
+            <i data-lucide="home"></i>
+            注册名 quiet-home · 路由 /tools/quiet-home
+            <span>一期</span>
+          </div>
+        </aside>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">23:06</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>到家报平安</strong>
+                </div>
+                <button class="icon-btn teal"><i data-lucide="badge-check"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="success-hero">
+                  <div class="success-icon"><i data-lucide="check-check"></i></div>
+                  <h3>已到家，平安</h3>
+                  <p>本次到达时间 23:06，比预计早 14 分钟。行程已结束。</p>
+                </div>
+                <div class="fact-grid">
+                  <div class="fact-tile"><span>预计时间</span><strong>23:20</strong></div>
+                  <div class="fact-tile"><span>到达时间</span><strong>23:06</strong></div>
+                  <div class="fact-tile"><span>晚归</span><strong>0 分钟</strong></div>
+                </div>
+                <div class="sync-box">
+                  <div class="section-head"><h3>同步给联系人</h3><span>真实事件</span></div>
+                  <div class="sync-row">
+                    <div class="sync-icon"><i data-lucide="send"></i></div>
+                    <div class="sync-copy"><strong>告诉联系人我到了</strong><span>只发送“已安全到家”事件</span></div>
+                    <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                  </div>
+                  <div class="sync-row">
+                    <div class="sync-icon ghost"><i data-lucide="bell-off"></i></div>
+                    <div class="sync-copy"><strong>不通知</strong><span>仅保留本次真实记录</span></div>
+                    <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                  </div>
+                </div>
+                <div class="privacy-note">
+                  <i data-lucide="lock"></i>
+                  行程已结束，位置监听已停止，未发送的提醒已自动撤销。
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>报平安完成</b> · 真实到达时间</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">23:35</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>超时提醒</strong>
+                </div>
+                <span class="status-pill warn"><i data-lucide="alert-triangle"></i>超过预计时间</span>
+              </div>
+              <div class="screen-body">
+                <div class="warn-banner">
+                  <i data-lucide="alert-triangle"></i>
+                  已超过预计到家时间 15 分钟。本人提醒已发送，联系人提醒将在 30 分钟后触发。
+                </div>
+                <div class="timeline-card">
+                  <div class="timeline-head"><strong><i data-lucide="bell-ring"></i>提醒时间线</strong><span>真实事件</span></div>
+                  <div class="timeline-step">
+                    <div class="step-dot"><i data-lucide="check"></i></div>
+                    <div class="step-copy"><strong>23:20 提醒本人</strong><span>系统通知已发送</span></div>
+                  </div>
+                  <div class="timeline-step">
+                    <div class="step-dot warn"><i data-lucide="bell"></i></div>
+                    <div class="step-copy"><strong>23:35 再次提醒本人</strong><span>应用内状态已展示</span></div>
+                  </div>
+                  <div class="timeline-step">
+                    <div class="step-dot pending"><i data-lucide="clock"></i></div>
+                    <div class="step-copy"><strong>23:50 提醒联系人</strong><span>等待触发，联系人已同意</span></div>
+                  </div>
+                </div>
+                <div class="contact-status">
+                  <div class="contact-avatar"><i data-lucide="user-check"></i></div>
+                  <div class="contact-copy">
+                    <strong>指定联系人</strong>
+                    <span class="good">已同意接收 · 默认不含位置</span>
+                  </div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <button class="cta green" style="margin-top: 10px;"><i data-lucide="check"></i>我已到家</button>
+                <div class="action-stack">
+                  <button class="cta ghost"><i data-lucide="clock-3"></i>延后 30 分钟</button>
+                  <button class="cta ghost"><i data-lucide="x-circle"></i>取消行程</button>
+                </div>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>超时提醒</b> · 升级时间线</div>
+        </div>
+
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="status-row">
+                <span class="status-time">21:40</span>
+                <span class="dynamic-island"></span>
+                <div class="status-icons">
+                  <i data-lucide="signal"></i>
+                  <i data-lucide="wifi"></i>
+                  <i data-lucide="battery-full"></i>
+                </div>
+              </div>
+              <div class="app-header">
+                <div class="app-title">
+                  <button class="icon-btn plain"><i data-lucide="arrow-left"></i></button>
+                  <strong>联系人与隐私</strong>
+                </div>
+                <button class="icon-btn amber"><i data-lucide="settings"></i></button>
+              </div>
+              <div class="screen-body">
+                <div class="setting-row">
+                  <div class="setting-icon"><i data-lucide="bell"></i></div>
+                  <div class="setting-copy"><strong>系统通知</strong><span>当前未开启，到点提醒可能错过</span></div>
+                  <div class="switch"><i></i></div>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-icon teal"><i data-lucide="map-pin"></i></div>
+                  <div class="setting-copy"><strong>定位权限</strong><span>仅本次到达检测 · 当前未使用</span></div>
+                  <div class="switch"><i></i></div>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-icon blue"><i data-lucide="users"></i></div>
+                  <div class="setting-copy"><strong>指定联系人</strong><span>0 位已同意 · 真实 FunBox 好友</span></div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-icon"><i data-lucide="database"></i></div>
+                  <div class="setting-copy"><strong>数据保留</strong><span>行程与事件默认保留 30 天</span></div>
+                  <button class="icon-btn"><i data-lucide="chevron-right"></i></button>
+                </div>
+                <div class="privacy-note">
+                  <i data-lucide="lock"></i>
+                  默认不保存轨迹；位置事件可查看、可清除，联系人授权可撤回。
+                </div>
+                <button class="cta ghost" style="margin-top: 10px;"><i data-lucide="history"></i>查看真实历史记录</button>
+              </div>
+              <nav class="bottom-nav">
+                <span><i data-lucide="house"></i>首页</span>
+                <span class="active"><i data-lucide="layout-grid"></i>工具</span>
+                <span><i data-lucide="user"></i>我的</span>
+              </nav>
+            </div>
+          </div>
+          <div class="phone-label"><b>联系人与隐私</b> · 真实授权状态</div>
+        </div>
+      </section>
+    </main>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
