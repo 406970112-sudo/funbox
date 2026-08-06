@@ -53,6 +53,7 @@ import (
 	"my-first-expo-app/backend/internal/timecapsule"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
+	"my-first-expo-app/backend/internal/whereisit"
 	"my-first-expo-app/backend/internal/whodoesit"
 )
 
@@ -99,6 +100,7 @@ type Server struct {
 	translationService        *translation.Service
 	ttsService                *tts.Service
 	whoDoesItStore            *whodoesit.Store
+	whereIsItStore            *whereisit.Store
 }
 
 func NewServer(
@@ -650,6 +652,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open who does it database failed: %v", err)
 	}
+	var whereIsItStore *whereisit.Store
+	whereIsItStore, err = whereisit.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open where is it database failed: %v", err)
+	}
 	var procrastinatorStore *procrastinator.Store
 	procrastinatorStore, err = procrastinator.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -741,6 +748,7 @@ func newServer(
 		translationService:        translationService,
 		ttsService:                ttsService,
 		whoDoesItStore:            whoDoesItStore,
+		whereIsItStore:            whereIsItStore,
 	}
 
 	mux := http.NewServeMux()
@@ -782,6 +790,7 @@ func newServer(
 	registerGoOutChecklistRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
+	registerWhereIsItRoutes(mux, api)
 	registerProcrastinatorRoutes(mux, api)
 	registerTimeCapsuleRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
@@ -845,6 +854,11 @@ func newServer(
 	}
 	if dnfActivitySvc != nil {
 		go dnfActivitySvc.Run(monitorContext)
+	}
+	if whereIsItStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = whereIsItStore.Close()
+		})
 	}
 	if timeCapsuleStore != nil {
 		go timeCapsuleStore.OpenDueLoop(monitorContext, time.Minute)

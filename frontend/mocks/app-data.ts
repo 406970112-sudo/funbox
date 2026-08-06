@@ -19,7 +19,26 @@ export const featuredBanner = {
 };
 
 const registeredFeatures = featureRegistry as RegisteredTool[];
-const registeredTools = registeredFeatures.filter((entry) => entry.route.startsWith('/tools/'));
+const whereIsItTool: RegisteredTool = {
+  id: 'where-is-it',
+  name: '物品在哪里',
+  tagline: '记录不常用物品的真实位置',
+  description: '记录物品名称、房间、具体位置与真实照片，支持搜索、房间分类、移动历史、确认在与导出备份。',
+  icon: 'map-marker-radius-outline',
+  category: '生活',
+  route: '/tools/where-is-it',
+  accentColor: '#4b6bff',
+  badges: ['真实数据', '拍照存档', '位置历史'],
+  keywords: ['物品在哪里', '物品位置', '备用钥匙', '保修卡', '螺丝刀', '旧手机', '位置记录', '房间分类', '找东西'],
+  usageLabel: '记录位置',
+  status: 'available',
+  featured: true,
+  initialRoles: ['normal', 'vip', 'svip', 'admin'],
+};
+const registeredTools = [
+  ...registeredFeatures.filter((entry) => entry.route.startsWith('/tools/') && entry.id !== 'where-is-it'),
+  whereIsItTool,
+];
 
 export const appTools: AppTool[] = registeredTools.map(({ initialRoles: _initialRoles, ...tool }) => tool);
 
