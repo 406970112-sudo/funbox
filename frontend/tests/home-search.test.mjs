@@ -156,6 +156,26 @@ test('real registry matches size library search keywords', () => {
   }
 });
 
+test('real registry matches borrow ledger search keywords', () => {
+  const realTools = featureRegistry.filter(
+    (entry) =>
+      entry.route.startsWith('/tools/') &&
+      entry.status === 'available' &&
+      !entry.hiddenFromList,
+  );
+  const realGames = featureRegistry.filter(
+    (entry) => entry.route.startsWith('/games/') && entry.status === 'playable',
+  );
+  for (const query of ['借还', '借出', '借入', '归还', '垫付', '还钱']) {
+    const result = searchHomeEntries(realTools, realGames, query);
+    assert.equal(
+      result.some((entry) => entry.id === 'borrow-ledger'),
+      true,
+      `${query} 应命中 borrow-ledger`,
+    );
+  }
+});
+
 test('mixes tools and games and keeps match rank stable', () => {
   const result = searchHomeEntries(tools, games, '棋');
   assert.deepEqual(

@@ -16,6 +16,7 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/blog"
+	"my-first-expo-app/backend/internal/borrowledger"
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/cookingguide"
 	"my-first-expo-app/backend/internal/cooling"
@@ -51,6 +52,7 @@ type Server struct {
 	accessStore               *access.Store
 	authService               *auth.Service
 	blogService               *blog.Service
+	borrowLedgerStore         *borrowledger.Store
 	cfg                       config.Config
 	coolingStore              *cooling.Store
 	cookingGuideService       *cookingguide.Service
@@ -631,10 +633,16 @@ func newServer(
 	if err != nil {
 		log.Printf("open size library database failed: %v", err)
 	}
+	var borrowLedgerStore *borrowledger.Store
+	borrowLedgerStore, err = borrowledger.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open borrow ledger database failed: %v", err)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
 		blogService:               blogService,
+		borrowLedgerStore:         borrowLedgerStore,
 		cfg:                       cfg,
 		coolingStore:              coolingStore,
 		cookingGuideService:       cookingGuideService,
@@ -706,6 +714,7 @@ func newServer(
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
+	registerBorrowLedgerRoutes(mux, api)
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
@@ -787,6 +796,11 @@ func newServer(
 	if sizeLibraryStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = sizeLibraryStore.Close()
+		})
+	}
+	if borrowLedgerStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = borrowLedgerStore.Close()
 		})
 	}
 	if plantIDStore != nil {

@@ -411,6 +411,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "borrow-ledger",
+    "name": "借还记录",
+    "tagline": "谁借了我什么，一记就懂",
+    "description": "记录借出物品、借出金额、会员账号、公司领用与垫付费用，支持真实好友选择和轻松提醒卡",
+    "icon": "repeat",
+    "category": "生活",
+    "route": "/tools/borrow-ledger",
+    "accentColor": "#18a78f",
+    "badges": ["真实记录", "好友选择", "轻松提醒"],
+    "keywords": ["借还", "借出", "借入", "归还", "充电器", "书", "会员账号", "公司领用", "垫付", "借款", "还钱", "借东西"],
+    "usageLabel": "记一笔",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "snake-brawl",
     "name": "贪吃蛇大作战",
     "tagline": "经典、无尽、闯关三种模式",
