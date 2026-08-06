@@ -136,6 +136,26 @@ test('matches tool keywords with fuzzy terms like 大转盘 and 抽奖', () => {
   }
 });
 
+test('real registry matches size library search keywords', () => {
+  const realTools = featureRegistry.filter(
+    (entry) =>
+      entry.route.startsWith('/tools/') &&
+      entry.status === 'available' &&
+      !entry.hiddenFromList,
+  );
+  const realGames = featureRegistry.filter(
+    (entry) => entry.route.startsWith('/games/') && entry.status === 'playable',
+  );
+  for (const query of ['尺寸库', '身高', '鞋码', '腰围', '窗帘', '书桌']) {
+    const result = searchHomeEntries(realTools, realGames, query);
+    assert.equal(
+      result.some((entry) => entry.id === 'size-library'),
+      true,
+      `${query} 应命中 size-library`,
+    );
+  }
+});
+
 test('mixes tools and games and keeps match rank stable', () => {
   const result = searchHomeEntries(tools, games, '棋');
   assert.deepEqual(

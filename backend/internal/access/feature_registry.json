@@ -379,6 +379,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "size-library",
+    "name": "我的尺寸库",
+    "tagline": "家人尺寸与家居尺寸一站记录",
+    "description": "记录家人身高、体重、鞋码、腰围、戒指号，以及房间、书桌、窗帘尺寸，网购与装修时一键核对",
+    "icon": "tape-measure",
+    "category": "生活",
+    "route": "/tools/size-library",
+    "accentColor": "#18a78f",
+    "badges": ["真实数据", "家庭共享"],
+    "keywords": ["尺寸库", "身高", "体重", "鞋码", "衣服尺码", "腰围", "戒指", "房间", "书桌", "窗帘", "装修", "代买"],
+    "usageLabel": "查看尺寸库",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "snake-brawl",
     "name": "贪吃蛇大作战",
     "tagline": "经典、无尽、闯关三种模式",

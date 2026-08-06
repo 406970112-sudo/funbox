@@ -38,6 +38,7 @@ import (
 	"my-first-expo-app/backend/internal/recommendation"
 	"my-first-expo-app/backend/internal/resourcesearch"
 	"my-first-expo-app/backend/internal/score"
+	"my-first-expo-app/backend/internal/sizelibrary"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/stockalert"
 	"my-first-expo-app/backend/internal/translation"
@@ -74,6 +75,7 @@ type Server struct {
 	resourceSearchService     resourceSearchService
 	scoreService              *score.Service
 	socialStore               *social.Store
+	sizeLibraryStore          *sizelibrary.Store
 	stockAlertService         stockAlertService
 	translationService        *translation.Service
 	ttsService                *tts.Service
@@ -617,6 +619,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open who does it database failed: %v", err)
 	}
+	var sizeLibraryStore *sizelibrary.Store
+	sizeLibraryStore, err = sizelibrary.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open size library database failed: %v", err)
+	}
 	api := &Server{
 		accessStore:               accessStore,
 		authService:               authService,
@@ -646,6 +653,7 @@ func newServer(
 		resourceSearchService:     resourcesearch.NewService(cfg.ResourceSearch, resourceSearchStore),
 		scoreService:              scoreService,
 		socialStore:               socialStore,
+		sizeLibraryStore:          sizeLibraryStore,
 		stockAlertService:         stockAlertService,
 		translationService:        translationService,
 		ttsService:                ttsService,
@@ -688,6 +696,7 @@ func newServer(
 	registerDiaryRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
+	registerSizeLibraryRoutes(mux, api)
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
@@ -756,6 +765,11 @@ func newServer(
 	if whoDoesItStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = whoDoesItStore.Close()
+		})
+	}
+	if sizeLibraryStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = sizeLibraryStore.Close()
 		})
 	}
 	if plantIDStore != nil {

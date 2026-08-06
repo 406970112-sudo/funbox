@@ -1,0 +1,1946 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 我的尺寸库 - 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce4f2;
+        --line-strong: #cdd8ea;
+        --canvas: #edf2fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --primary: #4568f2;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --teal: #18a78f;
+        --teal-dark: #0e806d;
+        --teal-soft: #e2f6f1;
+        --gold: #e8a33d;
+        --rose: #e8667a;
+        --gray: #7483a2;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        margin: 0 auto;
+        max-width: 1560px;
+        padding: 36px 24px 54px;
+        width: min(1560px, calc(100vw - 24px));
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 24px;
+        width: 24px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .section {
+        background: var(--surface);
+        border: 1px solid rgba(205, 216, 234, 0.82);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        margin: 0 0 22px;
+        padding: 24px 26px 26px;
+      }
+
+      .section-head {
+        align-items: baseline;
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .section-kicker {
+        color: var(--primary);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin: 5px 0 0;
+      }
+
+      .section-note {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        max-width: 620px;
+        text-align: right;
+      }
+
+      .tokens {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .token-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .token-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .token-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .token-icon svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .token-name {
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .token-desc {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 18px;
+      }
+
+      .rules {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .rule {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        min-width: 0;
+        padding: 12px;
+      }
+
+      .rule-num {
+        align-items: center;
+        background: var(--teal-soft);
+        border-radius: 9px;
+        color: var(--teal-dark);
+        display: flex;
+        flex: 0 0 30px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        height: 30px;
+        justify-content: center;
+      }
+
+      .rule-text {
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      .flow {
+        align-items: stretch;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+
+      .flow-node {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-height: 76px;
+        padding: 12px;
+      }
+
+      .flow-node .flow-icon {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--teal);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .flow-node .flow-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .flow-node .flow-name {
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 9px;
+      }
+
+      .flow-node .flow-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 4px;
+      }
+
+      .flow-arrow {
+        align-items: center;
+        color: #b7c2d6;
+        display: flex;
+        justify-content: center;
+      }
+
+      .flow-arrow svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .phones {
+        display: grid;
+        gap: 22px 20px;
+        grid-template-columns: repeat(3, 312px);
+        justify-content: center;
+        margin-top: 4px;
+      }
+
+      .phone-wrap {
+        width: 312px;
+      }
+
+      .phone-label {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding-top: 13px;
+      }
+
+      .phone-label .dot {
+        border-radius: 50%;
+        height: 8px;
+        width: 8px;
+      }
+
+      .phone-label span {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #f4f7fd;
+        border: 1px solid #c8d4e8;
+        border-radius: 42px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.22);
+        height: 880px;
+        overflow: hidden;
+        position: relative;
+        width: 312px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 42px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        padding: 10px 16px 0;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        color: #18233d;
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 0 5px;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        min-height: 46px;
+        padding: 4px 2px 8px;
+      }
+
+      .topbar-title {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .topbar-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .topbar-action {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .topbar-action svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .brand-mark-mini {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 32px;
+        padding: 0 9px;
+      }
+
+      .brand-mark-mini svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #151b3b, #1c4d4b 88%, #1d6659);
+        border-radius: 18px;
+        color: #ffffff;
+        padding: 18px 16px 16px;
+        position: relative;
+      }
+
+      .hero .hero-icon {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.14);
+        border: 1px solid rgba(201, 243, 106, 0.28);
+        border-radius: 12px;
+        color: var(--lime);
+        display: flex;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .hero .hero-icon svg {
+        height: 21px;
+        width: 21px;
+      }
+
+      .hero-title {
+        font-size: 19px;
+        font-weight: 900;
+        margin-top: 14px;
+      }
+
+      .hero-sub {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 5px;
+      }
+
+      .hero-meta {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .hero-meta-item {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        font-size: 9px;
+        font-weight: 700;
+        min-height: 28px;
+        padding: 6px 9px;
+      }
+
+      .quick-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 12px;
+      }
+
+      .quick-item {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 7px;
+        min-height: 58px;
+        justify-content: center;
+      }
+
+      .quick-item .quick-icon {
+        align-items: center;
+        border-radius: 8px;
+        color: var(--teal-dark);
+        display: flex;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .quick-item .quick-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .panel {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px 10px;
+      }
+
+      .panel-title {
+        align-items: center;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+        min-height: 36px;
+      }
+
+      .panel-title .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .profile-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 54px;
+      }
+
+      .avatar {
+        align-items: center;
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 34px;
+        font-size: 12px;
+        font-weight: 900;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .profile-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .profile-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .profile-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .row-arrow {
+        color: #b7c2d6;
+      }
+
+      .row-arrow svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .empty-hero {
+        align-items: center;
+        background: #ffffff;
+        border: 1px dashed #c9d5ea;
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        margin-top: 22px;
+        padding: 38px 20px 30px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: var(--teal-soft);
+        border-radius: 50%;
+        color: var(--teal-dark);
+        display: flex;
+        height: 72px;
+        justify-content: center;
+        width: 72px;
+      }
+
+      .empty-icon svg {
+        height: 32px;
+        width: 32px;
+      }
+
+      .empty-title {
+        font-size: 15px;
+        font-weight: 900;
+        margin-top: 18px;
+      }
+
+      .empty-sub {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 18px;
+        margin-top: 8px;
+        max-width: 230px;
+      }
+
+      .empty-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .btn {
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 7px;
+        height: 44px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .btn svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .btn.primary {
+        background: var(--teal);
+        color: #ffffff;
+      }
+
+      .btn.ghost {
+        background: var(--soft);
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .btn.navy {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .btn.light {
+        background: #ffffff;
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .empty-note {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 5px;
+        margin-top: 18px;
+      }
+
+      .empty-note svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .person-hero {
+        align-items: center;
+        background: linear-gradient(135deg, #f0f7ff, #e4f7f2);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        display: flex;
+        gap: 12px;
+        padding: 14px;
+      }
+
+      .person-hero .avatar {
+        flex-basis: 48px;
+        height: 48px;
+        width: 48px;
+        font-size: 16px;
+      }
+
+      .person-hero .profile-name {
+        font-size: 14px;
+      }
+
+      .dim-group {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        overflow: hidden;
+        padding: 4px 12px 8px;
+      }
+
+      .dim-group-title {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        justify-content: space-between;
+        min-height: 34px;
+      }
+
+      .dim-group-title .dim-icon {
+        color: var(--teal-dark);
+      }
+
+      .dim-group-title .dim-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .dim-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 8px;
+        min-height: 42px;
+      }
+
+      .dim-label {
+        color: var(--muted);
+        flex: 1;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .dim-value {
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .dim-unit {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .dim-edit {
+        color: #b7c2d6;
+      }
+
+      .dim-edit svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .dim-note-row {
+        align-items: center;
+        background: #f8fafd;
+        border-radius: 9px;
+        color: var(--muted);
+        display: flex;
+        font-size: 8px;
+        font-weight: 600;
+        gap: 6px;
+        margin: 8px 0 2px;
+        min-height: 30px;
+        padding: 0 9px;
+      }
+
+      .dim-note-row svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .action-row {
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 1.2fr 1fr;
+        margin-top: 14px;
+      }
+
+      .segmented {
+        background: #e8eef8;
+        border-radius: 12px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        padding: 3px;
+      }
+
+      .seg-btn {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 9px;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        height: 34px;
+        justify-content: center;
+      }
+
+      .seg-btn svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .seg-btn.active {
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(45, 64, 105, 0.1);
+        color: var(--teal-dark);
+      }
+
+      .form-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 12px;
+      }
+
+      .field {
+        margin-top: 12px;
+      }
+
+      .field:first-child {
+        margin-top: 0;
+      }
+
+      .field-label {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .input-row {
+        align-items: center;
+        display: flex;
+        gap: 7px;
+      }
+
+      .input {
+        background: #f6f8fc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        flex: 1;
+        font-size: 12px;
+        font-weight: 700;
+        height: 42px;
+        min-width: 0;
+        outline: none;
+        padding: 0 11px;
+        width: 100%;
+      }
+
+      .input::placeholder {
+        color: #a9b5ca;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .unit-label {
+        color: var(--muted);
+        flex: 0 0 26px;
+        font-size: 9px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .form-hint {
+        color: var(--faint);
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 14px;
+        margin-top: 6px;
+      }
+
+      .textarea {
+        background: #f6f8fc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 600;
+        min-height: 64px;
+        outline: none;
+        padding: 10px 11px;
+        resize: none;
+        width: 100%;
+      }
+
+      .textarea::placeholder {
+        color: #a9b5ca;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .form-footer {
+        margin-top: 14px;
+      }
+
+      .chips {
+        display: flex;
+        gap: 7px;
+        margin-top: 6px;
+      }
+
+      .chip {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        height: 30px;
+        padding: 0 10px;
+      }
+
+      .chip svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .chip.active {
+        background: var(--teal-soft);
+        border-color: #9edbcb;
+        color: var(--teal-dark);
+      }
+
+      .selector-row {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 9px;
+        margin-top: 12px;
+        min-height: 50px;
+        padding: 0 11px;
+      }
+
+      .selector-row .avatar {
+        flex-basis: 30px;
+        height: 30px;
+        width: 30px;
+        font-size: 10px;
+      }
+
+      .selector-row .profile-name {
+        font-size: 10px;
+      }
+
+      .check-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        margin-top: 12px;
+        overflow: hidden;
+        padding: 4px 13px 10px;
+      }
+
+      .check-head {
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 48px;
+      }
+
+      .check-head-icon {
+        align-items: center;
+        background: var(--teal-soft);
+        border-radius: 10px;
+        color: var(--teal-dark);
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .check-head-icon svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .check-title {
+        flex: 1;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .check-sub {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .check-row {
+        align-items: center;
+        border-bottom: 1px solid #eef2f8;
+        display: flex;
+        gap: 8px;
+        min-height: 38px;
+      }
+
+      .check-row:last-child {
+        border-bottom: 0;
+      }
+
+      .check-label {
+        color: var(--muted);
+        flex: 1;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .check-value {
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .check-value.missing {
+        color: var(--faint);
+        font-weight: 600;
+      }
+
+      .check-unit {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .copy-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .copy-head {
+        align-items: center;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+      }
+
+      .copy-head .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .copy-text {
+        background: #f6f8fc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 10px;
+        padding: 10px;
+        white-space: pre-wrap;
+      }
+
+      .space-tabs {
+        background: #e8eef8;
+        border-radius: 12px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 12px;
+        padding: 3px;
+      }
+
+      .space-tab {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 9px;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+        height: 34px;
+        justify-content: center;
+      }
+
+      .space-tab svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .space-tab.active {
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(45, 64, 105, 0.1);
+        color: var(--teal-dark);
+      }
+
+      .space-hero {
+        align-items: center;
+        background: linear-gradient(135deg, #f0f7ff, #e4f7f2);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        display: flex;
+        gap: 12px;
+        margin-top: 14px;
+        padding: 14px;
+      }
+
+      .space-icon {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: var(--teal-dark);
+        display: flex;
+        height: 44px;
+        justify-content: center;
+        width: 44px;
+      }
+
+      .space-icon svg {
+        height: 21px;
+        width: 21px;
+      }
+
+      .measure-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 12px;
+      }
+
+      .measure-cell {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        min-height: 58px;
+        padding: 9px 10px;
+      }
+
+      .measure-label {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+      }
+
+      .measure-value {
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        margin-top: 5px;
+      }
+
+      .measure-unit {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        margin-left: 2px;
+      }
+
+      .matrix {
+        overflow: hidden;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        font-size: 11px;
+        padding: 11px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      td {
+        color: var(--ink);
+        font-weight: 600;
+        line-height: 18px;
+      }
+
+      td strong {
+        font-weight: 800;
+      }
+
+      .tag {
+        border-radius: 7px;
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 4px 8px;
+      }
+
+      .tag.on {
+        background: var(--teal-soft);
+        color: var(--teal-dark);
+      }
+
+      .tag.off {
+        background: #eef1f6;
+        color: var(--gray);
+      }
+
+      .tag.warn {
+        background: #fff3df;
+        color: #b56f12;
+      }
+
+      .principles {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .principle {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .principle-num {
+        color: var(--teal);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .principle-title {
+        font-size: 12px;
+        font-weight: 900;
+        margin-top: 9px;
+      }
+
+      .principle-desc {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 17px;
+        margin-top: 7px;
+      }
+
+      .footnote {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        margin: 6px 0 0;
+        text-align: center;
+      }
+
+      .demo-note {
+        align-items: center;
+        background: #fff9ed;
+        border: 1px solid #f1d8a8;
+        border-radius: 11px;
+        color: #8a6419;
+        display: flex;
+        font-size: 10px;
+        font-weight: 700;
+        gap: 7px;
+        line-height: 17px;
+        margin-bottom: 16px;
+        padding: 10px 12px;
+      }
+
+      .demo-note svg {
+        flex: 0 0 auto;
+        height: 15px;
+        width: 15px;
+      }
+
+      @media (max-width: 1080px) {
+        .phones {
+          grid-template-columns: repeat(2, 312px);
+        }
+
+        .tokens,
+        .rules,
+        .principles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .flow {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 700px) {
+        .board {
+          padding: 20px 14px 36px;
+          width: calc(100vw - 20px);
+        }
+
+        .board-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .phones {
+          grid-template-columns: 312px;
+        }
+
+        .tokens,
+        .rules,
+        .principles {
+          grid-template-columns: 1fr;
+        }
+
+        .flow {
+          grid-template-columns: 1fr;
+        }
+
+        .section {
+          padding: 18px 16px 20px;
+        }
+
+        .section-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .section-note {
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="box"></i></div>
+          <div>
+            <h1 class="board-title">我的尺寸库 产品设计 V1</h1>
+            <p class="board-subtitle">家庭成员身体尺寸、衣物鞋饰与家居空间，一套真实尺寸库</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          完整一期
+          <strong>2026-08-06</strong>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Product Overview</div>
+            <h2 class="section-title">定位：把真实尺寸收进一个随时可查的地方</h2>
+          </div>
+          <p class="section-note">网购、装修、代买和软装时，不再翻聊天记录，也不再靠记忆。</p>
+        </div>
+        <div class="tokens">
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: var(--teal-soft); color: var(--teal-dark)">
+                <i data-lucide="shield-check"></i>
+              </div>
+              <div class="token-name">真实优先</div>
+            </div>
+            <div class="token-desc">首启为空，只保存用户真实录入的数据；不做尺码推算，不预置示例成员和空间。</div>
+          </div>
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #e8edff; color: var(--primary)">
+                <i data-lucide="package-check"></i>
+              </div>
+              <div class="token-name">一期完整</div>
+            </div>
+            <div class="token-desc">家人、房间、书桌、窗帘、购买核对、本机存储与账号同步全部在本期完成。</div>
+          </div>
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #fff1e4; color: #d9822b">
+                <i data-lucide="shopping-bag"></i>
+              </div>
+              <div class="token-name">场景直达</div>
+            </div>
+            <div class="token-desc">买衣服、买鞋、买戒指、买书桌、买窗帘、房间软装，一键生成真实尺寸核对卡。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Real Data Principles</div>
+            <h2 class="section-title">真实数据原则：硬性要求</h2>
+          </div>
+          <p class="section-note">以下每一条都会进入验收标准，任何环节都不允许预置假数据。</p>
+        </div>
+        <div class="rules">
+          <div class="rule"><div class="rule-num">01</div><div class="rule-text">首次进入为空态，不展示任何预置成员、尺寸或空间。</div></div>
+          <div class="rule"><div class="rule-num">02</div><div class="rule-text">每个成员都是用户真实输入的称呼，不内置示例姓名。</div></div>
+          <div class="rule"><div class="rule-num">03</div><div class="rule-text">尺寸值必须真实测量或确认，不根据身高体重自动推算尺码。</div></div>
+          <div class="rule"><div class="rule-num">04</div><div class="rule-text">房间、书桌、窗帘不提供示例户型或示例家具。</div></div>
+          <div class="rule"><div class="rule-num">05</div><div class="rule-text">购买核对只展示真实相关字段，缺失项显示未填写。</div></div>
+          <div class="rule"><div class="rule-num">06</div><div class="rule-text">设计稿录入后界面仅表达界面结构，正式产品首启为空。</div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Information Architecture</div>
+            <h2 class="section-title">信息架构</h2>
+          </div>
+          <p class="section-note">主页负责浏览，档案详情负责查看，购买核对负责下单前确认。</p>
+        </div>
+        <div class="flow">
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="ruler"></i></div>
+            <div class="flow-name">尺寸库主页</div>
+            <div class="flow-desc">家人、空间、快捷场景与最近更新</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="user-round"></i></div>
+            <div class="flow-name">档案详情</div>
+            <div class="flow-desc">身体尺寸分组或空间尺寸分组</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="shopping-bag"></i></div>
+            <div class="flow-name">购买核对</div>
+            <div class="flow-desc">按场景展示相关真实尺寸</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="copy"></i></div>
+            <div class="flow-name">复制/使用</div>
+            <div class="flow-desc">复制全部尺寸或继续查看</div>
+          </div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="plus"></i></div>
+            <div class="flow-name">新增/编辑</div>
+            <div class="flow-desc">家人、房间、书桌、窗帘动态表单</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Core Screens</div>
+            <h2 class="section-title">核心界面</h2>
+          </div>
+          <p class="section-note">覆盖空态、主页、家人详情、录入、购买核对与空间尺寸。</p>
+        </div>
+        <div class="demo-note">
+          <i data-lucide="info"></i>
+          <span>演示说明：录入后界面中的姓名、尺寸与空间名称仅用于表达界面结构；正式产品首启为空，所有数据由用户真实录入。</span>
+        </div>
+        <div class="phones">
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--teal)"></span><span>空态 · 首启</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">我的尺寸库</div>
+                    <div class="topbar-sub">真实录入，不做推算</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="box"></i>FunBox</div>
+                </div>
+                <div class="empty-hero">
+                  <div class="empty-icon"><i data-lucide="ruler"></i></div>
+                  <div class="empty-title">还没有真实尺寸数据</div>
+                  <div class="empty-sub">先添加家人、房间、书桌或窗帘，所有内容只来自你的真实录入。</div>
+                  <div class="empty-actions">
+                    <button class="btn primary" type="button"><i data-lucide="user-plus"></i>添加家人</button>
+                    <button class="btn ghost" type="button"><i data-lucide="home"></i>添加空间</button>
+                  </div>
+                  <div class="empty-note"><i data-lucide="shield-check"></i>不预置示例数据</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--primary)"></span><span>主页 · 录入后</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">我的尺寸库</div>
+                    <div class="topbar-sub">今天 09:12 更新</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="search"></i></div>
+                </div>
+                <div class="hero">
+                  <div class="hero-icon"><i data-lucide="ruler"></i></div>
+                  <div class="hero-title">3 位家人 · 3 个空间</div>
+                  <div class="hero-sub">身体尺寸、衣物鞋饰、房间、书桌与窗帘都在这里。</div>
+                  <div class="hero-meta">
+                    <div class="hero-meta-item">最近更新 09:12</div>
+                    <div class="hero-meta-item">已同步</div>
+                  </div>
+                </div>
+                <div class="quick-grid">
+                  <div class="quick-item"><div class="quick-icon" style="background: #e8edff"><i data-lucide="shirt"></i></div>买衣服</div>
+                  <div class="quick-item"><div class="quick-icon" style="background: #fff1e4"><i data-lucide="footprints"></i></div>买鞋</div>
+                  <div class="quick-item"><div class="quick-icon" style="background: #fde9ed"><i data-lucide="gem"></i></div>买戒指</div>
+                  <div class="quick-item"><div class="quick-icon" style="background: #e7f7f2"><i data-lucide="monitor"></i></div>买书桌</div>
+                  <div class="quick-item"><div class="quick-icon" style="background: #eef2ff"><i data-lucide="blinds"></i></div>买窗帘</div>
+                  <div class="quick-item"><div class="quick-icon" style="background: #fff5e8"><i data-lucide="home"></i></div>房间软装</div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>家人</span><span class="count">3 位</span></div>
+                  <div class="profile-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, #4b6bff, #8f7cff)">我</div>
+                    <div class="profile-copy"><div class="profile-name">我</div><div class="profile-desc">身体 7 项 · 衣物鞋饰 4 项</div></div>
+                    <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                  </div>
+                  <div class="profile-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, #18a78f, #4cc3a4)">妈</div>
+                    <div class="profile-copy"><div class="profile-name">妈妈</div><div class="profile-desc">身体 5 项 · 衣物鞋饰 3 项</div></div>
+                    <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                  </div>
+                  <div class="profile-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, #e8667a, #c25467)">宝</div>
+                    <div class="profile-copy"><div class="profile-name">宝宝</div><div class="profile-desc">鞋码 1 项 · 戒指 1 项</div></div>
+                    <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                  </div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>空间</span><span class="count">3 个</span></div>
+                  <div class="profile-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, #4568f2, #8f7cff)"><i data-lucide="home" style="height:15px;width:15px"></i></div>
+                    <div class="profile-copy"><div class="profile-name">主卧</div><div class="profile-desc">长宽高 · 关联 1 个窗帘</div></div>
+                    <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                  </div>
+                  <div class="profile-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, #18a78f, #4cc3a4)"><i data-lucide="monitor" style="height:15px;width:15px"></i></div>
+                    <div class="profile-copy"><div class="profile-name">书房书桌</div><div class="profile-desc">长宽高 · 放置在书房</div></div>
+                    <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                  </div>
+                  <div class="profile-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, #e8a33d, #f0c77d)"><i data-lucide="blinds" style="height:15px;width:15px"></i></div>
+                    <div class="profile-copy"><div class="profile-name">客厅窗帘</div><div class="profile-desc">窗户 · 轨道 · 落地高度</div></div>
+                    <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--rose)"></span><span>家人详情 · 录入后</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">我的尺寸</div>
+                    <div class="topbar-sub">最后更新 2026-08-06 09:12</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="pencil"></i></div>
+                </div>
+                <div class="person-hero">
+                  <div class="avatar" style="background: linear-gradient(135deg, #4b6bff, #8f7cff)">我</div>
+                  <div class="profile-copy">
+                    <div class="profile-name">我 · 本人</div>
+                    <div class="profile-desc">已填写 11 项真实尺寸</div>
+                  </div>
+                  <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="dim-group">
+                  <div class="dim-group-title"><span class="dim-icon"><i data-lucide="user-round"></i></span><span>身体尺寸</span><span class="count" style="color: var(--muted); font-size: 8px">3 项</span></div>
+                  <div class="dim-row"><span class="dim-label">身高</span><span class="dim-value">168</span><span class="dim-unit">cm</span><span class="dim-edit"><i data-lucide="pencil"></i></span></div>
+                  <div class="dim-row"><span class="dim-label">体重</span><span class="dim-value">55</span><span class="dim-unit">kg</span><span class="dim-edit"><i data-lucide="pencil"></i></span></div>
+                  <div class="dim-row"><span class="dim-label">腰围</span><span class="dim-value">68</span><span class="dim-unit">cm</span><span class="dim-edit"><i data-lucide="pencil"></i></span></div>
+                </div>
+                <div class="dim-group">
+                  <div class="dim-group-title"><span class="dim-icon"><i data-lucide="shirt"></i></span><span>衣物与鞋饰</span><span class="count" style="color: var(--muted); font-size: 8px">4 项</span></div>
+                  <div class="dim-row"><span class="dim-label">衣服尺码</span><span class="dim-value">M</span><span class="dim-edit"><i data-lucide="pencil"></i></span></div>
+                  <div class="dim-row"><span class="dim-label">鞋码</span><span class="dim-value">38</span><span class="dim-edit"><i data-lucide="pencil"></i></span></div>
+                  <div class="dim-row"><span class="dim-label">脚长</span><span class="dim-value">24.0</span><span class="dim-unit">cm</span><span class="dim-edit"><i data-lucide="pencil"></i></span></div>
+                  <div class="dim-row"><span class="dim-label">戒指圈号</span><span class="dim-value">12 号</span><span class="dim-edit"><i data-lucide="pencil"></i></span></div>
+                  <div class="dim-note-row"><i data-lucide="message-square-text"></i><span>运动鞋按 38.5 购买</span></div>
+                </div>
+                <div class="action-row">
+                  <button class="btn primary" type="button"><i data-lucide="shopping-bag"></i>买衣服核对</button>
+                  <button class="btn ghost" type="button"><i data-lucide="copy"></i>复制全部</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gold)"></span><span>录入 · 动态表单</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">添加家人</div>
+                    <div class="topbar-sub">只保存真实录入的数据</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="arrow-left"></i></div>
+                </div>
+                <div class="segmented">
+                  <button class="seg-btn active" type="button"><i data-lucide="user-round"></i>家人</button>
+                  <button class="seg-btn" type="button"><i data-lucide="home"></i>房间</button>
+                  <button class="seg-btn" type="button"><i data-lucide="monitor"></i>书桌</button>
+                  <button class="seg-btn" type="button"><i data-lucide="blinds"></i>窗帘</button>
+                </div>
+                <div class="form-card">
+                  <div class="field">
+                    <div class="field-label">称呼</div>
+                    <input class="input" placeholder="请输入真实称呼" />
+                    <div class="form-hint">1-12 个字符，同一类型内不可重名。</div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">身高</div>
+                    <div class="input-row"><input class="input" inputmode="decimal" placeholder="请输入身高" /><span class="unit-label">cm</span></div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">体重</div>
+                    <div class="input-row"><input class="input" inputmode="decimal" placeholder="请输入体重" /><span class="unit-label">kg</span></div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">腰围</div>
+                    <div class="input-row"><input class="input" inputmode="decimal" placeholder="请输入腰围" /><span class="unit-label">cm</span></div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">鞋码</div>
+                    <input class="input" placeholder="请输入鞋码" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">衣服尺码</div>
+                    <input class="input" placeholder="请输入衣服尺码" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">戒指圈号</div>
+                    <input class="input" placeholder="请输入戒指圈号" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">补充说明</div>
+                    <textarea class="textarea" placeholder="选填，例如买鞋或买衣服时的真实偏好"></textarea>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <button class="btn primary" type="button"><i data-lucide="save"></i>保存尺寸</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: #4568f2"></span><span>购买核对 · 买衣服</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">购买核对</div>
+                    <div class="topbar-sub">只看当前场景需要的真实尺寸</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="arrow-left"></i></div>
+                </div>
+                <div class="chips">
+                  <button class="chip active" type="button"><i data-lucide="shirt"></i>买衣服</button>
+                  <button class="chip" type="button"><i data-lucide="footprints"></i>买鞋</button>
+                  <button class="chip" type="button"><i data-lucide="gem"></i>买戒指</button>
+                </div>
+                <div class="selector-row">
+                  <div class="avatar" style="background: linear-gradient(135deg, #18a78f, #4cc3a4)">妈</div>
+                  <div class="profile-copy"><div class="profile-name">妈妈</div><div class="profile-desc">已填写 6 项相关尺寸</div></div>
+                  <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="check-card">
+                  <div class="check-head">
+                    <div class="check-head-icon"><i data-lucide="shirt"></i></div>
+                    <div>
+                      <div class="check-title">买衣服 · 妈妈</div>
+                      <div class="check-sub">以下内容来自妈妈档案的真实录入</div>
+                    </div>
+                  </div>
+                  <div class="check-row"><span class="check-label">身高</span><span class="check-value">158</span><span class="check-unit">cm</span></div>
+                  <div class="check-row"><span class="check-label">体重</span><span class="check-value">62</span><span class="check-unit">kg</span></div>
+                  <div class="check-row"><span class="check-label">胸围</span><span class="check-value">88</span><span class="check-unit">cm</span></div>
+                  <div class="check-row"><span class="check-label">腰围</span><span class="check-value">78</span><span class="check-unit">cm</span></div>
+                  <div class="check-row"><span class="check-label">臀围</span><span class="check-value">94</span><span class="check-unit">cm</span></div>
+                  <div class="check-row"><span class="check-label">衣服尺码</span><span class="check-value">L</span></div>
+                  <div class="check-row"><span class="check-label">袖长</span><span class="check-value missing">未填写</span></div>
+                  <div class="check-row"><span class="check-label">备注</span><span class="check-value" style="font-size: 9px">肩宽偏窄</span></div>
+                </div>
+                <div class="copy-card">
+                  <div class="copy-head"><span>复制全部尺寸</span><span class="count">8 条</span></div>
+                  <div class="copy-text">妈妈 · 买衣服
+身高 158cm
+体重 62kg
+胸围 88cm
+腰围 78cm
+臀围 94cm
+衣服尺码 L
+备注 肩宽偏窄
+最后更新 2026-08-06 09:12</div>
+                </div>
+                <div class="action-row">
+                  <button class="btn primary" type="button"><i data-lucide="copy"></i>复制尺寸</button>
+                  <button class="btn ghost" type="button"><i data-lucide="shopping-bag"></i>去购物</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--lime)"></span><span>空间尺寸 · 窗帘</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">空间尺寸</div>
+                    <div class="topbar-sub">房间、书桌与窗帘分开管理</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="plus"></i></div>
+                </div>
+                <div class="space-tabs">
+                  <button class="space-tab" type="button"><i data-lucide="home"></i>房间</button>
+                  <button class="space-tab" type="button"><i data-lucide="monitor"></i>书桌</button>
+                  <button class="space-tab active" type="button"><i data-lucide="blinds"></i>窗帘</button>
+                </div>
+                <div class="space-hero">
+                  <div class="space-icon"><i data-lucide="blinds"></i></div>
+                  <div class="profile-copy">
+                    <div class="profile-name">客厅窗帘</div>
+                    <div class="profile-desc">关联客厅 · 最后更新 08-06</div>
+                  </div>
+                  <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                </div>
+                <div class="measure-grid">
+                  <div class="measure-cell"><div class="measure-label">窗户宽</div><div class="measure-value">240<span class="measure-unit">cm</span></div></div>
+                  <div class="measure-cell"><div class="measure-label">窗户高</div><div class="measure-value">260<span class="measure-unit">cm</span></div></div>
+                  <div class="measure-cell"><div class="measure-label">窗帘宽</div><div class="measure-value">250<span class="measure-unit">cm</span></div></div>
+                  <div class="measure-cell"><div class="measure-label">窗帘高</div><div class="measure-value">270<span class="measure-unit">cm</span></div></div>
+                  <div class="measure-cell"><div class="measure-label">轨道长</div><div class="measure-value">245<span class="measure-unit">cm</span></div></div>
+                  <div class="measure-cell"><div class="measure-label">落地高度</div><div class="measure-value">265<span class="measure-unit">cm</span></div></div>
+                </div>
+                <div class="dim-note-row" style="margin-top: 12px"><i data-lucide="message-square-text"></i><span>落地帘，离地 2cm，褶皱倍数按购买说明确认</span></div>
+                <div class="panel">
+                  <div class="panel-title"><span>关联房间</span><span class="count">客厅</span></div>
+                  <div class="profile-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, #4568f2, #8f7cff)"><i data-lucide="home" style="height:15px;width:15px"></i></div>
+                    <div class="profile-copy"><div class="profile-name">客厅</div><div class="profile-desc">长 4.2m · 宽 3.6m · 高 2.8m</div></div>
+                    <span class="row-arrow"><i data-lucide="chevron-right"></i></span>
+                  </div>
+                </div>
+                <div class="action-row" style="margin-top: 12px">
+                  <button class="btn primary" type="button"><i data-lucide="shopping-bag"></i>买窗帘核对</button>
+                  <button class="btn ghost" type="button"><i data-lucide="copy"></i>复制全部</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Data Model & Validation</div>
+            <h2 class="section-title">数据模型与校验</h2>
+          </div>
+          <p class="section-note">档案与尺寸分离，维度定义前后端共用同一组 key。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 18%">档案类型</th>
+                <th style="width: 30%">主要字段</th>
+                <th style="width: 18%">单位</th>
+                <th>校验规则</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>家人</strong></td>
+                <td>称呼、身高、体重、胸围、腰围、臀围、肩宽、臂长、裤内长、衣服尺码、鞋码、脚长、戒指圈号、戒指内径</td>
+                <td>cm / kg / mm / 文本</td>
+                <td>称呼 1-12 字符；同类型不可重名；身高 30-250 cm；体重 2-300 kg；身体围度 20-200 cm</td>
+              </tr>
+              <tr>
+                <td><strong>房间</strong></td>
+                <td>名称、长、宽、高、面积（由长宽计算）、关联书桌、关联窗帘</td>
+                <td>cm / m</td>
+                <td>名称 1-20 字符；长宽高 10-10000 cm；面积只来自真实长宽</td>
+              </tr>
+              <tr>
+                <td><strong>书桌</strong></td>
+                <td>名称、长、宽、高、放置房间、备注</td>
+                <td>cm / m</td>
+                <td>名称 1-20 字符；长宽高 10-1000 cm；关联房间可空</td>
+              </tr>
+              <tr>
+                <td><strong>窗帘</strong></td>
+                <td>名称、窗户宽、窗户高、窗帘宽、窗帘高、轨道长、落地高度、关联房间、备注</td>
+                <td>cm / m</td>
+                <td>名称 1-20 字符；尺寸 10-1000 cm；不预置褶皱倍数，按购买说明确认</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">States & Constraints</div>
+            <h2 class="section-title">状态与约束</h2>
+          </div>
+          <p class="section-note">空态、加载态、错误态与保存态全部本期完成。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 20%">状态</th>
+                <th>行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="tag warn">空态</span></td><td>首次进入不出现任何预置数据，只提供添加家人和添加空间的引导。</td></tr>
+              <tr><td><span class="tag on">加载态</span></td><td>读取本机与账号数据期间显示 PageLoadingFrame，不渲染占位假尺寸。</td></tr>
+              <tr><td><span class="tag off">错误态</span></td><td>同步失败时保留本机真实数据，顶部提示"同步失败，已使用本机数据"。</td></tr>
+              <tr><td><span class="tag on">保存态</span></td><td>保存按钮进入加载态，成功后返回并轻提示"已保存真实尺寸"。</td></tr>
+              <tr><td><span class="tag on">删除态</span></td><td>删除档案前二次确认，清空尺寸库前要求再次确认。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Design Principles</div>
+            <h2 class="section-title">方案要点</h2>
+          </div>
+          <p class="section-note">五条原则约束所有录入、查看与核对流程。</p>
+        </div>
+        <div class="principles">
+          <div class="principle">
+            <div class="principle-num">01</div>
+            <div class="principle-title">真实录入</div>
+            <div class="principle-desc">所有档案和尺寸由用户输入，首启为空，不做任何推算。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">02</div>
+            <div class="principle-title">场景过滤</div>
+            <div class="principle-desc">购买核对只展示当前场景相关字段，减少下单前干扰。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">03</div>
+            <div class="principle-title">缺失可见</div>
+            <div class="principle-desc">未填写项明确显示"未填写"，不隐藏、不估算。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">04</div>
+            <div class="principle-title">本地优先</div>
+            <div class="principle-desc">未登录可用，登录后同步到本人账号，隐私数据不进公开场景。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">05</div>
+            <div class="principle-title">稳定布局</div>
+            <div class="principle-desc">输入框、按钮、尺寸行尺寸固定，内容变化不导致布局跳动。</div>
+          </div>
+        </div>
+      </section>
+
+      <p class="footnote">FunBox 我的尺寸库产品方案 V1 · 配套文档：docs/size-library-product-design-v1.md</p>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
