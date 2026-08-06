@@ -864,11 +864,6 @@ func newServer(
 	if dnfActivitySvc != nil {
 		go dnfActivitySvc.Run(monitorContext)
 	}
-	if whereIsItStore != nil {
-		server.RegisterOnShutdown(func() {
-			_ = whereIsItStore.Close()
-		})
-	}
 	if timeCapsuleStore != nil {
 		go timeCapsuleStore.OpenDueLoop(monitorContext, time.Minute)
 	}
@@ -880,6 +875,11 @@ func newServer(
 		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
+	}
+	if whereIsItStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = whereIsItStore.Close()
+		})
 	}
 	if daysLeftStore != nil {
 		server.RegisterOnShutdown(func() {
