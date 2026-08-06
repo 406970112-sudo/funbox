@@ -12,8 +12,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	"my-first-expo-app/backend/internal/dailylucksign"
 )
 
 const (
@@ -51,12 +49,6 @@ var weatherRuleLabels = map[string]string{
 	"uv-protect":    "当日最大 UV >= 6",
 	"heat-water":    "当日最高温 >= 32°C",
 	"air-mask":      "当前 EAQI > 100",
-}
-
-type Provider interface {
-	FetchWeather(ctx context.Context, lat, lon float64, date string) (dailylucksign.WeatherData, error)
-	FetchAirQuality(ctx context.Context, lat, lon float64) (dailylucksign.AirQualityData, error)
-	SearchCities(ctx context.Context, query string) ([]dailylucksign.CityResult, error)
 }
 
 type Service struct {
@@ -476,7 +468,7 @@ func (s *Service) WeatherHealth(ctx context.Context) HealthResponse {
 	}
 }
 
-func (s *Service) SearchCities(ctx context.Context, query string) ([]dailylucksign.CityResult, error) {
+func (s *Service) SearchCities(ctx context.Context, query string) ([]CityResult, error) {
 	if s.provider == nil {
 		return nil, fmt.Errorf("%w: weather provider unavailable", ErrInvalidInput)
 	}
@@ -807,7 +799,7 @@ func buildWeatherSuggestions(items []Item, weather WeatherSnapshot) []WeatherSug
 	return suggestions
 }
 
-func buildWeatherSnapshot(city string, weather dailylucksign.WeatherData, air dailylucksign.AirQualityData, weatherErr, airErr error) WeatherSnapshot {
+func buildWeatherSnapshot(city string, weather WeatherData, air AirQualityData, weatherErr, airErr error) WeatherSnapshot {
 	snapshot := WeatherSnapshot{
 		Available: weather.Daily != nil || air.EAQI != nil,
 		Status:    "complete",

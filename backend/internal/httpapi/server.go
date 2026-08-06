@@ -655,6 +655,16 @@ func newServer(
 	if err != nil {
 		log.Printf("open procrastinator database failed: %v", err)
 	}
+	openMeteoProvider := gooutchecklist.NewOpenMeteoProvider(15 * time.Second)
+	var goOutChecklistStore *gooutchecklist.Store
+	goOutChecklistStore, err = gooutchecklist.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open go out checklist database failed: %v", err)
+	}
+	var goOutChecklistService *gooutchecklist.Service
+	if goOutChecklistStore != nil {
+		goOutChecklistService = gooutchecklist.NewService(goOutChecklistStore, openMeteoProvider)
+	}
 	var timeCapsuleStore *timecapsule.Store
 	timeCapsuleStore, err = timecapsule.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -699,6 +709,7 @@ func newServer(
 		dailyLuckSignService:      dailyLuckSignService,
 		feedbackService:           feedbackService,
 		foodRecommendationService: foodRecommendationService,
+		goOutChecklistService:     goOutChecklistService,
 		focusStore:                focusStore,
 		homeRecommendationService: homeRecommendationService,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
@@ -768,6 +779,7 @@ func newServer(
 	registerDailyLuckSignRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
+	registerGoOutChecklistRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
 	registerProcrastinatorRoutes(mux, api)
@@ -854,6 +866,11 @@ func newServer(
 	if coolingStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = coolingStore.Close()
+		})
+	}
+	if goOutChecklistStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = goOutChecklistStore.Close()
 		})
 	}
 	if whoDoesItStore != nil {
