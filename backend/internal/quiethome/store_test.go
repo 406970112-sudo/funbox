@@ -104,6 +104,10 @@ func TestStoreSettingsContactsAndNotifications(t *testing.T) {
 	if contact.AgreedAt == nil {
 		t.Fatalf("expected agreedAt")
 	}
+	incoming, err := store.ListContacts(ctx, "u2")
+	if err != nil || len(incoming) != 1 || incoming[0].UserID != "u1" {
+		t.Fatalf("expected incoming contact for u2: %#v %v", incoming, err)
+	}
 
 	eta := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	trip, err := store.CreateTrip(ctx, "u1", Trip{

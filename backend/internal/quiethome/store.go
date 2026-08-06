@@ -305,9 +305,9 @@ func (s *Store) ListContacts(ctx context.Context, userID string) ([]Contact, err
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, user_id, contact_user_id, status, channels_json, agreed_at, updated_at
 		FROM quiet_home_contacts
-		WHERE user_id = ?
+		WHERE user_id = ? OR contact_user_id = ?
 		ORDER BY updated_at DESC
-	`, userID)
+	`, userID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list quiet home contacts: %w", err)
 	}

@@ -73,6 +73,7 @@ type FriendContact struct {
 	AvatarFile  string        `json:"avatarFile,omitempty"`
 	Status      ContactStatus `json:"status"`
 	AgreedAt    *string       `json:"agreedAt,omitempty"`
+	Incoming    bool          `json:"incoming,omitempty"`
 }
 
 type Notification struct {

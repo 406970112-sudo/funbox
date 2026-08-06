@@ -34,6 +34,7 @@ export type QuietHomeContact = {
   avatarFile?: string;
   status: QuietHomeContactStatus;
   agreedAt?: string;
+  incoming?: boolean;
 };
 
 export type QuietHomeNotification = {

@@ -292,7 +292,11 @@ func (s *Service) ListContacts(ctx context.Context, userID string) ([]FriendCont
 	}
 	statusByUser := make(map[string]Contact, len(contacts))
 	for _, item := range contacts {
-		statusByUser[item.ContactUserID] = item
+		if item.UserID == userID {
+			statusByUser[item.ContactUserID] = item
+		} else {
+			statusByUser[item.UserID] = item
+		}
 	}
 	items := make([]FriendContact, 0, len(friends))
 	for _, friend := range friends {
@@ -306,6 +310,7 @@ func (s *Service) ListContacts(ctx context.Context, userID string) ([]FriendCont
 		if contact, ok := statusByUser[friend.User.ID]; ok {
 			item.Status = contact.Status
 			item.AgreedAt = contact.AgreedAt
+			item.Incoming = contact.UserID != userID
 		}
 		items = append(items, item)
 	}
