@@ -33,6 +33,7 @@ import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
+import { ParkingLocationScreen } from '@/features/tools/parking-location-screen';
 import { QuietHomeScreen } from '@/features/tools/quiet-home-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
 import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
@@ -360,6 +361,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SizeLibraryScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'parking-location') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ParkingLocationScreen />
       </>
     );
   }

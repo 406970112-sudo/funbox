@@ -1,0 +1,2074 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 停车位置记录 - 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce4f2;
+        --line-strong: #cdd8ea;
+        --canvas: #edf2fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --primary: #4568f2;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --teal: #18a78f;
+        --teal-dark: #0e806d;
+        --teal-soft: #e2f6f1;
+        --gold: #e8a33d;
+        --gold-soft: #fff2da;
+        --rose: #e8667a;
+        --blue: #1c8ed8;
+        --blue-soft: #e4f3ff;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        margin: 0 auto;
+        max-width: 1560px;
+        padding: 36px 24px 54px;
+        width: min(1560px, calc(100vw - 24px));
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 24px;
+        width: 24px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .section {
+        background: var(--surface);
+        border: 1px solid rgba(205, 216, 234, 0.82);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        margin: 0 0 22px;
+        padding: 24px 26px 26px;
+      }
+
+      .section-head {
+        align-items: baseline;
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .section-kicker {
+        color: var(--primary);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin: 5px 0 0;
+      }
+
+      .section-note {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        max-width: 620px;
+        text-align: right;
+      }
+
+      .principles {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .principle {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .principle-num {
+        color: var(--teal);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .principle-title {
+        font-size: 14px;
+        font-weight: 800;
+        margin-top: 10px;
+      }
+
+      .principle-desc {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 18px;
+        margin-top: 7px;
+      }
+
+      .flow {
+        align-items: stretch;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+
+      .flow-node {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-height: 84px;
+        padding: 12px;
+      }
+
+      .flow-node .flow-icon {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--blue);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .flow-node .flow-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .flow-node .flow-name {
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 9px;
+      }
+
+      .flow-node .flow-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 4px;
+      }
+
+      .flow-arrow {
+        align-items: center;
+        color: #b7c2d6;
+        display: flex;
+        justify-content: center;
+      }
+
+      .flow-arrow svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .matrix {
+        overflow: hidden;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        font-size: 11px;
+        line-height: 18px;
+        padding: 12px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--soft);
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      td {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      td strong {
+        font-weight: 800;
+      }
+
+      .tag {
+        border-radius: 6px;
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 3px 7px;
+      }
+
+      .tag.on {
+        background: var(--teal-soft);
+        color: var(--teal-dark);
+      }
+
+      .tag.warn {
+        background: var(--gold-soft);
+        color: #a5680e;
+      }
+
+      .tag.off {
+        background: #eef1f7;
+        color: var(--muted);
+      }
+
+      .rules {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .rule {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        min-width: 0;
+        padding: 12px;
+      }
+
+      .rule-num {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 9px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 30px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        height: 30px;
+        justify-content: center;
+      }
+
+      .rule-text {
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      .phones {
+        display: grid;
+        gap: 22px 20px;
+        grid-template-columns: repeat(3, 312px);
+        justify-content: center;
+        margin-top: 4px;
+      }
+
+      .phone-wrap {
+        width: 312px;
+      }
+
+      .phone-label {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding-top: 13px;
+      }
+
+      .phone-label .dot {
+        border-radius: 50%;
+        height: 8px;
+        width: 8px;
+      }
+
+      .phone-label span {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #f4f7fd;
+        border: 1px solid #c8d4e8;
+        border-radius: 42px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.22);
+        height: 880px;
+        overflow: hidden;
+        position: relative;
+        width: 312px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 42px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        padding: 10px 16px 0;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        color: #18233d;
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 0 5px;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        min-height: 46px;
+        padding: 4px 2px 8px;
+      }
+
+      .topbar-title {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .topbar-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .topbar-action {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .topbar-action svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .brand-mark-mini {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 32px;
+        padding: 0 9px;
+      }
+
+      .brand-mark-mini svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #151b3b, #1c4d4b 88%, #1d6659);
+        border-radius: 18px;
+        color: #ffffff;
+        padding: 18px 16px 16px;
+        position: relative;
+      }
+
+      .hero .hero-icon {
+        align-items: center;
+        background: rgba(201, 243, 106, 0.14);
+        border: 1px solid rgba(201, 243, 106, 0.28);
+        border-radius: 12px;
+        color: var(--lime);
+        display: flex;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .hero .hero-icon svg {
+        height: 21px;
+        width: 21px;
+      }
+
+      .hero-title {
+        font-size: 19px;
+        font-weight: 900;
+        margin-top: 14px;
+      }
+
+      .hero-sub {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 5px;
+      }
+
+      .hero-meta {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .hero-meta-item {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        font-size: 9px;
+        font-weight: 700;
+        min-height: 28px;
+        padding: 6px 9px;
+      }
+
+      .search-bar {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 8px;
+        height: 42px;
+        margin-top: 14px;
+        padding: 0 11px;
+      }
+
+      .search-bar svg {
+        color: var(--muted);
+        height: 15px;
+        width: 15px;
+      }
+
+      .search-bar span {
+        color: #a9b5ca;
+        flex: 1;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .panel {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px 10px;
+      }
+
+      .panel-title {
+        align-items: center;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+        min-height: 36px;
+      }
+
+      .panel-title .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .panel-title svg {
+        color: var(--blue);
+        height: 14px;
+        width: 14px;
+      }
+
+      .panel-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 10px;
+        min-height: 54px;
+      }
+
+      .panel-row .row-icon {
+        align-items: center;
+        background: var(--soft);
+        border-radius: 9px;
+        color: var(--teal-dark);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+      }
+
+      .panel-row .row-icon svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .panel-row .row-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .panel-row .row-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .panel-row .row-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .row-arrow {
+        color: #b7c2d6;
+      }
+
+      .row-arrow svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .empty-hero {
+        align-items: center;
+        background: #ffffff;
+        border: 1px dashed #c9d5ea;
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        margin-top: 18px;
+        padding: 30px 20px 24px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 50%;
+        color: var(--blue);
+        display: flex;
+        height: 62px;
+        justify-content: center;
+        width: 62px;
+      }
+
+      .empty-icon svg {
+        height: 28px;
+        width: 28px;
+      }
+
+      .empty-title {
+        font-size: 14px;
+        font-weight: 900;
+        margin-top: 15px;
+      }
+
+      .empty-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 17px;
+        margin-top: 7px;
+        max-width: 230px;
+      }
+
+      .btn {
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 7px;
+        height: 44px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .btn svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .btn.primary {
+        background: var(--teal);
+        color: #ffffff;
+      }
+
+      .btn.ghost {
+        background: var(--soft);
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .btn.navy {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .btn.blue {
+        background: var(--blue);
+        color: #ffffff;
+      }
+
+      .btn.light {
+        background: #ffffff;
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .empty-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 16px;
+        width: 100%;
+      }
+
+      .empty-note {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 5px;
+        margin-top: 14px;
+      }
+
+      .empty-note svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .map-preview {
+        background: #dfe9f5;
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        height: 148px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .map-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        height: 100%;
+        width: 100%;
+      }
+
+      .map-tile {
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      .map-pin {
+        align-items: center;
+        color: var(--primary);
+        display: flex;
+        filter: drop-shadow(0 4px 8px rgba(21, 27, 59, 0.24));
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -100%);
+      }
+
+      .map-pin svg {
+        height: 32px;
+        width: 32px;
+      }
+
+      .map-accuracy {
+        background: rgba(69, 104, 242, 0.18);
+        border: 1px dashed rgba(69, 104, 242, 0.55);
+        border-radius: 50%;
+        height: 64px;
+        left: 50%;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 64px;
+      }
+
+      .map-chip {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        bottom: 9px;
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 6px;
+        left: 9px;
+        max-width: calc(100% - 18px);
+        padding: 7px 9px;
+        position: absolute;
+        right: 9px;
+      }
+
+      .map-chip svg {
+        color: var(--blue);
+        flex: 0 0 13px;
+        height: 13px;
+        width: 13px;
+      }
+
+      .map-chip span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .location-status {
+        align-items: center;
+        color: var(--teal-dark);
+        display: flex;
+        font-size: 9px;
+        font-weight: 700;
+        gap: 5px;
+        margin-top: 7px;
+      }
+
+      .location-status svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .form-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .field {
+        margin-top: 11px;
+      }
+
+      .field:first-child {
+        margin-top: 0;
+      }
+
+      .field-label {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .input {
+        background: #f6f8fc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 700;
+        height: 38px;
+        outline: none;
+        padding: 0 10px;
+        width: 100%;
+      }
+
+      .input::placeholder {
+        color: #a9b5ca;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .field-grid {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .photo-strip {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .photo-add {
+        align-items: center;
+        background: #f6f8fc;
+        border: 1px dashed #c5d1e5;
+        border-radius: 10px;
+        color: var(--muted);
+        display: flex;
+        flex: 0 0 54px;
+        font-size: 8px;
+        font-weight: 700;
+        flex-direction: column;
+        gap: 4px;
+        height: 54px;
+        justify-content: center;
+      }
+
+      .photo-add svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .photo-tile {
+        align-items: center;
+        background: linear-gradient(135deg, #dbe9f8, #dff2ee);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--teal-dark);
+        display: flex;
+        flex: 0 0 54px;
+        font-size: 8px;
+        font-weight: 700;
+        height: 54px;
+        justify-content: center;
+        position: relative;
+      }
+
+      .photo-tile svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .photo-count {
+        align-items: center;
+        background: rgba(21, 27, 59, 0.76);
+        border-radius: 7px;
+        bottom: 4px;
+        color: #ffffff;
+        display: flex;
+        font-size: 8px;
+        font-weight: 700;
+        padding: 2px 5px;
+        position: absolute;
+        right: 4px;
+      }
+
+      .form-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 8px;
+        min-height: 42px;
+      }
+
+      .form-row .form-label {
+        color: var(--muted);
+        flex: 1;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .form-row .form-value {
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .form-row .form-value.muted {
+        color: var(--faint);
+      }
+
+      .segmented {
+        background: #e8eef8;
+        border-radius: 11px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        padding: 3px;
+      }
+
+      .seg-btn {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 8px;
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        height: 32px;
+        justify-content: center;
+      }
+
+      .seg-btn.active {
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(45, 64, 105, 0.1);
+        color: var(--teal-dark);
+      }
+
+      .status-hero {
+        align-items: center;
+        background: linear-gradient(135deg, #e4f3ff, #e2f6f1);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        display: flex;
+        gap: 11px;
+        margin-top: 12px;
+        padding: 13px;
+      }
+
+      .status-hero .status-icon {
+        align-items: center;
+        background: #ffffff;
+        border-radius: 12px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 42px;
+        height: 42px;
+        justify-content: center;
+      }
+
+      .status-hero .status-icon svg {
+        height: 20px;
+        width: 20px;
+      }
+
+      .status-hero .status-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .status-hero .status-title {
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .status-hero .status-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+
+      .detail-map {
+        background: #dfe9f5;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        height: 112px;
+        margin-top: 12px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .detail-list {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 2px 12px 6px;
+      }
+
+      .detail-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 42px;
+      }
+
+      .detail-row:first-child {
+        border-top: 0;
+      }
+
+      .detail-row .detail-icon {
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 18px;
+      }
+
+      .detail-row .detail-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .detail-row .detail-label {
+        color: var(--muted);
+        flex: 0 0 70px;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .detail-row .detail-value {
+        color: var(--ink);
+        flex: 1;
+        font-size: 10px;
+        font-weight: 800;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .fee-card {
+        background: linear-gradient(135deg, #fff9eb, #fff4df);
+        border: 1px solid #f2d8a8;
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .fee-title {
+        align-items: center;
+        color: #8b5d0d;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 6px;
+      }
+
+      .fee-title svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .fee-amount {
+        color: var(--ink);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        margin-top: 6px;
+      }
+
+      .fee-note {
+        color: #9a7b45;
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 5px;
+      }
+
+      .reminder-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .reminder-card .reminder-head {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .reminder-card .reminder-icon {
+        color: var(--gold);
+      }
+
+      .reminder-card .reminder-icon svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .reminder-card .reminder-title {
+        flex: 1;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .switch {
+        align-items: center;
+        background: var(--teal);
+        border-radius: 10px;
+        display: flex;
+        height: 20px;
+        justify-content: flex-end;
+        padding: 2px;
+        width: 36px;
+      }
+
+      .switch::after {
+        background: #ffffff;
+        border-radius: 50%;
+        content: "";
+        height: 16px;
+        width: 16px;
+      }
+
+      .switch.off {
+        background: #d6dfec;
+        justify-content: flex-start;
+      }
+
+      .reminder-meta {
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 10px;
+        padding-top: 9px;
+      }
+
+      .settings-list {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 4px 12px 8px;
+      }
+
+      .settings-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 46px;
+      }
+
+      .settings-row:first-child {
+        border-top: 0;
+      }
+
+      .settings-row .settings-icon {
+        color: var(--blue);
+      }
+
+      .settings-row .settings-icon svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .settings-row .settings-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .settings-row .settings-name {
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .settings-row .settings-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .actions {
+        display: grid;
+        gap: 9px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 12px;
+      }
+
+      .summary-card {
+        align-items: center;
+        background: linear-gradient(135deg, #e4f3ff, #e2f6f1);
+        border: 1px solid var(--line);
+        border-radius: 15px;
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 13px;
+      }
+
+      .summary-card .summary-icon {
+        align-items: center;
+        background: #ffffff;
+        border-radius: 11px;
+        color: var(--blue);
+        display: flex;
+        flex: 0 0 40px;
+        height: 40px;
+        justify-content: center;
+      }
+
+      .summary-card .summary-icon svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .summary-card .summary-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .summary-card .summary-title {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .summary-card .summary-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .record-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        overflow: hidden;
+      }
+
+      .record-card .record-head {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+        padding: 12px;
+      }
+
+      .record-card .record-head .record-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: var(--blue);
+        display: flex;
+        height: 36px;
+        justify-content: center;
+        width: 36px;
+      }
+
+      .record-card .record-head .record-icon svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .record-card .record-head .record-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .record-card .record-head .record-name {
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .record-card .record-head .record-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .record-card .record-tag {
+        background: var(--teal-soft);
+        border-radius: 7px;
+        color: var(--teal-dark);
+        font-size: 8px;
+        font-weight: 800;
+        padding: 4px 7px;
+      }
+
+      .record-card .record-tag.done {
+        background: #eef1f7;
+        color: var(--muted);
+      }
+
+      .record-card .record-body {
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 17px;
+        padding: 10px 12px;
+      }
+
+      .record-card .record-body strong {
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .footnote {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="board-brand">
+          <div class="board-mark">
+            <i data-lucide="map-pin"></i>
+          </div>
+          <div>
+            <h1 class="board-title">FunBox 停车位置记录</h1>
+            <p class="board-subtitle">真实定位 + 文字定位 + 照片存档 + 缴费提醒</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          产品设计 V1 · 完整一期
+          <strong>2026-08-06</strong>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Design Principles</div>
+            <h2 class="section-title">方案要点</h2>
+          </div>
+          <p class="section-note">首启为空，真实数据驱动；所有缺失项明确展示，不做估算。</p>
+        </div>
+        <div class="principles">
+          <div class="principle">
+            <div class="principle-num">01</div>
+            <div class="principle-title">真实优先</div>
+            <div class="principle-desc">停车场、车位、照片、时间、收费规则全部来自真实操作，首启无任何预置记录。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">02</div>
+            <div class="principle-title">双层定位</div>
+            <div class="principle-desc">地图记录入口真实坐标，文字记录楼层区域车位，解决地下 GPS 不准。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">03</div>
+            <div class="principle-title">拍照存档</div>
+            <div class="principle-desc">拍照或相册上传真实照片，只作存档，不做 AI 识别补全。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">04</div>
+            <div class="principle-title">无规则不估算</div>
+            <div class="principle-desc">未录入收费规则时不显示预计金额；有规则时标注以出口实际收费为准。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">05</div>
+            <div class="principle-title">一期全量</div>
+            <div class="principle-desc">首页、记录、地图、照片、收费、提醒、取车、历史、搜索全部一次交付。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Core Flow</div>
+            <h2 class="section-title">核心流程</h2>
+          </div>
+          <p class="section-note">从停车到取车全程只产生真实数据。</p>
+        </div>
+        <div class="flow">
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="map-pin"></i></div>
+            <div class="flow-name">真实定位</div>
+            <div class="flow-desc">地图 POI / 设备坐标 / 手动名称</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="parking-circle"></i></div>
+            <div class="flow-name">文字定位</div>
+            <div class="flow-desc">楼层 / 区域 / 车位 / 标志物</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="camera"></i></div>
+            <div class="flow-name">拍照存档</div>
+            <div class="flow-desc">真实环境照片，最多 6 张</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="circle-dollar-sign"></i></div>
+            <div class="flow-name">收费与提醒</div>
+            <div class="flow-desc">真实规则估算 + 本地通知</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="chevron-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="check"></i></div>
+            <div class="flow-name">取车归档</div>
+            <div class="flow-desc">真实取车时间 / 实际缴费</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Real Data Rules</div>
+            <h2 class="section-title">真实数据规则</h2>
+          </div>
+          <p class="section-note">禁止 mock、种子、演示数据和 AI 编造。</p>
+        </div>
+        <div class="rules">
+          <div class="rule">
+            <div class="rule-num">01</div>
+            <div class="rule-text">首次进入没有任何停车记录、停车场、车位、照片、收费规则或历史数据。</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">02</div>
+            <div class="rule-text">定位失败时显示“定位不可用”，允许手动输入真实停车场名称，不展示默认坐标。</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">03</div>
+            <div class="rule-text">未录入收费规则时，预计收费返回 null，界面显示“未设置收费规则”。</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">04</div>
+            <div class="rule-text">提醒基于真实停车时间和用户设置计算，取车后自动取消未触发通知。</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">05</div>
+            <div class="rule-text">照片只作真实存档，不做车牌识别、场景识别或 OCR 自动补全。</div>
+          </div>
+          <div class="rule">
+            <div class="rule-num">06</div>
+            <div class="rule-text">所有记录、搜索、计数与导出结果只来自当前用户真实数据。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Data Model & Validation</div>
+            <h2 class="section-title">数据模型与校验</h2>
+          </div>
+          <p class="section-note">字段缺失显示“未填写”，收费金额只在真实规则存在时计算。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 22%">实体</th>
+                <th style="width: 44%">主要字段</th>
+                <th>校验规则</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>停车记录</strong></td>
+                <td>停车场名称、经纬度、精度、楼层、区域、车位、标志物、停车时间、取车时间、预计/实际收费、状态</td>
+                <td>停车场必填；楼层/区域/车位至少一项；经纬度可为 null</td>
+              </tr>
+              <tr>
+                <td><strong>停车照片</strong></td>
+                <td>记录 ID、文件、缩略图、拍摄时间、封面、排序</td>
+                <td>真实图片，单张 ≤10MB，最多 6 张</td>
+              </tr>
+              <tr>
+                <td><strong>收费规则</strong></td>
+                <td>停车场名称、免费时长、首段、后续、单日封顶、来源备注</td>
+                <td>金额非负、时长为正整数；无规则不估算</td>
+              </tr>
+              <tr>
+                <td><strong>提醒设置</strong></td>
+                <td>默认提醒分钟数、规则节点开关、取车取消开关</td>
+                <td>固定提醒 1-1440 分钟；基于真实时间调度</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Screens</div>
+            <h2 class="section-title">页面设计</h2>
+          </div>
+          <p class="section-note">空态、快速记录、停车中详情、提醒、取车、历史。</p>
+        </div>
+        <div class="phones">
+          <div class="phone-wrap">
+            <div class="phone-label">
+              <span class="dot" style="background: #18a78f"></span>
+              <span>首页空态</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar">
+                  <span>22:12</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </span>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">停车位置记录</div>
+                    <div class="topbar-sub">真实定位 + 文字 + 照片</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="car"></i> FunBox</div>
+                </div>
+                <div class="hero">
+                  <div class="hero-icon"><i data-lucide="map-pin"></i></div>
+                  <div class="hero-title">记录本次停车</div>
+                  <div class="hero-sub">地图入口坐标 + 地下楼层车位 + 环境照片</div>
+                  <div class="hero-meta">
+                    <span class="hero-meta-item">首启为空</span>
+                    <span class="hero-meta-item">无规则不估算</span>
+                  </div>
+                </div>
+                <div class="search-bar">
+                  <i data-lucide="search"></i>
+                  <span>搜索停车场 / 楼层 / 区域 / 车位</span>
+                </div>
+                <div class="panel">
+                  <div class="panel-title">
+                    <span><i data-lucide="clock"></i> 当前停车</span>
+                    <span class="count">0 条</span>
+                  </div>
+                  <div class="panel-row">
+                    <div class="row-icon"><i data-lucide="car"></i></div>
+                    <div class="row-copy">
+                      <div class="row-name">暂无停车中记录</div>
+                      <div class="row-desc">停车后点击下方按钮开始记录</div>
+                    </div>
+                    <div class="row-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                </div>
+                <div class="empty-hero">
+                  <div class="empty-icon"><i data-lucide="map-pin-off"></i></div>
+                  <div class="empty-title">还没有停车记录</div>
+                  <div class="empty-sub">所有停车场、车位、照片和收费规则都会从这里由你真实录入。</div>
+                  <div class="empty-actions">
+                    <button class="btn primary"><i data-lucide="car"></i> 记录本次停车</button>
+                  </div>
+                  <div class="empty-note"><i data-lucide="shield-check"></i> 数据仅用于本人找车与提醒</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label">
+              <span class="dot" style="background: #4568f2"></span>
+              <span>快速记录</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar">
+                  <span>22:12</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </span>
+                </div>
+                <div class="topbar">
+                  <div class="topbar-title">记录本次停车</div>
+                  <div class="topbar-action"><i data-lucide="x"></i></div>
+                </div>
+                <div class="map-preview">
+                  <div class="map-grid">
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51710_26918.png')"></div>
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51711_26918.png')"></div>
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51710_26919.png')"></div>
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51711_26919.png')"></div>
+                  </div>
+                  <div class="map-accuracy"></div>
+                  <div class="map-pin"><i data-lucide="map-pin"></i></div>
+                  <div class="map-chip"><i data-lucide="navigation"></i><span>成都新世纪环球中心 · 定位精度约 18 米</span></div>
+                </div>
+                <div class="location-status"><i data-lucide="check-circle"></i> 已获取真实定位，可手动修改停车场名称</div>
+                <div class="form-card">
+                  <div class="field">
+                    <div class="field-label">停车场名称</div>
+                    <input class="input" placeholder="搜索或选择真实停车场" value="成都新世纪环球中心" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">地下位置</div>
+                    <div class="field-grid">
+                      <input class="input" placeholder="B3" />
+                      <input class="input" placeholder="C区" />
+                      <input class="input" placeholder="328号" />
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">附近标志物</div>
+                    <input class="input" placeholder="例如：靠近蓝色电梯" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">周边环境照片</div>
+                    <div class="photo-strip">
+                      <div class="photo-add"><i data-lucide="camera"></i><span>拍照</span></div>
+                      <div class="photo-add"><i data-lucide="image-plus"></i><span>相册</span></div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">停车时间与提醒</div>
+                    <div class="segmented">
+                      <button class="seg-btn active">30分钟后</button>
+                      <button class="seg-btn">1小时后</button>
+                      <button class="seg-btn">规则节点</button>
+                      <button class="seg-btn">不提醒</button>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top: 12px">
+                  <button class="btn navy"><i data-lucide="save"></i> 保存真实记录</button>
+                </div>
+                <div style="align-items: center; color: var(--muted); display: flex; font-size: 8px; font-weight: 600; gap: 5px; justify-content: center; margin-top: 10px">
+                  <i data-lucide="circle-dollar-sign"></i> 未设置收费规则时不会显示预计收费
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label">
+              <span class="dot" style="background: #1c8ed8"></span>
+              <span>停车中详情</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar">
+                  <span>22:12</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </span>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">停车中</div>
+                    <div class="topbar-sub">真实数据 · 停车后 2 小时 46 分钟</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="edit-3"></i></div>
+                </div>
+                <div class="status-hero">
+                  <div class="status-icon"><i data-lucide="clock"></i></div>
+                  <div class="status-copy">
+                    <div class="status-title">正在停车</div>
+                    <div class="status-desc">取车前可通过地图、照片和文字定位找车</div>
+                  </div>
+                </div>
+                <div class="detail-map">
+                  <div class="map-grid">
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51710_26918.png')"></div>
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51711_26918.png')"></div>
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51710_26919.png')"></div>
+                    <div class="map-tile" style="background-image: url('parking-location-design-assets/16_51711_26919.png')"></div>
+                  </div>
+                  <div class="map-accuracy"></div>
+                  <div class="map-pin"><i data-lucide="map-pin"></i></div>
+                  <div class="map-chip"><i data-lucide="navigation"></i><span>成都新世纪环球中心 · 30.5713, 104.0624</span></div>
+                </div>
+                <div class="detail-list">
+                  <div class="detail-row">
+                    <span class="detail-icon"><i data-lucide="building-2"></i></span>
+                    <span class="detail-label">停车场</span>
+                    <span class="detail-value">成都新世纪环球中心</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-icon"><i data-lucide="parking-circle"></i></span>
+                    <span class="detail-label">地下位置</span>
+                    <span class="detail-value">B3层 · C区 · 328号</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-icon"><i data-lucide="map-pin"></i></span>
+                    <span class="detail-label">标志物</span>
+                    <span class="detail-value">靠近蓝色电梯</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-icon"><i data-lucide="clock"></i></span>
+                    <span class="detail-label">停车时间</span>
+                    <span class="detail-value">今天 19:26</span>
+                  </div>
+                </div>
+                <div class="detail-list">
+                  <div class="detail-row">
+                    <span class="detail-icon"><i data-lucide="image"></i></span>
+                    <span class="detail-label">环境照片</span>
+                    <span class="detail-value">已添加 3 张真实照片</span>
+                  </div>
+                  <div class="photo-strip" style="padding: 2px 0 10px">
+                    <div class="photo-tile"><i data-lucide="camera"></i><span class="photo-count">1</span></div>
+                    <div class="photo-tile"><i data-lucide="camera"></i><span class="photo-count">2</span></div>
+                    <div class="photo-tile"><i data-lucide="camera"></i><span class="photo-count">3</span></div>
+                    <div class="photo-add"><i data-lucide="plus"></i><span>添加</span></div>
+                  </div>
+                </div>
+                <div class="fee-card">
+                  <div class="fee-title"><i data-lucide="circle-dollar-sign"></i> 预计收费 · 基于真实规则</div>
+                  <div class="fee-amount">约 10 元</div>
+                  <div class="fee-note">6元/2小时，之后4元/小时 · 以出口实际收费为准</div>
+                </div>
+                <div class="reminder-card">
+                  <div class="reminder-head">
+                    <span class="reminder-icon"><i data-lucide="bell"></i></span>
+                    <span class="reminder-title">缴费提醒已开启</span>
+                    <span class="switch"></span>
+                  </div>
+                  <div class="reminder-meta">提醒时间：今天 19:56（停车后 30 分钟）<br />取车后自动取消未触发提醒。</div>
+                </div>
+                <div class="actions">
+                  <button class="btn blue"><i data-lucide="car"></i> 已取车</button>
+                  <button class="btn ghost"><i data-lucide="share-2"></i> 分享位置</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label">
+              <span class="dot" style="background: #e8a33d"></span>
+              <span>提醒设置</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar">
+                  <span>22:12</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </span>
+                </div>
+                <div class="topbar">
+                  <div class="topbar-title">提醒设置</div>
+                  <div class="topbar-action"><i data-lucide="check"></i></div>
+                </div>
+                <div class="status-hero">
+                  <div class="status-icon"><i data-lucide="bell"></i></div>
+                  <div class="status-copy">
+                    <div class="status-title">通知已开启</div>
+                    <div class="status-desc">提醒来自真实停车时间，不写入假状态</div>
+                  </div>
+                  <span class="switch"></span>
+                </div>
+                <div class="settings-list">
+                  <div class="settings-row">
+                    <span class="settings-icon"><i data-lucide="clock"></i></span>
+                    <div class="settings-copy">
+                      <div class="settings-name">默认提醒时长</div>
+                      <div class="settings-desc">新记录默认使用</div>
+                    </div>
+                    <span style="color: var(--ink); font-size: 10px; font-weight: 800">30分钟</span>
+                  </div>
+                  <div class="settings-row">
+                    <span class="settings-icon"><i data-lucide="calendar-clock"></i></span>
+                    <div class="settings-copy">
+                      <div class="settings-name">规则节点提醒</div>
+                      <div class="settings-desc">收费规则首段结束前 15 分钟</div>
+                    </div>
+                    <span class="switch"></span>
+                  </div>
+                  <div class="settings-row">
+                    <span class="settings-icon"><i data-lucide="car"></i></span>
+                    <div class="settings-copy">
+                      <div class="settings-name">取车自动取消</div>
+                      <div class="settings-desc">取车后清理未触发提醒</div>
+                    </div>
+                    <span class="switch"></span>
+                  </div>
+                </div>
+                <div class="panel" style="margin-top: 12px">
+                  <div class="panel-title">
+                    <span><i data-lucide="bell-ring"></i> 当前记录提醒</span>
+                    <span class="count">停车中</span>
+                  </div>
+                  <div class="panel-row">
+                    <div class="row-icon"><i data-lucide="parking-circle"></i></div>
+                    <div class="row-copy">
+                      <div class="row-name">成都新世纪环球中心</div>
+                      <div class="row-desc">B3层 · C区 · 328号 · 19:56 提醒</div>
+                    </div>
+                    <div class="row-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                </div>
+                <div class="reminder-card">
+                  <div class="reminder-head">
+                    <span class="reminder-icon"><i data-lucide="shield-check"></i></span>
+                    <span class="reminder-title">通知权限</span>
+                    <span class="switch"></span>
+                  </div>
+                  <div class="reminder-meta">未授权时不伪造“已提醒”，详情页显示“通知未开启”。</div>
+                </div>
+                <div style="margin-top: 12px">
+                  <button class="btn navy"><i data-lucide="save"></i> 保存设置</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label">
+              <span class="dot" style="background: #18a78f"></span>
+              <span>取车确认</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar">
+                  <span>22:12</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </span>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">取车确认</div>
+                    <div class="topbar-sub">完成后记录归档</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="x"></i></div>
+                </div>
+                <div class="summary-card">
+                  <div class="summary-icon"><i data-lucide="timer"></i></div>
+                  <div class="summary-copy">
+                    <div class="summary-title">本次停车 2 小时 46 分钟</div>
+                    <div class="summary-desc">成都新世纪环球中心 · B3层 C区 328号</div>
+                  </div>
+                </div>
+                <div class="form-card" style="margin-top: 12px">
+                  <div class="field">
+                    <div class="field-label">取车时间</div>
+                    <input class="input" value="今天 22:12" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">实际缴费金额</div>
+                    <input class="input" placeholder="如实填写，可空" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">备注</div>
+                    <input class="input" placeholder="例如：出口扫码支付" />
+                  </div>
+                </div>
+                <div class="fee-card">
+                  <div class="fee-title"><i data-lucide="circle-dollar-sign"></i> 预计收费</div>
+                  <div class="fee-amount">约 10 元</div>
+                  <div class="fee-note">真实规则计算 · 以出口实际收费为准</div>
+                </div>
+                <div class="actions">
+                  <button class="btn primary"><i data-lucide="check"></i> 确认取车</button>
+                  <button class="btn ghost"><i data-lucide="arrow-left"></i> 返回停车中</button>
+                </div>
+                <div style="align-items: center; color: var(--muted); display: flex; font-size: 8px; font-weight: 600; gap: 5px; justify-content: center; margin-top: 10px">
+                  <i data-lucide="bell-off"></i> 确认后将取消未触发的缴费提醒
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label">
+              <span class="dot" style="background: #7483a2"></span>
+              <span>历史记录</span>
+            </div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar">
+                  <span>22:12</span>
+                  <span class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </span>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">历史记录</div>
+                    <div class="topbar-sub">只展示真实录入记录</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="search"></i></div>
+                </div>
+                <div class="search-bar" style="margin-top: 4px">
+                  <i data-lucide="search"></i>
+                  <span>搜索停车场 / 楼层 / 区域 / 车位</span>
+                </div>
+                <div class="segmented" style="margin-top: 10px">
+                  <button class="seg-btn active">全部</button>
+                  <button class="seg-btn">停车中</button>
+                  <button class="seg-btn">已取车</button>
+                  <button class="seg-btn">有照片</button>
+                </div>
+                <div class="record-card">
+                  <div class="record-head">
+                    <div class="record-icon"><i data-lucide="car"></i></div>
+                    <div class="record-copy">
+                      <div class="record-name">成都新世纪环球中心</div>
+                      <div class="record-sub">B3层 · C区 · 328号 · 靠近蓝色电梯</div>
+                    </div>
+                    <span class="record-tag done">已取车</span>
+                  </div>
+                  <div class="record-body">
+                    8月6日 19:26 - 22:12 · 停车 2 小时 46 分钟<br />
+                    <strong>实际缴费：未填写</strong>
+                  </div>
+                </div>
+                <div class="panel" style="margin-top: 12px">
+                  <div class="panel-title">
+                    <span><i data-lucide="clock"></i> 最近记录</span>
+                    <span class="count">1 条</span>
+                  </div>
+                  <div class="panel-row">
+                    <div class="row-icon"><i data-lucide="map-pin-off"></i></div>
+                    <div class="row-copy">
+                      <div class="row-name">暂无其他历史记录</div>
+                      <div class="row-desc">历史列表只展示用户真实录入记录</div>
+                    </div>
+                    <div class="row-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                </div>
+                <div class="panel" style="margin-top: 12px">
+                  <div class="panel-title">
+                    <span><i data-lucide="trending-up"></i> 真实数据说明</span>
+                    <span class="count">V1</span>
+                  </div>
+                  <div class="panel-row">
+                    <div class="row-icon"><i data-lucide="database"></i></div>
+                    <div class="row-copy">
+                      <div class="row-name">计数与搜索来自真实记录</div>
+                      <div class="row-desc">首启为空，所有历史来自用户本人</div>
+                    </div>
+                    <div class="row-arrow"><i data-lucide="chevron-right"></i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">States & Constraints</div>
+            <h2 class="section-title">状态与约束</h2>
+          </div>
+          <p class="section-note">空态、定位失败、无规则、通知未开启全部本期完成。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 20%">状态</th>
+                <th>行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="tag warn">空态</span></td><td>首次进入不出现任何预置停车记录，只提供“记录本次停车”入口。</td></tr>
+              <tr><td><span class="tag off">定位失败</span></td><td>显示“定位不可用”，允许手动输入真实停车场名称，不展示默认坐标。</td></tr>
+              <tr><td><span class="tag warn">无收费规则</span></td><td>预计收费返回 null，界面显示“未设置收费规则”，不估算。</td></tr>
+              <tr><td><span class="tag off">通知未开启</span></td><td>详情页显示“通知未开启”，不伪造已提醒状态。</td></tr>
+              <tr><td><span class="tag on">取车</span></td><td>记录真实取车时间与可选实际缴费，取消未触发提醒。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="footnote">FunBox 停车位置记录产品方案 V1 · 配套文档：docs/parking-location-prd-v1.md</p>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

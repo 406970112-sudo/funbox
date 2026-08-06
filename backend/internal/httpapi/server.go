@@ -34,6 +34,7 @@ import (
 	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
+	"my-first-expo-app/backend/internal/parkinglocation"
 	"my-first-expo-app/backend/internal/plantid"
 	"my-first-expo-app/backend/internal/priceradar"
 	"my-first-expo-app/backend/internal/quiethome"
@@ -73,6 +74,7 @@ type Server struct {
 	dnfActivityService        dnfActivityService
 	momentsService            *moments.Service
 	newsService               newsFeedService
+	parkingLocationStore      *parkinglocation.Store
 	plantIDService            *plantid.Service
 	priceRadarService         *priceradar.Service
 	quietHomeService          *quiethome.Service
@@ -641,6 +643,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open borrow ledger database failed: %v", err)
 	}
+	var parkingLocationStore *parkinglocation.Store
+	parkingLocationStore, err = parkinglocation.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open parking location database failed: %v", err)
+	}
 	realtimeHub := realtime.NewHub()
 	var quietHomeService *quiethome.Service
 	quietHomeStore, err := quiethome.OpenStore(cfg.Database.Path)
@@ -672,6 +679,7 @@ func newServer(
 		dnfActivityService:        dnfActivitySvc,
 		momentsService:            momentsService,
 		newsService:               newsService,
+		parkingLocationStore:      parkingLocationStore,
 		plantIDService:            plantIDService,
 		priceRadarService:         priceRadarService,
 		quietHomeService:          quietHomeService,
@@ -727,6 +735,7 @@ func newServer(
 	registerWhoDoesItRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
 	registerBorrowLedgerRoutes(mux, api)
+	registerParkingLocationRoutes(mux, api)
 	registerQuietHomeRoutes(mux, api)
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
@@ -812,6 +821,11 @@ func newServer(
 	if sizeLibraryStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = sizeLibraryStore.Close()
+		})
+	}
+	if parkingLocationStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = parkingLocationStore.Close()
 		})
 	}
 	if borrowLedgerStore != nil {

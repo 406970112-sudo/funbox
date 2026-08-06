@@ -621,5 +621,21 @@
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "parking-location",
+    "name": "停车位置记录",
+    "tagline": "停好车快速记录，取车前准时提醒",
+    "description": "记录真实地图位置、地下楼层区域车位、周边环境照片与停车时间；基于真实收费规则估算费用，并在取车前提醒缴费。",
+    "icon": "parking",
+    "category": "生活",
+    "route": "/tools/parking-location",
+    "accentColor": "#18a78f",
+    "badges": ["真实数据", "缴费提醒"],
+    "usageLabel": "记录停车",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"],
+    "keywords": ["停车", "车位", "地下停车场", "楼层", "区域", "找车", "缴费", "提醒", "拍照", "环球中心"]
   }
 ]
