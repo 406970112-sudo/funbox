@@ -6,21 +6,20 @@ import (
 	"testing"
 	"time"
 
-	"my-first-expo-app/backend/internal/dailylucksign"
 	"my-first-expo-app/backend/internal/user"
 )
 
 type fakeProvider struct{}
 
-func (fakeProvider) FetchWeather(ctx context.Context, lat, lon float64, date string) (dailylucksign.WeatherData, error) {
+func (fakeProvider) FetchWeather(ctx context.Context, lat, lon float64, date string) (WeatherData, error) {
 	max := 34.3
 	precip := 52.0
 	uv := 8.3
-	return dailylucksign.WeatherData{
+	return WeatherData{
 		Date:      date,
 		Timezone:  "Asia/Shanghai",
 		FetchedAt: time.Now().UTC(),
-		Daily: &dailylucksign.DailyWeather{
+		Daily: &DailyWeather{
 			TemperatureMax:    &max,
 			PrecipitationProb: &precip,
 			UVIndex:           &uv,
@@ -28,17 +27,17 @@ func (fakeProvider) FetchWeather(ctx context.Context, lat, lon float64, date str
 	}, nil
 }
 
-func (fakeProvider) FetchAirQuality(ctx context.Context, lat, lon float64) (dailylucksign.AirQualityData, error) {
+func (fakeProvider) FetchAirQuality(ctx context.Context, lat, lon float64) (AirQualityData, error) {
 	aqi := 37.0
-	return dailylucksign.AirQualityData{
+	return AirQualityData{
 		Time:      "2026-08-06T09:00",
 		EAQI:      &aqi,
 		FetchedAt: time.Now().UTC(),
 	}, nil
 }
 
-func (fakeProvider) SearchCities(ctx context.Context, query string) ([]dailylucksign.CityResult, error) {
-	return []dailylucksign.CityResult{{Name: "上海市", Admin1: "上海", Country: "中国", Lat: 31.23, Lon: 121.47}}, nil
+func (fakeProvider) SearchCities(ctx context.Context, query string) ([]CityResult, error) {
+	return []CityResult{{Name: "上海市", Admin1: "上海", Country: "中国", Lat: 31.23, Lon: 121.47}}, nil
 }
 
 func TestServiceEmptyAndTemplateFlow(t *testing.T) {

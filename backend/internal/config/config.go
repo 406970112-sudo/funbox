@@ -231,7 +231,7 @@ func Load() (Config, error) {
 		Auth: AuthConfig{
 			JWTSecret:         envFirst("AUTH_JWT_SECRET", ""),
 			JWTSecretFile:     envFirst("AUTH_JWT_SECRET_FILE", "data/jwt-secret"),
-			TimeCapsuleSecret: envFirst("TIME_CAPSULE_MEDIA_SECRET", "funbox-time-capsule-media-secret"),
+			TimeCapsuleSecret: envFirst("TIME_CAPSULE_SECRET", "funbox-time-capsule-secret"),
 			TokenTTL:          durationFromMs("AUTH_TOKEN_TTL_MS", "", "604800000"),
 		},
 		Database: DatabaseConfig{

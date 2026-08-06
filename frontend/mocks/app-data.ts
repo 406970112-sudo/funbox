@@ -19,12 +19,52 @@ export const featuredBanner = {
 };
 
 const registeredFeatures = featureRegistry as RegisteredTool[];
-const registeredTools = registeredFeatures.filter((entry) => entry.route.startsWith('/tools/'));
+const whereIsItTool: RegisteredTool = {
+  id: 'where-is-it',
+  name: '物品在哪里',
+  tagline: '记录不常用物品的真实位置',
+  description: '记录物品名称、房间、具体位置与真实照片，支持搜索、房间分类、移动历史、确认在与导出备份。',
+  icon: 'map-marker-radius-outline',
+  category: '生活',
+  route: '/tools/where-is-it',
+  accentColor: '#4b6bff',
+  badges: ['真实数据', '拍照存档', '位置历史'],
+  keywords: ['物品在哪里', '物品位置', '备用钥匙', '保修卡', '螺丝刀', '旧手机', '位置记录', '房间分类', '找东西'],
+  usageLabel: '记录位置',
+  status: 'available',
+  featured: true,
+  initialRoles: ['normal', 'vip', 'svip', 'admin'],
+};
+const registeredTools = [
+  ...registeredFeatures.filter((entry) => entry.route.startsWith('/tools/') && entry.id !== 'where-is-it'),
+  whereIsItTool,
+];
 
-export const appTools: AppTool[] = registeredTools.map(({ initialRoles: _initialRoles, ...tool }) => tool);
+const homeManualTool: RegisteredTool = {
+  id: 'home-manual',
+  name: '家庭说明书',
+  tagline: '设备、网络、保修与联系人一本收好',
+  description: '记录真实家电型号、操作方法、Wi-Fi 密码、路由器后台、滤芯型号、保修期限与物业宽带房东联系方式，敏感字段加密查看',
+  icon: 'book-open-variant',
+  category: '生活',
+  route: '/tools/home-manual',
+  accentColor: '#18a78f',
+  badges: ['真实记录', '端到端加密', '保修提醒'],
+  keywords: ['家庭说明书', 'WiFi', 'Wi-Fi', '路由器', '后台地址', '空调', '洗衣机', '净水器', '滤芯', '保修', '物业', '宽带', '房东', '家电', '说明书'],
+  usageLabel: '查看家庭说明书',
+  status: 'available',
+  featured: true,
+  initialRoles: ['normal', 'vip', 'svip', 'admin'],
+};
+
+const mergedTools = registeredTools.some((tool) => tool.id === 'home-manual')
+  ? registeredTools
+  : [...registeredTools, homeManualTool];
+
+export const appTools: AppTool[] = mergedTools.map(({ initialRoles: _initialRoles, ...tool }) => tool);
 
 export const initialToolRoles = new Map(
-  registeredTools.map((tool) => [tool.id, tool.initialRoles ?? ['admin']] as const),
+  mergedTools.map((tool) => [tool.id, tool.initialRoles ?? ['admin']] as const),
 );
 
 export const initialGameRoles = new Map(

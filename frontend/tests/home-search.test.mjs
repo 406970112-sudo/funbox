@@ -156,7 +156,7 @@ test('real registry matches size library search keywords', () => {
   }
 });
 
-test('real registry matches leftover manager search keywords', () => {
+test('real registry matches home manual search keywords', () => {
   const realTools = featureRegistry.filter(
     (entry) =>
       entry.route.startsWith('/tools/') &&
@@ -166,12 +166,12 @@ test('real registry matches leftover manager search keywords', () => {
   const realGames = featureRegistry.filter(
     (entry) => entry.route.startsWith('/games/') && entry.status === 'playable',
   );
-  for (const query of ['冰箱', '剩菜', '外卖', '优先吃掉', '食材', '清理冰箱']) {
+  for (const query of ['家庭说明书', 'WiFi', '路由器', '空调', '洗衣机', '净水器', '滤芯', '保修', '物业', '宽带', '房东']) {
     const result = searchHomeEntries(realTools, realGames, query);
     assert.equal(
-      result.some((entry) => entry.id === 'leftover-manager'),
+      result.some((entry) => entry.id === 'home-manual'),
       true,
-      `${query} 应命中 leftover-manager`,
+      `${query} 应命中 home-manual`,
     );
   }
 });

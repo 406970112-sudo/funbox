@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "id": "moments",
     "name": "朋友圈",
@@ -348,6 +348,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "procrastination-crusher",
+    "name": "拖延任务粉碎机",
+    "tagline": "大任务拆成微步骤",
+    "description": "把大任务拆成可执行微步骤，按真实完成记录结算经验值，支持目标、步骤、账本与统计。",
+    "icon": "bomb",
+    "category": "效率",
+    "route": "/tools/procrastination-crusher",
+    "accentColor": "#ff6b8f",
+    "badges": ["微步骤", "真实经验值"],
+    "keywords": ["拖延", "任务拆解", "微步骤", "经验值", "目标", "第一步"],
+    "usageLabel": "开始粉碎",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "days-left",
     "name": "还有几天",
     "tagline": "证件、续费、保质期与纪念日",
@@ -358,6 +374,22 @@
     "accentColor": "#4b6bff",
     "badges": ["真实数据", "到期提醒", "续期历史"],
     "usageLabel": "开始管理",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "daily-luck-sign",
+    "name": "今日运气签",
+    "tagline": "真实数据的每日轻娱乐签",
+    "description": "由天气、空气质量、农历和节假日生成今日灵感色、小事、挑战与鼓励，字段级可溯源，不预测吉凶。",
+    "icon": "palette-outline",
+    "category": "生活",
+    "route": "/tools/daily-luck-sign",
+    "accentColor": "#2f9b8f",
+    "badges": ["真实数据", "不测吉凶", "每日更新"],
+    "keywords": ["今日", "运气签", "幸运色", "每日签", "今日挑战", "今日小事", "天气签"],
+    "usageLabel": "查看今日签",
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
@@ -438,6 +470,22 @@
     "badges": ["真实数据", "家庭共享"],
     "keywords": ["尺寸库", "身高", "体重", "鞋码", "衣服尺码", "腰围", "戒指", "房间", "书桌", "窗帘", "装修", "代买"],
     "usageLabel": "查看尺寸库",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "home-manual",
+    "name": "家庭说明书",
+    "tagline": "设备、网络、保修与联系人一本收好",
+    "description": "记录真实家电型号、操作方法、Wi-Fi 密码、路由器后台、滤芯型号、保修期限与物业宽带房东联系方式，敏感字段加密查看",
+    "icon": "book-open-variant",
+    "category": "生活",
+    "route": "/tools/home-manual",
+    "accentColor": "#18a78f",
+    "badges": ["真实记录", "端到端加密", "保修提醒"],
+    "keywords": ["家庭说明书", "WiFi", "Wi-Fi", "路由器", "后台地址", "空调", "洗衣机", "净水器", "滤芯", "保修", "物业", "宽带", "房东", "家电", "说明书"],
+    "usageLabel": "查看家庭说明书",
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]

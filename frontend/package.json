@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "my-first-expo-app-frontend",
   "main": "expo-router/entry",
   "version": "1.0.0",
@@ -30,6 +30,7 @@
     "test:days-left": "node --test --experimental-strip-types tests/days-left.test.mjs",
     "test:who-does-it": "node --test --experimental-strip-types tests/who-does-it.test.mjs",
     "test:daily-luck-sign": "node --test --experimental-strip-types tests/daily-luck-sign.test.mjs",
+    "test:procrastination-crusher": "node --test --experimental-strip-types tests/procrastination-crusher.test.mjs",
     "test:where-is-it": "node --test --experimental-strip-types tests/where-is-it.test.mjs",
     "test:impulse-cooler": "node --test --experimental-strip-types tests/impulse-cooler.test.mjs",
     "test:size-library": "node --test --experimental-strip-types tests/size-library.test.mjs",
@@ -44,6 +45,7 @@
     "test:featured-carousel": "node --test --experimental-strip-types tests/featured-carousel-sequence.test.mjs",
     "test:featured-tools": "node --test --experimental-strip-types tests/featured-tools.test.mjs",
     "test:home-catalog": "node --test --experimental-strip-types tests/home-tools-catalog.test.mjs",
+    "test:home-manual": "node --test --experimental-strip-types tests/home-manual.test.mjs",
     "test:home-search": "node --test --experimental-strip-types tests/home-search.test.mjs",
     "test:recent-usage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/recent-usage.test.mjs",
     "test:reading": "node --test --experimental-strip-types tests/reading-local-import.test.mjs tests/reading-state.test.mjs",

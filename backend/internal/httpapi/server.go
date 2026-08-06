@@ -29,6 +29,7 @@ import (
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
 	"my-first-expo-app/backend/internal/gooutchecklist"
+	"my-first-expo-app/backend/internal/homemanual"
 	"my-first-expo-app/backend/internal/homerecommendation"
 	"my-first-expo-app/backend/internal/leftovermanager"
 	"my-first-expo-app/backend/internal/lottery"
@@ -41,6 +42,7 @@ import (
 	"my-first-expo-app/backend/internal/partymemorycard"
 	"my-first-expo-app/backend/internal/plantid"
 	"my-first-expo-app/backend/internal/priceradar"
+	"my-first-expo-app/backend/internal/procrastinator"
 	"my-first-expo-app/backend/internal/quiethome"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
@@ -53,6 +55,7 @@ import (
 	"my-first-expo-app/backend/internal/timecapsule"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
+	"my-first-expo-app/backend/internal/whereisit"
 	"my-first-expo-app/backend/internal/whodoesit"
 )
 
@@ -70,6 +73,7 @@ type Server struct {
 	focusStore                *focus.Store
 	homeRecommendationService *homerecommendation.Service
 	goOutChecklistService     *gooutchecklist.Service
+	homeManualStore           *homemanual.Store
 	rateLimiter               *RateLimiter
 	realtimeHub               *realtime.Hub
 	lotteryService            lotteryHistoryService
@@ -79,6 +83,7 @@ type Server struct {
 	membershipService         *membership.Service
 	diaryService              *diary.Service
 	daysLeftStore             *daysleft.Store
+	procrastinatorStore       *procrastinator.Store
 	dnfActivityService        dnfActivityService
 	momentsService            *moments.Service
 	newsService               newsFeedService
@@ -99,6 +104,7 @@ type Server struct {
 	translationService        *translation.Service
 	ttsService                *tts.Service
 	whoDoesItStore            *whodoesit.Store
+	whereIsItStore            *whereisit.Store
 }
 
 func NewServer(
@@ -657,10 +663,25 @@ func newServer(
 	if err != nil {
 		log.Printf("open who does it database failed: %v", err)
 	}
-	var leftoverManagerStore *leftovermanager.Store
-	leftoverManagerStore, err = leftovermanager.OpenStore(cfg.Database.Path)
+	var whereIsItStore *whereisit.Store
+	whereIsItStore, err = whereisit.OpenStore(cfg.Database.Path)
 	if err != nil {
-		log.Printf("open leftover manager database failed: %v", err)
+		log.Printf("open where is it database failed: %v", err)
+	}
+	var procrastinatorStore *procrastinator.Store
+	procrastinatorStore, err = procrastinator.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open procrastinator database failed: %v", err)
+	}
+	openMeteoProvider := gooutchecklist.NewOpenMeteoProvider(15 * time.Second)
+	var goOutChecklistStore *gooutchecklist.Store
+	goOutChecklistStore, err = gooutchecklist.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open go out checklist database failed: %v", err)
+	}
+	var goOutChecklistService *gooutchecklist.Service
+	if goOutChecklistStore != nil {
+		goOutChecklistService = gooutchecklist.NewService(goOutChecklistStore, openMeteoProvider)
 	}
 	var timeCapsuleStore *timecapsule.Store
 	timeCapsuleStore, err = timecapsule.OpenStore(cfg.Database.Path)
@@ -676,6 +697,11 @@ func newServer(
 	partyMemoryCardStore, err = partymemorycard.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Printf("open party memory card database failed: %v", err)
+	}
+	var homeManualStore *homemanual.Store
+	homeManualStore, err = homemanual.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open home manual database failed: %v", err)
 	}
 	var borrowLedgerStore *borrowledger.Store
 	borrowLedgerStore, err = borrowledger.OpenStore(cfg.Database.Path)
@@ -706,9 +732,10 @@ func newServer(
 		dailyLuckSignService:      dailyLuckSignService,
 		feedbackService:           feedbackService,
 		foodRecommendationService: foodRecommendationService,
+		goOutChecklistService:     goOutChecklistService,
 		focusStore:                focusStore,
 		homeRecommendationService: homeRecommendationService,
-		goOutChecklistService:     goOutChecklistService,
+		homeManualStore:           homeManualStore,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		realtimeHub:               realtimeHub,
 		lotteryService:            lottery.NewService(cfg.Lottery),
@@ -718,6 +745,7 @@ func newServer(
 		membershipService:         membershipService,
 		diaryService:              diaryService,
 		daysLeftStore:             daysLeftStore,
+		procrastinatorStore:       procrastinatorStore,
 		dnfActivityService:        dnfActivitySvc,
 		momentsService:            momentsService,
 		newsService:               newsService,
@@ -738,6 +766,7 @@ func newServer(
 		translationService:        translationService,
 		ttsService:                ttsService,
 		whoDoesItStore:            whoDoesItStore,
+		whereIsItStore:            whereIsItStore,
 	}
 
 	mux := http.NewServeMux()
@@ -778,11 +807,15 @@ func newServer(
 	registerLeftoverManagerRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
+	registerGoOutChecklistRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
+	registerWhereIsItRoutes(mux, api)
+	registerProcrastinatorRoutes(mux, api)
 	registerTimeCapsuleRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
 	registerPartyMemoryCardRoutes(mux, api)
+	registerHomeManualRoutes(mux, api)
 	registerBorrowLedgerRoutes(mux, api)
 	registerParkingLocationRoutes(mux, api)
 	registerQuietHomeRoutes(mux, api)
@@ -855,6 +888,11 @@ func newServer(
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 	}
+	if whereIsItStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = whereIsItStore.Close()
+		})
+	}
 	if daysLeftStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = daysLeftStore.Close()
@@ -865,9 +903,19 @@ func newServer(
 			_ = coolingStore.Close()
 		})
 	}
+	if goOutChecklistStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = goOutChecklistStore.Close()
+		})
+	}
 	if whoDoesItStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = whoDoesItStore.Close()
+		})
+	}
+	if procrastinatorStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = procrastinatorStore.Close()
 		})
 	}
 	if timeCapsuleStore != nil {
@@ -888,6 +936,11 @@ func newServer(
 	if partyMemoryCardStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = partyMemoryCardStore.Close()
+		})
+	}
+	if homeManualStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = homeManualStore.Close()
 		})
 	}
 	if parkingLocationStore != nil {
@@ -1199,7 +1252,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Diary-Unlock-Token")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Diary-Unlock-Token,X-Home-Manual-Unlock-Token")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,Retry-After,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }
 

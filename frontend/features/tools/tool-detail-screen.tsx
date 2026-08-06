@@ -1,4 +1,4 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+﻿import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -20,6 +20,7 @@ import { PriceRadarScreen } from '@/features/tools/price-radar-screen';
 import { StockTradeAlertScreen } from '@/features/tools/stock-trade-alert-screen';
 import { DnfMobileActivityScreen } from '@/features/tools/dnf-mobile-activity-screen';
 import { DaysLeftScreen } from '@/features/tools/days-left-screen';
+import { DailyLuckSignScreen } from '@/features/tools/daily-luck-sign-screen';
 import { HomeConsumablesScreen } from '@/features/tools/home-consumables-screen';
 import { DoubleColorBallHubScreen } from '@/features/tools/double-color-ball-hub-screen';
 import { DoubleColorBallHistoryScreen } from '@/features/tools/double-color-ball-history-screen';
@@ -32,6 +33,7 @@ import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { TimeCapsuleScreen } from '@/features/tools/time-capsule-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
+import { ProcrastinationCrusherScreen } from '@/features/tools/procrastination-crusher-screen';
 import { WhereIsItScreen } from '@/features/tools/where-is-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
@@ -39,6 +41,7 @@ import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
 import { LeftoverManagerScreen } from '@/features/tools/leftover-manager-screen';
 import { GoOutChecklistScreen } from '@/features/tools/go-out-checklist-screen';
 import { PartyMemoryCardScreen } from '@/features/tools/party-memory-card-screen';
+import { HomeManualScreen } from '@/features/tools/home-manual-screen';
 import { ParkingLocationScreen } from '@/features/tools/parking-location-screen';
 import { QuietHomeScreen } from '@/features/tools/quiet-home-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
@@ -344,6 +347,15 @@ export function ToolDetailScreen() {
     );
   }
 
+  if (tool?.id === 'daily-luck-sign') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <DailyLuckSignScreen />
+      </>
+    );
+  }
+
   if (tool?.id === 'home-consumables') {
     return (
       <>
@@ -358,6 +370,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <WhoDoesItScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'procrastination-crusher') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ProcrastinationCrusherScreen />
       </>
     );
   }
@@ -412,6 +433,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <PartyMemoryCardScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'home-manual') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <HomeManualScreen />
       </>
     );
   }
