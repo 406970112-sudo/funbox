@@ -14,15 +14,19 @@ import { MobileScreen } from '@/shared/ui/mobile-screen';
 export function ProfileEditScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
-  const { status, updateDisplayName, uploadAvatar, user } = useAuth();
+  const { status, updateBirthday, updateDisplayName, uploadAvatar, user } = useAuth();
   const [displayName, setDisplayName] = useState(user?.displayName ?? '');
+  const [birthday, setBirthday] = useState(user?.birthday ?? '');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageKind, setMessageKind] = useState<'error' | 'success'>('success');
 
   useEffect(() => {
-    if (user) setDisplayName(user.displayName);
+    if (user) {
+      setDisplayName(user.displayName);
+      setBirthday(user.birthday);
+    }
   }, [user]);
 
   if (status === 'anonymous') {
@@ -68,9 +72,10 @@ export function ProfileEditScreen() {
     setMessage('');
     setSaving(true);
     try {
-      await updateDisplayName(displayName);
+      if (displayName !== user?.displayName) await updateDisplayName(displayName);
+      if (birthday !== user?.birthday) await updateBirthday(birthday);
       setMessageKind('success');
-      setMessage('昵称已保存。');
+      setMessage('资料已保存。');
     } catch (error) {
       setMessageKind('error');
       setMessage(getAuthErrorMessage(error));
@@ -158,6 +163,30 @@ export function ProfileEditScreen() {
           </View>
         </View>
 
+        <View style={styles.fieldGroup}>
+          <ThemedText style={styles.fieldLabel}>生日</ThemedText>
+          <View
+            style={[
+              styles.inputShell,
+              { backgroundColor: colors.surfaceMuted, borderColor: colors.line },
+            ]}>
+            <MaterialCommunityIcons name="cake-variant-outline" size={19} color={colors.mutedText} />
+            <TextInput
+              autoCapitalize="none"
+              maxLength={10}
+              onChangeText={setBirthday}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.mutedText}
+              selectionColor={colors.primary}
+              style={[styles.input, { color: colors.text }]}
+              value={birthday}
+            />
+          </View>
+          <ThemedText style={[styles.fieldHint, { color: colors.mutedText }]}>
+            用于时间胶囊的"明年生日"开启条件。
+          </ThemedText>
+        </View>
+
         {message ? (
           <View
             style={[
@@ -192,7 +221,7 @@ export function ProfileEditScreen() {
           ) : (
             <MaterialCommunityIcons name="content-save-outline" size={20} color="#ffffff" />
           )}
-          <ThemedText style={styles.submitText}>{saving ? '正在保存' : '保存昵称'}</ThemedText>
+          <ThemedText style={styles.submitText}>{saving ? '正在保存' : '保存资料'}</ThemedText>
         </Pressable>
       </View>
     </MobileScreen>
@@ -284,6 +313,10 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '800',
+  },
+  fieldHint: {
+    fontSize: 11,
+    lineHeight: 17,
   },
   readonlyField: {
     alignItems: 'center',

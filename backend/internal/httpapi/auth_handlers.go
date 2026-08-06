@@ -54,6 +54,7 @@ type recoveryResetRequest struct {
 }
 
 type updateProfileRequest struct {
+	Birthday    *string `json:"birthday"`
 	DisplayName string `json:"displayName"`
 }
 
@@ -64,6 +65,7 @@ type changePasswordRequest struct {
 
 type authUserResponse struct {
 	AvatarURL   string     `json:"avatarUrl"`
+	Birthday    string     `json:"birthday"`
 	CreatedAt   string     `json:"createdAt"`
 	DisplayName string     `json:"displayName"`
 	ID          string     `json:"id"`
@@ -189,10 +191,22 @@ func (s *Server) handleUpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, err := s.authService.UpdateDisplayName(r.Context(), account.ID, request.DisplayName)
-	if err != nil {
-		s.writeAuthError(w, err)
-		return
+	updated := account
+	if strings.TrimSpace(request.DisplayName) != "" || request.DisplayName != "" {
+		next, err := s.authService.UpdateDisplayName(r.Context(), account.ID, request.DisplayName)
+		if err != nil {
+			s.writeAuthError(w, err)
+			return
+		}
+		updated = next
+	}
+	if request.Birthday != nil {
+		next, err := s.authService.UpdateBirthday(r.Context(), account.ID, *request.Birthday)
+		if err != nil {
+			s.writeAuthError(w, err)
+			return
+		}
+		updated = next
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"user": s.publicUser(updated)})
 }
@@ -352,6 +366,7 @@ func (s *Server) publicUser(account user.User) authUserResponse {
 
 	return authUserResponse{
 		AvatarURL:   avatarURL,
+		Birthday:    account.Birthday,
 		CreatedAt:   account.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		DisplayName: account.DisplayName,
 		ID:          account.ID,
@@ -362,6 +377,8 @@ func (s *Server) publicUser(account user.User) authUserResponse {
 
 func (s *Server) writeAuthError(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, auth.ErrBirthdayInvalid):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "birthday_invalid"})
 	case errors.Is(err, auth.ErrUsernameInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "username_invalid"})
 	case errors.Is(err, auth.ErrPasswordInvalid):

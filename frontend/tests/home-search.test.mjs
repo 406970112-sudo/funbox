@@ -196,6 +196,26 @@ test('real registry matches borrow ledger search keywords', () => {
   }
 });
 
+test('real registry matches time capsule search keywords', () => {
+  const realTools = featureRegistry.filter(
+    (entry) =>
+      entry.route.startsWith('/tools/') &&
+      entry.status === 'available' &&
+      !entry.hiddenFromList,
+  );
+  const realGames = featureRegistry.filter(
+    (entry) => entry.route.startsWith('/games/') && entry.status === 'playable',
+  );
+  for (const query of ['时间胶囊', '写给未来', '生日', '纪念日', '一周年', '项目上线', '语音', '封存']) {
+    const result = searchHomeEntries(realTools, realGames, query);
+    assert.equal(
+      result.some((entry) => entry.id === 'time-capsule'),
+      true,
+      `${query} 应命中 time-capsule`,
+    );
+  }
+});
+
 test('mixes tools and games and keeps match rank stable', () => {
   const result = searchHomeEntries(tools, games, '棋');
   assert.deepEqual(

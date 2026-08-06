@@ -131,6 +131,19 @@ export async function updateDisplayName(token: string, displayName: string) {
   return withResolvedAvatar(response.user);
 }
 
+export async function updateBirthday(token: string, birthday: string) {
+  const response = await requestJSON<UserResponse>('/api/v1/users/me', {
+    ...withToken(token),
+    body: JSON.stringify({ birthday }),
+    headers: {
+      ...withToken(token).headers,
+      'Content-Type': 'application/json',
+    },
+    method: 'PATCH',
+  });
+  return withResolvedAvatar(response.user);
+}
+
 export async function changePassword(token: string, currentPassword: string, newPassword: string) {
   const session = await requestJSON<AuthSession>('/api/v1/users/me/password', {
     body: JSON.stringify({ currentPassword, newPassword }),
@@ -179,6 +192,7 @@ export function getAuthErrorMessage(error: unknown) {
     avatar_required: '请选择一张头像图片。',
     avatar_too_large: '头像不能超过 3 MB。',
     avatar_type_invalid: '头像仅支持 JPG 或 PNG 格式。',
+    birthday_invalid: '生日格式应为 YYYY-MM-DD。',
     current_password_invalid: '当前密码不正确。',
     display_name_invalid: '昵称需为 1 至 32 个字符。',
     invalid_credentials: '手机号或密码不正确。',

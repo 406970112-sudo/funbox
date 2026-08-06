@@ -31,9 +31,10 @@ type Config struct {
 }
 
 type AuthConfig struct {
-	JWTSecret     string
-	JWTSecretFile string
-	TokenTTL      time.Duration
+	JWTSecret         string
+	JWTSecretFile     string
+	TimeCapsuleSecret string
+	TokenTTL          time.Duration
 }
 
 type DatabaseConfig struct {
@@ -136,6 +137,7 @@ type StorageConfig struct {
 	MomentDir                string
 	PaymentQRDir             string
 	ReadingDir               string
+	TimeCapsuleDir           string
 	MaxAvatarBytes           int64
 	MaxBlogCoverBytes        int64
 	MaxCoolingImageBytes     int64
@@ -218,9 +220,10 @@ func Load() (Config, error) {
 	cfg := Config{
 		AppEnv: appEnv,
 		Auth: AuthConfig{
-			JWTSecret:     envFirst("AUTH_JWT_SECRET", ""),
-			JWTSecretFile: envFirst("AUTH_JWT_SECRET_FILE", "data/jwt-secret"),
-			TokenTTL:      durationFromMs("AUTH_TOKEN_TTL_MS", "", "604800000"),
+			JWTSecret:         envFirst("AUTH_JWT_SECRET", ""),
+			JWTSecretFile:     envFirst("AUTH_JWT_SECRET_FILE", "data/jwt-secret"),
+			TimeCapsuleSecret: envFirst("TIME_CAPSULE_MEDIA_SECRET", "funbox-time-capsule-media-secret"),
+			TokenTTL:          durationFromMs("AUTH_TOKEN_TTL_MS", "", "604800000"),
 		},
 		Database: DatabaseConfig{
 			Path: envFirst("DATABASE_PATH", "data/app.db"),
@@ -249,6 +252,7 @@ func Load() (Config, error) {
 			MomentDir:                envFirst("STORAGE_MOMENT_DIR", "data/moments"),
 			PaymentQRDir:             envFirst("STORAGE_PAYMENT_QR_DIR", "data/payment-qr"),
 			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
+			TimeCapsuleDir:           envFirst("STORAGE_TIME_CAPSULE_DIR", "data/time-capsule-media"),
 			MaxAvatarBytes:           int64(intFirst("STORAGE_MAX_AVATAR_BYTES", "", "3145728")),
 			MaxBlogCoverBytes:        int64(intFirst("STORAGE_MAX_BLOG_COVER_BYTES", "", "2097152")),
 			MaxCoolingImageBytes:     int64(intFirst("STORAGE_MAX_COOLING_IMAGE_BYTES", "", "5242880")),

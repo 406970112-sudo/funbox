@@ -1,0 +1,1881 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 时间胶囊 - 产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --faint: #9ba7bd;
+        --line: #dce4f2;
+        --line-strong: #cdd8ea;
+        --canvas: #edf2fb;
+        --surface: #ffffff;
+        --soft: #f5f7fc;
+        --primary: #4568f2;
+        --navy: #151b3b;
+        --navy-2: #222a52;
+        --lime: #c9f36a;
+        --teal: #18a78f;
+        --teal-dark: #0e806d;
+        --teal-soft: #e2f6f1;
+        --gold: #e8a33d;
+        --gold-dark: #bd7620;
+        --gold-soft: #fff3dc;
+        --rose: #e8667a;
+        --gray: #7483a2;
+        --shadow: 0 18px 52px rgba(45, 64, 105, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background:
+          linear-gradient(rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(111, 133, 176, 0.06) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        color: var(--ink);
+        font-family: "Noto Sans SC", sans-serif;
+        letter-spacing: 0;
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      .board {
+        margin: 0 auto;
+        max-width: 1560px;
+        padding: 36px 24px 54px;
+        width: min(1560px, calc(100vw - 24px));
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .board-brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .board-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 50px;
+        justify-content: center;
+        width: 50px;
+      }
+
+      .board-mark svg {
+        height: 24px;
+        width: 24px;
+      }
+
+      .board-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .board-subtitle {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .board-meta {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .board-meta strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .section {
+        background: var(--surface);
+        border: 1px solid rgba(205, 216, 234, 0.82);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        margin: 0 0 22px;
+        padding: 24px 26px 26px;
+      }
+
+      .section-head {
+        align-items: baseline;
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .section-kicker {
+        color: var(--primary);
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-title {
+        font-size: 19px;
+        font-weight: 800;
+        margin: 5px 0 0;
+      }
+
+      .section-note {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        max-width: 620px;
+        text-align: right;
+      }
+
+      .tokens {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .token-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        min-width: 0;
+        padding: 16px;
+      }
+
+      .token-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .token-icon {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .token-icon svg {
+        height: 19px;
+        width: 19px;
+      }
+
+      .token-name {
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .token-desc {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 18px;
+      }
+
+      .rules {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 14px;
+      }
+
+      .rule {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        min-width: 0;
+        padding: 12px;
+      }
+
+      .rule-num {
+        align-items: center;
+        background: var(--gold-soft);
+        border-radius: 9px;
+        color: var(--gold-dark);
+        display: flex;
+        flex: 0 0 30px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        height: 30px;
+        justify-content: center;
+      }
+
+      .rule-text {
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      .flow {
+        align-items: stretch;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+
+      .flow-node {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-height: 76px;
+        padding: 12px;
+      }
+
+      .flow-node .flow-icon {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--gold);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .flow-node .flow-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .flow-node .flow-name {
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 9px;
+      }
+
+      .flow-node .flow-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 4px;
+      }
+
+      .flow-arrow {
+        align-items: center;
+        color: #b7c2d6;
+        display: flex;
+        justify-content: center;
+      }
+
+      .flow-arrow svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .phones {
+        display: grid;
+        gap: 22px 20px;
+        grid-template-columns: repeat(3, 312px);
+        justify-content: center;
+        margin-top: 4px;
+      }
+
+      .phone-wrap {
+        width: 312px;
+      }
+
+      .phone-label {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding-top: 13px;
+      }
+
+      .phone-label .dot {
+        border-radius: 50%;
+        height: 8px;
+        width: 8px;
+      }
+
+      .phone-label span {
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        background: #f4f7fd;
+        border: 1px solid #c8d4e8;
+        border-radius: 42px;
+        box-shadow: 0 24px 60px rgba(45, 64, 105, 0.22);
+        height: 880px;
+        overflow: hidden;
+        position: relative;
+        width: 312px;
+      }
+
+      .phone-screen {
+        background: #f4f7fd;
+        border-radius: 42px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        padding: 10px 16px 0;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        color: #18233d;
+        display: flex;
+        flex: 0 0 26px;
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 0 5px;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        min-height: 46px;
+        padding: 4px 2px 8px;
+      }
+
+      .topbar-title {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .topbar-sub {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .topbar-action {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .topbar-action svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .brand-mark-mini {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--primary);
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+        height: 32px;
+        padding: 0 9px;
+      }
+
+      .brand-mark-mini svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #151b3b, #332c52 74%, #5a4126);
+        border-radius: 18px;
+        color: #ffffff;
+        padding: 18px 16px 16px;
+        position: relative;
+      }
+
+      .hero.gold {
+        background: linear-gradient(135deg, #151b3b, #3a2d1f 72%, #6b4a1c);
+      }
+
+      .hero .hero-icon {
+        align-items: center;
+        background: rgba(232, 163, 61, 0.16);
+        border: 1px solid rgba(232, 163, 61, 0.32);
+        border-radius: 12px;
+        color: #f2bd70;
+        display: flex;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .hero .hero-icon svg {
+        height: 21px;
+        width: 21px;
+      }
+
+      .hero-title {
+        font-size: 19px;
+        font-weight: 900;
+        margin-top: 14px;
+      }
+
+      .hero-sub {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 16px;
+        margin-top: 5px;
+      }
+
+      .hero-meta {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .hero-meta-item {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        font-size: 9px;
+        font-weight: 700;
+        min-height: 28px;
+        padding: 6px 9px;
+      }
+
+      .quick-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 12px;
+      }
+
+      .quick-item {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 7px;
+        min-height: 58px;
+        justify-content: center;
+      }
+
+      .quick-item .quick-icon {
+        align-items: center;
+        border-radius: 8px;
+        color: var(--gold-dark);
+        display: flex;
+        height: 24px;
+        justify-content: center;
+        width: 24px;
+      }
+
+      .quick-item .quick-icon svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .panel {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 14px;
+        padding: 4px 12px 10px;
+      }
+
+      .panel-title {
+        align-items: center;
+        display: flex;
+        font-size: 11px;
+        font-weight: 900;
+        gap: 7px;
+        justify-content: space-between;
+        min-height: 36px;
+      }
+
+      .panel-title .count {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .empty-inline {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        display: flex;
+        font-size: 9px;
+        font-weight: 600;
+        gap: 7px;
+        min-height: 54px;
+        padding: 0 2px;
+      }
+
+      .empty-inline svg {
+        height: 14px;
+        width: 14px;
+      }
+
+      .segmented {
+        background: #e8eef8;
+        border-radius: 12px;
+        display: grid;
+        gap: 3px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 3px;
+      }
+
+      .seg-btn {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 9px;
+        color: var(--muted);
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 5px;
+        height: 34px;
+        justify-content: center;
+      }
+
+      .seg-btn svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .seg-btn.active {
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(45, 64, 105, 0.1);
+        color: var(--gold-dark);
+      }
+
+      .form-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .field {
+        margin-top: 11px;
+      }
+
+      .field:first-child {
+        margin-top: 0;
+      }
+
+      .field-label {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .input {
+        background: #f6f8fc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 700;
+        height: 40px;
+        outline: none;
+        padding: 0 11px;
+        width: 100%;
+      }
+
+      .input::placeholder {
+        color: #a9b5ca;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .textarea {
+        background: #f6f8fc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 17px;
+        min-height: 62px;
+        outline: none;
+        padding: 9px 11px;
+        resize: none;
+        width: 100%;
+      }
+
+      .textarea::placeholder {
+        color: #a9b5ca;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .form-hint {
+        color: var(--faint);
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 14px;
+        margin-top: 6px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .chip {
+        align-items: center;
+        background: #f5f7fc;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        display: inline-flex;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 4px;
+        min-height: 28px;
+        padding: 0 9px;
+      }
+
+      .chip.active {
+        background: var(--gold-soft);
+        border-color: #edc681;
+        color: var(--gold-dark);
+      }
+
+      .chip svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .media-row {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 10px;
+      }
+
+      .media-tile {
+        align-items: center;
+        background: #f7f9fd;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: var(--ink);
+        display: flex;
+        flex-direction: column;
+        font-size: 8px;
+        font-weight: 800;
+        gap: 6px;
+        min-height: 62px;
+        justify-content: center;
+      }
+
+      .media-tile .media-icon {
+        color: var(--gold-dark);
+      }
+
+      .media-tile .media-icon svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .btn {
+        align-items: center;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
+        gap: 7px;
+        height: 44px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .btn svg {
+        height: 15px;
+        width: 15px;
+      }
+
+      .btn.primary {
+        background: var(--gold);
+        color: #ffffff;
+      }
+
+      .btn.navy {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .btn.ghost {
+        background: var(--soft);
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .btn.light {
+        background: #ffffff;
+        border-color: var(--line);
+        color: var(--ink);
+      }
+
+      .form-footer {
+        margin-top: 12px;
+      }
+
+      .source-card {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        display: flex;
+        gap: 9px;
+        margin-top: 10px;
+        min-height: 58px;
+        padding: 10px;
+      }
+
+      .source-card.active {
+        border-color: #edc681;
+        box-shadow: 0 0 0 2px rgba(232, 163, 61, 0.14);
+      }
+
+      .source-icon {
+        align-items: center;
+        background: var(--gold-soft);
+        border-radius: 9px;
+        color: var(--gold-dark);
+        display: flex;
+        flex: 0 0 34px;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .source-icon svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .source-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .source-name {
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .source-meta {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .source-radio {
+        align-items: center;
+        border: 1px solid #c9d5ea;
+        border-radius: 50%;
+        display: flex;
+        flex: 0 0 18px;
+        height: 18px;
+        justify-content: center;
+        width: 18px;
+      }
+
+      .source-card.active .source-radio {
+        background: var(--gold);
+        border-color: var(--gold);
+        color: #ffffff;
+      }
+
+      .source-radio svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .people-row {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .avatar {
+        align-items: center;
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 38px;
+        font-size: 13px;
+        font-weight: 900;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .people-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .people-name {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .people-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .invite-card {
+        background: #fff9ed;
+        border: 1px solid #f0d8ac;
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .invite-title {
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .invite-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 5px;
+      }
+
+      .member-row {
+        align-items: center;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        min-height: 48px;
+      }
+
+      .member-avatar {
+        align-items: center;
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 30px;
+        font-size: 10px;
+        font-weight: 900;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .member-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .member-name {
+        font-size: 9px;
+        font-weight: 900;
+      }
+
+      .member-meta {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .status-tag {
+        align-items: center;
+        background: var(--gold-soft);
+        border-radius: 999px;
+        color: var(--gold-dark);
+        display: inline-flex;
+        font-size: 8px;
+        font-weight: 900;
+        gap: 4px;
+        min-height: 22px;
+        padding: 0 8px;
+      }
+
+      .status-tag svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .seal-hero {
+        background: linear-gradient(145deg, #151b3b, #352b1c 76%, #6b4a1c);
+        border-radius: 18px;
+        color: #ffffff;
+        margin-top: 10px;
+        padding: 17px 16px 15px;
+      }
+
+      .seal-kicker {
+        align-items: center;
+        color: #f2bd70;
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+      }
+
+      .seal-kicker svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .seal-title {
+        font-size: 17px;
+        font-weight: 900;
+        margin-top: 10px;
+      }
+
+      .seal-count {
+        align-items: baseline;
+        display: flex;
+        gap: 7px;
+        margin-top: 13px;
+      }
+
+      .seal-count-value {
+        font-family: "Manrope", sans-serif;
+        font-size: 32px;
+        font-weight: 800;
+        line-height: 34px;
+      }
+
+      .seal-count-unit {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .seal-meta {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 7px;
+      }
+
+      .lock-card {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .lock-icon {
+        align-items: center;
+        background: var(--gold-soft);
+        border-radius: 10px;
+        color: var(--gold-dark);
+        display: flex;
+        flex: 0 0 38px;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .lock-icon svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .lock-copy {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .lock-title {
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .lock-desc {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 14px;
+        margin-top: 3px;
+      }
+
+      .member-chip-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .member-chip {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        display: flex;
+        flex: 1;
+        gap: 6px;
+        min-height: 38px;
+        padding: 6px 8px;
+      }
+
+      .member-chip .member-avatar {
+        flex-basis: 24px;
+        height: 24px;
+        width: 24px;
+        font-size: 8px;
+      }
+
+      .member-chip .member-name {
+        font-size: 8px;
+      }
+
+      .member-chip .member-meta {
+        font-size: 7px;
+      }
+
+      .opened-hero {
+        background: linear-gradient(145deg, #151b3b, #24443f 72%, #1d6659);
+        border-radius: 18px;
+        color: #ffffff;
+        margin-top: 10px;
+        padding: 17px 16px 15px;
+      }
+
+      .opened-kicker {
+        align-items: center;
+        color: #c9f36a;
+        display: flex;
+        font-size: 9px;
+        font-weight: 900;
+        gap: 5px;
+      }
+
+      .opened-kicker svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .opened-title {
+        font-size: 17px;
+        font-weight: 900;
+        margin-top: 9px;
+      }
+
+      .opened-meta {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 8px;
+        font-weight: 600;
+        margin-top: 5px;
+      }
+
+      .content-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .content-head {
+        align-items: center;
+        display: flex;
+        gap: 7px;
+        margin-bottom: 8px;
+      }
+
+      .content-author {
+        align-items: center;
+        background: #e4f7f1;
+        border-radius: 999px;
+        color: var(--teal-dark);
+        display: inline-flex;
+        font-size: 8px;
+        font-weight: 900;
+        gap: 4px;
+        min-height: 22px;
+        padding: 0 8px;
+      }
+
+      .content-author svg {
+        height: 11px;
+        width: 11px;
+      }
+
+      .content-kind {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .content-text {
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 18px;
+      }
+
+      .photo-preview {
+        align-items: center;
+        background: linear-gradient(135deg, #4b6bff, #18a78f);
+        border-radius: 11px;
+        color: #ffffff;
+        display: flex;
+        gap: 7px;
+        height: 58px;
+        justify-content: center;
+        margin-top: 8px;
+      }
+
+      .photo-preview svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .photo-preview span {
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .voice-card {
+        align-items: center;
+        background: #f7f9fd;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        min-height: 42px;
+        padding: 0 10px;
+      }
+
+      .voice-play {
+        align-items: center;
+        background: var(--gold);
+        border-radius: 50%;
+        color: #ffffff;
+        display: flex;
+        flex: 0 0 26px;
+        height: 26px;
+        justify-content: center;
+        width: 26px;
+      }
+
+      .voice-play svg {
+        height: 13px;
+        width: 13px;
+      }
+
+      .voice-wave {
+        color: var(--muted);
+        flex: 1;
+        font-size: 8px;
+        font-weight: 700;
+      }
+
+      .voice-time {
+        color: var(--muted);
+        font-family: "Manrope", sans-serif;
+        font-size: 8px;
+        font-weight: 800;
+      }
+
+      .matrix {
+        overflow-x: auto;
+      }
+
+      .matrix table {
+        border-collapse: collapse;
+        font-size: 11px;
+        line-height: 18px;
+        width: 100%;
+      }
+
+      .matrix th {
+        background: var(--soft);
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 900;
+        padding: 10px 12px;
+        text-align: left;
+      }
+
+      .matrix td {
+        border-top: 1px solid var(--line);
+        color: var(--ink);
+        padding: 11px 12px;
+        vertical-align: top;
+      }
+
+      .matrix td strong {
+        font-weight: 900;
+      }
+
+      .tag {
+        border-radius: 999px;
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 900;
+        padding: 4px 9px;
+      }
+
+      .tag.warn {
+        background: #fff1d6;
+        color: var(--gold-dark);
+      }
+
+      .tag.on {
+        background: #e4f7f1;
+        color: var(--teal-dark);
+      }
+
+      .tag.off {
+        background: #f4f6fa;
+        color: var(--muted);
+      }
+
+      .principles {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .principle {
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        min-width: 0;
+        padding: 13px;
+      }
+
+      .principle-num {
+        color: var(--gold);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .principle-title {
+        font-size: 11px;
+        font-weight: 900;
+        margin-top: 7px;
+      }
+
+      .principle-desc {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-top: 5px;
+      }
+
+      .footnote {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        margin: 4px 2px 0;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <div class="board-header">
+        <div class="board-brand">
+          <div class="board-mark"><i data-lucide="hourglass"></i></div>
+          <div>
+            <h1 class="board-title">FunBox 时间胶囊</h1>
+            <p class="board-subtitle">真实文字、照片、语音，到期或目标达成才开启；支持双人共同封存。</p>
+          </div>
+        </div>
+        <div class="board-meta">
+          产品设计 V1
+          <strong>2026-08-06 · 一期全量</strong>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Product &amp; Real Data</div>
+            <h2 class="section-title">方案速览</h2>
+          </div>
+          <p class="section-note">设计稿中的文字、照片、语音和名称均为版式演示，不会在运行时写入数据库。</p>
+        </div>
+        <div class="tokens">
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: var(--gold-soft); color: var(--gold-dark)"><i data-lucide="user-round"></i></div>
+              <div class="token-name">个人胶囊</div>
+            </div>
+            <div class="token-desc">写给一个月后的自己、明年生日、项目上线那天。封存后内容立即隐藏，到期自动开启。</div>
+          </div>
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #e4f7f1; color: var(--teal-dark)"><i data-lucide="users"></i></div>
+              <div class="token-name">双人共同封存</div>
+            </div>
+            <div class="token-desc">选择真实好友，双方各自放入内容并接受邀请后才能封存，到期后双方共同查看。</div>
+          </div>
+          <div class="token-card">
+            <div class="token-head">
+              <div class="token-icon" style="background: #e3e9ff; color: var(--primary)"><i data-lucide="shield-check"></i></div>
+              <div class="token-name">真实数据红线</div>
+            </div>
+            <div class="token-desc">没有种子胶囊、mock 内容、假好友、假照片或假语音；所有开启时间由服务端真实状态决定。</div>
+          </div>
+        </div>
+        <div class="rules">
+          <div class="rule"><div class="rule-num">01</div><div class="rule-text">首次进入为空态，不预置任何胶囊、内容或邀请。</div></div>
+          <div class="rule"><div class="rule-num">02</div><div class="rule-text">文字只来自用户输入，照片和语音只来自真实上传或录制。</div></div>
+          <div class="rule"><div class="rule-num">03</div><div class="rule-text">生日开启使用真实生日，目标开启只关联真实记录。</div></div>
+          <div class="rule"><div class="rule-num">04</div><div class="rule-text">双人胶囊只能选择真实好友，双方都必须放入内容。</div></div>
+          <div class="rule"><div class="rule-num">05</div><div class="rule-text">封存后正文与媒体从所有接口隐藏，到期才返回。</div></div>
+          <div class="rule"><div class="rule-num">06</div><div class="rule-text">开启时间、开启事件和通知全部由服务端记录。</div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Core Flow</div>
+            <h2 class="section-title">核心流程</h2>
+          </div>
+          <p class="section-note">个人与双人共用同一条封存、等待、开启链路。</p>
+        </div>
+        <div class="flow">
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="plus"></i></div>
+            <div class="flow-name">创建胶囊</div>
+            <div class="flow-desc">选择单人/双人，填写真实标题与开启条件。</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="users"></i></div>
+            <div class="flow-name">邀请好友</div>
+            <div class="flow-desc">双人模式从真实好友中选择并发送邀请。</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="pencil"></i></div>
+            <div class="flow-name">放入内容</div>
+            <div class="flow-desc">双方各自写文字、传照片或录语音。</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="lock"></i></div>
+            <div class="flow-name">封存</div>
+            <div class="flow-desc">服务端校验后隐藏全部内容并开始计时。</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="calendar-clock"></i></div>
+            <div class="flow-name">等待/事件触发</div>
+            <div class="flow-desc">日期到达或真实目标完成时自动开启。</div>
+          </div>
+          <div class="flow-arrow"><i data-lucide="arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-icon"><i data-lucide="book-open"></i></div>
+            <div class="flow-name">开启阅读</div>
+            <div class="flow-desc">双方收到通知，查看完整真实内容。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Key Screens</div>
+            <h2 class="section-title">核心界面</h2>
+          </div>
+          <p class="section-note">6 个页面覆盖创建、双人协作、封存等待与开启阅读。</p>
+        </div>
+        <div class="phones">
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gold)"></span><span>首页 · 空状态</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">时间胶囊</div>
+                    <div class="topbar-sub">真实记录，到期才开启</div>
+                  </div>
+                  <div class="brand-mark-mini"><i data-lucide="sparkles"></i>FunBox</div>
+                </div>
+                <div class="hero gold">
+                  <div class="hero-icon"><i data-lucide="hourglass"></i></div>
+                  <div class="hero-title">还没有时间胶囊</div>
+                  <div class="hero-sub">写给一个月后的自己、明年生日，或与好友共同封存。</div>
+                  <div class="hero-meta">
+                    <span class="hero-meta-item">0 个胶囊</span>
+                    <span class="hero-meta-item">0 条待开启</span>
+                    <span class="hero-meta-item">0 条邀请</span>
+                  </div>
+                </div>
+                <div class="quick-grid">
+                  <div class="quick-item"><span class="quick-icon"><i data-lucide="user-round"></i></span>写给自己</div>
+                  <div class="quick-item"><span class="quick-icon"><i data-lucide="users"></i></span>共同创建</div>
+                  <div class="quick-item"><span class="quick-icon"><i data-lucide="archive"></i></span>开启记录</div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>我的胶囊</span><span class="count">0 条真实记录</span></div>
+                  <div class="empty-inline"><i data-lucide="inbox"></i><span>首次进入为空，不预置任何数据</span></div>
+                </div>
+                <div class="form-footer">
+                  <button class="btn navy" type="button"><i data-lucide="plus"></i>新建胶囊</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--primary)"></span><span>创建 · 写给未来</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">新建胶囊</div>
+                    <div class="topbar-sub">只保存真实录入的内容</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="arrow-left"></i></div>
+                </div>
+                <div class="segmented">
+                  <button class="seg-btn active" type="button"><i data-lucide="user-round"></i>单人</button>
+                  <button class="seg-btn" type="button"><i data-lucide="users"></i>双人</button>
+                </div>
+                <div class="form-card">
+                  <div class="field">
+                    <div class="field-label">胶囊标题</div>
+                    <input class="input" value="写给一个月后的自己" />
+                  </div>
+                  <div class="field">
+                    <div class="field-label">开启时间</div>
+                    <div class="chips">
+                      <button class="chip active" type="button"><i data-lucide="calendar"></i>1 个月后</button>
+                      <button class="chip" type="button"><i data-lucide="calendar"></i>3 个月后</button>
+                      <button class="chip" type="button"><i data-lucide="cake"></i>明年生日</button>
+                      <button class="chip" type="button"><i data-lucide="clock"></i>自定义</button>
+                    </div>
+                    <div class="form-hint">快捷预设由服务端解析为真实开启时间。</div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">写给未来的话</div>
+                    <textarea class="textarea">希望到那时，我已经把今天想做的事真正做完了。</textarea>
+                    <div class="form-hint">示例为设计稿演示，正式运行时只保留用户输入。</div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">照片与语音</div>
+                    <div class="media-row">
+                      <div class="media-tile"><span class="media-icon"><i data-lucide="camera"></i></span>添加照片</div>
+                      <div class="media-tile"><span class="media-icon"><i data-lucide="mic"></i></span>录制语音</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <button class="btn primary" type="button"><i data-lucide="lock"></i>封存胶囊</button>
+                </div>
+                <div class="form-hint" style="margin-top: 8px; text-align: center">封存后内容隐藏，到期才可查看</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--teal)"></span><span>创建 · 目标达成开启</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">开启条件</div>
+                    <div class="topbar-sub">只关联账号里的真实记录</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="arrow-left"></i></div>
+                </div>
+                <div class="form-card">
+                  <div class="field">
+                    <div class="field-label">日期开启</div>
+                    <div class="source-card">
+                      <div class="source-icon"><i data-lucide="rocket"></i></div>
+                      <div class="source-copy">
+                        <div class="source-name">项目上线那天</div>
+                        <div class="source-meta">还有几天 · 项目上线 2026-09-01</div>
+                      </div>
+                      <div class="source-radio"><i data-lucide="check"></i></div>
+                    </div>
+                    <div class="source-card active">
+                      <div class="source-icon"><i data-lucide="target"></i></div>
+                      <div class="source-copy">
+                        <div class="source-name">减肥目标完成时</div>
+                        <div class="source-meta">效率清单 · 减到 62kg · 进行中</div>
+                      </div>
+                      <div class="source-radio"><i data-lucide="check"></i></div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="field-label">放入内容</div>
+                    <textarea class="textarea">如果达成，我要对自己说：你做到了。</textarea>
+                    <div class="form-hint">目标完成由服务端真实状态触发，不手动标记。</div>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <button class="btn primary" type="button"><i data-lucide="save"></i>保存并封存</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--rose)"></span><span>双人 · 共同创建</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">共同创建</div>
+                    <div class="topbar-sub">双方各自放入内容后才能封存</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="bell"></i></div>
+                </div>
+                <div class="people-row">
+                  <div class="avatar" style="background: linear-gradient(135deg, #4b6bff, #8f7cff)">我</div>
+                  <div class="people-copy">
+                    <div class="people-name">恋爱一周年</div>
+                    <div class="people-desc">2026-09-06 09:00 开启 · 双人共同封存</div>
+                  </div>
+                  <span class="status-tag"><i data-lucide="lock"></i>等待封存</span>
+                </div>
+                <div class="invite-card">
+                  <div class="invite-title">邀请真实好友共同创建</div>
+                  <div class="invite-desc">从当前账号好友中选择，好友接受后才能一起放入内容。</div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>成员状态</span><span class="count">2 位</span></div>
+                  <div class="member-row">
+                    <div class="member-avatar" style="background: linear-gradient(135deg, #4b6bff, #8f7cff)">我</div>
+                    <div class="member-copy"><div class="member-name">我</div><div class="member-meta">已放入 1 条内容</div></div>
+                    <span class="status-tag"><i data-lucide="check"></i>已完成</span>
+                  </div>
+                  <div class="member-row">
+                    <div class="member-avatar" style="background: linear-gradient(135deg, #18a78f, #4cc3a4)">岚</div>
+                    <div class="member-copy"><div class="member-name">阿岚</div><div class="member-meta">待接受邀请</div></div>
+                    <span class="status-tag" style="background: #f4f6fa; color: var(--muted)">待处理</span>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <button class="btn primary" type="button"><i data-lucide="send"></i>发送邀请</button>
+                </div>
+                <div class="form-hint" style="margin-top: 8px; text-align: center">封存前双方看不到对方的内容</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--gold)"></span><span>封存 · 等待开启</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">时间胶囊</div>
+                    <div class="topbar-sub">已封存 · 内容不公开</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="bell"></i></div>
+                </div>
+                <div class="seal-hero">
+                  <div class="seal-kicker"><i data-lucide="hourglass"></i>距离开启</div>
+                  <div class="seal-title">恋爱一周年</div>
+                  <div class="seal-count"><span class="seal-count-value">31</span><span class="seal-count-unit">天</span></div>
+                  <div class="seal-meta">2026-09-06 09:00 开启 · 双人共同封存</div>
+                </div>
+                <div class="lock-card">
+                  <div class="lock-icon"><i data-lucide="lock"></i></div>
+                  <div class="lock-copy">
+                    <div class="lock-title">内容已隐藏</div>
+                    <div class="lock-desc">2 条文字 · 1 张照片 · 1 条语音，开启后才可查看。</div>
+                  </div>
+                </div>
+                <div class="member-chip-row">
+                  <div class="member-chip">
+                    <div class="member-avatar" style="background: linear-gradient(135deg, #4b6bff, #8f7cff)">我</div>
+                    <div class="member-copy"><div class="member-name">我</div><div class="member-meta">已封存</div></div>
+                  </div>
+                  <div class="member-chip">
+                    <div class="member-avatar" style="background: linear-gradient(135deg, #18a78f, #4cc3a4)">岚</div>
+                    <div class="member-copy"><div class="member-name">阿岚</div><div class="member-meta">已封存</div></div>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <button class="btn navy" type="button"><i data-lucide="clock"></i>等待开启</button>
+                </div>
+                <div class="form-hint" style="margin-top: 8px; text-align: center">到期后双方都会收到真实开启通知</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="phone-wrap">
+            <div class="phone-label"><span class="dot" style="background: var(--teal)"></span><span>开启 · 阅读内容</span></div>
+            <div class="phone">
+              <div class="phone-screen">
+                <div class="status-bar"><span>9:41</span><span class="status-icons"><i data-lucide="signal"></i><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
+                <div class="topbar">
+                  <div>
+                    <div class="topbar-title">已开启</div>
+                    <div class="topbar-sub">来自真实封存的内容</div>
+                  </div>
+                  <div class="topbar-action"><i data-lucide="arrow-left"></i></div>
+                </div>
+                <div class="opened-hero">
+                  <div class="opened-kicker"><i data-lucide="party-popper"></i>2026-09-06 已开启</div>
+                  <div class="opened-title">恋爱一周年</div>
+                  <div class="opened-meta">双人共同封存 · 2 条文字 · 1 张照片 · 1 条语音</div>
+                </div>
+                <div class="content-card">
+                  <div class="content-head"><span class="content-author"><i data-lucide="user-round"></i>我</span><span class="content-kind">文字 · 2026-08-06</span></div>
+                  <div class="content-text">希望那时的我们还一起散步、吃饭，也还愿意把今天写下来。</div>
+                </div>
+                <div class="content-card">
+                  <div class="content-head"><span class="content-author"><i data-lucide="user-round"></i>阿岚</span><span class="content-kind">照片 · 1 张</span></div>
+                  <div class="photo-preview"><i data-lucide="image"></i><span>真实照片 · 设计稿仅用占位</span></div>
+                </div>
+                <div class="content-card">
+                  <div class="content-head"><span class="content-author"><i data-lucide="user-round"></i>阿岚</span><span class="content-kind">语音 · 0:42</span></div>
+                  <div class="voice-card">
+                    <div class="voice-play"><i data-lucide="play"></i></div>
+                    <div class="voice-wave">真实录音 · 设计稿仅用占位</div>
+                    <span class="voice-time">0:42</span>
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <button class="btn light" type="button"><i data-lucide="archive"></i>归档已开启胶囊</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Data Model &amp; API</div>
+            <h2 class="section-title">数据模型与接口</h2>
+          </div>
+          <p class="section-note">正文与媒体在未开启时不会返回，媒体使用签名访问。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 24%">数据表</th>
+                <th style="width: 42%">主要字段</th>
+                <th>真实数据来源</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>time_capsules</strong></td>
+                <td>标题、备注、单人/双人、开启规则、开启时间、关联记录、状态、封存/开启时间</td>
+                <td>用户输入 + 服务端时间 + 真实关联记录</td>
+              </tr>
+              <tr>
+                <td><strong>time_capsule_members</strong></td>
+                <td>胶囊、用户、角色、邀请状态、接受/拒绝/退出时间、内容数</td>
+                <td>当前账号真实好友关系</td>
+              </tr>
+              <tr>
+                <td><strong>time_capsule_contents</strong></td>
+                <td>胶囊、成员、类型、文字内容、媒体 ID、排序</td>
+                <td>用户真实输入、上传或录音</td>
+              </tr>
+              <tr>
+                <td><strong>time_capsule_media</strong></td>
+                <td>类型、文件名、路径、MIME、大小、宽高、时长</td>
+                <td>用户真实上传文件</td>
+              </tr>
+              <tr>
+                <td><strong>time_capsule_events</strong></td>
+                <td>创建、邀请、接受、封存、开启、归档等真实事件</td>
+                <td>服务端事件记录</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="matrix" style="margin-top: 16px">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 18%">方法</th>
+                <th style="width: 48%">路径</th>
+                <th>说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>GET</strong></td><td>/api/v1/time-capsule/home</td><td>首页统计、列表、待处理邀请</td></tr>
+              <tr><td><strong>POST</strong></td><td>/api/v1/time-capsules</td><td>新建草稿，支持单人/双人</td></tr>
+              <tr><td><strong>POST</strong></td><td>/api/v1/time-capsules/{id}/contents</td><td>新增内容块</td></tr>
+              <tr><td><strong>POST</strong></td><td>/api/v1/time-capsules/{id}/media</td><td>上传照片/语音</td></tr>
+              <tr><td><strong>POST</strong></td><td>/api/v1/time-capsules/{id}/accept</td><td>接受双人共同创建邀请</td></tr>
+              <tr><td><strong>POST</strong></td><td>/api/v1/time-capsules/{id}/seal</td><td>封存，服务端校验内容与成员状态</td></tr>
+              <tr><td><strong>GET</strong></td><td>/api/v1/time-capsule/sources/days-left</td><td>可关联的真实到期/纪念日记录</td></tr>
+              <tr><td><strong>GET</strong></td><td>/api/v1/time-capsule/sources/focus</td><td>可关联的真实效率清单目标</td></tr>
+              <tr><td><strong>GET</strong></td><td>/time-capsule-media/{fileName}?token=</td><td>签名媒体访问，仅参与成员且在允许状态下</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">States &amp; Constraints</div>
+            <h2 class="section-title">状态与约束</h2>
+          </div>
+          <p class="section-note">空态、草稿、封存、开启、归档全部本期完成。</p>
+        </div>
+        <div class="matrix">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 20%">状态</th>
+                <th>行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="tag warn">空态</span></td><td>首次进入不出现任何预置胶囊、内容或邀请，只提供新建入口。</td></tr>
+              <tr><td><span class="tag on">草稿</span></td><td>用户可增删改自己的内容；双人模式对方看不到自己草稿的正文。</td></tr>
+              <tr><td><span class="tag on">封存</span></td><td>服务端隐藏全部正文与媒体，所有列表接口不返回内容。</td></tr>
+              <tr><td><span class="tag off">等待</span></td><td>倒计时来自真实开启时间；未封存时到期不会自动开启。</td></tr>
+              <tr><td><span class="tag on">开启</span></td><td>日期到达或真实目标完成后自动开启，并通知所有成员。</td></tr>
+              <tr><td><span class="tag off">归档</span></td><td>已开启的胶囊可归档，回看记录保留真实内容。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Design Principles</div>
+            <h2 class="section-title">方案要点</h2>
+          </div>
+          <p class="section-note">五条原则约束创建、协作、封存与开启流程。</p>
+        </div>
+        <div class="principles">
+          <div class="principle">
+            <div class="principle-num">01</div>
+            <div class="principle-title">真实录入</div>
+            <div class="principle-desc">所有正文、照片、语音、日期、目标和好友都来自真实数据源。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">02</div>
+            <div class="principle-title">封存即隐藏</div>
+            <div class="principle-desc">封存后接口不返回正文和媒体，只有到期才开放。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">03</div>
+            <div class="principle-title">双人共写</div>
+            <div class="principle-desc">双方各自写内容，封存后合为一颗胶囊共同开启。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">04</div>
+            <div class="principle-title">服务端判定</div>
+            <div class="principle-desc">开启时间、目标完成、成员状态全部由服务端判定。</div>
+          </div>
+          <div class="principle">
+            <div class="principle-num">05</div>
+            <div class="principle-title">稳定布局</div>
+            <div class="principle-desc">卡片、按钮、头像尺寸固定，内容变化不导致布局跳动。</div>
+          </div>
+        </div>
+      </section>
+
+      <p class="footnote">FunBox 时间胶囊产品方案 V1 · 配套文档：docs/time-capsule-product-design-v1.md</p>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

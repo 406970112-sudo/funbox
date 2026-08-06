@@ -20,6 +20,7 @@ import (
 
 var (
 	ErrCurrentPasswordInvalid  = errors.New("current password is invalid")
+	ErrBirthdayInvalid         = errors.New("birthday is invalid")
 	ErrDisplayNameInvalid      = errors.New("display name is invalid")
 	ErrInvalidCredentials      = errors.New("invalid credentials")
 	ErrPasswordInvalid         = errors.New("password is invalid")
@@ -52,6 +53,7 @@ type Store interface {
 	ListRoleChangesByUserID(context.Context, string, int, int) (user.RoleChangeListResult, error)
 	UpdateAvatar(context.Context, string, string) (user.User, string, error)
 	UpdateDisplayName(context.Context, string, string) (user.User, error)
+	UpdateBirthday(context.Context, string, string) (user.User, error)
 	UpdatePasswordHash(context.Context, string, string) (user.User, error)
 	UpdateRecoveryState(context.Context, string, int, time.Time) error
 	UpdateRole(context.Context, string, string, roles.Role, roles.Role, string) (user.User, bool, error)
@@ -324,6 +326,20 @@ func (s *Service) UpdateDisplayName(
 		return user.User{}, err
 	}
 	return s.store.UpdateDisplayName(ctx, userID, normalized)
+}
+
+func (s *Service) UpdateBirthday(
+	ctx context.Context,
+	userID string,
+	birthday string,
+) (user.User, error) {
+	normalized := strings.TrimSpace(birthday)
+	if normalized != "" {
+		if _, err := time.Parse("2006-01-02", normalized); err != nil {
+			return user.User{}, ErrBirthdayInvalid
+		}
+	}
+	return s.store.UpdateBirthday(ctx, userID, normalized)
 }
 
 func (s *Service) UpdateAvatar(

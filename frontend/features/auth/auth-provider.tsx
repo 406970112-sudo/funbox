@@ -13,6 +13,7 @@ import {
   getCurrentUser,
   login,
   register,
+  updateBirthday,
   updateDisplayName,
   uploadAvatar as uploadAvatarRequest,
 } from '@/lib/auth-api';
@@ -44,6 +45,7 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   status: AuthStatus;
   updateDisplayName: (displayName: string) => Promise<void>;
+  updateBirthday: (birthday: string) => Promise<void>;
   uploadAvatar: (asset: AvatarAsset) => Promise<void>;
   user: AuthUser | null;
 };
@@ -128,6 +130,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setUser(await updateDisplayName(token, displayName));
   }
 
+  async function saveBirthday(birthday: string) {
+    if (!token) throw new Error('Authentication required');
+    setUser(await updateBirthday(token, birthday));
+  }
+
   async function saveAvatar(asset: AvatarAsset) {
     if (!token) throw new Error('Authentication required');
     setUser(await uploadAvatarRequest(token, asset));
@@ -170,6 +177,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         signOut,
         status,
         updateDisplayName: saveDisplayName,
+        updateBirthday: saveBirthday,
         uploadAvatar: saveAvatar,
         user,
       }}>

@@ -2,6 +2,7 @@ import type { UserRole } from '@/types/access';
 
 export type AuthUser = {
   avatarUrl: string;
+  birthday: string;
   createdAt: string;
   displayName: string;
   id: string;

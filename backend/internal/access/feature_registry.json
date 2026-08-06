@@ -637,5 +637,21 @@
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"],
     "keywords": ["停车", "车位", "地下停车场", "楼层", "区域", "找车", "缴费", "提醒", "拍照", "环球中心"]
+  },
+  {
+    "id": "time-capsule",
+    "name": "时间胶囊",
+    "tagline": "把今天寄给未来的自己或我们",
+    "description": "写入真实文字、照片或语音，设定真实日期或真实目标达成时开启，支持与好友共同封存。",
+    "icon": "clock-fast",
+    "category": "记录",
+    "route": "/tools/time-capsule",
+    "accentColor": "#e8a33d",
+    "badges": ["真实记录", "私密", "双人共写"],
+    "usageLabel": "封存时间",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"],
+    "keywords": ["时间胶囊", "写给未来", "生日", "纪念日", "恋爱", "一周年", "项目上线", "减肥", "目标完成", "语音", "照片", "封存"]
   }
 ]

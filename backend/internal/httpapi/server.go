@@ -46,6 +46,7 @@ import (
 	"my-first-expo-app/backend/internal/sizelibrary"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/stockalert"
+	"my-first-expo-app/backend/internal/timecapsule"
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
 	"my-first-expo-app/backend/internal/whodoesit"
@@ -86,6 +87,7 @@ type Server struct {
 	socialStore               *social.Store
 	sizeLibraryStore          *sizelibrary.Store
 	stockAlertService         stockAlertService
+	timeCapsuleStore          *timecapsule.Store
 	translationService        *translation.Service
 	ttsService                *tts.Service
 	whoDoesItStore            *whodoesit.Store
@@ -633,6 +635,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open who does it database failed: %v", err)
 	}
+	var timeCapsuleStore *timecapsule.Store
+	timeCapsuleStore, err = timecapsule.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open time capsule database failed: %v", err)
+	}
 	var sizeLibraryStore *sizelibrary.Store
 	sizeLibraryStore, err = sizelibrary.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -691,6 +698,7 @@ func newServer(
 		socialStore:               socialStore,
 		sizeLibraryStore:          sizeLibraryStore,
 		stockAlertService:         stockAlertService,
+		timeCapsuleStore:          timeCapsuleStore,
 		translationService:        translationService,
 		ttsService:                ttsService,
 		whoDoesItStore:            whoDoesItStore,
@@ -733,6 +741,7 @@ func newServer(
 	registerCoolingRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
+	registerTimeCapsuleRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
 	registerBorrowLedgerRoutes(mux, api)
 	registerParkingLocationRoutes(mux, api)
@@ -794,6 +803,9 @@ func newServer(
 	if dnfActivitySvc != nil {
 		go dnfActivitySvc.Run(monitorContext)
 	}
+	if timeCapsuleStore != nil {
+		go timeCapsuleStore.OpenDueLoop(monitorContext, time.Minute)
+	}
 	if coolingStore != nil {
 		go coolingStore.Run(monitorContext)
 	}
@@ -816,6 +828,11 @@ func newServer(
 	if whoDoesItStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = whoDoesItStore.Close()
+		})
+	}
+	if timeCapsuleStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = timeCapsuleStore.Close()
 		})
 	}
 	if sizeLibraryStore != nil {

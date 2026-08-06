@@ -28,6 +28,7 @@ type User struct {
 	Username               string
 	PasswordHash           string
 	DisplayName            string
+	Birthday               string
 	Role                   roles.Role
 	AvatarFile             string
 	SecurityQuestion       string
@@ -152,6 +153,7 @@ func (s *Store) migrate() error {
 		{name: "recovery_failed_attempts", definition: "INTEGER NOT NULL DEFAULT 0"},
 		{name: "recovery_locked_until", definition: "INTEGER NOT NULL DEFAULT 0"},
 		{name: "role", definition: "TEXT NOT NULL DEFAULT 'normal'"},
+		{name: "birthday", definition: "TEXT NOT NULL DEFAULT ''"},
 	}
 	for _, column := range columns {
 		if err := s.ensureUserColumn(column.name, column.definition); err != nil {
@@ -518,6 +520,23 @@ func (s *Store) UpdateDisplayName(ctx context.Context, id string, displayName st
 	return s.GetByID(ctx, id)
 }
 
+func (s *Store) UpdateBirthday(ctx context.Context, id string, birthday string) (User, error) {
+	result, err := s.db.ExecContext(
+		ctx,
+		`UPDATE users SET birthday = ?, updated_at = ? WHERE id = ?`,
+		strings.TrimSpace(birthday),
+		time.Now().UTC().Unix(),
+		id,
+	)
+	if err != nil {
+		return User{}, fmt.Errorf("update birthday: %w", err)
+	}
+	if err := ensureUpdated(result); err != nil {
+		return User{}, err
+	}
+	return s.GetByID(ctx, id)
+}
+
 func (s *Store) UpdateAvatar(ctx context.Context, id string, avatarFile string) (User, string, error) {
 	existing, err := s.GetByID(ctx, id)
 	if err != nil {
@@ -589,7 +608,7 @@ func (s *Store) UpdateRecoveryState(
 }
 
 const userSelect = `SELECT
-	id, username, password_hash, display_name, role, avatar_file,
+	id, username, password_hash, display_name, birthday, role, avatar_file,
 	security_question, security_answer_hash,
 	recovery_failed_attempts, recovery_locked_until,
 	token_version, created_at, updated_at
@@ -610,6 +629,7 @@ func scanUser(row rowScanner) (User, error) {
 		&result.Username,
 		&result.PasswordHash,
 		&result.DisplayName,
+		&result.Birthday,
 		&result.Role,
 		&result.AvatarFile,
 		&result.SecurityQuestion,

@@ -28,6 +28,7 @@ import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
+import { TimeCapsuleScreen } from '@/features/tools/time-capsule-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
@@ -406,6 +407,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <JsonWorkbenchScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'time-capsule') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <TimeCapsuleScreen />
       </>
     );
   }
