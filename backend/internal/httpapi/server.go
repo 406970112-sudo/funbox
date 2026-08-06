@@ -40,6 +40,7 @@ import (
 	"my-first-expo-app/backend/internal/partymemorycard"
 	"my-first-expo-app/backend/internal/plantid"
 	"my-first-expo-app/backend/internal/priceradar"
+	"my-first-expo-app/backend/internal/procrastinator"
 	"my-first-expo-app/backend/internal/quiethome"
 	"my-first-expo-app/backend/internal/reading"
 	"my-first-expo-app/backend/internal/realtime"
@@ -77,6 +78,7 @@ type Server struct {
 	membershipService         *membership.Service
 	diaryService              *diary.Service
 	daysLeftStore             *daysleft.Store
+	procrastinatorStore       *procrastinator.Store
 	dnfActivityService        dnfActivityService
 	momentsService            *moments.Service
 	newsService               newsFeedService
@@ -648,6 +650,11 @@ func newServer(
 	if err != nil {
 		log.Printf("open who does it database failed: %v", err)
 	}
+	var procrastinatorStore *procrastinator.Store
+	procrastinatorStore, err = procrastinator.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open procrastinator database failed: %v", err)
+	}
 	var timeCapsuleStore *timecapsule.Store
 	timeCapsuleStore, err = timecapsule.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -702,6 +709,7 @@ func newServer(
 		membershipService:         membershipService,
 		diaryService:              diaryService,
 		daysLeftStore:             daysLeftStore,
+		procrastinatorStore:       procrastinatorStore,
 		dnfActivityService:        dnfActivitySvc,
 		momentsService:            momentsService,
 		newsService:               newsService,
@@ -762,6 +770,7 @@ func newServer(
 	registerCoolingRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
+	registerProcrastinatorRoutes(mux, api)
 	registerTimeCapsuleRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
 	registerPartyMemoryCardRoutes(mux, api)
@@ -850,6 +859,11 @@ func newServer(
 	if whoDoesItStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = whoDoesItStore.Close()
+		})
+	}
+	if procrastinatorStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = procrastinatorStore.Close()
 		})
 	}
 	if timeCapsuleStore != nil {

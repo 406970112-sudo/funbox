@@ -32,6 +32,7 @@ import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { TimeCapsuleScreen } from '@/features/tools/time-capsule-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
+import { ProcrastinationCrusherScreen } from '@/features/tools/procrastination-crusher-screen';
 import { WhereIsItScreen } from '@/features/tools/where-is-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
@@ -357,6 +358,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <WhoDoesItScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'procrastination-crusher') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ProcrastinationCrusherScreen />
       </>
     );
   }

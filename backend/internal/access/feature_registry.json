@@ -348,6 +348,22 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "procrastination-crusher",
+    "name": "拖延任务粉碎机",
+    "tagline": "大任务拆成微步骤",
+    "description": "把大任务拆成可执行微步骤，按真实完成记录结算经验值，支持目标、步骤、账本与统计。",
+    "icon": "bomb",
+    "category": "效率",
+    "route": "/tools/procrastination-crusher",
+    "accentColor": "#ff6b8f",
+    "badges": ["微步骤", "真实经验值"],
+    "keywords": ["拖延", "任务拆解", "微步骤", "经验值", "目标", "第一步"],
+    "usageLabel": "开始粉碎",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "days-left",
     "name": "还有几天",
     "tagline": "证件、续费、保质期与纪念日",

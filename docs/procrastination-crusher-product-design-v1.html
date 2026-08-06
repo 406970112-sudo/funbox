@@ -1,0 +1,1641 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FunBox 拖延任务粉碎机产品设计 V1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <style>
+      :root {
+        --ink: #18233d;
+        --muted: #7483a2;
+        --line: #dce5f6;
+        --blue: #4b6bff;
+        --blue-soft: #e7ecff;
+        --navy: #151b3b;
+        --lime: #c9f36a;
+        --coral: #ff6b8f;
+        --coral-soft: #ffe9ef;
+        --green: #1db991;
+        --green-soft: #e8f6f0;
+        --amber: #f1a33b;
+        --amber-soft: #fff2e0;
+        --purple: #7e5bef;
+        --canvas: #dce6f5;
+        --screen: #f4f7fd;
+        --white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        letter-spacing: 0;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      .board {
+        background:
+          linear-gradient(rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(24, 35, 61, 0.045) 1px, transparent 1px),
+          var(--canvas);
+        background-size: 32px 32px;
+        min-height: 100vh;
+        padding: 30px 44px 46px;
+        width: 1600px;
+      }
+
+      .board-header {
+        align-items: flex-end;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 auto 24px;
+        max-width: 1512px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 14px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--lime);
+        display: flex;
+        height: 52px;
+        justify-content: center;
+        width: 52px;
+      }
+
+      .brand-mark svg {
+        height: 26px;
+        stroke-width: 2.3;
+        width: 26px;
+      }
+
+      .brand-title {
+        font-family: "Manrope", "Noto Sans SC", sans-serif;
+        font-size: 27px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .brand-subtitle {
+        color: #64728e;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 6px 0 0;
+      }
+
+      .version {
+        border-left: 3px solid var(--coral);
+        color: #6b7892;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.7;
+        padding-left: 12px;
+        text-align: right;
+      }
+
+      .version strong {
+        color: var(--ink);
+        display: block;
+        font-size: 14px;
+      }
+
+      .stage {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: 300px minmax(0, 1fr);
+        margin: 0 auto;
+        max-width: 1512px;
+      }
+
+      .strategy {
+        align-self: start;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.92);
+        border-radius: 18px;
+        padding: 24px 22px;
+      }
+
+      .strategy-kicker {
+        color: var(--coral);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+
+      .strategy h2 {
+        font-size: 26px;
+        font-weight: 900;
+        line-height: 1.25;
+        margin: 8px 0 10px;
+      }
+
+      .strategy-lead {
+        color: #5d6b86;
+        font-size: 12px;
+        line-height: 1.8;
+        margin: 0;
+      }
+
+      .strategy-section {
+        border-top: 1px solid var(--line);
+        margin-top: 20px;
+        padding-top: 18px;
+      }
+
+      .strategy-section h3 {
+        font-size: 13px;
+        font-weight: 900;
+        margin: 0 0 11px;
+      }
+
+      .principle-list,
+      .scope-list {
+        display: grid;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .principle-list li,
+      .scope-list li {
+        align-items: flex-start;
+        color: #4d5a75;
+        display: flex;
+        font-size: 11px;
+        gap: 9px;
+        line-height: 1.55;
+      }
+
+      .principle-list i,
+      .scope-list i {
+        color: var(--coral);
+        flex: 0 0 auto;
+        height: 15px;
+        margin-top: 2px;
+        width: 15px;
+      }
+
+      .scope-list i {
+        color: var(--green);
+      }
+
+      .scope-list.muted i {
+        color: #9aa5bb;
+      }
+
+      .entry-chip {
+        align-items: center;
+        background: var(--coral-soft);
+        border-radius: 12px;
+        color: #9d3e5a;
+        display: flex;
+        font-size: 10px;
+        font-weight: 800;
+        gap: 8px;
+        margin-top: 18px;
+        min-height: 42px;
+        padding: 9px 11px;
+      }
+
+      .entry-chip svg {
+        height: 15px;
+        stroke-width: 2.4;
+        width: 15px;
+      }
+
+      .entry-chip span {
+        color: #b06a82;
+        font-weight: 600;
+      }
+
+      .screens {
+        display: grid;
+        gap: 30px 24px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .screen-item {
+        min-width: 0;
+      }
+
+      .screen-label {
+        align-items: baseline;
+        display: flex;
+        gap: 9px;
+        justify-content: center;
+        margin: 0 0 10px;
+      }
+
+      .screen-label b {
+        color: var(--navy);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .screen-label span {
+        color: #6d7a94;
+        font-size: 10px;
+        font-weight: 600;
+      }
+
+      .phone {
+        background: #0e152b;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 42px;
+        box-shadow: 0 28px 54px rgba(45, 66, 105, 0.27), 0 4px 12px rgba(45, 66, 105, 0.14);
+        height: 742px;
+        margin: 0 auto;
+        padding: 10px;
+        position: relative;
+        width: 330px;
+      }
+
+      .speaker {
+        background: #05091a;
+        border-radius: 999px;
+        height: 24px;
+        left: 50%;
+        position: absolute;
+        top: 18px;
+        transform: translateX(-50%);
+        width: 88px;
+        z-index: 10;
+      }
+
+      .screen {
+        background: var(--screen);
+        border-radius: 34px;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .status-bar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 30px;
+        font-family: "Manrope", sans-serif;
+        font-size: 10px;
+        font-weight: 800;
+        justify-content: space-between;
+        padding: 6px 22px 0;
+        position: relative;
+        z-index: 5;
+      }
+
+      .status-icons {
+        align-items: center;
+        display: flex;
+        gap: 5px;
+      }
+
+      .status-icons svg {
+        height: 11px;
+        stroke-width: 2.4;
+        width: 11px;
+      }
+
+      .topbar {
+        align-items: center;
+        display: flex;
+        flex: 0 0 54px;
+        justify-content: space-between;
+        padding: 6px 18px 8px;
+      }
+
+      .page-title {
+        font-size: 20px;
+        font-weight: 900;
+        line-height: 1.1;
+        margin: 0;
+      }
+
+      .page-meta {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .top-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .icon-button {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex;
+        height: 34px;
+        justify-content: center;
+        padding: 0;
+        width: 34px;
+      }
+
+      .icon-button.primary {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--lime);
+      }
+
+      .icon-button.coral {
+        background: var(--coral);
+        border-color: var(--coral);
+        color: var(--white);
+      }
+
+      .icon-button svg {
+        height: 16px;
+        stroke-width: 2.3;
+        width: 16px;
+      }
+
+      .body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+        padding: 10px 14px 14px;
+        overflow: hidden;
+      }
+
+      .hero {
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--white);
+        flex: 0 0 auto;
+        overflow: hidden;
+        padding: 14px 15px 12px;
+        position: relative;
+      }
+
+      .hero::after {
+        border: 15px solid rgba(255, 107, 143, 0.22);
+        border-radius: 50%;
+        content: "";
+        height: 86px;
+        position: absolute;
+        right: -30px;
+        top: -34px;
+        width: 86px;
+      }
+
+      .hero-top {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-date {
+        color: #c3cde7;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .hero-tag {
+        align-items: center;
+        color: var(--lime);
+        display: flex;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 5px;
+      }
+
+      .hero-tag svg {
+        height: 13px;
+        stroke-width: 2.4;
+        width: 13px;
+      }
+
+      .hero-title {
+        font-size: 23px;
+        font-weight: 900;
+        line-height: 1.2;
+        margin: 8px 0 4px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-meta {
+        color: #aab6d6;
+        font-size: 9px;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+      }
+
+      .progress-track {
+        background: #30395f;
+        border-radius: 999px;
+        height: 7px;
+        margin-top: 12px;
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+      }
+
+      .progress-fill {
+        background: linear-gradient(90deg, var(--lime), #9df36a);
+        border-radius: 999px;
+        height: 100%;
+        width: 60%;
+      }
+
+      .hero-stats {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 10px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-stat {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        font-size: 9px;
+        padding: 8px 9px;
+      }
+
+      .hero-stat b {
+        color: var(--white);
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+
+      .hero-stat span {
+        color: #aab6d6;
+      }
+
+      .section-head {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+        justify-content: space-between;
+        margin: 12px 2px 7px;
+      }
+
+      .section-head b {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .section-head span,
+      .section-head .link {
+        color: var(--coral);
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .section-head .link {
+        align-items: center;
+        display: flex;
+        gap: 4px;
+      }
+
+      .section-head .link svg {
+        height: 12px;
+        stroke-width: 2.3;
+        width: 12px;
+      }
+
+      .current-step {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        flex: 0 0 auto;
+        padding: 11px;
+      }
+
+      .current-step-head {
+        align-items: center;
+        display: flex;
+        gap: 9px;
+      }
+
+      .step-number {
+        align-items: center;
+        background: var(--coral-soft);
+        border-radius: 10px;
+        color: var(--coral);
+        display: flex;
+        flex: 0 0 34px;
+        font-family: "Manrope", sans-serif;
+        font-size: 12px;
+        font-weight: 900;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .step-number.done {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .current-step-title {
+        flex: 1;
+        font-size: 12px;
+        font-weight: 900;
+        line-height: 1.35;
+      }
+
+      .current-step-meta {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .xp-pill {
+        background: var(--amber-soft);
+        border-radius: 7px;
+        color: #a96700;
+        flex: 0 0 auto;
+        font-size: 8px;
+        font-weight: 900;
+        padding: 4px 7px;
+      }
+
+      .current-step-actions {
+        display: grid;
+        gap: 7px;
+        grid-template-columns: 38px 1fr;
+        margin-top: 10px;
+      }
+
+      .secondary-button,
+      .primary-button,
+      .ghost-button {
+        align-items: center;
+        border-radius: 10px;
+        display: flex;
+        font-size: 10px;
+        font-weight: 900;
+        gap: 6px;
+        justify-content: center;
+        min-height: 36px;
+      }
+
+      .secondary-button {
+        background: #f1f4fb;
+        border: 1px solid var(--line);
+      }
+
+      .primary-button {
+        background: var(--coral);
+        border: 1px solid var(--coral);
+        color: var(--white);
+      }
+
+      .primary-button.navy {
+        background: var(--navy);
+        border-color: var(--navy);
+      }
+
+      .ghost-button {
+        background: transparent;
+        border: 1px dashed #cdd6e8;
+        color: var(--muted);
+      }
+
+      .primary-button svg,
+      .secondary-button svg,
+      .ghost-button svg {
+        height: 14px;
+        stroke-width: 2.4;
+        width: 14px;
+      }
+
+      .goal-row,
+      .event-row,
+      .ledger-row {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: grid;
+        gap: 9px;
+        margin-bottom: 6px;
+        min-height: 46px;
+        padding: 7px 10px;
+      }
+
+      .goal-row {
+        grid-template-columns: 34px 1fr auto;
+      }
+
+      .event-row {
+        grid-template-columns: 28px 1fr auto;
+      }
+
+      .goal-icon {
+        align-items: center;
+        background: var(--blue-soft);
+        border-radius: 10px;
+        color: var(--blue);
+        display: flex;
+        height: 32px;
+        justify-content: center;
+        width: 32px;
+      }
+
+      .goal-icon.coral {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .goal-icon svg {
+        height: 15px;
+        stroke-width: 2.2;
+        width: 15px;
+      }
+
+      .row-main {
+        min-width: 0;
+      }
+
+      .row-title {
+        font-size: 11.5px;
+        font-weight: 800;
+        line-height: 1.35;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .row-meta {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 600;
+        margin-top: 2px;
+      }
+
+      .row-value {
+        color: var(--amber);
+        font-size: 9px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .event-icon {
+        align-items: center;
+        background: var(--green-soft);
+        border-radius: 9px;
+        color: var(--green);
+        display: flex;
+        height: 28px;
+        justify-content: center;
+        width: 28px;
+      }
+
+      .event-icon.negative {
+        background: var(--coral-soft);
+        color: var(--coral);
+      }
+
+      .event-icon svg {
+        height: 14px;
+        stroke-width: 2.4;
+        width: 14px;
+      }
+
+      .xp-positive {
+        color: var(--green);
+        font-size: 10px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .xp-negative {
+        color: var(--coral);
+        font-size: 10px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .form-field {
+        flex: 0 0 auto;
+        margin-bottom: 7px;
+      }
+
+      .field-label {
+        color: var(--ink);
+        font-size: 9px;
+        font-weight: 900;
+        margin: 0 2px 5px;
+      }
+
+      .input {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: var(--ink);
+        display: flex;
+        font-size: 11px;
+        font-weight: 700;
+        gap: 7px;
+        min-height: 38px;
+        padding: 0 11px;
+      }
+
+      .input input {
+        background: transparent;
+        border: 0;
+        color: inherit;
+        flex: 1;
+        font-size: 11px;
+        font-weight: 700;
+        min-width: 0;
+        outline: 0;
+        padding: 0;
+      }
+
+      .input svg {
+        color: var(--muted);
+        height: 14px;
+        stroke-width: 2.2;
+        width: 14px;
+      }
+
+      .split-step {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 26px 1fr auto 22px;
+        margin-bottom: 4px;
+        min-height: 40px;
+        padding: 6px 9px;
+      }
+
+      .split-index {
+        color: var(--coral);
+        font-family: "Manrope", sans-serif;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .split-title {
+        font-size: 10.5px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .split-time {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .drag-icon {
+        align-items: center;
+        color: #a5afc3;
+        display: flex;
+        height: 22px;
+        justify-content: center;
+        width: 22px;
+      }
+
+      .drag-icon svg {
+        height: 14px;
+        stroke-width: 2.2;
+        width: 14px;
+      }
+
+      .summary-strip {
+        display: grid;
+        flex: 0 0 auto;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin: 3px 0 10px;
+      }
+
+      .summary-cell {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 9px 10px;
+      }
+
+      .summary-cell b {
+        color: var(--navy);
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+
+      .summary-cell span {
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 700;
+      }
+
+      .bottom-action {
+        background: var(--white);
+        border-top: 1px solid var(--line);
+        flex: 0 0 auto;
+        padding: 10px 14px 12px;
+      }
+
+      .execution-step {
+        align-items: center;
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 30px 1fr auto;
+        margin-bottom: 6px;
+        min-height: 52px;
+        padding: 8px 10px;
+      }
+
+      .execution-step.current {
+        border-color: var(--coral);
+        box-shadow: 0 0 0 2px rgba(255, 107, 143, 0.12);
+      }
+
+      .execution-step.done .row-title {
+        color: #9aa5bb;
+        text-decoration: line-through;
+      }
+
+      .step-check {
+        align-items: center;
+        background: var(--white);
+        border: 1.6px solid #c4cde2;
+        border-radius: 50%;
+        display: flex;
+        height: 22px;
+        justify-content: center;
+        width: 22px;
+      }
+
+      .step-check.done {
+        background: var(--green);
+        border-color: var(--green);
+        color: var(--white);
+      }
+
+      .step-check svg {
+        height: 12px;
+        stroke-width: 3;
+        width: 12px;
+      }
+
+      .mini-button {
+        align-items: center;
+        background: var(--coral-soft);
+        border-radius: 8px;
+        color: var(--coral);
+        display: flex;
+        font-size: 8.5px;
+        font-weight: 900;
+        gap: 4px;
+        min-height: 30px;
+        padding: 0 9px;
+        white-space: nowrap;
+      }
+
+      .mini-button.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .mini-button svg {
+        height: 12px;
+        stroke-width: 2.4;
+        width: 12px;
+      }
+
+      .timer-chip {
+        align-items: center;
+        color: var(--blue);
+        display: flex;
+        font-family: "Manrope", sans-serif;
+        font-size: 9px;
+        font-weight: 800;
+        gap: 4px;
+      }
+
+      .timer-chip svg {
+        height: 12px;
+        stroke-width: 2.4;
+        width: 12px;
+      }
+
+      .level-card {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 16px;
+        color: var(--white);
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 62px 1fr;
+        padding: 13px;
+      }
+
+      .level-badge {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        height: 62px;
+        justify-content: center;
+        width: 62px;
+      }
+
+      .level-badge b {
+        font-family: "Manrope", sans-serif;
+        font-size: 20px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .level-badge span {
+        color: #aab6d6;
+        font-size: 8px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .level-main b {
+        display: block;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .level-main span {
+        color: #aab6d6;
+        display: block;
+        font-size: 8.5px;
+        font-weight: 600;
+        margin-top: 3px;
+      }
+
+      .level-track {
+        background: #30395f;
+        border-radius: 999px;
+        height: 6px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+
+      .level-fill {
+        background: var(--lime);
+        border-radius: 999px;
+        height: 100%;
+        width: 84%;
+      }
+
+      .stats-grid {
+        display: grid;
+        flex: 0 0 auto;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        margin-top: 8px;
+      }
+
+      .stat-card {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+      }
+
+      .stat-card .stat-icon {
+        align-items: center;
+        background: var(--coral-soft);
+        border-radius: 9px;
+        color: var(--coral);
+        display: flex;
+        height: 27px;
+        justify-content: center;
+        margin-bottom: 6px;
+        width: 27px;
+      }
+
+      .stat-card .stat-icon.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .stat-card .stat-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .stat-card .stat-icon.amber {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .stat-card .stat-icon svg {
+        height: 14px;
+        stroke-width: 2.2;
+        width: 14px;
+      }
+
+      .stat-card b {
+        display: block;
+        font-family: "Manrope", sans-serif;
+        font-size: 18px;
+        font-weight: 900;
+        line-height: 1.1;
+      }
+
+      .stat-card span {
+        color: var(--muted);
+        display: block;
+        font-size: 8.5px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+
+      .filter-chips {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 6px;
+        margin: 8px 0;
+        overflow: hidden;
+      }
+
+      .chip {
+        background: var(--white);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        font-size: 8.5px;
+        font-weight: 800;
+        padding: 6px 10px;
+        white-space: nowrap;
+      }
+
+      .chip.active {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: var(--white);
+      }
+
+      .ledger-row {
+        grid-template-columns: 28px 1fr auto;
+      }
+
+      .bar-chart {
+        align-items: flex-end;
+        display: flex;
+        flex: 0 0 auto;
+        gap: 7px;
+        height: 72px;
+        margin-top: 8px;
+      }
+
+      .bar-col {
+        align-items: center;
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 5px;
+        height: 100%;
+        justify-content: flex-end;
+      }
+
+      .bar {
+        background: linear-gradient(180deg, var(--coral), #ff8ba7);
+        border-radius: 4px;
+        min-height: 4px;
+        width: 100%;
+      }
+
+      .bar-label {
+        color: #8a93a7;
+        font-size: 7px;
+        font-weight: 700;
+      }
+
+      .demo-note {
+        color: #7c89a3;
+        font-size: 10px;
+        line-height: 1.7;
+        margin: 2px 0 0;
+      }
+
+      .scope-list li {
+        align-items: flex-start;
+      }
+
+      .strategy-note {
+        color: #8a93a7;
+        font-size: 9.5px;
+        line-height: 1.6;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <header class="board-header">
+        <div class="brand">
+          <div class="brand-mark"><i data-lucide="bomb"></i></div>
+          <div>
+            <h1 class="brand-title">拖延任务粉碎机</h1>
+            <p class="brand-subtitle">把大任务拆成 3 分钟起步的真实进度</p>
+          </div>
+        </div>
+        <div class="version">
+          <strong>FunBox 产品设计 V1</strong>
+          一期全量 · 2026-08-06 · 待评审
+        </div>
+      </header>
+
+      <div class="stage">
+        <aside class="strategy">
+          <div class="strategy-kicker">PRODUCT STRATEGY</div>
+          <h2>先从“只做第一步”开始</h2>
+          <p class="strategy-lead">
+            大任务不直接完成，拆成可立即执行的小动作；每完成一步，服务端写入一条真实经验值记录。
+          </p>
+
+          <div class="strategy-section">
+            <h3>设计原则</h3>
+            <ul class="principle-list">
+              <li><i data-lucide="database"></i>真实数据：只存用户自己创建的目标、步骤和完成记录</li>
+              <li><i data-lucide="receipt-text"></i>可验证：经验值由服务端按已确认步骤计算并写入账本</li>
+              <li><i data-lucide="play"></i>小步推进：每一步都可独立开始、完成、撤销</li>
+              <li><i data-lucide="layers"></i>一期全量：无 mock、无演示数据、无分期</li>
+            </ul>
+          </div>
+
+          <div class="strategy-section">
+            <h3>一期范围</h3>
+            <ul class="scope-list">
+              <li><i data-lucide="check"></i>目标拆解、执行、撤销、归档</li>
+              <li><i data-lucide="check"></i>经验值账本、等级与统计</li>
+              <li><i data-lucide="check"></i>可选 AI 建议 + 人工确认保存</li>
+              <li><i data-lucide="check"></i>深浅主题与 320/390/430 响应式</li>
+            </ul>
+          </div>
+
+          <div class="entry-chip">
+            <i data-lucide="route"></i>
+            procrastination-crusher
+            <span>/tools/procrastination-crusher</span>
+          </div>
+          <p class="strategy-note">设计稿中的示例仅为版式演示，不进入运行时数据库；产品首次进入为空状态。</p>
+        </aside>
+
+        <section class="screens">
+          <div class="screen-item">
+            <div class="screen-label"><b>01 继续推进</b><span>当前第一步与最近经验</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">继续推进</h2>
+                    <div class="page-meta">Lv.3 · 84 XP</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="bell"></i></button>
+                    <button class="icon-button primary"><i data-lucide="plus"></i></button>
+                  </div>
+                </div>
+
+                <div class="body">
+                  <div class="hero">
+                    <div class="hero-top">
+                      <span class="hero-date">8月6日 · 周四</span>
+                      <span class="hero-tag"><i data-lucide="zap"></i>今日 +27 XP</span>
+                    </div>
+                    <div class="hero-title">整理房间</div>
+                    <div class="hero-meta">3/5 步 · 预计剩余 18 分钟</div>
+                    <div class="progress-track"><div class="progress-fill"></div></div>
+                    <div class="hero-stats">
+                      <div class="hero-stat"><b>还剩 2 步</b><span>先完成第 4 步</span></div>
+                      <div class="hero-stat"><b>预计 +38 XP</b><span>含目标完成奖励</span></div>
+                    </div>
+                  </div>
+
+                  <div class="section-head">
+                    <b>现在只做这一步</b>
+                    <span>完成 +11 XP</span>
+                  </div>
+                  <div class="current-step">
+                    <div class="current-step-head">
+                      <div class="step-number">04</div>
+                      <div>
+                        <div class="current-step-title">擦一遍桌面</div>
+                        <div class="current-step-meta">预计 6 分钟 · 实际开始 09:36</div>
+                      </div>
+                      <div class="xp-pill">+11 XP</div>
+                    </div>
+                    <div class="current-step-actions">
+                      <button class="secondary-button"><i data-lucide="play"></i></button>
+                      <button class="primary-button"><i data-lucide="check"></i>完成这一步</button>
+                    </div>
+                  </div>
+
+                  <div class="section-head">
+                    <b>进行中目标</b>
+                    <span>全部</span>
+                  </div>
+                  <div class="goal-row">
+                    <div class="goal-icon coral"><i data-lucide="home"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">整理房间</div>
+                      <div class="row-meta">3/5 步 · 预计剩余 18 分钟</div>
+                    </div>
+                    <div class="row-value">+38 XP</div>
+                  </div>
+                  <div class="goal-row">
+                    <div class="goal-icon"><i data-lucide="file-text"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">写完周报初稿</div>
+                      <div class="row-meta">1/4 步 · 预计剩余 42 分钟</div>
+                    </div>
+                    <div class="row-value">+44 XP</div>
+                  </div>
+
+                  <div class="section-head">
+                    <b>最近经验</b>
+                    <span>查看账本</span>
+                  </div>
+                  <div class="event-row">
+                    <div class="event-icon"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">扫地并拖地</div>
+                      <div class="row-meta">整理房间 · 10:24</div>
+                    </div>
+                    <div class="xp-positive">+11 XP</div>
+                  </div>
+                  <div class="event-row">
+                    <div class="event-icon"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">脏衣服放进洗衣机</div>
+                      <div class="row-meta">整理房间 · 10:18</div>
+                    </div>
+                    <div class="xp-positive">+9 XP</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-item">
+            <div class="screen-label"><b>02 拆解大任务</b><span>微步骤与预计时间</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">拆解大任务</h2>
+                    <div class="page-meta">2-20 步 · 每步 1-120 分钟</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="x"></i></button>
+                  </div>
+                </div>
+
+                <div class="body">
+                  <div class="form-field">
+                    <div class="field-label">目标标题</div>
+                    <div class="input">
+                      <i data-lucide="target"></i>
+                      <input value="整理房间" readonly />
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <div class="field-label">备注</div>
+                    <div class="input">
+                      <i data-lucide="sticky-note"></i>
+                      <input value="周末把房间恢复清爽" readonly />
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <div class="field-label">截止日期</div>
+                    <div class="input">
+                      <i data-lucide="calendar-days"></i>
+                      <input value="今天 18:00" readonly />
+                    </div>
+                  </div>
+
+                  <div class="section-head">
+                    <b>微步骤</b>
+                    <span class="link"><i data-lucide="sparkles"></i>AI 建议</span>
+                  </div>
+                  <div class="split-step">
+                    <span class="split-index">1</span>
+                    <span class="split-title">只把桌上的垃圾扔掉</span>
+                    <span class="split-time">3 分钟</span>
+                    <span class="drag-icon"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+                  <div class="split-step">
+                    <span class="split-index">2</span>
+                    <span class="split-title">桌面物品放回原位</span>
+                    <span class="split-time">5 分钟</span>
+                    <span class="drag-icon"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+                  <div class="split-step">
+                    <span class="split-index">3</span>
+                    <span class="split-title">脏衣服放进洗衣机</span>
+                    <span class="split-time">4 分钟</span>
+                    <span class="drag-icon"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+                  <div class="split-step">
+                    <span class="split-index">4</span>
+                    <span class="split-title">擦一遍桌面</span>
+                    <span class="split-time">6 分钟</span>
+                    <span class="drag-icon"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+                  <div class="split-step">
+                    <span class="split-index">5</span>
+                    <span class="split-title">扫地并拖地</span>
+                    <span class="split-time">12 分钟</span>
+                    <span class="drag-icon"><i data-lucide="grip-vertical"></i></span>
+                  </div>
+
+                  <div class="summary-strip">
+                    <div class="summary-cell"><b>30 分钟</b><span>预计总时长</span></div>
+                    <div class="summary-cell"><b>75 XP</b><span>预计获得经验</span></div>
+                  </div>
+                </div>
+
+                <div class="bottom-action">
+                  <button class="primary-button navy"><i data-lucide="bomb"></i>开始粉碎</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-item">
+            <div class="screen-label"><b>03 目标执行</b><span>开始、完成与撤销</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">整理房间</h2>
+                    <div class="page-meta">进行中 · 3/5 步</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="more-horizontal"></i></button>
+                  </div>
+                </div>
+
+                <div class="body">
+                  <div class="hero">
+                    <div class="hero-top">
+                      <span class="hero-date">还剩 2 步</span>
+                      <span class="hero-tag"><i data-lucide="timer"></i>18 分钟</span>
+                    </div>
+                    <div class="hero-title">预计剩余 18 分钟</div>
+                    <div class="hero-meta">已获得 27 XP · 完成后预计再得 48 XP</div>
+                    <div class="progress-track"><div class="progress-fill"></div></div>
+                    <div class="hero-stats">
+                      <div class="hero-stat"><b>已获 27 XP</b><span>来自 3 条真实记录</span></div>
+                      <div class="hero-stat"><b>完成后 +48 XP</b><span>含目标奖励 20 XP</span></div>
+                    </div>
+                  </div>
+
+                  <div class="section-head">
+                    <b>步骤列表</b>
+                    <span class="link"><i data-lucide="undo-2"></i>撤销上一步</span>
+                  </div>
+                  <div class="execution-step done">
+                    <div class="step-check done"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">只把桌上的垃圾扔掉</div>
+                      <div class="row-meta">预计 3 分钟 · 实际 2 分钟</div>
+                    </div>
+                    <div class="xp-positive">+8 XP</div>
+                  </div>
+                  <div class="execution-step done">
+                    <div class="step-check done"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">桌面物品放回原位</div>
+                      <div class="row-meta">预计 5 分钟 · 实际 4 分钟</div>
+                    </div>
+                    <div class="xp-positive">+10 XP</div>
+                  </div>
+                  <div class="execution-step done">
+                    <div class="step-check done"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">脏衣服放进洗衣机</div>
+                      <div class="row-meta">预计 4 分钟 · 实际 3 分钟</div>
+                    </div>
+                    <div class="xp-positive">+9 XP</div>
+                  </div>
+                  <div class="execution-step current">
+                    <div class="step-number">04</div>
+                    <div class="row-main">
+                      <div class="row-title">擦一遍桌面</div>
+                      <div class="timer-chip"><i data-lucide="timer"></i>02:14</div>
+                    </div>
+                    <button class="mini-button"><i data-lucide="check"></i>完成</button>
+                  </div>
+                  <div class="execution-step">
+                    <div class="step-number">05</div>
+                    <div class="row-main">
+                      <div class="row-title">扫地并拖地</div>
+                      <div class="row-meta">预计 12 分钟 · +17 XP</div>
+                    </div>
+                    <button class="mini-button green"><i data-lucide="play"></i>开始</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="screen-item">
+            <div class="screen-label"><b>04 经验账本</b><span>等级、统计与真实记录</span></div>
+            <div class="phone">
+              <div class="speaker"></div>
+              <div class="screen">
+                <div class="status-bar">
+                  <span>9:41</span>
+                  <div class="status-icons">
+                    <i data-lucide="signal"></i>
+                    <i data-lucide="wifi"></i>
+                    <i data-lucide="battery-full"></i>
+                  </div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <h2 class="page-title">经验账本</h2>
+                    <div class="page-meta">只展示真实完成记录</div>
+                  </div>
+                  <div class="top-actions">
+                    <button class="icon-button"><i data-lucide="calendar-days"></i></button>
+                  </div>
+                </div>
+
+                <div class="body">
+                  <div class="level-card">
+                    <div class="level-badge"><b>Lv.3</b><span>84 XP</span></div>
+                    <div class="level-main">
+                      <b>距离 Lv.4 还差 16 XP</b>
+                      <span>每完成一步都会写入真实账本</span>
+                      <div class="level-track"><div class="level-fill"></div></div>
+                    </div>
+                  </div>
+
+                  <div class="stats-grid" style="margin-top:10px;">
+                    <div class="stat-card">
+                      <div class="stat-icon"><i data-lucide="zap"></i></div>
+                      <b>27</b>
+                      <span>今日 XP</span>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-icon green"><i data-lucide="trending-up"></i></div>
+                      <b>84</b>
+                      <span>本周 XP</span>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-icon blue"><i data-lucide="flame"></i></div>
+                      <b>4 天</b>
+                      <span>当前连续</span>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-icon amber"><i data-lucide="trophy"></i></div>
+                      <b>3</b>
+                      <span>粉碎目标</span>
+                    </div>
+                  </div>
+
+                  <div class="section-head">
+                    <b>最近 7 天</b>
+                    <span>18 步完成</span>
+                  </div>
+                  <div class="bar-chart">
+                    <div class="bar-col"><span class="bar" style="height:36%"></span><span class="bar-label">五</span></div>
+                    <div class="bar-col"><span class="bar" style="height:55%"></span><span class="bar-label">六</span></div>
+                    <div class="bar-col"><span class="bar" style="height:28%"></span><span class="bar-label">日</span></div>
+                    <div class="bar-col"><span class="bar" style="height:68%"></span><span class="bar-label">一</span></div>
+                    <div class="bar-col"><span class="bar" style="height:42%"></span><span class="bar-label">二</span></div>
+                    <div class="bar-col"><span class="bar" style="height:30%"></span><span class="bar-label">三</span></div>
+                    <div class="bar-col"><span class="bar" style="height:58%"></span><span class="bar-label">四</span></div>
+                  </div>
+
+                  <div class="filter-chips">
+                    <span class="chip active">全部</span>
+                    <span class="chip">整理房间</span>
+                    <span class="chip">周报</span>
+                  </div>
+
+                  <div class="ledger-row">
+                    <div class="event-icon"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">扫地并拖地</div>
+                      <div class="row-meta">整理房间 · 今天 10:24</div>
+                    </div>
+                    <div class="xp-positive">+11 XP</div>
+                  </div>
+                  <div class="ledger-row">
+                    <div class="event-icon"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">脏衣服放进洗衣机</div>
+                      <div class="row-meta">整理房间 · 今天 10:18</div>
+                    </div>
+                    <div class="xp-positive">+9 XP</div>
+                  </div>
+                  <div class="ledger-row">
+                    <div class="event-icon"><i data-lucide="check"></i></div>
+                    <div class="row-main">
+                      <div class="row-title">桌面物品放回原位</div>
+                      <div class="row-meta">整理房间 · 今天 10:12</div>
+                    </div>
+                    <div class="xp-positive">+10 XP</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
