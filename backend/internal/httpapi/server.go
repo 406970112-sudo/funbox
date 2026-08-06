@@ -21,12 +21,14 @@ import (
 	"my-first-expo-app/backend/internal/config"
 	"my-first-expo-app/backend/internal/cookingguide"
 	"my-first-expo-app/backend/internal/cooling"
+	"my-first-expo-app/backend/internal/dailylucksign"
 	"my-first-expo-app/backend/internal/daysleft"
 	"my-first-expo-app/backend/internal/diary"
 	"my-first-expo-app/backend/internal/dnfactivity"
 	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/focus"
 	"my-first-expo-app/backend/internal/foodrecommendation"
+	"my-first-expo-app/backend/internal/gooutchecklist"
 	"my-first-expo-app/backend/internal/homerecommendation"
 	"my-first-expo-app/backend/internal/lottery"
 	"my-first-expo-app/backend/internal/lotterylab"
@@ -35,6 +37,7 @@ import (
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/parkinglocation"
+	"my-first-expo-app/backend/internal/partymemorycard"
 	"my-first-expo-app/backend/internal/plantid"
 	"my-first-expo-app/backend/internal/priceradar"
 	"my-first-expo-app/backend/internal/quiethome"
@@ -60,10 +63,12 @@ type Server struct {
 	cfg                       config.Config
 	coolingStore              *cooling.Store
 	cookingGuideService       *cookingguide.Service
+	dailyLuckSignService      *dailylucksign.Service
 	feedbackService           *feedback.Service
 	foodRecommendationService *foodrecommendation.Service
 	focusStore                *focus.Store
 	homeRecommendationService *homerecommendation.Service
+	goOutChecklistService     *gooutchecklist.Service
 	rateLimiter               *RateLimiter
 	realtimeHub               *realtime.Hub
 	lotteryService            lotteryHistoryService
@@ -76,6 +81,7 @@ type Server struct {
 	momentsService            *moments.Service
 	newsService               newsFeedService
 	parkingLocationStore      *parkinglocation.Store
+	partyMemoryCardStore      *partymemorycard.Store
 	plantIDService            *plantid.Service
 	priceRadarService         *priceradar.Service
 	quietHomeService          *quiethome.Service
@@ -630,6 +636,13 @@ func newServer(
 	if err != nil {
 		log.Printf("open cooling database failed: %v", err)
 	}
+	var dailyLuckSignService *dailylucksign.Service
+	dailyLuckSignStore, dailyLuckErr := dailylucksign.OpenStore(cfg.Database.Path)
+	if dailyLuckErr != nil {
+		log.Printf("open daily luck sign database failed: %v", dailyLuckErr)
+	} else {
+		dailyLuckSignService = dailylucksign.NewService(dailyLuckSignStore, dailylucksign.NewOpenMeteoProvider(15*time.Second))
+	}
 	var whoDoesItStore *whodoesit.Store
 	whoDoesItStore, err = whodoesit.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -644,6 +657,11 @@ func newServer(
 	sizeLibraryStore, err = sizelibrary.OpenStore(cfg.Database.Path)
 	if err != nil {
 		log.Printf("open size library database failed: %v", err)
+	}
+	var partyMemoryCardStore *partymemorycard.Store
+	partyMemoryCardStore, err = partymemorycard.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open party memory card database failed: %v", err)
 	}
 	var borrowLedgerStore *borrowledger.Store
 	borrowLedgerStore, err = borrowledger.OpenStore(cfg.Database.Path)
@@ -671,6 +689,7 @@ func newServer(
 		cfg:                       cfg,
 		coolingStore:              coolingStore,
 		cookingGuideService:       cookingGuideService,
+		dailyLuckSignService:      dailyLuckSignService,
 		feedbackService:           feedbackService,
 		foodRecommendationService: foodRecommendationService,
 		focusStore:                focusStore,
@@ -687,6 +706,7 @@ func newServer(
 		momentsService:            momentsService,
 		newsService:               newsService,
 		parkingLocationStore:      parkingLocationStore,
+		partyMemoryCardStore:      partyMemoryCardStore,
 		plantIDService:            plantIDService,
 		priceRadarService:         priceRadarService,
 		quietHomeService:          quietHomeService,
@@ -737,12 +757,14 @@ func newServer(
 	registerRecommendationRoutes(mux, api)
 	registerFoodRecommendationRoutes(mux, api)
 	registerCookingGuideRoutes(mux, api)
+	registerDailyLuckSignRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
 	registerWhoDoesItRoutes(mux, api)
 	registerTimeCapsuleRoutes(mux, api)
 	registerSizeLibraryRoutes(mux, api)
+	registerPartyMemoryCardRoutes(mux, api)
 	registerBorrowLedgerRoutes(mux, api)
 	registerParkingLocationRoutes(mux, api)
 	registerQuietHomeRoutes(mux, api)
@@ -840,6 +862,11 @@ func newServer(
 			_ = sizeLibraryStore.Close()
 		})
 	}
+	if partyMemoryCardStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = partyMemoryCardStore.Close()
+		})
+	}
 	if parkingLocationStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = parkingLocationStore.Close()
@@ -873,6 +900,11 @@ func newServer(
 	if priceRadarStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = priceRadarStore.Close()
+		})
+	}
+	if dailyLuckSignStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = dailyLuckSignStore.Close()
 		})
 	}
 	server.RegisterOnShutdown(monitorCancel)

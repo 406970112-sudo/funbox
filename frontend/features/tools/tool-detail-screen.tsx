@@ -31,9 +31,11 @@ import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { TimeCapsuleScreen } from '@/features/tools/time-capsule-screen';
 import { FocusScreen } from '@/features/focus/focus-screen';
 import { WhoDoesItScreen } from '@/features/tools/who-does-it-screen';
+import { WhereIsItScreen } from '@/features/tools/where-is-it-screen';
 import { BorrowLedgerScreen } from '@/features/tools/borrow-ledger-screen';
 import { ImpulseCoolerScreen } from '@/features/tools/impulse-cooler-screen';
 import { SizeLibraryScreen } from '@/features/tools/size-library-screen';
+import { PartyMemoryCardScreen } from '@/features/tools/party-memory-card-screen';
 import { ParkingLocationScreen } from '@/features/tools/parking-location-screen';
 import { QuietHomeScreen } from '@/features/tools/quiet-home-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
@@ -348,6 +350,15 @@ export function ToolDetailScreen() {
     );
   }
 
+  if (tool?.id === 'where-is-it') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <WhereIsItScreen />
+      </>
+    );
+  }
+
   if (tool?.id === 'impulse-cooler') {
     return (
       <>
@@ -362,6 +373,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SizeLibraryScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'party-memory-card') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <PartyMemoryCardScreen />
       </>
     );
   }

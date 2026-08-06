@@ -135,6 +135,7 @@ type StorageConfig struct {
 	DiaryDir                 string
 	FeedbackDir              string
 	MomentDir                string
+	PartyMemoryCardDir       string
 	PaymentQRDir             string
 	ReadingDir               string
 	TimeCapsuleDir           string
@@ -153,6 +154,8 @@ type StorageConfig struct {
 	MaxPaymentQRBytes        int64
 	MaxReadingUploadBytes    int64
 	MaxReadingExtractedBytes int64
+	MaxWhereIsItImageBytes   int64
+	MaxWhereIsItImages       int
 }
 
 type ReadingConfig struct {
@@ -250,6 +253,7 @@ func Load() (Config, error) {
 			DiaryDir:                 envFirst("STORAGE_DIARY_DIR", "data/diary-images"),
 			FeedbackDir:              envFirst("STORAGE_FEEDBACK_DIR", "data/feedback-images"),
 			MomentDir:                envFirst("STORAGE_MOMENT_DIR", "data/moments"),
+			PartyMemoryCardDir:       envFirst("STORAGE_PARTY_MEMORY_CARD_DIR", "data/party-memory-card-photos"),
 			PaymentQRDir:             envFirst("STORAGE_PAYMENT_QR_DIR", "data/payment-qr"),
 			ReadingDir:               envFirst("STORAGE_READING_DIR", "data/reading"),
 			TimeCapsuleDir:           envFirst("STORAGE_TIME_CAPSULE_DIR", "data/time-capsule-media"),
@@ -268,6 +272,8 @@ func Load() (Config, error) {
 			MaxPaymentQRBytes:        int64(intFirst("STORAGE_MAX_PAYMENT_QR_BYTES", "", "2097152")),
 			MaxReadingUploadBytes:    int64(intFirst("STORAGE_MAX_READING_UPLOAD_BYTES", "", "52428800")),
 			MaxReadingExtractedBytes: int64(intFirst("STORAGE_MAX_READING_EXTRACTED_BYTES", "", "209715200")),
+			MaxWhereIsItImageBytes:   int64(intFirst("STORAGE_MAX_WHERE_IS_IT_IMAGE_BYTES", "", "5242880")),
+			MaxWhereIsItImages:       intFirst("STORAGE_MAX_WHERE_IS_IT_IMAGES", "", "6"),
 		},
 		Reading: ReadingConfig{
 			LibraryEnabled:  boolFirst("READING_LIBRARY_ENABLED", libraryDefault),

@@ -653,5 +653,37 @@
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"],
     "keywords": ["时间胶囊", "写给未来", "生日", "纪念日", "恋爱", "一周年", "项目上线", "减肥", "目标完成", "语音", "照片", "封存"]
+  },
+  {
+    "id": "party-memory-card",
+    "name": "聚会记忆卡",
+    "tagline": "一场聚会，一张真实记忆卡",
+    "description": "记录参与者、餐厅、账单、照片、菜品评价、请客与下次意愿，下次聚餐前直接查看最近一次真实记录。",
+    "icon": "party-popper",
+    "category": "生活",
+    "route": "/tools/party-memory-card",
+    "accentColor": "#ff6b8f",
+    "badges": ["真实数据", "拍照存档", "下次准备"],
+    "usageLabel": "记录聚会",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"],
+    "keywords": ["聚会", "聚餐", "记忆卡", "请客", "谁请客", "聚餐记录", "餐厅评价", "停车", "烤鱼", "账单", "AA", "下次聚餐", "照片", "相册", "老友聚餐"]
+  },
+  {
+    "id": "where-is-it",
+    "name": "物品在哪里",
+    "tagline": "记录不常用物品的真实位置",
+    "description": "记录物品名称、房间、具体位置与真实照片，支持搜索、房间分类、移动历史、确认在与导出备份。",
+    "icon": "map-marker-radius-outline",
+    "category": "生活",
+    "route": "/tools/where-is-it",
+    "accentColor": "#4b6bff",
+    "badges": ["真实数据", "拍照存档", "位置历史"],
+    "keywords": ["物品在哪里", "物品位置", "备用钥匙", "保修卡", "螺丝刀", "旧手机", "位置记录", "房间分类", "找东西"],
+    "usageLabel": "记录位置",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]
