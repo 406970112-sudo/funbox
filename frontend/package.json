@@ -25,7 +25,7 @@
     "test:blog": "node --test --experimental-strip-types tests/blog-model.test.mjs",
     "test:admin-users": "node --test --experimental-strip-types tests/admin-users.test.mjs",
     "test:identity": "node --test --experimental-strip-types tests/identity.test.mjs",
-    "test:membership": "node --test --experimental-strip-types tests/membership-payment.test.mjs",
+    "test:membership": "node --test --experimental-strip-types tests/membership-payment.test.mjs tests/membership-benefit-comparison.test.mjs",
     "test:card-score": "node --test --experimental-strip-types tests/card-score.test.mjs",
     "test:days-left": "node --test --experimental-strip-types tests/days-left.test.mjs",
     "test:who-does-it": "node --test --experimental-strip-types tests/who-does-it.test.mjs",

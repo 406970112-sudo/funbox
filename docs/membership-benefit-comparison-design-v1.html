@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>会员中心 · 权益对比折叠展示</title>
+  <style>
+    :root {
+      --ink: #18233d;
+      --muted: #7483a2;
+      --line: #dce6f7;
+      --canvas: #eef4ff;
+      --surface: #ffffff;
+      --primary: #4b6bff;
+      --primary-soft: #e3e9ff;
+      --success: #1db991;
+      --warning: #d86f5b;
+      --vip: #c58b2d;
+      --svip: #d25d73;
+      --navy: #151b3b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(75,107,255,.08), transparent 28%),
+        var(--canvas);
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    button { font: inherit; }
+    .board { width: 1440px; margin: 0 auto; padding: 52px 66px 68px; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--primary); font-size: 12px; font-weight: 800; letter-spacing: .08em;
+    }
+    .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+    h1 { margin: 13px 0 8px; font-size: 36px; line-height: 1.15; letter-spacing: 0; }
+    .lead { max-width: 740px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.75; }
+    .source-badge {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 20px;
+      padding: 9px 12px; border: 1px solid #c9d7f5; border-radius: 10px;
+      background: rgba(255,255,255,.72); color: #526487; font-size: 11px; font-weight: 700;
+    }
+    .source-badge code { color: var(--primary); font-size: 11px; }
+    .artboards { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 40px; }
+    .artboard {
+      position: relative; min-height: 850px; padding: 24px 28px 30px;
+      border: 1px solid #d9e4f7; border-radius: 24px; background: rgba(255,255,255,.62);
+    }
+    .artboard-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+    .artboard-title { margin: 0; font-size: 16px; font-weight: 900; }
+    .artboard-note { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .state-pill { padding: 7px 9px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); font-size: 10px; font-weight: 900; white-space: nowrap; }
+    .state-pill.expanded { background: #fff0f3; color: var(--svip); }
+    .phone {
+      width: 340px; height: 714px; margin: 0 auto; overflow: hidden;
+      border: 8px solid #1b2944; border-radius: 35px; background: var(--canvas);
+      box-shadow: 0 18px 44px rgba(35,61,121,.2);
+    }
+    .phone-status { height: 22px; padding: 5px 13px 0; color: #8795b2; font-size: 8px; font-weight: 800; }
+    .screen { height: calc(100% - 22px); overflow: hidden; padding: 12px 15px 24px; }
+    .topbar { display: flex; align-items: center; gap: 9px; }
+    .back { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 11px; background: var(--surface); color: var(--ink); font-size: 18px; }
+    .topbar-copy { flex: 1; }
+    .page-title { font-size: 14px; font-weight: 900; }
+    .page-subtitle { margin-top: 2px; color: var(--muted); font-size: 8px; }
+    .brand { display: inline-flex; align-items: center; gap: 4px; padding: 7px 8px; border-radius: 11px; background: var(--surface); color: var(--primary); font-size: 8px; font-weight: 900; }
+    .hero { margin-top: 13px; padding: 17px; border-radius: 18px; background: var(--navy); color: white; }
+    .hero-icon { width: 35px; height: 35px; display: grid; place-items: center; border-radius: 11px; background: rgba(255,255,255,.13); font-size: 18px; }
+    .hero-title { margin-top: 12px; font-size: 16px; font-weight: 900; }
+    .hero-sub { margin-top: 4px; color: rgba(255,255,255,.72); font-size: 8px; line-height: 1.6; }
+    .hero-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 13px; }
+    .hero-chip { padding: 7px; border-radius: 8px; background: rgba(255,255,255,.1); }
+    .hero-chip small { display: block; color: rgba(255,255,255,.58); font-size: 7px; }
+    .hero-chip b { display: block; margin-top: 4px; font-size: 10px; }
+    .panel { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; }
+    .panel-title { font-size: 12px; font-weight: 900; }
+    .panel-meta { color: var(--muted); font-size: 8px; font-weight: 800; }
+    .compare { margin-top: 10px; border-top: 1px solid var(--line); }
+    .compare:not(.is-expanded) .extra { display: none; }
+    .compare-row { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(3, .63fr); align-items: center; min-height: 32px; border-bottom: 1px solid var(--line); }
+    .compare-row.head { min-height: 27px; color: var(--muted); border-bottom: 1px solid var(--line); }
+    .compare-row span { text-align: center; font-size: 8px; font-weight: 800; }
+    .compare-row .name { overflow: hidden; text-align: left; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-size: 9px; font-weight: 800; }
+    .compare-row.head .name { color: var(--ink); }
+    .mark { color: var(--success); font-size: 13px; }
+    .mark.off { color: #aeb9cb; font-size: 12px; }
+    .expand { width: 100%; min-height: 33px; display: flex; align-items: center; justify-content: center; gap: 5px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--primary); cursor: pointer; font-size: 9px; font-weight: 900; }
+    .expand:hover { background: #f6f8ff; }
+    .note { display: flex; gap: 5px; padding-top: 9px; color: var(--muted); font-size: 7px; line-height: 1.55; }
+    .rule-box { margin-top: 12px; padding: 10px; border-radius: 10px; background: #f6f8ff; color: #596b91; font-size: 8px; line-height: 1.6; }
+    .rule-box b { color: var(--primary); }
+    .callout { position: absolute; right: 26px; bottom: 24px; left: 26px; display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 12px; background: #18233d; color: #fff; }
+    .callout-icon { color: #a9c4ff; font-size: 16px; line-height: 1; }
+    .callout b { display: block; font-size: 10px; }
+    .callout p { margin: 4px 0 0; color: rgba(255,255,255,.68); font-size: 8px; line-height: 1.55; }
+    .spec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-top: 28px; }
+    .spec { padding: 17px; border: 1px solid #d9e4f7; border-radius: 15px; background: rgba(255,255,255,.68); }
+    .spec h2 { margin: 0 0 7px; font-size: 13px; }
+    .spec p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.7; }
+    .spec code { padding: 2px 4px; border-radius: 4px; background: #e7edff; color: var(--primary); font-size: 9px; }
+    .legend { display: flex; gap: 12px; margin-top: 12px; color: var(--muted); font-size: 9px; }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot.live { background: var(--success); }
+    .dot.design { background: var(--primary); }
+    .dot.guard { background: var(--warning); }
+    .footer-note { margin-top: 20px; color: #7182a4; font-size: 10px; line-height: 1.7; }
+    @media (max-width: 900px) {
+      .board { width: auto; padding: 28px 18px 42px; }
+      .artboards { grid-template-columns: 1fr; }
+      .artboard { min-height: 850px; }
+      .spec-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <div class="eyebrow">FUNBOX · MEMBERSHIP CENTER</div>
+    <h1>权益对比，先看差异，再看全部</h1>
+    <p class="lead">默认保留最有决策价值的 5 项差异，其他内容不丢失；点击一次即可展开全部。页面只接受权限库的实时结果，接口异常时明确停留在可解释状态。</p>
+    <div class="source-badge"><span>真实数据链路</span><code>GET /api/v1/membership/features</code><span>后台入口权限库 → 会员中心</span></div>
+
+    <section class="artboards">
+      <article class="artboard">
+        <div class="artboard-head">
+          <div><h2 class="artboard-title">默认收起态 · 首屏可扫描</h2><p class="artboard-note">仅保留 5 行；按钮把剩余项数量说清楚。</p></div>
+          <span class="state-pill">COLLAPSED</span>
+        </div>
+        <div class="phone">
+          <div class="phone-status">9:41　　●●●　▮</div>
+          <div class="screen">
+            <div class="topbar"><div class="back">‹</div><div class="topbar-copy"><div class="page-title">会员中心</div><div class="page-subtitle">我的身份与全部权益</div></div><div class="brand">▣ FunBox</div></div>
+            <div class="hero"><div class="hero-icon">♢</div><div class="hero-title">普通用户</div><div class="hero-sub">基础能力已生效，升级会员可解锁更多专属入口。</div><div class="hero-chips"><div class="hero-chip"><small>可用工具</small><b>18 个</b></div><div class="hero-chip"><small>可玩游戏</small><b>5 个</b></div><div class="hero-chip"><small>到期时间</small><b>暂无</b></div></div></div>
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">权益对比</span><span class="panel-meta">12 项差异</span></div>
+              <div class="compare">
+                <div class="compare-row head"><span class="name">功能</span><span>普通</span><span>VIP</span><span>SVIP</span></div>
+                <div class="compare-row"><span class="name">市场雷达</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">AI 导航</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">热点速览</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">资源搜索</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">文字转语音</span><span class="mark off">−</span><span class="mark off">−</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">图片压缩</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">智能翻译</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">股票交易提醒</span><span class="mark off">−</span><span class="mark off">−</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">二维码生成器</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">效率清单</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">时间胶囊</span><span class="mark off">−</span><span class="mark off">−</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">家庭说明书</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <button class="expand" type="button" data-expand="left">展开更多 · 7 项　⌄</button>
+              </div>
+              <div class="note"><span>ⓘ</span><span>只显示普通、VIP、SVIP 权限存在差异的入口；管理员专属与全员可用功能不计入。</span></div>
+            </div>
+            <div class="rule-box"><b>阅读顺序</b><br />先看 5 行主差异 → 再按需展开 → 对比完成后回到开通会员。</div>
+          </div>
+        </div>
+        <div class="callout"><div class="callout-icon">⌄</div><div><b>折叠按钮是一个明确的继续阅读入口</b><p>按钮文案同时传达动作与剩余数量，避免用户猜测还有多少内容。</p></div></div>
+      </article>
+
+      <article class="artboard">
+        <div class="artboard-head">
+          <div><h2 class="artboard-title">展开态 · 全量核对</h2><p class="artboard-note">展开后保留同一张表，位置不跳变；按钮变为收起。</p></div>
+          <span class="state-pill expanded">EXPANDED</span>
+        </div>
+        <div class="phone">
+          <div class="phone-status">9:41　　●●●　▮</div>
+          <div class="screen">
+            <div class="topbar"><div class="back">‹</div><div class="topbar-copy"><div class="page-title">会员中心</div><div class="page-subtitle">我的身份与全部权益</div></div><div class="brand">▣ FunBox</div></div>
+            <div class="hero" style="background:#c25467"><div class="hero-icon">♛</div><div class="hero-title">SVIP 会员</div><div class="hero-sub">全部会员能力已解锁，当前权限以后台配置为准。</div><div class="hero-chips"><div class="hero-chip"><small>可用工具</small><b>32 个</b></div><div class="hero-chip"><small>可玩游戏</small><b>5 个</b></div><div class="hero-chip"><small>到期时间</small><b>暂无</b></div></div></div>
+            <div class="panel">
+              <div class="panel-head"><span class="panel-title">权益对比</span><span class="panel-meta">12 项差异</span></div>
+              <div class="compare is-expanded">
+                <div class="compare-row head"><span class="name">功能</span><span>普通</span><span>VIP</span><span>SVIP</span></div>
+                <div class="compare-row"><span class="name">市场雷达</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">AI 导航</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">热点速览</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">资源搜索</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row"><span class="name">文字转语音</span><span class="mark off">−</span><span class="mark off">−</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">图片压缩</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">智能翻译</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">股票交易提醒</span><span class="mark off">−</span><span class="mark off">−</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">二维码生成器</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">效率清单</span><span class="mark off">−</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">时间胶囊</span><span class="mark off">−</span><span class="mark off">−</span><span class="mark">✓</span></div>
+                <div class="compare-row extra"><span class="name">家庭说明书</span><span class="mark">✓</span><span class="mark">✓</span><span class="mark">✓</span></div>
+                <button class="expand" type="button" data-expand="right" data-expanded="true">收起差异项　⌃</button>
+              </div>
+              <div class="note"><span>ⓘ</span><span>展开不会改变排序；返回页面后重新进入会员中心，恢复默认收起态。</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="callout"><div class="callout-icon">⌃</div><div><b>全量表仍然只保留差异项</b><p>展开不是把全员可用功能塞回来，而是让用户核对完整的会员差异矩阵。</p></div></div>
+      </article>
+    </section>
+
+    <section class="spec-grid">
+      <div class="spec"><h2>数据契约</h2><p>后端按 <code>sort_order</code> 返回启用入口与可见角色；前端不读取本地初始权限，不在失败时显示缓存或示例。</p><div class="legend"><span><i class="dot live"></i>线上真实数据</span><span><i class="dot guard"></i>失败保护</span></div></div>
+      <div class="spec"><h2>折叠规则</h2><p><code>diffCount ≤ 5</code> 全部展示；<code>diffCount &gt; 5</code> 默认展示 5 项，按钮显示剩余数量，展开后原位追加其余行。</p><div class="legend"><span><i class="dot design"></i>组件行为示意</span></div></div>
+      <div class="spec"><h2>真实库为空时</h2><p>当前本地权限库没有会员差异，运行页面会显示空态「当前没有需要对比的会员功能」，不为画面添加假入口。</p><div class="legend"><span><i class="dot guard"></i>可解释空态</span></div></div>
+    </section>
+    <p class="footer-note">设计图中的行名复用仓库入口注册表，仅用于说明折叠后的信息层级；真实应用中的角色勾选、总数与排序由 <code>/api/v1/membership/features</code> 响应决定。点击两张画板中的按钮可在收起与展开状态之间切换。</p>
+  </main>
+  <script>
+    document.querySelectorAll('[data-expand]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const expanded = button.dataset.expanded === 'true';
+        button.dataset.expanded = String(!expanded);
+        button.textContent = expanded ? '展开更多 · 7 项　⌄' : '收起差异项　⌃';
+        const compare = button.closest('.compare');
+        compare?.classList.toggle('is-expanded', !expanded);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -14,8 +14,9 @@ import {
 } from '@/lib/access-api';
 import { identityPresentation } from '@/lib/identity';
 import { getMembershipPaymentInfo } from '@/lib/membership-payment-api';
+import { buildMembershipComparison } from '@/lib/membership-benefit-comparison';
 import { DEFAULT_MEMBERSHIP_PLANS } from '@/lib/membership-payment-model';
-import { appTools, initialToolRoles } from '@/mocks/app-data';
+import { appTools } from '@/mocks/app-data';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import type { UserRole } from '@/types/access';
@@ -25,37 +26,56 @@ export function MembershipScreen() {
   const router = useRouter();
   const { colorScheme, colors } = useAppTheme();
   const { accessToken, refreshUser, status, user } = useAuth();
-  const { visibleGames, visibleTools } = useFeatureAccess();
+  const { visibleGames } = useFeatureAccess();
   const [benefitsExpanded, setBenefitsExpanded] = useState(false);
+  const [compareExpanded, setCompareExpanded] = useState(false);
   const [featureMatrix, setFeatureMatrix] = useState<MembershipFeatureMatrix[]>([]);
+  const [featureMatrixStatus, setFeatureMatrixStatus] = useState<FeatureMatrixStatus>('loading');
   const [paymentInfo, setPaymentInfo] = useState<Awaited<ReturnType<typeof getMembershipPaymentInfo>> | null>(null);
+
+  const loadFeatureMatrix = useCallback(() => {
+    if (!accessToken) {
+      setFeatureMatrixStatus('idle');
+      setFeatureMatrix([]);
+      return;
+    }
+
+    setCompareExpanded(false);
+    setFeatureMatrixStatus('loading');
+    void getMembershipFeatureMatrix(accessToken)
+      .then((features) => {
+        setFeatureMatrix(features);
+        setFeatureMatrixStatus('ready');
+      })
+      .catch(() => {
+        setFeatureMatrix([]);
+        setFeatureMatrixStatus('error');
+      });
+  }, [accessToken]);
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
       void refreshUser();
+      setBenefitsExpanded(false);
+      setCompareExpanded(false);
+      loadFeatureMatrix();
       if (accessToken) {
-        void getMembershipFeatureMatrix(accessToken)
-          .then((features) => {
-            if (!active) return;
-            setFeatureMatrix(features);
-          })
-          .catch(() => {
-            if (active) setFeatureMatrix([]);
-          });
         void getMembershipPaymentInfo(accessToken)
           .then((info) => {
-            if (active) setPaymentInfo(info);
+            setPaymentInfo(info);
           })
           .catch(() => {
-            if (active) setPaymentInfo(null);
+            setPaymentInfo(null);
           });
       }
-      return () => {
-        active = false;
-      };
-    }, [accessToken, refreshUser]),
+    }, [accessToken, loadFeatureMatrix, refreshUser]),
   );
+
+  const matrixByID = useMemo(
+    () => new Map(featureMatrix.map((feature) => [feature.id, feature.roles])),
+    [featureMatrix],
+  );
+  const rolesForTool = (toolID: string): UserRole[] => matrixByID.get(toolID) ?? [];
 
   if (status === 'loading') {
     return <AppLoadingScreen />;
@@ -67,39 +87,32 @@ export function MembershipScreen() {
   const role = user.role;
   const item = identityPresentation(role, colorScheme);
   const palette = membershipPalette(role, colorScheme === 'dark');
-  const availableTools = visibleTools.filter((tool) => tool.status === 'available');
-  const playableGameCount = visibleGames.length;
-  const matrixByID = useMemo(
-    () => new Map(featureMatrix.map((feature) => [feature.id, feature.roles])),
-    [featureMatrix],
+  const availableTools = appTools.filter(
+    (tool) =>
+      !tool.hiddenFromList &&
+      tool.status === 'available' &&
+      rolesForTool(tool.id).includes(role),
   );
-  const rolesForTool = (toolID: string): UserRole[] => {
-    const roles = matrixByID.get(toolID);
-    const fallback = initialToolRoles.get(toolID) as UserRole[] | undefined;
-    return roles && roles.length > 0 ? roles : fallback ?? ['admin'];
-  };
+  const playableGameCount = visibleGames.length;
   const benefitTools = availableTools.filter((tool) =>
     rolesForTool(tool.id).some(
       (candidate) => candidate === 'normal' || candidate === 'vip' || candidate === 'svip',
     ),
   );
   const visibleBenefitTools = benefitTools.slice(0, benefitsExpanded ? benefitTools.length : 5);
-  const compareTools = appTools.filter((tool) => {
-    if (tool.hiddenFromList || tool.status !== 'available') return false;
-    const roles = rolesForTool(tool.id);
-    const memberAccess = (['normal', 'vip', 'svip'] as const).map((candidate) =>
-      roles.includes(candidate),
-    );
-    return new Set(memberAccess).size > 1;
-  });
-  const upgradeTools = appTools.filter((tool) => {
-    if (tool.hiddenFromList) return false;
-    const roles = initialToolRoles.get(tool.id) ?? [];
-    return (
-      !roles.includes('normal') &&
-      roles.some((candidate) => candidate === 'vip' || candidate === 'svip')
-    );
-  }).slice(0, 6);
+  const comparison = buildMembershipComparison(
+    featureMatrix.filter((feature) => {
+      const tool = appTools.find((candidate) => candidate.id === feature.id);
+      return !tool || (!tool.hiddenFromList && tool.status === 'available');
+    }),
+    compareExpanded,
+  );
+  const compareFeatures = comparison.differences;
+  const upgradeTools = compareFeatures
+    .filter((feature) => !feature.roles.includes('normal'))
+    .map((feature) => appTools.find((tool) => tool.id === feature.id))
+    .filter((tool): tool is (typeof appTools)[number] => Boolean(tool))
+    .slice(0, 6);
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
@@ -225,7 +238,7 @@ export function MembershipScreen() {
           </View>
           <View>
             {upgradeTools.map((tool) => {
-              const memberRoles = (initialToolRoles.get(tool.id) ?? []).filter(
+              const memberRoles = rolesForTool(tool.id).filter(
                 (candidate) => candidate === 'vip' || candidate === 'svip',
               );
               return (
@@ -253,10 +266,14 @@ export function MembershipScreen() {
         <View style={styles.panelHead}>
           <ThemedText style={styles.panelTitle}>权益对比</ThemedText>
           <ThemedText style={[styles.panelMeta, { color: colors.mutedText }]}>
-            按入口权限配置展示
+            {featureMatrixStatus === 'ready' ? `${comparison.total} 项差异` : '按入口权限配置展示'}
           </ThemedText>
         </View>
-        {compareTools.length > 0 ? (
+        {featureMatrixStatus === 'loading' ? (
+          <MatrixLoadingState />
+        ) : featureMatrixStatus === 'error' ? (
+          <MatrixErrorState onRetry={loadFeatureMatrix} />
+        ) : compareFeatures.length > 0 ? (
           <>
             <View style={[styles.compareHead, { borderTopColor: colors.line }]}>
               <ThemedText style={styles.compareHeadText}>功能</ThemedText>
@@ -264,13 +281,34 @@ export function MembershipScreen() {
               <ThemedText style={styles.compareHeadText}>VIP</ThemedText>
               <ThemedText style={styles.compareHeadText}>SVIP</ThemedText>
             </View>
-            {compareTools.map((tool) => (
+            {comparison.visible.map((feature) => (
               <CompareRow
-                key={tool.id}
-                name={tool.name}
-                roles={rolesForTool(tool.id)}
+                key={feature.id}
+                name={feature.name}
+                roles={feature.roles}
               />
             ))}
+            {comparison.canExpand ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  compareExpanded
+                    ? '收起差异项'
+                    : `展开更多差异项，剩余 ${comparison.hiddenCount} 项`
+                }
+                accessibilityState={{ expanded: compareExpanded }}
+                onPress={() => setCompareExpanded((expanded) => !expanded)}
+                style={[styles.expandButton, { borderColor: colors.line }]}>
+                <ThemedText style={[styles.expandButtonText, { color: colors.primary }]}>
+                  {compareExpanded ? '收起差异项' : `展开更多 · ${comparison.hiddenCount} 项`}
+                </ThemedText>
+                <MaterialCommunityIcons
+                  name={compareExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color={colors.primary}
+                />
+              </Pressable>
+            ) : null}
             <View style={[styles.compareNote, { borderTopColor: colors.line }]}>
               <MaterialCommunityIcons name="information-outline" size={14} color={colors.mutedText} />
               <ThemedText style={[styles.compareNoteText, { color: colors.mutedText }]}>
@@ -288,6 +326,35 @@ export function MembershipScreen() {
         )}
       </View>
     </MobileScreen>
+  );
+}
+
+type FeatureMatrixStatus = 'error' | 'idle' | 'loading' | 'ready';
+
+function MatrixLoadingState() {
+  const { colors } = useAppTheme();
+  return (
+    <View style={styles.matrixState} accessibilityLabel="权益对比加载中">
+      <MaterialCommunityIcons name="loading" size={22} color={colors.primary} />
+      <ThemedText style={[styles.emptyText, { color: colors.mutedText }]}>正在同步最新权限配置</ThemedText>
+    </View>
+  );
+}
+
+function MatrixErrorState({ onRetry }: { onRetry: () => void }) {
+  const { colors } = useAppTheme();
+  return (
+    <View style={styles.matrixState}>
+      <MaterialCommunityIcons name="cloud-alert-outline" size={22} color="#d86f5b" />
+      <ThemedText style={[styles.emptyText, { color: colors.mutedText }]}>权限服务暂时不可用，未展示缓存或示例数据</ThemedText>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="重试加载权益对比"
+        onPress={onRetry}
+        style={[styles.retryButton, { borderColor: colors.line }]}>
+        <ThemedText style={[styles.retryButtonText, { color: colors.primary }]}>重试</ThemedText>
+      </Pressable>
+    </View>
   );
 }
 
@@ -693,6 +760,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
     paddingVertical: 20,
+  },
+  matrixState: {
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 22,
+  },
+  retryButton: {
+    alignItems: 'center',
+    borderRadius: 9,
+    borderWidth: 1,
+    minHeight: 32,
+    justifyContent: 'center',
+    marginTop: 2,
+    minWidth: 72,
+    paddingHorizontal: 14,
+  },
+  retryButtonText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   emptyText: {
     fontSize: 11,
