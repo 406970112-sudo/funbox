@@ -132,6 +132,27 @@ func TestXiangqiDoubleRookMate(t *testing.T) {
 	}
 }
 
+func TestXiangqiStalematedSideLoses(t *testing.T) {
+	board := xiangqiBoardFrom(t, [][4]any{
+		{4, 0, "black", xiangqiKing},
+		{0, 1, "red", xiangqiRook},
+		{3, 2, "red", xiangqiRook},
+		{5, 2, "red", xiangqiRook},
+		{4, 5, "red", xiangqiPawn},
+		{4, 9, "red", xiangqiKing},
+	})
+	if xiangqiInCheck(board, "black") {
+		t.Fatal("black king should not be in check")
+	}
+	if moves := xiangqiLegalMoves(board, "black"); len(moves) != 0 {
+		t.Fatalf("expected stalemate, got %d moves", len(moves))
+	}
+	winner, draw := xiangqiGameResult(board, "black")
+	if winner != "red" || draw {
+		t.Fatalf("expected red win, got winner=%q draw=%v", winner, draw)
+	}
+}
+
 func TestXiangqiHorseCannotJumpLeg(t *testing.T) {
 	board := xiangqiBoardFrom(t, [][4]any{
 		{4, 9, "red", xiangqiHorse},

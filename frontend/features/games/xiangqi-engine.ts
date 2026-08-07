@@ -44,7 +44,6 @@ type AiConfig = {
   randomChance: number;
 };
 
-const INDEX_BITS = 9;
 const WIN_SCORE = 1_000_000;
 const MATERIAL: Record<XiangqiPieceType, number> = {
   R: 900,
@@ -217,7 +216,6 @@ export function generateXiangqiPseudoMoves(
 
   const moves: XiangqiMove[] = [];
   const destinations: XiangqiPosition[] = [];
-  const { col, row } = from;
 
   switch (piece.type) {
     case 'R':
@@ -329,10 +327,9 @@ export function getXiangqiGameResult(state: XiangqiState): {
   if (legalMoves.length > 0) {
     return { draw: false, winner: null };
   }
-  const check = isXiangqiInCheck(state.board, state.sideToMove);
   return {
-    draw: !check,
-    winner: check ? opponent(state.sideToMove) : null,
+    draw: false,
+    winner: opponent(state.sideToMove),
   };
 }
 

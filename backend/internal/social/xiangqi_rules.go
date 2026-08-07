@@ -164,10 +164,7 @@ func xiangqiGameResult(board []*xiangqiPiece, color string) (winner string, draw
 	if len(xiangqiLegalMoves(board, color)) > 0 {
 		return "", false
 	}
-	if xiangqiInCheck(board, color) {
-		return xiangqiOpponent(color), false
-	}
-	return "", true
+	return xiangqiOpponent(color), false
 }
 
 func xiangqiSquareAttacked(board []*xiangqiPiece, col, row int, byColor string) bool {

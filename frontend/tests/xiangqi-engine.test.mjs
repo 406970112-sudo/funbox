@@ -15,15 +15,6 @@ import {
   isXiangqiInCheck,
 } from '../features/games/xiangqi-engine.ts';
 
-function boardWith(pieces) {
-  const board = createInitialXiangqiBoard();
-  for (const [col, row, color, type] of pieces) {
-    const index = row * 9 + col;
-    board[index] = { color, type };
-  }
-  return board;
-}
-
 function boardFrom(spec) {
   const board = Array(90).fill(null);
   for (const [col, row, color, type] of spec) {
@@ -134,6 +125,23 @@ test('legal moves escape check and checkmate ends the game', () => {
   assert.equal(generateXiangqiLegalMoves(mated, 'black').length, 0);
   const state = createXiangqiState();
   state.board = mated;
+  state.sideToMove = 'black';
+  assert.deepEqual(getXiangqiGameResult(state), { draw: false, winner: 'red' });
+});
+
+test('a stalemated side loses the game', () => {
+  const stalemated = boardFrom([
+    [4, 0, 'black', 'K'],
+    [0, 1, 'red', 'R'],
+    [3, 2, 'red', 'R'],
+    [5, 2, 'red', 'R'],
+    [4, 5, 'red', 'P'],
+    [4, 9, 'red', 'K'],
+  ]);
+  assert.equal(isXiangqiInCheck(stalemated, 'black'), false);
+  assert.equal(generateXiangqiLegalMoves(stalemated, 'black').length, 0);
+  const state = createXiangqiState();
+  state.board = stalemated;
   state.sideToMove = 'black';
   assert.deepEqual(getXiangqiGameResult(state), { draw: false, winner: 'red' });
 });

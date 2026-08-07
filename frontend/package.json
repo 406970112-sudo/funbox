@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test:gomoku": "node --test --experimental-strip-types tests/gomoku-engine.test.mjs",
-    "test:xiangqi": "node --test --experimental-strip-types tests/xiangqi-engine.test.mjs",
+    "test:xiangqi": "node --test --experimental-strip-types tests/xiangqi-engine.test.mjs tests/xiangqi-board-geometry.test.mjs",
     "test:brick-breaker-engine": "node --test --experimental-strip-types tests/brick-breaker-engine.test.mjs",
     "test:brick-breaker-rules": "node --test --experimental-strip-types tests/brick-breaker-rules.test.mjs",
     "test:qr": "node --test --experimental-strip-types tests/qr-code.test.mjs",

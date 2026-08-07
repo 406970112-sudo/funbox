@@ -11,20 +11,25 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import Svg, { Line, Path } from 'react-native-svg';
+import Svg, { Line } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
 import { useAuth } from '@/features/auth/auth-provider';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import {
+  createXiangqiBoardGeometry,
+  getXiangqiBoardPoint,
+  XIANGQI_COLUMN_INTERVALS,
+  XIANGQI_GRID_LINES,
+  XIANGQI_ROW_INTERVALS,
+  type XiangqiBoardGeometry,
+} from '@/features/games/xiangqi-board-geometry';
 import {
   applyXiangqiMove,
   chooseXiangqiAiMove,
   createXiangqiState,
   generateXiangqiLegalMoves,
-  generateXiangqiPseudoMoves,
   getXiangqiGameResult,
   getXiangqiHint,
-  getXiangqiMoveNotation,
   getXiangqiPiece,
   isXiangqiInCheck,
   XIANGQI_COLS,
@@ -47,7 +52,6 @@ import type { GameMatch, GameMove } from '@/types/game-social';
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 type MatchStatus = 'playing' | 'red-won' | 'black-won' | 'draw';
 
-const HUMAN_COLOR: XiangqiColor = 'red';
 const AI_DELAY_MS = 320;
 
 const DIFFICULTIES: { description: string; id: XiangqiDifficulty; label: string }[] = [
@@ -69,10 +73,10 @@ export function XiangqiGameScreen() {
 function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => void }) {
   const router = useRouter();
   const { colors, colorScheme } = useAppTheme();
-  const { width } = useWindowDimensions();
   const [moves, setMoves] = useState<XiangqiMove[]>([]);
   const [state, setState] = useState<XiangqiState>(() => createXiangqiState());
   const [difficulty, setDifficulty] = useState<XiangqiDifficulty>('medium');
+  const [hintedMove, setHintedMove] = useState<XiangqiMove | null>(null);
   const [selected, setSelected] = useState<XiangqiPosition | null>(null);
   const [scores, setScores] = useState({ ai: 0, human: 0 });
   const [round, setRound] = useState(1);
@@ -85,10 +89,6 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
   }, [state, status]);
   const isAiTurn = status === 'playing' && state.sideToMove === 'black';
   const humanInCheck = status === 'playing' && state.sideToMove === 'red' && isXiangqiInCheck(state.board, 'red');
-  const legalMoves = useMemo(
-    () => (status === 'playing' ? generateXiangqiLegalMoves(state.board, state.sideToMove) : []),
-    [state, status],
-  );
   const selectedMoves = useMemo(() => {
     if (!selected) return [];
     return generateXiangqiLegalMoves(state.board, state.sideToMove).filter(
@@ -104,6 +104,7 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
       startTransition(() => {
         setState((current) => ({ ...current, board: applyXiangqiMove(current.board, move), lastMove: move, sideToMove: 'red' }));
         setMoves((current) => [...current, move]);
+        setHintedMove(null);
         triggerMoveHaptic();
       });
     }, AI_DELAY_MS);
@@ -130,6 +131,7 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
 
   function handleSquarePress(position: XiangqiPosition) {
     if (status !== 'playing' || isAiTurn) return;
+    setHintedMove(null);
     const piece = getXiangqiPiece(state.board, position);
     if (selected) {
       const matching = selectedMoves.find(
@@ -162,6 +164,7 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
         board = applyXiangqiMove(board, move);
       }
       setMoves(remaining);
+      setHintedMove(null);
       setState({
         board,
         draw: false,
@@ -178,6 +181,7 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
     startTransition(() => {
       setState(createXiangqiState());
       setMoves([]);
+      setHintedMove(null);
       setSelected(null);
       setStatus('playing');
       setRound((current) => current + 1);
@@ -185,13 +189,11 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
   }
 
   function handleHint() {
+    if (status !== 'playing' || isAiTurn) return;
     const hint = getXiangqiHint(state.board, 'red');
     if (hint) {
-      startTransition(() => {
-        setState((current) => ({ ...current, board: applyXiangqiMove(current.board, hint), lastMove: hint }));
-        setMoves((current) => [...current, hint]);
-        setSelected(null);
-      });
+      setHintedMove(hint);
+      setSelected(hint.from);
       triggerMoveHaptic();
     }
   }
@@ -264,6 +266,7 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
             boardLineColor={boardPalette.boardLine}
             boardColor={boardPalette.board}
             gridColor={boardPalette.grid}
+            hintedMove={hintedMove}
             lastMove={state.lastMove}
             legalMoves={selectedMoves}
             onSquarePress={handleSquarePress}
@@ -289,7 +292,7 @@ function XiangqiAIGameScreen({ onOpenFriendMatch }: { onOpenFriendMatch: () => v
 
         <View style={styles.actionRow}>
           <XiangqiActionButton disabled={status !== 'playing' || !state.lastMove} icon="undo-variant" label="悔棋" onPress={handleUndo} />
-          <XiangqiActionButton accentColor={colors.primary} icon="lightbulb-outline" label="提示" onPress={handleHint} primary />
+          <XiangqiActionButton accentColor={colors.primary} disabled={status !== 'playing' || isAiTurn} icon="lightbulb-outline" label="提示" onPress={handleHint} primary />
           <XiangqiActionButton disabled={status !== 'playing' || !state.lastMove} icon="flag-outline" label="认输" onPress={handleResign} />
         </View>
         <View style={styles.hintRow}>
@@ -342,7 +345,7 @@ function XiangqiFriendGameScreen({ onExit }: { onExit: () => void }) {
   const { user } = useAuth();
   const { colors, colorScheme } = useAppTheme();
   const { friends } = useSocial();
-  const { authenticated, createMatch, error, loading, matches, refreshMatches, resignMatch, respondMatch, submitMove } = useGameSocial();
+  const { authenticated, createMatch, error, matches, refreshMatches, resignMatch, respondMatch, submitMove } = useGameSocial();
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState('');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -354,7 +357,6 @@ function XiangqiFriendGameScreen({ onExit }: { onExit: () => void }) {
   refreshRef.current = refreshMatches;
 
   const board = useMemo(() => buildBoardFromFriendMoves(selectedMatch?.moves ?? []), [selectedMatch]);
-  const moves = useMemo(() => (selectedMatch?.moves ?? []).map(toEngineMove), [selectedMatch]);
   const isMyTurn = selectedMatch?.status === 'active' && selectedMatch.currentTurnUserId === user?.id;
   const friendSide: XiangqiColor = selectedMatch ? (selectedMatch.inviter.id === user?.id ? 'red' : 'black') : 'red';
   const peer = selectedMatch ? (selectedMatch.inviter.id === user?.id ? selectedMatch.opponent : selectedMatch.inviter) : null;
@@ -363,8 +365,10 @@ function XiangqiFriendGameScreen({ onExit }: { onExit: () => void }) {
   const myInCheck = isMyTurn && isXiangqiInCheck(board, friendSide);
   const selectedMoves = useMemo(() => {
     if (!selected || !isMyTurn || !selectedMatch) return [];
-    return moves.filter((move) => move.from.col === selected.col && move.from.row === selected.row);
-  }, [isMyTurn, moves, selected, selectedMatch]);
+    return generateXiangqiLegalMoves(board, friendSide).filter(
+      (move) => move.from.col === selected.col && move.from.row === selected.row,
+    );
+  }, [board, friendSide, isMyTurn, selected, selectedMatch]);
 
   useEffect(() => {
     if (!selectedMatchId) return;
@@ -612,6 +616,7 @@ function XiangqiFriendGameScreen({ onExit }: { onExit: () => void }) {
             lastMove={selectedMatch.moves.length > 0 ? toEngineMove(selectedMatch.moves[selectedMatch.moves.length - 1]) : null}
             legalMoves={selectedMoves}
             onSquarePress={handleSquarePress}
+            perspective={friendSide}
             selected={selected}
           />
         </View>
@@ -634,26 +639,29 @@ function XiangqiBoardView({
   boardLineColor,
   boardColor,
   gridColor,
+  hintedMove = null,
   lastMove,
   legalMoves,
   onSquarePress,
+  perspective = 'red',
   selected,
 }: {
   board: ReturnType<typeof createXiangqiState>['board'];
   boardLineColor: string;
   boardColor: string;
   gridColor: string;
+  hintedMove?: XiangqiMove | null;
   lastMove: XiangqiMove | null;
   legalMoves: XiangqiMove[];
   onSquarePress: (position: XiangqiPosition) => void;
+  perspective?: XiangqiColor;
   selected: XiangqiPosition | null;
 }) {
   const { width } = useWindowDimensions();
-  const gridWidth = Math.min(width - 96, 360);
-  const cellSize = gridWidth / 8;
-  const boardPadding = Math.round(cellSize * 0.56);
-  const boardWidth = Math.round(gridWidth + boardPadding * 2);
-  const boardHeight = Math.round(gridWidth * (10 / 9) + boardPadding * 2);
+  const geometry = createXiangqiBoardGeometry(width);
+  const { boardHeight, boardPadding, boardWidth, cellSize } = geometry;
+  const hitSize = cellSize * 0.92;
+  const pieceSize = cellSize * 0.78;
   const pieces: { position: XiangqiPosition; piece: XiangqiPiece }[] = [];
   for (let row = 0; row < XIANGQI_ROWS; row += 1) {
     for (let col = 0; col < XIANGQI_COLS; col += 1) {
@@ -667,13 +675,14 @@ function XiangqiBoardView({
     <View
       accessibilityLabel="九乘十象棋棋盘"
       style={[styles.board, { backgroundColor: boardColor, borderColor: boardLineColor, height: boardHeight, width: boardWidth }]}>
-      <XiangqiGrid gridColor={gridColor} padding={boardPadding} />
-      <View style={[styles.riverLabel, { left: boardPadding, right: boardPadding }]} pointerEvents="none">
+      <XiangqiGrid geometry={geometry} gridColor={gridColor} />
+      <View style={[styles.riverLabel, { height: cellSize, left: boardPadding, right: boardPadding, top: boardPadding + cellSize * 4 }]} pointerEvents="none">
         <ThemedText style={[styles.riverText, { color: gridColor }]}>楚河 · 汉界</ThemedText>
       </View>
       {pieces.map(({ piece, position }) => {
         const isSelected = selected?.col === position.col && selected?.row === position.row;
         const isLast = lastMove?.col === position.col && lastMove?.row === position.row;
+        const point = getXiangqiBoardPoint(geometry, position, perspective);
         return (
           <Pressable
             key={`${position.col}:${position.row}`}
@@ -682,7 +691,7 @@ function XiangqiBoardView({
             onPress={() => onSquarePress(position)}
             style={[
               styles.squarePressable,
-              { height: cellSize * 0.92, left: boardPadding + position.col * cellSize - cellSize / 2, top: boardPadding + position.row * (gridWidth / 9) - (cellSize * 0.92) / 2, width: cellSize * 0.92 },
+              { height: hitSize, left: point.x - hitSize / 2, top: point.y - hitSize / 2, width: hitSize },
             ]}>
             {isSelected ? <View style={[styles.selectedRing, { borderColor: '#4b6bff' }]} /> : null}
             {isLast ? <View style={[styles.lastMoveMark, { backgroundColor: '#c9f36a' }]} /> : null}
@@ -692,8 +701,8 @@ function XiangqiBoardView({
                 {
                   backgroundColor: piece.color === 'red' ? '#fff1e0' : '#f7f3ea',
                   borderColor: piece.color === 'red' ? '#c43a34' : '#3a3840',
-                  height: cellSize * 0.78,
-                  width: cellSize * 0.78,
+                  height: pieceSize,
+                  width: pieceSize,
                 },
               ]}>
               <ThemedText style={[styles.pieceText, { color: piece.color === 'red' ? '#c43a34' : '#2d2b33', fontSize: cellSize * 0.42 }]}>
@@ -707,19 +716,21 @@ function XiangqiBoardView({
         ? [...legalTargets].map((key) => {
             const [col, row] = key.split(':').map(Number);
             const captured = board[row * XIANGQI_COLS + col];
+            const isHintTarget = hintedMove?.col === col && hintedMove?.row === row;
+            const point = getXiangqiBoardPoint(geometry, { col, row }, perspective);
             return (
               <Pressable
                 key={`target-${key}`}
-                accessibilityLabel="落子位置"
+                accessibilityLabel={isHintTarget ? '建议落子位置' : '落子位置'}
                 accessibilityRole="button"
                 onPress={() => onSquarePress({ col, row })}
-                style={[styles.squarePressable, { height: cellSize * 0.92, left: boardPadding + col * cellSize - cellSize / 2, top: boardPadding + row * (gridWidth / 9) - (cellSize * 0.92) / 2, width: cellSize * 0.92 }]}>
+                style={[styles.squarePressable, { height: hitSize, left: point.x - hitSize / 2, top: point.y - hitSize / 2, width: hitSize }]}>
                 <View
                   style={[
                     captured ? styles.captureTarget : styles.moveDot,
                     captured
-                      ? { borderColor: '#4b6bff', height: cellSize * 0.78, width: cellSize * 0.78 }
-                      : { backgroundColor: '#4b6bff', height: cellSize * 0.2, width: cellSize * 0.2 },
+                      ? { borderColor: isHintTarget ? '#70971c' : '#4b6bff', height: pieceSize, width: pieceSize }
+                      : { backgroundColor: isHintTarget ? '#70971c' : '#4b6bff', height: cellSize * (isHintTarget ? 0.26 : 0.2), width: cellSize * (isHintTarget ? 0.26 : 0.2) },
                   ]}
                 />
               </Pressable>
@@ -730,32 +741,27 @@ function XiangqiBoardView({
   );
 }
 
-function XiangqiGrid({ gridColor, padding }: { gridColor: string; padding: number }) {
+function XiangqiGrid({ geometry, gridColor }: { geometry: XiangqiBoardGeometry; gridColor: string }) {
   return (
     <Svg
-      height={`calc(100% - ${padding * 2}px)`}
+      height={geometry.playableHeight}
       pointerEvents="none"
       preserveAspectRatio="none"
-      style={{ left: padding, position: 'absolute', top: padding }}
-      viewBox="0 0 9 10"
-      width={`calc(100% - ${padding * 2}px)`}>
-      {Array.from({ length: 9 }, (_, col) => (
-        <Line key={`v${col}`} stroke={gridColor} strokeWidth={1.2} x1={col} x2={col} y1={0} y2={10} vectorEffect="non-scaling-stroke" />
+      style={{ left: geometry.boardPadding, position: 'absolute', top: geometry.boardPadding }}
+      viewBox={`0 0 ${XIANGQI_COLUMN_INTERVALS} ${XIANGQI_ROW_INTERVALS}`}
+      width={geometry.playableWidth}>
+      {XIANGQI_GRID_LINES.map((line) => (
+        <Line
+          key={line.id}
+          stroke={gridColor}
+          strokeWidth={line.emphasized ? 2 : 1.2}
+          vectorEffect="non-scaling-stroke"
+          x1={line.x1}
+          x2={line.x2}
+          y1={line.y1}
+          y2={line.y2}
+        />
       ))}
-      {Array.from({ length: 10 }, (_, row) =>
-        row === 4 || row === 5 ? null : (
-          <Line key={`h${row}`} stroke={gridColor} strokeWidth={1.2} x1={0} x2={9} y1={row} y2={row} vectorEffect="non-scaling-stroke" />
-        ),
-      )}
-      <Path d="M0 0 L0 10 L9 10 L9 0 Z" fill="none" stroke={gridColor} strokeWidth={2} vectorEffect="non-scaling-stroke" />
-      <Line stroke={gridColor} strokeWidth={1.2} x1={0} x2={3} y1={4} y2={4} vectorEffect="non-scaling-stroke" />
-      <Line stroke={gridColor} strokeWidth={1.2} x1={6} x2={9} y1={4} y2={4} vectorEffect="non-scaling-stroke" />
-      <Line stroke={gridColor} strokeWidth={1.2} x1={0} x2={3} y1={5} y2={5} vectorEffect="non-scaling-stroke" />
-      <Line stroke={gridColor} strokeWidth={1.2} x1={6} x2={9} y1={5} y2={5} vectorEffect="non-scaling-stroke" />
-      <Path d="M0 0 L3.5 2.5 L0 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      <Path d="M9 0 L5.5 2.5 L9 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      <Path d="M0 10 L3.5 7.5 L0 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      <Path d="M9 10 L5.5 7.5 L9 5 Z" fill="none" stroke={gridColor} strokeLinejoin="round" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
     </Svg>
   );
 }
@@ -935,7 +941,7 @@ const styles = StyleSheet.create({
   turnMeta: { fontSize: 10, fontWeight: '600', lineHeight: 14 },
   boardStage: { alignItems: 'center', alignSelf: 'center', borderRadius: 14, borderWidth: 1, padding: 4 },
   board: { borderWidth: 2, borderRadius: 9, overflow: 'hidden', position: 'relative' },
-  riverLabel: { alignItems: 'center', bottom: '46%', justifyContent: 'center', position: 'absolute', top: '46%' },
+  riverLabel: { alignItems: 'center', justifyContent: 'center', position: 'absolute' },
   riverText: { fontSize: 11, fontWeight: '800', letterSpacing: 4 },
   squarePressable: { alignItems: 'center', justifyContent: 'center', position: 'absolute' },
   piece: { alignItems: 'center', borderRadius: 999, borderWidth: 1.5, justifyContent: 'center' },
