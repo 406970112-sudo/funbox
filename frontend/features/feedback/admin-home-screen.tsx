@@ -71,6 +71,14 @@ export function AdminHomeScreen() {
             tone="#e8667a"
           />
           <AdminEntry
+            description="配置首页今日推荐、展示排期与运营效果"
+            desktop={isDesktop}
+            icon="star-circle-outline"
+            label="首页推荐"
+            onPress={() => router.push('/admin/recommendations')}
+            tone="#e8a33d"
+          />
+          <AdminEntry
             description="查看真实动态、举报记录并下架违规内容"
             desktop={isDesktop}
             icon="account-group-outline"
@@ -79,12 +87,36 @@ export function AdminHomeScreen() {
             tone="#4b6bff"
           />
           <AdminEntry
+            description="查看真实文章、举报记录并下架违规内容"
+            desktop={isDesktop}
+            icon="book-open-page-variant-outline"
+            label="博客管理"
+            onPress={() => router.push('/admin/blog')}
+            tone="#d95b6f"
+          />
+          <AdminEntry
+            description="导入、发布与隐藏阅读内容"
+            desktop={isDesktop}
+            icon="bookshelf"
+            label="阅读管理"
+            onPress={() => router.push('/admin/reading')}
+            tone="#2f8b55"
+          />
+          <AdminEntry
             description="配置资源搜索站点、真实健康检测与试搜验证"
             desktop={isDesktop}
             icon="database-search-outline"
             label="资源搜索"
             onPress={() => router.push('/admin/resource-search')}
             tone="#6b5adb"
+          />
+          <AdminEntry
+            description="核验用户上传的菜价凭证并处理异议"
+            desktop={isDesktop}
+            icon="basket-outline"
+            label="菜价核验"
+            onPress={() => router.push('/admin/price-radar')}
+            tone="#1d8fa3"
           />
           <AdminEntry
             description="上传收款码并维护会员支付说明"

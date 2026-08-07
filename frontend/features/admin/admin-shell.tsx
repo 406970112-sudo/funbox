@@ -31,7 +31,7 @@ type AdminNavItem = {
   path: Href;
 };
 
-const NAV_SECTIONS: Array<{ items: AdminNavItem[]; title: string }> = [
+const NAV_SECTIONS: { items: AdminNavItem[]; title: string }[] = [
   {
     title: '管理工具',
     items: [
@@ -65,12 +65,7 @@ const MOBILE_NAV_ITEMS: AdminNavItem[] = [
   { key: 'users', icon: 'account-key-outline', label: '用户', path: '/admin/users' },
   { key: 'permissions', icon: 'key-outline', label: '权限', path: '/admin/permissions' },
   { key: 'feedback', icon: 'message-alert-outline', label: '反馈', path: '/admin/feedback' },
-  { key: 'recommendations', icon: 'star-circle-outline', label: '推荐', path: '/admin/recommendations' },
-  { key: 'moments', icon: 'account-group-outline', label: '朋友圈', path: '/admin/moments' },
-  { key: 'blog', icon: 'book-open-page-variant-outline', label: '博客', path: '/admin/blog' },
-  { key: 'membership', icon: 'qrcode', label: '收款', path: '/admin/membership' },
   { key: 'reading', icon: 'book-open-page-variant-outline', label: '阅读', path: '/admin/reading' },
-  { key: 'price-radar', icon: 'basket-outline', label: '菜价', path: '/admin/price-radar' },
 ];
 
 const PAGE_META: Record<AdminPageKey, { breadcrumb: string; subtitle: string; title: string }> = {
@@ -143,7 +138,7 @@ export function AdminShell({ children }: PropsWithChildren) {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View style={styles.frame}>
+      <View style={[styles.frame, !isDesktop && styles.frameMobile]}>
         {isDesktop ? (
           <View style={styles.sidebar}>
             <Pressable
@@ -204,6 +199,7 @@ export function AdminShell({ children }: PropsWithChildren) {
           <View
             style={[
               styles.topbar,
+              !isDesktop && styles.topbarMobile,
               { backgroundColor: colors.surface, borderBottomColor: colors.line },
             ]}>
             {!isDesktop ? (
@@ -294,6 +290,8 @@ function adminPageKey(pathname: string): AdminPageKey {
     segment === 'users' ||
     segment === 'permissions' ||
     segment === 'feedback' ||
+    segment === 'blog' ||
+    segment === 'moments' ||
     segment === 'membership' ||
     segment === 'recommendations' ||
     segment === 'reading' ||
@@ -308,11 +306,16 @@ function adminPageKey(pathname: string): AdminPageKey {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    width: '100%',
   },
   frame: {
     flex: 1,
     flexDirection: 'row',
     minHeight: 0,
+    width: '100%',
+  },
+  frameMobile: {
+    flexDirection: 'column',
   },
   sidebar: {
     backgroundColor: '#141b39',
@@ -420,6 +423,10 @@ const styles = StyleSheet.create({
     minHeight: 62,
     paddingHorizontal: 18,
   },
+  topbarMobile: {
+    flexShrink: 0,
+    paddingHorizontal: 12,
+  },
   iconButton: {
     alignItems: 'center',
     borderRadius: 11,
@@ -458,12 +465,15 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     minHeight: 0,
+    overflow: 'hidden',
   },
   bottomNav: {
     borderTopWidth: 1,
+    flexShrink: 0,
     flexDirection: 'row',
     paddingBottom: 6,
     paddingTop: 8,
+    width: '100%',
   },
   bottomNavItem: {
     alignItems: 'center',
