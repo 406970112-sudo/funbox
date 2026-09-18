@@ -781,5 +781,21 @@
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "novel-agent",
+    "name": "小说工坊",
+    "tagline": "参考、架构、正文与复核接力",
+    "description": "把参考小说的高层结构与描述方法抽象成风格卡，先和 A 确认原创架构，再交给 B 写作，由 C 检查质量、风格漂移与原创性。",
+    "icon": "book-edit-outline",
+    "category": "AI",
+    "route": "/tools/novel-agent",
+    "accentColor": "#7e5bef",
+    "badges": ["多 Agent", "风格卡", "原创复核"],
+    "keywords": ["小说", "写作", "大纲", "参考小说", "文风", "多 Agent", "剧情架构", "章节复核"],
+    "usageLabel": "开始创作",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
   }
 ]

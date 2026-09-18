@@ -15,6 +15,7 @@
     "test:brick-breaker-rules": "node --test --experimental-strip-types tests/brick-breaker-rules.test.mjs",
     "test:qr": "node --test --experimental-strip-types tests/qr-code.test.mjs",
     "test:ai-navigation": "node --test --experimental-strip-types tests/ai-navigation.test.mjs",
+    "test:novel-agent": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/novel-agent-workflow.test.mjs",
     "test:json-workbench": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/json-workbench.test.mjs",
     "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
     "test:social-refresh": "node --test --experimental-strip-types tests/latest-request-gate.test.mjs",

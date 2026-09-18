@@ -45,6 +45,7 @@ import { PartyMemoryCardScreen } from '@/features/tools/party-memory-card-screen
 import { HomeManualScreen } from '@/features/tools/home-manual-screen';
 import { ParkingLocationScreen } from '@/features/tools/parking-location-screen';
 import { QuietHomeScreen } from '@/features/tools/quiet-home-screen';
+import { NovelAgentScreen } from '@/features/tools/novel-agent-screen';
 import { DiaryScreen } from '@/features/diary/diary-screen';
 import { MomentsFeedScreen } from '@/features/moments/moments-feed-screen';
 import { BlogFeedScreen } from '@/features/blog/blog-feed-screen';
@@ -228,6 +229,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <SmartTranslationToolScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'novel-agent') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <NovelAgentScreen />
       </>
     );
   }
