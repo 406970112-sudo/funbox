@@ -50,6 +50,8 @@ export type NovelOutline = {
   beats: string[];
   chapters: { label: string; count: number }[];
   referenceNote: string;
+  mustKeep: string[];
+  mustAvoid: string[];
   approvalStatus: '待用户确认';
 };
 
@@ -186,6 +188,8 @@ export function createNovelOutline(
       { label: '第二卷  深海回声', count: 5 },
       { label: '尾声  新的航向', count: 1 },
     ],
+    mustKeep: ['主角先观察再行动的行为逻辑', '灯塔与旧信共同推动主线'],
+    mustAvoid: ['未经确认改变人物关系', '直接复制参考样例的独特表达'],
   };
 }
 
