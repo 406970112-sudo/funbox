@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -17,6 +18,7 @@ import {
 } from '@/lib/novel-agent-artifacts';
 import { getNovelAgentLayout } from '@/lib/novel-agent-layout';
 import { aggregateReviewChecks, runReviewChecks } from '@/lib/novel-agent-review';
+import { restoreNovelWorkflow, serializeNovelWorkflow } from '@/lib/novel-agent-snapshot';
 import {
   NOVEL_STYLE_DIMENSIONS,
   runReferencePlan,
@@ -71,6 +73,8 @@ const EMPTY_STAGES: Record<NovelStageId, StageStatus> = {
   memory: 'idle',
 };
 
+const NOVEL_WORKFLOW_STORAGE_KEY = 'funbox.novel-agent.workflow.v1';
+
 export function NovelAgentScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
@@ -87,6 +91,7 @@ export function NovelAgentScreen() {
   const [revisionFeedback, setRevisionFeedback] = useState('');
   const [revisionCategory, setRevisionCategory] = useState<NovelRevisionCategory>('环境');
   const [revisionScope, setRevisionScope] = useState<NovelRevisionScope>('scene_only');
+  const [snapshotHydrated, setSnapshotHydrated] = useState(false);
   const [error, setError] = useState('');
 
   const isBusy = phase === 'planning' || phase === 'writing';
@@ -102,6 +107,52 @@ export function NovelAgentScreen() {
   })() : null;
   const completedStages = STAGES.filter((stage) => stages[stage.id] === 'complete').length;
   const progress = Math.round((completedStages / STAGES.length) * 100);
+
+  useEffect(() => {
+    let active = true;
+
+    AsyncStorage.getItem(NOVEL_WORKFLOW_STORAGE_KEY)
+      .then((raw) => {
+        if (!active) return;
+        const snapshot = restoreNovelWorkflow(raw);
+        if (snapshot) {
+          setForm(snapshot.form);
+          setStages({ ...EMPTY_STAGES, ...snapshot.stages });
+          setPhase(snapshot.phase);
+          setReference(snapshot.reference);
+          setOutline(snapshot.outline);
+          setDraft(snapshot.draft);
+          setReview(snapshot.review);
+          setMemorySync(snapshot.memorySync);
+        }
+        setSnapshotHydrated(true);
+      })
+      .catch(() => {
+        if (active) setSnapshotHydrated(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!snapshotHydrated) return;
+
+    AsyncStorage.setItem(NOVEL_WORKFLOW_STORAGE_KEY, serializeNovelWorkflow({
+      version: 1,
+      phase,
+      form,
+      stages,
+      reference,
+      outline,
+      draft,
+      review,
+      memorySync,
+    })).catch(() => {
+      // Local recovery is best-effort and must not block writing.
+    });
+  }, [draft, form, memorySync, outline, phase, reference, review, snapshotHydrated, stages]);
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -219,6 +270,9 @@ export function NovelAgentScreen() {
     setRevisionCategory('环境');
     setRevisionScope('scene_only');
     setError('');
+    AsyncStorage.removeItem(NOVEL_WORKFLOW_STORAGE_KEY).catch(() => {
+      // Storage cleanup is best-effort and must not block the reset UI.
+    });
   }
 
   function toggleDimension(dimension: NovelStyleDimension) {
