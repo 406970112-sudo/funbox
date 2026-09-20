@@ -77,7 +77,6 @@ function createQualityCheck({ context, round }: NovelReviewInput): NovelReviewCh
     issues: [],
   };
 }
-
 function createStyleCheck({ draft, reference }: NovelReviewInput): NovelReviewCheck {
   return {
     id: 'style',
@@ -172,4 +171,3 @@ export function aggregateReviewChecks(checks: NovelReviewCheck[], round: number)
     checks: checks.map((check) => ({ label: check.label, status: check.status })),
   };
 }
-
