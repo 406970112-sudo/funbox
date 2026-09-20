@@ -5,8 +5,18 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimension
 
 import { ThemedText } from '@/components/themed-text';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { createChapterCards, createInitialMemoryState, createSceneCards } from '@/lib/novel-agent-artifacts';
+import {
+  assembleWritingContext,
+  createChapterCards,
+  createInitialMemoryState,
+  createRevisionRequest,
+  createSceneCards,
+  reviseNovelDraft,
+  type NovelRevisionCategory,
+  type NovelRevisionScope,
+} from '@/lib/novel-agent-artifacts';
 import { getNovelAgentLayout } from '@/lib/novel-agent-layout';
+import { aggregateReviewChecks, runReviewChecks } from '@/lib/novel-agent-review';
 import {
   NOVEL_STYLE_DIMENSIONS,
   runReferencePlan,
@@ -74,6 +84,9 @@ export function NovelAgentScreen() {
   const [draft, setDraft] = useState<NovelDraft | null>(null);
   const [review, setReview] = useState<NovelReview | null>(null);
   const [memorySync, setMemorySync] = useState<{ status: string; updated: string[] } | null>(null);
+  const [revisionFeedback, setRevisionFeedback] = useState('');
+  const [revisionCategory, setRevisionCategory] = useState<NovelRevisionCategory>('环境');
+  const [revisionScope, setRevisionScope] = useState<NovelRevisionScope>('scene_only');
   const [error, setError] = useState('');
 
   const isBusy = phase === 'planning' || phase === 'writing';
@@ -157,6 +170,42 @@ export function NovelAgentScreen() {
     }
   }
 
+  async function handleRevision() {
+    if (isBusy || !draft || !plan) return;
+
+    const chapter = plan.chapterCards.find((candidate) => candidate.chapterId === draft.sceneId.split('-scene-')[0]) ?? plan.chapterCards[0];
+    const scene = plan.sceneCards.find((candidate) => candidate.sceneId === draft.sceneId) ?? plan.sceneCards[0];
+    const context = assembleWritingContext({
+      outline: plan.outline,
+      chapter,
+      scene,
+      memory: plan.memory,
+      styleDimensions: toWorkflowInput(form).styleDimensions,
+      priorReviewIssue: review?.issueDetails[0]?.message,
+    });
+    const request = createRevisionRequest({
+      feedback: revisionFeedback,
+      chapterId: chapter.chapterId,
+      sceneId: scene.sceneId,
+      category: revisionCategory,
+      scope: revisionScope,
+    });
+
+    if (!request) {
+      setError('请先写下具体修改意见，再让 B 返工。');
+      return;
+    }
+
+    setError('');
+    setPhase('writing');
+    const revisedDraft = reviseNovelDraft(draft, request, context);
+    const checks = await runReviewChecks({ draft: revisedDraft, context, reference: plan.reference, round: 2 });
+    setDraft(revisedDraft);
+    setReview(aggregateReviewChecks(checks, 2));
+    setRevisionFeedback('');
+    setPhase('complete');
+  }
+
   function handleReset() {
     setForm(DEFAULT_FORM);
     setStages(EMPTY_STAGES);
@@ -166,6 +215,9 @@ export function NovelAgentScreen() {
     setDraft(null);
     setReview(null);
     setMemorySync(null);
+    setRevisionFeedback('');
+    setRevisionCategory('环境');
+    setRevisionScope('scene_only');
     setError('');
   }
 
@@ -313,6 +365,7 @@ export function NovelAgentScreen() {
           </SurfaceCard>
           {layout.isDesktop && reference ? <ReferenceCard reference={reference} colors={colors} /> : null}
           {layout.isDesktop && outline ? <OutlineCard outline={outline} colors={colors} canApprove={phase === 'awaiting-approval'} onApprove={handleApprove} /> : null}
+          {layout.isDesktop && plan ? <StoryCardsCard plan={plan} colors={colors} /> : null}
         </View>
 
         <View style={[styles.column, layout.isDesktop && styles.secondaryColumn]}>
@@ -346,6 +399,7 @@ export function NovelAgentScreen() {
         ) : null}
       </SurfaceCard>
           {layout.isDesktop && draft ? <DraftCard draft={draft} colors={colors} /> : null}
+          {layout.isDesktop && draft && plan ? <RevisionCard draft={draft} plan={plan} feedback={revisionFeedback} category={revisionCategory} scope={revisionScope} onFeedbackChange={setRevisionFeedback} onCategoryChange={setRevisionCategory} onScopeChange={setRevisionScope} onSubmit={handleRevision} disabled={isBusy} colors={colors} /> : null}
           {layout.isDesktop && review ? <ReviewCard review={review} memorySync={memorySync} colors={colors} /> : null}
         </View>
       </View>
@@ -354,7 +408,9 @@ export function NovelAgentScreen() {
         <>
           {reference ? <ReferenceCard reference={reference} colors={colors} /> : null}
           {outline ? <OutlineCard outline={outline} colors={colors} canApprove={phase === 'awaiting-approval'} onApprove={handleApprove} /> : null}
+          {plan ? <StoryCardsCard plan={plan} colors={colors} /> : null}
           {draft ? <DraftCard draft={draft} colors={colors} /> : null}
+          {draft && plan ? <RevisionCard draft={draft} plan={plan} feedback={revisionFeedback} category={revisionCategory} scope={revisionScope} onFeedbackChange={setRevisionFeedback} onCategoryChange={setRevisionCategory} onScopeChange={setRevisionScope} onSubmit={handleRevision} disabled={isBusy} colors={colors} /> : null}
           {review ? <ReviewCard review={review} memorySync={memorySync} colors={colors} /> : null}
         </>
       ) : null}
@@ -474,6 +530,34 @@ function OutlineCard({
   );
 }
 
+function StoryCardsCard({ plan, colors }: { plan: NovelPlan; colors: ReturnType<typeof useAppTheme>['colors'] }) {
+  return (
+    <SurfaceCard style={styles.resultCard}>
+      <ResultHeader icon="▦" title="章节卡与场景卡" status={`${plan.sceneCards.length} 个场景`} colors={colors} />
+      <ThemedText style={[styles.resultHint, { color: colors.mutedText }]}>B 只读取当前场景卡、已确认事实和必要记忆，不读取整本参考原文。</ThemedText>
+      <View style={styles.storyCardList}>
+        {plan.chapterCards.map((chapter) => (
+          <View key={chapter.chapterId} style={[styles.storyChapter, { backgroundColor: colors.surfaceMuted, borderColor: colors.line }]}>
+            <View style={styles.storyChapterHeader}>
+              <ThemedText style={styles.storyChapterTitle}>{chapter.label}</ThemedText>
+              <ThemedText style={[styles.storyChapterMeta, { color: colors.primary }]}>{chapter.sceneIds.length} 场景</ThemedText>
+            </View>
+            <ThemedText style={[styles.storyChapterGoal, { color: colors.text }]}>{chapter.goal}</ThemedText>
+            <ThemedText style={[styles.storyChapterEnding, { color: colors.mutedText }]}>结尾牵引：{chapter.targetEnding}</ThemedText>
+          </View>
+        ))}
+      </View>
+      <View style={styles.sceneChipRow}>
+        {plan.sceneCards.slice(0, 5).map((scene) => (
+          <View key={scene.sceneId} style={[styles.sceneChip, { borderColor: colors.line }]}>
+            <ThemedText style={[styles.sceneChipText, { color: colors.mutedText }]}>{scene.label}</ThemedText>
+          </View>
+        ))}
+      </View>
+    </SurfaceCard>
+  );
+}
+
 function DraftCard({ draft, colors }: { draft: NovelDraft; colors: ReturnType<typeof useAppTheme>['colors'] }) {
   return (
     <SurfaceCard style={styles.resultCard}>
@@ -487,10 +571,85 @@ function DraftCard({ draft, colors }: { draft: NovelDraft; colors: ReturnType<ty
   );
 }
 
+function RevisionCard({
+  draft,
+  plan,
+  feedback,
+  category,
+  scope,
+  onFeedbackChange,
+  onCategoryChange,
+  onScopeChange,
+  onSubmit,
+  disabled,
+  colors,
+}: {
+  draft: NovelDraft;
+  plan: NovelPlan;
+  feedback: string;
+  category: NovelRevisionCategory;
+  scope: NovelRevisionScope;
+  onFeedbackChange: (value: string) => void;
+  onCategoryChange: (value: NovelRevisionCategory) => void;
+  onScopeChange: (value: NovelRevisionScope) => void;
+  onSubmit: () => void;
+  disabled: boolean;
+  colors: ReturnType<typeof useAppTheme>['colors'];
+}) {
+  const scene = plan.sceneCards.find((candidate) => candidate.sceneId === draft.sceneId) ?? plan.sceneCards[0];
+  const categories: NovelRevisionCategory[] = ['人物', '动作', '环境', '对白', '节奏', '文风'];
+  const scopes: { id: NovelRevisionScope; label: string }[] = [
+    { id: 'sentence', label: '局部句段' },
+    { id: 'scene_only', label: '当前场景' },
+    { id: 'chapter_preserve_structure', label: '整章保结构' },
+  ];
+
+  return (
+    <SurfaceCard style={styles.resultCard}>
+      <ResultHeader icon="✎" title="让 B 定向返工" status={`当前：${scene.label}`} colors={colors} />
+      <ThemedText style={[styles.resultHint, { color: colors.mutedText }]}>只修改选中场景，保留剧情结果和已确认事实。每次返工都会生成新版本。</ThemedText>
+      <TextInput
+        multiline
+        onChangeText={onFeedbackChange}
+        placeholder="例如：增加人物在空间中的具体动作，让环境变化影响人物判断"
+        placeholderTextColor={colors.mutedText}
+        style={[styles.revisionArea, { backgroundColor: colors.surfaceMuted, borderColor: colors.line, color: colors.text }]}
+        value={feedback}
+      />
+      <FieldLabel label="问题类型" />
+      <View style={styles.dimensionRow}>
+        {categories.map((item) => (
+          <Pressable key={item} onPress={() => onCategoryChange(item)} style={[styles.dimensionChip, { backgroundColor: category === item ? colors.primarySoft : colors.surfaceMuted, borderColor: category === item ? colors.primary : colors.line }]}>
+            <ThemedText style={[styles.dimensionText, { color: category === item ? colors.primary : colors.mutedText }]}>{item}</ThemedText>
+          </Pressable>
+        ))}
+      </View>
+      <FieldLabel label="修改范围" />
+      <View style={styles.dimensionRow}>
+        {scopes.map((item) => (
+          <Pressable key={item.id} onPress={() => onScopeChange(item.id)} style={[styles.dimensionChip, { backgroundColor: scope === item.id ? colors.primarySoft : colors.surfaceMuted, borderColor: scope === item.id ? colors.primary : colors.line }]}>
+            <ThemedText style={[styles.dimensionText, { color: scope === item.id ? colors.primary : colors.mutedText }]}>{item.label}</ThemedText>
+          </Pressable>
+        ))}
+      </View>
+      <Pressable disabled={disabled || !feedback.trim()} onPress={onSubmit} style={({ pressed }) => [styles.primaryButton, { backgroundColor: colors.primary, opacity: disabled || !feedback.trim() || pressed ? 0.48 : 1 }]}>
+        {disabled ? <ActivityIndicator color="#ffffff" size="small" /> : <MaterialCommunityIcons name="pencil-box-outline" size={18} color="#ffffff" />}
+        <ThemedText style={styles.primaryButtonText}>让 B 修改当前场景</ThemedText>
+      </Pressable>
+      {draft.revisionHistory.length ? (
+        <View style={styles.revisionHistory}>
+          <ThemedText style={[styles.miniLabel, { color: colors.mutedText }]}>版本记录</ThemedText>
+          {draft.revisionHistory.map((version) => <ThemedText key={version.revisionId} style={[styles.historyText, { color: colors.mutedText }]}>v{version.revision} 已保留 · {version.request?.problem ?? '初稿'}</ThemedText>)}
+        </View>
+      ) : null}
+    </SurfaceCard>
+  );
+}
+
 function ReviewCard({ review, memorySync, colors }: { review: NovelReview; memorySync: { status: string; updated: string[] } | null; colors: ReturnType<typeof useAppTheme>['colors'] }) {
   return (
     <SurfaceCard style={styles.resultCard}>
-      <ResultHeader icon="C" title="C 的复核报告" status={review.pass ? '复核通过' : '需要返工'} colors={colors} warning={!review.pass} />
+      <ResultHeader icon="C" title="C 的复核报告" status={review.pass ? '复核通过' : review.route === 'HUMAN_REVIEW' ? '人工确认' : '需要处理'} colors={colors} warning={!review.pass} />
       <View style={styles.reviewScoreRow}>
         <View style={styles.reviewScoreCopy}><ThemedText style={[styles.resultTitle, { color: review.pass ? colors.success : colors.accent }]}>{review.pass ? '可以继续连载' : '需要返工'}</ThemedText><ThemedText style={[styles.resultBody, { color: colors.mutedText }]}>{review.summary}</ThemedText></View>
         <ThemedText style={[styles.reviewScore, { color: review.pass ? colors.success : colors.accent }]}>{review.score}<ThemedText style={[styles.reviewScoreSmall, { color: colors.mutedText }]}>/100</ThemedText></ThemedText>
@@ -498,7 +657,18 @@ function ReviewCard({ review, memorySync, colors }: { review: NovelReview; memor
       <View style={styles.categoryList}>
         {Object.values(review.categories).map((category) => <View key={category.label} style={[styles.categoryRow, { borderBottomColor: colors.line }]}><ThemedText style={[styles.categoryLabel, { color: colors.text }]}>{category.label}</ThemedText><ThemedText style={[styles.categoryStatus, { color: category.status === 'pass' ? colors.success : colors.accent }]}>{category.status === 'pass' ? '通过' : '待优化'}</ThemedText></View>)}
       </View>
-      <View style={[styles.issueBox, { backgroundColor: colors.surfaceMuted, borderLeftColor: colors.accent }]}><ThemedText style={[styles.miniLabel, { color: colors.mutedText }]}>编辑建议</ThemedText><ThemedText style={[styles.issueText, { color: colors.text }]}>{review.issues[0]}</ThemedText></View>
+      {review.issueDetails.length ? (
+        <View style={[styles.issueBox, { backgroundColor: colors.surfaceMuted, borderLeftColor: colors.accent }]}>
+          <ThemedText style={[styles.miniLabel, { color: colors.mutedText }]}>编辑证据</ThemedText>
+          <ThemedText style={[styles.issueText, { color: colors.text }]}>{review.issueDetails[0].message}</ThemedText>
+          <ThemedText style={[styles.issueMeta, { color: colors.mutedText }]}>{review.issueDetails[0].location} · {review.issueDetails[0].evidence}</ThemedText>
+        </View>
+      ) : (
+        <View style={[styles.passBox, { backgroundColor: `${colors.success}12` }]}><MaterialCommunityIcons name="check-decagram-outline" size={16} color={colors.success} /><ThemedText style={[styles.passText, { color: colors.success }]}>四类检查均已通过，没有阻断问题。</ThemedText></View>
+      )}
+      <View style={styles.reviewEvidenceList}>
+        {review.checkResults.map((check) => <View key={check.id} style={[styles.reviewEvidenceRow, { borderBottomColor: colors.line }]}><View style={styles.reviewEvidenceCopy}><ThemedText style={[styles.categoryLabel, { color: colors.text }]}>{check.label}</ThemedText><ThemedText style={[styles.issueMeta, { color: colors.mutedText }]}>{check.evidence}</ThemedText></View><ThemedText style={[styles.categoryStatus, { color: check.status === 'pass' ? colors.success : colors.accent }]}>{check.status === 'pass' ? '通过' : '警告'}</ThemedText></View>)}
+      </View>
       {memorySync ? <View style={styles.memoryRow}><MaterialCommunityIcons name="database-check-outline" size={17} color={colors.success} /><ThemedText style={[styles.memoryText, { color: colors.mutedText }]}>{memorySync.status} · {memorySync.updated.join('、')}</ThemedText></View> : null}
     </SurfaceCard>
   );
@@ -576,6 +746,16 @@ const styles = StyleSheet.create({
   resultHeaderTitle: { fontSize: 15, fontWeight: '900' },
   statusChip: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 5 },
   statusChipText: { fontSize: 9, fontWeight: '900' },
+  storyCardList: { gap: 8 },
+  storyChapter: { borderRadius: 11, borderWidth: 1, gap: 4, padding: 10 },
+  storyChapterHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  storyChapterTitle: { fontSize: 11, fontWeight: '900' },
+  storyChapterMeta: { fontSize: 9, fontWeight: '900' },
+  storyChapterGoal: { fontSize: 11, lineHeight: 17 },
+  storyChapterEnding: { fontSize: 10, lineHeight: 16 },
+  sceneChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  sceneChip: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 5 },
+  sceneChipText: { fontSize: 9, fontWeight: '700' },
   referenceHeading: { alignItems: 'center', flexDirection: 'row', gap: 8, justifyContent: 'space-between' },
   resultTitle: { flex: 1, fontSize: 15, fontWeight: '900', lineHeight: 21 },
   resultBody: { fontSize: 12, lineHeight: 19 },
@@ -597,6 +777,9 @@ const styles = StyleSheet.create({
   wordCount: { fontSize: 10, marginBottom: 2 },
   styleApplied: { alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 7, paddingHorizontal: 10, paddingVertical: 8 },
   styleAppliedText: { flex: 1, fontSize: 10, lineHeight: 15 },
+  revisionArea: { borderRadius: 13, borderWidth: 1, fontSize: 12, lineHeight: 18, minHeight: 76, padding: 11, textAlignVertical: 'top' },
+  revisionHistory: { gap: 4 },
+  historyText: { fontSize: 10, lineHeight: 16 },
   draftCopy: { gap: 10 },
   paragraph: { fontFamily: 'serif', fontSize: 13, lineHeight: 22 },
   reviewScoreRow: { alignItems: 'center', flexDirection: 'row', gap: 10 },
@@ -609,6 +792,12 @@ const styles = StyleSheet.create({
   categoryStatus: { fontSize: 10, fontWeight: '900' },
   issueBox: { borderLeftWidth: 3, gap: 5, padding: 10 },
   issueText: { fontSize: 11, lineHeight: 17 },
+  issueMeta: { fontSize: 10, lineHeight: 16 },
+  passBox: { alignItems: 'center', borderRadius: 10, flexDirection: 'row', gap: 7, paddingHorizontal: 10, paddingVertical: 9 },
+  passText: { flex: 1, fontSize: 10, fontWeight: '800', lineHeight: 15 },
+  reviewEvidenceList: { borderTopWidth: 1, borderTopColor: '#edf0f7' },
+  reviewEvidenceRow: { alignItems: 'flex-start', borderBottomWidth: 1, flexDirection: 'row', gap: 8, justifyContent: 'space-between', paddingVertical: 8 },
+  reviewEvidenceCopy: { flex: 1, gap: 2 },
   memoryRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 7 },
   memoryText: { flex: 1, fontSize: 10, lineHeight: 16 },
   errorCard: { alignItems: 'flex-start', borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: 8, padding: 12 },
