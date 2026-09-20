@@ -27,6 +27,8 @@ test('builds stable chapter and scene cards from an approved outline', () => {
   assert.equal(scenes[0].sceneId, 'ch-001-scene-001');
   assert.equal(scenes.at(-1).sceneId, 'ch-003-scene-001');
   assert.equal(scenes.length, chapters.reduce((total, chapter) => total + chapter.sceneIds.length, 0));
+  assert.deepEqual(chapters[0].characters, outline.cast.map((person) => person.name));
+  assert.deepEqual(scenes[0].characters, outline.cast.map((person) => person.name));
   assert.ok(chapters.every((chapter) => chapter.mustKeep.length > 0 && chapter.mustAvoid.length > 0));
   assert.ok(scenes.every((scene) => scene.goal && scene.targetEnding && scene.chapterId));
 });

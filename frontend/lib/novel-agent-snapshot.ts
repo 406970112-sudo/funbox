@@ -48,6 +48,23 @@ function hasValidForm(value: unknown): value is NovelWorkflowFormSnapshot {
     && value.styleDimensions.every((item) => typeof item === 'string');
 }
 
+function hasValidPhase(value: unknown): value is NovelWorkflowPhase {
+  return value === 'idle'
+    || value === 'planning'
+    || value === 'awaiting-approval'
+    || value === 'writing'
+    || value === 'complete';
+}
+
+function hasValidStages(value: unknown): value is NovelWorkflowSnapshot['stages'] {
+  if (!isRecord(value)) return false;
+  return Object.values(value).every((stage) => stage === 'idle' || stage === 'running' || stage === 'complete');
+}
+
+function isNullableRecord(value: unknown): value is Record<string, unknown> | null {
+  return value === null || isRecord(value);
+}
+
 export function serializeNovelWorkflow(snapshot: NovelWorkflowSnapshot): string {
   return JSON.stringify(snapshot);
 }
@@ -57,7 +74,18 @@ export function restoreNovelWorkflow(raw: string | null): NovelWorkflowSnapshot 
 
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed) || parsed.version !== NOVEL_WORKFLOW_SNAPSHOT_VERSION || !hasValidForm(parsed.form)) {
+    if (
+      !isRecord(parsed)
+      || parsed.version !== NOVEL_WORKFLOW_SNAPSHOT_VERSION
+      || !hasValidPhase(parsed.phase)
+      || !hasValidForm(parsed.form)
+      || !hasValidStages(parsed.stages)
+      || !isNullableRecord(parsed.reference)
+      || !isNullableRecord(parsed.outline)
+      || !isNullableRecord(parsed.draft)
+      || !isNullableRecord(parsed.review)
+      || !isNullableRecord(parsed.memorySync)
+    ) {
       return null;
     }
     return parsed as NovelWorkflowSnapshot;

@@ -15,6 +15,7 @@ export type NovelChapterCard = {
   label: string;
   goal: string;
   beat: string;
+  characters: string[];
   sceneIds: string[];
   mustKeep: string[];
   mustAvoid: string[];
@@ -90,6 +91,7 @@ export function createChapterCards(outline: NovelOutline): NovelChapterCard[] {
       label: chapter.label,
       goal: `完成${beat}`,
       beat,
+      characters: outline.cast.map((person) => person.name),
       sceneIds: Array.from({ length: sceneCount }, (_, sceneIndex) => createSceneId(chapterId, sceneIndex)),
       mustKeep: [outline.logline, '已确认的人物关系与世界观事实'],
       mustAvoid: ['改变已确认的总体架构', '复制参考作品的原文表达'],
@@ -109,7 +111,7 @@ export function createSceneCards(chapter: NovelChapterCard): NovelSceneCard[] {
       label: `${chapter.label} · 场景 ${sceneNumber}`,
       goal: sceneNumber === 1 ? `建立${chapter.goal}的行动入口` : `推进${chapter.goal}`,
       conflict: isFinalScene ? '人物必须面对新的选择，并让下一步行动变得不可回避' : '人物的目标受到线索、环境或关系的阻碍',
-      characters: ['林砚', '沈遥'],
+      characters: chapter.characters,
       setting: '沿海小城与常年亮灯的旧灯塔',
       mustKeep: chapter.mustKeep,
       mustAvoid: chapter.mustAvoid,

@@ -49,5 +49,7 @@ test('rejects malformed and unsupported workflow snapshots safely', () => {
   assert.equal(restoreNovelWorkflow('{bad json'), null);
   assert.equal(restoreNovelWorkflow(JSON.stringify({ ...snapshot, version: 99 })), null);
   assert.equal(restoreNovelWorkflow(JSON.stringify({ ...snapshot, form: null })), null);
+  assert.equal(restoreNovelWorkflow(JSON.stringify({ ...snapshot, phase: 'broken' })), null);
+  assert.equal(restoreNovelWorkflow(JSON.stringify({ ...snapshot, stages: { reference: 'broken' } })), null);
+  assert.equal(restoreNovelWorkflow(JSON.stringify({ ...snapshot, draft: 'broken' })), null);
 });
-
