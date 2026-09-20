@@ -5,6 +5,8 @@ import {
   createSceneCards,
   type NovelChapterCard,
   type NovelMemoryState,
+  type NovelRevisionRecord,
+  type NovelRevisionRequest,
   type NovelSceneCard,
   type NovelWritingContext,
 } from './novel-agent-artifacts.ts';
@@ -80,6 +82,9 @@ export type NovelDraft = {
   wordCount: number;
   revision: number;
   sceneId: string;
+  activeRevisionId: string;
+  revisionHistory: NovelRevisionRecord[];
+  lastRevisionRequest: NovelRevisionRequest | null;
   sourceHook: string;
   styleApplied: string;
   styleDimensions: NovelStyleDimension[];
@@ -224,6 +229,9 @@ export function createNovelDraft(
     wordCount: paragraphs.join('').length,
     revision: rewrite ? 2 : 1,
     sceneId: context?.scene.sceneId ?? 'ch-001-scene-001',
+    activeRevisionId: rewrite ? 'rev-002' : 'rev-001',
+    revisionHistory: [],
+    lastRevisionRequest: null,
     sourceHook: outline.hook,
     styleApplied: `作者风格优先，按需借鉴${reference.referenceStyleProfile.enabled.join('、')}。`,
     styleDimensions: reference.referenceStyleProfile.enabled,

@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createNovelOutline } from '../lib/novel-agent-workflow.ts';
+import { createNovelDraft, createNovelOutline, createReferenceAnalysis } from '../lib/novel-agent-workflow.ts';
 import {
   assembleWritingContext,
   createChapterCards,
   createInitialMemoryState,
   createRevisionRequest,
   createSceneCards,
+  reviseNovelDraft,
 } from '../lib/novel-agent-artifacts.ts';
 
 const outline = createNovelOutline({
@@ -74,4 +75,39 @@ test('normalizes revision requests and rejects blank feedback', () => {
     mustKeep: ['当前场景的剧情结果', '已确认的世界观事实'],
     doNotChange: ['下一场的悬念', '章节整体结构'],
   });
+});
+
+test('creates an immutable targeted revision while preserving the approved structure', () => {
+  const input = { premise: '海边灯塔里藏着一封旧信', styleDimensions: ['节奏'] };
+  const reference = createReferenceAnalysis(input);
+  const approvedOutline = createNovelOutline(input, reference);
+  const chapter = createChapterCards(approvedOutline)[0];
+  const scene = createSceneCards(chapter)[0];
+  const memory = createInitialMemoryState(approvedOutline);
+  const context = assembleWritingContext({
+    outline: approvedOutline,
+    chapter,
+    scene,
+    memory,
+    styleDimensions: ['节奏'],
+  });
+  const draft = createNovelDraft(input, approvedOutline, reference, false, null, context);
+  const request = createRevisionRequest({
+    feedback: '增加人物在空间中的具体动作',
+    chapterId: chapter.chapterId,
+    sceneId: scene.sceneId,
+    category: '动作',
+    scope: 'scene_only',
+  });
+  const revised = reviseNovelDraft(draft, request, context);
+
+  assert.ok(request);
+  assert.equal(revised.revision, 2);
+  assert.equal(revised.sceneId, scene.sceneId);
+  assert.equal(revised.sourceHook, draft.sourceHook);
+  assert.notDeepEqual(revised.paragraphs, draft.paragraphs);
+  assert.equal(revised.revisionHistory.length, 1);
+  assert.equal(revised.revisionHistory[0].revision, 1);
+  assert.equal(revised.activeRevisionId, 'rev-002');
+  assert.equal(revised.lastRevisionRequest?.problem, '增加人物在空间中的具体动作');
 });

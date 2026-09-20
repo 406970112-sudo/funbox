@@ -1,4 +1,5 @@
 import type {
+  NovelDraft,
   NovelOutline,
   NovelStyleDimension,
 } from './novel-agent-workflow.ts';
@@ -58,6 +59,16 @@ export type NovelRevisionRequest = {
   mustChange: string[];
   mustKeep: string[];
   doNotChange: string[];
+};
+
+export type NovelRevisionRecord = {
+  revision: number;
+  revisionId: string;
+  title: string;
+  subtitle: string;
+  paragraphs: string[];
+  wordCount: number;
+  request: NovelRevisionRequest | null;
 };
 
 function createChapterId(index: number) {
@@ -188,3 +199,37 @@ export function createRevisionRequest({
   };
 }
 
+export function reviseNovelDraft(
+  draft: NovelDraft,
+  request: NovelRevisionRequest | null,
+  context: NovelWritingContext,
+): NovelDraft {
+  if (!request || request.target.sceneId !== context.scene.sceneId) return draft;
+
+  const nextRevision = draft.revision + 1;
+  const revisionId = `rev-${String(nextRevision).padStart(3, '0')}`;
+  const revisedParagraphs = draft.paragraphs.map((paragraph, index) => (
+    index === draft.paragraphs.length - 1
+      ? `${paragraph}（${request.category}返工：${request.problem}）`
+      : paragraph
+  ));
+  const record: NovelRevisionRecord = {
+    revision: draft.revision,
+    revisionId: draft.activeRevisionId,
+    title: draft.title,
+    subtitle: draft.subtitle,
+    paragraphs: draft.paragraphs,
+    wordCount: draft.wordCount,
+    request: draft.lastRevisionRequest,
+  };
+
+  return {
+    ...draft,
+    paragraphs: revisedParagraphs,
+    wordCount: revisedParagraphs.join('').length,
+    revision: nextRevision,
+    activeRevisionId: revisionId,
+    revisionHistory: [...draft.revisionHistory, record],
+    lastRevisionRequest: request,
+  };
+}
