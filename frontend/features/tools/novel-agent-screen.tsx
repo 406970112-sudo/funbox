@@ -1,10 +1,11 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { getNovelAgentLayout } from '@/lib/novel-agent-layout';
 import {
   NOVEL_STYLE_DIMENSIONS,
   runReferencePlan,
@@ -62,6 +63,8 @@ const EMPTY_STAGES: Record<NovelStageId, StageStatus> = {
 export function NovelAgentScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
+  const { width } = useWindowDimensions();
+  const layout = getNovelAgentLayout(width);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [stages, setStages] = useState(EMPTY_STAGES);
   const [phase, setPhase] = useState<WorkflowPhase>('idle');
@@ -175,7 +178,17 @@ export function NovelAgentScreen() {
   }[phase];
 
   return (
-    <MobileScreen contentContainerStyle={styles.pageContent}>
+    <MobileScreen
+      contentContainerStyle={[
+        styles.pageContent,
+        layout.isDesktop && [
+          styles.desktopPageContent,
+          {
+            maxWidth: layout.contentMaxWidth,
+            paddingHorizontal: layout.pagePadding,
+          },
+        ],
+      ]}>
       <PageHeader
         eyebrow="Multi-agent novel workflow"
         title="小说工坊"
@@ -209,7 +222,9 @@ export function NovelAgentScreen() {
         </View>
       </View>
 
-      <SurfaceCard style={styles.briefCard}>
+      <View style={[styles.workspace, layout.isDesktop && styles.desktopWorkspace, { columnGap: layout.columnGap }]}>
+        <View style={[styles.column, layout.isDesktop && styles.primaryColumn]}>
+          <SurfaceCard style={styles.briefCard}>
         <SectionHeader icon="text-box-edit-outline" title="故事与参考" meta="输入少量样例，R 不会把原文直接交给 B" />
         <FieldLabel label="故事主题 / 概梗" />
         <TextInput
@@ -285,9 +300,13 @@ export function NovelAgentScreen() {
             <ThemedText style={[styles.resetButtonText, { color: colors.mutedText }]}>重置这次体验</ThemedText>
           </Pressable>
         ) : null}
-      </SurfaceCard>
+          </SurfaceCard>
+          {layout.isDesktop && reference ? <ReferenceCard reference={reference} colors={colors} /> : null}
+          {layout.isDesktop && outline ? <OutlineCard outline={outline} colors={colors} canApprove={phase === 'awaiting-approval'} onApprove={handleApprove} /> : null}
+        </View>
 
-      <SurfaceCard style={styles.pipelineCard}>
+        <View style={[styles.column, layout.isDesktop && styles.secondaryColumn]}>
+          <SurfaceCard style={styles.pipelineCard}>
         <SectionHeader icon="source-branch" title="自动编排" meta={phaseCopy} />
         <View style={styles.progressHeader}>
           <ThemedText style={[styles.progressLabel, { color: colors.mutedText }]}>当前进度</ThemedText>
@@ -316,11 +335,19 @@ export function NovelAgentScreen() {
           </View>
         ) : null}
       </SurfaceCard>
+          {layout.isDesktop && draft ? <DraftCard draft={draft} colors={colors} /> : null}
+          {layout.isDesktop && review ? <ReviewCard review={review} memorySync={memorySync} colors={colors} /> : null}
+        </View>
+      </View>
 
-      {reference ? <ReferenceCard reference={reference} colors={colors} /> : null}
-      {outline ? <OutlineCard outline={outline} colors={colors} canApprove={phase === 'awaiting-approval'} onApprove={handleApprove} /> : null}
-      {draft ? <DraftCard draft={draft} colors={colors} /> : null}
-      {review ? <ReviewCard review={review} memorySync={memorySync} colors={colors} /> : null}
+      {!layout.isDesktop ? (
+        <>
+          {reference ? <ReferenceCard reference={reference} colors={colors} /> : null}
+          {outline ? <OutlineCard outline={outline} colors={colors} canApprove={phase === 'awaiting-approval'} onApprove={handleApprove} /> : null}
+          {draft ? <DraftCard draft={draft} colors={colors} /> : null}
+          {review ? <ReviewCard review={review} memorySync={memorySync} colors={colors} /> : null}
+        </>
+      ) : null}
 
       {error ? (
         <View style={[styles.errorCard, { backgroundColor: `${colors.accent}18`, borderColor: `${colors.accent}50` }]}>
@@ -478,6 +505,12 @@ function ResultHeader({ icon, title, status, colors, warning = false }: { icon: 
 
 const styles = StyleSheet.create({
   pageContent: { gap: 14, paddingTop: 8 },
+  desktopPageContent: { alignSelf: 'center', width: '100%' },
+  workspace: { gap: 14 },
+  desktopWorkspace: { alignItems: 'flex-start', flexDirection: 'row' },
+  column: { gap: 14, minWidth: 0 },
+  primaryColumn: { flex: 1.1 },
+  secondaryColumn: { flex: 0.9 },
   iconButton: { alignItems: 'center', borderRadius: 999, height: 38, justifyContent: 'center', width: 38 },
   hero: { borderRadius: 24, gap: 14, overflow: 'hidden', padding: 18 },
   heroHeader: { alignItems: 'center', flexDirection: 'row', gap: 11 },
