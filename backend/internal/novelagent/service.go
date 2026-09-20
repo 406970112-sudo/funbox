@@ -83,6 +83,7 @@ func (s *Service) MessageA(ctx context.Context, ownerID string, workflowID strin
 		Role:         RolePlanner,
 		SystemPrompt: plannerSystemPrompt(),
 		UserPrompt:   plannerUserPrompt(workflow.Input, workflow.AMessages),
+		OutputSchema: plannerOutputSchema(),
 	}, func(content string) error {
 		output = PlannerOutput{}
 		if err := DecodeJSON(content, &output); err != nil {
@@ -163,6 +164,7 @@ func (s *Service) WriteB(ctx context.Context, ownerID string, workflowID string,
 		Role:         RoleWriter,
 		SystemPrompt: writerSystemPrompt(),
 		UserPrompt:   writerUserPrompt(*workflow.ApprovedPlan, workflow.Input, input, workflow.Review),
+		OutputSchema: writerOutputSchema(),
 	}, func(content string) error {
 		output = WriterOutput{}
 		if err := DecodeJSON(content, &output); err != nil {
@@ -205,6 +207,7 @@ func (s *Service) ReviewC(ctx context.Context, ownerID string, workflowID string
 		Role:         RoleReviewer,
 		SystemPrompt: reviewerSystemPrompt(),
 		UserPrompt:   reviewerUserPrompt(*workflow.ApprovedPlan, *workflow.Draft),
+		OutputSchema: reviewerOutputSchema(),
 	}, func(content string) error {
 		output = ReviewerOutput{}
 		if err := DecodeJSON(content, &output); err != nil {
@@ -255,6 +258,7 @@ func (s *Service) ReviseB(ctx context.Context, ownerID string, workflowID string
 		Role:         RoleWriter,
 		SystemPrompt: writerSystemPrompt(),
 		UserPrompt:   revisionUserPrompt(*workflow.ApprovedPlan, *workflow.Draft, input),
+		OutputSchema: writerOutputSchema(),
 	}, func(content string) error {
 		output = WriterOutput{}
 		if err := DecodeJSON(content, &output); err != nil {
@@ -289,6 +293,7 @@ func (s *Service) generateJSON(ctx context.Context, workflow Workflow, role Role
 	if attempts < 1 {
 		attempts = 1
 	}
+	request.SystemPrompt = promptWithSchema(request.SystemPrompt, request.OutputSchema)
 	var lastErr error
 	for attempt := 1; attempt <= attempts; attempt++ {
 		started := s.now()
@@ -448,4 +453,62 @@ func reviewerSystemPrompt() string {
 func reviewerUserPrompt(plan Plan, draft Draft) string {
 	body, _ := json.Marshal(map[string]any{"plan": plan, "draft": draft})
 	return string(body)
+}
+
+func promptWithSchema(prompt string, schema map[string]any) string {
+	if len(schema) == 0 {
+		return prompt
+	}
+	encoded, err := json.Marshal(schema)
+	if err != nil {
+		return prompt
+	}
+	return prompt + "\n返回 JSON 必须满足以下最小结构：" + string(encoded)
+}
+
+func plannerOutputSchema() map[string]any {
+	return map[string]any{
+		"type":     "object",
+		"required": []string{"reply", "ready", "outline"},
+		"properties": map[string]any{
+			"reply":     map[string]string{"type": "string"},
+			"ready":     map[string]string{"type": "boolean"},
+			"questions": map[string]any{"type": "array", "items": map[string]string{"type": "string"}},
+			"reference": map[string]string{"type": "object"},
+			"outline":   map[string]string{"type": "object"},
+		},
+		"additionalProperties": false,
+	}
+}
+
+func writerOutputSchema() map[string]any {
+	return map[string]any{
+		"type":     "object",
+		"required": []string{"draft"},
+		"properties": map[string]any{
+			"draft": map[string]any{
+				"type":                 "object",
+				"required":             []string{"title", "paragraphs"},
+				"properties":           map[string]any{"title": map[string]string{"type": "string"}, "paragraphs": map[string]any{"type": "array"}},
+				"additionalProperties": true,
+			},
+		},
+		"additionalProperties": false,
+	}
+}
+
+func reviewerOutputSchema() map[string]any {
+	return map[string]any{
+		"type":     "object",
+		"required": []string{"review"},
+		"properties": map[string]any{
+			"review": map[string]any{
+				"type":                 "object",
+				"required":             []string{"route"},
+				"properties":           map[string]any{"route": map[string]string{"type": "string"}, "pass": map[string]string{"type": "boolean"}, "score": map[string]string{"type": "integer"}},
+				"additionalProperties": true,
+			},
+		},
+		"additionalProperties": false,
+	}
 }
