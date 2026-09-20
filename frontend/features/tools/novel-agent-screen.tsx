@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { useAuth } from '@/features/auth/auth-provider';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import {
   assembleWritingContext,
@@ -17,6 +18,16 @@ import {
   type NovelRevisionScope,
 } from '@/lib/novel-agent-artifacts';
 import { getNovelAgentLayout } from '@/lib/novel-agent-layout';
+import {
+  approveNovelAgentA,
+  createNovelAgentWorkflow,
+  getNovelAgentConfig,
+  messageNovelAgentA,
+  reviewNovelAgentC,
+  reviseNovelAgentB,
+  writeNovelAgentB,
+  type NovelAgentWorkflowResult,
+} from '@/lib/novel-agent-api';
 import { aggregateReviewChecks, runReviewChecks } from '@/lib/novel-agent-review';
 import { restoreNovelWorkflow, serializeNovelWorkflow } from '@/lib/novel-agent-snapshot';
 import {
@@ -37,6 +48,7 @@ import { SurfaceCard } from '@/shared/ui/surface-card';
 
 type StageStatus = 'idle' | 'running' | 'complete';
 type WorkflowPhase = 'idle' | 'planning' | 'awaiting-approval' | 'writing' | 'complete';
+type WorkflowMode = 'demo' | 'real';
 
 type FormState = {
   premise: string;
@@ -78,6 +90,7 @@ const NOVEL_WORKFLOW_STORAGE_KEY = 'funbox.novel-agent.workflow.v1';
 export function NovelAgentScreen() {
   const router = useRouter();
   const { colors } = useAppTheme();
+  const { accessToken, status: authStatus } = useAuth();
   const { width } = useWindowDimensions();
   const layout = getNovelAgentLayout(width);
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -93,6 +106,10 @@ export function NovelAgentScreen() {
   const [revisionScope, setRevisionScope] = useState<NovelRevisionScope>('scene_only');
   const [snapshotHydrated, setSnapshotHydrated] = useState(false);
   const [error, setError] = useState('');
+  const [mode, setMode] = useState<WorkflowMode>('demo');
+  const [realModeAvailable, setRealModeAvailable] = useState(false);
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [workflowVersion, setWorkflowVersion] = useState<number | null>(null);
 
   const isBusy = phase === 'planning' || phase === 'writing';
   const plan: NovelPlan | null = reference && outline ? (() => {
@@ -110,6 +127,20 @@ export function NovelAgentScreen() {
 
   useEffect(() => {
     let active = true;
+    getNovelAgentConfig()
+      .then((config) => {
+        if (active) setRealModeAvailable(config.real);
+      })
+      .catch(() => {
+        if (active) setRealModeAvailable(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
 
     AsyncStorage.getItem(NOVEL_WORKFLOW_STORAGE_KEY)
       .then((raw) => {
@@ -124,6 +155,9 @@ export function NovelAgentScreen() {
           setDraft(snapshot.draft);
           setReview(snapshot.review);
           setMemorySync(snapshot.memorySync);
+          setMode(snapshot.mode ?? 'demo');
+          setWorkflowId(snapshot.workflowId ?? null);
+          setWorkflowVersion(snapshot.workflowVersion ?? null);
         }
         setSnapshotHydrated(true);
       })
@@ -141,6 +175,9 @@ export function NovelAgentScreen() {
 
     AsyncStorage.setItem(NOVEL_WORKFLOW_STORAGE_KEY, serializeNovelWorkflow({
       version: 1,
+      mode,
+      workflowId,
+      workflowVersion,
       phase,
       form,
       stages,
@@ -152,7 +189,7 @@ export function NovelAgentScreen() {
     })).catch(() => {
       // Local recovery is best-effort and must not block writing.
     });
-  }, [draft, form, memorySync, outline, phase, reference, review, snapshotHydrated, stages]);
+  }, [draft, form, memorySync, mode, outline, phase, reference, review, snapshotHydrated, stages, workflowId, workflowVersion]);
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -182,6 +219,15 @@ export function NovelAgentScreen() {
     if (event.stage === 'memory') setMemorySync(event.data as { status: string; updated: string[] });
   }
 
+  function applyRemoteResult(result: NovelAgentWorkflowResult) {
+    setWorkflowId(result.workflowId);
+    setWorkflowVersion(result.version);
+    if (result.reference) setReference(result.reference);
+    if (result.outline) setOutline(result.outline);
+    if (result.draft) setDraft(result.draft);
+    if (result.review) setReview(result.review);
+  }
+
   async function handleAnalyze() {
     if (isBusy) return;
 
@@ -195,6 +241,26 @@ export function NovelAgentScreen() {
     setMemorySync(null);
 
     try {
+      if (mode === 'real') {
+        if (authStatus !== 'authenticated' || !accessToken) {
+          throw new Error('真实模式需要先登录 FunBox。');
+        }
+        if (!realModeAvailable) {
+          throw new Error('后端尚未启用真实模型，请先配置 NOVEL_AGENT_ENABLED 和 DeepSeek API Key。');
+        }
+        const created = await createNovelAgentWorkflow(accessToken, toWorkflowInput(form));
+        applyRemoteResult(created);
+        const analyzed = await messageNovelAgentA(
+          accessToken,
+          created.workflowId,
+          `请先分析参考样例并和我确认整体架构。故事设想：${form.premise}`,
+          created.version,
+        );
+        applyRemoteResult(analyzed);
+        setStages({ ...EMPTY_STAGES, reference: 'complete', outline: 'complete' });
+        setPhase('awaiting-approval');
+        return;
+      }
       await runReferencePlan(toWorkflowInput(form), handleEvent);
       setPhase('awaiting-approval');
     } catch (workflowError) {
@@ -210,6 +276,39 @@ export function NovelAgentScreen() {
     setPhase('writing');
 
     try {
+      if (mode === 'real') {
+        if (!accessToken || !workflowId || !workflowVersion) {
+          throw new Error('真实工作流状态已丢失，请重新分析故事。');
+        }
+        const approved = await approveNovelAgentA(accessToken, workflowId, workflowVersion);
+        applyRemoteResult(approved);
+        const chapter = plan.chapterCards[0];
+        const scene = plan.sceneCards.find((candidate) => candidate.chapterId === chapter.chapterId) ?? plan.sceneCards[0];
+        const written = await writeNovelAgentB(accessToken, workflowId, approved.version, {
+          chapterGoal: chapter.goal,
+          sceneGoal: scene.goal,
+          sceneId: scene.sceneId,
+        });
+        applyRemoteResult(written);
+        let reviewed = await reviewNovelAgentC(accessToken, workflowId, written.version);
+        applyRemoteResult(reviewed);
+        if (reviewed.review?.route === 'B_REWRITE' && reviewed.draft) {
+          const feedback = reviewed.review.issueDetails[0]?.message || reviewed.review.issues[0] || '请根据复核证据优化当前场景。';
+          const revised = await reviseNovelAgentB(accessToken, workflowId, reviewed.version, {
+            category: '节奏',
+            feedback,
+            sceneId: reviewed.draft.sceneId,
+            scope: 'scene_only',
+          });
+          applyRemoteResult(revised);
+          reviewed = await reviewNovelAgentC(accessToken, workflowId, revised.version);
+          applyRemoteResult(reviewed);
+        }
+        setStages({ ...EMPTY_STAGES, reference: 'complete', outline: 'complete', draft: 'complete', review: 'complete' });
+        setMemorySync({ status: '工作流状态已保存', updated: ['章节版本', '复核记录', '远程 workflow'] });
+        setPhase('complete');
+        return;
+      }
       const result = await runWritingReview(toWorkflowInput(form), plan, handleEvent);
       setDraft(result.draft);
       setReview(result.review);
@@ -249,6 +348,34 @@ export function NovelAgentScreen() {
 
     setError('');
     setPhase('writing');
+    if (mode === 'real') {
+      if (!accessToken || !workflowId || !workflowVersion) {
+        setPhase('complete');
+        setError('真实工作流状态已丢失，请重新分析故事。');
+        return;
+      }
+      try {
+        const revised = await reviseNovelAgentB(accessToken, workflowId, workflowVersion, {
+          category: request.category,
+          doNotChange: request.doNotChange,
+          feedback: request.problem,
+          mustChange: request.mustChange,
+          mustKeep: request.mustKeep,
+          sceneId: request.target.sceneId,
+          scope: request.scope,
+        });
+        applyRemoteResult(revised);
+        const reviewed = await reviewNovelAgentC(accessToken, workflowId, revised.version);
+        applyRemoteResult(reviewed);
+        setMemorySync({ status: '工作流状态已保存', updated: ['返工版本', '复核记录'] });
+        setRevisionFeedback('');
+        setPhase('complete');
+      } catch (workflowError) {
+        setPhase('complete');
+        setError(workflowError instanceof Error ? workflowError.message : '真实返工失败，请重试。');
+      }
+      return;
+    }
     const revisedDraft = reviseNovelDraft(draft, request, context);
     const checks = await runReviewChecks({ draft: revisedDraft, context, reference: plan.reference, round: 2 });
     setDraft(revisedDraft);
@@ -266,6 +393,8 @@ export function NovelAgentScreen() {
     setDraft(null);
     setReview(null);
     setMemorySync(null);
+    setWorkflowId(null);
+    setWorkflowVersion(null);
     setRevisionFeedback('');
     setRevisionCategory('环境');
     setRevisionScope('scene_only');
@@ -337,6 +466,40 @@ export function NovelAgentScreen() {
           ))}
         </View>
       </View>
+
+      <SurfaceCard style={styles.modeCard}>
+        <View style={styles.modeHeader}>
+          <View style={styles.modeCopy}>
+            <ThemedText style={styles.modeTitle}>运行模式</ThemedText>
+            <ThemedText style={[styles.modeMeta, { color: colors.mutedText }]}>
+              {mode === 'real' ? '真实模型会保存工作流并消耗 API。' : '演示模式使用本地确定性数据，不消耗 API。'}
+            </ThemedText>
+          </View>
+          <View style={styles.modeBadge}>
+            <ThemedText style={styles.modeBadgeText}>{mode === 'real' ? 'REAL' : 'DEMO'}</ThemedText>
+          </View>
+        </View>
+        <View style={styles.modeOptions}>
+          {(['demo', 'real'] as WorkflowMode[]).map((candidate) => {
+            const selected = mode === candidate;
+            const disabled = isBusy || (candidate === 'real' && !realModeAvailable);
+            return (
+              <Pressable
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected, disabled }}
+                disabled={disabled}
+                key={candidate}
+                onPress={() => setMode(candidate)}
+                style={[styles.modeOption, { backgroundColor: selected ? colors.primarySoft : colors.surfaceMuted, borderColor: selected ? colors.primary : colors.line, opacity: disabled ? 0.5 : 1 }]}>
+                <MaterialCommunityIcons name={candidate === 'real' ? 'cloud-check-outline' : 'flask-outline'} size={16} color={selected ? colors.primary : colors.mutedText} />
+                <ThemedText style={[styles.modeOptionText, { color: selected ? colors.primary : colors.mutedText }]}>{candidate === 'real' ? '真实模型' : '离线演示'}</ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+        {mode === 'real' && authStatus !== 'authenticated' ? <ThemedText style={[styles.modeHint, { color: colors.accent }]}>真实模型需要先登录；当前页面仍可继续体验演示模式。</ThemedText> : null}
+        {!realModeAvailable ? <ThemedText style={[styles.modeHint, { color: colors.mutedText }]}>后端未启用真实 Provider 时，真实模型选项会保持关闭。</ThemedText> : null}
+      </SurfaceCard>
 
       <View style={[styles.workspace, layout.isDesktop && styles.desktopWorkspace, { columnGap: layout.columnGap }]}>
         <View style={[styles.column, layout.isDesktop && styles.primaryColumn]}>
@@ -476,7 +639,7 @@ export function NovelAgentScreen() {
         </View>
       ) : null}
 
-      <ThemedText style={[styles.demoNote, { color: colors.mutedText }]}>当前为本地演示工作流，不消耗 API；后续可接入真实模型 Provider。</ThemedText>
+      <ThemedText style={[styles.demoNote, { color: colors.mutedText }]}>{mode === 'real' ? '真实模式：A 的方案会持久化，确认后才调用 B，C 的复核结果会写回工作流。' : '演示模式：使用本地确定性 workflow adapter，不消耗 API。'}</ThemedText>
     </MobileScreen>
   );
 }
@@ -756,6 +919,17 @@ const styles = StyleSheet.create({
   heroTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   heroTag: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 6 },
   heroTagText: { color: '#edf1ff', fontSize: 10, fontWeight: '800' },
+  modeCard: { gap: 10, padding: 14 },
+  modeHeader: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  modeCopy: { flex: 1, gap: 2 },
+  modeTitle: { fontSize: 14, fontWeight: '900' },
+  modeMeta: { fontSize: 11, lineHeight: 16 },
+  modeBadge: { backgroundColor: '#eef2ff', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 5 },
+  modeBadgeText: { color: '#5965a8', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  modeOptions: { flexDirection: 'row', gap: 8 },
+  modeOption: { alignItems: 'center', borderRadius: 11, borderWidth: 1, flex: 1, flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 40, paddingHorizontal: 10 },
+  modeOptionText: { fontSize: 11, fontWeight: '900' },
+  modeHint: { fontSize: 10, lineHeight: 15 },
   briefCard: { gap: 10, padding: 15 },
   pipelineCard: { gap: 12, padding: 15 },
   sectionHeader: { alignItems: 'center', flexDirection: 'row', gap: 10 },

@@ -22,6 +22,9 @@ export type NovelWorkflowFormSnapshot = {
 
 export type NovelWorkflowSnapshot = {
   version: typeof NOVEL_WORKFLOW_SNAPSHOT_VERSION;
+  mode?: 'demo' | 'real';
+  workflowId?: string | null;
+  workflowVersion?: number | null;
   phase: NovelWorkflowPhase;
   form: NovelWorkflowFormSnapshot;
   stages: Partial<Record<NovelStageId, 'idle' | 'running' | 'complete'>>;

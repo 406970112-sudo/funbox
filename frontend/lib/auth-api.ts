@@ -1,9 +1,7 @@
 import { Platform } from 'react-native';
 
+import { getAPIBaseUrl as resolveAPIBaseUrl } from './api-base-url';
 import type { AuthSession, AuthUser, AvatarAsset } from '@/types/auth';
-
-const defaultApiBaseUrl =
-  Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://127.0.0.1:3000';
 
 type APIErrorPayload = {
   error?: string;
@@ -34,11 +32,7 @@ export class AuthAPIError extends Error {
 }
 
 export function getAPIBaseUrl() {
-  return (
-    process.env.EXPO_PUBLIC_API_BASE_URL?.trim() ||
-    process.env.EXPO_PUBLIC_VOICE_SERVER_URL?.trim() ||
-    defaultApiBaseUrl
-  ).replace(/\/$/, '');
+  return resolveAPIBaseUrl(Platform.OS);
 }
 
 export function resolveAvatarURL(avatarUrl: string) {
