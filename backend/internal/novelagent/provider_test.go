@@ -1,9 +1,6 @@
 package novelagent
 
-import (
-	"context"
-	"testing"
-)
+import "testing"
 
 func TestDecodeJSONAcceptsCodeFencesAndRejectsUnknownFields(t *testing.T) {
 	var result struct {
@@ -18,12 +15,5 @@ func TestDecodeJSONAcceptsCodeFencesAndRejectsUnknownFields(t *testing.T) {
 
 	if err := DecodeJSON(`{"title":"灯塔","unexpected":true}`, &result); err == nil {
 		t.Fatal("DecodeJSON() accepted an unknown field")
-	}
-}
-
-func TestProviderContextAliasAcceptsContext(t *testing.T) {
-	ctx := context.Background()
-	if contextFromInterface(ctx) != ctx {
-		t.Fatal("contextFromInterface did not preserve native context")
 	}
 }

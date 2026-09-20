@@ -1,6 +1,7 @@
 package novelagent
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,14 +9,7 @@ import (
 )
 
 type Provider interface {
-	Generate(ctx Context, request GenerateRequest) (GenerateResponse, error)
-}
-
-// Context is kept as an alias so provider implementations cannot accidentally
-// accept an unbounded request context from another abstraction.
-type Context interface {
-	Done() <-chan struct{}
-	Err() error
+	Generate(ctx context.Context, request GenerateRequest) (GenerateResponse, error)
 }
 
 func DecodeJSON(raw string, target any) error {

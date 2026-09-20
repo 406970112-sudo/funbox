@@ -56,7 +56,7 @@ func NewDeepSeekProvider(deepSeek config.DeepSeekConfig, novel config.NovelAgent
 	}
 }
 
-func (p *DeepSeekProvider) Generate(ctx Context, request GenerateRequest) (GenerateResponse, error) {
+func (p *DeepSeekProvider) Generate(ctx context.Context, request GenerateRequest) (GenerateResponse, error) {
 	model := p.models[request.Role]
 	if model == "" {
 		return GenerateResponse{}, fmt.Errorf("unsupported novel agent role %q", request.Role)
@@ -78,7 +78,7 @@ func (p *DeepSeekProvider) Generate(ctx Context, request GenerateRequest) (Gener
 		return GenerateResponse{}, fmt.Errorf("marshal model request: %w", err)
 	}
 
-	httpRequest, err := http.NewRequestWithContext(contextFromInterface(ctx), http.MethodPost, p.baseURL+"/chat/completions", bytes.NewReader(body))
+	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, p.baseURL+"/chat/completions", bytes.NewReader(body))
 	if err != nil {
 		return GenerateResponse{}, fmt.Errorf("build model request: %w", err)
 	}
@@ -114,11 +114,4 @@ func (p *DeepSeekProvider) Generate(ctx Context, request GenerateRequest) (Gener
 		}
 	}
 	return GenerateResponse{}, fmt.Errorf("model returned empty content")
-}
-
-func contextFromInterface(ctx Context) context.Context {
-	if native, ok := ctx.(context.Context); ok {
-		return native
-	}
-	return context.Background()
 }

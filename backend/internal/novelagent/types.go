@@ -137,6 +137,45 @@ type Review struct {
 	CheckResults []ReviewCheck `json:"checkResults"`
 }
 
+type WriteInput struct {
+	SceneID         string `json:"sceneId,omitempty"`
+	ChapterGoal     string `json:"chapterGoal,omitempty"`
+	SceneGoal       string `json:"sceneGoal,omitempty"`
+	Context         string `json:"context,omitempty"`
+	ExpectedVersion int    `json:"expectedVersion,omitempty"`
+}
+
+type RevisionInput struct {
+	SceneID         string   `json:"sceneId,omitempty"`
+	Category        string   `json:"category,omitempty"`
+	Scope           string   `json:"scope,omitempty"`
+	Feedback        string   `json:"feedback"`
+	MustChange      []string `json:"mustChange,omitempty"`
+	MustKeep        []string `json:"mustKeep,omitempty"`
+	DoNotChange     []string `json:"doNotChange,omitempty"`
+	ExpectedVersion int      `json:"expectedVersion,omitempty"`
+}
+
+type ReviewInput struct {
+	ExpectedVersion int `json:"expectedVersion,omitempty"`
+}
+
+type PlannerOutput struct {
+	Reply     string            `json:"reply"`
+	Ready     bool              `json:"ready"`
+	Questions []string          `json:"questions"`
+	Reference ReferenceAnalysis `json:"reference"`
+	Outline   Outline           `json:"outline"`
+}
+
+type WriterOutput struct {
+	Draft Draft `json:"draft"`
+}
+
+type ReviewerOutput struct {
+	Review Review `json:"review"`
+}
+
 type Workflow struct {
 	ID           string         `json:"workflowId"`
 	OwnerID      string         `json:"-"`
