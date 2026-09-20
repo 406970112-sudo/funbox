@@ -239,6 +239,10 @@ func Load() (Config, error) {
 		providerDefault = "disabled"
 		libraryDefault = "false"
 	}
+	novelAgentEnabledDefault := "false"
+	if strings.TrimSpace(os.Getenv("DEEPSEEK_API_KEY")) != "" {
+		novelAgentEnabledDefault = "true"
+	}
 	cfg := Config{
 		AppEnv: appEnv,
 		Auth: AuthConfig{
@@ -316,11 +320,11 @@ func Load() (Config, error) {
 			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
 		},
 		NovelAgent: NovelAgentConfig{
-			Enabled:         boolFirst("NOVEL_AGENT_ENABLED", "false"),
+			Enabled:         boolFirst("NOVEL_AGENT_ENABLED", novelAgentEnabledDefault),
 			Provider:        strings.ToLower(envFirst("NOVEL_AGENT_PROVIDER", "deepseek")),
-			ModelA:          envFirst("NOVEL_AGENT_MODEL_A", "DEEPSEEK_MODEL_A", "deepseek-chat"),
-			ModelB:          envFirst("NOVEL_AGENT_MODEL_B", "DEEPSEEK_MODEL_B", "deepseek-chat"),
-			ModelC:          envFirst("NOVEL_AGENT_MODEL_C", "DEEPSEEK_MODEL_C", "deepseek-chat"),
+			ModelA:          envFirst("NOVEL_AGENT_MODEL_A", "DEEPSEEK_MODEL_A", "deepseek-flash"),
+			ModelB:          envFirst("NOVEL_AGENT_MODEL_B", "DEEPSEEK_MODEL_B", "deepseek-flash"),
+			ModelC:          envFirst("NOVEL_AGENT_MODEL_C", "DEEPSEEK_MODEL_C", "deepseek-flash"),
 			RequestTimeout:  durationFromMs("NOVEL_AGENT_REQUEST_TIMEOUT_MS", "DEEPSEEK_REQUEST_TIMEOUT_MS", "120000"),
 			MaxRetries:      intFirst("NOVEL_AGENT_MAX_RETRIES", "", "2"),
 			MaxInputBytes:   int64(intFirst("NOVEL_AGENT_MAX_INPUT_BYTES", "", "200000")),
