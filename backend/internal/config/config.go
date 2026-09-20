@@ -15,6 +15,7 @@ type Config struct {
 	Security           SecurityConfig
 	Storage            StorageConfig
 	DeepSeek           DeepSeekConfig
+	NovelAgent         NovelAgentConfig
 	DNFActivity        DNFActivityConfig
 	FoodRecommendation FoodRecommendationConfig
 	Lottery            LotteryConfig
@@ -187,6 +188,18 @@ type DeepSeekConfig struct {
 	RequestTimeout time.Duration
 }
 
+type NovelAgentConfig struct {
+	Enabled         bool
+	Provider        string
+	ModelA          string
+	ModelB          string
+	ModelC          string
+	RequestTimeout  time.Duration
+	MaxRetries      int
+	MaxInputBytes   int64
+	MaxOutputTokens int
+}
+
 type FoodRecommendationConfig struct {
 	AmapKey         string
 	AmapBaseURL     string
@@ -301,6 +314,17 @@ func Load() (Config, error) {
 			Model:          envFirst("DEEPSEEK_TRANSLATION_MODEL", "deepseek-chat"),
 			StockModel:     envFirst("DEEPSEEK_STOCK_MODEL", "deepseek-v4-flash"),
 			RequestTimeout: durationFromMs("DEEPSEEK_REQUEST_TIMEOUT_MS", "", "120000"),
+		},
+		NovelAgent: NovelAgentConfig{
+			Enabled:         boolFirst("NOVEL_AGENT_ENABLED", "false"),
+			Provider:        strings.ToLower(envFirst("NOVEL_AGENT_PROVIDER", "deepseek")),
+			ModelA:          envFirst("NOVEL_AGENT_MODEL_A", "DEEPSEEK_MODEL_A", "deepseek-chat"),
+			ModelB:          envFirst("NOVEL_AGENT_MODEL_B", "DEEPSEEK_MODEL_B", "deepseek-chat"),
+			ModelC:          envFirst("NOVEL_AGENT_MODEL_C", "DEEPSEEK_MODEL_C", "deepseek-chat"),
+			RequestTimeout:  durationFromMs("NOVEL_AGENT_REQUEST_TIMEOUT_MS", "DEEPSEEK_REQUEST_TIMEOUT_MS", "120000"),
+			MaxRetries:      intFirst("NOVEL_AGENT_MAX_RETRIES", "", "2"),
+			MaxInputBytes:   int64(intFirst("NOVEL_AGENT_MAX_INPUT_BYTES", "", "200000")),
+			MaxOutputTokens: intFirst("NOVEL_AGENT_MAX_OUTPUT_TOKENS", "", "4000"),
 		},
 		FoodRecommendation: FoodRecommendationConfig{
 			AmapKey:         envFirst("AMAP_WEB_API_KEY", "AMAP_KEY", ""),
