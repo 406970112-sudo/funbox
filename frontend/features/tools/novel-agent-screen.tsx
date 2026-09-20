@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, useWindowDimension
 
 import { ThemedText } from '@/components/themed-text';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { createChapterCards, createInitialMemoryState, createSceneCards } from '@/lib/novel-agent-artifacts';
 import { getNovelAgentLayout } from '@/lib/novel-agent-layout';
 import {
   NOVEL_STYLE_DIMENSIONS,
@@ -76,7 +77,16 @@ export function NovelAgentScreen() {
   const [error, setError] = useState('');
 
   const isBusy = phase === 'planning' || phase === 'writing';
-  const plan: NovelPlan | null = reference && outline ? { reference, outline } : null;
+  const plan: NovelPlan | null = reference && outline ? (() => {
+    const chapterCards = createChapterCards(outline);
+    return {
+      reference,
+      outline,
+      chapterCards,
+      sceneCards: chapterCards.flatMap((chapter) => createSceneCards(chapter)),
+      memory: createInitialMemoryState(outline),
+    };
+  })() : null;
   const completedStages = STAGES.filter((stage) => stages[stage.id] === 'complete').length;
   const progress = Math.round((completedStages / STAGES.length) * 100);
 

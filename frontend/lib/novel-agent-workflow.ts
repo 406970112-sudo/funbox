@@ -1,3 +1,21 @@
+import {
+  assembleWritingContext,
+  createChapterCards,
+  createInitialMemoryState,
+  createSceneCards,
+  type NovelChapterCard,
+  type NovelMemoryState,
+  type NovelSceneCard,
+  type NovelWritingContext,
+} from './novel-agent-artifacts.ts';
+import {
+  aggregateReviewChecks,
+  runReviewChecks,
+  type NovelReview,
+} from './novel-agent-review.ts';
+
+export type { NovelReview } from './novel-agent-review.ts';
+
 export const NOVEL_STYLE_DIMENSIONS = [
   { id: '节奏', label: '短段落推进，句群长短交替' },
   { id: '环境描写', label: '环境变化参与人物判断' },
@@ -61,41 +79,25 @@ export type NovelDraft = {
   paragraphs: string[];
   wordCount: number;
   revision: number;
+  sceneId: string;
   sourceHook: string;
   styleApplied: string;
   styleDimensions: NovelStyleDimension[];
 };
 
-export type NovelReviewCategory = {
-  label: string;
-  status: 'pass' | 'warn';
-  detail: string;
-};
-
-export type NovelReview = {
-  round: number;
-  pass: boolean;
-  score: number;
-  summary: string;
-  issues: string[];
-  categories: {
-    quality: NovelReviewCategory;
-    style: NovelReviewCategory;
-    originality: NovelReviewCategory;
-  };
-  checks: { label: string; status: 'pass' | 'warn' }[];
-};
-
 export type NovelPlan = {
   reference: ReferenceAnalysis;
   outline: NovelOutline;
+  chapterCards: NovelChapterCard[];
+  sceneCards: NovelSceneCard[];
+  memory: NovelMemoryState;
 };
 
 export type NovelWritingResult = {
   draft: NovelDraft;
   review: NovelReview;
   memorySync: {
-    status: '同步完成';
+    status: '同步完成' | '等待人工处理';
     updated: string[];
   };
   attempts: number;
@@ -129,12 +131,12 @@ async function runStage<T>(
   stage: NovelStageId,
   round: number,
   delayMs: number,
-  produce: () => T,
+  produce: () => T | Promise<T>,
   emit: (event: NovelWorkflowEvent) => void,
 ) {
   emit({ type: 'stage-start', stage, round });
   await sleep(delayMs);
-  const data = produce();
+  const data = await produce();
   emit({ type: 'stage-complete', stage, round, data });
   return data;
 }
@@ -199,6 +201,7 @@ export function createNovelDraft(
   reference: ReferenceAnalysis,
   rewrite = false,
   review: NovelReview | null = null,
+  context?: NovelWritingContext,
 ): NovelDraft {
   const normalized = normalizeInput(input);
   const title = rewrite ? '灯塔的来信·回声' : '灯塔的来信';
@@ -220,67 +223,10 @@ export function createNovelDraft(
     paragraphs,
     wordCount: paragraphs.join('').length,
     revision: rewrite ? 2 : 1,
+    sceneId: context?.scene.sceneId ?? 'ch-001-scene-001',
     sourceHook: outline.hook,
     styleApplied: `作者风格优先，按需借鉴${reference.referenceStyleProfile.enabled.join('、')}。`,
     styleDimensions: reference.referenceStyleProfile.enabled,
-  };
-}
-
-export function createNovelReview(
-  draft: NovelDraft,
-  round: 1 | 2,
-  reference: ReferenceAnalysis,
-): NovelReview {
-  const categories = {
-    quality: {
-      label: '质量',
-      status: round === 1 ? 'warn' : 'pass',
-      detail: round === 1 ? '结尾需要更明确的行动牵引' : '逻辑、人物和章节牵引已达标',
-    } as NovelReviewCategory,
-    style: {
-      label: '风格漂移',
-      status: 'pass',
-      detail: `作者风格优先，已执行${reference.referenceStyleProfile.enabled.join('、')}参考特征`,
-    } as NovelReviewCategory,
-    originality: {
-      label: '原创性',
-      status: 'pass',
-      detail: '未发现对参考样例的具体句子或事件序列复用',
-    } as NovelReviewCategory,
-  };
-
-  if (round === 1) {
-    return {
-      round,
-      pass: false,
-      score: 76,
-      summary: '基础氛围成立，但结尾还缺少能推动读者继续阅读的明确牵引。',
-      issues: ['结尾悬念不足，主角的下一步行动还不够具体'],
-      categories,
-      checks: [
-        { label: '情节逻辑', status: 'pass' },
-        { label: '人物设定', status: 'pass' },
-        { label: '风格漂移', status: 'pass' },
-        { label: '原创性', status: 'pass' },
-        { label: '章节牵引', status: 'warn' },
-      ],
-    };
-  }
-
-  return {
-    round,
-    pass: true,
-    score: 92,
-    summary: '复核通过。结尾已经补上行动动机，第一章具备继续连载的牵引力。',
-    issues: ['已补强结尾悬念，并明确主角下一章将前往灯塔'],
-    categories,
-    checks: [
-      { label: '情节逻辑', status: 'pass' },
-      { label: '人物设定', status: 'pass' },
-      { label: '风格漂移', status: 'pass' },
-      { label: '原创性', status: 'pass' },
-      { label: '章节牵引', status: 'pass' },
-    ],
   };
 }
 
@@ -291,7 +237,15 @@ export async function runReferencePlan(
   const normalized = normalizeInput(input);
   const reference = await runStage('reference', 1, normalized.delayMs, () => createReferenceAnalysis(normalized), emit);
   const outline = await runStage('outline', 1, normalized.delayMs, () => createNovelOutline(normalized, reference), emit);
-  return { reference, outline };
+  const chapterCards = createChapterCards(outline);
+  const sceneCards = chapterCards.flatMap((chapter) => createSceneCards(chapter));
+  return {
+    reference,
+    outline,
+    chapterCards,
+    sceneCards,
+    memory: createInitialMemoryState(outline),
+  };
 }
 
 export async function runWritingReview(
@@ -300,49 +254,77 @@ export async function runWritingReview(
   emit: (event: NovelWorkflowEvent) => void = () => {},
 ): Promise<NovelWritingResult> {
   const normalized = normalizeInput(input);
+  const chapter = plan.chapterCards[0];
+  const scene = plan.sceneCards.find((candidate) => candidate.chapterId === chapter.chapterId) ?? plan.sceneCards[0];
+  let context = assembleWritingContext({
+    outline: plan.outline,
+    chapter,
+    scene,
+    memory: plan.memory,
+    styleDimensions: normalized.styleDimensions,
+  });
   let draft = await runStage(
     'draft',
     1,
     normalized.delayMs,
-    () => createNovelDraft(normalized, plan.outline, plan.reference),
+    () => createNovelDraft(normalized, plan.outline, plan.reference, false, null, context),
     emit,
   );
   let review = await runStage(
     'review',
     1,
     normalized.delayMs,
-    () => createNovelReview(draft, 1, plan.reference),
+    async () => aggregateReviewChecks(
+      await runReviewChecks({ draft, context, reference: plan.reference, round: 1 }),
+      1,
+    ),
     emit,
   );
 
-  if (!review.pass) {
+  if (review.route === 'B_REWRITE') {
     emit({ type: 'rework-start', stage: 'review', nextStage: 'draft', round: 2, data: review });
+    context = assembleWritingContext({
+      outline: plan.outline,
+      chapter,
+      scene,
+      memory: plan.memory,
+      styleDimensions: normalized.styleDimensions,
+      priorReviewIssue: review.issueDetails[0]?.message,
+    });
     draft = await runStage(
       'draft',
       2,
       normalized.delayMs,
-      () => createNovelDraft(normalized, plan.outline, plan.reference, true, review),
+      () => createNovelDraft(normalized, plan.outline, plan.reference, true, review, context),
       emit,
     );
     review = await runStage(
       'review',
       2,
       normalized.delayMs,
-      () => createNovelReview(draft, 2, plan.reference),
+      async () => aggregateReviewChecks(
+        await runReviewChecks({ draft, context, reference: plan.reference, round: 2 }),
+        2,
+      ),
       emit,
     );
   }
 
-  const memorySync = await runStage(
-    'memory',
-    1,
-    normalized.delayMs,
-    () => ({
-      status: '同步完成' as const,
-      updated: ['章节摘要', '人物状态', '风格检查记录'],
-    }),
-    emit,
-  );
+  const memorySync = review.pass
+    ? await runStage(
+      'memory',
+      1,
+      normalized.delayMs,
+      () => ({
+        status: '同步完成' as const,
+        updated: ['章节摘要', '人物状态', '时间线与伏笔', '风格检查记录'],
+      }),
+      emit,
+    )
+    : {
+        status: '等待人工处理' as const,
+        updated: [],
+      };
 
   return { draft, review, memorySync, attempts: review.round };
 }
