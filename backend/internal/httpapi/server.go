@@ -39,6 +39,7 @@ import (
 	"my-first-expo-app/backend/internal/membership"
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
+	"my-first-expo-app/backend/internal/novelagent"
 	"my-first-expo-app/backend/internal/parkinglocation"
 	"my-first-expo-app/backend/internal/partymemorycard"
 	"my-first-expo-app/backend/internal/plantid"
@@ -108,6 +109,8 @@ type Server struct {
 	timeCapsuleStore          *timecapsule.Store
 	translationService        *translation.Service
 	ttsService                *tts.Service
+	novelAgentService         *novelagent.Service
+	novelAgentStore           *novelagent.Store
 	whoDoesItStore            *whodoesit.Store
 	whereIsItStore            *whereisit.Store
 }
@@ -728,6 +731,18 @@ func newServer(
 		log.Printf("open parking location database failed: %v", err)
 	}
 	realtimeHub := realtime.NewHub()
+	var novelAgentStore *novelagent.Store
+	var novelAgentService *novelagent.Service
+	novelAgentStore, err = novelagent.OpenStore(cfg.Database.Path)
+	if err != nil {
+		log.Printf("open novel agent database failed: %v", err)
+	} else {
+		var provider novelagent.Provider
+		if cfg.NovelAgent.Enabled && strings.EqualFold(cfg.NovelAgent.Provider, "deepseek") && strings.TrimSpace(cfg.DeepSeek.APIKey) != "" {
+			provider = novelagent.NewDeepSeekProvider(cfg.DeepSeek, cfg.NovelAgent, nil)
+		}
+		novelAgentService = novelagent.NewService(novelAgentStore, provider, cfg.NovelAgent.Provider, cfg.NovelAgent)
+	}
 	var quietHomeService *quiethome.Service
 	quietHomeStore, err := quiethome.OpenStore(cfg.Database.Path)
 	if err != nil {
@@ -782,6 +797,8 @@ func newServer(
 		timeCapsuleStore:          timeCapsuleStore,
 		translationService:        translationService,
 		ttsService:                ttsService,
+		novelAgentService:         novelAgentService,
+		novelAgentStore:           novelAgentStore,
 		whoDoesItStore:            whoDoesItStore,
 		whereIsItStore:            whereIsItStore,
 	}
@@ -841,6 +858,7 @@ func newServer(
 	registerHomeRecommendationRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
 	registerPriceRadarRoutes(mux, api)
+	registerNovelAgentRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))
@@ -1014,6 +1032,11 @@ func newServer(
 	if goOutChecklistStore != nil {
 		server.RegisterOnShutdown(func() {
 			_ = goOutChecklistStore.Close()
+		})
+	}
+	if novelAgentStore != nil {
+		server.RegisterOnShutdown(func() {
+			_ = novelAgentStore.Close()
 		})
 	}
 	server.RegisterOnShutdown(monitorCancel)
