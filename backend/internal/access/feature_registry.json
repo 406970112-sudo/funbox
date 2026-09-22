@@ -75,6 +75,21 @@
     "initialRoles": ["normal", "vip", "svip", "admin"]
   },
   {
+    "id": "requirement-prompt",
+    "name": "需求方案模板",
+    "tagline": "输入需求，生成标准化方案提示",
+    "description": "把需求填入固定模板，直接复制给开发或 AI，避免遗漏分析、测试与影响范围。",
+    "icon": "file-document-edit-outline",
+    "category": "AI",
+    "route": "/tools/requirement-prompt",
+    "accentColor": "#4b6bff",
+    "badges": ["固定模板", "一键复制"],
+    "usageLabel": "生成方案提示",
+    "status": "available",
+    "featured": true,
+    "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
     "id": "ai-navigation",
     "name": "AI 导航",
     "tagline": "全球主流 AI 官方入口",
