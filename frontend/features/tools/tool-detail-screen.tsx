@@ -28,6 +28,7 @@ import { DoubleColorBallLabScreen } from '@/features/tools/double-color-ball-lab
 import { DoubleColorBallLabClassicScreen } from '@/features/tools/double-color-ball-lab-classic-screen';
 import { DoubleColorBallScreen } from '@/features/tools/double-color-ball-screen';
 import { ReleaseEmailAssistantScreen } from '@/features/tools/release-email-assistant-screen';
+import { RequirementPromptScreen } from '@/features/tools/requirement-prompt-screen';
 import { CardScoreScreen } from '@/features/tools/card-score/card-score-screen';
 import { JsonWorkbenchScreen } from '@/features/tools/json-workbench-screen';
 import { TimeCapsuleScreen } from '@/features/tools/time-capsule-screen';
@@ -220,6 +221,15 @@ export function ToolDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <ReleaseEmailAssistantScreen />
+      </>
+    );
+  }
+
+  if (tool?.id === 'requirement-prompt') {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <RequirementPromptScreen />
       </>
     );
   }

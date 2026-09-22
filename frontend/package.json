@@ -17,6 +17,7 @@
     "test:ai-navigation": "node --test --experimental-strip-types tests/ai-navigation.test.mjs",
     "test:novel-agent": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/novel-agent-workflow.test.mjs tests/novel-agent-layout.test.mjs",
     "test:json-workbench": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/json-workbench.test.mjs",
+    "test:requirement-prompt": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/requirement-prompt.test.mjs",
     "test:resource-search": "node --test --experimental-strip-types tests/resource-search.test.mjs",
     "test:social-refresh": "node --test --experimental-strip-types tests/latest-request-gate.test.mjs",
     "test:social-friends": "node --test --experimental-strip-types tests/friend-list-model.test.mjs",
