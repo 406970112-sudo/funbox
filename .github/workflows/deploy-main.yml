@@ -32,6 +32,15 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          printf '%s\n' \
+            'Host *' \
+            '  BatchMode yes' \
+            '  ConnectTimeout 30' \
+            '  ConnectionAttempts 3' \
+            '  ServerAliveInterval 30' \
+            '  ServerAliveCountMax 10' \
+            '  TCPKeepAlive yes' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
       - name: Sync source to server
         env:
@@ -46,24 +55,46 @@ jobs:
             -i ~/.ssh/deploy_key \
             -p "${DEPLOY_PORT:-22}" \
             -o BatchMode=yes \
-            -o ConnectTimeout=15 \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "rm -rf '$REMOTE_RELEASE_DIR' && mkdir -p '$REMOTE_RELEASE_DIR/source'"
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT:-22} -o BatchMode=yes -o ConnectTimeout=15" \
-            --exclude='.git/' \
+          tar -czf "$RUNNER_TEMP/funbox-source.tar.gz" \
+            --exclude-vcs \
             --exclude='.expo-web.err.log' \
             --exclude='.expo-web.log' \
             --exclude='frontend/.env' \
             --exclude='backend/.env' \
             --exclude='email-agent/backend/.env' \
-            --exclude='frontend/node_modules/' \
-            --exclude='backend/bin/' \
-            --exclude='email-agent/backend/node_modules/' \
-            --exclude='email-agent/backend/dist/' \
-            --exclude='email-agent/frontend/node_modules/' \
-            --exclude='email-agent/frontend/dist/' \
-            ./ "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE_DIR/source/"
+            --exclude='frontend/node_modules' \
+            --exclude='backend/bin' \
+            --exclude='email-agent/backend/node_modules' \
+            --exclude='email-agent/backend/dist' \
+            --exclude='email-agent/frontend/node_modules' \
+            --exclude='email-agent/frontend/dist' \
+            -C "$GITHUB_WORKSPACE" \
+            .
+          upload_ok=false
+          for attempt in 1 2 3; do
+            if scp \
+              -i ~/.ssh/deploy_key \
+              -P "${DEPLOY_PORT:-22}" \
+              "$RUNNER_TEMP/funbox-source.tar.gz" \
+              "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE_DIR/source.tar.gz.upload"; then
+              upload_ok=true
+              break
+            fi
+            echo "Source archive upload failed (attempt $attempt/3); retrying shortly."
+            sleep $((attempt * 5))
+          done
+          if [[ "$upload_ok" != true ]]; then
+            echo "Source archive upload failed after 3 attempts."
+            exit 1
+          fi
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -p "${DEPLOY_PORT:-22}" \
+            -o BatchMode=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mv '$REMOTE_RELEASE_DIR/source.tar.gz.upload' '$REMOTE_RELEASE_DIR/source.tar.gz' && tar -xzf '$REMOTE_RELEASE_DIR/source.tar.gz' -C '$REMOTE_RELEASE_DIR/source' && rm -f '$REMOTE_RELEASE_DIR/source.tar.gz'"
 
       - name: Configure TinyPNG secret
         env:
