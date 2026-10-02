@@ -25,7 +25,7 @@ test('replaces only the template placeholder and keeps the rest unchanged', () =
 });
 
 test('preserves leading spaces, trailing spaces, and placeholder-like user content', () => {
-  const requirement = '  输入内容【在这里填写具体需求】\n第二行  ';
+  const requirement = `  输入内容${REQUIREMENT_PROMPT_PLACEHOLDER}\n第二行  `;
   const result = buildRequirementPrompt(requirement);
 
   assert.equal(result.includes(requirement), true);
