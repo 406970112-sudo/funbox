@@ -166,7 +166,15 @@ sudo BRANCH=your-branch bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04
 - `DEPLOY_KNOWN_HOSTS`：服务器 SSH 主机公钥记录，可在可信终端执行 `ssh-keyscan -H 服务器公网IP` 获取。
 - `STOCK_ALERT_SENDKEY`：Server酱 SendKey，用于股票交易提醒的微信推送；在 `Settings > Secrets and variables > Actions` 中配置后，每次部署会自动写入服务器 `backend/.env`。
 
-部署用户必须能够免密执行更新脚本需要的 `sudo` 命令。工作流会先快进更新服务器仓库，确保首次自动部署时也能获取最新的 `update-server.sh`。
+部署用户必须能够免密执行更新脚本需要的 `sudo` 命令。工作流通过 `create-source-archive.sh` 打包当前提交中已跟踪的前端、Go 后端、邮件智能体、部署脚本及根目录 npm 配置，再上传到服务器构建。设计文档、设计脚本、小程序、独立邮件后端副本和未跟踪的本地文件不进入部署包。
+
+源码同步步骤最多运行 10 分钟，每次上传最多运行 180 秒，失败后最多尝试 3 次，避免源码传输占满整个部署的 30 分钟预算。日志会记录部署包大小及上传耗时。
+
+本地检查部署包内容：
+
+```bash
+bash deploy/alicloud/ubuntu-22.04/tests/create-source-archive.test.sh
+```
 
 ## 绑定新域名并开启 HTTPS
 

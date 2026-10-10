@@ -43,6 +43,7 @@ jobs:
           chmod 600 ~/.ssh/config
 
       - name: Sync source to server
+        timeout-minutes: 10
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
@@ -57,32 +58,20 @@ jobs:
             -o BatchMode=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "rm -rf '$REMOTE_RELEASE_DIR' && mkdir -p '$REMOTE_RELEASE_DIR/source'"
-          tar -czf "$RUNNER_TEMP/funbox-source.tar.gz" \
-            --exclude-vcs \
-            --exclude='.expo-web.err.log' \
-            --exclude='.expo-web.log' \
-            --exclude='frontend/.env' \
-            --exclude='backend/.env' \
-            --exclude='email-agent/backend/.env' \
-            --exclude='frontend/node_modules' \
-            --exclude='backend/bin' \
-            --exclude='email-agent/backend/node_modules' \
-            --exclude='email-agent/backend/dist' \
-            --exclude='email-agent/frontend/node_modules' \
-            --exclude='email-agent/frontend/dist' \
-            -C "$GITHUB_WORKSPACE" \
-            .
+          bash deploy/alicloud/ubuntu-22.04/create-source-archive.sh "$RUNNER_TEMP/funbox-source.tar.gz"
           upload_ok=false
           for attempt in 1 2 3; do
-            if scp \
+            upload_started=$SECONDS
+            if timeout --kill-after=15s 180s scp \
               -i ~/.ssh/deploy_key \
               -P "${DEPLOY_PORT:-22}" \
               "$RUNNER_TEMP/funbox-source.tar.gz" \
               "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_RELEASE_DIR/source.tar.gz.upload"; then
+              echo "Source archive uploaded in $((SECONDS - upload_started))s (attempt $attempt/3)."
               upload_ok=true
               break
             fi
-            echo "Source archive upload failed (attempt $attempt/3); retrying shortly."
+            echo "Source archive upload failed after $((SECONDS - upload_started))s (attempt $attempt/3); retrying shortly."
             sleep $((attempt * 5))
           done
           if [[ "$upload_ok" != true ]]; then
