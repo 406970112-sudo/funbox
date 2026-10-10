@@ -788,8 +788,6 @@ nginx -t
 systemctl reload nginx
 
 log "Verifying deployment"
-systemctl is-active --quiet "$BACKEND_SERVICE"
-systemctl is-active --quiet "$EMAIL_AGENT_SERVICE"
 systemctl is-active --quiet nginx
 runuser -u "$APP_USER" -- test -w "$AUDIO_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$AVATAR_STORAGE_DIR"
@@ -797,12 +795,10 @@ runuser -u "$APP_USER" -- test -w "$PAYMENT_QR_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$FEEDBACK_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$(dirname "$DATABASE_FILE")"
 runuser -u "$APP_USER" -- test -w "$(dirname "$JWT_SECRET_FILE")"
-curl --fail --silent --show-error http://127.0.0.1:3000/healthz
-if ! retry 10 2 curl --fail --silent --show-error "http://127.0.0.1:${EMAIL_AGENT_PORT}/api/"; then
-  systemctl status --no-pager "$EMAIL_AGENT_SERVICE" || true
-  journalctl -u "$EMAIL_AGENT_SERVICE" -n 80 --no-pager || true
-  exit 1
-fi
+bash "$APP_ROOT/deploy/alicloud/ubuntu-22.04/wait-for-service.sh" "$BACKEND_SERVICE" "http://127.0.0.1:${BACKEND_PORT}/healthz"
+bash "$APP_ROOT/deploy/alicloud/ubuntu-22.04/wait-for-service.sh" "$EMAIL_AGENT_SERVICE" "http://127.0.0.1:${EMAIL_AGENT_PORT}/api/"
+systemctl is-active --quiet "$BACKEND_SERVICE"
+systemctl is-active --quiet "$EMAIL_AGENT_SERVICE"
 curl --fail --silent --show-error -X OPTIONS http://127.0.0.1/api/agent >/dev/null
 curl --fail --silent --show-error http://127.0.0.1/api/recipients >/dev/null
 curl --fail --silent --show-error http://127.0.0.1/api/v1/system/ping

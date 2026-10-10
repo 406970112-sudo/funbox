@@ -176,6 +176,14 @@ sudo BRANCH=your-branch bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04
 bash deploy/alicloud/ubuntu-22.04/tests/create-source-archive.test.sh
 ```
 
+发布后会通过 `wait-for-service.sh` 等待后端和邮件智能体的 HTTP 接口就绪，每个服务最多探测 30 次，失败后间隔 2 秒重试；单次连接最多等待 2 秒，响应最多等待 5 秒。最终失败时输出对应服务状态及最近 80 条日志，再触发回滚，避免把进程已启动误认为接口已就绪。
+
+本地检查服务就绪等待：
+
+```bash
+node --test deploy/alicloud/ubuntu-22.04/tests/wait-for-service.test.mjs
+```
+
 ## 绑定新域名并开启 HTTPS
 
 先在 DNS 控制台将域名 A 记录解析到 ECS 公网 IP。解析生效后，在云服务器执行：
