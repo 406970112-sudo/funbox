@@ -10,6 +10,8 @@ import {
 test('empty input returns the complete template with its placeholder', () => {
   assert.equal(buildRequirementPrompt(''), REQUIREMENT_PROMPT_TEMPLATE);
   assert.equal(REQUIREMENT_PROMPT_TEMPLATE.includes(REQUIREMENT_PROMPT_PLACEHOLDER), true);
+  assert.equal(REQUIREMENT_PROMPT_TEMPLATE.split('\n')[0], '## 本次需求');
+  assert.equal(REQUIREMENT_PROMPT_TEMPLATE.split('\n## 本次需求').length, 1);
 });
 
 test('replaces only the template placeholder and keeps the rest unchanged', () => {

@@ -1,8 +1,6 @@
 export const REQUIREMENT_PROMPT_PLACEHOLDER = '【在这里填写具体需求，尽量描述：什么场景、什么操作、当前结果、期望结果】';
 
-export const REQUIREMENT_PROMPT_TEMPLATE = `# 代码修改任务：先分析，确认后实施
-
-## 本次需求
+export const REQUIREMENT_PROMPT_TEMPLATE = `## 本次需求
 
 ${REQUIREMENT_PROMPT_PLACEHOLDER}
 
