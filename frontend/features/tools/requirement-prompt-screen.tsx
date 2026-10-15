@@ -39,7 +39,7 @@ export function RequirementPromptScreen() {
   const copyLabel = copyStatus === 'success'
     ? '已复制'
     : copyStatus === 'error'
-      ? '复制失败，请重试'
+      ? '复制失败'
       : '立即复制';
   const copyColor = copyStatus === 'error' ? colors.accent : colors.primary;
 
@@ -108,8 +108,31 @@ export function RequirementPromptScreen() {
               <MaterialCommunityIcons name="file-document-outline" size={19} color={colors.accent} />
             </View>
             <ThemedText style={styles.cardTitle}>生成结果</ThemedText>
+            <ThemedText
+              numberOfLines={1}
+              style={[styles.fixedLabel, { color: colors.success }]}>
+              固定模板
+            </ThemedText>
           </View>
-          <ThemedText style={[styles.fixedLabel, { color: colors.success }]}>固定模板</ThemedText>
+          <Pressable
+            accessibilityLabel={copyLabel}
+            accessibilityRole="button"
+            onPress={() => void handleCopy()}
+            testID="requirement-prompt-copy"
+            style={({ pressed }) => [
+              styles.copyButton,
+              { backgroundColor: colors.hero },
+              pressed && styles.pressed,
+            ]}>
+            <MaterialCommunityIcons
+              name={copyStatus === 'success' ? 'check' : 'content-copy'}
+              size={17}
+              color="#c9f36a"
+            />
+            <ThemedText numberOfLines={1} style={styles.copyButtonText}>
+              {copyLabel}
+            </ThemedText>
+          </Pressable>
         </View>
 
         <View style={[styles.outputBox, { backgroundColor: colors.surfaceMuted, borderColor: colors.line }]}>
@@ -117,24 +140,6 @@ export function RequirementPromptScreen() {
             {outputText}
           </ThemedText>
         </View>
-
-        <Pressable
-          accessibilityLabel={copyLabel}
-          accessibilityRole="button"
-          onPress={() => void handleCopy()}
-          testID="requirement-prompt-copy"
-          style={({ pressed }) => [
-            styles.copyButton,
-            { backgroundColor: colors.hero },
-            pressed && styles.pressed,
-          ]}>
-          <MaterialCommunityIcons
-            name={copyStatus === 'success' ? 'check' : 'content-copy'}
-            size={17}
-            color="#c9f36a"
-          />
-          <ThemedText style={styles.copyButtonText}>{copyLabel}</ThemedText>
-        </Pressable>
       </SurfaceCard>
     </MobileScreen>
   );
@@ -155,11 +160,13 @@ const styles = StyleSheet.create({
   cardHeader: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: 8,
     justifyContent: 'space-between',
   },
   cardTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexShrink: 1,
     gap: 9,
   },
   cardTitle: {
@@ -171,6 +178,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   fixedLabel: {
+    flexShrink: 1,
     fontSize: 11,
     fontWeight: '800',
   },
@@ -220,12 +228,13 @@ const styles = StyleSheet.create({
   },
   copyButton: {
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 999,
     flexDirection: 'row',
     gap: 7,
     justifyContent: 'center',
-    minHeight: 46,
-    paddingHorizontal: 14,
+    minHeight: 36,
+    minWidth: 100,
+    paddingHorizontal: 12,
   },
   copyButtonText: {
     color: '#c9f36a',
