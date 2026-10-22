@@ -831,7 +831,7 @@ pushd "$FRONTEND_ROOT" >/dev/null
 # cannot consume reliably on the server. Do not modify the checked-in lock file.
 # react-tetris exposes React-independent models but declares peers only through React 18.
 npm install --package-lock=false --legacy-peer-deps --registry="$NPM_REGISTRY"
-npx expo export --platform web
+npm run build:web
 popd >/dev/null
 
 log "Building backend"
@@ -872,7 +872,12 @@ log "Publishing frontend and backend"
 mkdir -p "$BACKEND_ROOT/bin"
 install -m 755 "$BUILD_API" "$BACKEND_ROOT/bin/api"
 mkdir -p "$WEB_ROOT"
-rsync -a --delete "$FRONTEND_ROOT/dist/" "$WEB_ROOT/"
+# Keep previous hashed bundles for clients that still hold an older index.html.
+# The current entry document is always replaced, while content-addressed files
+# remain available until the retention cleanup below.
+rsync -a "$FRONTEND_ROOT/dist/" "$WEB_ROOT/"
+find "$WEB_ROOT/_expo/static" "$WEB_ROOT/assets" -type f -mtime +30 -delete 2>/dev/null || true
+find "$WEB_ROOT/_expo/static" "$WEB_ROOT/assets" -type d -empty -delete 2>/dev/null || true
 mkdir -p "$EMAIL_AGENT_WEB_ROOT"
 rsync -a --delete "$EMAIL_AGENT_FRONTEND_ROOT/dist/" "$EMAIL_AGENT_WEB_ROOT/"
 chown -R "$APP_USER:$APP_GROUP" "$WEB_ROOT"

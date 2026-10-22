@@ -5,6 +5,7 @@
   "scripts": {
     "start": "expo start",
     "fonts:subset": "node scripts/build-icon-fonts.mjs",
+    "build:web": "expo export --platform web && node scripts/inject-web-fallback.mjs dist",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -61,6 +62,7 @@
     "test:page-loading": "node --test --experimental-strip-types tests/page-load-state.test.mjs tests/real-data-cache.test.mjs",
     "test:startup": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/startup-performance.test.mjs",
     "test:icon-fonts": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types tests/icon-font-subset.test.mjs",
+    "test:web-build": "node --test tests/web-fallback.test.mjs",
     "test:ssq-lab": "node --test --experimental-strip-types tests/double-color-ball-lab.test.mjs",
     "test:ssq-lab-classic": "node --test --experimental-strip-types tests/double-color-ball-lab-classic.test.mjs"
   },

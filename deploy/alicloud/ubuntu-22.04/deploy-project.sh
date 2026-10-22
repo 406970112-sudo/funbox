@@ -192,10 +192,12 @@ popd >/dev/null
 
 pushd "$APP_ROOT/frontend" >/dev/null
 npm install --registry="$NPM_REGISTRY"
-npx expo export --platform web
+npm run build:web
 popd >/dev/null
 
-rsync -av --delete "$APP_ROOT/frontend/dist/" "/var/www/$APP_NAME/frontend/"
+# Keep previous hashed assets so clients holding an older index.html do not
+# request files that were removed during a deployment.
+rsync -av "$APP_ROOT/frontend/dist/" "/var/www/$APP_NAME/frontend/"
 
 install -d -m 755 /etc/my-first-expo-app
 

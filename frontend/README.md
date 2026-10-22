@@ -17,6 +17,14 @@ npm run web
 - `constants/`
 - `hooks/`
 
+生产 Web 构建使用：
+
+```bash
+npm run build:web
+```
+
+该命令会在 `dist/index.html` 中注入启动失败提示，避免脚本资源异常时只显示白屏。
+
 ## 图标字体
 
 生产 Web 使用按源码实际引用图标生成的字体子集，避免启动时下载完整的
