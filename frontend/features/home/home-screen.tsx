@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   type NativeSyntheticEvent,
@@ -38,9 +38,13 @@ import {
   searchHomeEntries,
   type HomeSearchEntry,
 } from '@/lib/home-search';
-import { prefetchFeatureRoutes } from '@/lib/route-prefetch';
 import { getStoredRecentUsage } from '@/lib/recent-usage-storage';
 import type { RecentUsageItem } from '@/lib/recent-usage';
+import {
+  hasStartupMilestone,
+  markStartupMilestone,
+  subscribeStartupMilestones,
+} from '@/lib/startup-metrics';
 import { getStoredToolUsage } from '@/lib/tool-usage-storage';
 import type { ToolUsageStat } from '@/lib/tool-usage';
 import { MobileScreen } from '@/shared/ui/mobile-screen';
@@ -131,6 +135,38 @@ function ToolTile({ tool, onPress }: { tool: AppTool; onPress: () => void }) {
         </View>
       ) : null}
     </Pressable>
+  );
+}
+
+function ToolGridSkeleton() {
+  const { colors } = useAppTheme();
+
+  return (
+    <View style={styles.toolGrid}>
+      {Array.from({ length: 6 }, (_, index) => (
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          key={index}
+          style={[
+            styles.toolTile,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.line,
+            },
+          ]}>
+          <View style={[styles.toolIcon, { backgroundColor: colors.surfaceMuted }]} />
+          <View style={[styles.toolSkeletonLine, { backgroundColor: colors.surfaceMuted }]} />
+          <View
+            style={[
+              styles.toolSkeletonLine,
+              styles.toolSkeletonLineShort,
+              { backgroundColor: colors.surfaceMuted },
+            ]}
+          />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -295,7 +331,7 @@ export function HomeScreen() {
   const { colors, colorScheme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
-  const { visibleGames, visibleTools } = useFeatureAccess();
+  const { status: accessStatus, visibleGames, visibleTools } = useFeatureAccess();
   const { status: authStatus, user } = useAuth();
   const [toolUsage, setToolUsage] = useState<ToolUsageStat[]>([]);
   const [activeCategory, setActiveCategory] = useState(HOME_ALL_CATEGORY);
@@ -307,6 +343,8 @@ export function HomeScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const searchInputRef = useRef<TextInput>(null);
   const toolsSectionYRef = useRef(0);
+  const homeReadyMarkedRef = useRef(false);
+  const homeReadyScheduledRef = useRef(false);
 
   const availableTools = useMemo(
     () => visibleTools.filter((tool) => tool.status === 'available'),
@@ -383,18 +421,43 @@ export function HomeScreen() {
   const gameCardWidth = Math.round(contentWidth * GAME_CARD_WIDTH_RATIO);
   const bottomPadding = appLayout.tabBarHeight + insets.bottom + BOTTOM_EXTRA_PADDING;
 
+  useEffect(() => {
+    let firstFrame = 0;
+    let secondFrame = 0;
+
+    const markWhenVisible = () => {
+      if (
+        accessStatus === 'loading'
+        || homeReadyMarkedRef.current
+        || homeReadyScheduledRef.current
+        || !hasStartupMilestone('fonts-ready')
+      ) {
+        return;
+      }
+
+      homeReadyScheduledRef.current = true;
+      firstFrame = requestAnimationFrame(() => {
+        secondFrame = requestAnimationFrame(() => {
+          homeReadyMarkedRef.current = true;
+          markStartupMilestone('home-ready');
+        });
+      });
+    };
+
+    markWhenVisible();
+    const unsubscribe = subscribeStartupMilestones(markWhenVisible);
+
+    return () => {
+      unsubscribe();
+      homeReadyScheduledRef.current = false;
+      cancelAnimationFrame(firstFrame);
+      if (secondFrame) cancelAnimationFrame(secondFrame);
+    };
+  }, [accessStatus]);
+
   useFocusEffect(
     useCallback(() => {
       let active = true;
-
-      prefetchFeatureRoutes(
-        [
-          ...visibleTools
-            .filter((tool) => tool.status === 'available')
-            .map((tool) => tool.route),
-          ...visibleGames.map((game) => game.route),
-        ],
-      );
 
       void Promise.all([getStoredToolUsage(), getStoredRecentUsage()]).then(
         ([usageItems, recentItems]) => {
@@ -408,7 +471,7 @@ export function HomeScreen() {
       return () => {
         active = false;
       };
-    }, [visibleGames, visibleTools]),
+    }, []),
   );
 
   function handleSearchChange(value: string) {
@@ -642,7 +705,9 @@ export function HomeScreen() {
           </ScrollView>
         ) : null}
 
-        {filteredTools.length === 0 ? (
+        {accessStatus === 'loading' ? (
+          <ToolGridSkeleton />
+        ) : filteredTools.length === 0 ? (
           <View style={styles.emptyState}>
             <MaterialCommunityIcons name="magnify-close" size={22} color={colors.mutedText} />
             <ThemedText style={[styles.emptyText, { color: colors.mutedText }]}>
@@ -894,6 +959,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
     lineHeight: 16,
+  },
+  toolSkeletonLine: {
+    borderRadius: 999,
+    height: 10,
+    width: '82%',
+  },
+  toolSkeletonLineShort: {
+    height: 8,
+    width: '54%',
   },
   toolBadge: {
     alignSelf: 'flex-start',

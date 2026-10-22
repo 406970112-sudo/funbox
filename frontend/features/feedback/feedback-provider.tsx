@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useSocial } from '@/features/social/social-provider';
 import {
@@ -31,6 +32,7 @@ const FeedbackContext = createContext<FeedbackContextValue | undefined>(undefine
 
 export function FeedbackProvider({ children }: PropsWithChildren) {
   const { accessToken } = useAuth();
+  const { status: accessStatus } = useFeatureAccess();
   const { lastEvent, lastEventSequence } = useSocial();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,6 +70,8 @@ export function FeedbackProvider({ children }: PropsWithChildren) {
   }, [accessToken]);
 
   useEffect(() => {
+    if (accessStatus === 'loading') return;
+
     if (!accessToken) {
       setUnreadCount(0);
       setNotifications([]);
@@ -75,7 +79,7 @@ export function FeedbackProvider({ children }: PropsWithChildren) {
       return;
     }
     void refreshUnread();
-  }, [accessToken, refreshUnread]);
+  }, [accessStatus, accessToken, refreshUnread]);
 
   useEffect(() => {
     if (!lastEvent || lastEvent.type !== 'feedback.resolved') return;

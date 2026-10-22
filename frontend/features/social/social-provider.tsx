@@ -9,7 +9,9 @@ import {
   useState,
 } from 'react';
 
+import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
+import { shouldRefreshAfterSocketOpen } from '@/features/social/startup-refresh';
 import {
   applyConversationPresence,
   applyFriendPresence,
@@ -71,6 +73,7 @@ const SocialContext = createContext<SocialContextValue | undefined>(undefined);
 
 export function SocialProvider({ children }: PropsWithChildren) {
   const { accessToken } = useAuth();
+  const { status: accessStatus } = useFeatureAccess();
   const [connectionStatus, setConnectionStatus] = useState<SocialConnectionStatus>('idle');
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [error, setError] = useState('');
@@ -128,6 +131,8 @@ export function SocialProvider({ children }: PropsWithChildren) {
   }
 
   useEffect(() => {
+    if (accessStatus === 'loading') return;
+
     if (!accessToken) {
       refreshGate.invalidate();
       presenceEventVersionRef.current = 0;
@@ -149,8 +154,11 @@ export function SocialProvider({ children }: PropsWithChildren) {
     let reconnectAttempt = 0;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
     let socket: WebSocket | undefined;
+    let lastRefreshFinishedAt = 0;
 
-    void refreshForToken(accessToken, true);
+    void refreshForToken(accessToken, true).finally(() => {
+      lastRefreshFinishedAt = Date.now();
+    });
 
     async function connect() {
       if (!active) return;
@@ -162,7 +170,9 @@ export function SocialProvider({ children }: PropsWithChildren) {
         socket.onopen = () => {
           reconnectAttempt = 0;
           setConnectionStatus('connected');
-          void refreshForToken(accessToken as string);
+          if (shouldRefreshAfterSocketOpen(lastRefreshFinishedAt)) {
+            void refreshForToken(accessToken as string);
+          }
         };
         socket.onmessage = (message) => {
           try {
@@ -211,7 +221,7 @@ export function SocialProvider({ children }: PropsWithChildren) {
       if (reconnectTimer) clearTimeout(reconnectTimer);
       socket?.close();
     };
-  }, [accessToken, refreshGate]);
+  }, [accessStatus, accessToken, refreshGate]);
 
   async function refresh() {
     if (!accessToken) return undefined;

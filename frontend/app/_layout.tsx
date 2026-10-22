@@ -1,6 +1,4 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFonts } from 'expo-font';
 import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -19,6 +17,7 @@ import { SocialProvider } from '@/features/social/social-provider';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { installSafeRouterBack, trackBackContext } from '@/lib/router-back';
+import { markStartupMilestone } from '@/lib/startup-metrics';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 
 export const unstable_settings = {
@@ -31,14 +30,20 @@ void SplashScreen.preventAutoHideAsync();
 
 installSafeRouterBack();
 
+const appFonts = {
+  ionicons: require('../assets/fonts/Ionicons-subset.ttf'),
+  'material-community': require('../assets/fonts/MaterialCommunityIcons-subset.ttf'),
+};
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { colors } = useAppTheme();
   const pathname = usePathname();
-  const [fontsLoaded, fontError] = useFonts({
-    ...Ionicons.font,
-    ...MaterialCommunityIcons.font,
-  });
+  const [fontsLoaded, fontError] = useFonts(appFonts);
+
+  useEffect(() => {
+    markStartupMilestone('layout-mounted');
+  }, []);
 
   useEffect(() => {
     trackBackContext(pathname);
@@ -46,6 +51,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
+      markStartupMilestone('fonts-ready');
       void SplashScreen.hideAsync();
     }
   }, [fontError, fontsLoaded]);
@@ -84,10 +90,6 @@ export default function RootLayout() {
     );
   }
 
-  if (!fontsLoaded) {
-    return <AppLoadingScreen />;
-  }
-
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
@@ -97,51 +99,87 @@ export default function RootLayout() {
               <BlogProvider>
                 <FeedbackProvider>
                   <GameSocialProvider>
-                <Stack
-                  screenOptions={{
-                    animation: 'slide_from_right',
-                    contentStyle: { backgroundColor: colors.background },
-                    headerShown: false,
-                  }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="profile/feedback" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="profile/feedback/history" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen
-              name="profile/feedback/result/[id]"
-              options={{ animation: 'slide_from_right' }}
-            />
-            <Stack.Screen name="profile/membership" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="profile/membership/payment" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="admin" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="reading/import" options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="reading/books/[bookId]" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="reading/books/[bookId]/chapters/[chapterId]" options={{ animation: 'fade' }} />
-                <Stack.Screen name="social/add-friend" options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="social/chat/[conversationId]" options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="moments/create" options={{ animation: 'slide_from_bottom' }} />
-                <Stack.Screen name="moments/[momentId]" options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="moments/notifications" options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="blog/create" options={{ animation: 'slide_from_bottom' }} />
-                <Stack.Screen name="blog/[postId]" options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="blog/mine" options={{ animation: 'slide_from_right' }} />
-                <Stack.Screen name="blog/notifications" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen
-              name="tools/[toolId]"
-              options={{
-                animation: 'slide_from_right',
-              }}
-            />
-            <Stack.Screen
-              name="games/[gameId]"
-              options={{
-                animation: 'slide_from_right',
-              }}
-            />
-                </Stack>
-                <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+                    {fontsLoaded ? (
+                      <>
+                        <Stack
+                          screenOptions={{
+                            animation: 'slide_from_right',
+                            contentStyle: { backgroundColor: colors.background },
+                            headerShown: false,
+                          }}>
+                          <Stack.Screen name="(tabs)" />
+                          <Stack.Screen name="auth" options={{ animation: 'slide_from_bottom' }} />
+                          <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
+                          <Stack.Screen name="profile/security" options={{ animation: 'slide_from_right' }} />
+                          <Stack.Screen name="profile/feedback" options={{ animation: 'slide_from_right' }} />
+                          <Stack.Screen
+                            name="profile/feedback/history"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen
+                            name="profile/feedback/result/[id]"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen
+                            name="profile/membership"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen
+                            name="profile/membership/payment"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen name="admin" options={{ animation: 'slide_from_right' }} />
+                          <Stack.Screen name="reading/import" options={{ animation: 'slide_from_bottom' }} />
+                          <Stack.Screen
+                            name="reading/books/[bookId]"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen
+                            name="reading/books/[bookId]/chapters/[chapterId]"
+                            options={{ animation: 'fade' }}
+                          />
+                          <Stack.Screen
+                            name="social/add-friend"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen
+                            name="social/chat/[conversationId]"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen name="moments/create" options={{ animation: 'slide_from_bottom' }} />
+                          <Stack.Screen
+                            name="moments/[momentId]"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen
+                            name="moments/notifications"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen name="blog/create" options={{ animation: 'slide_from_bottom' }} />
+                          <Stack.Screen name="blog/[postId]" options={{ animation: 'slide_from_right' }} />
+                          <Stack.Screen name="blog/mine" options={{ animation: 'slide_from_right' }} />
+                          <Stack.Screen
+                            name="blog/notifications"
+                            options={{ animation: 'slide_from_right' }}
+                          />
+                          <Stack.Screen
+                            name="tools/[toolId]"
+                            options={{
+                              animation: 'slide_from_right',
+                            }}
+                          />
+                          <Stack.Screen
+                            name="games/[gameId]"
+                            options={{
+                              animation: 'slide_from_right',
+                            }}
+                          />
+                        </Stack>
+                        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+                      </>
+                    ) : (
+                      <AppLoadingScreen />
+                    )}
                   </GameSocialProvider>
                 </FeedbackProvider>
               </BlogProvider>

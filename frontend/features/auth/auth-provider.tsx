@@ -25,11 +25,15 @@ import {
 import type { AuthUser, AvatarAsset } from '@/types/auth';
 import type { UserRole } from '@/types/access';
 import { identityPresentation } from '@/lib/identity';
+import { markStartupMilestone } from '@/lib/startup-metrics';
 
 type AuthStatus = 'anonymous' | 'authenticated' | 'loading';
+type AuthBootstrapStatus = 'loading' | 'ready';
 
 type AuthContextValue = {
   accessToken: string | null;
+  bootstrapStatus: AuthBootstrapStatus;
+  bootstrapToken: string | null;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   clearIdentityChangeNotice: () => void;
   identityChangeNotice: string | null;
@@ -55,6 +59,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: PropsWithChildren) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [token, setToken] = useState<string | null>(null);
+  const [bootstrapStatus, setBootstrapStatus] = useState<AuthBootstrapStatus>('loading');
+  const [bootstrapToken, setBootstrapToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [identityChangeNotice, setIdentityChangeNotice] = useState<string | null>(null);
   const previousRoleRef = useRef<UserRole | null>(null);
@@ -64,8 +70,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     void (async () => {
       const storedToken = await getStoredAccessToken();
+      if (!active) return;
+
+      setBootstrapToken(storedToken);
+      setBootstrapStatus('ready');
+
       if (!storedToken) {
-        if (active) setStatus('anonymous');
+        setStatus('anonymous');
+        markStartupMilestone('auth-ready');
         return;
       }
 
@@ -76,9 +88,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setToken(storedToken);
         setUser(currentUser);
         setStatus('authenticated');
+        markStartupMilestone('auth-ready');
       } catch {
         await removeStoredAccessToken();
-        if (active) setStatus('anonymous');
+        if (active) {
+          setBootstrapToken(null);
+          setStatus('anonymous');
+          markStartupMilestone('auth-ready');
+        }
       }
     })();
 
@@ -92,6 +109,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     previousRoleRef.current = nextUser.role;
     setIdentityChangeNotice(null);
     setToken(nextToken);
+    setBootstrapToken(nextToken);
+    setBootstrapStatus('ready');
     setUser(nextUser);
     setStatus('authenticated');
   }
@@ -121,6 +140,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   async function signOut() {
     await removeStoredAccessToken();
     setToken(null);
+    setBootstrapToken(null);
+    setBootstrapStatus('ready');
     setUser(null);
     setStatus('anonymous');
   }
@@ -168,6 +189,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     <AuthContext.Provider
       value={{
         accessToken: token,
+        bootstrapStatus,
+        bootstrapToken,
         changePassword: savePassword,
         clearIdentityChangeNotice: clearIdentityChange,
         identityChangeNotice,

@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import { useFeatureAccess } from '@/features/access/feature-access-provider';
 import { useAuth } from '@/features/auth/auth-provider';
 import { upsertGameMatch } from '@/features/games/game-social-model';
 import { useSocial } from '@/features/social/social-provider';
@@ -52,6 +53,7 @@ const GameSocialContext = createContext<GameSocialContextValue | undefined>(unde
 
 export function GameSocialProvider({ children }: PropsWithChildren) {
   const { accessToken } = useAuth();
+  const { status: accessStatus } = useFeatureAccess();
   const { lastEvent, lastEventSequence } = useSocial();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,13 +72,15 @@ export function GameSocialProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
+    if (accessStatus === 'loading') return;
+
     if (!accessToken) {
       setMatches([]);
       setError('');
       return;
     }
     void refreshMatchesForToken(accessToken, true);
-  }, [accessToken, refreshMatchesForToken]);
+  }, [accessStatus, accessToken, refreshMatchesForToken]);
 
   useEffect(() => {
     if (!lastEvent || !lastEvent.type.startsWith('game.match.')) {

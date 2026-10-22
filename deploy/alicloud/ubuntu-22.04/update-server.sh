@@ -638,6 +638,106 @@ configure_nginx_api_proxies() {
   fi
 }
 
+configure_nginx_frontend_delivery() {
+  local configured=false
+  local conf
+  local tmp
+  local add_gzip
+  local add_gzip_types
+  local add_index_cache
+  local add_expo_cache
+  local add_assets_cache
+
+  shopt -s nullglob
+  for conf in /etc/nginx/sites-available/*.conf; do
+    if ! grep -Fq "root $WEB_ROOT;" "$conf"; then
+      continue
+    fi
+
+    if grep -Eq '^[[:space:]]*gzip[[:space:]]+on;' "$conf"; then
+      add_gzip=0
+    else
+      add_gzip=1
+    fi
+    if grep -Eq '^[[:space:]]*gzip_types[[:space:]]' "$conf"; then
+      add_gzip_types=0
+    else
+      add_gzip_types=1
+    fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]*=[[:space:]]*/index\.html[[:space:]]*\{' "$conf"; then
+      add_index_cache=0
+    else
+      add_index_cache=1
+    fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]+/_expo/static/[[:space:]]*\{' "$conf"; then
+      add_expo_cache=0
+    else
+      add_expo_cache=1
+    fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]+/assets/[[:space:]]*\{' "$conf"; then
+      add_assets_cache=0
+    else
+      add_assets_cache=1
+    fi
+
+    tmp="$(mktemp)"
+    awk \
+      -v add_gzip="$add_gzip" \
+      -v add_gzip_types="$add_gzip_types" \
+      -v add_index_cache="$add_index_cache" \
+      -v add_expo_cache="$add_expo_cache" \
+      -v add_assets_cache="$add_assets_cache" '
+      /^[[:space:]]*server[[:space:]]*\{/ {
+        print
+        if (add_gzip == 1) {
+          print "  gzip on;"
+          print "  gzip_vary on;"
+          print "  gzip_min_length 1024;"
+        }
+        if (add_gzip_types == 1) {
+          print "  gzip_types application/javascript application/json application/manifest+json application/xml font/otf font/ttf image/svg+xml text/css text/javascript;"
+        }
+        next
+      }
+      /^[[:space:]]*location[[:space:]]+\/[[:space:]]*\{/ && !inserted {
+        if (add_index_cache == 1) {
+          print "  location = /index.html {"
+          print "    add_header Cache-Control \"no-cache\" always;"
+          print "    add_header Permissions-Policy \"camera=(self), microphone=(self)\" always;"
+          print "    try_files $uri =404;"
+          print "  }"
+          print ""
+        }
+        if (add_expo_cache == 1) {
+          print "  location /_expo/static/ {"
+          print "    add_header Cache-Control \"public, max-age=31536000, immutable\" always;"
+          print "    try_files $uri =404;"
+          print "  }"
+          print ""
+        }
+        if (add_assets_cache == 1) {
+          print "  location /assets/ {"
+          print "    add_header Cache-Control \"public, max-age=31536000, immutable\" always;"
+          print "    try_files $uri =404;"
+          print "  }"
+          print ""
+        }
+        inserted = 1
+      }
+      { print }
+    ' "$conf" >"$tmp"
+    cat "$tmp" >"$conf"
+    rm -f "$tmp"
+    configured=true
+    log "Configured frontend delivery headers in $conf"
+  done
+  shopt -u nullglob
+
+  if [[ "$configured" != true ]]; then
+    log "No Nginx site with root $WEB_ROOT found. Skipping frontend delivery config."
+  fi
+}
+
 rollback() {
   local exit_code=$?
 
@@ -784,6 +884,7 @@ systemctl enable "$BACKEND_SERVICE" "$EMAIL_AGENT_SERVICE"
 systemctl restart "$BACKEND_SERVICE"
 systemctl restart "$EMAIL_AGENT_SERVICE"
 configure_nginx_api_proxies
+configure_nginx_frontend_delivery
 nginx -t
 systemctl reload nginx
 
