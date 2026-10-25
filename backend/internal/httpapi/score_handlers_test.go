@@ -110,6 +110,90 @@ func TestScoreHTTPFlow(t *testing.T) {
 	}
 }
 
+func TestScoreHTTPZhaJinHuaFlow(t *testing.T) {
+	tempDir := t.TempDir()
+	databasePath := filepath.Join(tempDir, "funbox.db")
+	userStore, err := user.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = userStore.Close() })
+	socialStore, err := social.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = socialStore.Close() })
+	scoreStore, err := score.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = scoreStore.Close() })
+
+	cfg := config.Config{
+		Auth:     config.AuthConfig{TokenTTL: time.Hour},
+		Server:   config.ServerConfig{Host: "127.0.0.1", ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second},
+		Security: config.SecurityConfig{MaxRequestBodyBytes: 64 << 10, RateLimitMax: 100, RateLimitWindow: time.Minute},
+		Storage:  config.StorageConfig{AvatarDir: filepath.Join(tempDir, "avatars"), MaxAvatarBytes: 1 << 20},
+	}
+	signingKey := []byte(strings.Repeat("z", 32))
+	authService := auth.NewService(userStore, signingKey, time.Hour)
+	scoreService := score.NewService(scoreStore, signingKey, 7*24*time.Hour)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil, scoreService)
+	testServer := httptest.NewServer(httpServer.Handler)
+	t.Cleanup(testServer.Close)
+
+	registered := scoreRequestJSON[sessionResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/auth/register", map[string]any{
+		"username": "13800138002", "password": "password-123", "displayName": "Host",
+		"securityQuestion": "Question?", "securityAnswer": "Answer",
+	}, "", http.StatusCreated)
+	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
+		"name": "炸金花局", "maxPlayers": 2, "scene": "zhajinhua",
+		"forceOpenThreshold": 2, "forceOpenFeePoints": 5,
+	}, registered.AccessToken, http.StatusCreated)
+	if created.Room.Scene != score.SceneZhaJinHua || created.Room.ZhaJinHuaSettings.ForceOpenFeePoints != 5 {
+		t.Fatalf("created room = %+v", created.Room)
+	}
+	joined := scoreRequestJSON[score.JoinRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
+		"code": created.Room.Code, "displayName": "Guest",
+	}, "", http.StatusCreated)
+	room := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/start", map[string]any{
+		"clientActionId": "zjh-start-room", "expectedRoomVersion": joined.Room.Version,
+	}, registered.AccessToken, http.StatusOK).Room
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/hands", map[string]any{
+		"clientActionId": "zjh-start-hand", "expectedRoomVersion": room.Version,
+	}, registered.AccessToken, http.StatusCreated).Room
+	handID := room.CurrentZhaJinHuaHand.ID
+
+	scoreRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/hands/"+handID+"/actions", map[string]any{
+		"clientActionId": "zjh-guest-out-of-turn", "expectedRoomVersion": room.Version,
+		"actionType": "raise", "points": 1,
+	}, joined.GuestToken, http.StatusConflict)
+
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/hands/"+handID+"/actions", map[string]any{
+		"clientActionId": "zjh-host-raise", "expectedRoomVersion": room.Version,
+		"actionType": "raise", "points": 10,
+	}, registered.AccessToken, http.StatusOK).Room
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/hands/"+handID+"/actions", map[string]any{
+		"clientActionId": "zjh-guest-raise", "expectedRoomVersion": room.Version,
+		"actionType": "raise", "points": 10,
+	}, joined.GuestToken, http.StatusOK).Room
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/hands/"+handID+"/actions", map[string]any{
+		"clientActionId": "zjh-host-open", "expectedRoomVersion": room.Version,
+		"actionType": "force_open", "targetParticipantId": joined.Actor.ParticipantID,
+		"winnerParticipantId": created.Actor.ParticipantID,
+	}, registered.AccessToken, http.StatusOK).Room
+	if room.CurrentZhaJinHuaHand != nil || len(room.ZhaJinHuaHands) != 1 || room.ZhaJinHuaHands[0].PotPoints != 25 {
+		t.Fatalf("finished zha jin hua room = %+v", room)
+	}
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPatch, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/settings", map[string]any{
+		"clientActionId": "zjh-update-settings", "expectedRoomVersion": room.Version,
+		"forceOpenThreshold": 2, "forceOpenFeePoints": 7,
+	}, registered.AccessToken, http.StatusOK).Room
+	if room.ZhaJinHuaSettings.ForceOpenFeePoints != 7 {
+		t.Fatalf("updated zha jin hua settings = %+v", room.ZhaJinHuaSettings)
+	}
+}
+
 type scoreRoomResponse struct {
 	Room score.RoomSnapshot `json:"room"`
 }

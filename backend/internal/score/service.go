@@ -30,6 +30,9 @@ var (
 	ErrRoundNotFound      = errors.New("score round not found")
 	ErrGiftBatchNotFound  = errors.New("score gift batch not found")
 	ErrParticipantMissing = errors.New("score participant not found")
+	ErrNotYourTurn        = errors.New("not the current player's turn")
+	ErrForceOpenLocked    = errors.New("force open is not available yet")
+	ErrInvalidZJHHand     = errors.New("zha jin hua hand not found")
 )
 
 type Actor struct {
@@ -45,9 +48,12 @@ type CommandMeta struct {
 }
 
 type CreateRoomInput struct {
-	Name          string `json:"name"`
-	MaxPlayers    int    `json:"maxPlayers"`
-	CentsPerPoint int64  `json:"centsPerPoint"`
+	Name               string     `json:"name"`
+	MaxPlayers         int        `json:"maxPlayers"`
+	CentsPerPoint      int64      `json:"centsPerPoint"`
+	Scene              ScoreScene `json:"scene,omitempty"`
+	ForceOpenThreshold int        `json:"forceOpenThreshold,omitempty"`
+	ForceOpenFeePoints int64      `json:"forceOpenFeePoints,omitempty"`
 }
 
 type CreateRoomResult struct {
@@ -94,6 +100,18 @@ type SettleRoomInput struct {
 	CentsPerPoint int64 `json:"centsPerPoint,omitempty"`
 }
 
+type UpdateZhaJinHuaSettingsInput struct {
+	ForceOpenThreshold int   `json:"forceOpenThreshold"`
+	ForceOpenFeePoints int64 `json:"forceOpenFeePoints"`
+}
+
+type ZhaJinHuaActionInput struct {
+	ActionType          ZhaJinHuaActionType `json:"actionType"`
+	Points              int64               `json:"points,omitempty"`
+	TargetParticipantID string              `json:"targetParticipantId,omitempty"`
+	WinnerParticipantID string              `json:"winnerParticipantId,omitempty"`
+}
+
 type VersionConflictError struct {
 	Latest RoomSnapshot
 }
@@ -133,6 +151,10 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	hostUserID = strings.TrimSpace(hostUserID)
 	displayName = strings.TrimSpace(displayName)
 	input.Name = strings.TrimSpace(input.Name)
+	input.Scene = ScoreScene(strings.TrimSpace(string(input.Scene)))
+	if input.Scene == "" {
+		input.Scene = SceneGeneric
+	}
 	if input.CentsPerPoint == 0 {
 		input.CentsPerPoint = 100
 	}
@@ -144,6 +166,24 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	}
 	if input.MaxPlayers < 2 || input.MaxPlayers > 8 || input.CentsPerPoint < 1 || input.CentsPerPoint > 1_000_000 {
 		return CreateRoomResult{}, fmt.Errorf("room settings: %w", ErrInvalidInput)
+	}
+	switch input.Scene {
+	case SceneGeneric:
+		input.ForceOpenThreshold = 0
+		input.ForceOpenFeePoints = 0
+	case SceneZhaJinHua:
+		if input.ForceOpenThreshold == 0 {
+			input.ForceOpenThreshold = 2
+		}
+		if input.ForceOpenFeePoints == 0 {
+			input.ForceOpenFeePoints = 1
+		}
+		if input.ForceOpenThreshold < 2 || input.ForceOpenThreshold > input.MaxPlayers ||
+			input.ForceOpenFeePoints < 1 || input.ForceOpenFeePoints > 2_147_483_647 {
+			return CreateRoomResult{}, fmt.Errorf("zha jin hua settings: %w", ErrInvalidInput)
+		}
+	default:
+		return CreateRoomResult{}, fmt.Errorf("room scene: %w", ErrInvalidInput)
 	}
 
 	for attempt := 0; attempt < 12; attempt++ {
@@ -188,6 +228,14 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 	`, participantID, roomID, hostUserID, displayName, normalizeDisplayName(displayName), now.Unix(), now.Unix())
 	if err != nil {
 		return CreateRoomResult{}, false, fmt.Errorf("insert score host: %w", err)
+	}
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO score_room_game_configs (
+			room_id, scene, force_open_threshold, force_open_fee_points, updated_at
+		) VALUES (?, ?, ?, ?, ?)
+	`, roomID, input.Scene, input.ForceOpenThreshold, input.ForceOpenFeePoints, now.Unix())
+	if err != nil {
+		return CreateRoomResult{}, false, fmt.Errorf("insert score room game config: %w", err)
 	}
 	room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
 	if err != nil {
@@ -339,7 +387,7 @@ func (s *Service) StartRound(ctx context.Context, actor Actor, meta CommandMeta,
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
-		if room.Status != RoomActive || room.CurrentRound != nil {
+		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil {
 			return ErrInvalidState
 		}
 		now := s.now().UTC().Unix()
@@ -406,6 +454,229 @@ func (s *Service) StartRound(ctx context.Context, actor Actor, meta CommandMeta,
 	})
 }
 
+func (s *Service) UpdateZhaJinHuaSettings(ctx context.Context, actor Actor, meta CommandMeta, input UpdateZhaJinHuaSettingsInput) (RoomSnapshot, error) {
+	return s.mutate(ctx, actor, meta, "zjh.settings.update", input, func(tx *sql.Tx, room RoomSnapshot) error {
+		if actor.Role != ParticipantHost {
+			return ErrForbidden
+		}
+		if room.Scene != SceneZhaJinHua || room.CurrentZhaJinHuaHand != nil || room.CurrentRound != nil {
+			return ErrInvalidState
+		}
+		if input.ForceOpenThreshold < 2 || input.ForceOpenThreshold > room.MaxPlayers ||
+			input.ForceOpenFeePoints < 1 || input.ForceOpenFeePoints > 2_147_483_647 {
+			return fmt.Errorf("zha jin hua settings: %w", ErrInvalidInput)
+		}
+		_, err := tx.ExecContext(ctx, `
+			UPDATE score_room_game_configs
+			SET force_open_threshold = ?, force_open_fee_points = ?, updated_at = ?
+			WHERE room_id = ? AND scene = 'zhajinhua'
+		`, input.ForceOpenThreshold, input.ForceOpenFeePoints, s.now().UTC().Unix(), room.ID)
+		if err != nil {
+			return fmt.Errorf("update zha jin hua settings: %w", err)
+		}
+		return nil
+	})
+}
+
+func (s *Service) StartZhaJinHuaHand(ctx context.Context, actor Actor, meta CommandMeta) (RoomSnapshot, error) {
+	return s.mutate(ctx, actor, meta, "zjh.hand.start", nil, func(tx *sql.Tx, room RoomSnapshot) error {
+		if actor.Role != ParticipantHost {
+			return ErrForbidden
+		}
+		if room.Scene != SceneZhaJinHua || room.Status != RoomActive ||
+			room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil {
+			return ErrInvalidState
+		}
+		players := activeParticipants(room.Participants)
+		if len(players) < 2 {
+			return ErrInvalidState
+		}
+		var number int
+		if err := tx.QueryRowContext(ctx, `
+			SELECT COALESCE(MAX(number), 0) + 1 FROM score_zjh_hands WHERE room_id = ?
+		`, room.ID).Scan(&number); err != nil {
+			return fmt.Errorf("find next zha jin hua hand: %w", err)
+		}
+		handID := uuid.NewString()
+		now := s.now().UTC().Unix()
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO score_zjh_hands (
+				id, room_id, number, status, pot_points, current_turn_participant_id,
+				force_open_threshold, force_open_fee_points, created_by, created_at
+			) VALUES (?, ?, ?, 'active', 0, ?, ?, ?, ?, ?)
+		`, handID, room.ID, number, players[0].ID, room.ZhaJinHuaSettings.ForceOpenThreshold,
+			room.ZhaJinHuaSettings.ForceOpenFeePoints, actor.ParticipantID, now); err != nil {
+			return fmt.Errorf("insert zha jin hua hand: %w", err)
+		}
+		for index, participant := range players {
+			if _, err := tx.ExecContext(ctx, `
+				INSERT INTO score_zjh_hand_players (
+					hand_id, participant_id, position, status, contribution_points, is_winner
+				) VALUES (?, ?, ?, 'active', 0, 0)
+			`, handID, participant.ID, index+1); err != nil {
+				return fmt.Errorf("insert zha jin hua hand player: %w", err)
+			}
+		}
+		return nil
+	})
+}
+
+func (s *Service) SubmitZhaJinHuaAction(ctx context.Context, actor Actor, meta CommandMeta, handID string, input ZhaJinHuaActionInput) (RoomSnapshot, error) {
+	payload := struct {
+		HandID string `json:"handId"`
+		ZhaJinHuaActionInput
+	}{HandID: handID, ZhaJinHuaActionInput: input}
+	return s.mutate(ctx, actor, meta, "zjh.action", payload, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.Scene != SceneZhaJinHua || room.Status != RoomActive || room.CurrentZhaJinHuaHand == nil ||
+			room.CurrentZhaJinHuaHand.ID != handID {
+			return ErrInvalidZJHHand
+		}
+		hand := room.CurrentZhaJinHuaHand
+		if hand.CurrentTurnParticipantID != actor.ParticipantID {
+			return ErrNotYourTurn
+		}
+		actorPlayer := findZhaJinHuaPlayer(hand.Players, actor.ParticipantID)
+		if actorPlayer == nil || actorPlayer.Status != ZhaJinHuaPlayerActive {
+			return ErrForbidden
+		}
+		now := s.now().UTC().Unix()
+		var targetParticipantID, winnerParticipantID string
+		var actionPoints int64
+		switch input.ActionType {
+		case ZhaJinHuaActionRaise:
+			if input.Points <= 0 || input.Points > 2_147_483_647 || hand.PotPoints > 2_147_483_647-input.Points {
+				return fmt.Errorf("raise points: %w", ErrInvalidInput)
+			}
+			actionPoints = input.Points
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE score_zjh_hand_players
+				SET contribution_points = contribution_points + ?
+				WHERE hand_id = ? AND participant_id = ?
+			`, input.Points, handID, actor.ParticipantID); err != nil {
+				return fmt.Errorf("raise zha jin hua contribution: %w", err)
+			}
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE score_zjh_hands SET pot_points = pot_points + ? WHERE id = ?
+			`, input.Points, handID); err != nil {
+				return fmt.Errorf("raise zha jin hua pot: %w", err)
+			}
+		case ZhaJinHuaActionFold:
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE score_zjh_hand_players SET status = 'folded'
+				WHERE hand_id = ? AND participant_id = ?
+			`, handID, actor.ParticipantID); err != nil {
+				return fmt.Errorf("fold zha jin hua player: %w", err)
+			}
+		case ZhaJinHuaActionForceOpen:
+			targetParticipantID = strings.TrimSpace(input.TargetParticipantID)
+			winnerParticipantID = strings.TrimSpace(input.WinnerParticipantID)
+			targetPlayer := findZhaJinHuaPlayer(hand.Players, targetParticipantID)
+			activeCount := activeZhaJinHuaPlayerCount(hand.Players)
+			if activeCount > hand.ForceOpenThreshold {
+				return ErrForceOpenLocked
+			}
+			if targetParticipantID == "" || targetParticipantID == actor.ParticipantID ||
+				targetPlayer == nil || targetPlayer.Status != ZhaJinHuaPlayerActive {
+				return fmt.Errorf("force open target: %w", ErrInvalidInput)
+			}
+			if winnerParticipantID != actor.ParticipantID && winnerParticipantID != targetParticipantID {
+				return fmt.Errorf("force open winner: %w", ErrInvalidInput)
+			}
+			if hand.PotPoints > 2_147_483_647-hand.ForceOpenFeePoints {
+				return fmt.Errorf("force open fee: %w", ErrInvalidInput)
+			}
+			actionPoints = hand.ForceOpenFeePoints
+			loserParticipantID := targetParticipantID
+			if winnerParticipantID == targetParticipantID {
+				loserParticipantID = actor.ParticipantID
+			}
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE score_zjh_hand_players
+				SET contribution_points = contribution_points + ?
+				WHERE hand_id = ? AND participant_id = ?
+			`, hand.ForceOpenFeePoints, handID, actor.ParticipantID); err != nil {
+				return fmt.Errorf("charge zha jin hua force open fee: %w", err)
+			}
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE score_zjh_hand_players SET status = 'folded'
+				WHERE hand_id = ? AND participant_id = ?
+			`, handID, loserParticipantID); err != nil {
+				return fmt.Errorf("fold zha jin hua force open loser: %w", err)
+			}
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE score_zjh_hands SET pot_points = pot_points + ? WHERE id = ?
+			`, hand.ForceOpenFeePoints, handID); err != nil {
+				return fmt.Errorf("add zha jin hua force open fee: %w", err)
+			}
+		default:
+			return fmt.Errorf("zha jin hua action: %w", ErrInvalidInput)
+		}
+
+		var sequence int
+		if err := tx.QueryRowContext(ctx, `
+			SELECT COALESCE(MAX(sequence), 0) + 1 FROM score_zjh_actions WHERE hand_id = ?
+		`, handID).Scan(&sequence); err != nil {
+			return fmt.Errorf("find zha jin hua action sequence: %w", err)
+		}
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO score_zjh_actions (
+				hand_id, sequence, action_type, actor_participant_id,
+				target_participant_id, winner_participant_id, points, created_at
+			) VALUES (?, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), ?, ?)
+		`, handID, sequence, input.ActionType, actor.ParticipantID,
+			targetParticipantID, winnerParticipantID, actionPoints, now); err != nil {
+			return fmt.Errorf("insert zha jin hua action: %w", err)
+		}
+
+		var remaining int
+		if err := tx.QueryRowContext(ctx, `
+			SELECT COUNT(*) FROM score_zjh_hand_players WHERE hand_id = ? AND status = 'active'
+		`, handID).Scan(&remaining); err != nil {
+			return fmt.Errorf("count active zha jin hua players: %w", err)
+		}
+		if remaining == 1 {
+			var winnerID string
+			var potPoints int64
+			if err := tx.QueryRowContext(ctx, `
+				SELECT p.participant_id, h.pot_points
+				FROM score_zjh_hand_players p
+				JOIN score_zjh_hands h ON h.id = p.hand_id
+				WHERE p.hand_id = ? AND p.status = 'active'
+			`, handID).Scan(&winnerID, &potPoints); err != nil {
+				return fmt.Errorf("load zha jin hua winner: %w", err)
+			}
+			return finishZhaJinHuaHand(ctx, tx, handID, winnerID, potPoints, now)
+		}
+		nextParticipantID, err := nextZhaJinHuaParticipant(ctx, tx, handID, actor.ParticipantID)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `
+			UPDATE score_zjh_hands SET current_turn_participant_id = ? WHERE id = ?
+		`, nextParticipantID, handID); err != nil {
+			return fmt.Errorf("advance zha jin hua turn: %w", err)
+		}
+		return nil
+	})
+}
+
+func (s *Service) CancelZhaJinHuaHand(ctx context.Context, actor Actor, meta CommandMeta, handID string) (RoomSnapshot, error) {
+	return s.mutate(ctx, actor, meta, "zjh.hand.cancel", map[string]string{"handId": handID}, func(tx *sql.Tx, room RoomSnapshot) error {
+		if actor.Role != ParticipantHost {
+			return ErrForbidden
+		}
+		if room.Scene != SceneZhaJinHua || room.CurrentZhaJinHuaHand == nil || room.CurrentZhaJinHuaHand.ID != handID {
+			return ErrInvalidZJHHand
+		}
+		_, err := tx.ExecContext(ctx, `
+			UPDATE score_zjh_hands
+			SET status = 'cancelled', current_turn_participant_id = NULL, cancelled_at = ?
+			WHERE id = ?
+		`, s.now().UTC().Unix(), handID)
+		return err
+	})
+}
+
 func (s *Service) SubmitEntry(ctx context.Context, actor Actor, meta CommandMeta, roundID string, deltaPoints int64) (RoomSnapshot, error) {
 	payload := struct {
 		RoundID     string `json:"roundId"`
@@ -415,7 +686,7 @@ func (s *Service) SubmitEntry(ctx context.Context, actor Actor, meta CommandMeta
 		if deltaPoints < -2_147_483_648 || deltaPoints > 2_147_483_647 {
 			return ErrInvalidInput
 		}
-		if room.Status != RoomActive || room.CurrentRound == nil || room.CurrentRound.ID != roundID || room.CurrentRound.Kind != RoundNormal {
+		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound == nil || room.CurrentRound.ID != roundID || room.CurrentRound.Kind != RoundNormal {
 			return ErrInvalidState
 		}
 		if !containsString(room.CurrentRound.Roster, actor.ParticipantID) {
@@ -443,7 +714,7 @@ func (s *Service) SubmitEntry(ctx context.Context, actor Actor, meta CommandMeta
 
 func (s *Service) SubmitGifts(ctx context.Context, actor Actor, meta CommandMeta, input SubmitGiftsInput) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "gifts.submit", input, func(tx *sql.Tx, room RoomSnapshot) error {
-		if room.Status != RoomActive || room.CurrentRound != nil {
+		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound != nil {
 			return ErrInvalidState
 		}
 		active := make(map[string]bool, len(room.Participants))
@@ -506,7 +777,7 @@ func (s *Service) ReverseGiftBatch(ctx context.Context, actor Actor, meta Comman
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
-		if room.Status != RoomActive || room.CurrentRound != nil {
+		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound != nil {
 			return ErrInvalidState
 		}
 		batchID = strings.TrimSpace(batchID)
@@ -587,7 +858,7 @@ func (s *Service) ReverseGiftBatch(ctx context.Context, actor Actor, meta Comman
 func (s *Service) ConfirmRound(ctx context.Context, actor Actor, meta CommandMeta, roundID string) (RoomSnapshot, error) {
 	payload := map[string]string{"roundId": roundID}
 	return s.mutate(ctx, actor, meta, "round.confirm", payload, func(tx *sql.Tx, room RoomSnapshot) error {
-		if room.Status != RoomActive || room.CurrentRound == nil || room.CurrentRound.ID != roundID || room.CurrentRound.Status != RoundReview {
+		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound == nil || room.CurrentRound.ID != roundID || room.CurrentRound.Status != RoundReview {
 			return ErrInvalidState
 		}
 		if !containsString(room.CurrentRound.Roster, actor.ParticipantID) {
@@ -636,7 +907,7 @@ func (s *Service) CancelRound(ctx context.Context, actor Actor, meta CommandMeta
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
-		if room.Status != RoomActive || room.CurrentRound == nil || room.CurrentRound.ID != roundID {
+		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound == nil || room.CurrentRound.ID != roundID {
 			return ErrInvalidState
 		}
 		_, err := tx.ExecContext(ctx, `UPDATE score_rounds SET status = 'cancelled', cancelled_at = ? WHERE id = ?`, s.now().UTC().Unix(), roundID)
@@ -665,7 +936,7 @@ func (s *Service) RemoveParticipant(ctx context.Context, actor Actor, meta Comma
 		if room.Status != RoomWaiting && room.Status != RoomActive {
 			return ErrInvalidState
 		}
-		if room.CurrentRound != nil {
+		if room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil {
 			return ErrInvalidState
 		}
 		result, err := tx.ExecContext(ctx, `
@@ -692,7 +963,8 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
-		if room.Status != RoomActive || room.CurrentRound != nil || (len(room.Rounds) == 0 && len(room.GiftBatches) == 0) {
+		if room.Status != RoomActive || room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil ||
+			(len(room.Rounds) == 0 && len(room.GiftBatches) == 0 && len(room.ZhaJinHuaHands) == 0) {
 			return ErrInvalidState
 		}
 		centsPerPoint := input.CentsPerPoint
@@ -979,6 +1251,103 @@ func (s *Service) validateActor(ctx context.Context, q queryer, actor Actor, wri
 	}
 	if write && (roomStatus == string(RoomSettled) || roomStatus == string(RoomCancelled)) {
 		return ErrInvalidState
+	}
+	return nil
+}
+
+func findZhaJinHuaPlayer(players []ZhaJinHuaPlayer, participantID string) *ZhaJinHuaPlayer {
+	for index := range players {
+		if players[index].ParticipantID == participantID {
+			return &players[index]
+		}
+	}
+	return nil
+}
+
+func activeZhaJinHuaPlayerCount(players []ZhaJinHuaPlayer) int {
+	count := 0
+	for _, player := range players {
+		if player.Status == ZhaJinHuaPlayerActive {
+			count++
+		}
+	}
+	return count
+}
+
+func nextZhaJinHuaParticipant(ctx context.Context, tx *sql.Tx, handID, actorParticipantID string) (string, error) {
+	var actorPosition int
+	if err := tx.QueryRowContext(ctx, `
+		SELECT position FROM score_zjh_hand_players
+		WHERE hand_id = ? AND participant_id = ?
+	`, handID, actorParticipantID).Scan(&actorPosition); err != nil {
+		return "", fmt.Errorf("load zha jin hua actor position: %w", err)
+	}
+	var nextParticipantID string
+	if err := tx.QueryRowContext(ctx, `
+		SELECT participant_id
+		FROM score_zjh_hand_players
+		WHERE hand_id = ? AND status = 'active'
+		ORDER BY CASE WHEN position > ? THEN 0 ELSE 1 END, position
+		LIMIT 1
+	`, handID, actorPosition).Scan(&nextParticipantID); err != nil {
+		return "", fmt.Errorf("find next zha jin hua player: %w", err)
+	}
+	return nextParticipantID, nil
+}
+
+func finishZhaJinHuaHand(ctx context.Context, tx *sql.Tx, handID, winnerParticipantID string, potPoints, now int64) error {
+	rows, err := tx.QueryContext(ctx, `
+		SELECT participant_id, contribution_points
+		FROM score_zjh_hand_players WHERE hand_id = ?
+	`, handID)
+	if err != nil {
+		return fmt.Errorf("load zha jin hua contributions: %w", err)
+	}
+	type contribution struct {
+		participantID string
+		points        int64
+	}
+	contributions := make([]contribution, 0)
+	for rows.Next() {
+		var item contribution
+		if err := rows.Scan(&item.participantID, &item.points); err != nil {
+			_ = rows.Close()
+			return fmt.Errorf("scan zha jin hua contribution: %w", err)
+		}
+		contributions = append(contributions, item)
+	}
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return fmt.Errorf("iterate zha jin hua contributions: %w", err)
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close zha jin hua contributions: %w", err)
+	}
+	for _, item := range contributions {
+		delta := -item.points
+		if item.participantID == winnerParticipantID {
+			delta += potPoints
+		}
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO score_zjh_ledger (hand_id, participant_id, delta_points)
+			VALUES (?, ?, ?)
+		`, handID, item.participantID, delta); err != nil {
+			return fmt.Errorf("insert zha jin hua ledger: %w", err)
+		}
+	}
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE score_zjh_hand_players SET is_winner = CASE WHEN participant_id = ? THEN 1 ELSE 0 END
+		WHERE hand_id = ?
+	`, winnerParticipantID, handID); err != nil {
+		return fmt.Errorf("mark zha jin hua winner: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE score_zjh_hands
+		SET status = 'finished', current_turn_participant_id = NULL,
+			winner_participant_id = ?, finished_at = ?
+		WHERE id = ?
+	`, winnerParticipantID, now, handID); err != nil {
+		return fmt.Errorf("finish zha jin hua hand: %w", err)
 	}
 	return nil
 }

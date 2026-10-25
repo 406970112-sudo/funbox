@@ -9,6 +9,8 @@ import type {
   ScoreGiftAllocation,
   ScoreRealtimeStatus,
   ScoreRoomSnapshot,
+  SubmitZhaJinHuaActionInput,
+  UpdateZhaJinHuaSettingsInput,
 } from '@/types/card-score';
 
 type ErrorPayload = {
@@ -71,6 +73,53 @@ export async function listScoreRoomHistory(token: string) {
 
 export function startScoreRoom(credential: ScoreCredential, room: ScoreRoomSnapshot) {
   return mutateRoom(credential, room, '/start');
+}
+
+export async function startZhaJinHuaHand(credential: ScoreCredential, room: ScoreRoomSnapshot) {
+  const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/zha-jin-hua/hands`, credential, {
+    body: JSON.stringify(command(room)),
+    method: 'POST',
+  });
+  return response.room;
+}
+
+export async function submitZhaJinHuaAction(
+  credential: ScoreCredential,
+  room: ScoreRoomSnapshot,
+  handId: string,
+  input: SubmitZhaJinHuaActionInput,
+) {
+  const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/zha-jin-hua/hands/${encodeURIComponent(handId)}/actions`, credential, {
+    body: JSON.stringify({
+      ...command(room),
+      actionType: input.actionType,
+      points: Math.trunc(input.points ?? 0),
+      targetParticipantId: input.targetParticipantId,
+      winnerParticipantId: input.winnerParticipantId,
+    }),
+    method: 'POST',
+  });
+  return response.room;
+}
+
+export async function cancelZhaJinHuaHand(credential: ScoreCredential, room: ScoreRoomSnapshot, handId: string) {
+  const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/zha-jin-hua/hands/${encodeURIComponent(handId)}/cancel`, credential, {
+    body: JSON.stringify(command(room)),
+    method: 'POST',
+  });
+  return response.room;
+}
+
+export async function updateZhaJinHuaSettings(
+  credential: ScoreCredential,
+  room: ScoreRoomSnapshot,
+  input: UpdateZhaJinHuaSettingsInput,
+) {
+  const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/zha-jin-hua/settings`, credential, {
+    body: JSON.stringify({ ...command(room), ...input }),
+    method: 'PATCH',
+  });
+  return response.room;
 }
 
 export function cancelScoreRoom(credential: ScoreCredential, room: ScoreRoomSnapshot) {
@@ -227,10 +276,12 @@ export function getCardScoreErrorMessage(error: unknown) {
     score_action_id_reused: '操作标识已失效，请刷新后重试。',
     score_balances_not_zero: '所有玩家的本局分数合计必须为 0。',
     score_invite_invalid: '二维码不是有效的牌局邀请码，请让房主重新展示。',
+    score_force_open_locked: '当前剩余人数还不能强开，请完成本手或调整房主设置。',
     score_invalid_input: '请检查房间设置或分数输入。',
     score_invalid_state: '房间状态已经变化，请刷新后重试。',
     score_nickname_conflict: '这个昵称已被房间内其他玩家使用。',
     score_not_found: '房间或牌局不存在。',
+    score_not_your_turn: '还没轮到你行动，请等待当前玩家操作。',
     score_room_full: '房间人数已满。',
     score_version_conflict: '房间已有新操作，已为你刷新。',
     unauthorized: '身份已失效，请重新加入房间。',

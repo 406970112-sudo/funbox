@@ -42,6 +42,10 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/gifts/{batchID}/reverse", api.withScoreActor(api.withAPIPipeline(api.handleReverseScoreGiftBatch)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/rounds/{roundID}/confirm", api.withScoreActor(api.withAPIPipeline(api.handleConfirmScoreRound)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/rounds/{roundID}/cancel", api.withScoreActor(api.withAPIPipeline(api.handleCancelScoreRound)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/zha-jin-hua/hands", api.withScoreActor(api.withAPIPipeline(api.handleStartZhaJinHuaHand)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/zha-jin-hua/hands/{handID}/actions", api.withScoreActor(api.withAPIPipeline(api.handleSubmitZhaJinHuaAction)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/zha-jin-hua/hands/{handID}/cancel", api.withScoreActor(api.withAPIPipeline(api.handleCancelZhaJinHuaHand)))
+	mux.HandleFunc("PATCH /api/v1/score-rooms/{roomID}/zha-jin-hua/settings", api.withScoreActor(api.withAPIPipeline(api.handleUpdateZhaJinHuaSettings)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/participants/{participantID}/remove", api.withScoreActor(api.withAPIPipeline(api.handleRemoveScoreParticipant)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/settle", api.withScoreActor(api.withAPIPipeline(api.handleSettleScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/invite-token", api.withScoreActor(api.withAPIPipeline(api.handleScoreInviteToken)))
@@ -191,6 +195,55 @@ func (s *Server) handleSubmitScoreEntry(w http.ResponseWriter, r *http.Request) 
 	s.writeScoreMutation(w, http.StatusOK, room, err)
 }
 
+func (s *Server) handleStartZhaJinHuaHand(w http.ResponseWriter, r *http.Request) {
+	s.handleScoreCommand(w, r, http.StatusCreated, func(actor score.Actor, body scoreCommandBody) (score.RoomSnapshot, error) {
+		return s.scoreService.StartZhaJinHuaHand(r.Context(), actor, body.meta())
+	})
+}
+
+func (s *Server) handleSubmitZhaJinHuaAction(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		scoreCommandBody
+		ActionType          score.ZhaJinHuaActionType `json:"actionType"`
+		Points              int64                     `json:"points"`
+		TargetParticipantID string                    `json:"targetParticipantId"`
+		WinnerParticipantID string                    `json:"winnerParticipantId"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	actor, _ := scoreActorFromContext(r.Context())
+	room, err := s.scoreService.SubmitZhaJinHuaAction(r.Context(), actor, body.meta(), r.PathValue("handID"), score.ZhaJinHuaActionInput{
+		ActionType: body.ActionType, Points: body.Points,
+		TargetParticipantID: body.TargetParticipantID, WinnerParticipantID: body.WinnerParticipantID,
+	})
+	s.writeScoreMutation(w, http.StatusOK, room, err)
+}
+
+func (s *Server) handleCancelZhaJinHuaHand(w http.ResponseWriter, r *http.Request) {
+	s.handleScoreCommand(w, r, http.StatusOK, func(actor score.Actor, body scoreCommandBody) (score.RoomSnapshot, error) {
+		return s.scoreService.CancelZhaJinHuaHand(r.Context(), actor, body.meta(), r.PathValue("handID"))
+	})
+}
+
+func (s *Server) handleUpdateZhaJinHuaSettings(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		scoreCommandBody
+		ForceOpenThreshold int   `json:"forceOpenThreshold"`
+		ForceOpenFeePoints int64 `json:"forceOpenFeePoints"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	actor, _ := scoreActorFromContext(r.Context())
+	room, err := s.scoreService.UpdateZhaJinHuaSettings(r.Context(), actor, body.meta(), score.UpdateZhaJinHuaSettingsInput{
+		ForceOpenThreshold: body.ForceOpenThreshold, ForceOpenFeePoints: body.ForceOpenFeePoints,
+	})
+	s.writeScoreMutation(w, http.StatusOK, room, err)
+}
+
 func (s *Server) handleSubmitScoreGifts(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		scoreCommandBody
@@ -305,7 +358,7 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": "score_action_forbidden"})
 	case errors.Is(err, score.ErrInviteInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invite_invalid"})
-	case errors.Is(err, score.ErrRoomNotFound), errors.Is(err, score.ErrRoundNotFound), errors.Is(err, score.ErrGiftBatchNotFound), errors.Is(err, score.ErrParticipantMissing):
+	case errors.Is(err, score.ErrRoomNotFound), errors.Is(err, score.ErrRoundNotFound), errors.Is(err, score.ErrGiftBatchNotFound), errors.Is(err, score.ErrParticipantMissing), errors.Is(err, score.ErrInvalidZJHHand):
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "score_not_found"})
 	case errors.Is(err, score.ErrRoomFull):
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_room_full"})
@@ -319,6 +372,10 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invalid_input"})
 	case errors.Is(err, score.ErrBalancesNotZero):
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": "score_balances_not_zero"})
+	case errors.Is(err, score.ErrNotYourTurn):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_not_your_turn"})
+	case errors.Is(err, score.ErrForceOpenLocked):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_force_open_locked"})
 	default:
 		log.Printf("score request failed: %v", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "score_request_failed"})

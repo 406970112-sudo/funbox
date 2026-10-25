@@ -14,6 +14,11 @@ type ProgressEntry = {
   submitted: boolean;
 };
 
+type ZhaJinHuaRankableHand = {
+  forceOpenThreshold: number;
+  players: { status: 'active' | 'folded' }[];
+};
+
 export function formatScore(value: number) {
   const integer = Math.trunc(value);
   return integer > 0 ? `+${integer}` : String(integer);
@@ -91,6 +96,15 @@ export function roundProgress(entries: ProgressEntry[]) {
     if (entry.confirmed) confirmed += 1;
   }
   return { confirmed, submitted, total: entries.length };
+}
+
+export function zhaJinHuaActivePlayerCount(hand: ZhaJinHuaRankableHand) {
+  return hand.players.filter((player) => player.status === 'active').length;
+}
+
+export function canForceOpenZhaJinHua(hand: ZhaJinHuaRankableHand) {
+  const activePlayers = zhaJinHuaActivePlayerCount(hand);
+  return activePlayers >= 2 && activePlayers <= hand.forceOpenThreshold;
 }
 
 export function extractScoreInviteToken(value: string) {

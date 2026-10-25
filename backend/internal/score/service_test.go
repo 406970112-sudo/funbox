@@ -26,6 +26,11 @@ func TestOpenStoreCreatesScoreSchema(t *testing.T) {
 		"score_room_events",
 		"score_command_receipts",
 		"score_settlements",
+		"score_room_game_configs",
+		"score_zjh_hands",
+		"score_zjh_hand_players",
+		"score_zjh_actions",
+		"score_zjh_ledger",
 	} {
 		var name string
 		err := store.db.QueryRowContext(
@@ -188,6 +193,181 @@ func TestServiceDirectGiftBatchUsesDefaultRateAndSettlesWithOverride(t *testing.
 	}
 	if _, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle-again", settled), SettleRoomInput{CentsPerPoint: 50}); !errors.Is(err, ErrInvalidState) {
 		t.Fatalf("second settlement error = %v, want ErrInvalidState", err)
+	}
+}
+
+func TestServiceZhaJinHuaTurnPotForceOpenAndSettlement(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+
+	created, err := service.CreateRoom(ctx, "host-user", "Host", CreateRoomInput{
+		Name: "炸金花", MaxPlayers: 4, CentsPerPoint: 50, Scene: SceneZhaJinHua,
+		ForceOpenThreshold: 2, ForceOpenFeePoints: 5,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Room.Scene != SceneZhaJinHua || created.Room.ZhaJinHuaSettings.ForceOpenThreshold != 2 ||
+		created.Room.ZhaJinHuaSettings.ForceOpenFeePoints != 5 {
+		t.Fatalf("created zha jin hua room = %+v", created.Room)
+	}
+	guest, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	third, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Third"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err := service.StartRoom(ctx, created.Actor, commandMeta("start-room", third.Room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err = service.StartZhaJinHuaHand(ctx, created.Actor, commandMeta("start-hand", room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if room.CurrentZhaJinHuaHand == nil || len(room.CurrentZhaJinHuaHand.Players) != 3 ||
+		room.CurrentZhaJinHuaHand.CurrentTurnParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("started zha jin hua hand = %+v", room.CurrentZhaJinHuaHand)
+	}
+	handID := room.CurrentZhaJinHuaHand.ID
+	if _, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle-active-hand", room), SettleRoomInput{}); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("settle active zha jin hua hand error = %v, want ErrInvalidState", err)
+	}
+	if _, err := service.RemoveParticipant(ctx, created.Actor, commandMeta("remove-active-hand", room), guest.Actor.ParticipantID); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("remove during zha jin hua hand error = %v, want ErrInvalidState", err)
+	}
+	if _, err := service.SubmitGifts(ctx, created.Actor, commandMeta("generic-gift-in-zjh", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 1}},
+	}); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("generic gift in zha jin hua room error = %v, want ErrInvalidState", err)
+	}
+
+	if _, err := service.SubmitZhaJinHuaAction(ctx, guest.Actor, commandMeta("out-of-turn", room), handID, ZhaJinHuaActionInput{
+		ActionType: ZhaJinHuaActionRaise, Points: 1,
+	}); !errors.Is(err, ErrNotYourTurn) {
+		t.Fatalf("out-of-turn action error = %v, want ErrNotYourTurn", err)
+	}
+	if _, err := service.SubmitZhaJinHuaAction(ctx, created.Actor, commandMeta("locked-open", room), handID, ZhaJinHuaActionInput{
+		ActionType: ZhaJinHuaActionForceOpen, TargetParticipantID: guest.Actor.ParticipantID,
+		WinnerParticipantID: created.Actor.ParticipantID,
+	}); !errors.Is(err, ErrForceOpenLocked) {
+		t.Fatalf("locked force open error = %v, want ErrForceOpenLocked", err)
+	}
+
+	raiseMeta := commandMeta("host-raise", room)
+	room, err = service.SubmitZhaJinHuaAction(ctx, created.Actor, raiseMeta, handID, ZhaJinHuaActionInput{
+		ActionType: ZhaJinHuaActionRaise, Points: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repeated, err := service.SubmitZhaJinHuaAction(ctx, created.Actor, raiseMeta, handID, ZhaJinHuaActionInput{
+		ActionType: ZhaJinHuaActionRaise, Points: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repeated.Version != room.Version || repeated.CurrentZhaJinHuaHand.PotPoints != 10 {
+		t.Fatalf("repeated raise changed pot: first=%+v repeated=%+v", room.CurrentZhaJinHuaHand, repeated.CurrentZhaJinHuaHand)
+	}
+	room, err = service.SubmitZhaJinHuaAction(ctx, guest.Actor, commandMeta("guest-raise", room), handID, ZhaJinHuaActionInput{
+		ActionType: ZhaJinHuaActionRaise, Points: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err = service.SubmitZhaJinHuaAction(ctx, third.Actor, commandMeta("third-fold", room), handID, ZhaJinHuaActionInput{
+		ActionType: ZhaJinHuaActionFold,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if room.CurrentZhaJinHuaHand.PotPoints != 20 || room.CurrentZhaJinHuaHand.CurrentTurnParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("hand after fold = %+v", room.CurrentZhaJinHuaHand)
+	}
+	room, err = service.SubmitZhaJinHuaAction(ctx, created.Actor, commandMeta("host-force-open", room), handID, ZhaJinHuaActionInput{
+		ActionType: ZhaJinHuaActionForceOpen, TargetParticipantID: guest.Actor.ParticipantID,
+		WinnerParticipantID: created.Actor.ParticipantID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if room.CurrentZhaJinHuaHand != nil || len(room.ZhaJinHuaHands) != 1 ||
+		room.ZhaJinHuaHands[0].WinnerParticipantID != created.Actor.ParticipantID ||
+		room.ZhaJinHuaHands[0].PotPoints != 25 || len(room.ZhaJinHuaHands[0].Actions) != 4 {
+		t.Fatalf("finished zha jin hua hand = current:%+v history:%+v", room.CurrentZhaJinHuaHand, room.ZhaJinHuaHands)
+	}
+	totals := make(map[string]int64)
+	for _, participant := range room.Participants {
+		totals[participant.ID] = participant.TotalPoints
+	}
+	if totals[created.Actor.ParticipantID] != 10 || totals[guest.Actor.ParticipantID] != -10 || totals[third.Actor.ParticipantID] != 0 {
+		t.Fatalf("zha jin hua totals = %+v", totals)
+	}
+	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle", room), SettleRoomInput{CentsPerPoint: 50})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settled.Settlement == nil || len(settled.Settlement.Transfers) != 1 ||
+		settled.Settlement.Transfers[0].FromParticipantID != guest.Actor.ParticipantID ||
+		settled.Settlement.Transfers[0].ToParticipantID != created.Actor.ParticipantID ||
+		settled.Settlement.Transfers[0].AmountCents != 500 {
+		t.Fatalf("zha jin hua settlement = %+v", settled.Settlement)
+	}
+}
+
+func TestServiceZhaJinHuaSettingsApplyToNextHand(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+
+	created, err := service.CreateRoom(ctx, "host-user", "Host", CreateRoomInput{
+		Name: "炸金花", MaxPlayers: 3, Scene: SceneZhaJinHua,
+		ForceOpenThreshold: 2, ForceOpenFeePoints: 2,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	guest, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err := service.StartRoom(ctx, created.Actor, commandMeta("start-room", guest.Room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err = service.StartZhaJinHuaHand(ctx, created.Actor, commandMeta("start-hand", room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.UpdateZhaJinHuaSettings(ctx, created.Actor, commandMeta("update-during-hand", room), UpdateZhaJinHuaSettingsInput{
+		ForceOpenThreshold: 3, ForceOpenFeePoints: 7,
+	}); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("update during hand error = %v, want ErrInvalidState", err)
+	}
+	room, err = service.CancelZhaJinHuaHand(ctx, created.Actor, commandMeta("cancel-hand", room), room.CurrentZhaJinHuaHand.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.UpdateZhaJinHuaSettings(ctx, guest.Actor, commandMeta("guest-update", room), UpdateZhaJinHuaSettingsInput{
+		ForceOpenThreshold: 3, ForceOpenFeePoints: 7,
+	}); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("guest update error = %v, want ErrForbidden", err)
+	}
+	room, err = service.UpdateZhaJinHuaSettings(ctx, created.Actor, commandMeta("host-update", room), UpdateZhaJinHuaSettingsInput{
+		ForceOpenThreshold: 3, ForceOpenFeePoints: 7,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err = service.StartZhaJinHuaHand(ctx, created.Actor, commandMeta("next-hand", room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if room.CurrentZhaJinHuaHand == nil || room.CurrentZhaJinHuaHand.ForceOpenThreshold != 3 ||
+		room.CurrentZhaJinHuaHand.ForceOpenFeePoints != 7 {
+		t.Fatalf("next hand settings = %+v", room.CurrentZhaJinHuaHand)
 	}
 }
 
@@ -561,6 +741,9 @@ func TestLoadRoomSnapshotCountsOnlyConfirmedRounds(t *testing.T) {
 	}
 	if snapshot.ID != "room-1" || snapshot.Version != 7 || snapshot.EventSequence != 6 {
 		t.Fatalf("snapshot metadata = %+v", snapshot)
+	}
+	if snapshot.Scene != SceneGeneric {
+		t.Fatalf("legacy room scene = %q, want generic", snapshot.Scene)
 	}
 	if len(snapshot.Participants) != 2 {
 		t.Fatalf("participants = %+v", snapshot.Participants)

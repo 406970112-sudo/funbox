@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   buildScoreGiftAllocations,
+  canForceOpenZhaJinHua,
   formatCNY,
   formatRateInput,
   formatScore,
@@ -11,6 +12,7 @@ import {
   roundProgress,
   scoreDifference,
   sortedParticipants,
+  zhaJinHuaActivePlayerCount,
 } from '../lib/card-score.ts';
 
 test('score difference and money formatting stay integer-safe', () => {
@@ -64,6 +66,21 @@ test('round progress counts roster states', () => {
     { submitted: true, confirmed: false },
     { submitted: false, confirmed: false },
   ]), { confirmed: 1, submitted: 2, total: 3 });
+});
+
+test('zha jin hua force open follows remaining active player threshold', () => {
+  const hand = {
+    forceOpenThreshold: 2,
+    players: [
+      { status: 'active' },
+      { status: 'active' },
+      { status: 'folded' },
+    ],
+  };
+  assert.equal(zhaJinHuaActivePlayerCount(hand), 2);
+  assert.equal(canForceOpenZhaJinHua(hand), true);
+  assert.equal(canForceOpenZhaJinHua({ ...hand, players: hand.players.slice(0, 2).concat([{ status: 'active' }]) }), false);
+  assert.equal(canForceOpenZhaJinHua({ ...hand, players: [{ status: 'active' }, { status: 'folded' }] }), false);
 });
 
 test('invite token extraction supports deep links and raw tokens', () => {

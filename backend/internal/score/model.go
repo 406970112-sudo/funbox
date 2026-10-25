@@ -20,6 +20,13 @@ const (
 	RoomCancelled RoomStatus = "cancelled"
 )
 
+type ScoreScene string
+
+const (
+	SceneGeneric   ScoreScene = "generic"
+	SceneZhaJinHua ScoreScene = "zhajinhua"
+)
+
 type ParticipantRole string
 
 const (
@@ -52,28 +59,32 @@ const (
 )
 
 type RoomSnapshot struct {
-	ID                string        `json:"id"`
-	Code              string        `json:"code"`
-	HostUserID        string        `json:"hostUserId"`
-	Name              string        `json:"name"`
-	Mode              string        `json:"mode"`
-	Status            RoomStatus    `json:"status"`
-	MaxPlayers        int           `json:"maxPlayers"`
-	CentsPerPoint     int64         `json:"centsPerPoint"`
-	Version           int64         `json:"version"`
-	EventSequence     int64         `json:"eventSequence"`
-	CreatedAt         time.Time     `json:"createdAt"`
-	StartedAt         *time.Time    `json:"startedAt,omitempty"`
-	SettledAt         *time.Time    `json:"settledAt,omitempty"`
-	CancelledAt       *time.Time    `json:"cancelledAt,omitempty"`
-	ExpiresAt         time.Time     `json:"expiresAt"`
-	Participants      []Participant `json:"participants"`
-	CurrentRound      *Round        `json:"currentRound,omitempty"`
-	Rounds            []Round       `json:"rounds"`
-	GiftBatches       []GiftBatch   `json:"giftBatches"`
-	Settlement        *Settlement   `json:"settlement,omitempty"`
-	SelfParticipantID string        `json:"selfParticipantId,omitempty"`
-	InviteToken       string        `json:"inviteToken,omitempty"`
+	ID                   string            `json:"id"`
+	Code                 string            `json:"code"`
+	HostUserID           string            `json:"hostUserId"`
+	Name                 string            `json:"name"`
+	Mode                 string            `json:"mode"`
+	Scene                ScoreScene        `json:"scene"`
+	Status               RoomStatus        `json:"status"`
+	MaxPlayers           int               `json:"maxPlayers"`
+	CentsPerPoint        int64             `json:"centsPerPoint"`
+	Version              int64             `json:"version"`
+	EventSequence        int64             `json:"eventSequence"`
+	CreatedAt            time.Time         `json:"createdAt"`
+	StartedAt            *time.Time        `json:"startedAt,omitempty"`
+	SettledAt            *time.Time        `json:"settledAt,omitempty"`
+	CancelledAt          *time.Time        `json:"cancelledAt,omitempty"`
+	ExpiresAt            time.Time         `json:"expiresAt"`
+	Participants         []Participant     `json:"participants"`
+	CurrentRound         *Round            `json:"currentRound,omitempty"`
+	Rounds               []Round           `json:"rounds"`
+	GiftBatches          []GiftBatch       `json:"giftBatches"`
+	ZhaJinHuaSettings    ZhaJinHuaSettings `json:"zhaJinHuaSettings"`
+	CurrentZhaJinHuaHand *ZhaJinHuaHand    `json:"currentZhaJinHuaHand,omitempty"`
+	ZhaJinHuaHands       []ZhaJinHuaHand   `json:"zhaJinHuaHands"`
+	Settlement           *Settlement       `json:"settlement,omitempty"`
+	SelfParticipantID    string            `json:"selfParticipantId,omitempty"`
+	InviteToken          string            `json:"inviteToken,omitempty"`
 }
 
 type Participant struct {
@@ -131,6 +142,70 @@ type GiftItem struct {
 	FromParticipantID string `json:"fromParticipantId"`
 	ToParticipantID   string `json:"toParticipantId"`
 	Points            int64  `json:"points"`
+}
+
+type ZhaJinHuaSettings struct {
+	ForceOpenThreshold int   `json:"forceOpenThreshold"`
+	ForceOpenFeePoints int64 `json:"forceOpenFeePoints"`
+}
+
+type ZhaJinHuaHandStatus string
+
+const (
+	ZhaJinHuaHandActive    ZhaJinHuaHandStatus = "active"
+	ZhaJinHuaHandFinished  ZhaJinHuaHandStatus = "finished"
+	ZhaJinHuaHandCancelled ZhaJinHuaHandStatus = "cancelled"
+)
+
+type ZhaJinHuaPlayerStatus string
+
+const (
+	ZhaJinHuaPlayerActive ZhaJinHuaPlayerStatus = "active"
+	ZhaJinHuaPlayerFolded ZhaJinHuaPlayerStatus = "folded"
+)
+
+type ZhaJinHuaActionType string
+
+const (
+	ZhaJinHuaActionRaise     ZhaJinHuaActionType = "raise"
+	ZhaJinHuaActionFold      ZhaJinHuaActionType = "fold"
+	ZhaJinHuaActionForceOpen ZhaJinHuaActionType = "force_open"
+)
+
+type ZhaJinHuaHand struct {
+	ID                       string              `json:"id"`
+	RoomID                   string              `json:"roomId"`
+	Number                   int                 `json:"number"`
+	Status                   ZhaJinHuaHandStatus `json:"status"`
+	PotPoints                int64               `json:"potPoints"`
+	CurrentTurnParticipantID string              `json:"currentTurnParticipantId,omitempty"`
+	ForceOpenThreshold       int                 `json:"forceOpenThreshold"`
+	ForceOpenFeePoints       int64               `json:"forceOpenFeePoints"`
+	WinnerParticipantID      string              `json:"winnerParticipantId,omitempty"`
+	CreatedBy                string              `json:"createdBy"`
+	CreatedAt                time.Time           `json:"createdAt"`
+	FinishedAt               *time.Time          `json:"finishedAt,omitempty"`
+	CancelledAt              *time.Time          `json:"cancelledAt,omitempty"`
+	Players                  []ZhaJinHuaPlayer   `json:"players"`
+	Actions                  []ZhaJinHuaAction   `json:"actions"`
+}
+
+type ZhaJinHuaPlayer struct {
+	ParticipantID      string                `json:"participantId"`
+	Position           int                   `json:"position"`
+	Status             ZhaJinHuaPlayerStatus `json:"status"`
+	ContributionPoints int64                 `json:"contributionPoints"`
+	IsWinner           bool                  `json:"isWinner"`
+}
+
+type ZhaJinHuaAction struct {
+	Sequence            int                 `json:"sequence"`
+	ActionType          ZhaJinHuaActionType `json:"actionType"`
+	ActorParticipantID  string              `json:"actorParticipantId"`
+	TargetParticipantID string              `json:"targetParticipantId,omitempty"`
+	WinnerParticipantID string              `json:"winnerParticipantId,omitempty"`
+	Points              int64               `json:"points"`
+	CreatedAt           time.Time           `json:"createdAt"`
 }
 
 type Settlement struct {

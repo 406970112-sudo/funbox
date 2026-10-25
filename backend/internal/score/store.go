@@ -181,6 +181,65 @@ func (s *Store) migrate() error {
 			transfers_json TEXT NOT NULL,
 			created_at INTEGER NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS score_room_game_configs (
+				room_id TEXT PRIMARY KEY REFERENCES score_rooms(id) ON DELETE CASCADE,
+				scene TEXT NOT NULL CHECK(scene IN ('generic', 'zhajinhua')),
+				force_open_threshold INTEGER NOT NULL DEFAULT 0 CHECK(force_open_threshold BETWEEN 0 AND 8),
+				force_open_fee_points INTEGER NOT NULL DEFAULT 0 CHECK(force_open_fee_points BETWEEN 0 AND 2147483647),
+				updated_at INTEGER NOT NULL,
+				CHECK(
+					(scene = 'generic' AND force_open_threshold = 0 AND force_open_fee_points = 0)
+					OR
+					(scene = 'zhajinhua' AND force_open_threshold >= 2 AND force_open_fee_points >= 1)
+				)
+			)`,
+		`CREATE TABLE IF NOT EXISTS score_zjh_hands (
+				id TEXT PRIMARY KEY,
+				room_id TEXT NOT NULL REFERENCES score_rooms(id) ON DELETE CASCADE,
+				number INTEGER NOT NULL CHECK(number >= 1),
+				status TEXT NOT NULL CHECK(status IN ('active', 'finished', 'cancelled')),
+				pot_points INTEGER NOT NULL DEFAULT 0 CHECK(pot_points >= 0),
+				current_turn_participant_id TEXT REFERENCES score_participants(id),
+				force_open_threshold INTEGER NOT NULL CHECK(force_open_threshold BETWEEN 2 AND 8),
+				force_open_fee_points INTEGER NOT NULL CHECK(force_open_fee_points BETWEEN 1 AND 2147483647),
+				winner_participant_id TEXT REFERENCES score_participants(id),
+				created_by TEXT NOT NULL REFERENCES score_participants(id),
+				created_at INTEGER NOT NULL,
+				finished_at INTEGER,
+				cancelled_at INTEGER,
+				UNIQUE(room_id, number)
+			)`,
+		`CREATE INDEX IF NOT EXISTS idx_score_zjh_hands_room_number
+				ON score_zjh_hands(room_id, number DESC)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_score_zjh_hands_one_active
+				ON score_zjh_hands(room_id) WHERE status = 'active'`,
+		`CREATE TABLE IF NOT EXISTS score_zjh_hand_players (
+				hand_id TEXT NOT NULL REFERENCES score_zjh_hands(id) ON DELETE CASCADE,
+				participant_id TEXT NOT NULL REFERENCES score_participants(id),
+				position INTEGER NOT NULL CHECK(position >= 1),
+				status TEXT NOT NULL CHECK(status IN ('active', 'folded')),
+				contribution_points INTEGER NOT NULL DEFAULT 0 CHECK(contribution_points >= 0),
+				is_winner INTEGER NOT NULL DEFAULT 0 CHECK(is_winner IN (0, 1)),
+				PRIMARY KEY(hand_id, participant_id),
+				UNIQUE(hand_id, position)
+			)`,
+		`CREATE TABLE IF NOT EXISTS score_zjh_actions (
+				hand_id TEXT NOT NULL REFERENCES score_zjh_hands(id) ON DELETE CASCADE,
+				sequence INTEGER NOT NULL CHECK(sequence >= 1),
+				action_type TEXT NOT NULL CHECK(action_type IN ('raise', 'fold', 'force_open')),
+				actor_participant_id TEXT NOT NULL REFERENCES score_participants(id),
+				target_participant_id TEXT REFERENCES score_participants(id),
+				winner_participant_id TEXT REFERENCES score_participants(id),
+				points INTEGER NOT NULL DEFAULT 0 CHECK(points >= 0),
+				created_at INTEGER NOT NULL,
+				PRIMARY KEY(hand_id, sequence)
+			)`,
+		`CREATE TABLE IF NOT EXISTS score_zjh_ledger (
+				hand_id TEXT NOT NULL REFERENCES score_zjh_hands(id) ON DELETE CASCADE,
+				participant_id TEXT NOT NULL REFERENCES score_participants(id),
+				delta_points INTEGER NOT NULL,
+				PRIMARY KEY(hand_id, participant_id)
+			)`,
 	}
 
 	for _, statement := range statements {
@@ -223,6 +282,13 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 	snapshot.CancelledAt = nullableUnixTime(cancelledAt)
 	snapshot.ExpiresAt = time.Unix(expiresAt, 0).UTC()
 
+	scene, settings, err := loadRoomGameConfig(ctx, q, roomID)
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
+	snapshot.Scene = scene
+	snapshot.ZhaJinHuaSettings = settings
+
 	participants, err := loadParticipants(ctx, q, roomID, snapshot.CentsPerPoint)
 	if err != nil {
 		return RoomSnapshot{}, err
@@ -253,7 +319,33 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 		return RoomSnapshot{}, err
 	}
 	snapshot.GiftBatches = giftBatches
+	currentZhaJinHuaHand, err := loadCurrentZhaJinHuaHand(ctx, q, roomID)
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
+	snapshot.CurrentZhaJinHuaHand = currentZhaJinHuaHand
+	zhaJinHuaHands, err := loadFinishedZhaJinHuaHands(ctx, q, roomID)
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
+	snapshot.ZhaJinHuaHands = zhaJinHuaHands
 	return snapshot, nil
+}
+
+func loadRoomGameConfig(ctx context.Context, q queryer, roomID string) (ScoreScene, ZhaJinHuaSettings, error) {
+	var scene string
+	var settings ZhaJinHuaSettings
+	err := q.QueryRowContext(ctx, `
+		SELECT scene, force_open_threshold, force_open_fee_points
+		FROM score_room_game_configs WHERE room_id = ?
+	`, roomID).Scan(&scene, &settings.ForceOpenThreshold, &settings.ForceOpenFeePoints)
+	if errors.Is(err, sql.ErrNoRows) {
+		return SceneGeneric, ZhaJinHuaSettings{}, nil
+	}
+	if err != nil {
+		return "", ZhaJinHuaSettings{}, fmt.Errorf("load score room game config: %w", err)
+	}
+	return ScoreScene(scene), settings, nil
 }
 
 func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoint int64) ([]Participant, error) {
@@ -269,6 +361,11 @@ func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoi
 				END)
 				FROM score_point_gifts pg
 				WHERE pg.from_participant_id = p.id OR pg.to_participant_id = p.id
+			), 0) +
+			COALESCE((
+				SELECT SUM(z.delta_points)
+				FROM score_zjh_ledger z
+				WHERE z.participant_id = p.id
 			), 0)
 		FROM score_participants p
 		LEFT JOIN score_entries e ON e.participant_id = p.id
@@ -490,6 +587,142 @@ func loadRoundEntries(ctx context.Context, q queryer, round *Round) error {
 			round.ConfirmedCount++
 		}
 		round.Entries = append(round.Entries, entry)
+	}
+	return nil
+}
+
+func loadCurrentZhaJinHuaHand(ctx context.Context, q queryer, roomID string) (*ZhaJinHuaHand, error) {
+	hands, err := loadZhaJinHuaHandList(ctx, q, roomID, `status = 'active'`)
+	if err != nil {
+		return nil, err
+	}
+	if len(hands) == 0 {
+		return nil, nil
+	}
+	return &hands[0], nil
+}
+
+func loadFinishedZhaJinHuaHands(ctx context.Context, q queryer, roomID string) ([]ZhaJinHuaHand, error) {
+	return loadZhaJinHuaHandList(ctx, q, roomID, `status = 'finished'`)
+}
+
+func loadZhaJinHuaHandList(ctx context.Context, q queryer, roomID, statusPredicate string) ([]ZhaJinHuaHand, error) {
+	rows, err := q.QueryContext(ctx, `
+		SELECT id, room_id, number, status, pot_points, current_turn_participant_id,
+			force_open_threshold, force_open_fee_points, winner_participant_id,
+			created_by, created_at, finished_at, cancelled_at
+		FROM score_zjh_hands
+		WHERE room_id = ? AND `+statusPredicate+`
+		ORDER BY number DESC
+	`, roomID)
+	if err != nil {
+		return nil, fmt.Errorf("load zha jin hua hands: %w", err)
+	}
+	hands := make([]ZhaJinHuaHand, 0)
+	for rows.Next() {
+		var hand ZhaJinHuaHand
+		var status string
+		var currentTurn, winner sql.NullString
+		var createdAt int64
+		var finishedAt, cancelledAt sql.NullInt64
+		if err := rows.Scan(
+			&hand.ID, &hand.RoomID, &hand.Number, &status, &hand.PotPoints,
+			&currentTurn, &hand.ForceOpenThreshold, &hand.ForceOpenFeePoints,
+			&winner, &hand.CreatedBy, &createdAt, &finishedAt, &cancelledAt,
+		); err != nil {
+			_ = rows.Close()
+			return nil, fmt.Errorf("scan zha jin hua hand: %w", err)
+		}
+		hand.Status = ZhaJinHuaHandStatus(status)
+		hand.CurrentTurnParticipantID = currentTurn.String
+		hand.WinnerParticipantID = winner.String
+		hand.CreatedAt = time.Unix(createdAt, 0).UTC()
+		hand.FinishedAt = nullableUnixTime(finishedAt)
+		hand.CancelledAt = nullableUnixTime(cancelledAt)
+		hands = append(hands, hand)
+	}
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return nil, fmt.Errorf("iterate zha jin hua hands: %w", err)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("close zha jin hua hands: %w", err)
+	}
+	for index := range hands {
+		if err := loadZhaJinHuaPlayers(ctx, q, &hands[index]); err != nil {
+			return nil, err
+		}
+		if err := loadZhaJinHuaActions(ctx, q, &hands[index]); err != nil {
+			return nil, err
+		}
+	}
+	return hands, nil
+}
+
+func loadZhaJinHuaPlayers(ctx context.Context, q queryer, hand *ZhaJinHuaHand) error {
+	rows, err := q.QueryContext(ctx, `
+		SELECT participant_id, position, status, contribution_points, is_winner
+		FROM score_zjh_hand_players
+		WHERE hand_id = ?
+		ORDER BY position
+	`, hand.ID)
+	if err != nil {
+		return fmt.Errorf("load zha jin hua players: %w", err)
+	}
+	defer rows.Close()
+	hand.Players = make([]ZhaJinHuaPlayer, 0)
+	for rows.Next() {
+		var player ZhaJinHuaPlayer
+		var status string
+		var isWinner int
+		if err := rows.Scan(
+			&player.ParticipantID, &player.Position, &status,
+			&player.ContributionPoints, &isWinner,
+		); err != nil {
+			return fmt.Errorf("scan zha jin hua player: %w", err)
+		}
+		player.Status = ZhaJinHuaPlayerStatus(status)
+		player.IsWinner = isWinner == 1
+		hand.Players = append(hand.Players, player)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate zha jin hua players: %w", err)
+	}
+	return nil
+}
+
+func loadZhaJinHuaActions(ctx context.Context, q queryer, hand *ZhaJinHuaHand) error {
+	rows, err := q.QueryContext(ctx, `
+		SELECT sequence, action_type, actor_participant_id, target_participant_id,
+			winner_participant_id, points, created_at
+		FROM score_zjh_actions
+		WHERE hand_id = ?
+		ORDER BY sequence
+	`, hand.ID)
+	if err != nil {
+		return fmt.Errorf("load zha jin hua actions: %w", err)
+	}
+	defer rows.Close()
+	hand.Actions = make([]ZhaJinHuaAction, 0)
+	for rows.Next() {
+		var action ZhaJinHuaAction
+		var actionType string
+		var target, winner sql.NullString
+		var createdAt int64
+		if err := rows.Scan(
+			&action.Sequence, &actionType, &action.ActorParticipantID, &target,
+			&winner, &action.Points, &createdAt,
+		); err != nil {
+			return fmt.Errorf("scan zha jin hua action: %w", err)
+		}
+		action.ActionType = ZhaJinHuaActionType(actionType)
+		action.TargetParticipantID = target.String
+		action.WinnerParticipantID = winner.String
+		action.CreatedAt = time.Unix(createdAt, 0).UTC()
+		hand.Actions = append(hand.Actions, action)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate zha jin hua actions: %w", err)
 	}
 	return nil
 }

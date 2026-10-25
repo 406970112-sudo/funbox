@@ -3,6 +3,10 @@ export type ScoreRoundStatus = 'collecting' | 'review' | 'confirmed' | 'cancelle
 export type ScoreRoundKind = 'normal' | 'reversal';
 export type ScoreParticipantRole = 'host' | 'guest';
 export type ScoreParticipantStatus = 'active' | 'removed' | 'left';
+export type ScoreScene = 'generic' | 'zhajinhua';
+export type ZhaJinHuaHandStatus = 'active' | 'finished' | 'cancelled';
+export type ZhaJinHuaPlayerStatus = 'active' | 'folded';
+export type ZhaJinHuaActionType = 'raise' | 'fold' | 'force_open';
 
 export type ScoreParticipant = {
   id: string;
@@ -79,12 +83,54 @@ export type ScoreSettlement = {
   createdAt: string;
 };
 
+export type ZhaJinHuaSettings = {
+  forceOpenThreshold: number;
+  forceOpenFeePoints: number;
+};
+
+export type ZhaJinHuaPlayer = {
+  participantId: string;
+  position: number;
+  status: ZhaJinHuaPlayerStatus;
+  contributionPoints: number;
+  isWinner: boolean;
+};
+
+export type ZhaJinHuaAction = {
+  sequence: number;
+  actionType: ZhaJinHuaActionType;
+  actorParticipantId: string;
+  targetParticipantId?: string;
+  winnerParticipantId?: string;
+  points: number;
+  createdAt: string;
+};
+
+export type ZhaJinHuaHand = {
+  id: string;
+  roomId: string;
+  number: number;
+  status: ZhaJinHuaHandStatus;
+  potPoints: number;
+  currentTurnParticipantId?: string;
+  forceOpenThreshold: number;
+  forceOpenFeePoints: number;
+  winnerParticipantId?: string;
+  createdBy: string;
+  createdAt: string;
+  finishedAt?: string;
+  cancelledAt?: string;
+  players: ZhaJinHuaPlayer[];
+  actions: ZhaJinHuaAction[];
+};
+
 export type ScoreRoomSnapshot = {
   id: string;
   code: string;
   hostUserId: string;
   name: string;
   mode: 'generic';
+  scene: ScoreScene;
   status: ScoreRoomStatus;
   maxPlayers: number;
   centsPerPoint: number;
@@ -99,6 +145,9 @@ export type ScoreRoomSnapshot = {
   currentRound?: ScoreRound;
   rounds: ScoreRound[];
   giftBatches: ScoreGiftBatch[];
+  zhaJinHuaSettings: ZhaJinHuaSettings;
+  currentZhaJinHuaHand?: ZhaJinHuaHand;
+  zhaJinHuaHands: ZhaJinHuaHand[];
   settlement?: ScoreSettlement;
   selfParticipantId?: string;
   inviteToken?: string;
@@ -127,6 +176,18 @@ export type CreateScoreRoomInput = {
   name: string;
   maxPlayers: number;
   centsPerPoint?: number;
+  scene?: ScoreScene;
+  forceOpenThreshold?: number;
+  forceOpenFeePoints?: number;
+};
+
+export type UpdateZhaJinHuaSettingsInput = ZhaJinHuaSettings;
+
+export type SubmitZhaJinHuaActionInput = {
+  actionType: ZhaJinHuaActionType;
+  points?: number;
+  targetParticipantId?: string;
+  winnerParticipantId?: string;
 };
 
 export type ScoreGiftAllocation = {

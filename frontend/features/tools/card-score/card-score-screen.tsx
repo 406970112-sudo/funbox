@@ -12,6 +12,7 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 import {
   cancelScoreRoom,
   cancelScoreRound,
+  cancelZhaJinHuaHand,
   CardScoreAPIError,
   confirmScoreRound,
   connectScoreRealtime,
@@ -26,11 +27,15 @@ import {
   settleScoreRoom,
   startScoreRoom,
   startScoreRound,
+  startZhaJinHuaHand,
   submitScoreGifts,
   submitScoreEntry,
+  submitZhaJinHuaAction,
+  updateZhaJinHuaSettings,
 } from '@/lib/card-score-api';
 import {
   buildScoreGiftAllocations,
+  canForceOpenZhaJinHua,
   formatCNY,
   formatRateInput,
   formatScore,
@@ -38,6 +43,7 @@ import {
   roundProgress,
   scoreDifference,
   sortedParticipants,
+  zhaJinHuaActivePlayerCount,
 } from '@/lib/card-score';
 import {
   getStoredScoreSession,
@@ -47,10 +53,14 @@ import {
 import { MobileScreen } from '@/shared/ui/mobile-screen';
 import { SurfaceCard } from '@/shared/ui/surface-card';
 import type {
+  CreateScoreRoomInput,
   ScoreCredential,
   ScoreParticipant,
   ScoreRealtimeStatus,
   ScoreRoomSnapshot,
+  ScoreScene,
+  ZhaJinHuaHand,
+  ZhaJinHuaSettings,
 } from '@/types/card-score';
 
 import {
@@ -94,7 +104,13 @@ export function CardScoreScreen() {
   }, [accessToken, guestToken]);
 
   const applyRoom = useCallback((next: ScoreRoomSnapshot) => {
-    const normalized = { ...next, giftBatches: next.giftBatches ?? [] };
+    const normalized = {
+      ...next,
+      scene: next.scene ?? 'generic',
+      giftBatches: next.giftBatches ?? [],
+      zhaJinHuaSettings: next.zhaJinHuaSettings ?? { forceOpenFeePoints: 0, forceOpenThreshold: 0 },
+      zhaJinHuaHands: next.zhaJinHuaHands ?? [],
+    };
     roomVersionRef.current = normalized.version;
     setRoom((current) => ({
       ...normalized,
@@ -288,7 +304,7 @@ export function CardScoreScreen() {
           initialInvite={params.invite}
           mode={mode}
           onBack={() => router.back()}
-          onCreate={async (name, maxPlayers) => {
+          onCreate={async (input) => {
             if (!accessToken) {
               router.push({ pathname: '/auth', params: { returnTo: '/tools/card-score' } });
               return;
@@ -296,7 +312,7 @@ export function CardScoreScreen() {
             setBusy(true);
             setFeedback(null);
             try {
-              const result = await createScoreRoom(accessToken, { name, maxPlayers });
+              const result = await createScoreRoom(accessToken, input);
               setGuestToken(null);
               applyRoom({ ...result.room, inviteToken: result.inviteToken });
             } catch (error) {
@@ -372,7 +388,7 @@ function LandingView({
   initialInvite?: string;
   mode: LandingMode;
   onBack: () => void;
-  onCreate: (name: string, maxPlayers: number) => Promise<void>;
+  onCreate: (input: CreateScoreRoomInput) => Promise<void>;
   onJoin: (code: string, displayName: string, inviteToken?: string) => Promise<void>;
   onModeChange: (mode: LandingMode) => void;
   onOpenHistory: (room: ScoreRoomSnapshot) => void;
@@ -381,8 +397,17 @@ function LandingView({
   const { colors } = useAppTheme();
   const [name, setName] = useState('今晚牌局');
   const [maxPlayers, setMaxPlayers] = useState(4);
+  const [scene, setScene] = useState<ScoreScene>('generic');
+  const [forceOpenThreshold, setForceOpenThreshold] = useState(2);
+  const [forceOpenFee, setForceOpenFee] = useState('1');
   const [code, setCode] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const forceOpenFeePoints = Number.parseInt(forceOpenFee, 10);
+  const validForceOpenFee = Number.isSafeInteger(forceOpenFeePoints) && forceOpenFeePoints > 0 && forceOpenFeePoints <= 2_147_483_647;
+
+  useEffect(() => {
+    if (forceOpenThreshold > maxPlayers) setForceOpenThreshold(maxPlayers);
+  }, [forceOpenThreshold, maxPlayers]);
 
   return (
     <MobileScreen contentContainerStyle={styles.pageContent}>
@@ -402,6 +427,14 @@ function LandingView({
           <>
             <ScoreField icon="cards-playing-outline" label="牌局名称" maxLength={40} onChangeText={setName} placeholder="例如：周五牌局" value={name} />
             <View style={styles.settingBlock}>
+              <ThemedText style={[styles.fieldCaption, { color: colors.mutedText }]}>记分场景</ThemedText>
+              <SegmentedControl
+                onChange={(value) => setScene(value as ScoreScene)}
+                options={[{ label: '通用记分', value: 'generic' }, { label: '炸金花', value: 'zhajinhua' }]}
+                value={scene}
+              />
+            </View>
+            <View style={styles.settingBlock}>
               <ThemedText style={[styles.fieldCaption, { color: colors.mutedText }]}>玩家人数上限</ThemedText>
               <View style={styles.optionRow}>
                 {PLAYER_LIMITS.map((limit) => (
@@ -409,12 +442,42 @@ function LandingView({
                 ))}
               </View>
             </View>
-            <FeedbackBanner message="默认 1 分 = 1 元；打完后由房主在结算时调整比例。" tone="info" />
+            {scene === 'zhajinhua' ? (
+              <>
+                <View style={styles.settingBlock}>
+                  <ThemedText style={[styles.fieldCaption, { color: colors.mutedText }]}>剩多少人可强开</ThemedText>
+                  <View style={styles.optionRow}>
+                    {Array.from({ length: Math.max(0, maxPlayers - 1) }, (_, index) => index + 2).map((limit) => (
+                      <OptionButton key={limit} label={`${limit} 人`} selected={forceOpenThreshold === limit} onPress={() => setForceOpenThreshold(limit)} />
+                    ))}
+                  </View>
+                </View>
+                <ScoreField
+                  icon="cash-fast"
+                  keyboardType="number-pad"
+                  label="强开牌费（积分）"
+                  maxLength={10}
+                  onChangeText={(value) => setForceOpenFee(value.replace(/\D/g, ''))}
+                  placeholder="1"
+                  value={forceOpenFee}
+                />
+                <FeedbackBanner message="不自动发牌或判牌；桌上强开后，由发起人选择本手结果，App 只记录牌费、奖池和积分。" tone="info" />
+              </>
+            ) : (
+              <FeedbackBanner message="默认 1 分 = 1 元；打完后由房主在结算时调整比例。" tone="info" />
+            )}
             <PrimaryAction
               icon={accessToken ? 'plus-circle-outline' : 'login'}
               label={accessToken ? '创建记分房间' : '登录后创建'}
               loading={busy}
-              onPress={() => void onCreate(name.trim(), maxPlayers)}
+              disabled={scene === 'zhajinhua' && !validForceOpenFee}
+              onPress={() => void onCreate({
+                name: name.trim(),
+                maxPlayers,
+                scene,
+                forceOpenFeePoints: scene === 'zhajinhua' ? forceOpenFeePoints : undefined,
+                forceOpenThreshold: scene === 'zhajinhua' ? forceOpenThreshold : undefined,
+              })}
             />
           </>
         ) : (
@@ -523,6 +586,7 @@ function WaitingRoom({ activeCount, busy, credential, host, onMutation, room }: 
   room: ScoreRoomSnapshot;
 }) {
   const { colors } = useAppTheme();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const inviteURL = room.inviteToken ? Linking.createURL('/tools/card-score', { queryParams: { invite: room.inviteToken } }) : '';
   return (
     <>
@@ -535,6 +599,11 @@ function WaitingRoom({ activeCount, busy, credential, host, onMutation, room }: 
           {inviteURL ? <View style={styles.qrShell}><QRCode backgroundColor="#ffffff" color="#18233d" quietZone={4} size={148} value={inviteURL} /></View> : null}
         </View>
         <ThemedText style={[styles.ruleText, { color: colors.mutedText }]}>暂按每分 {formatCNY(room.centsPerPoint)} · 结算时可调整 · {activeCount}/{room.maxPlayers} 人</ThemedText>
+        {room.scene === 'zhajinhua' ? (
+          <ThemedText style={[styles.ruleText, { color: colors.mutedText }]}>
+            炸金花规则：剩 {room.zhaJinHuaSettings.forceOpenThreshold} 人可强开 · 牌费 {room.zhaJinHuaSettings.forceOpenFeePoints} 分
+          </ThemedText>
+        ) : null}
         <Pressable accessibilityRole="button" onPress={() => void Clipboard.setStringAsync(room.code)} style={({ pressed }) => [styles.copyButton, { backgroundColor: colors.surfaceMuted }, pressed && styles.pressed]}>
           <MaterialCommunityIcons name="content-copy" color={colors.primary} size={18} />
           <ThemedText style={[styles.copyText, { color: colors.primary }]}>复制房间码</ThemedText>
@@ -558,10 +627,24 @@ function WaitingRoom({ activeCount, busy, credential, host, onMutation, room }: 
       </View>
       {host ? (
         <View style={styles.actionStack}>
+          {room.scene === 'zhajinhua' ? (
+            <PrimaryAction icon="tune-variant" label="修改强开规则" onPress={() => setSettingsOpen(true)} tone="neutral" />
+          ) : null}
           <PrimaryAction disabled={activeCount < 2} icon="play-circle-outline" label={activeCount < 2 ? '至少 2 人才能开始' : '开始牌局'} loading={busy} onPress={() => void onMutation(() => startScoreRoom(credential, room))} />
           <PrimaryAction icon="close-circle-outline" label="取消房间" onPress={() => void onMutation(() => cancelScoreRoom(credential, room))} tone="neutral" />
         </View>
       ) : <FeedbackBanner message="已加入，等待房主开始牌局。" tone="info" />}
+      <ZhaJinHuaSettingsModal
+        busy={busy}
+        onClose={() => setSettingsOpen(false)}
+        onSave={async (settings) => {
+          const success = await onMutation(() => updateZhaJinHuaSettings(credential, room, settings), '强开规则已更新。');
+          if (success) setSettingsOpen(false);
+          return success;
+        }}
+        room={room}
+        visible={settingsOpen}
+      />
     </>
   );
 }
@@ -576,7 +659,8 @@ function ActiveRoom({ busy, credential, host, onMutation, room, self }: {
 }) {
   const [settleOpen, setSettleOpen] = useState(false);
   const ranking = sortedParticipants(room.participants);
-  const hasRecords = room.rounds.length > 0 || room.giftBatches.length > 0;
+  const hasRecords = room.rounds.length > 0 || room.giftBatches.length > 0 || room.zhaJinHuaHands.length > 0;
+  const hasActiveHand = Boolean(room.currentRound || room.currentZhaJinHuaHand);
   return (
     <>
       <View style={styles.section}>
@@ -585,16 +669,18 @@ function ActiveRoom({ busy, credential, host, onMutation, room, self }: {
           {ranking.map((participant, index) => <ParticipantScoreRow key={participant.id} participant={participant} rank={index + 1} />)}
         </SurfaceCard>
       </View>
-      {room.currentRound ? (
+      {room.scene === 'zhajinhua' ? (
+        <ZhaJinHuaRoom busy={busy} credential={credential} host={host} onMutation={onMutation} room={room} self={self} />
+      ) : room.currentRound ? (
         <CurrentRound busy={busy} credential={credential} host={host} onMutation={onMutation} room={room} self={self} />
       ) : (
         <GivePointsPanel busy={busy} credential={credential} onMutation={onMutation} room={room} self={self} />
       )}
-      {!room.currentRound && host && hasRecords ? (
+      {!hasActiveHand && host && hasRecords ? (
         <PrimaryAction icon="flag-checkered" label="结束并结算" onPress={() => setSettleOpen(true)} tone="neutral" />
       ) : null}
-      {room.giftBatches.length ? <GiftHistory credential={credential} host={host} onMutation={onMutation} room={room} /> : null}
-      {room.rounds.length ? <RoundHistory credential={credential} host={host} onMutation={onMutation} room={room} /> : null}
+      {room.scene === 'generic' && room.giftBatches.length ? <GiftHistory credential={credential} host={host} onMutation={onMutation} room={room} /> : null}
+      {room.scene === 'generic' && room.rounds.length ? <RoundHistory credential={credential} host={host} onMutation={onMutation} room={room} /> : null}
       <SettlementRateModal
         busy={busy}
         onClose={() => setSettleOpen(false)}
@@ -607,6 +693,296 @@ function ActiveRoom({ busy, credential, host, onMutation, room, self }: {
         visible={settleOpen}
       />
     </>
+  );
+}
+
+function ZhaJinHuaRoom({ busy, credential, host, onMutation, room, self }: {
+  busy: boolean;
+  credential: ScoreCredential;
+  host: boolean;
+  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
+  room: ScoreRoomSnapshot;
+  self?: ScoreParticipant;
+}) {
+  const { colors } = useAppTheme();
+  const hand = room.currentZhaJinHuaHand;
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [raiseDraft, setRaiseDraft] = useState('');
+  const [targetId, setTargetId] = useState('');
+  const [winnerId, setWinnerId] = useState('');
+  const selfPlayer = hand?.players.find((player) => player.participantId === self?.id);
+  const activeOpponents = hand?.players.filter((player) => player.status === 'active' && player.participantId !== self?.id) ?? [];
+  const activeOpponentIds = activeOpponents.map((player) => player.participantId).join('|');
+  const activeCount = hand ? zhaJinHuaActivePlayerCount(hand) : 0;
+  const isMyTurn = Boolean(hand && self && hand.currentTurnParticipantId === self.id);
+  const forceOpenAvailable = Boolean(hand && canForceOpenZhaJinHua(hand));
+  const raisePoints = Number.parseInt(raiseDraft, 10);
+  const validRaise = Number.isSafeInteger(raisePoints) && raisePoints > 0 && raisePoints <= 2_147_483_647;
+
+  useEffect(() => {
+    setRaiseDraft('');
+    const available = activeOpponentIds ? activeOpponentIds.split('|') : [];
+    setTargetId(available[0] ?? '');
+    setWinnerId('');
+  }, [activeOpponentIds, hand?.currentTurnParticipantId, hand?.id]);
+
+  useEffect(() => {
+    if (winnerId && winnerId !== self?.id && winnerId !== targetId) setWinnerId('');
+  }, [self?.id, targetId, winnerId]);
+
+  async function startHand() {
+    await onMutation(() => startZhaJinHuaHand(credential, room), '新一手已开始。');
+  }
+
+  async function raise() {
+    if (!hand || !validRaise) return;
+    const success = await onMutation(
+      () => submitZhaJinHuaAction(credential, room, hand.id, { actionType: 'raise', points: raisePoints }),
+      `已加注 ${raisePoints} 分，积分进入公共池。`,
+    );
+    if (success) setRaiseDraft('');
+  }
+
+  async function fold() {
+    if (!hand) return;
+    await onMutation(() => submitZhaJinHuaAction(credential, room, hand.id, { actionType: 'fold' }), '你已弃牌。');
+  }
+
+  async function forceOpen() {
+    if (!hand || !targetId || !winnerId) return;
+    await onMutation(
+      () => submitZhaJinHuaAction(credential, room, hand.id, {
+        actionType: 'force_open',
+        targetParticipantId: targetId,
+        winnerParticipantId: winnerId,
+      }),
+      `已支付 ${hand.forceOpenFeePoints} 分牌费并记录强开结果。`,
+    );
+  }
+
+  const settingsModal = (
+    <ZhaJinHuaSettingsModal
+      busy={busy}
+      onClose={() => setSettingsOpen(false)}
+      onSave={async (settings) => {
+        const success = await onMutation(() => updateZhaJinHuaSettings(credential, room, settings), '强开规则已更新，将于下一手生效。');
+        if (success) setSettingsOpen(false);
+        return success;
+      }}
+      room={room}
+      visible={settingsOpen}
+    />
+  );
+
+  if (!hand) {
+    return (
+      <>
+        <View style={styles.section}>
+          <SectionTitle action="下一手生效" title="炸金花规则" />
+          <SurfaceCard style={styles.roundPanel}>
+            <View style={[styles.zjhRuleRow, { borderBottomColor: colors.line }]}>
+              <View>
+                <ThemedText style={styles.entryName}>强开人数</ThemedText>
+                <ThemedText style={[styles.entryState, { color: colors.mutedText }]}>本手未弃牌人数不超过该值时可强开</ThemedText>
+              </View>
+              <ThemedText style={[styles.entryScore, { color: colors.primary }]}>{room.zhaJinHuaSettings.forceOpenThreshold} 人</ThemedText>
+            </View>
+            <View style={[styles.zjhRuleRow, { borderBottomColor: colors.line }]}>
+              <View>
+                <ThemedText style={styles.entryName}>强开牌费</ThemedText>
+                <ThemedText style={[styles.entryState, { color: colors.mutedText }]}>发起人支付，计入当前公共积分池</ThemedText>
+              </View>
+              <ThemedText style={[styles.entryScore, { color: colors.primary }]}>{room.zhaJinHuaSettings.forceOpenFeePoints} 分</ThemedText>
+            </View>
+            {host ? <PrimaryAction icon="tune-variant" label="修改强开规则" onPress={() => setSettingsOpen(true)} tone="neutral" /> : null}
+            {host ? <PrimaryAction icon="cards-playing-outline" label="开始新一手" loading={busy} onPress={() => void startHand()} /> : <FeedbackBanner message="等待房主开始新一手。" tone="info" />}
+          </SurfaceCard>
+        </View>
+        <ZhaJinHuaHistory room={room} />
+        {settingsModal}
+      </>
+    );
+  }
+
+  const participants = new Map(room.participants.map((participant) => [participant.id, participant]));
+  const currentTurnName = participants.get(hand.currentTurnParticipantId ?? '')?.displayName ?? '玩家';
+  return (
+    <>
+      <View style={styles.section}>
+        <SectionTitle action={`第 ${hand.number} 手`} title="公共积分池" />
+        <SurfaceCard style={styles.zjhPotCard}>
+          <ThemedText style={[styles.zjhPotLabel, { color: colors.mutedText }]}>当前池内</ThemedText>
+          <ThemedText style={[styles.zjhPotValue, { color: colors.accent }]}>{hand.potPoints} 分</ThemedText>
+          <ThemedText style={[styles.ruleText, { color: colors.mutedText }]}>
+            {activeCount} 人在局 · 剩 {hand.forceOpenThreshold} 人可强开 · 牌费 {hand.forceOpenFeePoints} 分
+          </ThemedText>
+        </SurfaceCard>
+      </View>
+      <View style={styles.section}>
+        <SectionTitle action={`轮到 ${currentTurnName}`} title="本手玩家" />
+        <SurfaceCard style={styles.listCard}>
+          {hand.players.map((player) => {
+            const participant = participants.get(player.participantId);
+            if (!participant) return null;
+            const isTurn = player.participantId === hand.currentTurnParticipantId;
+            return (
+              <View key={player.participantId} style={[styles.entryRow, { borderBottomColor: colors.line }]}>
+                <View style={styles.entryNameBlock}>
+                  <ThemedText style={[styles.entryName, { color: isTurn ? colors.primary : colors.text }]}>{participant.displayName}</ThemedText>
+                  <ThemedText style={[styles.entryState, { color: player.status === 'folded' ? colors.mutedText : isTurn ? colors.primary : colors.mutedText }]}>
+                    {player.status === 'folded' ? '已弃牌' : isTurn ? '当前行动' : '在局'} · 已投入 {player.contributionPoints} 分
+                  </ThemedText>
+                </View>
+                <ThemedText style={[styles.entryScore, { color: player.status === 'folded' ? colors.mutedText : colors.text }]}>{player.contributionPoints}</ThemedText>
+              </View>
+            );
+          })}
+        </SurfaceCard>
+      </View>
+      <View style={styles.section}>
+        <SectionTitle action={isMyTurn ? '你的回合' : '等待中'} title="本手行动" />
+        <SurfaceCard style={styles.roundPanel}>
+          {isMyTurn ? (
+            <>
+              <ScoreField
+                icon="plus-circle-outline"
+                keyboardType="number-pad"
+                label="本次加注积分"
+                maxLength={10}
+                onChangeText={(value) => setRaiseDraft(value.replace(/\D/g, ''))}
+                placeholder="输入正整数"
+                value={raiseDraft}
+              />
+              <View style={styles.actionStack}>
+                <PrimaryAction disabled={!validRaise} icon="trending-up" label={validRaise ? `加注 ${raisePoints} 分` : '输入加注积分'} loading={busy} onPress={() => void raise()} />
+                <PrimaryAction icon="card-remove-outline" label="弃牌" onPress={() => void fold()} tone="neutral" />
+              </View>
+              {forceOpenAvailable ? (
+                <View style={[styles.zjhForceOpen, { borderColor: colors.line }]}>
+                  <View>
+                    <ThemedText style={styles.entryName}>强开对手</ThemedText>
+                    <ThemedText style={[styles.entryState, { color: colors.mutedText }]}>支付 {hand.forceOpenFeePoints} 分牌费后，现场看牌并选择结果。</ThemedText>
+                  </View>
+                  {activeOpponents.length > 1 ? (
+                    <View style={styles.optionRow}>
+                      {activeOpponents.map((player) => (
+                        <OptionButton
+                          key={player.participantId}
+                          label={participants.get(player.participantId)?.displayName ?? '玩家'}
+                          onPress={() => setTargetId(player.participantId)}
+                          selected={targetId === player.participantId}
+                        />
+                      ))}
+                    </View>
+                  ) : null}
+                  <View style={styles.optionRow}>
+                    {self ? <OptionButton label="我赢" onPress={() => setWinnerId(self.id)} selected={winnerId === self.id} /> : null}
+                    {targetId ? <OptionButton label="对方赢" onPress={() => setWinnerId(targetId)} selected={winnerId === targetId} /> : null}
+                  </View>
+                  <PrimaryAction disabled={!targetId || !winnerId} icon="cards-outline" label={`支付 ${hand.forceOpenFeePoints} 分并强开`} loading={busy} onPress={() => void forceOpen()} tone="primary" />
+                </View>
+              ) : (
+                <FeedbackBanner message={`还剩 ${activeCount} 人，强开将在不超过 ${hand.forceOpenThreshold} 人时开放。`} tone="info" />
+              )}
+            </>
+          ) : (
+            <FeedbackBanner message={`等待 ${currentTurnName} 行动。`} tone="info" />
+          )}
+          {host ? (
+            <PrimaryAction icon="close-circle-outline" label="取消本手" onPress={() => void onMutation(() => cancelZhaJinHuaHand(credential, room, hand.id), '本手已取消，未记入积分。')} tone="neutral" />
+          ) : null}
+        </SurfaceCard>
+      </View>
+      <ZhaJinHuaHistory room={room} />
+      {settingsModal}
+    </>
+  );
+}
+
+function ZhaJinHuaHistory({ room }: { room: ScoreRoomSnapshot }) {
+  const { colors } = useAppTheme();
+  const [expanded, setExpanded] = useState(false);
+  const hands = expanded ? room.zhaJinHuaHands : room.zhaJinHuaHands.slice(0, 3);
+  const participants = new Map(room.participants.map((participant) => [participant.id, participant]));
+  if (!room.zhaJinHuaHands.length) return null;
+  return (
+    <View style={styles.section}>
+      <SectionTitle action={`${room.zhaJinHuaHands.length} 手`} title="炸金花记录" />
+      <SurfaceCard style={styles.listCard}>
+        {hands.map((hand) => (
+          <View key={hand.id} style={[styles.roundHistoryRow, { borderBottomColor: colors.line }]}>
+            <View style={[styles.roundNumber, { backgroundColor: colors.surfaceMuted }]}><ThemedText style={[styles.roundNumberText, { color: colors.primary }]}>{hand.number}</ThemedText></View>
+            <View style={styles.roundHistoryCopy}>
+              <ThemedText style={styles.roundHistoryTitle}>第 {hand.number} 手 · {participants.get(hand.winnerParticipantId ?? '')?.displayName ?? '玩家'}获胜</ThemedText>
+              <ThemedText style={[styles.roundHistoryMeta, { color: colors.mutedText }]}>奖池 {hand.potPoints} 分 · {hand.actions.length} 次操作</ThemedText>
+            </View>
+          </View>
+        ))}
+        {room.zhaJinHuaHands.length > 3 ? (
+          <Pressable onPress={() => setExpanded((value) => !value)} style={styles.expandButton}><ThemedText style={[styles.expandText, { color: colors.primary }]}>{expanded ? '收起记录' : '查看全部记录'}</ThemedText><MaterialCommunityIcons name={expanded ? 'chevron-up' : 'chevron-down'} color={colors.primary} size={19} /></Pressable>
+        ) : null}
+      </SurfaceCard>
+    </View>
+  );
+}
+
+function ZhaJinHuaSettingsModal({ busy, onClose, onSave, room, visible }: {
+  busy: boolean;
+  onClose: () => void;
+  onSave: (settings: ZhaJinHuaSettings) => Promise<boolean>;
+  room: ScoreRoomSnapshot;
+  visible: boolean;
+}) {
+  const { colors } = useAppTheme();
+  const [threshold, setThreshold] = useState(room.zhaJinHuaSettings.forceOpenThreshold || 2);
+  const [feeDraft, setFeeDraft] = useState(String(room.zhaJinHuaSettings.forceOpenFeePoints || 1));
+  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    if (!visible) return;
+    setThreshold(room.zhaJinHuaSettings.forceOpenThreshold || 2);
+    setFeeDraft(String(room.zhaJinHuaSettings.forceOpenFeePoints || 1));
+  }, [room.zhaJinHuaSettings.forceOpenFeePoints, room.zhaJinHuaSettings.forceOpenThreshold, visible]);
+  const feePoints = Number.parseInt(feeDraft, 10);
+  const valid = Number.isSafeInteger(feePoints) && feePoints > 0 && threshold >= 2 && threshold <= room.maxPlayers;
+
+  async function save() {
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    try {
+      await onSave({ forceOpenThreshold: threshold, forceOpenFeePoints: feePoints });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
+      <View style={styles.modalBackdrop}>
+        <SurfaceCard style={styles.settlementModal}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalTitleBlock}>
+              <ThemedText style={styles.settlementTitle}>强开规则</ThemedText>
+              <ThemedText style={[styles.settlementMeta, { color: colors.mutedText }]}>修改后从下一手开始使用。</ThemedText>
+            </View>
+            <Pressable accessibilityLabel="关闭强开规则设置" onPress={onClose} style={styles.rowIconButton}><MaterialCommunityIcons name="close" color={colors.mutedText} size={21} /></Pressable>
+          </View>
+          <View style={styles.settingBlock}>
+            <ThemedText style={[styles.fieldCaption, { color: colors.mutedText }]}>剩多少人可强开</ThemedText>
+            <View style={styles.optionRow}>
+              {Array.from({ length: Math.max(0, room.maxPlayers - 1) }, (_, index) => index + 2).map((limit) => (
+                <OptionButton key={limit} label={`${limit} 人`} selected={threshold === limit} onPress={() => setThreshold(limit)} />
+              ))}
+            </View>
+          </View>
+          <ScoreField icon="cash-fast" keyboardType="number-pad" label="强开牌费（积分）" maxLength={10} onChangeText={(value) => setFeeDraft(value.replace(/\D/g, ''))} placeholder="1" value={feeDraft} />
+          {!valid ? <FeedbackBanner message="请输入大于 0 的牌费积分，并选择有效人数。" /> : null}
+          <View style={styles.modalActions}>
+            <PrimaryAction disabled={!valid} icon="content-save-outline" label="保存规则" loading={busy || submitting} onPress={() => void save()} />
+            <PrimaryAction icon="close" label="取消" onPress={onClose} tone="neutral" />
+          </View>
+        </SurfaceCard>
+      </View>
+    </Modal>
   );
 }
 
@@ -901,7 +1277,7 @@ function SettledRoom({ room }: { room: ScoreRoomSnapshot }) {
   const { colors } = useAppTheme();
   const ranking = sortedParticipants(room.participants);
   const participants = new Map(room.participants.map((participant) => [participant.id, participant]));
-  const recordCount = room.giftBatches.length + room.rounds.length;
+  const recordCount = room.giftBatches.length + room.rounds.length + room.zhaJinHuaHands.length;
   return (
     <>
       <SurfaceCard style={styles.settlementHero}>
@@ -923,6 +1299,7 @@ function SettledRoom({ room }: { room: ScoreRoomSnapshot }) {
       </View>
       {room.giftBatches.length ? <GiftHistory room={room} /> : null}
       {room.rounds.length ? <RoundHistory room={room} /> : null}
+      {room.zhaJinHuaHands.length ? <ZhaJinHuaHistory room={room} /> : null}
     </>
   );
 }
@@ -1024,4 +1401,9 @@ const styles = StyleSheet.create({
   settlementMeta: { fontSize: 12 },
   settlementModal: { gap: 16, maxHeight: '92%', padding: 18 },
   settlementTitle: { fontSize: 22, fontWeight: '900' },
+  zjhForceOpen: { borderTopWidth: 1, gap: 12, paddingTop: 14 },
+  zjhPotCard: { alignItems: 'center', gap: 7, padding: 22 },
+  zjhPotLabel: { fontSize: 12, fontWeight: '800' },
+  zjhPotValue: { fontSize: 36, fontWeight: '900' },
+  zjhRuleRow: { alignItems: 'center', borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 58, paddingVertical: 8 },
 });
