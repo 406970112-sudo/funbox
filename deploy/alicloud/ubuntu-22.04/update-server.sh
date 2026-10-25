@@ -21,9 +21,11 @@ FETCH_RETRY_DELAY_SECONDS="${FETCH_RETRY_DELAY_SECONDS:-15}"
 BACKUP_ROOT="${BACKUP_ROOT:-/srv/deploy-backups}"
 CORS_ALLOWED_ORIGINS_OVERRIDE="${CORS_ALLOWED_ORIGINS_OVERRIDE:-}"
 STOCK_ALERT_SENDKEY_OVERRIDE="${STOCK_ALERT_SENDKEY_OVERRIDE:-}"
+PUBLIC_FRONTEND_URL="${PUBLIC_FRONTEND_URL:-}"
 DEFAULT_PERSISTENT_ROOT="/srv/my-first-expo-app-shared"
 PERSISTENT_ROOT="${PERSISTENT_ROOT:-}"
 PREVIOUS_APP_ROOT="${PREVIOUS_APP_ROOT:-/srv/my-first-expo-app-current}"
+WEB_BUILD_TIME="${WEB_BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%S.000Z)}"
 
 FRONTEND_ROOT="$APP_ROOT/frontend"
 BACKEND_ROOT="$APP_ROOT/backend"
@@ -51,6 +53,42 @@ LEGACY_FEEDBACK_STORAGE_DIR=""
 
 log() {
   printf '\n[%s] %s\n' "$(date '+%F %T')" "$*"
+}
+
+publish_file_atomically() {
+  local source="$1"
+  local target="$2"
+  local temporary="${target}.next.$$"
+
+  install -m 644 "$source" "$temporary"
+  mv -f "$temporary" "$target"
+}
+
+resolve_expected_web_commit() {
+  if [[ -n "$DEPLOY_COMMIT" ]]; then
+    printf '%s\n' "$DEPLOY_COMMIT"
+    return
+  fi
+
+  if git -C "$APP_ROOT" rev-parse HEAD >/dev/null 2>&1; then
+    git -C "$APP_ROOT" rev-parse HEAD
+    return
+  fi
+
+  printf '%s\n' "unknown"
+}
+
+verify_public_frontend_version() {
+  local expected_commit="$1"
+
+  if [[ -z "$PUBLIC_FRONTEND_URL" ]]; then
+    log "Skipping public frontend version check because PUBLIC_FRONTEND_URL is not set"
+    return
+  fi
+
+  log "Verifying public frontend version at $PUBLIC_FRONTEND_URL"
+  node "$APP_ROOT/deploy/alicloud/ubuntu-22.04/verify-production-release.mjs" \
+    "$PUBLIC_FRONTEND_URL" "$expected_commit" 15 2000
 }
 
 set_env_value() {
@@ -647,6 +685,7 @@ configure_nginx_frontend_delivery() {
   local add_index_cache
   local add_expo_cache
   local add_assets_cache
+  local add_version_cache
 
   shopt -s nullglob
   for conf in /etc/nginx/sites-available/*.conf; do
@@ -679,6 +718,11 @@ configure_nginx_frontend_delivery() {
     else
       add_assets_cache=1
     fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]*=[[:space:]]*/version\.json[[:space:]]*\{' "$conf"; then
+      add_version_cache=0
+    else
+      add_version_cache=1
+    fi
 
     tmp="$(mktemp)"
     awk \
@@ -686,7 +730,8 @@ configure_nginx_frontend_delivery() {
       -v add_gzip_types="$add_gzip_types" \
       -v add_index_cache="$add_index_cache" \
       -v add_expo_cache="$add_expo_cache" \
-      -v add_assets_cache="$add_assets_cache" '
+      -v add_assets_cache="$add_assets_cache" \
+      -v add_version_cache="$add_version_cache" '
       /^[[:space:]]*server[[:space:]]*\{/ {
         print
         if (add_gzip == 1) {
@@ -702,8 +747,19 @@ configure_nginx_frontend_delivery() {
       /^[[:space:]]*location[[:space:]]+\/[[:space:]]*\{/ && !inserted {
         if (add_index_cache == 1) {
           print "  location = /index.html {"
-          print "    add_header Cache-Control \"no-cache\" always;"
+          print "    add_header Cache-Control \"no-store, no-cache, must-revalidate\" always;"
+          print "    add_header Pragma \"no-cache\" always;"
+          print "    add_header Expires \"0\" always;"
           print "    add_header Permissions-Policy \"camera=(self), microphone=(self)\" always;"
+          print "    try_files $uri =404;"
+          print "  }"
+          print ""
+        }
+        if (add_version_cache == 1) {
+          print "  location = /version.json {"
+          print "    add_header Cache-Control \"no-store, no-cache, must-revalidate\" always;"
+          print "    add_header Pragma \"no-cache\" always;"
+          print "    add_header Expires \"0\" always;"
           print "    try_files $uri =404;"
           print "  }"
           print ""
@@ -723,6 +779,12 @@ configure_nginx_frontend_delivery() {
           print ""
         }
         inserted = 1
+      }
+      /^[[:space:]]*add_header[[:space:]]+Cache-Control[[:space:]]+"no-cache"[[:space:]]+always;[[:space:]]*$/ {
+        print "    add_header Cache-Control \"no-store, no-cache, must-revalidate\" always;"
+        print "    add_header Pragma \"no-cache\" always;"
+        print "    add_header Expires \"0\" always;"
+        next
       }
       { print }
     ' "$conf" >"$tmp"
@@ -831,6 +893,7 @@ pushd "$FRONTEND_ROOT" >/dev/null
 # cannot consume reliably on the server. Do not modify the checked-in lock file.
 # react-tetris exposes React-independent models but declares peers only through React 18.
 npm install --package-lock=false --legacy-peer-deps --registry="$NPM_REGISTRY"
+export DEPLOY_COMMIT WEB_BUILD_TIME
 npm run build:web
 popd >/dev/null
 
@@ -873,9 +936,11 @@ mkdir -p "$BACKEND_ROOT/bin"
 install -m 755 "$BUILD_API" "$BACKEND_ROOT/bin/api"
 mkdir -p "$WEB_ROOT"
 # Keep previous hashed bundles for clients that still hold an older index.html.
-# The current entry document is always replaced, while content-addressed files
-# remain available until the retention cleanup below.
-rsync -a "$FRONTEND_ROOT/dist/" "$WEB_ROOT/"
+# Publish all assets first, then atomically replace HTML, and publish the version
+# marker last. This prevents an entry document from pointing at unavailable chunks.
+rsync -a --exclude='/index.html' --exclude='/version.json' "$FRONTEND_ROOT/dist/" "$WEB_ROOT/"
+publish_file_atomically "$FRONTEND_ROOT/dist/index.html" "$WEB_ROOT/index.html"
+publish_file_atomically "$FRONTEND_ROOT/dist/version.json" "$WEB_ROOT/version.json"
 find "$WEB_ROOT/_expo/static" "$WEB_ROOT/assets" -type f -mtime +30 -delete 2>/dev/null || true
 find "$WEB_ROOT/_expo/static" "$WEB_ROOT/assets" -type d -empty -delete 2>/dev/null || true
 mkdir -p "$EMAIL_AGENT_WEB_ROOT"
@@ -894,6 +959,7 @@ nginx -t
 systemctl reload nginx
 
 log "Verifying deployment"
+expected_web_commit="$(resolve_expected_web_commit)"
 systemctl is-active --quiet nginx
 runuser -u "$APP_USER" -- test -w "$AUDIO_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$AVATAR_STORAGE_DIR"
@@ -913,6 +979,11 @@ curl --fail --silent --show-error --head http://127.0.0.1/tools/live-stream-capt
 for route in tools messages profile; do
   curl --fail --location --silent --show-error --head "http://127.0.0.1/$route" >/dev/null
 done
+curl --fail --silent --show-error "http://127.0.0.1/version.json?__deploy_check=$(date +%s)" \
+  | grep -F "\"commit\":\"$expected_web_commit\"" >/dev/null
+curl --fail --silent --show-error "http://127.0.0.1/?__deploy_check=$(date +%s)" \
+  | grep -F "name=\"funbox-build-commit\" content=\"$expected_web_commit\"" >/dev/null
+verify_public_frontend_version "$expected_web_commit"
 
 DEPLOY_STARTED=false
 trap - ERR

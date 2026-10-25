@@ -122,7 +122,8 @@ curl https://api.example.com/healthz
 代码合并并推送到远程 `main` 后，在云服务器执行：
 
 ```bash
-sudo bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04/update-server.sh
+sudo PUBLIC_FRONTEND_URL=https://www.xwhub.cn \
+  bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04/update-server.sh
 ```
 
 脚本会自动：
@@ -134,8 +135,9 @@ sudo bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04/update-server.sh
 5. 共享数据库不存在时，从 `PREVIOUS_APP_ROOT` 自动迁移上一版数据库、当前头像和 JWT 密钥。
 6. 重新构建 Expo Web 前端和 Go 后端。
 7. 将当前线上前端和后端二进制备份到 `/srv/deploy-backups/`。
-8. 发布新版本、重启后端、重载 Nginx 并执行健康检查。
-9. 发布失败时自动恢复本次备份。
+8. 先发布哈希资源，再原子替换 HTML，最后发布版本标记并重载 Nginx。
+9. 校验本机与公网 HTML、`version.json` 和入口资源都属于本次提交。
+10. 发布失败时自动恢复本次备份。
 
 查看最近一次发布结果：
 
@@ -145,6 +147,18 @@ git log -1 --oneline
 systemctl status my-first-expo-app-backend --no-pager
 curl http://127.0.0.1:3000/healthz
 curl -I http://127.0.0.1/tools/live-stream-capture
+curl https://www.xwhub.cn/version.json
+```
+
+`version.json` 和 HTML 中的 `funbox-build-commit` 应等于本次部署提交。HTML 与 `version.json` 使用 `Cache-Control: no-store`，带哈希的 `/_expo/static/` 和 `/assets/` 资源继续使用长期 immutable 缓存。
+
+生产页面会在加载、前台恢复和低频轮询时检查新版本。发现新版本后，前台停留时显示更新提示；切回前台或发生路由切换时自动重新加载。`verify-production-release.mjs` 可在本地手动检查线上版本：
+
+```bash
+node deploy/alicloud/ubuntu-22.04/verify-production-release.mjs \
+  https://www.xwhub.cn \
+  "$(git rev-parse HEAD)"
+node --test deploy/alicloud/ubuntu-22.04/tests/verify-production-release.test.mjs
 ```
 
 如需更新其它分支：

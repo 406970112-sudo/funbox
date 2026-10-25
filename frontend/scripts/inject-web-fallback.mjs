@@ -1,12 +1,35 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const distDirectory = path.resolve(process.argv[2] ?? 'dist');
 const indexPath = path.join(distDirectory, 'index.html');
-const indexHtml = fs.readFileSync(indexPath, 'utf8');
+const versionPath = path.join(distDirectory, 'version.json');
+const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+let indexHtml = fs.readFileSync(indexPath, 'utf8');
 const marker = 'data-funbox-boot-fallback';
+const buildMetadataPattern = /[ \t]*<!-- funbox-build-metadata:start -->[\s\S]*?<!-- funbox-build-metadata:end -->[ \t]*\n?/g;
+
+const buildInfo = createBuildInfo();
+
+indexHtml = indexHtml.replace(buildMetadataPattern, '');
+const buildMetadata = `<!-- funbox-build-metadata:start -->
+  <meta name="funbox-build-id" content="${escapeHtml(buildInfo.buildId)}" data-funbox-build-metadata />
+  <meta name="funbox-build-commit" content="${escapeHtml(buildInfo.commit)}" data-funbox-build-metadata />
+  <meta name="funbox-build-time" content="${escapeHtml(buildInfo.builtAt)}" data-funbox-build-metadata />
+  <!-- funbox-build-metadata:end -->
+`;
+
+if (!indexHtml.includes('</head>')) {
+  throw new Error('Unable to find the closing head tag in dist/index.html');
+}
+
+indexHtml = indexHtml.replace('</head>', `${buildMetadata}</head>`);
+fs.writeFileSync(versionPath, `${JSON.stringify(buildInfo)}\n`);
 
 if (indexHtml.includes(marker)) {
+  fs.writeFileSync(indexPath, indexHtml);
   process.exit(0);
 }
 
@@ -58,3 +81,59 @@ const fallback = `
     </script>`;
 
 fs.writeFileSync(indexPath, indexHtml.replace(emptyRoot, `<div id="root">${fallback}</div>`));
+
+function createBuildInfo() {
+  const configuredCommit = normaliseString(process.env.DEPLOY_COMMIT);
+  const configuredBuiltAt = normaliseString(process.env.WEB_BUILD_TIME);
+  const commit = configuredCommit ?? resolveGitCommit();
+  const isDirty = !configuredCommit && isGitWorktreeDirty();
+  const builtAt = configuredBuiltAt ?? new Date().toISOString();
+
+  if (!Number.isFinite(Date.parse(builtAt))) {
+    throw new Error(`Invalid WEB_BUILD_TIME value: ${builtAt}`);
+  }
+
+  return {
+    buildId: `${commit}${isDirty ? '-dirty' : ''}`,
+    commit,
+    builtAt,
+  };
+}
+
+function resolveGitCommit() {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: frontendRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
+function isGitWorktreeDirty() {
+  try {
+    return Boolean(
+      execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+        cwd: frontendRoot,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim(),
+    );
+  } catch {
+    return false;
+  }
+}
+
+function normaliseString(value) {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}

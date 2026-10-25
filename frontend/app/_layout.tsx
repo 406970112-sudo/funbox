@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { DevSettings, Platform } from 'react-native';
 import 'react-native-reanimated';
 
+import { WebBuildUpdateBanner } from '@/components/web-build-update-banner';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { FeatureAccessProvider } from '@/features/access/feature-access-provider';
 import { BlogProvider } from '@/features/blog/blog-provider';
@@ -92,6 +93,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <WebBuildUpdateBanner pathname={pathname} />
       <AuthProvider>
         <FeatureAccessProvider>
           <SocialProvider>

@@ -59,8 +59,17 @@ server {
     text/javascript;
 
   location = /index.html {
-    add_header Cache-Control "no-cache" always;
+    add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
     add_header Permissions-Policy "camera=(self), microphone=(self)" always;
+    try_files \$uri =404;
+  }
+
+  location = /version.json {
+    add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
     try_files \$uri =404;
   }
 
@@ -157,7 +166,9 @@ server {
   }
 
   location / {
-    add_header Cache-Control "no-cache" always;
+    add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
     add_header Permissions-Policy "camera=(self), microphone=(self)" always;
     try_files \$uri \$uri/ /index.html;
   }
