@@ -78,6 +78,11 @@ async function verifyRelease() {
     }
     checkedAssets.add(assetUrl);
 
+    const parsedAssetUrl = new URL(assetUrl);
+    if (parsedAssetUrl.pathname.endsWith('.js') && parsedAssetUrl.searchParams.get('v') !== versionInfo.buildId) {
+      throw new Error(`JavaScript asset is missing the current build version: ${assetUrl}`);
+    }
+
     const assetResponse = await fetch(assetUrl, {
       cache: 'no-store',
       signal: AbortSignal.timeout(30_000),
@@ -86,9 +91,10 @@ async function verifyRelease() {
       throw new Error(`referenced asset returned HTTP ${assetResponse.status}: ${assetUrl}`);
     }
 
-    if (new URL(assetUrl).pathname.endsWith('.js')) {
+    if (parsedAssetUrl.pathname.endsWith('.js')) {
+      assertJavaScriptCachePolicy(assetResponse, assetUrl);
       const assetSource = await assetResponse.text();
-      for (const nestedAssetUrl of readJavaScriptAssets(assetSource)) {
+      for (const nestedAssetUrl of readJavaScriptAssets(assetSource, versionInfo.buildId)) {
         if (!checkedAssets.has(nestedAssetUrl)) {
           assetsToCheck.push(nestedAssetUrl);
         }
@@ -101,6 +107,16 @@ function assertNoStore(response, label) {
   const cacheControl = response.headers.get('cache-control') ?? '';
   if (!cacheControl.toLowerCase().includes('no-store')) {
     throw new Error(`${label} is missing the no-store cache policy`);
+  }
+}
+
+function assertJavaScriptCachePolicy(response, assetUrl) {
+  const cacheControl = (response.headers.get('cache-control') ?? '').toLowerCase();
+  if (!cacheControl.includes('no-cache') && !cacheControl.includes('no-store')) {
+    throw new Error(`JavaScript asset is not revalidated: ${assetUrl}`);
+  }
+  if (cacheControl.includes('immutable')) {
+    throw new Error(`JavaScript asset is incorrectly marked immutable: ${assetUrl}`);
   }
 }
 
@@ -149,17 +165,18 @@ function readSameOriginAssets(html) {
   return assets;
 }
 
-function readJavaScriptAssets(source) {
+function readJavaScriptAssets(source, buildId) {
   const assets = new Set();
   const baseOrigin = new URL(baseUrl).origin;
+  const expectedVersion = encodeURIComponent(buildId);
+  const pattern = /(\/_expo\/static\/js\/[^"'`\s\\?]+?\.js)(?:\?v=([^"'`\s\\]*))?/g;
 
-  for (const match of source.matchAll(/\/_expo\/static\/[^"'\s\\`)]+/g)) {
-    const pathname = match[0].split(/[?#]/, 1)[0];
-    if (!pathname.endsWith('.js')) {
-      continue;
+  for (const match of source.matchAll(pattern)) {
+    if (match[2] !== expectedVersion) {
+      throw new Error(`JavaScript bundle contains an unversioned asset URL: ${match[1]}`);
     }
 
-    const url = new URL(pathname, `${baseUrl}/`);
+    const url = new URL(`${match[1]}?v=${expectedVersion}`, `${baseUrl}/`);
     if (url.origin === baseOrigin) {
       assets.add(url.href);
     }

@@ -19,6 +19,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { installSafeRouterBack, trackBackContext } from '@/lib/router-back';
 import { markStartupMilestone } from '@/lib/startup-metrics';
+import { markWebBootReady } from '@/lib/web-boot-ready';
 import { AppLoadingScreen } from '@/shared/ui/app-loading-screen';
 
 export const unstable_settings = {
@@ -53,6 +54,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded || fontError) {
       markStartupMilestone('fonts-ready');
+      markWebBootReady();
       void SplashScreen.hideAsync();
     }
   }, [fontError, fontsLoaded]);

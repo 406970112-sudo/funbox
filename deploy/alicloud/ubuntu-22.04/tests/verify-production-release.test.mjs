@@ -12,6 +12,7 @@ const scriptPath = path.resolve(testDirectory, '../verify-production-release.mjs
 const commit = '4f6785008b343f86a61ecc0ebe618a48ac0026b8';
 const builtAt = '2026-10-25T03:00:00.000Z';
 const buildId = commit;
+const entryChunkPath = '/_expo/static/js/web/entry-33333333333333333333333333333333.js';
 const routeChunkPath = '/_expo/static/js/web/tools-11111111111111111111111111111111.js';
 
 test('verifies that the public HTML and assets match version.json', async () => {
@@ -62,14 +63,14 @@ async function withReleaseServer(run, { routeChunkStatus = 200 } = {}) {
         <meta name="funbox-build-id" content="${buildId}" />
         <meta name="funbox-build-commit" content="${commit}" />
         <meta name="funbox-build-time" content="${builtAt}" />
-        <script src="/entry.js"></script>
+        <script src="${entryChunkPath}?v=${buildId}"></script>
       </head><body></body></html>`);
       return;
     }
 
-    if (url.pathname === '/entry.js') {
+    if (url.pathname === entryChunkPath) {
       response.setHeader('Content-Type', 'application/javascript');
-      response.end(`console.log(${JSON.stringify(routeChunkPath)});`);
+      response.end(`console.log(${JSON.stringify(`${routeChunkPath}?v=${buildId}`)});`);
       return;
     }
 

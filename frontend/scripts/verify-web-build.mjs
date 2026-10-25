@@ -16,13 +16,15 @@ if (buildInfo.buildId !== metadata.buildId || buildInfo.commit !== metadata.comm
   throw new Error('version.json and index.html metadata do not describe the same build');
 }
 
-for (const assetPath of extractLocalAssets(indexHtml)) {
+for (const assetUrl of extractLocalAssets(indexHtml)) {
+  const assetPath = assetUrl.split(/[?#]/, 1)[0];
   const filePath = path.join(distDirectory, assetPath.slice(1));
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-    throw new Error(`index.html references a missing build asset: ${assetPath}`);
+    throw new Error(`index.html references a missing build asset: ${assetUrl}`);
   }
 }
 
+assertJavaScriptCacheBusting(indexHtml, buildInfo.buildId, 'index.html');
 for (const assetPath of extractJavaScriptAssets(distDirectory)) {
   const filePath = path.join(distDirectory, assetPath.slice(1));
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
@@ -77,9 +79,8 @@ function extractLocalAssets(html) {
       continue;
     }
 
-    const pathname = value.split(/[?#]/, 1)[0];
-    if (pathname && pathname !== '/') {
-      assets.add(pathname);
+    if (value !== '/') {
+      assets.add(value);
     }
   }
 
@@ -100,6 +101,7 @@ function extractJavaScriptAssets(distRoot) {
     }
 
     const source = fs.readFileSync(path.join(scriptDirectory, entry.name), 'utf8');
+    assertJavaScriptCacheBusting(source, buildInfo.buildId, entry.name);
     for (const match of source.matchAll(/\/_expo\/static\/[^"'\s\\`)]+/g)) {
       const pathname = match[0].split(/[?#]/, 1)[0];
       if (pathname.endsWith('.js')) {
@@ -109,4 +111,15 @@ function extractJavaScriptAssets(distRoot) {
   }
 
   return assets;
+}
+
+function assertJavaScriptCacheBusting(source, buildId, sourceLabel) {
+  const expectedVersion = encodeURIComponent(buildId);
+  const pattern = /(\/_expo\/static\/js\/[^"'`\s\\?]+?\.js)(?:\?v=([^"'`\s\\]*))?/g;
+
+  for (const match of source.matchAll(pattern)) {
+    if (match[2] !== expectedVersion) {
+      throw new Error(`${sourceLabel} contains a JavaScript URL without the current build version: ${match[1]}`);
+    }
+  }
 }

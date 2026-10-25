@@ -683,6 +683,7 @@ configure_nginx_frontend_delivery() {
   local add_gzip
   local add_gzip_types
   local add_index_cache
+  local add_javascript_cache
   local add_expo_cache
   local add_assets_cache
   local add_version_cache
@@ -713,6 +714,11 @@ configure_nginx_frontend_delivery() {
     else
       add_expo_cache=1
     fi
+    if grep -Eq '^[[:space:]]*location[[:space:]]+/_expo/static/js/[[:space:]]*\{' "$conf"; then
+      add_javascript_cache=0
+    else
+      add_javascript_cache=1
+    fi
     if grep -Eq '^[[:space:]]*location[[:space:]]+/assets/[[:space:]]*\{' "$conf"; then
       add_assets_cache=0
     else
@@ -729,6 +735,7 @@ configure_nginx_frontend_delivery() {
       -v add_gzip="$add_gzip" \
       -v add_gzip_types="$add_gzip_types" \
       -v add_index_cache="$add_index_cache" \
+      -v add_javascript_cache="$add_javascript_cache" \
       -v add_expo_cache="$add_expo_cache" \
       -v add_assets_cache="$add_assets_cache" \
       -v add_version_cache="$add_version_cache" '
@@ -760,6 +767,14 @@ configure_nginx_frontend_delivery() {
           print "    add_header Cache-Control \"no-store, no-cache, must-revalidate\" always;"
           print "    add_header Pragma \"no-cache\" always;"
           print "    add_header Expires \"0\" always;"
+          print "    try_files $uri =404;"
+          print "  }"
+          print ""
+        }
+        if (add_javascript_cache == 1) {
+          print "  location /_expo/static/js/ {"
+          print "    add_header Cache-Control \"no-cache, must-revalidate\" always;"
+          print "    add_header Pragma \"no-cache\" always;"
           print "    try_files $uri =404;"
           print "  }"
           print ""
@@ -935,7 +950,7 @@ log "Publishing frontend and backend"
 mkdir -p "$BACKEND_ROOT/bin"
 install -m 755 "$BUILD_API" "$BACKEND_ROOT/bin/api"
 mkdir -p "$WEB_ROOT"
-# Keep previous hashed bundles for clients that still hold an older index.html.
+# Keep previous bundle URLs available for clients that still hold an older index.html.
 # Publish all assets first, then atomically replace HTML, and publish the version
 # marker last. This prevents an entry document from pointing at unavailable chunks.
 rsync -a --exclude='/index.html' --exclude='/version.json' "$FRONTEND_ROOT/dist/" "$WEB_ROOT/"

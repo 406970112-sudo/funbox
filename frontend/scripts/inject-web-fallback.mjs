@@ -28,22 +28,18 @@ if (!indexHtml.includes('</head>')) {
 indexHtml = indexHtml.replace('</head>', `${buildMetadata}</head>`);
 fs.writeFileSync(versionPath, `${JSON.stringify(buildInfo)}\n`);
 
-if (indexHtml.includes(marker)) {
-  fs.writeFileSync(indexPath, indexHtml);
-  process.exit(0);
-}
+if (!indexHtml.includes(marker)) {
+  const emptyRoot = '<div id="root"></div>';
+  if (!indexHtml.includes(emptyRoot)) {
+    throw new Error('Unable to find the Expo root element in dist/index.html');
+  }
 
-const emptyRoot = '<div id="root"></div>';
-if (!indexHtml.includes(emptyRoot)) {
-  throw new Error('Unable to find the Expo root element in dist/index.html');
-}
-
-const fallback = `
+  const fallback = `
     <div
       id="funbox-boot-fallback"
       ${marker}
       role="status"
-      style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#eef4ff;color:#18233f;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;box-sizing:border-box">
+      style="position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:#eef4ff;color:#18233f;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;box-sizing:border-box">
       <div>
         <div style="font-size:24px;font-weight:800;letter-spacing:-0.02em">FunBox</div>
         <div id="funbox-boot-message" style="margin-top:10px;color:#7483a2;font-size:14px">正在加载工具与游戏…</div>
@@ -59,19 +55,25 @@ const fallback = `
     </div>
     <script>
       (function () {
+        var fallback = document.getElementById('funbox-boot-fallback');
         var message = document.getElementById('funbox-boot-message');
         var retry = document.getElementById('funbox-boot-retry');
         var failed = false;
 
         function showFailure() {
-          if (failed || !message || !document.body.contains(message)) return;
+          if (failed || !fallback || !message) return;
           failed = true;
+          fallback.style.display = 'flex';
           message.textContent = '页面资源加载失败，请检查网络后刷新重试。';
           if (retry) retry.hidden = false;
         }
 
+        window.__funboxMarkBootReady = function () {
+          if (!failed && fallback) fallback.style.display = 'none';
+        };
+
         window.addEventListener('error', function (event) {
-          if (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
+          if (event.error || (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK'))) {
             showFailure();
           }
         }, true);
@@ -80,7 +82,12 @@ const fallback = `
       })();
     </script>`;
 
-fs.writeFileSync(indexPath, indexHtml.replace(emptyRoot, `<div id="root">${fallback}</div>`));
+  indexHtml = indexHtml.replace(emptyRoot, `${emptyRoot}${fallback}`);
+}
+
+indexHtml = versionJavaScriptUrls(indexHtml, buildInfo.buildId);
+fs.writeFileSync(indexPath, indexHtml);
+versionJavaScriptFiles(distDirectory, buildInfo.buildId);
 
 function createBuildInfo() {
   const configuredCommit = normaliseString(process.env.DEPLOY_COMMIT);
@@ -136,4 +143,38 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+function versionJavaScriptFiles(distRoot, buildId) {
+  const scriptDirectory = path.join(distRoot, '_expo/static/js');
+  for (const filePath of listFiles(scriptDirectory)) {
+    if (!filePath.endsWith('.js')) {
+      continue;
+    }
+
+    const source = fs.readFileSync(filePath, 'utf8');
+    const versionedSource = versionJavaScriptUrls(source, buildId);
+    if (versionedSource !== source) {
+      fs.writeFileSync(filePath, versionedSource);
+    }
+  }
+}
+
+function versionJavaScriptUrls(source, buildId) {
+  const version = encodeURIComponent(buildId);
+  return source.replace(
+    /(\/_expo\/static\/js\/[^"'`\s\\?]+?\.js)(?:\?v=[^"'`\s\\]*)?/g,
+    (_match, scriptPath) => `${scriptPath}?v=${version}`,
+  );
+}
+
+function listFiles(directory) {
+  if (!fs.existsSync(directory)) {
+    return [];
+  }
+
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    return entry.isDirectory() ? listFiles(entryPath) : [entryPath];
+  });
 }

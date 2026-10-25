@@ -73,6 +73,12 @@ server {
     try_files \$uri =404;
   }
 
+  location /_expo/static/js/ {
+    add_header Cache-Control "no-cache, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    try_files \$uri =404;
+  }
+
   location /_expo/static/ {
     add_header Cache-Control "public, max-age=31536000, immutable" always;
     try_files \$uri =404;

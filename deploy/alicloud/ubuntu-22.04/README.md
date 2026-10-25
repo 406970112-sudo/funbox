@@ -150,7 +150,7 @@ curl -I http://127.0.0.1/tools/live-stream-capture
 curl https://www.xwhub.cn/version.json
 ```
 
-`version.json` 和 HTML 中的 `funbox-build-commit` 应等于本次部署提交。HTML 与 `version.json` 使用 `Cache-Control: no-store`，带哈希的 `/_expo/static/` 和 `/assets/` 资源继续使用长期 immutable 缓存。
+`version.json` 和 HTML 中的 `funbox-build-commit` 应等于本次部署提交。HTML 与 `version.json` 使用 `Cache-Control: no-store`；`/_expo/static/js/` 使用可重新验证缓存，并在 URL 上携带构建版本参数；`/assets/` 等真正带内容哈希的资源继续使用长期 immutable 缓存。
 
 生产页面会在加载、前台恢复和低频轮询时检查新版本。发现新版本后，前台停留时显示更新提示；切回前台或发生路由切换时自动重新加载。`verify-production-release.mjs` 可在本地手动检查线上版本：
 
