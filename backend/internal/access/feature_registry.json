@@ -33,7 +33,7 @@
     "id": "card-score",
     "name": "打牌记分",
     "tagline": "多人记分，散场结算",
-    "description": "创建牌局并邀请好友各自报分，全员确认后自动累计总分并生成最简转账方案。",
+    "description": "创建牌局并邀请好友直接给分，赢家无需填分，散场时按房主设置的比例生成最简转账方案。",
     "icon": "cards-playing-outline",
     "category": "生活",
     "route": "/tools/card-score",

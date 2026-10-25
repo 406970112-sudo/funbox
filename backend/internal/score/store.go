@@ -132,6 +132,29 @@ func (s *Store) migrate() error {
 			confirmed_at INTEGER NOT NULL,
 			PRIMARY KEY(round_id, participant_id)
 		)`,
+		`CREATE TABLE IF NOT EXISTS score_gift_batches (
+			id TEXT PRIMARY KEY,
+			room_id TEXT NOT NULL REFERENCES score_rooms(id) ON DELETE CASCADE,
+			number INTEGER NOT NULL CHECK(number >= 1),
+			kind TEXT NOT NULL CHECK(kind IN ('normal', 'reversal')),
+			reverses_batch_id TEXT REFERENCES score_gift_batches(id),
+			created_by TEXT NOT NULL REFERENCES score_participants(id),
+			created_at INTEGER NOT NULL,
+			UNIQUE(room_id, number),
+			CHECK((kind = 'normal' AND reverses_batch_id IS NULL) OR (kind = 'reversal' AND reverses_batch_id IS NOT NULL))
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_score_gift_batches_room_number
+			ON score_gift_batches(room_id, number DESC)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_score_gift_batches_one_reversal
+			ON score_gift_batches(reverses_batch_id) WHERE reverses_batch_id IS NOT NULL`,
+		`CREATE TABLE IF NOT EXISTS score_point_gifts (
+			batch_id TEXT NOT NULL REFERENCES score_gift_batches(id) ON DELETE CASCADE,
+			from_participant_id TEXT NOT NULL REFERENCES score_participants(id),
+			to_participant_id TEXT NOT NULL REFERENCES score_participants(id),
+			points INTEGER NOT NULL CHECK(points BETWEEN 1 AND 2147483647),
+			PRIMARY KEY(batch_id, from_participant_id, to_participant_id),
+			CHECK(from_participant_id <> to_participant_id)
+		)`,
 		`CREATE TABLE IF NOT EXISTS score_room_events (
 			room_id TEXT NOT NULL REFERENCES score_rooms(id) ON DELETE CASCADE,
 			sequence INTEGER NOT NULL CHECK(sequence >= 1),
@@ -225,6 +248,11 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 		return RoomSnapshot{}, err
 	}
 	snapshot.Settlement = settlement
+	giftBatches, err := loadGiftBatches(ctx, q, roomID)
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
+	snapshot.GiftBatches = giftBatches
 	return snapshot, nil
 }
 
@@ -232,7 +260,16 @@ func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoi
 	rows, err := q.QueryContext(ctx, `
 		SELECT p.id, p.user_id, p.display_name, p.role, p.status, p.joined_at,
 			p.last_seen_at,
-			COALESCE(SUM(CASE WHEN r.status = 'confirmed' THEN e.delta_points ELSE 0 END), 0)
+			COALESCE(SUM(CASE WHEN r.status = 'confirmed' THEN e.delta_points ELSE 0 END), 0) +
+			COALESCE((
+				SELECT SUM(CASE
+					WHEN pg.from_participant_id = p.id THEN -pg.points
+					WHEN pg.to_participant_id = p.id THEN pg.points
+					ELSE 0
+				END)
+				FROM score_point_gifts pg
+				WHERE pg.from_participant_id = p.id OR pg.to_participant_id = p.id
+			), 0)
 		FROM score_participants p
 		LEFT JOIN score_entries e ON e.participant_id = p.id
 		LEFT JOIN score_rounds r ON r.id = e.round_id
@@ -269,6 +306,71 @@ func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoi
 		return nil, fmt.Errorf("iterate score participants: %w", err)
 	}
 	return participants, nil
+}
+
+func loadGiftBatches(ctx context.Context, q queryer, roomID string) ([]GiftBatch, error) {
+	rows, err := q.QueryContext(ctx, `
+		SELECT id, room_id, number, kind, reverses_batch_id, created_by, created_at
+		FROM score_gift_batches
+		WHERE room_id = ?
+		ORDER BY number DESC
+	`, roomID)
+	if err != nil {
+		return nil, fmt.Errorf("load score gift batches: %w", err)
+	}
+	batches := make([]GiftBatch, 0)
+	for rows.Next() {
+		var batch GiftBatch
+		var kind string
+		var reversesBatchID sql.NullString
+		var createdAt int64
+		if err := rows.Scan(
+			&batch.ID, &batch.RoomID, &batch.Number, &kind, &reversesBatchID,
+			&batch.CreatedBy, &createdAt,
+		); err != nil {
+			_ = rows.Close()
+			return nil, fmt.Errorf("scan score gift batch: %w", err)
+		}
+		batch.Kind = RoundKind(kind)
+		batch.ReversesBatchID = reversesBatchID.String
+		batch.CreatedAt = time.Unix(createdAt, 0).UTC()
+		batches = append(batches, batch)
+	}
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return nil, fmt.Errorf("iterate score gift batches: %w", err)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("close score gift batches: %w", err)
+	}
+	for index := range batches {
+		giftRows, err := q.QueryContext(ctx, `
+			SELECT from_participant_id, to_participant_id, points
+			FROM score_point_gifts
+			WHERE batch_id = ?
+			ORDER BY rowid
+		`, batches[index].ID)
+		if err != nil {
+			return nil, fmt.Errorf("load score gift items: %w", err)
+		}
+		batches[index].Gifts = make([]GiftItem, 0)
+		for giftRows.Next() {
+			var gift GiftItem
+			if err := giftRows.Scan(&gift.FromParticipantID, &gift.ToParticipantID, &gift.Points); err != nil {
+				_ = giftRows.Close()
+				return nil, fmt.Errorf("scan score gift item: %w", err)
+			}
+			batches[index].Gifts = append(batches[index].Gifts, gift)
+		}
+		if err := giftRows.Err(); err != nil {
+			_ = giftRows.Close()
+			return nil, fmt.Errorf("iterate score gift items: %w", err)
+		}
+		if err := giftRows.Close(); err != nil {
+			return nil, fmt.Errorf("close score gift items: %w", err)
+		}
+	}
+	return batches, nil
 }
 
 func loadRoundList(ctx context.Context, q queryer, roomID, statusPredicate string) ([]Round, error) {

@@ -21,6 +21,8 @@ func TestOpenStoreCreatesScoreSchema(t *testing.T) {
 		"score_rounds",
 		"score_entries",
 		"score_confirmations",
+		"score_gift_batches",
+		"score_point_gifts",
 		"score_room_events",
 		"score_command_receipts",
 		"score_settlements",
@@ -94,7 +96,7 @@ func TestServiceConfirmsZeroSumRoundAndSettles(t *testing.T) {
 		t.Fatalf("room after confirmation = %+v", final)
 	}
 
-	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle", final))
+	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle", final), SettleRoomInput{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,6 +106,136 @@ func TestServiceConfirmsZeroSumRoundAndSettles(t *testing.T) {
 	transfer := settled.Settlement.Transfers[0]
 	if transfer.FromParticipantID != guest.Actor.ParticipantID || transfer.ToParticipantID != created.Actor.ParticipantID || transfer.AmountCents != 500 {
 		t.Fatalf("transfer = %+v", transfer)
+	}
+}
+
+func TestServiceDirectGiftBatchUsesDefaultRateAndSettlesWithOverride(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+
+	created, err := service.CreateRoom(ctx, "host-user", "Host", CreateRoomInput{
+		Name: "Friday game", MaxPlayers: 4,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Room.CentsPerPoint != 100 {
+		t.Fatalf("default cents per point = %d, want 100", created.Room.CentsPerPoint)
+	}
+	guest, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	third, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Third"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err := service.StartRoom(ctx, created.Actor, commandMeta("start-room", third.Room))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	room, err = service.SubmitGifts(ctx, created.Actor, commandMeta("host-gifts", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{
+			{ToParticipantID: guest.Actor.ParticipantID, Points: 10},
+			{ToParticipantID: third.Actor.ParticipantID, Points: 5},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if room.CurrentRound != nil {
+		t.Fatalf("direct gifts unexpectedly created a current round: %+v", room.CurrentRound)
+	}
+	if len(room.GiftBatches) != 1 || len(room.GiftBatches[0].Gifts) != 2 {
+		t.Fatalf("gift batches = %+v", room.GiftBatches)
+	}
+	assertTotalPoints := func(participantID string, want int64) {
+		t.Helper()
+		for _, participant := range room.Participants {
+			if participant.ID == participantID {
+				if participant.TotalPoints != want {
+					t.Fatalf("participant %s total = %d, want %d", participantID, participant.TotalPoints, want)
+				}
+				return
+			}
+		}
+		t.Fatalf("participant %s not found", participantID)
+	}
+	assertTotalPoints(created.Actor.ParticipantID, -15)
+	assertTotalPoints(guest.Actor.ParticipantID, 10)
+	assertTotalPoints(third.Actor.ParticipantID, 5)
+
+	if _, err := service.SettleRoom(ctx, guest.Actor, commandMeta("guest-settle", room), SettleRoomInput{CentsPerPoint: 300}); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("guest settlement error = %v, want ErrForbidden", err)
+	}
+	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle", room), SettleRoomInput{CentsPerPoint: 200})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settled.CentsPerPoint != 200 || settled.Settlement == nil || len(settled.Settlement.Transfers) != 2 {
+		t.Fatalf("settled room = %+v", settled)
+	}
+	transfers := make(map[string]int64)
+	for _, transfer := range settled.Settlement.Transfers {
+		if transfer.FromParticipantID != created.Actor.ParticipantID {
+			t.Fatalf("transfer from = %s, want host", transfer.FromParticipantID)
+		}
+		transfers[transfer.ToParticipantID] = transfer.AmountCents
+	}
+	if transfers[guest.Actor.ParticipantID] != 2000 || transfers[third.Actor.ParticipantID] != 1000 {
+		t.Fatalf("settlement transfers = %+v", settled.Settlement.Transfers)
+	}
+	if _, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle-again", settled), SettleRoomInput{CentsPerPoint: 50}); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("second settlement error = %v, want ErrInvalidState", err)
+	}
+}
+
+func TestServiceRejectsInvalidGiftBatchesAndReversesValidBatch(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+	created, guest, room := startTwoPlayerRoom(t, service)
+
+	for name, input := range map[string]SubmitGiftsInput{
+		"empty": {Allocations: nil},
+		"self":  {Allocations: []GiftAllocationInput{{ToParticipantID: created.Actor.ParticipantID, Points: 1}}},
+		"zero":  {Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 0}}},
+		"duplicate": {Allocations: []GiftAllocationInput{
+			{ToParticipantID: guest.Actor.ParticipantID, Points: 1},
+			{ToParticipantID: guest.Actor.ParticipantID, Points: 2},
+		}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := service.SubmitGifts(ctx, created.Actor, commandMeta("invalid-"+name, room), input); !errors.Is(err, ErrInvalidInput) {
+				t.Fatalf("SubmitGifts() error = %v, want ErrInvalidInput", err)
+			}
+		})
+	}
+
+	room, err := service.SubmitGifts(ctx, created.Actor, commandMeta("valid-gift", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 4}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	batchID := room.GiftBatches[0].ID
+	if _, err := service.ReverseGiftBatch(ctx, guest.Actor, commandMeta("guest-reverse", room), batchID); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("guest reversal error = %v, want ErrForbidden", err)
+	}
+	room, err = service.ReverseGiftBatch(ctx, created.Actor, commandMeta("host-reverse", room), batchID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(room.GiftBatches) != 2 || room.GiftBatches[0].Kind != RoundReversal {
+		t.Fatalf("reversed gift batches = %+v", room.GiftBatches)
+	}
+	for _, participant := range room.Participants {
+		if participant.TotalPoints != 0 {
+			t.Fatalf("participant %s total after reversal = %d, want 0", participant.ID, participant.TotalPoints)
+		}
+	}
+	if _, err := service.ReverseGiftBatch(ctx, created.Actor, commandMeta("second-reverse", room), batchID); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("second reversal error = %v, want ErrInvalidState", err)
 	}
 }
 

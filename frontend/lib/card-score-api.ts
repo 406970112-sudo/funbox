@@ -6,6 +6,7 @@ import type {
   JoinScoreRoomInput,
   JoinScoreRoomResult,
   ScoreCredential,
+  ScoreGiftAllocation,
   ScoreRealtimeStatus,
   ScoreRoomSnapshot,
 } from '@/types/card-score';
@@ -92,6 +93,28 @@ export async function submitScoreEntry(credential: ScoreCredential, room: ScoreR
   return response.room;
 }
 
+export async function submitScoreGifts(credential: ScoreCredential, room: ScoreRoomSnapshot, allocations: ScoreGiftAllocation[]) {
+  const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/gifts`, credential, {
+    body: JSON.stringify({
+      ...command(room),
+      allocations: allocations.map((allocation) => ({
+        toParticipantId: allocation.toParticipantId,
+        points: Math.trunc(allocation.points),
+      })),
+    }),
+    method: 'POST',
+  });
+  return response.room;
+}
+
+export async function reverseScoreGiftBatch(credential: ScoreCredential, room: ScoreRoomSnapshot, batchId: string) {
+  const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/gifts/${encodeURIComponent(batchId)}/reverse`, credential, {
+    body: JSON.stringify(command(room)),
+    method: 'POST',
+  });
+  return response.room;
+}
+
 export async function confirmScoreRound(credential: ScoreCredential, room: ScoreRoomSnapshot, roundId: string) {
   const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/rounds/${encodeURIComponent(roundId)}/confirm`, credential, {
     body: JSON.stringify(command(room)),
@@ -116,9 +139,9 @@ export async function removeScoreParticipant(credential: ScoreCredential, room: 
   return response.room;
 }
 
-export async function settleScoreRoom(credential: ScoreCredential, room: ScoreRoomSnapshot) {
+export async function settleScoreRoom(credential: ScoreCredential, room: ScoreRoomSnapshot, centsPerPoint?: number) {
   const response = await requestJSON<RoomResponse>(`${roomPath(room.id)}/settle`, credential, {
-    body: JSON.stringify(command(room)),
+    body: JSON.stringify({ ...command(room), centsPerPoint }),
     method: 'POST',
   });
   return response.room;

@@ -57,8 +57,11 @@ func TestScoreHTTPFlow(t *testing.T) {
 		"securityQuestion": "Question?", "securityAnswer": "Answer",
 	}, "", http.StatusCreated)
 	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
-		"name": "Friday game", "maxPlayers": 4, "centsPerPoint": 50,
+		"name": "Friday game", "maxPlayers": 4,
 	}, registered.AccessToken, http.StatusCreated)
+	if created.Room.CentsPerPoint != 100 {
+		t.Fatalf("default cents per point = %d, want 100", created.Room.CentsPerPoint)
+	}
 	preview := scoreRequestJSON[score.InvitePreviewResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/invite-preview", map[string]any{
 		"inviteToken": created.InviteToken,
 	}, "", http.StatusOK)
@@ -86,26 +89,23 @@ func TestScoreHTTPFlow(t *testing.T) {
 	assertScoreInvalidation(t, hostSocket, room)
 	assertScoreInvalidation(t, guestSocket, room)
 
-	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/rounds", map[string]any{
-		"clientActionId": "round", "expectedRoomVersion": room.Version,
-	}, registered.AccessToken, http.StatusCreated).Room
-	roundID := room.CurrentRound.ID
-	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPut, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/rounds/"+roundID+"/entry", map[string]any{
-		"clientActionId": "host-entry", "expectedRoomVersion": room.Version, "deltaPoints": 8,
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/gifts", map[string]any{
+		"clientActionId": "host-gifts", "expectedRoomVersion": room.Version,
+		"allocations": []map[string]any{{"toParticipantId": joined.Actor.ParticipantID, "points": 8}},
 	}, registered.AccessToken, http.StatusOK).Room
-	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPut, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/rounds/"+roundID+"/entry", map[string]any{
-		"clientActionId": "guest-entry", "expectedRoomVersion": room.Version, "deltaPoints": -8,
-	}, joined.GuestToken, http.StatusOK).Room
-	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/rounds/"+roundID+"/confirm", map[string]any{
-		"clientActionId": "host-confirm", "expectedRoomVersion": room.Version,
+	if room.CurrentRound != nil || len(room.GiftBatches) != 1 {
+		t.Fatalf("direct gift room = %+v", room)
+	}
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/settle", map[string]any{
+		"clientActionId": "settle", "expectedRoomVersion": room.Version, "centsPerPoint": 50,
 	}, registered.AccessToken, http.StatusOK).Room
-	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/rounds/"+roundID+"/confirm", map[string]any{
-		"clientActionId": "guest-confirm", "expectedRoomVersion": room.Version,
-	}, joined.GuestToken, http.StatusOK).Room
+	if room.Status != score.RoomSettled || room.CentsPerPoint != 50 || room.Settlement == nil || len(room.Settlement.Transfers) != 1 {
+		t.Fatalf("settled room = %+v", room)
+	}
 
 	hostSnapshot := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodGet, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID, nil, registered.AccessToken, http.StatusOK).Room
 	guestSnapshot := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodGet, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID, nil, joined.GuestToken, http.StatusOK).Room
-	if hostSnapshot.Version != guestSnapshot.Version || hostSnapshot.Participants[0].TotalPoints != 8 || guestSnapshot.Participants[1].TotalPoints != -8 {
+	if hostSnapshot.Version != guestSnapshot.Version || hostSnapshot.Participants[0].TotalPoints != -8 || guestSnapshot.Participants[1].TotalPoints != 8 {
 		t.Fatalf("snapshots differ: host=%+v guest=%+v", hostSnapshot, guestSnapshot)
 	}
 }

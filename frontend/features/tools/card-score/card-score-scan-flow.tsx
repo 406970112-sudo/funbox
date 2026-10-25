@@ -177,7 +177,7 @@ export function ScoreScanJoinFlow({
           <ThemedText style={styles.roomCode}>{room?.code}</ThemedText>
         </View>
         <ThemedText style={[styles.roomMeta, { color: colors.mutedText }]}>
-          房主 {hostName} · 每分 {formatCNY(room?.centsPerPoint ?? 0)} · {activeCount}/{room?.maxPlayers} 人
+          房主 {hostName} · 暂按每分 {formatCNY(room?.centsPerPoint ?? 0)}（结算时可调整）· {activeCount}/{room?.maxPlayers} 人
         </ThemedText>
       </SurfaceCard>
       <ScoreField

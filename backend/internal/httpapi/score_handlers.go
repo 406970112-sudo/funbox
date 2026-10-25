@@ -38,6 +38,8 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/cancel", api.withScoreActor(api.withAPIPipeline(api.handleCancelScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/rounds", api.withScoreActor(api.withAPIPipeline(api.handleStartScoreRound)))
 	mux.HandleFunc("PUT /api/v1/score-rooms/{roomID}/rounds/{roundID}/entry", api.withScoreActor(api.withAPIPipeline(api.handleSubmitScoreEntry)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/gifts", api.withScoreActor(api.withAPIPipeline(api.handleSubmitScoreGifts)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/gifts/{batchID}/reverse", api.withScoreActor(api.withAPIPipeline(api.handleReverseScoreGiftBatch)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/rounds/{roundID}/confirm", api.withScoreActor(api.withAPIPipeline(api.handleConfirmScoreRound)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/rounds/{roundID}/cancel", api.withScoreActor(api.withAPIPipeline(api.handleCancelScoreRound)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/participants/{participantID}/remove", api.withScoreActor(api.withAPIPipeline(api.handleRemoveScoreParticipant)))
@@ -189,6 +191,26 @@ func (s *Server) handleSubmitScoreEntry(w http.ResponseWriter, r *http.Request) 
 	s.writeScoreMutation(w, http.StatusOK, room, err)
 }
 
+func (s *Server) handleSubmitScoreGifts(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		scoreCommandBody
+		Allocations []score.GiftAllocationInput `json:"allocations"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	actor, _ := scoreActorFromContext(r.Context())
+	room, err := s.scoreService.SubmitGifts(r.Context(), actor, body.meta(), score.SubmitGiftsInput{Allocations: body.Allocations})
+	s.writeScoreMutation(w, http.StatusOK, room, err)
+}
+
+func (s *Server) handleReverseScoreGiftBatch(w http.ResponseWriter, r *http.Request) {
+	s.handleScoreCommand(w, r, http.StatusOK, func(actor score.Actor, body scoreCommandBody) (score.RoomSnapshot, error) {
+		return s.scoreService.ReverseGiftBatch(r.Context(), actor, body.meta(), r.PathValue("batchID"))
+	})
+}
+
 func (s *Server) handleConfirmScoreRound(w http.ResponseWriter, r *http.Request) {
 	s.handleScoreCommand(w, r, http.StatusOK, func(actor score.Actor, body scoreCommandBody) (score.RoomSnapshot, error) {
 		return s.scoreService.ConfirmRound(r.Context(), actor, body.meta(), r.PathValue("roundID"))
@@ -208,9 +230,17 @@ func (s *Server) handleRemoveScoreParticipant(w http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) handleSettleScoreRoom(w http.ResponseWriter, r *http.Request) {
-	s.handleScoreCommand(w, r, http.StatusOK, func(actor score.Actor, body scoreCommandBody) (score.RoomSnapshot, error) {
-		return s.scoreService.SettleRoom(r.Context(), actor, body.meta())
-	})
+	var body struct {
+		scoreCommandBody
+		CentsPerPoint int64 `json:"centsPerPoint"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	actor, _ := scoreActorFromContext(r.Context())
+	room, err := s.scoreService.SettleRoom(r.Context(), actor, body.meta(), score.SettleRoomInput{CentsPerPoint: body.CentsPerPoint})
+	s.writeScoreMutation(w, http.StatusOK, room, err)
 }
 
 func (s *Server) handleScoreInviteToken(w http.ResponseWriter, r *http.Request) {
@@ -275,7 +305,7 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": "score_action_forbidden"})
 	case errors.Is(err, score.ErrInviteInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invite_invalid"})
-	case errors.Is(err, score.ErrRoomNotFound), errors.Is(err, score.ErrRoundNotFound), errors.Is(err, score.ErrParticipantMissing):
+	case errors.Is(err, score.ErrRoomNotFound), errors.Is(err, score.ErrRoundNotFound), errors.Is(err, score.ErrGiftBatchNotFound), errors.Is(err, score.ErrParticipantMissing):
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "score_not_found"})
 	case errors.Is(err, score.ErrRoomFull):
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_room_full"})

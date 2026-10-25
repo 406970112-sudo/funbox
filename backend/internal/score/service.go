@@ -28,6 +28,7 @@ var (
 	ErrVersionConflict    = errors.New("score room version conflict")
 	ErrActionIDReused     = errors.New("score client action id was reused")
 	ErrRoundNotFound      = errors.New("score round not found")
+	ErrGiftBatchNotFound  = errors.New("score gift batch not found")
 	ErrParticipantMissing = errors.New("score participant not found")
 )
 
@@ -80,6 +81,19 @@ type StartRoundInput struct {
 	ReversesRoundID string `json:"reversesRoundId,omitempty"`
 }
 
+type GiftAllocationInput struct {
+	ToParticipantID string `json:"toParticipantId"`
+	Points          int64  `json:"points"`
+}
+
+type SubmitGiftsInput struct {
+	Allocations []GiftAllocationInput `json:"allocations"`
+}
+
+type SettleRoomInput struct {
+	CentsPerPoint int64 `json:"centsPerPoint,omitempty"`
+}
+
 type VersionConflictError struct {
 	Latest RoomSnapshot
 }
@@ -119,6 +133,9 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	hostUserID = strings.TrimSpace(hostUserID)
 	displayName = strings.TrimSpace(displayName)
 	input.Name = strings.TrimSpace(input.Name)
+	if input.CentsPerPoint == 0 {
+		input.CentsPerPoint = 100
+	}
 	if hostUserID == "" {
 		return CreateRoomResult{}, ErrUnauthorized
 	}
@@ -424,6 +441,149 @@ func (s *Service) SubmitEntry(ctx context.Context, actor Actor, meta CommandMeta
 	})
 }
 
+func (s *Service) SubmitGifts(ctx context.Context, actor Actor, meta CommandMeta, input SubmitGiftsInput) (RoomSnapshot, error) {
+	return s.mutate(ctx, actor, meta, "gifts.submit", input, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.Status != RoomActive || room.CurrentRound != nil {
+			return ErrInvalidState
+		}
+		active := make(map[string]bool, len(room.Participants))
+		for _, participant := range room.Participants {
+			if participant.Status == ParticipantActive {
+				active[participant.ID] = true
+			}
+		}
+		if !active[actor.ParticipantID] {
+			return ErrForbidden
+		}
+		if len(input.Allocations) == 0 || len(input.Allocations) > len(active)-1 {
+			return fmt.Errorf("gift allocations: %w", ErrInvalidInput)
+		}
+		seenRecipients := make(map[string]bool, len(input.Allocations))
+		var totalPoints int64
+		allocations := make([]GiftAllocationInput, len(input.Allocations))
+		for index, allocation := range input.Allocations {
+			allocation.ToParticipantID = strings.TrimSpace(allocation.ToParticipantID)
+			if allocation.ToParticipantID == "" || allocation.ToParticipantID == actor.ParticipantID ||
+				!active[allocation.ToParticipantID] || seenRecipients[allocation.ToParticipantID] ||
+				allocation.Points <= 0 || allocation.Points > 2_147_483_647 ||
+				totalPoints > 2_147_483_647-allocation.Points {
+				return fmt.Errorf("gift allocation: %w", ErrInvalidInput)
+			}
+			seenRecipients[allocation.ToParticipantID] = true
+			totalPoints += allocation.Points
+			allocations[index] = allocation
+		}
+
+		var number int
+		if err := tx.QueryRowContext(ctx, `
+			SELECT COALESCE(MAX(number), 0) + 1 FROM score_gift_batches WHERE room_id = ?
+		`, room.ID).Scan(&number); err != nil {
+			return fmt.Errorf("find next score gift batch: %w", err)
+		}
+		batchID := uuid.NewString()
+		now := s.now().UTC().Unix()
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO score_gift_batches (
+				id, room_id, number, kind, reverses_batch_id, created_by, created_at
+			) VALUES (?, ?, ?, 'normal', NULL, ?, ?)
+		`, batchID, room.ID, number, actor.ParticipantID, now); err != nil {
+			return fmt.Errorf("insert score gift batch: %w", err)
+		}
+		for _, allocation := range allocations {
+			if _, err := tx.ExecContext(ctx, `
+				INSERT INTO score_point_gifts (batch_id, from_participant_id, to_participant_id, points)
+				VALUES (?, ?, ?, ?)
+			`, batchID, actor.ParticipantID, allocation.ToParticipantID, allocation.Points); err != nil {
+				return fmt.Errorf("insert score gift: %w", err)
+			}
+		}
+		return nil
+	})
+}
+
+func (s *Service) ReverseGiftBatch(ctx context.Context, actor Actor, meta CommandMeta, batchID string) (RoomSnapshot, error) {
+	return s.mutate(ctx, actor, meta, "gifts.reverse", map[string]string{"batchId": batchID}, func(tx *sql.Tx, room RoomSnapshot) error {
+		if actor.Role != ParticipantHost {
+			return ErrForbidden
+		}
+		if room.Status != RoomActive || room.CurrentRound != nil {
+			return ErrInvalidState
+		}
+		batchID = strings.TrimSpace(batchID)
+		var kind string
+		if err := tx.QueryRowContext(ctx, `
+			SELECT kind FROM score_gift_batches WHERE id = ? AND room_id = ?
+		`, batchID, room.ID).Scan(&kind); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return ErrGiftBatchNotFound
+			}
+			return err
+		}
+		if kind != string(RoundNormal) {
+			return ErrInvalidState
+		}
+		var reversed int
+		if err := tx.QueryRowContext(ctx, `
+			SELECT COUNT(*) FROM score_gift_batches WHERE reverses_batch_id = ?
+		`, batchID).Scan(&reversed); err != nil {
+			return err
+		}
+		if reversed > 0 {
+			return ErrInvalidState
+		}
+		rows, err := tx.QueryContext(ctx, `
+			SELECT from_participant_id, to_participant_id, points
+			FROM score_point_gifts WHERE batch_id = ? ORDER BY from_participant_id, to_participant_id
+		`, batchID)
+		if err != nil {
+			return fmt.Errorf("load score gifts for reversal: %w", err)
+		}
+		gifts := make([]GiftItem, 0)
+		for rows.Next() {
+			var gift GiftItem
+			if err := rows.Scan(&gift.FromParticipantID, &gift.ToParticipantID, &gift.Points); err != nil {
+				_ = rows.Close()
+				return err
+			}
+			gifts = append(gifts, gift)
+		}
+		if err := rows.Err(); err != nil {
+			_ = rows.Close()
+			return err
+		}
+		if err := rows.Close(); err != nil {
+			return err
+		}
+		if len(gifts) == 0 {
+			return ErrGiftBatchNotFound
+		}
+		var number int
+		if err := tx.QueryRowContext(ctx, `
+			SELECT COALESCE(MAX(number), 0) + 1 FROM score_gift_batches WHERE room_id = ?
+		`, room.ID).Scan(&number); err != nil {
+			return fmt.Errorf("find next score gift reversal: %w", err)
+		}
+		newBatchID := uuid.NewString()
+		now := s.now().UTC().Unix()
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO score_gift_batches (
+				id, room_id, number, kind, reverses_batch_id, created_by, created_at
+			) VALUES (?, ?, ?, 'reversal', ?, ?, ?)
+		`, newBatchID, room.ID, number, batchID, actor.ParticipantID, now); err != nil {
+			return fmt.Errorf("insert score gift reversal batch: %w", err)
+		}
+		for _, gift := range gifts {
+			if _, err := tx.ExecContext(ctx, `
+				INSERT INTO score_point_gifts (batch_id, from_participant_id, to_participant_id, points)
+				VALUES (?, ?, ?, ?)
+			`, newBatchID, gift.ToParticipantID, gift.FromParticipantID, gift.Points); err != nil {
+				return fmt.Errorf("insert reversed score gift: %w", err)
+			}
+		}
+		return nil
+	})
+}
+
 func (s *Service) ConfirmRound(ctx context.Context, actor Actor, meta CommandMeta, roundID string) (RoomSnapshot, error) {
 	payload := map[string]string{"roundId": roundID}
 	return s.mutate(ctx, actor, meta, "round.confirm", payload, func(tx *sql.Tx, room RoomSnapshot) error {
@@ -524,19 +684,29 @@ func (s *Service) RemoveParticipant(ctx context.Context, actor Actor, meta Comma
 	})
 }
 
-func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta) (RoomSnapshot, error) {
-	return s.mutate(ctx, actor, meta, "room.settle", nil, func(tx *sql.Tx, room RoomSnapshot) error {
+func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta, input SettleRoomInput) (RoomSnapshot, error) {
+	payload := struct {
+		CentsPerPoint int64 `json:"centsPerPoint"`
+	}{CentsPerPoint: input.CentsPerPoint}
+	return s.mutate(ctx, actor, meta, "room.settle", payload, func(tx *sql.Tx, room RoomSnapshot) error {
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
-		if room.Status != RoomActive || room.CurrentRound != nil || len(room.Rounds) == 0 {
+		if room.Status != RoomActive || room.CurrentRound != nil || (len(room.Rounds) == 0 && len(room.GiftBatches) == 0) {
 			return ErrInvalidState
+		}
+		centsPerPoint := input.CentsPerPoint
+		if centsPerPoint == 0 {
+			centsPerPoint = room.CentsPerPoint
+		}
+		if centsPerPoint < 1 || centsPerPoint > 1_000_000 {
+			return fmt.Errorf("settlement rate: %w", ErrInvalidInput)
 		}
 		balances := make(map[string]int64, len(room.Participants))
 		order := make([]string, 0, len(room.Participants))
 		settlementBalances := make([]SettlementBalance, 0, len(room.Participants))
 		for _, participant := range room.Participants {
-			amount := participant.TotalPoints * room.CentsPerPoint
+			amount := participant.TotalPoints * centsPerPoint
 			balances[participant.ID] = amount
 			order = append(order, participant.ID)
 			settlementBalances = append(settlementBalances, SettlementBalance{
@@ -560,7 +730,9 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta)
 		if err != nil {
 			return fmt.Errorf("store score settlement: %w", err)
 		}
-		_, err = tx.ExecContext(ctx, `UPDATE score_rooms SET status = 'settled', settled_at = ? WHERE id = ?`, now, room.ID)
+		_, err = tx.ExecContext(ctx, `
+			UPDATE score_rooms SET status = 'settled', cents_per_point = ?, settled_at = ? WHERE id = ?
+		`, centsPerPoint, now, room.ID)
 		return err
 	})
 }

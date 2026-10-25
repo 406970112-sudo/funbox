@@ -70,6 +70,7 @@ type RoomSnapshot struct {
 	Participants      []Participant `json:"participants"`
 	CurrentRound      *Round        `json:"currentRound,omitempty"`
 	Rounds            []Round       `json:"rounds"`
+	GiftBatches       []GiftBatch   `json:"giftBatches"`
 	Settlement        *Settlement   `json:"settlement,omitempty"`
 	SelfParticipantID string        `json:"selfParticipantId,omitempty"`
 	InviteToken       string        `json:"inviteToken,omitempty"`
@@ -113,6 +114,23 @@ type Entry struct {
 	Confirmed     bool       `json:"confirmed"`
 	SubmittedAt   *time.Time `json:"submittedAt,omitempty"`
 	UpdatedAt     *time.Time `json:"updatedAt,omitempty"`
+}
+
+type GiftBatch struct {
+	ID              string     `json:"id"`
+	RoomID          string     `json:"roomId"`
+	Number          int        `json:"number"`
+	Kind            RoundKind  `json:"kind"`
+	ReversesBatchID string     `json:"reversesBatchId,omitempty"`
+	CreatedBy       string     `json:"createdBy"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	Gifts           []GiftItem `json:"gifts"`
+}
+
+type GiftItem struct {
+	FromParticipantID string `json:"fromParticipantId"`
+	ToParticipantID   string `json:"toParticipantId"`
+	Points            int64  `json:"points"`
 }
 
 type Settlement struct {

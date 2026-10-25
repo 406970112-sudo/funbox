@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  buildScoreGiftAllocations,
   formatCNY,
+  formatRateInput,
   formatScore,
   extractScoreInviteToken,
+  parseYuanToCents,
   roundProgress,
   scoreDifference,
   sortedParticipants,
@@ -17,6 +20,32 @@ test('score difference and money formatting stay integer-safe', () => {
   assert.equal(formatScore(0), '0');
   assert.equal(formatScore(7), '+7');
   assert.equal(formatScore(-2), '-2');
+});
+
+test('settlement rates parse to integer cents without floating point drift', () => {
+  assert.equal(parseYuanToCents('0.5'), 50);
+  assert.equal(parseYuanToCents('1'), 100);
+  assert.equal(parseYuanToCents('2.00'), 200);
+  assert.equal(parseYuanToCents('1.05'), 105);
+  assert.equal(parseYuanToCents('0'), null);
+  assert.equal(parseYuanToCents('1.234'), null);
+  assert.equal(parseYuanToCents('abc'), null);
+  assert.equal(formatRateInput(50), '0.5');
+  assert.equal(formatRateInput(100), '1');
+  assert.equal(formatRateInput(105), '1.05');
+});
+
+test('batch gifts keep each recipient amount and reject invalid drafts', () => {
+  assert.deepEqual(buildScoreGiftAllocations(['b', 'c'], { b: '10', c: '5' }), {
+    allocations: [{ toParticipantId: 'b', points: 10 }, { toParticipantId: 'c', points: 5 }],
+    hasEnteredPoints: true,
+    invalid: false,
+    totalPoints: 15,
+  });
+  assert.equal(buildScoreGiftAllocations(['b', 'c'], { b: '10', c: '' }).invalid, false);
+  assert.equal(buildScoreGiftAllocations(['b', 'c'], { b: '0' }).invalid, true);
+  assert.equal(buildScoreGiftAllocations(['b', 'c'], { b: '1.5' }).invalid, true);
+  assert.equal(buildScoreGiftAllocations(['b', 'c'], { b: '2147483647', c: '1' }).invalid, true);
 });
 
 test('ranking is stable across ties', () => {

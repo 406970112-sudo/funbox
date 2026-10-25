@@ -3,7 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { AppState, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { ThemedText } from '@/components/themed-text';
@@ -22,12 +22,23 @@ import {
   joinScoreRoom,
   listScoreRoomHistory,
   removeScoreParticipant,
+  reverseScoreGiftBatch,
   settleScoreRoom,
   startScoreRoom,
   startScoreRound,
+  submitScoreGifts,
   submitScoreEntry,
 } from '@/lib/card-score-api';
-import { formatCNY, formatScore, roundProgress, scoreDifference, sortedParticipants } from '@/lib/card-score';
+import {
+  buildScoreGiftAllocations,
+  formatCNY,
+  formatRateInput,
+  formatScore,
+  parseYuanToCents,
+  roundProgress,
+  scoreDifference,
+  sortedParticipants,
+} from '@/lib/card-score';
 import {
   getStoredScoreSession,
   removeStoredScoreSession,
@@ -58,7 +69,7 @@ type LandingMode = 'create' | 'join';
 type Feedback = { message: string; tone?: 'error' | 'info' | 'success' };
 
 const PLAYER_LIMITS = [2, 3, 4, 5, 6, 7, 8];
-const CENT_PRESETS = [10, 50, 100, 200];
+const SETTLEMENT_RATE_PRESETS = [50, 100, 200];
 
 export function CardScoreScreen() {
   const router = useRouter();
@@ -83,10 +94,11 @@ export function CardScoreScreen() {
   }, [accessToken, guestToken]);
 
   const applyRoom = useCallback((next: ScoreRoomSnapshot) => {
-    roomVersionRef.current = next.version;
+    const normalized = { ...next, giftBatches: next.giftBatches ?? [] };
+    roomVersionRef.current = normalized.version;
     setRoom((current) => ({
-      ...next,
-      inviteToken: next.inviteToken ?? (current?.id === next.id ? current.inviteToken : undefined),
+      ...normalized,
+      inviteToken: normalized.inviteToken ?? (current?.id === normalized.id ? current.inviteToken : undefined),
     }));
   }, []);
 
@@ -166,15 +178,17 @@ export function CardScoreScreen() {
   }, [credential, refreshRoom, roomId]);
 
   async function runMutation(action: () => Promise<ScoreRoomSnapshot>, success?: string) {
-    if (busy) return;
+    if (busy) return false;
     setBusy(true);
     setFeedback(null);
     try {
       applyRoom(await action());
       if (success) setFeedback({ message: success, tone: 'success' });
+      return true;
     } catch (error) {
       if (error instanceof CardScoreAPIError && error.snapshot) applyRoom(error.snapshot);
       setFeedback({ message: getCardScoreErrorMessage(error) });
+      return false;
     } finally {
       setBusy(false);
     }
@@ -274,7 +288,7 @@ export function CardScoreScreen() {
           initialInvite={params.invite}
           mode={mode}
           onBack={() => router.back()}
-          onCreate={async (name, maxPlayers, centsPerPoint) => {
+          onCreate={async (name, maxPlayers) => {
             if (!accessToken) {
               router.push({ pathname: '/auth', params: { returnTo: '/tools/card-score' } });
               return;
@@ -282,7 +296,7 @@ export function CardScoreScreen() {
             setBusy(true);
             setFeedback(null);
             try {
-              const result = await createScoreRoom(accessToken, { name, maxPlayers, centsPerPoint });
+              const result = await createScoreRoom(accessToken, { name, maxPlayers });
               setGuestToken(null);
               applyRoom({ ...result.room, inviteToken: result.inviteToken });
             } catch (error) {
@@ -358,7 +372,7 @@ function LandingView({
   initialInvite?: string;
   mode: LandingMode;
   onBack: () => void;
-  onCreate: (name: string, maxPlayers: number, centsPerPoint: number) => Promise<void>;
+  onCreate: (name: string, maxPlayers: number) => Promise<void>;
   onJoin: (code: string, displayName: string, inviteToken?: string) => Promise<void>;
   onModeChange: (mode: LandingMode) => void;
   onOpenHistory: (room: ScoreRoomSnapshot) => void;
@@ -367,7 +381,6 @@ function LandingView({
   const { colors } = useAppTheme();
   const [name, setName] = useState('今晚牌局');
   const [maxPlayers, setMaxPlayers] = useState(4);
-  const [centsPerPoint, setCentsPerPoint] = useState(50);
   const [code, setCode] = useState('');
   const [displayName, setDisplayName] = useState('');
 
@@ -376,7 +389,7 @@ function LandingView({
       <ScoreTopBar onBack={onBack} title="打牌记分" />
       <View style={styles.heroCopy}>
         <ThemedText style={styles.pageTitle}>先记清每一分，散场再结算</ThemedText>
-        <ThemedText style={[styles.pageDescription, { color: colors.mutedText }]}>多人各自报分，全员确认后才计入总账。</ThemedText>
+        <ThemedText style={[styles.pageDescription, { color: colors.mutedText }]}>赢家不用填分，谁输分就给别人多少；散场时房主再定每分金额。</ThemedText>
       </View>
 
       <SurfaceCard style={styles.formPanel}>
@@ -396,19 +409,12 @@ function LandingView({
                 ))}
               </View>
             </View>
-            <View style={styles.settingBlock}>
-              <ThemedText style={[styles.fieldCaption, { color: colors.mutedText }]}>每分金额</ThemedText>
-              <View style={styles.optionRow}>
-                {CENT_PRESETS.map((cents) => (
-                  <OptionButton key={cents} label={formatCNY(cents)} selected={centsPerPoint === cents} onPress={() => setCentsPerPoint(cents)} />
-                ))}
-              </View>
-            </View>
+            <FeedbackBanner message="默认 1 分 = 1 元；打完后由房主在结算时调整比例。" tone="info" />
             <PrimaryAction
               icon={accessToken ? 'plus-circle-outline' : 'login'}
               label={accessToken ? '创建记分房间' : '登录后创建'}
               loading={busy}
-              onPress={() => void onCreate(name.trim(), maxPlayers, centsPerPoint)}
+              onPress={() => void onCreate(name.trim(), maxPlayers)}
             />
           </>
         ) : (
@@ -469,7 +475,7 @@ function RoomView({
   credential: ScoreCredential;
   feedback: Feedback | null;
   onExit: () => void;
-  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<void>;
+  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
   realtimeStatus: ScoreRealtimeStatus;
   room: ScoreRoomSnapshot;
   self?: ScoreParticipant;
@@ -513,7 +519,7 @@ function WaitingRoom({ activeCount, busy, credential, host, onMutation, room }: 
   busy: boolean;
   credential: ScoreCredential;
   host: boolean;
-  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<void>;
+  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
   room: ScoreRoomSnapshot;
 }) {
   const { colors } = useAppTheme();
@@ -528,7 +534,7 @@ function WaitingRoom({ activeCount, busy, credential, host, onMutation, room }: 
           </View>
           {inviteURL ? <View style={styles.qrShell}><QRCode backgroundColor="#ffffff" color="#18233d" quietZone={4} size={148} value={inviteURL} /></View> : null}
         </View>
-        <ThemedText style={[styles.ruleText, { color: colors.mutedText }]}>每分 {formatCNY(room.centsPerPoint)} · {activeCount}/{room.maxPlayers} 人</ThemedText>
+        <ThemedText style={[styles.ruleText, { color: colors.mutedText }]}>暂按每分 {formatCNY(room.centsPerPoint)} · 结算时可调整 · {activeCount}/{room.maxPlayers} 人</ThemedText>
         <Pressable accessibilityRole="button" onPress={() => void Clipboard.setStringAsync(room.code)} style={({ pressed }) => [styles.copyButton, { backgroundColor: colors.surfaceMuted }, pressed && styles.pressed]}>
           <MaterialCommunityIcons name="content-copy" color={colors.primary} size={18} />
           <ThemedText style={[styles.copyText, { color: colors.primary }]}>复制房间码</ThemedText>
@@ -564,29 +570,233 @@ function ActiveRoom({ busy, credential, host, onMutation, room, self }: {
   busy: boolean;
   credential: ScoreCredential;
   host: boolean;
-  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<void>;
+  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
   room: ScoreRoomSnapshot;
   self?: ScoreParticipant;
 }) {
+  const [settleOpen, setSettleOpen] = useState(false);
   const ranking = sortedParticipants(room.participants);
+  const hasRecords = room.rounds.length > 0 || room.giftBatches.length > 0;
   return (
     <>
       <View style={styles.section}>
-        <SectionTitle action={`每分 ${formatCNY(room.centsPerPoint)}`} title="当前总分" />
+        <SectionTitle action={`暂按每分 ${formatCNY(room.centsPerPoint)}`} title="当前总分" />
         <SurfaceCard style={styles.listCard}>
           {ranking.map((participant, index) => <ParticipantScoreRow key={participant.id} participant={participant} rank={index + 1} />)}
         </SurfaceCard>
       </View>
       {room.currentRound ? (
         <CurrentRound busy={busy} credential={credential} host={host} onMutation={onMutation} room={room} self={self} />
-      ) : host ? (
-        <View style={styles.actionStack}>
-          <PrimaryAction icon="plus-circle-outline" label={room.rounds.length ? '开始下一局' : '开始第一局'} loading={busy} onPress={() => void onMutation(() => startScoreRound(credential, room))} />
-          {room.rounds.length ? <PrimaryAction icon="flag-checkered" label="结束并结算" onPress={() => void onMutation(() => settleScoreRoom(credential, room))} tone="neutral" /> : null}
-        </View>
-      ) : <FeedbackBanner message="等待房主开始下一局。" tone="info" />}
+      ) : (
+        <GivePointsPanel busy={busy} credential={credential} onMutation={onMutation} room={room} self={self} />
+      )}
+      {!room.currentRound && host && hasRecords ? (
+        <PrimaryAction icon="flag-checkered" label="结束并结算" onPress={() => setSettleOpen(true)} tone="neutral" />
+      ) : null}
+      {room.giftBatches.length ? <GiftHistory credential={credential} host={host} onMutation={onMutation} room={room} /> : null}
       {room.rounds.length ? <RoundHistory credential={credential} host={host} onMutation={onMutation} room={room} /> : null}
+      <SettlementRateModal
+        busy={busy}
+        onClose={() => setSettleOpen(false)}
+        onSettle={async (centsPerPoint) => {
+          const success = await onMutation(() => settleScoreRoom(credential, room, centsPerPoint), '牌局已结算。');
+          if (success) setSettleOpen(false);
+          return success;
+        }}
+        room={room}
+        visible={settleOpen}
+      />
     </>
+  );
+}
+
+function GivePointsPanel({ busy, credential, onMutation, room, self }: {
+  busy: boolean;
+  credential: ScoreCredential;
+  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
+  room: ScoreRoomSnapshot;
+  self?: ScoreParticipant;
+}) {
+  const { colors } = useAppTheme();
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const recipients = room.participants.filter((participant) => participant.status === 'active' && participant.id !== self?.id);
+  const giftDraft = useMemo(
+    () => buildScoreGiftAllocations(recipients.map((participant) => participant.id), drafts),
+    [drafts, recipients],
+  );
+  const { allocations, hasEnteredPoints, invalid, totalPoints } = giftDraft;
+  const canSubmit = Boolean(self) && hasEnteredPoints && !invalid && allocations.length > 0;
+
+  async function handleSubmit() {
+    if (!canSubmit) return;
+    const success = await onMutation(() => submitScoreGifts(credential, room, allocations), '给分已入账。');
+    if (success) setDrafts({});
+  }
+
+  if (!self) return null;
+  return (
+    <View style={styles.section}>
+      <SectionTitle action="赢家无需填写" title="我给分" />
+      <SurfaceCard style={styles.roundPanel}>
+        <ThemedText style={[styles.giveHint, { color: colors.mutedText }]}>选择一位或多位玩家，填写你要给每个人的分数。提交后双方分数会立即更新。</ThemedText>
+        <View style={styles.entryList}>
+          {recipients.map((participant) => (
+            <View key={participant.id} style={[styles.giveRow, { borderBottomColor: colors.line }]}>
+              <View style={styles.entryNameBlock}>
+                <ThemedText style={styles.entryName}>{participant.displayName}</ThemedText>
+                <ThemedText style={[styles.entryState, { color: colors.mutedText }]}>当前 {formatScore(participant.totalPoints)} 分</ThemedText>
+              </View>
+              <TextInput
+                accessibilityLabel={`给 ${participant.displayName} 的分数`}
+                keyboardType="number-pad"
+                maxLength={10}
+                onChangeText={(value) => setDrafts((current) => ({ ...current, [participant.id]: value.replace(/\D/g, '') }))}
+                placeholder="0"
+                placeholderTextColor={colors.mutedText}
+                selectionColor={colors.primary}
+                style={[styles.giveInput, { backgroundColor: colors.surfaceMuted, borderColor: colors.line, color: colors.text }]}
+                value={drafts[participant.id] ?? ''}
+              />
+              <ThemedText style={[styles.giveUnit, { color: colors.mutedText }]}>分</ThemedText>
+            </View>
+          ))}
+        </View>
+        <View style={styles.giveSummary}>
+          <ThemedText style={[styles.giveSummaryLabel, { color: colors.mutedText }]}>本次给出</ThemedText>
+          <ThemedText style={[styles.giveSummaryValue, { color: totalPoints > 0 ? colors.accent : colors.mutedText }]}>{totalPoints > 0 ? formatScore(-totalPoints) : '0'} 分</ThemedText>
+        </View>
+        {invalid ? <FeedbackBanner message="每人只能填写大于 0 的整数分数，且合计不能超出计分上限。" /> : null}
+        <PrimaryAction disabled={!canSubmit} icon="gift-outline" label="确认给分" loading={busy} onPress={() => void handleSubmit()} />
+      </SurfaceCard>
+    </View>
+  );
+}
+
+function GiftHistory({ credential, host = false, onMutation, room }: {
+  credential?: ScoreCredential;
+  host?: boolean;
+  onMutation?: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
+  room: ScoreRoomSnapshot;
+}) {
+  const { colors } = useAppTheme();
+  const [expanded, setExpanded] = useState(false);
+  const batches = expanded ? room.giftBatches : room.giftBatches.slice(0, 3);
+  const participants = new Map(room.participants.map((participant) => [participant.id, participant]));
+  const batchByID = new Map(room.giftBatches.map((batch) => [batch.id, batch]));
+  const reversedBatchIDs = new Set(room.giftBatches.map((batch) => batch.reversesBatchId).filter(Boolean));
+  return (
+    <View style={styles.section}>
+      <SectionTitle action={`${room.giftBatches.length} 笔`} title="给分记录" />
+      <SurfaceCard style={styles.listCard}>
+        {batches.map((batch) => {
+          const sourceBatch = batch.reversesBatchId ? batchByID.get(batch.reversesBatchId) : undefined;
+          const detail = batch.gifts.map((gift) => {
+            const from = participants.get(gift.fromParticipantId)?.displayName ?? '玩家';
+            const to = participants.get(gift.toParticipantId)?.displayName ?? '玩家';
+            return `${from} 给 ${to} ${formatScore(gift.points)} 分`;
+          }).join(' · ');
+          const canReverse = Boolean(host && credential && onMutation) && batch.kind === 'normal' && !reversedBatchIDs.has(batch.id);
+          return (
+            <View key={batch.id} style={[styles.roundHistoryRow, { borderBottomColor: colors.line }]}>
+              <View style={[styles.roundNumber, { backgroundColor: colors.surfaceMuted }]}><ThemedText style={[styles.roundNumberText, { color: colors.primary }]}>{batch.number}</ThemedText></View>
+              <View style={styles.roundHistoryCopy}>
+                <ThemedText style={styles.roundHistoryTitle}>{batch.kind === 'reversal' ? `反向记录，更正第 ${sourceBatch?.number ?? '—'} 笔` : `第 ${batch.number} 笔给分`}</ThemedText>
+                <ThemedText numberOfLines={3} style={[styles.roundHistoryMeta, { color: colors.mutedText }]}>{detail}</ThemedText>
+              </View>
+              {canReverse ? (
+                <Pressable accessibilityLabel={`更正第 ${batch.number} 笔给分`} onPress={() => void onMutation?.(() => reverseScoreGiftBatch(credential!, room, batch.id), '已生成反向给分记录。')} style={styles.rowIconButton}>
+                  <MaterialCommunityIcons name="undo-variant" color={colors.primary} size={20} />
+                </Pressable>
+              ) : null}
+            </View>
+          );
+        })}
+        {room.giftBatches.length > 3 ? (
+          <Pressable onPress={() => setExpanded((value) => !value)} style={styles.expandButton}><ThemedText style={[styles.expandText, { color: colors.primary }]}>{expanded ? '收起记录' : '查看全部记录'}</ThemedText><MaterialCommunityIcons name={expanded ? 'chevron-up' : 'chevron-down'} color={colors.primary} size={19} /></Pressable>
+        ) : null}
+      </SurfaceCard>
+    </View>
+  );
+}
+
+function SettlementRateModal({ busy, onClose, onSettle, room, visible }: {
+  busy: boolean;
+  onClose: () => void;
+  onSettle: (centsPerPoint: number) => Promise<boolean>;
+  room: ScoreRoomSnapshot;
+  visible: boolean;
+}) {
+  const { colors } = useAppTheme();
+  const [rateDraft, setRateDraft] = useState(formatRateInput(room.centsPerPoint));
+  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    if (visible) setRateDraft(formatRateInput(room.centsPerPoint));
+  }, [room.centsPerPoint, visible]);
+  const centsPerPoint = parseYuanToCents(rateDraft);
+  const ranking = sortedParticipants(room.participants);
+
+  async function handleSettle() {
+    if (!centsPerPoint || submitting) return;
+    setSubmitting(true);
+    try {
+      await onSettle(centsPerPoint);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
+      <View style={styles.modalBackdrop}>
+        <SurfaceCard style={styles.settlementModal}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalTitleBlock}>
+              <ThemedText style={styles.settlementTitle}>结算比例</ThemedText>
+              <ThemedText style={[styles.settlementMeta, { color: colors.mutedText }]}>只改变金额，不改变玩家分数。</ThemedText>
+            </View>
+            <Pressable accessibilityLabel="关闭结算设置" onPress={onClose} style={styles.rowIconButton}><MaterialCommunityIcons name="close" color={colors.mutedText} size={21} /></Pressable>
+          </View>
+          <View style={styles.optionRow}>
+            {SETTLEMENT_RATE_PRESETS.map((cents) => (
+              <OptionButton key={cents} label={`${formatCNY(cents)}/分`} selected={centsPerPoint === cents} onPress={() => setRateDraft(formatRateInput(cents))} />
+            ))}
+          </View>
+          <View style={styles.rateInputRow}>
+            <ThemedText style={[styles.fieldCaption, { color: colors.mutedText }]}>自定义</ThemedText>
+            <View style={[styles.rateInputShell, { backgroundColor: colors.surfaceMuted, borderColor: colors.line }]}>
+              <ThemedText style={[styles.ratePrefix, { color: colors.mutedText }]}>¥</ThemedText>
+              <TextInput
+                accessibilityLabel="每分金额"
+                keyboardType="decimal-pad"
+                onChangeText={(value) => setRateDraft(value.replace(/[^0-9.]/g, ''))}
+                placeholder="1"
+                placeholderTextColor={colors.mutedText}
+                selectionColor={colors.primary}
+                style={[styles.rateInput, { color: colors.text }]}
+                value={rateDraft}
+              />
+              <ThemedText style={[styles.ratePrefix, { color: colors.mutedText }]}>元/分</ThemedText>
+            </View>
+          </View>
+          {!centsPerPoint ? <FeedbackBanner message="请输入大于 0、最多两位小数的每分金额。" /> : null}
+          <View style={styles.entryList}>
+            {ranking.map((participant) => (
+              <View key={participant.id} style={[styles.entryRow, { borderBottomColor: colors.line }]}>
+                <View style={styles.entryNameBlock}>
+                  <ThemedText style={styles.entryName}>{participant.displayName}</ThemedText>
+                  <ThemedText style={[styles.entryState, { color: colors.mutedText }]}>{formatScore(participant.totalPoints)} 分</ThemedText>
+                </View>
+                <ThemedText style={styles.entryScore}>{centsPerPoint ? formatCNY(participant.totalPoints * centsPerPoint) : '—'}</ThemedText>
+              </View>
+            ))}
+          </View>
+          <View style={styles.modalActions}>
+            <PrimaryAction icon="flag-checkered" label="确认并结算" loading={busy || submitting} onPress={() => void handleSettle()} disabled={!centsPerPoint} />
+            <PrimaryAction icon="close" label="取消" onPress={onClose} tone="neutral" />
+          </View>
+        </SurfaceCard>
+      </View>
+    </Modal>
   );
 }
 
@@ -594,7 +804,7 @@ function CurrentRound({ busy, credential, host, onMutation, room, self }: {
   busy: boolean;
   credential: ScoreCredential;
   host: boolean;
-  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<void>;
+  onMutation: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
   room: ScoreRoomSnapshot;
   self?: ScoreParticipant;
 }) {
@@ -656,7 +866,7 @@ function CurrentRound({ busy, credential, host, onMutation, room, self }: {
 function RoundHistory({ credential, host = false, onMutation, room }: {
   credential?: ScoreCredential;
   host?: boolean;
-  onMutation?: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<void>;
+  onMutation?: (action: () => Promise<ScoreRoomSnapshot>, success?: string) => Promise<boolean>;
   room: ScoreRoomSnapshot;
 }) {
   const { colors } = useAppTheme();
@@ -691,12 +901,13 @@ function SettledRoom({ room }: { room: ScoreRoomSnapshot }) {
   const { colors } = useAppTheme();
   const ranking = sortedParticipants(room.participants);
   const participants = new Map(room.participants.map((participant) => [participant.id, participant]));
+  const recordCount = room.giftBatches.length + room.rounds.length;
   return (
     <>
       <SurfaceCard style={styles.settlementHero}>
         <View style={[styles.settlementIcon, { backgroundColor: colors.primarySoft }]}><MaterialCommunityIcons name="check-decagram-outline" color={colors.success} size={34} /></View>
         <ThemedText style={styles.settlementTitle}>牌局已结算</ThemedText>
-        <ThemedText style={[styles.settlementMeta, { color: colors.mutedText }]}>{room.rounds.length} 局 · 每分 {formatCNY(room.centsPerPoint)}</ThemedText>
+        <ThemedText style={[styles.settlementMeta, { color: colors.mutedText }]}>{recordCount} 条记录 · 每分 {formatCNY(room.centsPerPoint)}</ThemedText>
       </SurfaceCard>
       <View style={styles.section}>
         <SectionTitle action="最终" title="排名与账目" />
@@ -710,7 +921,8 @@ function SettledRoom({ room }: { room: ScoreRoomSnapshot }) {
           )) : <View style={styles.noTransfer}><MaterialCommunityIcons name="hand-okay" color={colors.success} size={26} /><ThemedText style={styles.noTransferText}>账目已自然抵消，无需转账</ThemedText></View>}
         </SurfaceCard>
       </View>
-      <RoundHistory room={room} />
+      {room.giftBatches.length ? <GiftHistory room={room} /> : null}
+      {room.rounds.length ? <RoundHistory room={room} /> : null}
     </>
   );
 }
@@ -755,6 +967,13 @@ const styles = StyleSheet.create({
   expandText: { fontSize: 12, fontWeight: '800' },
   fieldCaption: { fontSize: 12, fontWeight: '700' },
   formPanel: { gap: 16, padding: 16 },
+  giveHint: { fontSize: 12, fontWeight: '700', lineHeight: 18 },
+  giveInput: { borderRadius: 12, borderWidth: 1, fontSize: 17, fontWeight: '900', height: 44, paddingHorizontal: 10, paddingVertical: 0, textAlign: 'center', width: 68 },
+  giveRow: { alignItems: 'center', borderBottomWidth: 1, flexDirection: 'row', gap: 10, minHeight: 60, paddingVertical: 8 },
+  giveSummary: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2 },
+  giveSummaryLabel: { fontSize: 12, fontWeight: '700' },
+  giveSummaryValue: { fontSize: 16, fontWeight: '900' },
+  giveUnit: { fontSize: 12, fontWeight: '800' },
   heroCopy: { gap: 6, marginBottom: 2 },
   historyRoomCopy: { flex: 1 },
   historyRoomMeta: { fontSize: 11, marginTop: 4 },
@@ -765,6 +984,10 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 11, fontWeight: '800' },
   listCard: { overflow: 'hidden', paddingHorizontal: 15 },
   loadingTitle: { fontSize: 16, fontWeight: '800', marginTop: 8 },
+  modalActions: { gap: 9 },
+  modalBackdrop: { backgroundColor: 'rgba(9, 15, 30, 0.52)', flex: 1, justifyContent: 'flex-end', padding: 16 },
+  modalHeader: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
+  modalTitleBlock: { flex: 1, gap: 4 },
   noTransfer: { alignItems: 'center', flexDirection: 'row', gap: 10, justifyContent: 'center', minHeight: 72 },
   noTransferText: { fontSize: 13, fontWeight: '800' },
   optionButton: { alignItems: 'center', borderRadius: 14, borderWidth: 1, flex: 1, justifyContent: 'center', minHeight: 42, minWidth: 40, paddingHorizontal: 8 },
@@ -775,6 +998,10 @@ const styles = StyleSheet.create({
   pageTitle: { fontSize: 27, fontWeight: '900', lineHeight: 34 },
   pressed: { opacity: 0.76 },
   qrShell: { backgroundColor: '#ffffff', borderRadius: 16, padding: 6 },
+  rateInput: { flex: 1, fontSize: 18, fontWeight: '900', height: 48, paddingHorizontal: 6, paddingVertical: 0 },
+  rateInputRow: { gap: 7 },
+  rateInputShell: { alignItems: 'center', borderRadius: 16, borderWidth: 1, flexDirection: 'row', minHeight: 52, paddingHorizontal: 14 },
+  ratePrefix: { fontSize: 13, fontWeight: '800' },
   roomCode: { fontSize: 34, fontWeight: '900', letterSpacing: 0, marginTop: 5 },
   roomIcon: { alignItems: 'center', borderRadius: 16, height: 38, justifyContent: 'center', width: 38 },
   roundHistoryCopy: { flex: 1, minWidth: 0 },
@@ -795,5 +1022,6 @@ const styles = StyleSheet.create({
   settlementHero: { alignItems: 'center', gap: 8, padding: 24 },
   settlementIcon: { alignItems: 'center', borderRadius: 24, height: 52, justifyContent: 'center', width: 52 },
   settlementMeta: { fontSize: 12 },
+  settlementModal: { gap: 16, maxHeight: '92%', padding: 18 },
   settlementTitle: { fontSize: 22, fontWeight: '900' },
 });

@@ -44,6 +44,23 @@ export type ScoreRound = {
   totalDelta: number;
 };
 
+export type ScoreGiftItem = {
+  fromParticipantId: string;
+  toParticipantId: string;
+  points: number;
+};
+
+export type ScoreGiftBatch = {
+  id: string;
+  roomId: string;
+  number: number;
+  kind: ScoreRoundKind;
+  reversesBatchId?: string;
+  createdBy: string;
+  createdAt: string;
+  gifts: ScoreGiftItem[];
+};
+
 export type ScoreTransfer = {
   fromParticipantId: string;
   toParticipantId: string;
@@ -81,6 +98,7 @@ export type ScoreRoomSnapshot = {
   participants: ScoreParticipant[];
   currentRound?: ScoreRound;
   rounds: ScoreRound[];
+  giftBatches: ScoreGiftBatch[];
   settlement?: ScoreSettlement;
   selfParticipantId?: string;
   inviteToken?: string;
@@ -108,7 +126,12 @@ export type StoredScoreSession = {
 export type CreateScoreRoomInput = {
   name: string;
   maxPlayers: number;
-  centsPerPoint: number;
+  centsPerPoint?: number;
+};
+
+export type ScoreGiftAllocation = {
+  toParticipantId: string;
+  points: number;
 };
 
 export type CreateScoreRoomResult = {
