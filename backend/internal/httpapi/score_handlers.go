@@ -230,8 +230,7 @@ func (s *Server) handleCancelZhaJinHuaHand(w http.ResponseWriter, r *http.Reques
 func (s *Server) handleUpdateZhaJinHuaSettings(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		scoreCommandBody
-		ForceOpenThreshold int   `json:"forceOpenThreshold"`
-		ForceOpenFeePoints int64 `json:"forceOpenFeePoints"`
+		ForceOpenThreshold int `json:"forceOpenThreshold"`
 	}
 	if err := decodeJSONBody(r, &body); err != nil {
 		writeRequestBodyError(w, err)
@@ -239,7 +238,7 @@ func (s *Server) handleUpdateZhaJinHuaSettings(w http.ResponseWriter, r *http.Re
 	}
 	actor, _ := scoreActorFromContext(r.Context())
 	room, err := s.scoreService.UpdateZhaJinHuaSettings(r.Context(), actor, body.meta(), score.UpdateZhaJinHuaSettingsInput{
-		ForceOpenThreshold: body.ForceOpenThreshold, ForceOpenFeePoints: body.ForceOpenFeePoints,
+		ForceOpenThreshold: body.ForceOpenThreshold,
 	})
 	s.writeScoreMutation(w, http.StatusOK, room, err)
 }

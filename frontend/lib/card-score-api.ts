@@ -276,7 +276,7 @@ export function getCardScoreErrorMessage(error: unknown) {
     score_action_id_reused: '操作标识已失效，请刷新后重试。',
     score_balances_not_zero: '所有玩家的本局分数合计必须为 0。',
     score_invite_invalid: '二维码不是有效的牌局邀请码，请让房主重新展示。',
-    score_force_open_locked: '当前剩余人数还不能强开，请完成本手或调整房主设置。',
+    score_force_open_locked: '当前还不能强开，请确认剩余人数已达标且本手已有加注。',
     score_invalid_input: '请检查房间设置或分数输入。',
     score_invalid_state: '房间状态已经变化，请刷新后重试。',
     score_nickname_conflict: '这个昵称已被房间内其他玩家使用。',

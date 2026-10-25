@@ -85,7 +85,6 @@ export type ScoreSettlement = {
 
 export type ZhaJinHuaSettings = {
   forceOpenThreshold: number;
-  forceOpenFeePoints: number;
 };
 
 export type ZhaJinHuaPlayer = {
@@ -112,9 +111,9 @@ export type ZhaJinHuaHand = {
   number: number;
   status: ZhaJinHuaHandStatus;
   potPoints: number;
+  currentBetPoints: number;
   currentTurnParticipantId?: string;
   forceOpenThreshold: number;
-  forceOpenFeePoints: number;
   winnerParticipantId?: string;
   createdBy: string;
   createdAt: string;
@@ -178,10 +177,11 @@ export type CreateScoreRoomInput = {
   centsPerPoint?: number;
   scene?: ScoreScene;
   forceOpenThreshold?: number;
-  forceOpenFeePoints?: number;
 };
 
-export type UpdateZhaJinHuaSettingsInput = ZhaJinHuaSettings;
+export type UpdateZhaJinHuaSettingsInput = {
+  forceOpenThreshold: number;
+};
 
 export type SubmitZhaJinHuaActionInput = {
   actionType: ZhaJinHuaActionType;

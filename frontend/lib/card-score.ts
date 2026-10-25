@@ -16,6 +16,7 @@ type ProgressEntry = {
 
 type ZhaJinHuaRankableHand = {
   forceOpenThreshold: number;
+  currentBetPoints: number;
   players: { status: 'active' | 'folded' }[];
 };
 
@@ -104,7 +105,7 @@ export function zhaJinHuaActivePlayerCount(hand: ZhaJinHuaRankableHand) {
 
 export function canForceOpenZhaJinHua(hand: ZhaJinHuaRankableHand) {
   const activePlayers = zhaJinHuaActivePlayerCount(hand);
-  return activePlayers >= 2 && activePlayers <= hand.forceOpenThreshold;
+  return hand.currentBetPoints > 0 && activePlayers >= 2 && activePlayers <= hand.forceOpenThreshold;
 }
 
 export function extractScoreInviteToken(value: string) {

@@ -53,7 +53,6 @@ type CreateRoomInput struct {
 	CentsPerPoint      int64      `json:"centsPerPoint"`
 	Scene              ScoreScene `json:"scene,omitempty"`
 	ForceOpenThreshold int        `json:"forceOpenThreshold,omitempty"`
-	ForceOpenFeePoints int64      `json:"forceOpenFeePoints,omitempty"`
 }
 
 type CreateRoomResult struct {
@@ -101,8 +100,7 @@ type SettleRoomInput struct {
 }
 
 type UpdateZhaJinHuaSettingsInput struct {
-	ForceOpenThreshold int   `json:"forceOpenThreshold"`
-	ForceOpenFeePoints int64 `json:"forceOpenFeePoints"`
+	ForceOpenThreshold int `json:"forceOpenThreshold"`
 }
 
 type ZhaJinHuaActionInput struct {
@@ -170,16 +168,11 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	switch input.Scene {
 	case SceneGeneric:
 		input.ForceOpenThreshold = 0
-		input.ForceOpenFeePoints = 0
 	case SceneZhaJinHua:
 		if input.ForceOpenThreshold == 0 {
 			input.ForceOpenThreshold = 2
 		}
-		if input.ForceOpenFeePoints == 0 {
-			input.ForceOpenFeePoints = 1
-		}
-		if input.ForceOpenThreshold < 2 || input.ForceOpenThreshold > input.MaxPlayers ||
-			input.ForceOpenFeePoints < 1 || input.ForceOpenFeePoints > 2_147_483_647 {
+		if input.ForceOpenThreshold < 2 || input.ForceOpenThreshold > input.MaxPlayers {
 			return CreateRoomResult{}, fmt.Errorf("zha jin hua settings: %w", ErrInvalidInput)
 		}
 	default:
@@ -229,11 +222,15 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 	if err != nil {
 		return CreateRoomResult{}, false, fmt.Errorf("insert score host: %w", err)
 	}
+	legacyForceOpenFee := int64(0)
+	if input.Scene == SceneZhaJinHua {
+		legacyForceOpenFee = 1
+	}
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO score_room_game_configs (
 			room_id, scene, force_open_threshold, force_open_fee_points, updated_at
 		) VALUES (?, ?, ?, ?, ?)
-	`, roomID, input.Scene, input.ForceOpenThreshold, input.ForceOpenFeePoints, now.Unix())
+	`, roomID, input.Scene, input.ForceOpenThreshold, legacyForceOpenFee, now.Unix())
 	if err != nil {
 		return CreateRoomResult{}, false, fmt.Errorf("insert score room game config: %w", err)
 	}
@@ -462,15 +459,14 @@ func (s *Service) UpdateZhaJinHuaSettings(ctx context.Context, actor Actor, meta
 		if room.Scene != SceneZhaJinHua || room.CurrentZhaJinHuaHand != nil || room.CurrentRound != nil {
 			return ErrInvalidState
 		}
-		if input.ForceOpenThreshold < 2 || input.ForceOpenThreshold > room.MaxPlayers ||
-			input.ForceOpenFeePoints < 1 || input.ForceOpenFeePoints > 2_147_483_647 {
+		if input.ForceOpenThreshold < 2 || input.ForceOpenThreshold > room.MaxPlayers {
 			return fmt.Errorf("zha jin hua settings: %w", ErrInvalidInput)
 		}
 		_, err := tx.ExecContext(ctx, `
 			UPDATE score_room_game_configs
-			SET force_open_threshold = ?, force_open_fee_points = ?, updated_at = ?
+			SET force_open_threshold = ?, updated_at = ?
 			WHERE room_id = ? AND scene = 'zhajinhua'
-		`, input.ForceOpenThreshold, input.ForceOpenFeePoints, s.now().UTC().Unix(), room.ID)
+		`, input.ForceOpenThreshold, s.now().UTC().Unix(), room.ID)
 		if err != nil {
 			return fmt.Errorf("update zha jin hua settings: %w", err)
 		}
@@ -505,7 +501,7 @@ func (s *Service) StartZhaJinHuaHand(ctx context.Context, actor Actor, meta Comm
 				force_open_threshold, force_open_fee_points, created_by, created_at
 			) VALUES (?, ?, ?, 'active', 0, ?, ?, ?, ?, ?)
 		`, handID, room.ID, number, players[0].ID, room.ZhaJinHuaSettings.ForceOpenThreshold,
-			room.ZhaJinHuaSettings.ForceOpenFeePoints, actor.ParticipantID, now); err != nil {
+			1, actor.ParticipantID, now); err != nil {
 			return fmt.Errorf("insert zha jin hua hand: %w", err)
 		}
 		for index, participant := range players {
@@ -582,10 +578,17 @@ func (s *Service) SubmitZhaJinHuaAction(ctx context.Context, actor Actor, meta C
 			if winnerParticipantID != actor.ParticipantID && winnerParticipantID != targetParticipantID {
 				return fmt.Errorf("force open winner: %w", ErrInvalidInput)
 			}
-			if hand.PotPoints > 2_147_483_647-hand.ForceOpenFeePoints {
+			currentBetPoints, err := currentZhaJinHuaBet(ctx, tx, handID)
+			if err != nil {
+				return err
+			}
+			if currentBetPoints <= 0 {
+				return ErrForceOpenLocked
+			}
+			if hand.PotPoints > 2_147_483_647-currentBetPoints {
 				return fmt.Errorf("force open fee: %w", ErrInvalidInput)
 			}
-			actionPoints = hand.ForceOpenFeePoints
+			actionPoints = currentBetPoints
 			loserParticipantID := targetParticipantID
 			if winnerParticipantID == targetParticipantID {
 				loserParticipantID = actor.ParticipantID
@@ -594,7 +597,7 @@ func (s *Service) SubmitZhaJinHuaAction(ctx context.Context, actor Actor, meta C
 				UPDATE score_zjh_hand_players
 				SET contribution_points = contribution_points + ?
 				WHERE hand_id = ? AND participant_id = ?
-			`, hand.ForceOpenFeePoints, handID, actor.ParticipantID); err != nil {
+			`, currentBetPoints, handID, actor.ParticipantID); err != nil {
 				return fmt.Errorf("charge zha jin hua force open fee: %w", err)
 			}
 			if _, err := tx.ExecContext(ctx, `
@@ -604,8 +607,10 @@ func (s *Service) SubmitZhaJinHuaAction(ctx context.Context, actor Actor, meta C
 				return fmt.Errorf("fold zha jin hua force open loser: %w", err)
 			}
 			if _, err := tx.ExecContext(ctx, `
-				UPDATE score_zjh_hands SET pot_points = pot_points + ? WHERE id = ?
-			`, hand.ForceOpenFeePoints, handID); err != nil {
+				UPDATE score_zjh_hands
+				SET pot_points = pot_points + ?, force_open_fee_points = ?
+				WHERE id = ?
+			`, currentBetPoints, currentBetPoints, handID); err != nil {
 				return fmt.Errorf("add zha jin hua force open fee: %w", err)
 			}
 		default:
@@ -1272,6 +1277,21 @@ func activeZhaJinHuaPlayerCount(players []ZhaJinHuaPlayer) int {
 		}
 	}
 	return count
+}
+
+func currentZhaJinHuaBet(ctx context.Context, q queryer, handID string) (int64, error) {
+	var points int64
+	err := q.QueryRowContext(ctx, `
+		SELECT COALESCE((
+			SELECT points FROM score_zjh_actions
+			WHERE hand_id = ? AND action_type = 'raise'
+			ORDER BY sequence DESC LIMIT 1
+		), 0)
+	`, handID).Scan(&points)
+	if err != nil {
+		return 0, fmt.Errorf("load current zha jin hua bet: %w", err)
+	}
+	return points, nil
 }
 
 func nextZhaJinHuaParticipant(ctx context.Context, tx *sql.Tx, handID, actorParticipantID string) (string, error) {

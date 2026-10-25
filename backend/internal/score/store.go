@@ -335,10 +335,11 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 func loadRoomGameConfig(ctx context.Context, q queryer, roomID string) (ScoreScene, ZhaJinHuaSettings, error) {
 	var scene string
 	var settings ZhaJinHuaSettings
+	var legacyForceOpenFee int64
 	err := q.QueryRowContext(ctx, `
 		SELECT scene, force_open_threshold, force_open_fee_points
 		FROM score_room_game_configs WHERE room_id = ?
-	`, roomID).Scan(&scene, &settings.ForceOpenThreshold, &settings.ForceOpenFeePoints)
+	`, roomID).Scan(&scene, &settings.ForceOpenThreshold, &legacyForceOpenFee)
 	if errors.Is(err, sql.ErrNoRows) {
 		return SceneGeneric, ZhaJinHuaSettings{}, nil
 	}
@@ -624,10 +625,11 @@ func loadZhaJinHuaHandList(ctx context.Context, q queryer, roomID, statusPredica
 		var status string
 		var currentTurn, winner sql.NullString
 		var createdAt int64
+		var recordedForceOpenFee int64
 		var finishedAt, cancelledAt sql.NullInt64
 		if err := rows.Scan(
 			&hand.ID, &hand.RoomID, &hand.Number, &status, &hand.PotPoints,
-			&currentTurn, &hand.ForceOpenThreshold, &hand.ForceOpenFeePoints,
+			&currentTurn, &hand.ForceOpenThreshold, &recordedForceOpenFee,
 			&winner, &hand.CreatedBy, &createdAt, &finishedAt, &cancelledAt,
 		); err != nil {
 			_ = rows.Close()
@@ -654,6 +656,11 @@ func loadZhaJinHuaHandList(ctx context.Context, q queryer, roomID, statusPredica
 		}
 		if err := loadZhaJinHuaActions(ctx, q, &hands[index]); err != nil {
 			return nil, err
+		}
+		for _, action := range hands[index].Actions {
+			if action.ActionType == ZhaJinHuaActionRaise {
+				hands[index].CurrentBetPoints = action.Points
+			}
 		}
 	}
 	return hands, nil

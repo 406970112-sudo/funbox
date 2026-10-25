@@ -145,8 +145,7 @@ type GiftItem struct {
 }
 
 type ZhaJinHuaSettings struct {
-	ForceOpenThreshold int   `json:"forceOpenThreshold"`
-	ForceOpenFeePoints int64 `json:"forceOpenFeePoints"`
+	ForceOpenThreshold int `json:"forceOpenThreshold"`
 }
 
 type ZhaJinHuaHandStatus string
@@ -178,9 +177,9 @@ type ZhaJinHuaHand struct {
 	Number                   int                 `json:"number"`
 	Status                   ZhaJinHuaHandStatus `json:"status"`
 	PotPoints                int64               `json:"potPoints"`
+	CurrentBetPoints         int64               `json:"currentBetPoints"`
 	CurrentTurnParticipantID string              `json:"currentTurnParticipantId,omitempty"`
 	ForceOpenThreshold       int                 `json:"forceOpenThreshold"`
-	ForceOpenFeePoints       int64               `json:"forceOpenFeePoints"`
 	WinnerParticipantID      string              `json:"winnerParticipantId,omitempty"`
 	CreatedBy                string              `json:"createdBy"`
 	CreatedAt                time.Time           `json:"createdAt"`

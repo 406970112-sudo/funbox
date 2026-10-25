@@ -148,9 +148,9 @@ func TestScoreHTTPZhaJinHuaFlow(t *testing.T) {
 	}, "", http.StatusCreated)
 	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
 		"name": "炸金花局", "maxPlayers": 2, "scene": "zhajinhua",
-		"forceOpenThreshold": 2, "forceOpenFeePoints": 5,
+		"forceOpenThreshold": 2,
 	}, registered.AccessToken, http.StatusCreated)
-	if created.Room.Scene != score.SceneZhaJinHua || created.Room.ZhaJinHuaSettings.ForceOpenFeePoints != 5 {
+	if created.Room.Scene != score.SceneZhaJinHua || created.Room.ZhaJinHuaSettings.ForceOpenThreshold != 2 {
 		t.Fatalf("created room = %+v", created.Room)
 	}
 	joined := scoreRequestJSON[score.JoinRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
@@ -177,19 +177,23 @@ func TestScoreHTTPZhaJinHuaFlow(t *testing.T) {
 		"clientActionId": "zjh-guest-raise", "expectedRoomVersion": room.Version,
 		"actionType": "raise", "points": 10,
 	}, joined.GuestToken, http.StatusOK).Room
+	if room.CurrentZhaJinHuaHand.CurrentBetPoints != 10 || room.CurrentZhaJinHuaHand.PotPoints != 20 {
+		t.Fatalf("zha jin hua bet/pot = %+v", room.CurrentZhaJinHuaHand)
+	}
 	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/hands/"+handID+"/actions", map[string]any{
 		"clientActionId": "zjh-host-open", "expectedRoomVersion": room.Version,
 		"actionType": "force_open", "targetParticipantId": joined.Actor.ParticipantID,
 		"winnerParticipantId": created.Actor.ParticipantID,
 	}, registered.AccessToken, http.StatusOK).Room
-	if room.CurrentZhaJinHuaHand != nil || len(room.ZhaJinHuaHands) != 1 || room.ZhaJinHuaHands[0].PotPoints != 25 {
+	if room.CurrentZhaJinHuaHand != nil || len(room.ZhaJinHuaHands) != 1 || room.ZhaJinHuaHands[0].PotPoints != 30 ||
+		room.ZhaJinHuaHands[0].CurrentBetPoints != 10 {
 		t.Fatalf("finished zha jin hua room = %+v", room)
 	}
 	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPatch, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/zha-jin-hua/settings", map[string]any{
 		"clientActionId": "zjh-update-settings", "expectedRoomVersion": room.Version,
-		"forceOpenThreshold": 2, "forceOpenFeePoints": 7,
+		"forceOpenThreshold": 2,
 	}, registered.AccessToken, http.StatusOK).Room
-	if room.ZhaJinHuaSettings.ForceOpenFeePoints != 7 {
+	if room.ZhaJinHuaSettings.ForceOpenThreshold != 2 {
 		t.Fatalf("updated zha jin hua settings = %+v", room.ZhaJinHuaSettings)
 	}
 }

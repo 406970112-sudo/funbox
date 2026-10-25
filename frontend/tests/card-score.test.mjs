@@ -71,6 +71,7 @@ test('round progress counts roster states', () => {
 test('zha jin hua force open follows remaining active player threshold', () => {
   const hand = {
     forceOpenThreshold: 2,
+    currentBetPoints: 10,
     players: [
       { status: 'active' },
       { status: 'active' },
@@ -81,6 +82,7 @@ test('zha jin hua force open follows remaining active player threshold', () => {
   assert.equal(canForceOpenZhaJinHua(hand), true);
   assert.equal(canForceOpenZhaJinHua({ ...hand, players: hand.players.slice(0, 2).concat([{ status: 'active' }]) }), false);
   assert.equal(canForceOpenZhaJinHua({ ...hand, players: [{ status: 'active' }, { status: 'folded' }] }), false);
+  assert.equal(canForceOpenZhaJinHua({ ...hand, currentBetPoints: 0 }), false);
 });
 
 test('invite token extraction supports deep links and raw tokens', () => {
