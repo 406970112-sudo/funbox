@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -59,3 +60,111 @@ test('injects an idempotent boot fallback into the exported index', () => {
     fs.rmSync(workspace, { recursive: true, force: true });
   }
 });
+
+test('keeps the fallback hidden after boot and preserves real failure handling', () => {
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'funbox-web-fallback-runtime-'));
+  const distDirectory = path.join(workspace, 'dist');
+  fs.mkdirSync(distDirectory);
+  const indexPath = path.join(distDirectory, 'index.html');
+  fs.writeFileSync(
+    indexPath,
+    '<!doctype html><html><head><title>FunBox</title></head><body><div id="root"></div></body></html>',
+  );
+
+  try {
+    execFileSync(process.execPath, [scriptPath, distDirectory], { env: process.env });
+    const harness = createFallbackHarness(fs.readFileSync(indexPath, 'utf8'));
+
+    harness.markReady();
+    assert.equal(harness.pendingTimers(), 0);
+    harness.advance(12_000);
+    assert.equal(harness.fallback.style.display, 'none');
+    assert.equal(harness.message.textContent, '正在加载工具与游戏…');
+    assert.equal(harness.retry.hidden, true);
+
+    const timeoutHarness = createFallbackHarness(fs.readFileSync(indexPath, 'utf8'));
+    timeoutHarness.advance(12_000);
+    assert.equal(timeoutHarness.fallback.style.display, 'flex');
+    assert.equal(timeoutHarness.message.textContent, '页面资源加载失败，请检查网络后刷新重试。');
+    assert.equal(timeoutHarness.retry.hidden, false);
+
+    const resourceErrorHarness = createFallbackHarness(fs.readFileSync(indexPath, 'utf8'));
+    resourceErrorHarness.dispatchError({ target: { tagName: 'SCRIPT' }, error: null });
+    assert.equal(resourceErrorHarness.fallback.style.display, 'flex');
+    assert.equal(resourceErrorHarness.retry.hidden, false);
+
+    const postBootErrorHarness = createFallbackHarness(fs.readFileSync(indexPath, 'utf8'));
+    postBootErrorHarness.markReady();
+    postBootErrorHarness.dispatchError({ target: null, error: new Error('runtime failure') });
+    assert.equal(postBootErrorHarness.fallback.style.display, 'flex');
+    assert.equal(postBootErrorHarness.retry.hidden, false);
+  } finally {
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});
+
+function createFallbackHarness(indexHtml) {
+  const match = indexHtml.match(/<script>\s*([\s\S]*?window\.__funboxMarkBootReady[\s\S]*?)<\/script>/);
+  assert.ok(match, 'fallback inline script was not injected');
+
+  const fallback = { style: { display: 'flex' } };
+  const message = { textContent: '正在加载工具与游戏…' };
+  const retry = { hidden: true };
+  const elements = new Map([
+    ['funbox-boot-fallback', fallback],
+    ['funbox-boot-message', message],
+    ['funbox-boot-retry', retry],
+  ]);
+  const timers = new Map();
+  let nextTimerId = 1;
+  let now = 0;
+  let errorHandler = null;
+
+  const window = {
+    addEventListener(type, handler) {
+      if (type === 'error') errorHandler = handler;
+    },
+    setTimeout(callback, delay) {
+      const timerId = nextTimerId++;
+      timers.set(timerId, { callback, dueAt: now + delay });
+      return timerId;
+    },
+    clearTimeout(timerId) {
+      timers.delete(timerId);
+    },
+  };
+  const document = {
+    body: { contains: () => true },
+    getElementById(id) {
+      return elements.get(id) ?? null;
+    },
+  };
+
+  vm.runInContext(match[1], vm.createContext({ window, document }));
+
+  return {
+    fallback,
+    message,
+    retry,
+    markReady() {
+      window.__funboxMarkBootReady();
+    },
+    dispatchError(event) {
+      assert.ok(errorHandler, 'fallback error handler was not registered');
+      errorHandler(event);
+    },
+    advance(milliseconds) {
+      now += milliseconds;
+      const dueTimers = [...timers.entries()]
+        .filter(([, timer]) => timer.dueAt <= now)
+        .sort((left, right) => left[1].dueAt - right[1].dueAt);
+      for (const [timerId, timer] of dueTimers) {
+        timers.delete(timerId);
+        timer.callback();
+      }
+    },
+    pendingTimers() {
+      return timers.size;
+    },
+  };
+}

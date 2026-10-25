@@ -59,6 +59,8 @@ if (!indexHtml.includes(marker)) {
         var message = document.getElementById('funbox-boot-message');
         var retry = document.getElementById('funbox-boot-retry');
         var failed = false;
+        var bootReady = false;
+        var failureTimer = null;
 
         function showFailure() {
           if (failed || !fallback || !message) return;
@@ -69,6 +71,11 @@ if (!indexHtml.includes(marker)) {
         }
 
         window.__funboxMarkBootReady = function () {
+          bootReady = true;
+          if (failureTimer !== null) {
+            window.clearTimeout(failureTimer);
+            failureTimer = null;
+          }
           if (!failed && fallback) fallback.style.display = 'none';
         };
 
@@ -78,7 +85,10 @@ if (!indexHtml.includes(marker)) {
           }
         }, true);
 
-        window.setTimeout(showFailure, 12000);
+        failureTimer = window.setTimeout(function () {
+          failureTimer = null;
+          if (!bootReady) showFailure();
+        }, 12000);
       })();
     </script>`;
 
