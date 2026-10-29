@@ -14,6 +14,7 @@ Page({
   },
 
   onLoad() {
+    wx.showShareMenu({ menus: ["shareAppMessage", "shareTimeline"] });
     this.checkBackend();
   },
 
@@ -68,5 +69,13 @@ Page({
   resumeRoom() {
     if (!this.data.activeSession) return;
     wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(this.data.activeSession.roomId)}` });
+  },
+
+  onShareAppMessage() {
+    return { title: "FunBox 麻将记分", path: "/pages/index/index" };
+  },
+
+  onShareTimeline() {
+    return { title: "FunBox 麻将记分", query: "" };
   },
 });
