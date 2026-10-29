@@ -12,18 +12,14 @@
       <text class="preview-code">{{previewRoom.code}}</text>
       <view class="preview-rule-row">
         <view><text class="preview-label">每分</text><text class="preview-value">{{previewRateText}}</text></view>
-        <view><text class="preview-label">封顶</text><text class="preview-value">{{previewCapText}}</text></view>
+        <view><text class="preview-label">封顶提示</text><text class="preview-value">{{previewCapText}}</text></view>
         <view><text class="preview-label">人数</text><text class="preview-value">{{previewRoom.maxPlayers}} 人</text></view>
       </view>
     </view>
     <view class="form-card">
       <view class="form-head">
         <text class="form-title">加入牌局</text>
-        <text class="form-badge">游客可加入</text>
-      </view>
-      <view wx:if="{{previewRoom.requiresPassword}}" class="field">
-        <text class="field-label">房间密码</text>
-        <input class="field-input" data-field="joinPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{joinPassword}}" bindinput="handleJoinField" />
+        <text class="form-badge">邀请免密加入</text>
       </view>
       <view class="field">
         <text class="field-label">你的昵称</text>
@@ -56,7 +52,7 @@
       </view>
       <view class="room-metrics">
         <view class="metric"><text class="metric-label">每分金额</text><text class="metric-value">{{rateText}}</text></view>
-        <view class="metric"><text class="metric-label">单局封顶</text><text class="metric-value">{{capText}}</text></view>
+        <view class="metric"><text class="metric-label">封顶提示</text><text class="metric-value">{{capText}}</text></view>
         <view class="metric"><text class="metric-label">当前人数</text><text class="metric-value">{{activePlayers}} / {{room.maxPlayers}}</text></view>
       </view>
       <text class="room-state">{{room.status === 'waiting' ? '等待开始' : room.status === 'active' ? '牌局进行中' : room.status === 'settled' ? '已结算' : '已取消'}}</text>
@@ -70,7 +66,7 @@
         <view class="invite-copy">
           <text class="section-kicker">邀请牌友</text>
           <text class="invite-title">扫码或转发加入</text>
-          <text class="invite-desc">房间密码不会写入二维码，加入时仍需输入。</text>
+          <text class="invite-desc">邀请链接和二维码已包含入房凭证，填写昵称即可加入。</text>
           <view class="room-code-box" bindtap="copyRoomCode">
             <text class="room-code-value">{{room.code}}</text>
             <text class="room-code-copy">复制房间码</text>
@@ -125,7 +121,7 @@
           <text class="section-title">批量给分</text>
           <text class="section-meta">赢家无需填写</text>
         </view>
-        <text class="give-hint">填写你要给每位玩家的分数，一次提交全部入账。</text>
+        <text class="give-hint">填写你要给每位玩家的分数，一次提交全部入账；封顶仅作提示。</text>
         <view wx:for="{{recipients}}" wx:key="id" class="give-row">
           <view class="give-player">
             <text class="give-name">{{item.displayName}}</text>
@@ -164,7 +160,7 @@
       <view class="settled-hero">
         <text class="settled-kicker">FINAL RESULT</text>
         <text class="settled-title">牌局结算完成</text>
-        <text class="settled-subtitle">按 {{rateText}} 计算，封顶 {{capText}}</text>
+        <text class="settled-subtitle">按 {{rateText}} 计算，封顶参考 {{capText}}</text>
       </view>
 
       <view class="result-list">
@@ -205,7 +201,7 @@
       <view class="sheet-handle"></view>
       <text class="sheet-title">确认结算</text>
       <text class="sheet-desc">请核对每名玩家的当前分数与预计金额。</text>
-      <view class="settlement-rule">{{rateText}} · 封顶 {{capText}}</view>
+      <view class="settlement-rule">{{rateText}} · 封顶参考 {{capText}}</view>
       <view class="settlement-list">
         <view wx:for="{{settlementRows}}" wx:key="participantId" class="settlement-row">
           <text>{{item.name}}</text>

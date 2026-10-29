@@ -350,8 +350,10 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 		return JoinRoomResult{}, fmt.Errorf("display name: %w", ErrInvalidInput)
 	}
 	code := strings.TrimSpace(input.Code)
-	if strings.TrimSpace(input.InviteToken) != "" {
-		claims, err := s.parseToken(input.InviteToken, "score_invite")
+	inviteToken := strings.TrimSpace(input.InviteToken)
+	usedInviteToken := inviteToken != ""
+	if usedInviteToken {
+		claims, err := s.parseToken(inviteToken, "score_invite")
 		if err != nil {
 			return JoinRoomResult{}, ErrInviteInvalid
 		}
@@ -386,7 +388,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if activePlayers >= maxPlayers {
 		return JoinRoomResult{}, ErrRoomFull
 	}
-	if passwordHash != "" {
+	if passwordHash != "" && !usedInviteToken {
 		if input.Password == "" {
 			return JoinRoomResult{}, ErrPasswordRequired
 		}
@@ -940,10 +942,6 @@ func (s *Service) SubmitGifts(ctx context.Context, actor Actor, meta CommandMeta
 			totalPoints += allocation.Points
 			allocations[index] = allocation
 		}
-		if room.CapPoints > 0 && totalPoints > room.CapPoints {
-			return ErrCapExceeded
-		}
-
 		var number int
 		if err := tx.QueryRowContext(ctx, `
 			SELECT COALESCE(MAX(number), 0) + 1 FROM score_gift_batches WHERE room_id = ?

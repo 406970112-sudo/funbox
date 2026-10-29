@@ -6,7 +6,7 @@
     </view>
     <view class="account-pill" bindtap="openAuth">
       <text class="account-dot">{{isLoggedIn ? '已' : '游'}}</text>
-      <text>{{userName}}</text>
+      <text class="account-name">{{userName}}</text>
     </view>
   </view>
 

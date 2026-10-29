@@ -11,7 +11,7 @@ const {
 const { getAccessToken, getStoredUser } = require("../../../utils/auth");
 const { clearScoreSession, credentialForRoom, getScoreSession, saveScoreSession } = require("../../../utils/score-session");
 const { buildInviteContent } = require("../../../utils/invite");
-const { capSummary, formatCNY, formatScore, parsePoints } = require("../../../utils/score-format");
+const { capSummary, formatCNY, formatScore, giftCapHint, parsePoints } = require("../../../utils/score-format");
 const { connectScoreRealtime } = require("../../../utils/score-realtime");
 const { drawScoreQRCode } = require("../../../utils/score-qr");
 
@@ -33,7 +33,6 @@ Page({
     previewRateText: "",
     previewCapText: "",
     joinNeeded: false,
-    joinPassword: "",
     joinNickname: "",
     joining: false,
     room: null,
@@ -127,10 +126,6 @@ Page({
   async joinFromInvite() {
     if (this.data.joining || !this.data.previewRoom) return;
     const displayName = this.data.joinNickname.trim();
-    if (this.data.previewRoom.requiresPassword && !/^\d{4,6}$/.test(this.data.joinPassword)) {
-      this.setData({ errorMessage: "请输入房主设置的 4～6 位房间密码。" });
-      return;
-    }
     if (!displayName) {
       this.setData({ errorMessage: "请输入牌局内显示的昵称。" });
       return;
@@ -139,7 +134,6 @@ Page({
     try {
       const result = await joinScoreRoom({
         inviteToken: this.data.inviteToken,
-        password: this.data.joinPassword,
         displayName,
       });
       saveScoreSession({
@@ -152,7 +146,6 @@ Page({
         roomId: result.room.id,
         joinNeeded: false,
         previewRoom: null,
-        joinPassword: "",
       });
       await this.loadRoom();
     } catch (error) {
@@ -211,11 +204,7 @@ Page({
     const giftTotal = recipients.reduce((sum, item) => sum + (parsePoints(item.pointsInput) || 0), 0);
     const capPoints = room.capPoints || 0;
     const overCap = Boolean(capPoints && giftTotal > capPoints);
-    const capRemainingText = capPoints
-      ? overCap
-        ? `已超出封顶 ${giftTotal - capPoints} 分`
-        : `还可给出 ${capPoints - giftTotal} 分`
-      : "本房间不封顶";
+    const capRemainingText = giftCapHint(capPoints, room.centsPerPoint, giftTotal);
     const settlementRows = room.settlement
       ? room.settlement.balances.map((balance) => ({
         ...balance,
@@ -265,7 +254,7 @@ Page({
       settlementTransfers,
       giftTotal,
       overCap,
-      canSubmitGifts: giftTotal > 0 && !overCap,
+      canSubmitGifts: giftTotal > 0,
       capRemainingText,
       realtimeStatus: this.data.realtimeStatus,
     });
@@ -321,16 +310,12 @@ Page({
     ));
     const giftTotal = recipients.reduce((sum, item) => sum + (parsePoints(item.pointsInput) || 0), 0);
     const capPoints = this.data.room.capPoints || 0;
-    const capRemainingText = capPoints
-      ? giftTotal > capPoints
-        ? `已超出封顶 ${giftTotal - capPoints} 分`
-        : `还可给出 ${capPoints - giftTotal} 分`
-      : "本房间不封顶";
+    const capRemainingText = giftCapHint(capPoints, this.data.room.centsPerPoint, giftTotal);
     this.setData({
       recipients,
       giftTotal,
       overCap: Boolean(capPoints && giftTotal > capPoints),
-      canSubmitGifts: giftTotal > 0 && (!capPoints || giftTotal <= capPoints),
+      canSubmitGifts: giftTotal > 0,
       capRemainingText,
       errorMessage: "",
     });
@@ -343,12 +328,6 @@ Page({
       .filter((item) => item.points);
     if (!allocations.length) {
       this.setData({ errorMessage: "请至少给一位玩家填写大于 0 的整数分。" });
-      return;
-    }
-    const capPoints = this.data.room.capPoints || 0;
-    const total = allocations.reduce((sum, item) => sum + item.points, 0);
-    if (capPoints && total > capPoints) {
-      this.setData({ errorMessage: `本次给分超过封顶 ${capPoints} 分。` });
       return;
     }
     this.setData({ busy: true, errorMessage: "", feedback: "" });

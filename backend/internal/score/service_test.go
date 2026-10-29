@@ -249,7 +249,7 @@ func TestServiceDirectGiftBatchUsesDefaultRateAndSettlesWithOverride(t *testing.
 	}
 }
 
-func TestServiceMahjongPasswordCapNearbyAndLockedSettlementRate(t *testing.T) {
+func TestServiceMahjongInvitePasswordCapHintNearbyAndLockedSettlementRate(t *testing.T) {
 	service := newTestService(t)
 	ctx := context.Background()
 	latitude, longitude := 30.5728, 104.0668
@@ -282,6 +282,10 @@ func TestServiceMahjongPasswordCapNearbyAndLockedSettlementRate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	invitedGuest, err := service.JoinRoom(ctx, JoinRoomInput{InviteToken: created.InviteToken, DisplayName: "Invited Guest"})
+	if err != nil {
+		t.Fatalf("join with invite without password: %v", err)
+	}
 	nearby, err := service.ListNearbyRooms(ctx, NearbyRoomsInput{
 		Latitude: latitude + 0.001, Longitude: longitude, RadiusMeters: 3000, GameType: GameTypeMahjong,
 	})
@@ -310,31 +314,45 @@ func TestServiceMahjongPasswordCapNearbyAndLockedSettlementRate(t *testing.T) {
 		t.Fatalf("mahjong defaults = %+v", defaults.Room)
 	}
 
-	room, err := service.StartRoom(ctx, created.Actor, commandMeta("start-mahjong", guest.Room))
+	room, err := service.StartRoom(ctx, created.Actor, commandMeta("start-mahjong", invitedGuest.Room))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := service.StartRound(ctx, created.Actor, commandMeta("mahjong-round", room), StartRoundInput{}); !errors.Is(err, ErrInvalidState) {
 		t.Fatalf("mahjong start round error = %v, want ErrInvalidState", err)
 	}
-	if _, err := service.SubmitGifts(ctx, created.Actor, commandMeta("over-cap", room), SubmitGiftsInput{
+	room, err = service.SubmitGifts(ctx, created.Actor, commandMeta("over-cap", room), SubmitGiftsInput{
 		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 6}},
-	}); !errors.Is(err, ErrCapExceeded) {
-		t.Fatalf("cap error = %v", err)
-	}
-	room, err = service.SubmitGifts(ctx, created.Actor, commandMeta("at-cap", room), SubmitGiftsInput{
-		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 5}},
 	})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("over-cap gift should be accepted as a hint: %v", err)
+	}
+	if invitedGuest.Actor.ParticipantID == "" {
+		t.Fatal("invited guest participant id is empty")
 	}
 	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle-mahjong", room), SettleRoomInput{CentsPerPoint: 999})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if settled.CentsPerPoint != 200 || settled.Settlement == nil || len(settled.Settlement.Transfers) != 1 ||
-		settled.Settlement.Transfers[0].AmountCents != 1000 {
+		settled.Settlement.Transfers[0].AmountCents != 1200 {
 		t.Fatalf("mahjong settlement = %+v", settled)
+	}
+}
+
+func TestServiceAnyActiveParticipantCanSubmitGifts(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+	created, guest, room := startTwoPlayerRoom(t, service)
+
+	room, err := service.SubmitGifts(ctx, guest.Actor, commandMeta("guest-gifts", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{{ToParticipantID: created.Actor.ParticipantID, Points: 3}},
+	})
+	if err != nil {
+		t.Fatalf("guest should be able to submit gifts: %v", err)
+	}
+	if len(room.GiftBatches) != 1 || room.GiftBatches[0].CreatedBy != guest.Actor.ParticipantID {
+		t.Fatalf("guest gift batch = %+v", room.GiftBatches)
 	}
 }
 

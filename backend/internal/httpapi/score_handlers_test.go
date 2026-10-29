@@ -110,7 +110,7 @@ func TestScoreHTTPFlow(t *testing.T) {
 	}
 }
 
-func TestScoreHTTPMahjongPasswordAndNearbyFlow(t *testing.T) {
+func TestScoreHTTPMahjongInvitePasswordHintAndNearbyFlow(t *testing.T) {
 	tempDir := t.TempDir()
 	databasePath := filepath.Join(tempDir, "funbox.db")
 	userStore, err := user.OpenStore(databasePath)
@@ -167,18 +167,33 @@ func TestScoreHTTPMahjongPasswordAndNearbyFlow(t *testing.T) {
 	if joined.Room.ID != created.Room.ID || joined.Room.GameType != score.GameTypeMahjong {
 		t.Fatalf("joined room = %+v", joined.Room)
 	}
+	invited := scoreRequestJSON[score.JoinRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
+		"inviteToken": created.InviteToken, "displayName": "Invited Guest",
+	}, "", http.StatusCreated)
+	if invited.Room.ID != created.Room.ID || invited.GuestToken == "" {
+		t.Fatalf("invite join = %+v", invited)
+	}
 	room := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
 		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/start",
-		map[string]any{"clientActionId": "start-nearby", "expectedRoomVersion": joined.Room.Version},
+		map[string]any{"clientActionId": "start-nearby", "expectedRoomVersion": invited.Room.Version},
 		registered.AccessToken, http.StatusOK).Room
-	overCap := scoreRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost,
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
 		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/gifts",
 		map[string]any{
 			"clientActionId": "over-cap", "expectedRoomVersion": room.Version,
 			"allocations": []map[string]any{{"toParticipantId": joined.Actor.ParticipantID, "points": 9}},
-		}, registered.AccessToken, http.StatusUnprocessableEntity)
-	if overCap["error"] != "score_cap_exceeded" {
-		t.Fatalf("over cap response = %+v", overCap)
+		}, registered.AccessToken, http.StatusOK).Room
+	if len(room.GiftBatches) != 1 || len(room.GiftBatches[0].Gifts) != 1 || room.GiftBatches[0].Gifts[0].Points != 9 {
+		t.Fatalf("over-cap gift response = %+v", room.GiftBatches)
+	}
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/gifts",
+		map[string]any{
+			"clientActionId": "guest-gift", "expectedRoomVersion": room.Version,
+			"allocations": []map[string]any{{"toParticipantId": invited.Actor.ParticipantID, "points": 2}},
+		}, joined.GuestToken, http.StatusOK).Room
+	if len(room.GiftBatches) != 2 || room.GiftBatches[0].CreatedBy != joined.Actor.ParticipantID {
+		t.Fatalf("guest gift response = %+v", room.GiftBatches)
 	}
 }
 

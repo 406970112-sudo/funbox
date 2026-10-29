@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { capSummary, formatCNY, formatDistance, formatScore, parsePoints, parseYuanToCents } = require("../utils/score-format");
+const { capSummary, formatCNY, formatDistance, formatScore, giftCapHint, parsePoints, parseYuanToCents } = require("../utils/score-format");
 const { buildInviteContent, extractInviteToken } = require("../utils/invite");
 const QRCode = require("../libs/qrcode");
 
@@ -23,6 +23,9 @@ test("score and cap formatting reflects room rules", () => {
   assert.equal(parsePoints("0"), null);
   assert.equal(capSummary(10, 100), "10 分 / ¥10.00");
   assert.equal(capSummary(0, 100), "不封顶");
+  assert.equal(giftCapHint(10, 100, 6), "封顶提示：10 分 / ¥10.00");
+  assert.equal(giftCapHint(10, 100, 13), "已超过封顶 3 分，仍可继续提交");
+  assert.equal(giftCapHint(0, 100, 13), "本房间未设置封顶提示");
   assert.equal(formatDistance(1560), "1.6 公里");
 });
 

@@ -17,7 +17,7 @@
 
 .eyebrow,
 .headline,
-.account-pill text,
+.account-name,
 .section-title,
 .section-note,
 .scene-kicker,
@@ -50,7 +50,10 @@
 .account-pill {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10rpx;
+  box-sizing: border-box;
+  min-height: 56rpx;
   max-width: 190rpx;
   padding: 12rpx 18rpx;
   border: 1rpx solid rgba(36, 82, 61, 0.15);
@@ -59,18 +62,29 @@
   color: #44534a;
   font-size: 22rpx;
   font-weight: 700;
+  line-height: 36rpx;
 }
 
 .account-dot {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 36rpx;
   height: 36rpx;
   border-radius: 50%;
   background: #e5eadf;
   color: #256349;
   font-size: 19rpx;
+  line-height: 1;
+}
+
+.account-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .offline-banner {
