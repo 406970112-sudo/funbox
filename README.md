@@ -17,6 +17,7 @@
 | 目录 | 说明 |
 | --- | --- |
 | `frontend/` | Expo + React Native 前端，使用 expo-router，按 `app/` 路由组织页面，`features/` 存放功能实现 |
+| `miniprogram/` | 原生微信小程序（AppID：`wx1c056466c78d8934`），复用现有 `backend/` 统一后端 |
 | `backend/` | Go 后端服务，统一 API、认证、社交、实时通信及各业务模块 |
 | `email-agent/` | 邮件智能体：`backend/` 为 Koa + TypeScript + AI SDK 服务，`frontend/` 为 Vite + React 管理界面 |
 | `email-agent-backend/` | 邮件智能体后端的独立工作副本 |

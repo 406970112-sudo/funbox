@@ -1,35 +1,44 @@
-# XWHub 微信小程序
+# FunBox 微信小程序
 
-这是一个原生微信小程序壳，通过 `web-view` 直接加载 `https://www.xwhub.cn/`。
+这是从零搭建的 FunBox 原生微信小程序，代码全部位于 `miniprogram/`。
 
-## 导入项目
+## 项目信息
+
+- AppID：`wx1c056466c78d8934`
+- 项目类型：原生微信小程序
+- 后端：复用仓库根目录下的 `backend/` Go 服务
+- 生产 API：`https://www.xwhub.cn/api/v1`
+
+小程序不维护独立后端。账号、业务数据、文件上传等能力统一调用现有 FunBox 后端，接口和鉴权方式与 Web 前端保持一致。
+
+## 使用微信开发者工具
 
 1. 打开微信开发者工具，选择“导入项目”。
-2. 项目目录选择本目录 `miniprogram/`。
-3. 在 `project.config.json` 中把 `touristappid` 替换为正式小程序 AppID。
+2. 项目目录选择当前 `miniprogram/` 文件夹。
+3. 开发者工具会自动读取 `project.config.json` 中的 AppID。
+4. 生产预览和发布前，在微信公众平台配置 `www.xwhub.cn` 的 request 合法域名。
 
-## 配置业务域名
+## 本地联调
 
-正式预览和发布前，需要在微信公众平台的“开发管理 -> 开发设置 -> 业务域名”中添加：
-
-```text
-https://www.xwhub.cn
-```
-
-按微信公众平台提示下载 `MP_verify_*.txt` 校验文件，把它放入仓库的 `frontend/public/` 目录后重新发布网站，确认可通过 `https://www.xwhub.cn/MP_verify_*.txt` 访问。不要只把文件手工放进服务器 Web 根目录，现有发布脚本使用 `rsync --delete`，后续部署会删除未包含在前端构建产物中的文件。
-
-开发者工具可临时关闭域名校验用于本地调试，但真机和已发布版本仍需要完成业务域名配置。微信账号主体也必须支持 `web-view` 和业务域名能力。
-
-## 网站自动更新
-
-小程序不打包网站页面，而是在每次进入页面时生成带时间戳的线上地址。这样可以绕过入口 HTML 的旧缓存；网站发布新功能后，用户重新进入小程序即可加载线上最新版本，无需重新提交小程序审核。
-
-如果修改的是本目录中的小程序壳代码，则仍需重新上传和发布小程序版本。`app.js` 已接入微信更新管理器，已发布的新壳版本下载完成后会提示用户重启应用。
-
-## 本地检查
-
-在仓库根目录运行：
+本地启动 Go 后端：
 
 ```bash
-node --test miniprogram/tests/web-view-url.test.js
+cd ../backend
+go run ./cmd/api
 ```
+
+然后把 `config/index.js` 中的 `API_BASE_URL` 临时改为：
+
+```text
+http://127.0.0.1:3000/api/v1
+```
+
+并在微信开发者工具中关闭域名校验。真机联调时应改为局域网可访问的 HTTPS 地址，不能使用电脑本机的 `127.0.0.1`。
+
+## 目录说明
+
+- `app.js` / `app.json` / `app.wxss`：小程序入口与全局配置
+- `config/index.js`：统一后端地址和请求配置
+- `utils/request.js`：统一请求封装，支持 Bearer Token
+- `pages/`：小程序页面
+- `project.config.json`：微信开发者工具项目配置

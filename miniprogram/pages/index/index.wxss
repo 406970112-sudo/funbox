@@ -1,0 +1,141 @@
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 48rpx 32rpx 64rpx;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx 8rpx 48rpx;
+}
+
+.eyebrow {
+  color: #2563eb;
+  font-size: 22rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+}
+
+.title {
+  margin-top: 18rpx;
+  color: #111827;
+  font-size: 72rpx;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin-top: 24rpx;
+  color: #6b7280;
+  font-size: 28rpx;
+  line-height: 1.7;
+}
+
+.card,
+.notice {
+  box-sizing: border-box;
+  border: 1rpx solid #e5e7eb;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 16rpx 48rpx rgba(15, 23, 42, 0.06);
+}
+
+.card {
+  padding: 36rpx;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title,
+.notice-title {
+  color: #111827;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  color: #6b7280;
+  font-size: 24rpx;
+}
+
+.status-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+
+.status-online {
+  color: #047857;
+}
+
+.status-online .status-dot {
+  background: #10b981;
+}
+
+.status-offline {
+  color: #b91c1c;
+}
+
+.status-offline .status-dot {
+  background: #ef4444;
+}
+
+.status-checking .status-dot {
+  background: #f59e0b;
+}
+
+.message {
+  display: block;
+  margin-top: 32rpx;
+  color: #374151;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.endpoint {
+  display: block;
+  margin-top: 14rpx;
+  overflow: hidden;
+  color: #9ca3af;
+  font-size: 22rpx;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.button {
+  margin-top: 32rpx;
+  border-radius: 18rpx;
+  background: #111827;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.button[disabled] {
+  background: #6b7280;
+  color: #ffffff;
+}
+
+.notice {
+  margin-top: 28rpx;
+  padding: 32rpx 36rpx;
+  box-shadow: none;
+}
+
+.notice-text {
+  display: block;
+  margin-top: 16rpx;
+  color: #6b7280;
+  font-size: 26rpx;
+  line-height: 1.7;
+}

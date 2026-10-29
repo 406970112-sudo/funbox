@@ -1,1 +1,27 @@
-<web-view src="{{webViewUrl}}" bindmessage="handleMessage" binderror="handleError"></web-view>
+<view class="page">
+  <view class="hero">
+    <text class="eyebrow">FUNBOX MINI PROGRAM</text>
+    <text class="title">FunBox</text>
+    <text class="subtitle">小程序客户端从零开始，与现有 FunBox 后端共享账号、数据和业务接口。</text>
+  </view>
+
+  <view class="card">
+    <view class="card-head">
+      <text class="card-title">后端连接</text>
+      <view class="status status-{{backendStatus}}">
+        <view class="status-dot"></view>
+        <text>{{statusLabel}}</text>
+      </view>
+    </view>
+    <text class="message">{{backendMessage}}</text>
+    <text class="endpoint">{{apiBaseUrl}}</text>
+    <button class="button" loading="{{checking}}" disabled="{{checking}}" bindtap="checkBackend">
+      {{checking ? "正在检测" : "重新检测"}}
+    </button>
+  </view>
+
+  <view class="notice">
+    <text class="notice-title">开发说明</text>
+    <text class="notice-text">当前是全新小程序骨架。后续页面直接调用 backend 的统一 API，不再创建独立后端。</text>
+  </view>
+</view>
