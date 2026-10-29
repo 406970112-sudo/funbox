@@ -1,0 +1,66 @@
+<view class="history-page">
+  <view class="history-hero">
+    <text class="hero-kicker">GAME ARCHIVE</text>
+    <text class="hero-title">最近牌局</text>
+    <text class="hero-copy">查看本人参与的已结算牌局，每页展示 5 场。</text>
+  </view>
+
+  <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="filter-row">
+      <view
+        wx:for="{{filters}}"
+        wx:key="key"
+        class="filter-chip {{activeRange === item.key ? 'filter-active' : ''}}"
+        data-range="{{item.key}}"
+        bindtap="changeRange"
+      >{{item.label}}</view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{loading}}" class="state-card">
+    <view class="state-pulse"></view>
+    <text>正在加载牌局记录…</text>
+  </view>
+
+  <view wx:elif="{{errorMessage}}" class="state-card state-error" bindtap="retryLoad">
+    <text>{{errorMessage}}</text>
+    <text class="state-action">重新加载</text>
+  </view>
+
+  <view wx:elif="{{!rooms.length}}" class="state-card">
+    <text class="empty-title">这个时间范围内暂无牌局</text>
+    <text class="empty-desc">可以切换时间范围，或完成一场牌局后再来看看。</text>
+  </view>
+
+  <view wx:else class="record-list">
+    <view class="record-card" wx:for="{{rooms}}" wx:key="id">
+      <view class="record-top">
+        <view class="record-title-wrap">
+          <text class="record-type">{{item.gameTypeText}}</text>
+          <text class="record-name">{{item.name}}</text>
+        </view>
+        <view class="record-result {{item.resultClass}}">
+          <text class="result-score">{{item.scoreText}}</text>
+          <text class="result-amount">{{item.amountText}}</text>
+        </view>
+      </view>
+      <view class="record-divider"></view>
+      <view class="record-line">
+        <text class="record-label">参与者</text>
+        <text class="record-value">{{item.participantsText}}</text>
+      </view>
+      <view class="record-line">
+        <text class="record-label">结算时间</text>
+        <text class="record-value">{{item.timeText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="pagination">
+    <view class="page-summary">第 {{page}} / {{totalPages}} 页 · 共 {{total}} 场</view>
+    <view class="page-actions">
+      <button class="page-button" disabled="{{!hasPrev || loading}}" bindtap="previousPage">上一页</button>
+      <button class="page-button page-button-primary" disabled="{{!hasNext || loading}}" bindtap="nextPage">下一页</button>
+    </view>
+  </view>
+</view>

@@ -21,6 +21,7 @@ Page({
     isLoggedIn: false,
     userName: "游客",
     roomName: "今晚麻将",
+    hostNickname: "",
     roomPassword: "",
     confirmPassword: "",
     publishNearby: true,
@@ -82,13 +83,11 @@ Page({
 
   async createRoom() {
     if (this.data.creating) return;
-    if (!this.data.isLoggedIn) {
-      this.openAuth();
-      return;
-    }
     const roomName = this.data.roomName.trim();
+    const hostNickname = this.data.hostNickname.trim();
     const password = this.data.roomPassword;
     if (!roomName) return this.setData({ errorMessage: "请输入房间名。" });
+    if (!this.data.isLoggedIn && !hostNickname) return this.setData({ errorMessage: "请输入房主昵称。" });
     if (!/^\d{4,6}$/.test(password)) return this.setData({ errorMessage: "房间密码需为 4～6 位数字。" });
     if (password !== this.data.confirmPassword) return this.setData({ errorMessage: "两次输入的房间密码不一致。" });
 
@@ -119,9 +118,18 @@ Page({
         gameType: "mahjong",
         latitude: location ? location.latitude : undefined,
         longitude: location ? location.longitude : undefined,
+        ...(this.data.isLoggedIn ? {} : { displayName: hostNickname }),
       });
       saveHostRoomPassword(result.room.id, password);
-      clearScoreSession();
+      if (result.guestToken) {
+        saveScoreSession({
+          roomId: result.room.id,
+          guestToken: result.guestToken,
+          participantId: result.actor && result.actor.participantId,
+        });
+      } else {
+        clearScoreSession();
+      }
       wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(result.room.id)}&created=1` });
     } catch (error) {
       this.setData({ errorMessage: getScoreErrorMessage(error) });

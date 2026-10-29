@@ -8,24 +8,33 @@ Page({
     returnTo: "",
     username: "",
     password: "",
+    passwordVisible: false,
     displayName: "",
     securityQuestion: "",
     securityAnswer: "",
   },
 
   onLoad(options) {
-    this.setData({ returnTo: options.returnTo ? decodeURIComponent(options.returnTo) : "" });
+    this.setData({
+      mode: options && options.mode === "register" ? "register" : "login",
+      returnTo: options && options.returnTo ? decodeURIComponent(options.returnTo) : "",
+    });
   },
 
   switchMode(event) {
     this.setData({
       mode: event.currentTarget.dataset.mode,
+      passwordVisible: false,
       errorMessage: "",
     });
   },
 
   handleInput(event) {
     this.setData({ [event.currentTarget.dataset.field]: event.detail.value });
+  },
+
+  togglePasswordVisibility() {
+    this.setData({ passwordVisible: !this.data.passwordVisible });
   },
 
   async handleSubmit() {

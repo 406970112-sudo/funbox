@@ -60,6 +60,17 @@
     <view wx:if="{{feedback}}" class="success-banner">{{feedback}}</view>
     <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
 
+    <view wx:if="{{showAccountBinding && room.status !== 'cancelled'}}" class="account-bind-card {{accountBound ? 'account-bind-complete' : ''}}">
+      <view class="account-bind-copy">
+        <text class="account-bind-title">{{accountBound ? '本局战绩已关联账号' : '登录后记录本局战绩'}}</text>
+        <text class="account-bind-desc">{{accountBound ? '散场结算后，本局会出现在你的个人战绩中。' : '游客也能继续记分；登录后会追溯到当前座位，不影响已有分数。'}}</text>
+      </view>
+      <button wx:if="{{!accountBound && isLoggedIn}}" class="account-bind-button" loading="{{bindingAccount}}" disabled="{{bindingAccount}}" bindtap="bindParticipantAccount">
+        {{bindingAccount ? '绑定中…' : '绑定本局战绩'}}
+      </button>
+      <button wx:elif="{{!accountBound}}" class="account-bind-button" bindtap="openAccountLogin">登录并绑定</button>
+    </view>
+
     <block wx:if="{{room.status === 'waiting'}}">
       <view wx:if="{{isHost}}" class="invite-card">
         <view class="invite-copy">

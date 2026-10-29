@@ -56,6 +56,13 @@ func (s *Server) withFeedbackUploadPipeline(next http.HandlerFunc) http.HandlerF
 	}
 }
 
+type feedbackCreateRequest struct {
+	Category    string `json:"category"`
+	Description string `json:"description"`
+	Kind        string `json:"kind"`
+	Title       string `json:"title"`
+}
+
 func (s *Server) handleCreateFeedback(w http.ResponseWriter, r *http.Request) {
 	if s.feedbackService == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "feedback_unavailable"})
@@ -67,35 +74,55 @@ func (s *Server) handleCreateFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	maxImageBytes := s.cfg.Storage.MaxFeedbackImageBytes
-	if maxImageBytes <= 0 {
-		maxImageBytes = 5 << 20
-	}
-	if err := r.ParseMultipartForm(maxImageBytes); err != nil {
-		if strings.Contains(strings.ToLower(err.Error()), "request body too large") {
-			writeJSON(w, http.StatusRequestEntityTooLarge, map[string]any{"error": "feedback_upload_too_large"})
-			return
-		}
-		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid_feedback_upload"})
-		return
-	}
+	description := ""
+	kind := ""
+	title := ""
+	category := ""
+	uploads := make([]feedback.Upload, 0)
+	openFiles := make([]multipart.File, 0)
+	defer func() { closeFeedbackFiles(openFiles) }()
 
-	description := r.FormValue("description")
-	kind := r.FormValue("kind")
-	title := r.FormValue("title")
-	category := r.FormValue("category")
-	fileHeaders := r.MultipartForm.File["images"]
-	uploads := make([]feedback.Upload, 0, len(fileHeaders))
-	openFiles := make([]multipart.File, 0, len(fileHeaders))
-	for _, header := range fileHeaders {
-		file, err := header.Open()
-		if err != nil {
-			closeFeedbackFiles(openFiles)
-			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "feedback_image_read_failed"})
+	contentType := strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Type")))
+	if strings.HasPrefix(contentType, "application/json") {
+		var input feedbackCreateRequest
+		if err := decodeJSONBody(r, &input); err != nil {
+			writeRequestBodyError(w, err)
 			return
 		}
-		openFiles = append(openFiles, file)
-		uploads = append(uploads, feedback.Upload{Reader: file})
+		description = input.Description
+		kind = input.Kind
+		title = input.Title
+		category = input.Category
+	} else {
+		maxImageBytes := s.cfg.Storage.MaxFeedbackImageBytes
+		if maxImageBytes <= 0 {
+			maxImageBytes = 5 << 20
+		}
+		if err := r.ParseMultipartForm(maxImageBytes); err != nil {
+			if strings.Contains(strings.ToLower(err.Error()), "request body too large") {
+				writeJSON(w, http.StatusRequestEntityTooLarge, map[string]any{"error": "feedback_upload_too_large"})
+				return
+			}
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid_feedback_upload"})
+			return
+		}
+
+		description = r.FormValue("description")
+		kind = r.FormValue("kind")
+		title = r.FormValue("title")
+		category = r.FormValue("category")
+		fileHeaders := r.MultipartForm.File["images"]
+		uploads = make([]feedback.Upload, 0, len(fileHeaders))
+		openFiles = make([]multipart.File, 0, len(fileHeaders))
+		for _, header := range fileHeaders {
+			file, err := header.Open()
+			if err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]any{"error": "feedback_image_read_failed"})
+				return
+			}
+			openFiles = append(openFiles, file)
+			uploads = append(uploads, feedback.Upload{Reader: file})
+		}
 	}
 
 	created, err := s.feedbackService.Create(
@@ -107,7 +134,6 @@ func (s *Server) handleCreateFeedback(w http.ResponseWriter, r *http.Request) {
 		description,
 		uploads,
 	)
-	closeFeedbackFiles(openFiles)
 	if err != nil {
 		s.writeFeedbackError(w, err)
 		return

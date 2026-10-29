@@ -16,6 +16,7 @@ const previewCalls = [];
 const joinCalls = [];
 const createCalls = [];
 const passwordSaves = [];
+const scoreSessionSaves = [];
 let scoreSessionClears = 0;
 const navigateCalls = [];
 const imageWriteCalls = [];
@@ -29,7 +30,11 @@ require.cache[scoreAPI] = {
   exports: {
     createScoreRoom: async (token, input) => {
       createCalls.push({ token, input });
-      return { room: { id: "room-1" } };
+      return {
+        room: { id: "room-1" },
+        actor: { participantId: "participant-host" },
+        ...(input.displayName ? { guestToken: "host-guest-token" } : {}),
+      };
     },
     getScoreErrorMessage: (error) => error.message,
     getScoreRoom: async () => ({ room: {} }),
@@ -80,7 +85,7 @@ require.cache[session] = {
     getHostRoomPassword: () => "",
     getScoreSession: () => null,
     saveHostRoomPassword: (roomId, password) => passwordSaves.push({ roomId, password }),
-    saveScoreSession: () => undefined,
+    saveScoreSession: (value) => scoreSessionSaves.push(value),
   },
 };
 const realtime = require.resolve("../utils/score-realtime");
@@ -164,6 +169,48 @@ test("room creation omits settlement pricing and saves the host password locally
   assert.deepEqual(passwordSaves, [{ roomId: "room-1", password: "2468" }]);
   assert.equal(scoreSessionClears, 1);
   accessToken = "";
+});
+
+test("anonymous room creation submits the guest host nickname and stores the participant session", async () => {
+  accessToken = "";
+  createCalls.length = 0;
+  passwordSaves.length = 0;
+  scoreSessionSaves.length = 0;
+  scoreSessionClears = 0;
+  navigateCalls.length = 0;
+  const page = createPage(mahjongPage, {
+    isLoggedIn: false,
+    creating: false,
+    roomName: "游客牌局",
+    hostNickname: "游客房主",
+    roomPassword: "2468",
+    confirmPassword: "2468",
+    publishNearby: false,
+    errorMessage: "",
+  });
+
+  await page.createRoom();
+
+  assert.deepEqual(createCalls, [{
+    token: "",
+    input: {
+      name: "游客牌局",
+      maxPlayers: 4,
+      password: "2468",
+      scene: "generic",
+      gameType: "mahjong",
+      latitude: undefined,
+      longitude: undefined,
+      displayName: "游客房主",
+    },
+  }]);
+  assert.deepEqual(scoreSessionSaves, [{
+    roomId: "room-1",
+    guestToken: "host-guest-token",
+    participantId: "participant-host",
+  }]);
+  assert.equal(scoreSessionClears, 0);
+  assert.deepEqual(navigateCalls, ["/pages/score/room/index?roomId=room-1&created=1"]);
 });
 
 test("external scene preview and join use inviteScene", async () => {

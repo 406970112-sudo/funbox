@@ -52,6 +52,26 @@ func TestAuthUsesDedicatedRateLimitBudget(t *testing.T) {
 	assertResponseStatus(t, server.URL+"/resource", http.StatusOK)
 }
 
+func TestScoreCreateUsesDedicatedRateLimitBudget(t *testing.T) {
+	api := &Server{
+		cfg: config.Config{
+			Security: config.SecurityConfig{MaxRequestBodyBytes: 1024},
+		},
+		rateLimiter:            NewRateLimiter(time.Minute, 1),
+		scoreCreateRateLimiter: NewRateLimiter(time.Minute, 2),
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /score-create", api.withScoreCreateRateLimitedPipeline(okHandler))
+	mux.HandleFunc("GET /resource", api.withRateLimitedAPIPipeline("resource-search", okHandler))
+	server := httptest.NewServer(api.withGlobalMiddleware(mux))
+	t.Cleanup(server.Close)
+
+	assertResponseStatus(t, server.URL+"/score-create", http.StatusOK)
+	assertResponseStatus(t, server.URL+"/score-create", http.StatusOK)
+	assertRateLimited(t, server.URL+"/score-create")
+	assertResponseStatus(t, server.URL+"/resource", http.StatusOK)
+}
+
 func TestClientIPTrustsHeadersOnlyFromLoopbackProxy(t *testing.T) {
 	tests := []struct {
 		name       string

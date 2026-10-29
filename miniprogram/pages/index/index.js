@@ -61,8 +61,8 @@ Page({
     wx.showToast({ title: `${event.currentTarget.dataset.scene}敬请期待`, icon: "none" });
   },
 
-  openAuth() {
-    wx.navigateTo({ url: "/pages/auth/index" });
+  openProfile() {
+    wx.switchTab({ url: "/pages/profile/index" });
   },
 
   resumeRoom() {

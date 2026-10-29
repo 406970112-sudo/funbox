@@ -81,3 +81,37 @@ func TestLoadNovelAgentReadsRoleSpecificConfiguration(t *testing.T) {
 		t.Fatalf("unexpected limits: %#v", cfg.NovelAgent)
 	}
 }
+
+func TestScoreCreateRateLimitDefaultsAndOverrides(t *testing.T) {
+	t.Run("defaults", func(t *testing.T) {
+		t.Setenv("SCORE_CREATE_RATE_LIMIT_MAX_REQUESTS", "")
+		t.Setenv("SCORE_CREATE_RATE_LIMIT_WINDOW_MS", "")
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.Security.ScoreCreateRateLimitMax != 60 {
+			t.Fatalf("score create max = %d, want 60", cfg.Security.ScoreCreateRateLimitMax)
+		}
+		if cfg.Security.ScoreCreateRateLimitWindow != 15*time.Minute {
+			t.Fatalf("score create window = %s, want 15m", cfg.Security.ScoreCreateRateLimitWindow)
+		}
+	})
+
+	t.Run("overrides", func(t *testing.T) {
+		t.Setenv("SCORE_CREATE_RATE_LIMIT_MAX_REQUESTS", "90")
+		t.Setenv("SCORE_CREATE_RATE_LIMIT_WINDOW_MS", "60000")
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.Security.ScoreCreateRateLimitMax != 90 {
+			t.Fatalf("score create max = %d, want 90", cfg.Security.ScoreCreateRateLimitMax)
+		}
+		if cfg.Security.ScoreCreateRateLimitWindow != time.Minute {
+			t.Fatalf("score create window = %s, want 1m", cfg.Security.ScoreCreateRateLimitWindow)
+		}
+	})
+}

@@ -71,6 +71,33 @@ func TestFeedbackSubmissionAndAdminImageRead(t *testing.T) {
 	}
 }
 
+func TestFeedbackJSONSubmissionWithoutImage(t *testing.T) {
+	server, normalToken, adminToken := newFeedbackHTTPTestServer(t)
+	created := performFeedbackRequest(
+		t,
+		server,
+		"POST",
+		"/api/v1/feedback",
+		strings.NewReader(`{"kind":"problem","description":"小程序中未选择截图时也应能正常提交反馈"}`),
+		normalToken,
+		"application/json",
+	)
+	created.Body.Close()
+	if created.StatusCode != http.StatusCreated {
+		t.Fatalf("create status = %d", created.StatusCode)
+	}
+
+	page := performFeedbackRequest(t, server, "GET", "/api/v1/admin/feedback?limit=30&offset=0", nil, adminToken, "")
+	pageBody, err := io.ReadAll(page.Body)
+	page.Body.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.StatusCode != http.StatusOK || !bytes.Contains(pageBody, []byte("小程序中未选择截图时也应能正常提交反馈")) {
+		t.Fatalf("admin page body = %s, status = %d", pageBody, page.StatusCode)
+	}
+}
+
 func TestFeedbackValidationErrors(t *testing.T) {
 	server, normalToken, _ := newFeedbackHTTPTestServer(t)
 

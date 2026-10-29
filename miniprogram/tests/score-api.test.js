@@ -2,9 +2,13 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const calls = [];
+let accessToken = "";
 global.wx = {
-  getStorageSync() {
-    return "";
+  getStorageSync(key) {
+    return key === "accessToken" ? accessToken : "";
+  },
+  removeStorageSync(key) {
+    if (key === "accessToken") accessToken = "";
   },
   request(options) {
     calls.push(options);
@@ -12,7 +16,14 @@ global.wx = {
   },
 };
 
-const { createScoreRoom, joinScoreRoom, listNearbyScoreRooms, settleScoreRoom } = require("../utils/score-api");
+const {
+  bindScoreParticipantAccount,
+  createScoreRoom,
+  joinScoreRoom,
+  listNearbyScoreRooms,
+  listScoreHistory,
+  settleScoreRoom,
+} = require("../utils/score-api");
 
 test("score API sends authentication and mahjong room settings", async () => {
   calls.length = 0;
@@ -32,6 +43,39 @@ test("score API sends authentication and mahjong room settings", async () => {
   });
 });
 
+test("anonymous room creation can send a guest host nickname without authentication", async () => {
+  accessToken = "";
+  calls.length = 0;
+  global.wx.request = (options) => {
+    calls.push(options);
+    options.success({ statusCode: 201, data: { room: { id: "room-1" }, guestToken: "host-token" } });
+  };
+  await createScoreRoom("", {
+    name: "游客牌局",
+    displayName: "游客房主",
+    gameType: "mahjong",
+    password: "1234",
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].header.Authorization, undefined);
+  assert.equal(calls[0].data.displayName, "游客房主");
+});
+
+test("participant account binding sends both the account token and guest token", async () => {
+  accessToken = "account-token";
+  calls.length = 0;
+  global.wx.request = (options) => {
+    calls.push(options);
+    options.success({ statusCode: 200, data: { room: { id: "room-1", hostUserId: "user-1" } } });
+  };
+  const room = await bindScoreParticipantAccount("room-1", "participant-token");
+  assert.equal(room.hostUserId, "user-1");
+  assert.match(calls[0].url, /\/score-rooms\/room-1\/bind-account$/);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].header.Authorization, "Bearer account-token");
+  assert.deepEqual(calls[0].data, { participantToken: "participant-token" });
+});
+
 test("mahjong settlement explicitly enables the settlement rate", async () => {
   calls.length = 0;
   await settleScoreRoom(
@@ -47,12 +91,54 @@ test("mahjong settlement explicitly enables the settlement rate", async () => {
 });
 
 test("guest join sends room password without an account token", async () => {
+  accessToken = "";
   calls.length = 0;
   await joinScoreRoom({ code: "123456", password: "2468", displayName: "游客" });
   assert.equal(calls.length, 1);
   assert.match(calls[0].url, /\/score-rooms\/join$/);
   assert.equal(calls[0].header.Authorization, undefined);
   assert.equal(calls[0].data.password, "2468");
+});
+
+test("logged-in join links the account and retries as a guest after an expired token", async () => {
+  accessToken = "account-token";
+  calls.length = 0;
+  global.wx.request = (options) => {
+    calls.push(options);
+    options.success({ statusCode: 201, data: { room: { id: "room-1" } } });
+  };
+  await joinScoreRoom({ code: "123456", displayName: "登录牌友" });
+  assert.equal(calls[0].header.Authorization, "Bearer account-token");
+
+  accessToken = "expired-token";
+  calls.length = 0;
+  global.wx.request = (options) => {
+    calls.push(options);
+    if (options.header.Authorization) {
+      options.success({ statusCode: 401, data: { error: "unauthorized" } });
+      return;
+    }
+    options.success({ statusCode: 201, data: { room: { id: "room-1" } } });
+  };
+  await joinScoreRoom({ code: "123456", displayName: "登录牌友" });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].header.Authorization, "Bearer expired-token");
+  assert.equal(calls[1].header.Authorization, undefined);
+  assert.equal(accessToken, "");
+});
+
+test("recent score history requests settled rooms participated in by the account", async () => {
+  accessToken = "account-token";
+  calls.length = 0;
+  global.wx.request = (options) => {
+    calls.push(options);
+    options.success({ statusCode: 200, data: { rooms: [{ id: "room-1" }], total: 1, limit: 5, offset: 0 } });
+  };
+  const page = await listScoreHistory({ limit: 5, offset: 0, from: "2026-10-22T00:00:00.000Z" });
+  assert.deepEqual(page.rooms, [{ id: "room-1" }]);
+  assert.equal(page.total, 1);
+  assert.match(calls[0].url, /\/score-rooms\/history\?scope=participated&status=settled&limit=5&offset=0&from=2026-10-22T00%3A00%3A00.000Z$/);
+  assert.equal(calls[0].header.Authorization, "Bearer account-token");
 });
 
 test("nearby rooms request includes location radius and mahjong type", async () => {
@@ -67,6 +153,7 @@ test("nearby rooms request includes location radius and mahjong type", async () 
 });
 
 test("score API preserves backend error codes and snapshots", async () => {
+  accessToken = "";
   global.wx.request = (options) => {
     calls.push(options);
     options.success({

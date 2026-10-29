@@ -6,10 +6,10 @@ const AUTH_ERROR_MESSAGES = {
   birthday_invalid: "生日格式不正确。",
   display_name_invalid: "昵称需为 1～32 个字符。",
   invalid_credentials: "账号或密码不正确。",
-  password_invalid: "密码至少 8 位，且同时包含字母和数字。",
+  password_invalid: "密码不能为空，且不能超过 72 个字节。",
   rate_limited: "操作太频繁，请稍后再试。",
   security_answer_invalid: "请输入密保答案。",
-  security_question_invalid: "密保问题需为 4～64 个字符。",
+  security_question_invalid: "请输入密保问题，且不能超过 64 个字符。",
   username_invalid: "请输入有效的 11 位手机号。",
   username_taken: "该手机号已注册，请直接登录。",
 };
@@ -55,6 +55,17 @@ async function register(input) {
   return session;
 }
 
+async function getCurrentUser() {
+  const token = getAccessToken();
+  if (!token) return null;
+  const response = await request({ path: "/auth/me", auth: true });
+  const user = response && response.user ? response.user : null;
+  if (user) {
+    wx.setStorageSync(USER_STORAGE_KEY, user);
+  }
+  return user;
+}
+
 function getAuthErrorMessage(error) {
   return (error && AUTH_ERROR_MESSAGES[error.code]) || (error && error.message) || "登录失败，请稍后重试。";
 }
@@ -63,6 +74,7 @@ module.exports = {
   clearSession,
   getAccessToken,
   getAuthErrorMessage,
+  getCurrentUser,
   getStoredUser,
   login,
   register,

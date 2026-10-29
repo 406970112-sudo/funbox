@@ -1,4 +1,5 @@
 const {
+  bindScoreParticipantAccount,
   getScoreErrorMessage,
   getScoreRoom,
   issueScoreInviteCode,
@@ -10,7 +11,7 @@ const {
   startScoreRoom,
   submitScoreGifts,
 } = require("../../../utils/score-api");
-const { getAccessToken, getStoredUser } = require("../../../utils/auth");
+const { clearSession, getAccessToken, getStoredUser } = require("../../../utils/auth");
 const {
   clearHostRoomPassword,
   clearScoreSession,
@@ -92,6 +93,10 @@ Page({
     room: null,
     self: null,
     isHost: false,
+    isLoggedIn: false,
+    showAccountBinding: false,
+    accountBound: false,
+    bindingAccount: false,
     hostRoomPassword: "",
     activePlayers: 0,
     canStart: false,
@@ -144,6 +149,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ isLoggedIn: Boolean(getAccessToken()) });
     if (this.credential && this.data.room) {
       if (this.data.realtimeStatus === "offline") {
         this.stopRealtime();
@@ -280,6 +286,9 @@ Page({
     const selfID = room.selfParticipantId || (getScoreSession() && getScoreSession().participantId);
     const self = participantMap[selfID] || null;
     const isHost = Boolean(self && self.role === "host");
+    const isLoggedIn = Boolean(getAccessToken());
+    const accountBound = Boolean(self && self.userId);
+    const showAccountBinding = Boolean(this.credential && this.credential.kind === "guest" && self && self.status === "active");
     let hostRoomPassword = isHost ? getHostRoomPassword(room.id) : "";
     if (isHost && (room.status === "settled" || room.status === "cancelled")) {
       clearHostRoomPassword(room.id);
@@ -353,6 +362,9 @@ Page({
       room,
       self,
       isHost,
+      isLoggedIn,
+      showAccountBinding,
+      accountBound,
       hostRoomPassword,
       activePlayers,
       canStart: activePlayers >= 2,
@@ -373,6 +385,7 @@ Page({
       this.updateSettlementPreview(this.data.settlementRateInput);
     }
     this.lastRoomSyncAt = Date.now();
+    this.maybeBindParticipantAccount();
     this.startRealtime();
     this.startPolling();
     if (isHost && room.status === "waiting") {
@@ -380,6 +393,45 @@ Page({
       this.ensureInviteCode();
     }
     return true;
+  },
+
+  openAccountLogin() {
+    if (this.data.bindingAccount) return;
+    this.accountBindingPaused = false;
+    wx.navigateTo({ url: "/pages/auth/index" });
+  },
+
+  maybeBindParticipantAccount() {
+    if (this.accountBindingPaused) return;
+    if (!this.credential || this.credential.kind !== "guest" || !this.data.room) return;
+    if (!this.data.showAccountBinding || this.data.accountBound || this.data.bindingAccount) return;
+    if (!getAccessToken()) return;
+    this.bindParticipantAccount();
+  },
+
+  async bindParticipantAccount() {
+    if (!this.credential || this.credential.kind !== "guest" || !this.data.room || this.data.bindingAccount) return;
+    if (!getAccessToken()) {
+      this.openAccountLogin();
+      return;
+    }
+    this.accountBindingPaused = false;
+    this.setData({ bindingAccount: true, errorMessage: "" });
+    try {
+      const room = await bindScoreParticipantAccount(this.data.room.id, this.credential.token);
+      await this.applyRoom(room);
+      this.setData({ feedback: "已绑定账号，本局结算后会记录战绩。" });
+    } catch (error) {
+      if (error && error.statusCode === 401) {
+        clearSession();
+        this.setData({ isLoggedIn: false });
+      } else {
+        this.accountBindingPaused = true;
+      }
+      this.setData({ errorMessage: getScoreErrorMessage(error) });
+    } finally {
+      this.setData({ bindingAccount: false });
+    }
   },
 
   async ensureInviteToken() {

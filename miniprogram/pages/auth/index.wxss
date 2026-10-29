@@ -100,6 +100,32 @@
   font-size: 28rpx;
 }
 
+.password-input-wrap {
+  position: relative;
+}
+
+.password-input {
+  padding-right: 128rpx;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112rpx;
+  height: 88rpx;
+  color: #1d6b4f;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.password-toggle-hover {
+  opacity: 0.6;
+}
+
 .error-banner {
   margin-top: 24rpx;
   padding: 20rpx 24rpx;

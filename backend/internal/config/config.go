@@ -53,11 +53,13 @@ type ServerConfig struct {
 }
 
 type SecurityConfig struct {
-	MaxRequestBodyBytes int64
-	RateLimitMax        int
-	RateLimitWindow     time.Duration
-	AuthRateLimitMax    int
-	AuthRateLimitWindow time.Duration
+	MaxRequestBodyBytes        int64
+	RateLimitMax               int
+	RateLimitWindow            time.Duration
+	AuthRateLimitMax           int
+	AuthRateLimitWindow        time.Duration
+	ScoreCreateRateLimitMax    int
+	ScoreCreateRateLimitWindow time.Duration
 }
 
 type ResourceSearchConfig struct {
@@ -276,11 +278,13 @@ func Load() (Config, error) {
 			WriteTimeout:   durationFromMs("SERVER_WRITE_TIMEOUT_MS", "", "15000"),
 		},
 		Security: SecurityConfig{
-			MaxRequestBodyBytes: int64(intFirst("MAX_REQUEST_BODY_BYTES", "VOICE_MAX_REQUEST_BYTES", "65536")),
-			RateLimitMax:        intFirst("RATE_LIMIT_MAX_REQUESTS", "VOICE_RATE_LIMIT_MAX_REQUESTS", "30"),
-			RateLimitWindow:     durationFromMs("RATE_LIMIT_WINDOW_MS", "VOICE_RATE_LIMIT_WINDOW_MS", "900000"),
-			AuthRateLimitMax:    intFirst("AUTH_RATE_LIMIT_MAX_REQUESTS", "", "120"),
-			AuthRateLimitWindow: durationFromMs("AUTH_RATE_LIMIT_WINDOW_MS", "", "900000"),
+			MaxRequestBodyBytes:        int64(intFirst("MAX_REQUEST_BODY_BYTES", "VOICE_MAX_REQUEST_BYTES", "65536")),
+			RateLimitMax:               intFirst("RATE_LIMIT_MAX_REQUESTS", "VOICE_RATE_LIMIT_MAX_REQUESTS", "30"),
+			RateLimitWindow:            durationFromMs("RATE_LIMIT_WINDOW_MS", "VOICE_RATE_LIMIT_WINDOW_MS", "900000"),
+			AuthRateLimitMax:           intFirst("AUTH_RATE_LIMIT_MAX_REQUESTS", "", "120"),
+			AuthRateLimitWindow:        durationFromMs("AUTH_RATE_LIMIT_WINDOW_MS", "", "900000"),
+			ScoreCreateRateLimitMax:    intFirst("SCORE_CREATE_RATE_LIMIT_MAX_REQUESTS", "", "60"),
+			ScoreCreateRateLimitWindow: durationFromMs("SCORE_CREATE_RATE_LIMIT_WINDOW_MS", "", "900000"),
 		},
 		Storage: StorageConfig{
 			AudioDir:                     envFirst("STORAGE_AUDIO_DIR", "VOICE_OUTPUT_DIR", "voice"),

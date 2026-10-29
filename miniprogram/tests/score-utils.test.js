@@ -3,7 +3,14 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { formatCNY, formatDistance, formatScore, parsePoints, parseYuanToCents } = require("../utils/score-format");
+const {
+  buildHistoryItems,
+  formatCNY,
+  formatDistance,
+  formatScore,
+  parsePoints,
+  parseYuanToCents,
+} = require("../utils/score-format");
 const { buildInviteContent, extractInviteToken } = require("../utils/invite");
 const QRCode = require("../libs/qrcode");
 
@@ -46,13 +53,51 @@ test("local QR encoder produces a scannable module matrix", () => {
 test("mini program registers scoring pages and location privacy declaration", () => {
   const root = path.resolve(__dirname, "..");
   const config = JSON.parse(fs.readFileSync(path.join(root, "app.json"), "utf8"));
-  for (const page of ["pages/index/index", "pages/auth/index", "pages/score/mahjong/index", "pages/score/room/index"]) {
+  for (const page of [
+    "pages/index/index",
+    "pages/profile/index",
+    "pages/game-history/index",
+    "pages/auth/index",
+    "pages/feedback/index",
+    "pages/score/mahjong/index",
+    "pages/score/room/index",
+  ]) {
     assert.ok(config.pages.includes(page));
     for (const extension of ["js", "json", "wxml", "wxss"]) {
       assert.equal(fs.existsSync(path.join(root, `${page}.${extension}`)), true, `${page}.${extension}`);
     }
   }
+  assert.deepEqual(config.tabBar.list.map((item) => [item.pagePath, item.text]), [
+    ["pages/index/index", "首页"],
+    ["pages/profile/index", "我的"],
+  ]);
+  assert.notEqual(config.tabBar.custom, true);
+  for (const item of config.tabBar.list) {
+    assert.equal(fs.existsSync(path.join(root, item.iconPath)), true, item.iconPath);
+    assert.equal(fs.existsSync(path.join(root, item.selectedIconPath)), true, item.selectedIconPath);
+  }
   assert.ok(config.requiredPrivateInfos.includes("getLocation"));
+});
+
+test("recent game history maps the current participant, result, type and time", () => {
+  const items = buildHistoryItems([{
+    id: "room-1",
+    name: "周五麻将",
+    gameType: "mahjong",
+    settledAt: "2026-10-29T08:30:00Z",
+    selfParticipantId: "participant-2",
+    participants: [
+      { id: "participant-1", displayName: "房主", totalPoints: -8, amountCents: -800 },
+      { id: "participant-2", displayName: "小李", totalPoints: 8, amountCents: 800 },
+    ],
+  }]);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].gameTypeText, "麻将");
+  assert.equal(items[0].participantsText, "房主、小李");
+  assert.equal(items[0].scoreText, "+8 分");
+  assert.equal(items[0].amountText, "¥8.00");
+  assert.equal(items[0].resultClass, "result-win");
+  assert.notEqual(items[0].timeText, "时间未知");
 });
 
 test("room templates remove caps and only expose the settlement rate inside the host sheet", () => {
@@ -64,4 +109,6 @@ test("room templates remove caps and only expose the settlement rate inside the 
   assert.doesNotMatch(roomTemplate, /封顶|rateText|capText/);
   assert.equal((roomTemplate.match(/每分金额/g) || []).length, 1);
   assert.match(roomTemplate, /hostRoomPassword/);
+  assert.match(createTemplate, /房主昵称/);
+  assert.match(roomTemplate, /登录并绑定/);
 });

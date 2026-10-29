@@ -681,6 +681,60 @@
   color: #ad4933;
 }
 
+.account-bind-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-top: 20rpx;
+  padding: 20rpx 22rpx;
+  border: 1rpx solid rgba(29, 107, 79, 0.16);
+  border-radius: 18rpx;
+  background: linear-gradient(135deg, #eef5ed, #fffaf0);
+}
+
+.account-bind-complete {
+  background: #edf4ee;
+}
+
+.account-bind-copy {
+  flex: 1;
+}
+
+.account-bind-title,
+.account-bind-desc {
+  display: block;
+}
+
+.account-bind-title {
+  color: #214d39;
+  font-size: 23rpx;
+  font-weight: 900;
+}
+
+.account-bind-desc {
+  margin-top: 6rpx;
+  color: #627168;
+  font-size: 19rpx;
+  line-height: 1.5;
+}
+
+.account-bind-button {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 20rpx;
+  border-radius: 14rpx;
+  background: #1d6b4f;
+  color: #fffdf7;
+  font-size: 20rpx;
+  font-weight: 800;
+}
+
+.account-bind-button[disabled] {
+  background: #819d8f;
+  color: #f7f5ee;
+}
+
 .state-panel {
   display: flex;
   align-items: center;

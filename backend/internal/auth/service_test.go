@@ -79,6 +79,10 @@ func TestAccountLifecycle(t *testing.T) {
 	if !errors.Is(err, auth.ErrCurrentPasswordInvalid) {
 		t.Fatalf("wrong current password error = %v", err)
 	}
+	_, err = service.ChangePassword(ctx, authenticated.ID, "password-123", "1")
+	if !errors.Is(err, auth.ErrPasswordInvalid) {
+		t.Fatalf("weak replacement password error = %v", err)
+	}
 
 	changed, err := service.ChangePassword(
 		ctx,
@@ -162,14 +166,20 @@ func TestValidation(t *testing.T) {
 	}{
 		{name: "short username", username: "1380013", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrUsernameInvalid},
 		{name: "invalid username", username: "12800138000", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrUsernameInvalid},
-		{name: "short password", username: "13800138001", password: "short1", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrPasswordInvalid},
-		{name: "password without number", username: "13800138001", password: "passwordonly", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrPasswordInvalid},
-		{name: "empty display name", username: "13800138001", password: "password-123", displayName: " ", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrDisplayNameInvalid},
-		{name: "empty security question", username: "13800138001", password: "password-123", displayName: "用户", question: "", answer: "海底两万里", want: auth.ErrSecurityQuestionInvalid},
-		{name: "empty security answer", username: "13800138001", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: " ", want: auth.ErrSecurityAnswerInvalid},
-		{name: "one character Chinese answer", username: "13800138002", password: "password-123", displayName: "用户", question: "你印象最深的一座城市是哪里？", answer: "京"},
-		{name: "long Chinese answer", username: "13800138003", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: strings.Repeat("中", 64)},
-		{name: "answer over limit", username: "13800138004", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: strings.Repeat("中", 65), want: auth.ErrSecurityAnswerInvalid},
+		{name: "one character password", username: "13800138001", password: "1", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里"},
+		{name: "letters-only password", username: "13800138002", password: "passwordonly", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里"},
+		{name: "empty password", username: "13800138003", password: "", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrPasswordInvalid},
+		{name: "blank password", username: "13800138004", password: "   ", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrPasswordInvalid},
+		{name: "password over bcrypt limit", username: "13800138005", password: strings.Repeat("中", 25), displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrPasswordInvalid},
+		{name: "empty display name", username: "13800138006", password: "password-123", displayName: " ", question: "你小时候最喜欢的书是什么？", answer: "海底两万里", want: auth.ErrDisplayNameInvalid},
+		{name: "empty security question", username: "13800138007", password: "password-123", displayName: "用户", question: "", answer: "海底两万里", want: auth.ErrSecurityQuestionInvalid},
+		{name: "one character security question", username: "13800138008", password: "password-123", displayName: "用户", question: "1", answer: "海底两万里"},
+		{name: "two character security question", username: "13800138009", password: "password-123", displayName: "用户", question: "密保", answer: "海底两万里"},
+		{name: "security question over limit", username: "13800138010", password: "password-123", displayName: "用户", question: strings.Repeat("问", 65), answer: "海底两万里", want: auth.ErrSecurityQuestionInvalid},
+		{name: "empty security answer", username: "13800138011", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: " ", want: auth.ErrSecurityAnswerInvalid},
+		{name: "one character Chinese answer", username: "13800138012", password: "password-123", displayName: "用户", question: "你印象最深的一座城市是哪里？", answer: "京"},
+		{name: "long Chinese answer", username: "13800138013", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: strings.Repeat("中", 64)},
+		{name: "answer over limit", username: "13800138014", password: "password-123", displayName: "用户", question: "你小时候最喜欢的书是什么？", answer: strings.Repeat("中", 65), want: auth.ErrSecurityAnswerInvalid},
 	}
 
 	for _, test := range tests {
@@ -227,6 +237,9 @@ func TestPasswordRecovery(t *testing.T) {
 	}
 	if recoveryToken == "" {
 		t.Fatal("recovery token is empty")
+	}
+	if err := service.ResetPasswordWithRecoveryToken(ctx, recoveryToken, "1"); !errors.Is(err, auth.ErrPasswordInvalid) {
+		t.Fatalf("weak recovered password error = %v", err)
 	}
 	if err := service.ResetPasswordWithRecoveryToken(ctx, recoveryToken, "recovered-456"); err != nil {
 		t.Fatalf("reset password: %v", err)

@@ -85,6 +85,13 @@ func (s *Server) authLimiter() *RateLimiter {
 	return s.rateLimiter
 }
 
+func (s *Server) scoreCreateLimiter() *RateLimiter {
+	if s.scoreCreateRateLimiter != nil {
+		return s.scoreCreateRateLimiter
+	}
+	return s.rateLimiter
+}
+
 func authRateLimitMax(cfg config.Config) int {
 	if cfg.Security.AuthRateLimitMax > 0 {
 		return cfg.Security.AuthRateLimitMax
@@ -95,6 +102,20 @@ func authRateLimitMax(cfg config.Config) int {
 func authRateLimitWindow(cfg config.Config) time.Duration {
 	if cfg.Security.AuthRateLimitWindow > 0 {
 		return cfg.Security.AuthRateLimitWindow
+	}
+	return cfg.Security.RateLimitWindow
+}
+
+func scoreCreateRateLimitMax(cfg config.Config) int {
+	if cfg.Security.ScoreCreateRateLimitMax > 0 {
+		return cfg.Security.ScoreCreateRateLimitMax
+	}
+	return cfg.Security.RateLimitMax
+}
+
+func scoreCreateRateLimitWindow(cfg config.Config) time.Duration {
+	if cfg.Security.ScoreCreateRateLimitWindow > 0 {
+		return cfg.Security.ScoreCreateRateLimitWindow
 	}
 	return cfg.Security.RateLimitWindow
 }

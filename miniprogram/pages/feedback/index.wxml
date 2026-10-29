@@ -1,0 +1,52 @@
+<view class="feedback-page">
+  <view wx:if="{{submitted}}" class="success-card">
+    <view class="success-mark">✓</view>
+    <text class="success-title">反馈已提交</text>
+    <text class="success-copy">管理员可在后台查看你的描述和截图，处理结果会通过账号通知触达。</text>
+    <button class="success-button" bindtap="goBack">返回我的</button>
+  </view>
+
+  <block wx:else>
+    <view class="feedback-hero">
+      <text class="hero-kicker">FUNBOX · 功能反馈</text>
+      <text class="hero-title">把问题说清楚</text>
+      <text class="hero-copy">请描述操作过程、预期结果和实际结果。可附 1 张截图帮助定位问题。</text>
+    </view>
+
+    <view class="form-card">
+      <view class="field-head">
+        <text class="field-label">问题描述</text>
+        <text class="field-count">{{descriptionCount}} / 1000</text>
+      </view>
+      <textarea
+        class="description-input"
+        maxlength="1000"
+        placeholder="例如：我在结算牌局时点击确认后页面一直显示加载中，返回后分数没有变化。"
+        placeholder-class="description-placeholder"
+        value="{{description}}"
+        bindinput="handleDescription"
+      />
+
+      <view class="image-section">
+        <view class="field-head">
+          <text class="field-label">截图</text>
+          <text class="field-note">可选，最多 1 张</text>
+        </view>
+        <view wx:if="{{image}}" class="image-preview-wrap">
+          <image class="image-preview" src="{{image.tempFilePath}}" mode="aspectFill" bindtap="previewImage" />
+          <view class="image-remove" bindtap="removeImage">×</view>
+        </view>
+        <view wx:else class="image-picker" bindtap="chooseImage">
+          <text class="image-plus">＋</text>
+          <text class="image-picker-title">选择截图</text>
+          <text class="image-picker-note">JPG、PNG 或 WebP，最大 5 MB</text>
+        </view>
+      </view>
+
+      <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
+      <button class="submit-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="handleSubmit">
+        {{submitting ? '正在提交' : '提交反馈'}}
+      </button>
+    </view>
+  </block>
+</view>

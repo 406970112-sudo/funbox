@@ -4,7 +4,7 @@
       <text class="eyebrow">FUNBOX · 牌局记分</text>
       <text class="headline">今晚打牌，分数交给 FunBox</text>
     </view>
-    <view class="account-pill" bindtap="openAuth">
+    <view class="account-pill" bindtap="openProfile">
       <text class="account-dot">{{isLoggedIn ? '已' : '游'}}</text>
       <text class="account-name">{{userName}}</text>
     </view>

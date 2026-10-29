@@ -213,6 +213,40 @@ func TestAuthHTTPFlow(t *testing.T) {
 		"",
 		http.StatusOK,
 	)
+
+	simple := requestJSON[sessionResponse](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/register",
+		`{"username":"13700137000","password":"1","displayName":"简单账号","securityQuestion":"密保","securityAnswer":"1"}`,
+		"",
+		http.StatusCreated,
+	)
+	if simple.AccessToken == "" {
+		t.Fatal("simple registration did not return a token")
+	}
+	requestJSON[sessionResponse](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/login",
+		`{"username":"13700137000","password":"1"}`,
+		"",
+		http.StatusOK,
+	)
+	simpleQuestion := requestJSON[map[string]string](
+		t,
+		testServer.Client(),
+		http.MethodPost,
+		testServer.URL+"/api/v1/auth/password-recovery/question",
+		`{"username":"13700137000"}`,
+		"",
+		http.StatusOK,
+	)
+	if simpleQuestion["securityQuestion"] != "密保" {
+		t.Fatalf("simple recovery question = %q", simpleQuestion["securityQuestion"])
+	}
 }
 
 func TestProfileUpdateIsNotBlockedByExhaustedAuthRateLimit(t *testing.T) {

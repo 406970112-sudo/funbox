@@ -4,6 +4,7 @@ const { clearSession, getAccessToken } = require("./auth");
 const SCORE_ERROR_MESSAGES = {
   score_action_forbidden: "当前身份不能执行这个操作。",
   score_action_id_reused: "操作标识已失效，请刷新后重试。",
+  score_account_already_bound: "该账号已经加入了当前牌局，不能重复绑定。",
   score_balances_not_zero: "所有玩家的累计分数没有归零，暂时不能结算。",
   score_cap_exceeded: "本次给分超过房间封顶。",
   score_force_open_locked: "当前还不能强开。",
@@ -53,10 +54,41 @@ function createScoreRoom(token, input) {
 }
 
 function joinScoreRoom(input) {
-  return scoreRequest({
+  const token = getAccessToken();
+  const options = {
     path: "/score-rooms/join",
     method: "POST",
+    bearerToken: token,
     data: input,
+  };
+  return scoreRequest(options).catch(async (error) => {
+    if (!token || error.statusCode !== 401) throw error;
+    clearSession();
+    return scoreRequest({ ...options, bearerToken: "" });
+  });
+}
+
+function bindScoreParticipantAccount(roomId, participantToken) {
+  return scoreRequest({
+    path: `/score-rooms/${encodeURIComponent(roomId)}/bind-account`,
+    method: "POST",
+    bearerToken: getAccessToken(),
+    data: { participantToken },
+  }).then((response) => response.room);
+}
+
+function listScoreHistory({ limit = 5, offset = 0, from = "" } = {}) {
+  const token = getAccessToken();
+  const query = [
+    "scope=participated",
+    "status=settled",
+    `limit=${encodeURIComponent(limit)}`,
+    `offset=${encodeURIComponent(offset)}`,
+  ];
+  if (from) query.push(`from=${encodeURIComponent(from)}`);
+  return scoreRequest({
+    path: `/score-rooms/history?${query.join("&")}`,
+    bearerToken: token,
   });
 }
 
@@ -171,6 +203,7 @@ function getScoreErrorMessage(error) {
 }
 
 module.exports = {
+  bindScoreParticipantAccount,
   createRealtimeTicket,
   createScoreRoom,
   getScoreErrorMessage,
@@ -178,6 +211,7 @@ module.exports = {
   issueScoreInviteCode,
   issueScoreInviteToken,
   joinScoreRoom,
+  listScoreHistory,
   listNearbyScoreRooms,
   mutateRoom,
   previewScoreInvite,

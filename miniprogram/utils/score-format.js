@@ -44,10 +44,49 @@ function roomStatusLabel(status) {
   }[status] || "未知状态";
 }
 
+function gameTypeLabel(gameType) {
+  return {
+    generic: "牌局",
+    mahjong: "麻将",
+    zhajinhua: "炸金花",
+  }[gameType] || "牌局";
+}
+
+function formatHistoryTime(value) {
+  if (!value) return "时间未知";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "时间未知";
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function buildHistoryItems(rooms) {
+  return (Array.isArray(rooms) ? rooms : []).map((room) => {
+    const participants = Array.isArray(room.participants) ? room.participants : [];
+    const self = participants.find((participant) => participant.id === room.selfParticipantId) || null;
+    const points = self ? Math.trunc(Number(self.totalPoints) || 0) : 0;
+    return {
+      id: room.id,
+      name: room.name || "未命名牌局",
+      gameTypeText: gameTypeLabel(room.gameType),
+      participantsText: participants.length
+        ? participants.map((participant) => participant.displayName || "玩家").join("、")
+        : "暂无参与者",
+      timeText: formatHistoryTime(room.settledAt || room.startedAt || room.createdAt),
+      scoreText: self ? `${formatScore(points)} 分` : "—",
+      amountText: self ? formatCNY(self.amountCents) : "—",
+      resultClass: points > 0 ? "result-win" : points < 0 ? "result-loss" : "result-even",
+    };
+  });
+}
+
 module.exports = {
+  buildHistoryItems,
   formatCNY,
   formatDistance,
+  formatHistoryTime,
   formatScore,
+  gameTypeLabel,
   parsePoints,
   parseYuanToCents,
   roomStatusLabel,

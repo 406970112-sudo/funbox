@@ -38,6 +38,11 @@
       <input class="field-input" data-field="roomName" maxlength="40" placeholder="例如：周五老友局" value="{{roomName}}" bindinput="handleField" />
     </view>
 
+    <view wx:if="{{!isLoggedIn}}" class="field">
+      <text class="field-label">房主昵称</text>
+      <input class="field-input" data-field="hostNickname" maxlength="48" placeholder="本局内显示的房主名字" value="{{hostNickname}}" bindinput="handleField" />
+    </view>
+
     <view class="field-row">
       <view class="field half">
         <text class="field-label">房间密码</text>
@@ -64,7 +69,7 @@
 
     <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
     <button class="primary-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createRoom">
-      {{isLoggedIn ? '创建麻将房间' : '登录后创建房间'}}
+      创建麻将房间
     </button>
   </view>
 

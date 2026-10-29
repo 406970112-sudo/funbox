@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const joinCalls = [];
+const bindCalls = [];
 const settleCalls = [];
 let realtimeOptions = null;
 const scoreAPI = require.resolve("../utils/score-api");
@@ -10,6 +11,25 @@ require.cache[scoreAPI] = {
   filename: scoreAPI,
   loaded: true,
   exports: {
+    bindScoreParticipantAccount: async (roomId, participantToken) => {
+      bindCalls.push({ roomId, participantToken });
+      return {
+        id: roomId,
+        version: 4,
+        status: "active",
+        participants: [{
+          id: "participant-guest",
+          userId: "account-user",
+          role: "guest",
+          status: "active",
+          displayName: "游客牌友",
+          totalPoints: 0,
+          joinedAt: "2026-10-29T00:00:00Z",
+        }],
+        selfParticipantId: "participant-guest",
+        giftBatches: [],
+      };
+    },
     getScoreErrorMessage: (error) => error.message,
     joinScoreRoom: async (input) => {
       joinCalls.push(input);
@@ -103,6 +123,26 @@ test("gift totals no longer depend on a cap setting", () => {
 
   assert.equal(page.data.giftTotal, 13);
   assert.equal(page.data.canSubmitGifts, true);
+});
+
+test("a logged-in guest participant can bind the current room identity", async () => {
+  bindCalls.length = 0;
+  storage.accessToken = "account-token";
+  const page = createPage({
+    room: { id: "room-1" },
+    showAccountBinding: true,
+    accountBound: false,
+    bindingAccount: false,
+  });
+  page.credential = { kind: "guest", token: "participant-token" };
+  page.applyRoom = async () => undefined;
+
+  await page.bindParticipantAccount();
+
+  assert.deepEqual(bindCalls, [{ roomId: "room-1", participantToken: "participant-token" }]);
+  assert.equal(page.data.bindingAccount, false);
+  assert.match(page.data.feedback, /已绑定账号/);
+  delete storage.accessToken;
 });
 
 test("host settlement defaults to one yuan and submits the edited rate", async () => {

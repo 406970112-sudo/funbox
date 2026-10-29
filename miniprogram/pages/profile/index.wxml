@@ -1,0 +1,54 @@
+<view class="profile-page">
+  <view class="profile-hero">
+    <text class="hero-kicker">FUNBOX · 我的</text>
+    <text class="hero-title">牌局有记录，反馈有回音</text>
+    <text class="hero-copy">管理账号、回看最近牌局，也可以把使用中遇到的问题告诉我们。</text>
+  </view>
+
+  <view wx:if="{{isLoggedIn}}" class="identity-card">
+    <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" binderror="handleAvatarError" />
+    <view wx:else class="avatar avatar-fallback">{{initial}}</view>
+    <view class="identity-copy">
+      <text class="identity-name">{{displayName}}</text>
+      <text class="identity-meta">{{maskedUsername}}</text>
+      <text class="identity-date">{{registeredAt}}</text>
+    </view>
+    <view wx:if="{{userLoading}}" class="loading-dot"></view>
+  </view>
+
+  <view wx:else class="guest-card">
+    <view class="guest-mark">游</view>
+    <view class="guest-copy">
+      <text class="guest-title">当前为游客模式</text>
+      <text class="guest-desc">登录后可查看本人参与的最近牌局。</text>
+    </view>
+    <view class="guest-actions">
+      <button class="login-button" bindtap="openLogin">登录</button>
+      <button class="register-button" bindtap="openRegister">注册</button>
+    </view>
+  </view>
+
+  <view wx:if="{{userError}}" class="inline-error" bindtap="retryLoad">
+    <text>{{userError}}</text>
+    <text class="inline-retry">重试</text>
+  </view>
+
+  <view wx:if="{{isLoggedIn}}" class="history-entry-card" bindtap="openHistory">
+    <view class="history-entry-mark">牌</view>
+    <view class="history-entry-copy">
+      <text class="history-entry-title">最近牌局</text>
+      <text class="history-entry-desc">按时间筛选并回看参与者和输赢</text>
+    </view>
+    <text class="history-entry-arrow">›</text>
+  </view>
+
+  <view class="feedback-card" bindtap="openFeedback">
+    <view class="feedback-mark">!</view>
+    <view class="feedback-copy">
+      <text class="feedback-title">功能反馈</text>
+      <text class="feedback-desc">上传截图并描述你遇到的问题</text>
+    </view>
+    <text class="feedback-arrow">›</text>
+  </view>
+
+</view>

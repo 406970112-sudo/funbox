@@ -42,6 +42,7 @@ var (
 	ErrCapExceeded           = errors.New("score gift cap exceeded")
 	ErrLocationInvalid       = errors.New("score location is invalid")
 	ErrInviteCodeUnavailable = errors.New("score invite code unavailable")
+	ErrAccountAlreadyBound   = errors.New("score account is already bound in this room")
 )
 
 type Actor struct {
@@ -58,6 +59,7 @@ type CommandMeta struct {
 
 type CreateRoomInput struct {
 	Name               string     `json:"name"`
+	DisplayName        string     `json:"displayName,omitempty"`
 	MaxPlayers         int        `json:"maxPlayers"`
 	CentsPerPoint      int64      `json:"centsPerPoint"`
 	Scene              ScoreScene `json:"scene,omitempty"`
@@ -73,6 +75,7 @@ type CreateRoomResult struct {
 	Room        RoomSnapshot `json:"room"`
 	Actor       Actor        `json:"actor"`
 	InviteToken string       `json:"inviteToken"`
+	GuestToken  string       `json:"guestToken,omitempty"`
 }
 
 type JoinRoomInput struct {
@@ -81,6 +84,15 @@ type JoinRoomInput struct {
 	InviteScene string `json:"inviteScene,omitempty"`
 	DisplayName string `json:"displayName"`
 	Password    string `json:"password,omitempty"`
+	UserID      string `json:"-"`
+}
+
+type HistoryOptions struct {
+	Scope  string     `json:"scope,omitempty"`
+	Status RoomStatus `json:"status,omitempty"`
+	Limit  int        `json:"limit,omitempty"`
+	Offset int        `json:"offset,omitempty"`
+	From   *time.Time `json:"from,omitempty"`
 }
 
 type JoinRoomResult struct {
@@ -219,9 +231,6 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	if input.CentsPerPoint == 0 {
 		input.CentsPerPoint = 100
 	}
-	if hostUserID == "" {
-		return CreateRoomResult{}, ErrUnauthorized
-	}
 	if displayName == "" || len([]rune(displayName)) > 48 || input.Name == "" || len([]rune(input.Name)) > 40 {
 		return CreateRoomResult{}, fmt.Errorf("room or display name: %w", ErrInvalidInput)
 	}
@@ -332,12 +341,16 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 		}
 		return CreateRoomResult{}, false, fmt.Errorf("insert score room: %w", err)
 	}
+	var participantUserID any
+	if hostUserID != "" {
+		participantUserID = hostUserID
+	}
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO score_participants (
 			id, room_id, user_id, display_name, normalized_name, role, status,
 			token_version, joined_at, last_seen_at
 		) VALUES (?, ?, ?, ?, ?, 'host', 'active', 1, ?, ?)
-	`, participantID, roomID, hostUserID, displayName, normalizeDisplayName(displayName), now.Unix(), now.Unix())
+	`, participantID, roomID, participantUserID, displayName, normalizeDisplayName(displayName), now.Unix(), now.Unix())
 	if err != nil {
 		return CreateRoomResult{}, false, fmt.Errorf("insert score host: %w", err)
 	}
@@ -367,11 +380,21 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 	}
 	room.SelfParticipantID = participantID
 	room.InviteToken = inviteToken
-	return CreateRoomResult{Room: room, Actor: actor, InviteToken: inviteToken}, false, nil
+	result := CreateRoomResult{Room: room, Actor: actor, InviteToken: inviteToken}
+	if hostUserID == "" {
+		result.GuestToken, err = s.signToken(tokenClaims{
+			Type: "score_guest", RoomID: roomID, ParticipantID: participantID, TokenVersion: 1,
+		}, s.guestTTL)
+		if err != nil {
+			return CreateRoomResult{}, false, err
+		}
+	}
+	return result, false, nil
 }
 
 func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomResult, error) {
 	displayName := strings.TrimSpace(input.DisplayName)
+	userID := strings.TrimSpace(input.UserID)
 	if displayName == "" || len([]rune(displayName)) > 48 {
 		return JoinRoomResult{}, fmt.Errorf("display name: %w", ErrInvalidInput)
 	}
@@ -412,9 +435,6 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if status != string(RoomWaiting) {
 		return JoinRoomResult{}, fmt.Errorf("joining started room: %w", ErrInvalidState)
 	}
-	if activePlayers >= maxPlayers {
-		return JoinRoomResult{}, ErrRoomFull
-	}
 	if passwordHash != "" && !usedInviteCredential {
 		if input.Password == "" {
 			return JoinRoomResult{}, ErrPasswordRequired
@@ -423,13 +443,49 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 			return JoinRoomResult{}, ErrPasswordInvalid
 		}
 	}
+	if userID != "" {
+		var existingID, existingRole, existingStatus string
+		err := tx.QueryRowContext(ctx, `
+			SELECT id, role, status FROM score_participants
+			WHERE room_id = ? AND user_id = ?
+		`, roomID, userID).Scan(&existingID, &existingRole, &existingStatus)
+		if err == nil {
+			if existingStatus != string(ParticipantActive) || existingRole != string(ParticipantGuest) {
+				return JoinRoomResult{}, ErrInvalidState
+			}
+			room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+			if err != nil {
+				return JoinRoomResult{}, err
+			}
+			if err := tx.Commit(); err != nil {
+				return JoinRoomResult{}, fmt.Errorf("commit score room rejoin: %w", err)
+			}
+			guestToken, err := s.IssueGuestToken(ctx, existingID)
+			if err != nil {
+				return JoinRoomResult{}, err
+			}
+			room.SelfParticipantID = existingID
+			actor := Actor{ParticipantID: existingID, UserID: userID, RoomID: roomID, Role: ParticipantGuest}
+			return JoinRoomResult{Room: room, Actor: actor, GuestToken: guestToken}, nil
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return JoinRoomResult{}, fmt.Errorf("find existing score participant: %w", err)
+		}
+	}
+	if activePlayers >= maxPlayers {
+		return JoinRoomResult{}, ErrRoomFull
+	}
 	participantID := uuid.NewString()
+	var participantUserID any
+	if userID != "" {
+		participantUserID = userID
+	}
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO score_participants (
 			id, room_id, user_id, display_name, normalized_name, role, status,
 			token_version, joined_at, last_seen_at
-		) VALUES (?, ?, NULL, ?, ?, 'guest', 'active', 1, ?, ?)
-	`, participantID, roomID, displayName, normalizeDisplayName(displayName), now.Unix(), now.Unix())
+		) VALUES (?, ?, ?, ?, ?, 'guest', 'active', 1, ?, ?)
+	`, participantID, roomID, participantUserID, displayName, normalizeDisplayName(displayName), now.Unix(), now.Unix())
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "unique") {
 			return JoinRoomResult{}, ErrNicknameConflict
@@ -446,7 +502,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if err := tx.Commit(); err != nil {
 		return JoinRoomResult{}, fmt.Errorf("commit score room join: %w", err)
 	}
-	actor := Actor{ParticipantID: participantID, RoomID: roomID, Role: ParticipantGuest}
+	actor := Actor{ParticipantID: participantID, UserID: userID, RoomID: roomID, Role: ParticipantGuest}
 	guestToken, err := s.signToken(tokenClaims{
 		Type: "score_guest", RoomID: roomID, ParticipantID: participantID, TokenVersion: 1,
 	}, s.guestTTL)
@@ -1275,14 +1331,23 @@ func (s *Service) GetRoom(ctx context.Context, actor Actor) (RoomSnapshot, error
 	return room, nil
 }
 
-func (s *Service) ListHistory(ctx context.Context, userID string) ([]RoomSnapshot, error) {
-	userID = strings.TrimSpace(userID)
-	if userID == "" {
-		return nil, ErrUnauthorized
+func (s *Service) ListHistory(ctx context.Context, userID string, options HistoryOptions) ([]RoomSnapshot, error) {
+	query, args, options, err := historyFilter(userID, options)
+	if err != nil {
+		return nil, err
 	}
-	rows, err := s.store.db.QueryContext(ctx, `
-		SELECT id FROM score_rooms WHERE host_user_id = ? ORDER BY created_at DESC
-	`, userID)
+	query = `SELECT r.id FROM score_rooms r WHERE ` + query
+	if options.Scope == "participated" {
+		query += ` ORDER BY COALESCE(r.settled_at, r.started_at, r.created_at) DESC, r.created_at DESC`
+	} else {
+		query += ` ORDER BY r.created_at DESC`
+	}
+	if options.Limit > 0 {
+		query += ` LIMIT ? OFFSET ?`
+		args = append(args, options.Limit, options.Offset)
+	}
+
+	rows, err := s.store.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -1306,9 +1371,69 @@ func (s *Service) ListHistory(ctx context.Context, userID string) ([]RoomSnapsho
 		if err != nil {
 			return nil, err
 		}
+		for _, participant := range room.Participants {
+			if participant.UserID == userID {
+				room.SelfParticipantID = participant.ID
+				break
+			}
+		}
 		history = append(history, room)
 	}
 	return history, nil
+}
+
+func (s *Service) CountHistory(ctx context.Context, userID string, options HistoryOptions) (int, error) {
+	filter, args, _, err := historyFilter(userID, options)
+	if err != nil {
+		return 0, err
+	}
+	var total int
+	if err := s.store.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM score_rooms r WHERE `+filter, args...).Scan(&total); err != nil {
+		return 0, err
+	}
+	return total, nil
+}
+
+func historyFilter(userID string, options HistoryOptions) (string, []any, HistoryOptions, error) {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
+		return "", nil, options, ErrUnauthorized
+	}
+	options.Scope = strings.TrimSpace(options.Scope)
+	if options.Scope == "" {
+		options.Scope = "host"
+	}
+	if options.Scope != "host" && options.Scope != "participated" {
+		return "", nil, options, fmt.Errorf("history scope: %w", ErrInvalidInput)
+	}
+	if options.Status != "" {
+		switch options.Status {
+		case RoomWaiting, RoomActive, RoomSettled, RoomCancelled:
+		default:
+			return "", nil, options, fmt.Errorf("history status: %w", ErrInvalidInput)
+		}
+	}
+	if options.Limit < 0 || options.Limit > 50 || options.Offset < 0 {
+		return "", nil, options, fmt.Errorf("history pagination: %w", ErrInvalidInput)
+	}
+
+	filter := `r.host_user_id = ?`
+	if options.Scope == "participated" {
+		filter = `EXISTS (
+			SELECT 1 FROM score_participants p
+			WHERE p.room_id = r.id AND p.user_id = ?
+		)`
+	}
+	args := []any{userID}
+	if options.Status != "" {
+		filter += ` AND r.status = ?`
+		args = append(args, string(options.Status))
+	}
+	if options.From != nil {
+		filter += ` AND COALESCE(r.settled_at, r.started_at, r.created_at) >= ?`
+		args = append(args, options.From.UTC().Unix())
+	}
+	return filter, args, options, nil
 }
 
 func (s *Service) ActorForUser(ctx context.Context, roomID, userID string) (Actor, error) {
@@ -1459,15 +1584,16 @@ func (s *Service) AuthenticateGuestToken(ctx context.Context, rawToken string) (
 		return Actor{}, err
 	}
 	var roomID, role, participantStatus, roomStatus string
+	var userID sql.NullString
 	var tokenVersion int
 	var settledAt sql.NullInt64
 	err = s.store.db.QueryRowContext(ctx, `
-		SELECT p.room_id, p.role, p.status, p.token_version, r.status, r.settled_at
+		SELECT p.room_id, p.user_id, p.role, p.status, p.token_version, r.status, r.settled_at
 		FROM score_participants p
 		JOIN score_rooms r ON r.id = p.room_id
 		WHERE p.id = ? AND p.room_id = ?
 	`, claims.ParticipantID, claims.RoomID).Scan(
-		&roomID, &role, &participantStatus, &tokenVersion, &roomStatus, &settledAt,
+		&roomID, &userID, &role, &participantStatus, &tokenVersion, &roomStatus, &settledAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Actor{}, ErrUnauthorized
@@ -1475,7 +1601,8 @@ func (s *Service) AuthenticateGuestToken(ctx context.Context, rawToken string) (
 	if err != nil {
 		return Actor{}, err
 	}
-	if role != string(ParticipantGuest) || participantStatus != string(ParticipantActive) || tokenVersion != claims.TokenVersion {
+	if (role != string(ParticipantHost) && role != string(ParticipantGuest)) ||
+		participantStatus != string(ParticipantActive) || tokenVersion != claims.TokenVersion {
 		return Actor{}, ErrUnauthorized
 	}
 	if roomStatus == string(RoomCancelled) {
@@ -1484,7 +1611,113 @@ func (s *Service) AuthenticateGuestToken(ctx context.Context, rawToken string) (
 	if roomStatus == string(RoomSettled) && (!settledAt.Valid || s.now().UTC().After(time.Unix(settledAt.Int64, 0).UTC().Add(24*time.Hour))) {
 		return Actor{}, ErrUnauthorized
 	}
-	return Actor{ParticipantID: claims.ParticipantID, RoomID: roomID, Role: ParticipantGuest}, nil
+	return Actor{ParticipantID: claims.ParticipantID, UserID: userID.String, RoomID: roomID, Role: ParticipantRole(role)}, nil
+}
+
+func (s *Service) BindParticipantAccount(ctx context.Context, accountID, roomID, participantToken string) (RoomSnapshot, error) {
+	accountID = strings.TrimSpace(accountID)
+	roomID = strings.TrimSpace(roomID)
+	participantToken = strings.TrimSpace(participantToken)
+	if accountID == "" || roomID == "" || participantToken == "" {
+		return RoomSnapshot{}, ErrUnauthorized
+	}
+
+	actor, err := s.AuthenticateGuestToken(ctx, participantToken)
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
+	if actor.RoomID != roomID {
+		return RoomSnapshot{}, ErrUnauthorized
+	}
+
+	tx, err := s.store.db.BeginTx(ctx, nil)
+	if err != nil {
+		return RoomSnapshot{}, fmt.Errorf("begin score account binding: %w", err)
+	}
+	defer tx.Rollback()
+
+	var participantRoomID, participantStatus, participantRole, roomStatus string
+	var boundUserID sql.NullString
+	err = tx.QueryRowContext(ctx, `
+		SELECT p.room_id, p.user_id, p.status, p.role, r.status
+		FROM score_participants p
+		JOIN score_rooms r ON r.id = p.room_id
+		WHERE p.id = ? AND p.room_id = ?
+	`, actor.ParticipantID, roomID).Scan(
+		&participantRoomID, &boundUserID, &participantStatus, &participantRole, &roomStatus,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return RoomSnapshot{}, ErrUnauthorized
+	}
+	if err != nil {
+		return RoomSnapshot{}, fmt.Errorf("load participant for account binding: %w", err)
+	}
+	if participantRoomID != roomID || participantStatus != string(ParticipantActive) {
+		return RoomSnapshot{}, ErrUnauthorized
+	}
+	if roomStatus == string(RoomCancelled) {
+		return RoomSnapshot{}, ErrInvalidState
+	}
+	boundAccountID := strings.TrimSpace(boundUserID.String)
+	if boundAccountID != "" {
+		if boundAccountID != accountID {
+			return RoomSnapshot{}, ErrAccountAlreadyBound
+		}
+		room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+		if err != nil {
+			return RoomSnapshot{}, err
+		}
+		room.SelfParticipantID = actor.ParticipantID
+		if err := tx.Commit(); err != nil {
+			return RoomSnapshot{}, fmt.Errorf("commit score account binding: %w", err)
+		}
+		return room, nil
+	}
+
+	var existingParticipantID string
+	err = tx.QueryRowContext(ctx, `
+		SELECT id FROM score_participants
+		WHERE room_id = ? AND user_id = ? AND id <> ?
+	`, roomID, accountID, actor.ParticipantID).Scan(&existingParticipantID)
+	if err == nil {
+		return RoomSnapshot{}, ErrAccountAlreadyBound
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return RoomSnapshot{}, fmt.Errorf("find account participant for binding: %w", err)
+	}
+
+	result, err := tx.ExecContext(ctx, `
+		UPDATE score_participants SET user_id = ?
+		WHERE id = ? AND (user_id IS NULL OR TRIM(user_id) = '')
+	`, accountID, actor.ParticipantID)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "unique") {
+			return RoomSnapshot{}, ErrAccountAlreadyBound
+		}
+		return RoomSnapshot{}, fmt.Errorf("bind participant account: %w", err)
+	}
+	changed, err := result.RowsAffected()
+	if err != nil {
+		return RoomSnapshot{}, fmt.Errorf("check participant account binding: %w", err)
+	}
+	if changed != 1 {
+		return RoomSnapshot{}, ErrAccountAlreadyBound
+	}
+	if participantRole == string(ParticipantHost) {
+		if _, err := tx.ExecContext(ctx, `UPDATE score_rooms SET host_user_id = ? WHERE id = ?`, accountID, roomID); err != nil {
+			return RoomSnapshot{}, fmt.Errorf("bind score room host account: %w", err)
+		}
+	}
+
+	room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
+	room.SelfParticipantID = actor.ParticipantID
+	if err := tx.Commit(); err != nil {
+		return RoomSnapshot{}, fmt.Errorf("commit score account binding: %w", err)
+	}
+	return room, nil
 }
 
 func (s *Service) mutate(

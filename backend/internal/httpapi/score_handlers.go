@@ -3,10 +3,12 @@ package httpapi
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"my-first-expo-app/backend/internal/realtime"
 	"my-first-expo-app/backend/internal/score"
@@ -30,11 +32,12 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	if api.scoreService == nil {
 		return
 	}
-	mux.HandleFunc("POST /api/v1/score-rooms", api.withAuth(api.withAPIPipeline(api.handleCreateScoreRoom)))
-	mux.HandleFunc("POST /api/v1/score-rooms/join", api.withRateLimitedAPIPipeline("score-join", api.handleJoinScoreRoom))
+	mux.HandleFunc("POST /api/v1/score-rooms", api.withOptionalAuth(api.withScoreCreateRateLimitedPipeline(api.handleCreateScoreRoom)))
+	mux.HandleFunc("POST /api/v1/score-rooms/join", api.withOptionalAuth(api.withRateLimitedAPIPipeline("score-join", api.handleJoinScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/invite-preview", api.withOptionalAuth(api.withRateLimitedAPIPipeline("score-join", api.handlePreviewScoreInvite)))
 	mux.HandleFunc("GET /api/v1/score-rooms/nearby", api.withRateLimitedAPIPipeline("score-nearby", api.handleNearbyScoreRooms))
 	mux.HandleFunc("GET /api/v1/score-rooms/history", api.withAuth(api.withAPIPipeline(api.handleScoreRoomHistory)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/bind-account", api.withAuth(api.withAPIPipeline(api.handleBindScoreParticipantAccount)))
 	mux.HandleFunc("GET /api/v1/score-rooms/{roomID}", api.withScoreActor(api.withAPIPipeline(api.handleGetScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/start", api.withScoreActor(api.withAPIPipeline(api.handleStartScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/cancel", api.withScoreActor(api.withAPIPipeline(api.handleCancelScoreRoom)))
@@ -91,13 +94,18 @@ func scoreActorFromContext(ctx context.Context) (score.Actor, bool) {
 }
 
 func (s *Server) handleCreateScoreRoom(w http.ResponseWriter, r *http.Request) {
-	account, _ := authenticatedUserFromContext(r.Context())
 	var input score.CreateRoomInput
 	if err := decodeJSONBody(r, &input); err != nil {
 		writeRequestBodyError(w, err)
 		return
 	}
-	result, err := s.scoreService.CreateRoom(r.Context(), account.ID, account.DisplayName, input)
+	hostUserID := ""
+	displayName := input.DisplayName
+	if account, ok := authenticatedUserFromContext(r.Context()); ok {
+		hostUserID = account.ID
+		displayName = account.DisplayName
+	}
+	result, err := s.scoreService.CreateRoom(r.Context(), hostUserID, displayName, input)
 	if err != nil {
 		s.writeScoreError(w, err)
 		return
@@ -105,11 +113,31 @@ func (s *Server) handleCreateScoreRoom(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, result)
 }
 
+func (s *Server) handleBindScoreParticipantAccount(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ParticipantToken string `json:"participantToken"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	account, _ := authenticatedUserFromContext(r.Context())
+	room, err := s.scoreService.BindParticipantAccount(r.Context(), account.ID, r.PathValue("roomID"), body.ParticipantToken)
+	if err != nil {
+		s.writeScoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"room": room})
+}
+
 func (s *Server) handleJoinScoreRoom(w http.ResponseWriter, r *http.Request) {
 	var input score.JoinRoomInput
 	if err := decodeJSONBody(r, &input); err != nil {
 		writeRequestBodyError(w, err)
 		return
+	}
+	if account, ok := authenticatedUserFromContext(r.Context()); ok {
+		input.UserID = account.ID
 	}
 	result, err := s.scoreService.JoinRoom(r.Context(), input)
 	if err != nil {
@@ -167,12 +195,66 @@ func (s *Server) handleNearbyScoreRooms(w http.ResponseWriter, r *http.Request) 
 
 func (s *Server) handleScoreRoomHistory(w http.ResponseWriter, r *http.Request) {
 	account, _ := authenticatedUserFromContext(r.Context())
-	rooms, err := s.scoreService.ListHistory(r.Context(), account.ID)
+	options, err := parseScoreHistoryOptions(r)
 	if err != nil {
 		s.writeScoreError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"rooms": rooms})
+	rooms, err := s.scoreService.ListHistory(r.Context(), account.ID, options)
+	if err != nil {
+		s.writeScoreError(w, err)
+		return
+	}
+	total, err := s.scoreService.CountHistory(r.Context(), account.ID, options)
+	if err != nil {
+		s.writeScoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"rooms":  rooms,
+		"total":  total,
+		"limit":  options.Limit,
+		"offset": options.Offset,
+	})
+}
+
+func parseScoreHistoryOptions(r *http.Request) (score.HistoryOptions, error) {
+	options := score.HistoryOptions{
+		Scope:  strings.TrimSpace(r.URL.Query().Get("scope")),
+		Status: score.RoomStatus(strings.TrimSpace(r.URL.Query().Get("status"))),
+	}
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		limit, err := strconv.Atoi(raw)
+		if err != nil || limit < 1 || limit > 50 {
+			return score.HistoryOptions{}, fmt.Errorf("history limit: %w", score.ErrInvalidInput)
+		}
+		options.Limit = limit
+	}
+	if raw := strings.TrimSpace(r.URL.Query().Get("offset")); raw != "" {
+		offset, err := strconv.Atoi(raw)
+		if err != nil || offset < 0 {
+			return score.HistoryOptions{}, fmt.Errorf("history offset: %w", score.ErrInvalidInput)
+		}
+		options.Offset = offset
+	}
+	if raw := strings.TrimSpace(r.URL.Query().Get("from")); raw != "" {
+		from, err := time.Parse(time.RFC3339, raw)
+		if err != nil {
+			return score.HistoryOptions{}, fmt.Errorf("history from: %w", score.ErrInvalidInput)
+		}
+		options.From = &from
+	}
+	if options.Scope != "" && options.Scope != "host" && options.Scope != "participated" {
+		return score.HistoryOptions{}, fmt.Errorf("history scope: %w", score.ErrInvalidInput)
+	}
+	if options.Status != "" {
+		switch options.Status {
+		case score.RoomWaiting, score.RoomActive, score.RoomSettled, score.RoomCancelled:
+		default:
+			return score.HistoryOptions{}, fmt.Errorf("history status: %w", score.ErrInvalidInput)
+		}
+	}
+	return options, nil
 }
 
 func (s *Server) handleGetScoreRoom(w http.ResponseWriter, r *http.Request) {
@@ -414,6 +496,8 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_room_full"})
 	case errors.Is(err, score.ErrNicknameConflict):
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_nickname_conflict"})
+	case errors.Is(err, score.ErrAccountAlreadyBound):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_account_already_bound"})
 	case errors.Is(err, score.ErrActionIDReused):
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_action_id_reused"})
 	case errors.Is(err, score.ErrInvalidState):

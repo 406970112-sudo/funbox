@@ -80,6 +80,7 @@ type Server struct {
 	homeManualStore           *homemanual.Store
 	rateLimiter               *RateLimiter
 	authRateLimiter           *RateLimiter
+	scoreCreateRateLimiter    *RateLimiter
 	realtimeHub               *realtime.Hub
 	lotteryService            lotteryHistoryService
 	lotteryLabService         lotteryLabHistoryService
@@ -769,6 +770,7 @@ func newServer(
 		homeManualStore:           homeManualStore,
 		rateLimiter:               NewRateLimiter(cfg.Security.RateLimitWindow, cfg.Security.RateLimitMax),
 		authRateLimiter:           NewRateLimiter(authRateLimitWindow(cfg), authRateLimitMax(cfg)),
+		scoreCreateRateLimiter:    NewRateLimiter(scoreCreateRateLimitWindow(cfg), scoreCreateRateLimitMax(cfg)),
 		realtimeHub:               realtimeHub,
 		lotteryService:            lottery.NewService(cfg.Lottery),
 		lotteryLabService:         lotterylab.NewService(lotterylab.Config{}),
@@ -1055,6 +1057,10 @@ func (s *Server) withAuthPipeline(next http.HandlerFunc) http.HandlerFunc {
 
 func (s *Server) withRateLimitedAPIPipeline(scope string, next http.HandlerFunc) http.HandlerFunc {
 	return s.withJSONPipeline(scope, next)
+}
+
+func (s *Server) withScoreCreateRateLimitedPipeline(next http.HandlerFunc) http.HandlerFunc {
+	return s.withJSONPipelineAndLimiter("score-create", s.scoreCreateLimiter(), next)
 }
 
 func (s *Server) withJSONPipeline(scope string, next http.HandlerFunc) http.HandlerFunc {

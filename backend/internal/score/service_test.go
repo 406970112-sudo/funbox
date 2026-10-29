@@ -800,6 +800,118 @@ func TestServiceRemovalInvalidatesGuestToken(t *testing.T) {
 	}
 }
 
+func TestServiceParticipantHistoryAndGuestTokenIdentity(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+	fixedNow := time.Date(2026, 10, 29, 8, 30, 0, 0, time.UTC)
+	service.now = func() time.Time { return fixedNow }
+
+	created, err := service.CreateRoom(ctx, "host-user", "Host", CreateRoomInput{
+		Name: "参与者历史", MaxPlayers: 4, CentsPerPoint: 100,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	guest, err := service.JoinRoom(ctx, JoinRoomInput{
+		Code: created.Room.Code, DisplayName: "Guest", UserID: "guest-user",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if guest.Actor.UserID != "guest-user" {
+		t.Fatalf("joined actor user id = %q, want guest-user", guest.Actor.UserID)
+	}
+	guestActor, err := service.AuthenticateGuestToken(ctx, guest.GuestToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if guestActor.UserID != "guest-user" {
+		t.Fatalf("guest token user id = %q, want guest-user", guestActor.UserID)
+	}
+
+	rejoined, err := service.JoinRoom(ctx, JoinRoomInput{
+		Code: created.Room.Code, DisplayName: "ignored display name", UserID: "guest-user",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rejoined.Actor.ParticipantID != guest.Actor.ParticipantID || rejoined.GuestToken == "" {
+		t.Fatalf("rejoined participant = %+v, want participant %s", rejoined.Actor, guest.Actor.ParticipantID)
+	}
+
+	room, err := service.StartRoom(ctx, created.Actor, commandMeta("start-history-room", rejoined.Room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err = service.SubmitGifts(ctx, created.Actor, commandMeta("history-gifts", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 10}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle-history-room", room), SettleRoomInput{CentsPerPoint: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settled.SettledAt == nil {
+		t.Fatal("settled room does not have settledAt")
+	}
+
+	history, err := service.ListHistory(ctx, "guest-user", HistoryOptions{
+		Scope: "participated", Status: RoomSettled, Limit: 5, Offset: 0,
+		From: timePointer(fixedNow.Add(-24 * time.Hour)),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history) != 1 || history[0].ID != created.Room.ID {
+		t.Fatalf("participant history = %+v, want room %s", history, created.Room.ID)
+	}
+	if history[0].SelfParticipantID != guest.Actor.ParticipantID {
+		t.Fatalf("history self participant = %q, want %q", history[0].SelfParticipantID, guest.Actor.ParticipantID)
+	}
+	var guestResult *Participant
+	for index := range history[0].Participants {
+		if history[0].Participants[index].ID == guest.Actor.ParticipantID {
+			guestResult = &history[0].Participants[index]
+			break
+		}
+	}
+	if guestResult == nil || guestResult.TotalPoints != 10 || guestResult.AmountCents != 1000 {
+		t.Fatalf("participant result = %+v, want 10 points and 1000 cents", guestResult)
+	}
+	total, err := service.CountHistory(ctx, "guest-user", HistoryOptions{
+		Scope: "participated", Status: RoomSettled,
+		From: timePointer(fixedNow.Add(-24 * time.Hour)),
+	})
+	if err != nil || total != 1 {
+		t.Fatalf("history total = %d, err = %v, want 1", total, err)
+	}
+	emptyPage, err := service.ListHistory(ctx, "guest-user", HistoryOptions{
+		Scope: "participated", Status: RoomSettled, Limit: 5, Offset: 5,
+	})
+	if err != nil || len(emptyPage) != 0 {
+		t.Fatalf("offset history = %+v, err = %v, want empty", emptyPage, err)
+	}
+	futureHistory, err := service.ListHistory(ctx, "guest-user", HistoryOptions{
+		Scope: "participated", Status: RoomSettled,
+		From: timePointer(fixedNow.Add(time.Hour)),
+	})
+	if err != nil || len(futureHistory) != 0 {
+		t.Fatalf("future history = %+v, err = %v, want empty", futureHistory, err)
+	}
+
+	otherHistory, err := service.ListHistory(ctx, "other-user", HistoryOptions{Scope: "participated", Status: RoomSettled})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(otherHistory) != 0 {
+		t.Fatalf("other user history = %+v, want empty", otherHistory)
+	}
+}
+
+func timePointer(value time.Time) *time.Time { return &value }
+
 func startTwoPlayerRoom(t *testing.T, service *Service) (CreateRoomResult, JoinRoomResult, RoomSnapshot) {
 	t.Helper()
 	ctx := context.Background()
@@ -816,6 +928,123 @@ func startTwoPlayerRoom(t *testing.T, service *Service) (CreateRoomResult, JoinR
 		t.Fatal(err)
 	}
 	return created, guest, room
+}
+
+func TestServiceAnonymousHostTokenAndAccountBindingAfterSettlement(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+
+	created, err := service.CreateRoom(ctx, "", "游客房主", CreateRoomInput{
+		Name: "游客牌局", MaxPlayers: 4, CentsPerPoint: 100,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.GuestToken == "" || created.Room.HostUserID != "" || created.Actor.Role != ParticipantHost || created.Actor.UserID != "" {
+		t.Fatalf("anonymous create result = %+v", created)
+	}
+	actor, err := service.AuthenticateGuestToken(ctx, created.GuestToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if actor.Role != ParticipantHost || actor.UserID != "" || actor.ParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("anonymous host token actor = %+v", actor)
+	}
+
+	guest, err := service.JoinRoom(ctx, JoinRoomInput{
+		Code: created.Room.Code, DisplayName: "登录牌友", UserID: "guest-user",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	anonymousGuest, err := service.JoinRoom(ctx, JoinRoomInput{
+		Code: created.Room.Code, DisplayName: "游客牌友",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err := service.StartRoom(ctx, created.Actor, commandMeta("anonymous-start", anonymousGuest.Room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	room, err = service.SubmitGifts(ctx, created.Actor, commandMeta("anonymous-gifts", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 10}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("anonymous-settle", room), SettleRoomInput{CentsPerPoint: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settled.Status != RoomSettled {
+		t.Fatalf("anonymous host settlement = %+v", settled)
+	}
+
+	bound, err := service.BindParticipantAccount(ctx, "host-user", settled.ID, created.GuestToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bound.HostUserID != "host-user" || bound.SelfParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("bound room = %+v", bound)
+	}
+	var hostUserID string
+	for _, participant := range bound.Participants {
+		if participant.ID == created.Actor.ParticipantID {
+			hostUserID = participant.UserID
+		}
+	}
+	if hostUserID != "host-user" {
+		t.Fatalf("bound host participant user id = %q", hostUserID)
+	}
+
+	history, err := service.ListHistory(ctx, "host-user", HistoryOptions{Scope: "participated", Status: RoomSettled, Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history) != 1 || history[0].ID != created.Room.ID || history[0].SelfParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("host history after binding = %+v", history)
+	}
+	if _, err := service.BindParticipantAccount(ctx, "host-user", settled.ID, created.GuestToken); err != nil {
+		t.Fatalf("idempotent binding error = %v", err)
+	}
+	if _, err := service.BindParticipantAccount(ctx, "other-user", settled.ID, created.GuestToken); !errors.Is(err, ErrAccountAlreadyBound) {
+		t.Fatalf("different account binding error = %v", err)
+	}
+	if _, err := service.BindParticipantAccount(ctx, "guest-account", settled.ID, anonymousGuest.GuestToken); err != nil {
+		t.Fatalf("anonymous guest binding error = %v", err)
+	}
+	guestHistory, err := service.ListHistory(ctx, "guest-account", HistoryOptions{Scope: "participated", Status: RoomSettled, Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(guestHistory) != 1 || guestHistory[0].ID != created.Room.ID || guestHistory[0].SelfParticipantID != anonymousGuest.Actor.ParticipantID {
+		t.Fatalf("anonymous guest history after binding = %+v", guestHistory)
+	}
+}
+
+func TestServiceAccountBindingRejectsConflictsAndCrossRoomToken(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+
+	first, err := service.CreateRoom(ctx, "", "游客一", CreateRoomInput{Name: "房间一", MaxPlayers: 4, CentsPerPoint: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.JoinRoom(ctx, JoinRoomInput{Code: first.Room.Code, DisplayName: "已登录牌友", UserID: "shared-user"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.BindParticipantAccount(ctx, "shared-user", first.Room.ID, first.GuestToken); !errors.Is(err, ErrAccountAlreadyBound) {
+		t.Fatalf("account already in room error = %v", err)
+	}
+
+	second, err := service.CreateRoom(ctx, "", "游客二", CreateRoomInput{Name: "房间二", MaxPlayers: 4, CentsPerPoint: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.BindParticipantAccount(ctx, "another-user", first.Room.ID, second.GuestToken); !errors.Is(err, ErrUnauthorized) {
+		t.Fatalf("cross-room token binding error = %v", err)
+	}
 }
 
 func newTestService(t *testing.T) *Service {

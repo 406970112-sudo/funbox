@@ -16,6 +16,15 @@ function getErrorMessage(response) {
   return `请求失败（HTTP ${response.statusCode}）`;
 }
 
+function parseResponseData(data) {
+  if (typeof data !== "string") return data;
+  try {
+    return JSON.parse(data);
+  } catch (error) {
+    return data;
+  }
+}
+
 function request({ path, method = "GET", data, auth = false, bearerToken = "", header = {} }) {
   return new Promise((resolve, reject) => {
     const token = bearerToken || (auth ? wx.getStorageSync(ACCESS_TOKEN_STORAGE_KEY) : "");
@@ -54,6 +63,52 @@ function request({ path, method = "GET", data, auth = false, bearerToken = "", h
   });
 }
 
+function uploadFile({
+  path,
+  filePath,
+  name = "file",
+  formData = {},
+  auth = false,
+  bearerToken = "",
+  header = {},
+}) {
+  return new Promise((resolve, reject) => {
+    const token = bearerToken || (auth ? wx.getStorageSync(ACCESS_TOKEN_STORAGE_KEY) : "");
+    const requestHeader = { ...header };
+    if (token) requestHeader.Authorization = `Bearer ${token}`;
+
+    wx.uploadFile({
+      url: buildUrl(path),
+      filePath,
+      name,
+      formData,
+      header: requestHeader,
+      timeout: REQUEST_TIMEOUT,
+      success(response) {
+        const parsed = {
+          ...response,
+          data: parseResponseData(response.data),
+        };
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          resolve(parsed.data);
+          return;
+        }
+
+        const body = parsed.data;
+        const error = new Error(getErrorMessage(parsed));
+        error.statusCode = response.statusCode;
+        error.response = parsed;
+        error.code = body && body.error ? body.error : "";
+        reject(error);
+      },
+      fail(error) {
+        reject(new Error(error.errMsg || "文件上传失败，请稍后重试"));
+      },
+    });
+  });
+}
+
 module.exports = {
   request,
+  uploadFile,
 };

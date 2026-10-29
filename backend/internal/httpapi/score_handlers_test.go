@@ -56,6 +56,10 @@ func TestScoreHTTPFlow(t *testing.T) {
 		"username": "13800138001", "password": "password-123", "displayName": "Host",
 		"securityQuestion": "Question?", "securityAnswer": "Answer",
 	}, "", http.StatusCreated)
+	guestRegistered := scoreRequestJSON[sessionResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/auth/register", map[string]any{
+		"username": "13800138009", "password": "password-123", "displayName": "Account Guest",
+		"securityQuestion": "Question?", "securityAnswer": "Answer",
+	}, "", http.StatusCreated)
 	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
 		"name": "Friday game", "maxPlayers": 4,
 	}, registered.AccessToken, http.StatusCreated)
@@ -76,7 +80,10 @@ func TestScoreHTTPFlow(t *testing.T) {
 	}
 	joined := scoreRequestJSON[score.JoinRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
 		"code": created.Room.Code, "displayName": "Guest",
-	}, "", http.StatusCreated)
+	}, guestRegistered.AccessToken, http.StatusCreated)
+	if joined.Actor.UserID != guestRegistered.User.ID {
+		t.Fatalf("joined participant user id = %q, want %q", joined.Actor.UserID, guestRegistered.User.ID)
+	}
 
 	hostTicket := scoreRequestJSON[realtimeTicketResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/realtime-ticket", nil, registered.AccessToken, http.StatusCreated)
 	guestTicket := scoreRequestJSON[realtimeTicketResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/realtime-ticket", nil, joined.GuestToken, http.StatusCreated)
@@ -110,6 +117,116 @@ func TestScoreHTTPFlow(t *testing.T) {
 	if hostSnapshot.Version != guestSnapshot.Version || hostSnapshot.Participants[0].TotalPoints != -8 || guestSnapshot.Participants[1].TotalPoints != 8 {
 		t.Fatalf("snapshots differ: host=%+v guest=%+v", hostSnapshot, guestSnapshot)
 	}
+	history := scoreRequestJSON[scoreHistoryResponse](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/score-rooms/history?scope=participated&status=settled&limit=5&offset=0",
+		nil, guestRegistered.AccessToken, http.StatusOK)
+	if history.Total != 1 || history.Limit != 5 || history.Offset != 0 ||
+		len(history.Rooms) != 1 || history.Rooms[0].ID != created.Room.ID ||
+		history.Rooms[0].SelfParticipantID != joined.Actor.ParticipantID {
+		t.Fatalf("participant history = %+v", history.Rooms)
+	}
+}
+
+func TestScoreHTTPAnonymousHostCreationAndAccountBinding(t *testing.T) {
+	tempDir := t.TempDir()
+	databasePath := filepath.Join(tempDir, "funbox.db")
+	userStore, err := user.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = userStore.Close() })
+	socialStore, err := social.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = socialStore.Close() })
+	scoreStore, err := score.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = scoreStore.Close() })
+
+	cfg := config.Config{
+		Auth:     config.AuthConfig{TokenTTL: time.Hour},
+		Server:   config.ServerConfig{Host: "127.0.0.1", ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second},
+		Security: config.SecurityConfig{MaxRequestBodyBytes: 64 << 10, RateLimitMax: 100, RateLimitWindow: time.Minute},
+		Storage:  config.StorageConfig{AvatarDir: filepath.Join(tempDir, "avatars"), MaxAvatarBytes: 1 << 20},
+	}
+	signingKey := []byte(strings.Repeat("s", 32))
+	authService := auth.NewService(userStore, signingKey, time.Hour)
+	scoreService := score.NewService(scoreStore, signingKey, 7*24*time.Hour)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil, scoreService)
+	testServer := httptest.NewServer(httpServer.Handler)
+	t.Cleanup(testServer.Close)
+
+	hostAccount := scoreRequestJSON[sessionResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/auth/register", map[string]any{
+		"username": "13800138021", "password": "password-123", "displayName": "游客转登录",
+		"securityQuestion": "Question?", "securityAnswer": "Answer",
+	}, "", http.StatusCreated)
+	guestAccount := scoreRequestJSON[sessionResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/auth/register", map[string]any{
+		"username": "13800138022", "password": "password-123", "displayName": "登录牌友",
+		"securityQuestion": "Question?", "securityAnswer": "Answer",
+	}, "", http.StatusCreated)
+
+	scoreRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
+		"name": "未命名游客局", "maxPlayers": 4,
+	}, "", http.StatusBadRequest)
+	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
+		"name": "游客房主牌局", "displayName": "游客房主", "maxPlayers": 4,
+	}, "", http.StatusCreated)
+	if created.GuestToken == "" || created.Room.HostUserID != "" || created.Actor.Role != score.ParticipantHost || created.Actor.UserID != "" {
+		t.Fatalf("anonymous create response = %+v", created)
+	}
+
+	bound := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/bind-account",
+		map[string]any{"participantToken": created.GuestToken}, hostAccount.AccessToken, http.StatusOK).Room
+	if bound.HostUserID != hostAccount.User.ID || bound.SelfParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("bound anonymous room = %+v", bound)
+	}
+	hostSnapshot := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID, nil, hostAccount.AccessToken, http.StatusOK).Room
+	if hostSnapshot.SelfParticipantID != created.Actor.ParticipantID {
+		t.Fatalf("account token room access after binding = %+v", hostSnapshot)
+	}
+	scoreRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/bind-account",
+		map[string]any{"participantToken": created.GuestToken}, guestAccount.AccessToken, http.StatusConflict)
+
+	joined := scoreRequestJSON[score.JoinRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
+		"code": created.Room.Code, "displayName": "登录牌友",
+	}, guestAccount.AccessToken, http.StatusCreated)
+	room := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/start",
+		map[string]any{"clientActionId": "anonymous-start", "expectedRoomVersion": joined.Room.Version},
+		created.GuestToken, http.StatusOK).Room
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/gifts",
+		map[string]any{
+			"clientActionId": "anonymous-gifts", "expectedRoomVersion": room.Version,
+			"allocations": []map[string]any{{"toParticipantId": joined.Actor.ParticipantID, "points": 8}},
+		}, created.GuestToken, http.StatusOK).Room
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/settle",
+		map[string]any{
+			"clientActionId": "anonymous-settle", "expectedRoomVersion": room.Version,
+			"centsPerPoint": 100, "useSettlementRate": true,
+		}, created.GuestToken, http.StatusOK).Room
+	if room.Status != score.RoomSettled {
+		t.Fatalf("anonymous room settlement = %+v", room)
+	}
+
+	for _, account := range []sessionResponse{hostAccount, guestAccount} {
+		history := scoreRequestJSON[scoreHistoryResponse](t, testServer.Client(), http.MethodGet,
+			testServer.URL+"/api/v1/score-rooms/history?scope=participated&status=settled&limit=10",
+			nil, account.AccessToken, http.StatusOK)
+		if len(history.Rooms) != 1 || history.Rooms[0].ID != created.Room.ID {
+			t.Fatalf("account history after anonymous room = %+v", history.Rooms)
+		}
+	}
+	scoreRequestJSON[map[string]any](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/score-rooms/history?scope=participated&status=settled&limit=10",
+		nil, "", http.StatusUnauthorized)
 }
 
 func TestScoreHTTPMahjongInvitePasswordHintAndNearbyFlow(t *testing.T) {
@@ -307,6 +424,13 @@ func TestScoreHTTPZhaJinHuaFlow(t *testing.T) {
 
 type scoreRoomResponse struct {
 	Room score.RoomSnapshot `json:"room"`
+}
+
+type scoreHistoryResponse struct {
+	Rooms  []score.RoomSnapshot `json:"rooms"`
+	Total  int                  `json:"total"`
+	Limit  int                  `json:"limit"`
+	Offset int                  `json:"offset"`
 }
 
 type realtimeTicketResponse struct {

@@ -1,7 +1,10 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/profile/index",
+    "pages/game-history/index",
     "pages/auth/index",
+    "pages/feedback/index",
     "pages/score/mahjong/index",
     "pages/score/room/index"
   ],
@@ -20,6 +23,26 @@
   "requiredPrivateInfos": [
     "getLocation"
   ],
+  "tabBar": {
+    "color": "#7b847d",
+    "selectedColor": "#1d6b4f",
+    "backgroundColor": "#fffdf7",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/icons/tab-home.png",
+        "selectedIconPath": "assets/icons/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "assets/icons/tab-profile.png",
+        "selectedIconPath": "assets/icons/tab-profile-active.png"
+      }
+    ]
+  },
   "networkTimeout": {
     "request": 15000,
     "connectSocket": 15000

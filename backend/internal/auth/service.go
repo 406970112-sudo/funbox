@@ -102,7 +102,7 @@ func (s *Service) Register(
 	if err != nil {
 		return Session{}, err
 	}
-	if err := validatePassword(password); err != nil {
+	if err := validateRegistrationPassword(password); err != nil {
 		return Session{}, err
 	}
 
@@ -466,6 +466,18 @@ func validatePassword(value string) error {
 	return nil
 }
 
+func validateRegistrationPassword(value string) error {
+	if strings.TrimSpace(value) == "" || len([]byte(value)) > 72 {
+		return ErrPasswordInvalid
+	}
+	for _, character := range value {
+		if unicode.IsControl(character) {
+			return ErrPasswordInvalid
+		}
+	}
+	return nil
+}
+
 func validateDisplayName(value string) (string, error) {
 	normalized := strings.TrimSpace(value)
 	length := utf8.RuneCountInString(normalized)
@@ -483,7 +495,7 @@ func validateDisplayName(value string) (string, error) {
 func validateSecurityQuestion(value string) (string, error) {
 	normalized := strings.TrimSpace(value)
 	length := utf8.RuneCountInString(normalized)
-	if length < 4 || length > 64 {
+	if length < 1 || length > 64 {
 		return "", ErrSecurityQuestionInvalid
 	}
 	for _, character := range normalized {
