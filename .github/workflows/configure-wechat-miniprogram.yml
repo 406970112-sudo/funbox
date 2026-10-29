@@ -1,0 +1,65 @@
+name: Configure WeChat mini program
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: configure-wechat-mini-program
+  cancel-in-progress: false
+
+jobs:
+  configure:
+    name: Configure WeChat mini program secret
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          : "${DEPLOY_SSH_KEY:?Missing DEPLOY_SSH_KEY repository secret}"
+          : "${DEPLOY_KNOWN_HOSTS:?Missing DEPLOY_KNOWN_HOSTS repository secret}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          printf '%s\n' \
+            'Host *' \
+            '  BatchMode yes' \
+            '  ConnectTimeout 30' \
+            '  ConnectionAttempts 3' \
+            '  ServerAliveInterval 30' \
+            '  ServerAliveCountMax 10' \
+            '  TCPKeepAlive yes' > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Configure secret and restart backend
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          WECHAT_MINIPROGRAM_APP_SECRET: ${{ secrets.WECHAT_MINIPROGRAM_APP_SECRET }}
+        run: |
+          : "${DEPLOY_HOST:?Missing DEPLOY_HOST repository secret}"
+          : "${DEPLOY_USER:?Missing DEPLOY_USER repository secret}"
+          : "${WECHAT_MINIPROGRAM_APP_SECRET:?Missing WECHAT_MINIPROGRAM_APP_SECRET repository secret}"
+          scp \
+            -i ~/.ssh/deploy_key \
+            -P "${DEPLOY_PORT:-22}" \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            deploy/alicloud/ubuntu-22.04/configure-wechat-miniprogram-secret.sh \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/configure-wechat-miniprogram-secret.sh"
+          printf '%s\n' "$WECHAT_MINIPROGRAM_APP_SECRET" | ssh \
+            -i ~/.ssh/deploy_key \
+            -p "${DEPLOY_PORT:-22}" \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "sudo -n bash /tmp/configure-wechat-miniprogram-secret.sh && sudo -n systemctl restart my-first-expo-app-backend.service && sleep 2 && sudo -n systemctl is-active my-first-expo-app-backend.service"
