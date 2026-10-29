@@ -56,6 +56,7 @@ test("mini program registers scoring pages without requesting location access", 
   for (const page of [
     "pages/index/index",
     "pages/profile/index",
+    "pages/profile-settings/index",
     "pages/game-history/index",
     "pages/auth/index",
     "pages/feedback/index",

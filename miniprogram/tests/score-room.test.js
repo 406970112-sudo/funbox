@@ -34,7 +34,11 @@ require.cache[scoreAPI] = {
     joinScoreRoom: async (input) => {
       joinCalls.push(input);
       return {
-        room: { id: "room-1" },
+        room: {
+          id: "room-1", version: 2, status: "waiting", maxPlayers: 4,
+          selfParticipantId: "participant-1",
+          participants: [{ id: "participant-1", role: "guest", status: "active", displayName: input.displayName, totalPoints: 0 }],
+        },
         guestToken: "guest-token",
         actor: { participantId: "participant-1" },
       };
@@ -102,12 +106,74 @@ test("invite join only submits the invited name", async () => {
     previewRoom: { requiresPassword: true },
   });
   page.credential = null;
-  page.loadRoom = async () => undefined;
+  page.startRealtime = () => undefined;
+  page.startPolling = () => undefined;
 
   await page.joinFromInvite();
 
   assert.deepEqual(joinCalls, [{ inviteToken: "invite-token", displayName: "受邀牌友" }]);
   assert.equal(page.data.joinNeeded, false);
+});
+
+test("successful invitation join opens the returned snapshot without another room request", async () => {
+  const page = createPage({
+    loading: false,
+    inviteToken: "invite-token",
+    joinNeeded: true,
+    joinNickname: "Guest",
+    previewRoom: { id: "room-1" },
+    errorMessage: "previous timeout",
+  });
+  let reads = 0;
+  page.loadRoom = async () => {
+    reads += 1;
+    throw new Error("request:fail timeout");
+  };
+  page.startRealtime = () => undefined;
+  page.startPolling = () => undefined;
+
+  await page.joinFromInvite();
+
+  assert.equal(reads, 0);
+  assert.equal(page.data.room.id, "room-1");
+  assert.equal(page.data.self.id, "participant-1");
+  assert.equal(page.data.joinNeeded, false);
+  assert.equal(page.data.loading, false);
+  assert.equal(page.data.errorMessage, "");
+  assert.equal(storage.funboxScoreSessionV1.guestToken, "guest-token");
+});
+
+test("retrying a failed invitation keeps its original credential and prevents overlapping loads", async () => {
+  for (const data of [{ inviteToken: "invite-token" }, { inviteScene: "scene-1" }]) {
+    const page = createPage({ ...data, loading: false, errorMessage: "timeout" });
+    const attempts = [];
+    page.prepareInvite = async (token) => { attempts.push({ inviteToken: token }); };
+    page.prepareInviteScene = async (scene) => { attempts.push({ inviteScene: scene }); };
+
+    await page.retryOpenRoom();
+    assert.deepEqual(attempts, [data]);
+    page.data.loading = true;
+    await page.retryOpenRoom();
+    assert.equal(attempts.length, 1);
+    page.data.loading = false;
+    page.data.joining = true;
+    await page.retryOpenRoom();
+    assert.equal(attempts.length, 1);
+  }
+});
+
+test("retrying an entered room reloads its saved identity instead of joining again", async () => {
+  const page = createPage({ loading: false, roomId: "room-1", inviteToken: "invite-token" });
+  page.credential = { kind: "guest", token: "guest-token" };
+  let loads = 0;
+  page.loadRoom = async () => { loads += 1; };
+  const previousJoins = joinCalls.length;
+
+  await page.retryOpenRoom();
+
+  assert.equal(loads, 1);
+  assert.equal(joinCalls.length, previousJoins);
+  assert.equal(page.credential.token, "guest-token");
 });
 
 test("gift totals no longer depend on a cap setting", () => {
@@ -286,6 +352,22 @@ test("stale room snapshots never replace a newer room version", async () => {
 
   assert.equal(applied, false);
   assert.equal(page.data.room.version, 5);
+});
+
+test("background snapshots preserve validation errors and clear recovered network errors", async () => {
+  for (const scenario of [
+    { canRetryLoad: false, errorMessage: "Enter a positive integer", expected: "Enter a positive integer" },
+    { canRetryLoad: true, errorMessage: "Network timed out", expected: "" },
+  ]) {
+    const page = createPage(scenario);
+    page.startRealtime = () => undefined;
+    page.startPolling = () => undefined;
+
+    await page.applyRoom({ id: "room-1", version: 4, status: "waiting", maxPlayers: 4, participants: [] });
+
+    assert.equal(page.data.errorMessage, scenario.expected);
+    assert.equal(page.data.canRetryLoad, false);
+  }
 });
 
 test("realtime invalidations are not dropped while a mutation is busy", () => {

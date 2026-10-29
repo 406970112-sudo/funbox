@@ -25,6 +25,15 @@ const { formatCNY, formatScore, parsePoints, parseYuanToCents } = require("../..
 const { connectScoreRealtime } = require("../../../utils/score-realtime");
 const { drawScoreQRCode } = require("../../../utils/score-qr");
 
+const REALTIME_ERRORS = {
+  domain: "实时连接域名未获微信许可，请联系管理员检查小程序域名配置。",
+  unauthorized: "房间身份已失效，请退出后重新进入房间。",
+  forbidden: "实时连接被服务端拒绝，请更新小程序后重试。",
+  tls: "无法建立安全连接，请检查手机时间或切换网络后重试。",
+  timeout: "实时连接超时，请检查网络后重试。",
+  network: "实时连接暂不可用，正在自动重连。",
+};
+
 function showModal(options) {
   return new Promise((resolve) => {
     wx.showModal({ ...options, success: resolve, fail: () => resolve({ confirm: false }) });
@@ -82,6 +91,7 @@ Page({
     loading: true,
     busy: false,
     errorMessage: "",
+    canRetryLoad: false,
     feedback: "",
     roomId: "",
     inviteToken: "",
@@ -108,6 +118,7 @@ Page({
     canSubmitGifts: false,
     giftHistory: [],
     realtimeStatus: "connecting",
+    realtimeError: "",
     qrSize: 112,
     qrLargeSize: 320,
     qrImageSrc: "",
@@ -123,6 +134,7 @@ Page({
 
   onLoad(options) {
     this.pageActive = true;
+    this.pageVisible = true;
     this.pageOptions = options || {};
     this.loadAccessToken = getAccessToken();
     if (options.scene) {
@@ -149,35 +161,48 @@ Page({
   },
 
   onShow() {
+    this.pageVisible = true;
     this.setData({ isLoggedIn: Boolean(getAccessToken()) });
     if (this.credential && this.data.room) {
-      if (this.data.realtimeStatus === "offline") {
-        this.stopRealtime();
-        this.startRealtime();
-      }
+      this.startRealtime();
+      this.startPolling();
       this.refreshRoom();
     }
   },
 
-  onUnload() {
-    this.pageActive = false;
+  onHide() {
+    this.pageVisible = false;
     this.stopRealtime();
     if (this.pollTimer) clearInterval(this.pollTimer);
+    this.pollTimer = null;
+  },
+
+  onUnload() {
+    this.pageActive = false;
+    this.onHide();
     if (this.qrRenderTimer) clearTimeout(this.qrRenderTimer);
     removeQrImageFile(this.data.qrImageSrc);
   },
 
   onPullDownRefresh() {
-    this.refreshRoom().finally(() => wx.stopPullDownRefresh());
+    const reload = this.data.room ? this.refreshRoom() : this.retryOpenRoom();
+    Promise.resolve(reload).finally(() => wx.stopPullDownRefresh());
+  },
+
+  retryOpenRoom() {
+    if (this.data.loading || this.data.joining) return;
+    if (this.credential && this.data.roomId) return this.loadRoom();
+    if (this.data.inviteScene) return this.prepareInviteScene(this.data.inviteScene);
+    if (this.data.inviteToken) return this.prepareInvite(this.data.inviteToken);
   },
 
   async prepareInvite(inviteToken) {
-    this.setData({ inviteToken, inviteScene: "", loading: true, errorMessage: "" });
+    this.setData({ inviteToken, inviteScene: "", loading: true, errorMessage: "", canRetryLoad: false });
     return this.prepareInvitePreview(() => previewScoreInvite(inviteToken));
   },
 
   async prepareInviteScene(inviteScene) {
-    this.setData({ inviteToken: "", inviteScene, loading: true, errorMessage: "" });
+    this.setData({ inviteToken: "", inviteScene, loading: true, errorMessage: "", canRetryLoad: false });
     return this.prepareInvitePreview(() => previewScoreInviteScene(inviteScene));
   },
 
@@ -199,7 +224,7 @@ Page({
         joinNickname: user && user.displayName ? user.displayName : "",
       });
     } catch (error) {
-      this.setData({ loading: false, errorMessage: getScoreErrorMessage(error) });
+      this.setData({ loading: false, errorMessage: getScoreErrorMessage(error), canRetryLoad: Boolean(error.isNetworkError) });
     }
   },
 
@@ -234,7 +259,7 @@ Page({
         joinNeeded: false,
         previewRoom: null,
       });
-      await this.loadRoom();
+      await this.applyRoom(result.room);
     } catch (error) {
       this.setData({ errorMessage: getScoreErrorMessage(error) });
     } finally {
@@ -245,7 +270,7 @@ Page({
   async loadRoom(options) {
     if (!this.credential || !this.data.roomId) return;
     const quiet = options && options.quiet;
-    if (!quiet) this.setData({ loading: true, errorMessage: "" });
+    if (!quiet) this.setData({ loading: true, errorMessage: "", canRetryLoad: false });
     try {
       const room = await getScoreRoom(this.credential, this.data.roomId);
       await this.applyRoom(room);
@@ -253,7 +278,7 @@ Page({
       if (error && error.statusCode === 401 && this.credential.kind === "guest") {
         clearScoreSession();
       }
-      this.setData({ errorMessage: getScoreErrorMessage(error) });
+      this.setData({ errorMessage: getScoreErrorMessage(error), canRetryLoad: Boolean(error.isNetworkError) });
       if (!quiet) this.setData({ loading: false });
     }
   },
@@ -359,6 +384,8 @@ Page({
 
     this.setData({
       loading: false,
+      errorMessage: this.data.canRetryLoad ? "" : this.data.errorMessage,
+      canRetryLoad: false,
       room,
       self,
       isHost,
@@ -626,6 +653,7 @@ Page({
   },
 
   startRealtime() {
+    if (this.pageActive === false || this.pageVisible === false) return;
     if (!this.credential || !this.data.room) return;
     if (this.realtimeClose && this.realtimeRoomID === this.data.room.id) return;
     this.stopRealtime();
@@ -637,11 +665,28 @@ Page({
         if (!this.data.room || version <= this.data.room.version) return;
         this.refreshRoom();
       },
-      onStatus: (status) => {
-        this.setData({ realtimeStatus: status });
+      onStatus: (status, reason) => {
+        this.setData({
+          realtimeStatus: status,
+          realtimeError: status === "online" ? "" : (REALTIME_ERRORS[reason] || this.data.realtimeError),
+        });
         if (status === "online" && this.data.room) this.refreshRoom();
       },
     });
+  },
+
+  async retryRealtime() {
+    if (this.data.realtimeStatus === "online") return;
+    const result = await showModal({
+      title: "实时同步暂不可用",
+      content: `${this.data.realtimeError || REALTIME_ERRORS.network} 分数仍会定时刷新。`,
+      confirmText: "重新连接",
+      cancelText: "稍后重试",
+    });
+    if (!result.confirm || this.pageActive === false || this.pageVisible === false) return;
+    this.stopRealtime();
+    this.startRealtime();
+    this.refreshRoom();
   },
 
   stopRealtime() {
@@ -651,6 +696,7 @@ Page({
   },
 
   startPolling() {
+    if (this.pageActive === false || this.pageVisible === false) return;
     if (this.pollTimer) return;
     this.pollTimer = setInterval(() => {
       if (this.data.room && this.data.room.status !== "settled" && this.data.room.status !== "cancelled") {

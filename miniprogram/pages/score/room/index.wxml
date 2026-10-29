@@ -33,7 +33,8 @@
     <view class="error-mark">!</view>
     <text class="state-title">无法打开牌局</text>
     <text class="state-desc">{{errorMessage}}</text>
-    <button class="primary-button compact" bindtap="goHome">返回首页</button>
+    <button wx:if="{{canRetryLoad}}" class="primary-button compact" bindtap="retryOpenRoom">重新加载</button>
+    <button class="{{canRetryLoad ? 'secondary-button' : 'primary-button'}} compact" bindtap="goHome">返回首页</button>
   </view>
 
   <block wx:elif="{{room}}">
@@ -43,9 +44,9 @@
           <text class="room-kicker">牌桌 · {{room.code}}</text>
           <text class="room-title">{{room.name}}</text>
         </view>
-        <view class="realtime-pill realtime-{{realtimeStatus}}">
+        <view class="realtime-pill realtime-{{realtimeStatus}}" bindtap="retryRealtime">
           <view class="realtime-dot"></view>
-          <text>{{realtimeStatus === 'online' ? '实时同步' : realtimeStatus === 'connecting' ? '连接中' : '离线'}}</text>
+          <text>{{realtimeStatus === 'online' ? '实时同步' : realtimeStatus === 'connecting' ? '连接中' : '离线 · 重连'}}</text>
         </view>
       </view>
       <view class="room-footer">

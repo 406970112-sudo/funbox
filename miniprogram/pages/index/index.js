@@ -1,6 +1,5 @@
 const { request } = require("../../utils/request");
 const { getAccessToken, getStoredUser } = require("../../utils/auth");
-const { getScoreSession } = require("../../utils/score-session");
 
 Page({
   data: {
@@ -10,7 +9,6 @@ Page({
     backendMessage: "正在连接牌局服务…",
     isLoggedIn: false,
     userName: "游客",
-    activeSession: null,
   },
 
   onLoad() {
@@ -20,11 +18,9 @@ Page({
 
   onShow() {
     const user = getStoredUser();
-    const session = getScoreSession();
     this.setData({
       isLoggedIn: Boolean(getAccessToken()),
       userName: user && user.displayName ? user.displayName : "游客",
-      activeSession: session,
     });
   },
 
@@ -64,11 +60,6 @@ Page({
 
   openProfile() {
     wx.switchTab({ url: "/pages/profile/index" });
-  },
-
-  resumeRoom() {
-    if (!this.data.activeSession) return;
-    wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(this.data.activeSession.roomId)}` });
   },
 
   onShareAppMessage() {

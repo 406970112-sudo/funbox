@@ -40,6 +40,11 @@
   margin-top: -25rpx;
 }
 
+.profile-card {
+  box-sizing: border-box;
+  height: 200rpx;
+}
+
 .identity-card {
   display: flex;
   align-items: center;
@@ -49,8 +54,8 @@
 
 .avatar {
   flex-shrink: 0;
-  width: 120rpx;
-  height: 120rpx;
+  width: 112rpx;
+  height: 112rpx;
   border-radius: 28rpx;
   background: #e9f0ff;
 }
@@ -113,13 +118,18 @@
 }
 
 .guest-card {
-  padding: 30rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 28rpx;
 }
 
 .guest-identity {
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  flex: 1;
+  min-width: 0;
+  gap: 18rpx;
 }
 
 .guest-copy {
@@ -128,7 +138,7 @@
 }
 
 .guest-title {
-  font-size: 31rpx;
+  font-size: 30rpx;
   font-weight: 800;
 }
 
@@ -141,16 +151,17 @@
 
 .guest-actions {
   display: flex;
-  gap: 20rpx;
-  margin-top: 30rpx;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 116rpx;
+  gap: 12rpx;
 }
 
 .login-button,.register-button {
-  flex: 1;
   margin: 0;
-  padding: 21rpx 10rpx;
-  border-radius: 22rpx;
-  font-size: 29rpx;
+  padding: 10rpx;
+  border-radius: 16rpx;
+  font-size: 25rpx;
   font-weight: 800;
   line-height: 1.5;
 }
@@ -189,8 +200,7 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
-  min-height: 192rpx;
-  padding: 30rpx;
+  padding: 22rpx 28rpx;
   margin-top: 24rpx;
   box-sizing: border-box;
   overflow: hidden;

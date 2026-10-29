@@ -135,6 +135,14 @@ Page({
     wx.navigateTo({ url: "/pages/auth/index?mode=login" });
   },
 
+  openSettings() {
+    if (!getAccessToken()) {
+      this.openLogin();
+      return;
+    }
+    wx.navigateTo({ url: "/pages/profile-settings/index" });
+  },
+
   openRegister() {
     wx.navigateTo({ url: "/pages/auth/index?mode=register" });
   },

@@ -43,7 +43,11 @@ require.cache[scoreAPI] = {
     joinScoreRoom: async (input) => {
       joinCalls.push(input);
       return {
-        room: { id: "room-1" },
+        room: {
+          id: "room-1", version: 2, status: "waiting", maxPlayers: 4,
+          selfParticipantId: "participant-1",
+          participants: [{ id: "participant-1", role: "guest", status: "active", displayName: input.displayName, totalPoints: 0 }],
+        },
         guestToken: "guest-token",
         actor: { participantId: "participant-1" },
       };
@@ -211,7 +215,8 @@ test("external scene preview and join use inviteScene", async () => {
   joinCalls.length = 0;
   const page = createPage(roomPage, { loading: true });
   page.credential = null;
-  page.loadRoom = async () => undefined;
+  page.startRealtime = () => undefined;
+  page.startPolling = () => undefined;
 
   await page.prepareInviteScene("scene-1");
   assert.deepEqual(previewCalls, [{ inviteScene: "scene-1" }]);
@@ -221,6 +226,8 @@ test("external scene preview and join use inviteScene", async () => {
   page.data.joinNickname = "受邀牌友";
   await page.joinFromInvite();
   assert.deepEqual(joinCalls, [{ inviteScene: "scene-1", displayName: "受邀牌友" }]);
+  assert.equal(page.data.room.id, "room-1");
+  assert.equal(page.data.errorMessage, "");
 });
 
 test("QR image toggles between compact and expanded states", () => {

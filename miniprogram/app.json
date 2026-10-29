@@ -2,6 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/profile/index",
+    "pages/profile-settings/index",
     "pages/game-history/index",
     "pages/auth/index",
     "pages/feedback/index",

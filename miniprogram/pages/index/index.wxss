@@ -94,38 +94,6 @@
   margin-right: -10rpx;
 }
 
-.resume-card {
-  display: flex;
-  align-items: center;
-  gap: 26rpx;
-  padding: 27rpx 30rpx;
-  margin-bottom: 32rpx;
-  border-radius: 30rpx;
-  background: #e6efff;
-}
-
-.resume-copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.resume-kicker {
-  display: block;
-  color: #72819a;
-  font-size: 23rpx;
-}
-
-.resume-title {
-  display: block;
-  margin-top: 5rpx;
-  font-size: 29rpx;
-  font-weight: 800;
-}
-
-.resume-card .fb-arrow {
-  color: #2d5bff;
-}
-
 .section-head {
   display: flex;
   align-items: baseline;

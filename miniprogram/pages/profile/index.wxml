@@ -6,22 +6,23 @@
       <view class="profile-art art"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
   </view>
-  <view wx:if="{{isLoggedIn}}" class="identity-card fb-card">
+  <view wx:if="{{isLoggedIn}}" class="profile-card identity-card fb-card" bindtap="openSettings" role="button" aria-label="编辑个人资料">
     <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" binderror="handleAvatarError" />
     <view wx:else class="avatar avatar-fallback">{{initial}}</view>
     <view class="identity-copy"><text class="identity-name">{{displayName}}</text><text class="identity-meta">{{maskedUsername}}</text><text class="identity-date">{{registeredAt}}</text></view>
     <view wx:if="{{userLoading}}" class="loading-dot"></view>
+    <text class="fb-arrow">›</text>
   </view>
-  <view wx:else class="guest-card fb-card">
-    <view class="guest-identity"><view class="avatar avatar-fallback">游</view><view class="guest-copy"><text class="guest-title">当前为游客模式</text><text class="guest-desc">登录后可查看本人参与的最近牌局。</text></view></view>
+  <view wx:else class="profile-card guest-card fb-card">
+    <view class="guest-identity"><view class="avatar avatar-fallback">游</view><view class="guest-copy"><text class="guest-title">游客模式</text><text class="guest-desc">登录后查看最近牌局</text></view></view>
     <view class="guest-actions"><button class="login-button" bindtap="openLogin">登录</button><button class="register-button" bindtap="openRegister">注册</button></view>
   </view>
   <view wx:if="{{userError}}" class="inline-error" bindtap="retryLoad"><text>{{userError}}</text><text class="inline-retry">重试</text></view>
-  <view wx:if="{{isLoggedIn}}" class="history-entry-card" bindtap="openHistory">
+  <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card" bindtap="openHistory">
     <view class="history-entry-copy"><text class="history-entry-title">最近牌局</text><text class="history-entry-desc">按时间回看参与者和输赢</text></view>
     <view class="history-art art art-score"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="fb-arrow">›</text>
   </view>
-  <view class="feedback-card fb-card" bindtap="openFeedback">
+  <view class="profile-card feedback-card fb-card" bindtap="openFeedback">
     <view class="feedback-copy"><text class="feedback-title">功能反馈</text><text class="feedback-desc">上传截图，告诉我们你的问题</text></view>
     <view class="feedback-art art art-feedback"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="fb-arrow">›</text>
   </view>

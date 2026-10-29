@@ -57,7 +57,10 @@ function request({ path, method = "GET", data, auth = false, bearerToken = "", h
         reject(error);
       },
       fail(error) {
-        reject(new Error(error.errMsg || "网络请求失败，请稍后重试"));
+        const requestError = new Error(error.errMsg || "网络请求失败，请稍后重试");
+        requestError.isNetworkError = true;
+        requestError.code = /time\s*out/i.test(requestError.message) ? "request_timeout" : "request_network_failed";
+        reject(requestError);
       },
     });
   });

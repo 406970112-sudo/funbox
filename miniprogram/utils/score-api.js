@@ -2,6 +2,8 @@ const { request } = require("./request");
 const { clearSession, getAccessToken } = require("./auth");
 
 const SCORE_ERROR_MESSAGES = {
+  request_timeout: "网络请求超时，请检查网络后重试。",
+  request_network_failed: "网络连接失败，请检查网络后重试。",
   score_action_forbidden: "当前身份不能执行这个操作。",
   score_action_id_reused: "操作标识已失效，请刷新后重试。",
   score_account_already_bound: "该账号已经加入了当前牌局，不能重复绑定。",
@@ -33,14 +35,21 @@ function bearerHeader(credential) {
     : {};
 }
 
-async function scoreRequest(options) {
-  try {
-    return await request(options);
-  } catch (error) {
-    const body = error && error.response && error.response.data;
-    error.scoreCode = (body && body.error) || error.code || "";
-    error.snapshot = body && body.room ? body.room : null;
-    throw error;
+async function scoreRequest({ retryOnNetworkError = false, ...options }) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await request(options);
+    } catch (error) {
+      // Only explicitly marked reads may retry: a timed-out write may have committed.
+      if (retryOnNetworkError && attempt === 0 && error.isNetworkError) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        continue;
+      }
+      const body = error && error.response && error.response.data;
+      error.scoreCode = (body && body.error) || error.code || "";
+      error.snapshot = body && body.room ? body.room : null;
+      throw error;
+    }
   }
 }
 
@@ -106,6 +115,7 @@ async function previewScoreInviteCredential(credential) {
     return await scoreRequest({
       path: "/score-rooms/invite-preview",
       method: "POST",
+      retryOnNetworkError: true,
       bearerToken: token,
       data: credential,
     });
@@ -115,6 +125,7 @@ async function previewScoreInviteCredential(credential) {
     return scoreRequest({
       path: "/score-rooms/invite-preview",
       method: "POST",
+      retryOnNetworkError: true,
       data: credential,
     });
   }
@@ -123,6 +134,7 @@ async function previewScoreInviteCredential(credential) {
 function getScoreRoom(credential, roomId) {
   return scoreRequest({
     path: `/score-rooms/${encodeURIComponent(roomId)}`,
+    retryOnNetworkError: true,
     bearerToken: credential.token,
     header: bearerHeader(credential),
   }).then((response) => response.room);

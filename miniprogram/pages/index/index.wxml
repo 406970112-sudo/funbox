@@ -10,11 +10,6 @@
     </view>
   </view>
   <view wx:if="{{backendStatus === 'offline'}}" class="offline-banner"><text>牌局服务暂时离线，请检查网络后重试。</text><text class="offline-action" bindtap="checkBackend">重试</text></view>
-  <view wx:if="{{activeSession}}" class="resume-card" bindtap="resumeRoom">
-    <view class="fb-score-mark">±</view>
-    <view class="resume-copy"><text class="resume-kicker">上次加入的牌局</text><text class="resume-title">继续查看当前分数</text></view>
-    <text class="fb-arrow">›</text>
-  </view>
   <view class="section-head"><text class="section-title">选择牌局</text><text class="section-note">不同玩法，一样清楚</text></view>
   <view class="scene-grid">
     <view class="scene-card mahjong-card" bindtap="openMahjong">

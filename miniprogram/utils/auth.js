@@ -1,8 +1,11 @@
-const { request } = require("./request");
+const { request, uploadFile } = require("./request");
 const { ACCESS_TOKEN_STORAGE_KEY } = require("../config/index");
 
 const USER_STORAGE_KEY = "funboxUser";
 const AUTH_ERROR_MESSAGES = {
+  avatar_required: "请选择一张头像图片。",
+  avatar_too_large: "头像不能超过 3 MB。",
+  avatar_type_invalid: "头像仅支持 JPG 或 PNG 格式。",
   birthday_invalid: "生日格式不正确。",
   display_name_invalid: "昵称需为 1～32 个字符。",
   invalid_credentials: "账号或密码不正确。",
@@ -58,12 +61,41 @@ async function register(input) {
 async function getCurrentUser() {
   const token = getAccessToken();
   if (!token) return null;
-  const response = await request({ path: "/auth/me", auth: true });
+  const response = await request({ path: "/auth/me", bearerToken: token });
   const user = response && response.user ? response.user : null;
-  if (user) {
+  if (user && getAccessToken() === token) {
     wx.setStorageSync(USER_STORAGE_KEY, user);
   }
   return user;
+}
+
+async function updateDisplayName(displayName) {
+  const token = getAccessToken();
+  const response = await request({
+    path: "/users/me",
+    method: "PATCH",
+    bearerToken: token,
+    data: { displayName },
+  });
+  return storeUpdatedUser(response, token);
+}
+
+async function uploadAvatar(filePath) {
+  const token = getAccessToken();
+  const response = await uploadFile({
+    path: "/users/me/avatar",
+    filePath,
+    name: "avatar",
+    bearerToken: token,
+  });
+  return storeUpdatedUser(response, token);
+}
+
+function storeUpdatedUser(response, token) {
+  if (!response || !response.user) throw new Error("未获取到更新后的个人信息，请重试。");
+  // A late response must not restore an account after logout or account switching.
+  if (token && getAccessToken() === token) wx.setStorageSync(USER_STORAGE_KEY, response.user);
+  return response.user;
 }
 
 function getAuthErrorMessage(error) {
@@ -79,4 +111,6 @@ module.exports = {
   login,
   register,
   saveSession,
+  updateDisplayName,
+  uploadAvatar,
 };

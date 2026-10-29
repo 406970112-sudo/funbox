@@ -102,3 +102,15 @@ test("expired profile sessions clear local state", async () => {
   assert.equal(page.data.isLoggedIn, false);
   assert.equal(page.data.displayName, "游客");
 });
+
+test("identity card opens account settings only for signed-in users", () => {
+  const page = createPage();
+  navigations.length = 0;
+  accessToken = "account-token";
+  page.openSettings();
+  assert.equal(navigations[0].url, "/pages/profile-settings/index");
+
+  accessToken = "";
+  page.openSettings();
+  assert.equal(navigations[1].url, "/pages/auth/index?mode=login");
+});
