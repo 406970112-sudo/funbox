@@ -11,19 +11,38 @@ function connectScoreRealtime({ credential, roomId, onInvalidate, onStatus }) {
   let socketTask = null;
   let retryTimer = null;
   let retryCount = 0;
+  let generation = 0;
 
   async function connect() {
     if (disposed) return;
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+    const currentGeneration = ++generation;
     onStatus("connecting");
     try {
       const ticket = await createRealtimeTicket(credential, roomId);
-      if (disposed) return;
-      socketTask = wx.connectSocket({ url: realtimeURL(ticket) });
-      socketTask.onOpen(() => {
+      if (disposed || currentGeneration !== generation) return;
+      const task = wx.connectSocket({ url: realtimeURL(ticket) });
+      socketTask = task;
+      let finished = false;
+
+      const handleDisconnect = () => {
+        if (finished || disposed || currentGeneration !== generation) return;
+        finished = true;
+        if (socketTask === task) socketTask = null;
+        onStatus("offline");
+        scheduleReconnect();
+      };
+
+      task.onOpen(() => {
+        if (disposed || currentGeneration !== generation) return;
         retryCount = 0;
         onStatus("online");
       });
-      socketTask.onMessage((message) => {
+      task.onMessage((message) => {
+        if (disposed || currentGeneration !== generation) return;
         try {
           const event = JSON.parse(String(message.data));
           if (event.type === "score.room.updated" && event.data && event.data.roomId === roomId) {
@@ -33,34 +52,48 @@ function connectScoreRealtime({ credential, roomId, onInvalidate, onStatus }) {
           // REST snapshots remain authoritative when an event cannot be decoded.
         }
       });
-      socketTask.onError(() => onStatus("offline"));
-      socketTask.onClose(() => {
-        socketTask = null;
-        if (disposed) return;
-        onStatus("offline");
-        scheduleReconnect();
+      task.onError(() => {
+        handleDisconnect();
+        try {
+          task.close({ code: 4000, reason: "socket error" });
+        } catch (error) {
+          // The reconnect timer is already scheduled; closing is best effort.
+        }
       });
+      task.onClose(handleDisconnect);
     } catch (error) {
-      if (disposed) return;
+      if (disposed || currentGeneration !== generation) return;
       onStatus("offline");
       scheduleReconnect();
     }
   }
 
   function scheduleReconnect() {
-    if (retryTimer) clearTimeout(retryTimer);
+    if (disposed || retryTimer) return;
     const delay = Math.min(1000 * Math.pow(2, retryCount), 15000);
     retryCount += 1;
-    retryTimer = setTimeout(connect, delay);
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      connect();
+    }, delay);
   }
 
   connect();
 
   return function close() {
     disposed = true;
+    generation += 1;
     if (retryTimer) clearTimeout(retryTimer);
-    if (socketTask) socketTask.close({ code: 1000, reason: "page closed" });
+    retryTimer = null;
+    const task = socketTask;
     socketTask = null;
+    if (task) {
+      try {
+        task.close({ code: 1000, reason: "page closed" });
+      } catch (error) {
+        // The page is leaving; a stale socket no longer needs cleanup.
+      }
+    }
   };
 }
 

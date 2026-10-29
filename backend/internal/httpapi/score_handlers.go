@@ -314,14 +314,17 @@ func (s *Server) handleRemoveScoreParticipant(w http.ResponseWriter, r *http.Req
 func (s *Server) handleSettleScoreRoom(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		scoreCommandBody
-		CentsPerPoint int64 `json:"centsPerPoint"`
+		CentsPerPoint     int64 `json:"centsPerPoint"`
+		UseSettlementRate bool  `json:"useSettlementRate"`
 	}
 	if err := decodeJSONBody(r, &body); err != nil {
 		writeRequestBodyError(w, err)
 		return
 	}
 	actor, _ := scoreActorFromContext(r.Context())
-	room, err := s.scoreService.SettleRoom(r.Context(), actor, body.meta(), score.SettleRoomInput{CentsPerPoint: body.CentsPerPoint})
+	room, err := s.scoreService.SettleRoom(r.Context(), actor, body.meta(), score.SettleRoomInput{
+		CentsPerPoint: body.CentsPerPoint, UseSettlementRate: body.UseSettlementRate,
+	})
 	s.writeScoreMutation(w, http.StatusOK, room, err)
 }
 

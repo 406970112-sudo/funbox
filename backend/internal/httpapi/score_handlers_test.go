@@ -96,6 +96,8 @@ func TestScoreHTTPFlow(t *testing.T) {
 	if room.CurrentRound != nil || len(room.GiftBatches) != 1 {
 		t.Fatalf("direct gift room = %+v", room)
 	}
+	assertScoreInvalidation(t, hostSocket, room)
+	assertScoreInvalidation(t, guestSocket, room)
 	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/settle", map[string]any{
 		"clientActionId": "settle", "expectedRoomVersion": room.Version, "centsPerPoint": 50,
 	}, registered.AccessToken, http.StatusOK).Room
@@ -194,6 +196,15 @@ func TestScoreHTTPMahjongInvitePasswordHintAndNearbyFlow(t *testing.T) {
 		}, joined.GuestToken, http.StatusOK).Room
 	if len(room.GiftBatches) != 2 || room.GiftBatches[0].CreatedBy != joined.Actor.ParticipantID {
 		t.Fatalf("guest gift response = %+v", room.GiftBatches)
+	}
+	room = scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/settle",
+		map[string]any{
+			"clientActionId": "settle-nearby", "expectedRoomVersion": room.Version,
+			"centsPerPoint": 300, "useSettlementRate": true,
+		}, registered.AccessToken, http.StatusOK).Room
+	if room.Status != score.RoomSettled || room.CentsPerPoint != 300 || room.Settlement == nil {
+		t.Fatalf("settled mahjong room = %+v", room)
 	}
 }
 

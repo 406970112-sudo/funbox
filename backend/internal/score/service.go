@@ -154,7 +154,8 @@ type SubmitGiftsInput struct {
 }
 
 type SettleRoomInput struct {
-	CentsPerPoint int64 `json:"centsPerPoint,omitempty"`
+	CentsPerPoint     int64 `json:"centsPerPoint,omitempty"`
+	UseSettlementRate bool  `json:"useSettlementRate,omitempty"`
 }
 
 type UpdateZhaJinHuaSettingsInput struct {
@@ -1206,8 +1207,9 @@ func (s *Service) RemoveParticipant(ctx context.Context, actor Actor, meta Comma
 
 func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta, input SettleRoomInput) (RoomSnapshot, error) {
 	payload := struct {
-		CentsPerPoint int64 `json:"centsPerPoint"`
-	}{CentsPerPoint: input.CentsPerPoint}
+		CentsPerPoint     int64 `json:"centsPerPoint"`
+		UseSettlementRate bool  `json:"useSettlementRate"`
+	}{CentsPerPoint: input.CentsPerPoint, UseSettlementRate: input.UseSettlementRate}
 	return s.mutate(ctx, actor, meta, "room.settle", payload, func(tx *sql.Tx, room RoomSnapshot) error {
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
@@ -1220,7 +1222,7 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 		if centsPerPoint == 0 {
 			centsPerPoint = room.CentsPerPoint
 		}
-		if room.GameType == GameTypeMahjong {
+		if room.GameType == GameTypeMahjong && !input.UseSettlementRate {
 			centsPerPoint = room.CentsPerPoint
 		}
 		if centsPerPoint < 1 || centsPerPoint > 1_000_000 {

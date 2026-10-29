@@ -1,7 +1,7 @@
 const { createScoreRoom, getScoreErrorMessage, joinScoreRoom, listNearbyScoreRooms } = require("../../../utils/score-api");
-const { clearScoreSession, saveScoreSession } = require("../../../utils/score-session");
+const { clearScoreSession, saveHostRoomPassword, saveScoreSession } = require("../../../utils/score-session");
 const { getAccessToken, getStoredUser } = require("../../../utils/auth");
-const { capSummary, formatCNY, formatDistance, parseYuanToCents } = require("../../../utils/score-format");
+const { formatDistance } = require("../../../utils/score-format");
 const { extractInviteScene, extractInviteToken } = require("../../../utils/invite");
 
 function getLocation() {
@@ -23,10 +23,6 @@ Page({
     roomName: "今晚麻将",
     roomPassword: "",
     confirmPassword: "",
-    rateInput: "1",
-    capInput: "10",
-    rateText: "¥1.00 / 分",
-    capText: "10 分 / ¥10.00",
     publishNearby: true,
     creating: false,
     roomCode: "",
@@ -73,17 +69,7 @@ Page({
   handleField(event) {
     const field = event.currentTarget.dataset.field;
     const value = event.detail.value;
-    const patch = { [field]: value, errorMessage: "" };
-    if (field === "rateInput") {
-      const cents = parseYuanToCents(value);
-      patch.rateText = cents ? `${formatCNY(cents)} / 分` : "金额格式待修正";
-    }
-    if (field === "capInput" || field === "rateInput") {
-      const cap = Number(value === undefined ? this.data.capInput : field === "capInput" ? value : this.data.capInput);
-      const cents = parseYuanToCents(field === "rateInput" ? value : this.data.rateInput);
-      patch.capText = Number.isSafeInteger(cap) && cap > 0 && cents ? capSummary(cap, cents) : "封顶待修正";
-    }
-    this.setData(patch);
+    this.setData({ [field]: value, errorMessage: "" });
   },
 
   toggleNearbyPublish(event) {
@@ -102,15 +88,9 @@ Page({
     }
     const roomName = this.data.roomName.trim();
     const password = this.data.roomPassword;
-    const centsPerPoint = parseYuanToCents(this.data.rateInput);
-    const capPoints = Number(this.data.capInput);
     if (!roomName) return this.setData({ errorMessage: "请输入房间名。" });
     if (!/^\d{4,6}$/.test(password)) return this.setData({ errorMessage: "房间密码需为 4～6 位数字。" });
     if (password !== this.data.confirmPassword) return this.setData({ errorMessage: "两次输入的房间密码不一致。" });
-    if (!centsPerPoint) return this.setData({ errorMessage: "请输入大于 0、最多两位小数的每分金额。" });
-    if (!Number.isSafeInteger(capPoints) || capPoints < 1 || capPoints > 2147483647) {
-      return this.setData({ errorMessage: "封顶需为正整数分值。" });
-    }
 
     this.setData({ creating: true, errorMessage: "" });
     try {
@@ -134,14 +114,13 @@ Page({
       const result = await createScoreRoom(getAccessToken(), {
         name: roomName,
         maxPlayers: 4,
-        centsPerPoint,
-        capPoints,
         password,
         scene: "generic",
         gameType: "mahjong",
         latitude: location ? location.latitude : undefined,
         longitude: location ? location.longitude : undefined,
       });
+      saveHostRoomPassword(result.room.id, password);
       clearScoreSession();
       wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(result.room.id)}&created=1` });
     } catch (error) {
@@ -214,8 +193,6 @@ Page({
         showNearby: true,
         nearbyRooms: rooms.map((room) => ({
           ...room,
-          rateText: `${formatCNY(room.centsPerPoint)} / 分`,
-          capText: capSummary(room.capPoints, room.centsPerPoint),
           distanceText: formatDistance(room.distanceMeters),
         })),
       });

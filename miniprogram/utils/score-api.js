@@ -110,8 +110,11 @@ function submitScoreGifts(credential, room, allocations) {
   return mutateRoom(credential, room, "/gifts", { allocations });
 }
 
-function settleScoreRoom(credential, room) {
-  return mutateRoom(credential, room, "/settle", {});
+function settleScoreRoom(credential, room, centsPerPoint) {
+  return mutateRoom(credential, room, "/settle", {
+    centsPerPoint,
+    useSettlementRate: true,
+  });
 }
 
 function issueScoreInviteToken(credential, roomId) {

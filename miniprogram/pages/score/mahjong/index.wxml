@@ -9,12 +9,13 @@
     </view>
     <view class="hero-content">
       <view>
-        <text class="hero-kicker">MAHJONG SCORE</text>
-        <text class="hero-title">麻将领风，账目分明</text>
-        <text class="hero-desc">赢家不用自己加分。输家一次选择收款人，批量给分。</text>
+        <text class="hero-kicker">MAHJONG TABLE · 4 人围桌</text>
+        <text class="hero-title">老友围桌，牌局开场</text>
+        <text class="hero-desc">人齐就开台，输赢交给记分牌。散场时，账目自然清清楚楚。</text>
       </view>
       <view class="hero-tiles">
         <view class="hero-tile">東</view>
+        <view class="hero-tile">南</view>
         <view class="hero-tile red">中</view>
         <view class="hero-tile">發</view>
       </view>
@@ -28,8 +29,8 @@
 
   <view wx:if="{{mode === 'create'}}" class="form-card">
     <view class="form-head">
-      <text class="form-title">房主设置</text>
-      <text class="form-badge">4 人麻将</text>
+      <text class="form-title">开一桌</text>
+      <text class="form-badge">四方来客</text>
     </view>
 
     <view class="field">
@@ -48,26 +49,6 @@
       </view>
     </view>
 
-    <view class="field-row">
-      <view class="field half">
-        <text class="field-label">每分金额</text>
-        <view class="money-input">
-          <text class="money-prefix">¥</text>
-          <input class="money-field" data-field="rateInput" type="digit" placeholder="1" value="{{rateInput}}" bindinput="handleField" />
-          <text class="money-suffix">元/分</text>
-        </view>
-        <text class="field-help">{{rateText}}</text>
-      </view>
-      <view class="field half">
-        <text class="field-label">封顶提示</text>
-        <view class="money-input">
-          <input class="money-field" data-field="capInput" type="number" placeholder="10" value="{{capInput}}" bindinput="handleField" />
-          <text class="money-suffix">分</text>
-        </view>
-        <text class="field-help">{{capText}}</text>
-      </view>
-    </view>
-
     <view class="switch-row">
       <view>
         <text class="switch-title">公开到附近房间</text>
@@ -76,13 +57,9 @@
       <switch color="#1d6b4f" checked="{{publishNearby}}" bindchange="toggleNearbyPublish" />
     </view>
 
-    <view class="rule-strip">
-      <text class="rule-number">01</text>
-      <text>一次给分可填写多名收款人，提交后立即入账。</text>
-    </view>
-    <view class="rule-strip">
-      <text class="rule-number">02</text>
-      <text>封顶仅作提醒，杠牌等情况可以超过；实际分数照常入账。</text>
+    <view class="score-note">
+      <text class="score-note-tile">记</text>
+      <text>一次可给多位牌友，散场时由房主统一结算金额。</text>
     </view>
 
     <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
@@ -94,24 +71,24 @@
   <view wx:else class="join-stack">
     <view class="quick-actions">
       <view class="quick-card scan-card" bindtap="scanToJoin">
-        <view class="quick-icon">⌗</view>
+        <view class="quick-icon">码</view>
         <view>
-          <text class="quick-title">扫一扫加入</text>
-          <text class="quick-desc">扫描房主展示的邀请二维码</text>
+          <text class="quick-title">扫码入桌</text>
+          <text class="quick-desc">扫房主的邀请码，直接坐上牌桌</text>
         </view>
       </view>
       <view class="quick-card nearby-card" bindtap="searchNearby">
-        <view class="quick-icon">⌖</view>
+        <view class="quick-icon">邻</view>
         <view>
-          <text class="quick-title">附近房间</text>
-          <text class="quick-desc">{{nearbyLoading ? '正在搜索…' : '查看 3 公里内等待中的房间'}}</text>
+          <text class="quick-title">附近找桌</text>
+          <text class="quick-desc">{{nearbyLoading ? '正在找桌子…' : '看看 3 公里内谁在等牌友'}}</text>
         </view>
       </view>
     </view>
 
     <view class="form-card join-card">
       <view class="form-head">
-        <text class="form-title">输入房间码</text>
+        <text class="form-title">报个房间码</text>
         <text class="form-badge">游客可加入</text>
       </view>
       <view class="field">
@@ -132,7 +109,7 @@
 
     <view wx:if="{{showNearby}}" class="nearby-results">
       <view class="nearby-head">
-        <text class="form-title">附近房间</text>
+        <text class="form-title">附近的牌桌</text>
         <view class="radius-row">
           <text class="radius-pill {{nearbyRadius === 1000 ? 'selected' : ''}}" data-radius="1000" bindtap="changeNearbyRadius">1km</text>
           <text class="radius-pill {{nearbyRadius === 3000 ? 'selected' : ''}}" data-radius="3000" bindtap="changeNearbyRadius">3km</text>
@@ -144,7 +121,6 @@
         <view class="room-main">
           <text class="room-name">{{item.name}}</text>
           <text class="room-meta">房主 {{item.hostDisplayName}} · {{item.activePlayers}}/{{item.maxPlayers}} 人 · {{item.distanceText}}</text>
-          <text class="room-rule">{{item.rateText}} · 封顶提示 {{item.capText}}</text>
         </view>
         <text class="room-code">{{item.code}}</text>
       </view>
@@ -154,8 +130,8 @@
   <view wx:if="{{selectedNearby}}" class="sheet-mask" bindtap="closeNearbySheet">
     <view class="join-sheet" catchtap="noop">
       <view class="sheet-handle"></view>
-      <text class="sheet-kicker">加入 {{selectedNearby.name}}</text>
-      <text class="sheet-meta">{{selectedNearby.rateText}} · 封顶提示 {{selectedNearby.capText}} · {{selectedNearby.distanceText}}</text>
+      <text class="sheet-kicker">入桌 · {{selectedNearby.name}}</text>
+      <text class="sheet-meta">{{selectedNearby.distanceText}}</text>
       <view class="field">
         <text class="field-label">房间密码</text>
         <input class="field-input" data-field="nearbyPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{nearbyPassword}}" bindinput="handleNearbyField" />

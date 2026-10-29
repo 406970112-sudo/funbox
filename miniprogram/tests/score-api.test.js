@@ -12,7 +12,7 @@ global.wx = {
   },
 };
 
-const { createScoreRoom, joinScoreRoom, listNearbyScoreRooms } = require("../utils/score-api");
+const { createScoreRoom, joinScoreRoom, listNearbyScoreRooms, settleScoreRoom } = require("../utils/score-api");
 
 test("score API sends authentication and mahjong room settings", async () => {
   calls.length = 0;
@@ -20,7 +20,6 @@ test("score API sends authentication and mahjong room settings", async () => {
     name: "麻将",
     gameType: "mahjong",
     password: "1234",
-    capPoints: 10,
   });
   assert.equal(calls.length, 1);
   assert.match(calls[0].url, /\/score-rooms$/);
@@ -30,8 +29,21 @@ test("score API sends authentication and mahjong room settings", async () => {
     name: "麻将",
     gameType: "mahjong",
     password: "1234",
-    capPoints: 10,
   });
+});
+
+test("mahjong settlement explicitly enables the settlement rate", async () => {
+  calls.length = 0;
+  await settleScoreRoom(
+    { token: "host-token" },
+    { id: "room-1", version: 7 },
+    250,
+  );
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].url, /\/score-rooms\/room-1\/settle$/);
+  assert.equal(calls[0].data.centsPerPoint, 250);
+  assert.equal(calls[0].data.useSettlementRate, true);
+  assert.equal(calls[0].data.expectedRoomVersion, 7);
 });
 
 test("guest join sends room password without an account token", async () => {

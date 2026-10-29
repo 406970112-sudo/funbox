@@ -14,8 +14,12 @@ test("invite parsing keeps JWT paths and recognizes mini program scenes", () => 
 
 const previewCalls = [];
 const joinCalls = [];
+const createCalls = [];
+const passwordSaves = [];
+let scoreSessionClears = 0;
 const navigateCalls = [];
 const imageWriteCalls = [];
+let accessToken = "";
 
 const scoreAPI = require.resolve("../utils/score-api");
 require.cache[scoreAPI] = {
@@ -23,7 +27,10 @@ require.cache[scoreAPI] = {
   filename: scoreAPI,
   loaded: true,
   exports: {
-    createScoreRoom: async () => ({ room: { id: "room-1" } }),
+    createScoreRoom: async (token, input) => {
+      createCalls.push({ token, input });
+      return { room: { id: "room-1" } };
+    },
     getScoreErrorMessage: (error) => error.message,
     getScoreRoom: async () => ({ room: {} }),
     issueScoreInviteCode: async () => ({ imageBase64: "jpeg", mediaType: "image/jpeg", width: 430 }),
@@ -57,7 +64,7 @@ require.cache[auth] = {
   filename: auth,
   loaded: true,
   exports: {
-    getAccessToken: () => "",
+    getAccessToken: () => accessToken,
     getStoredUser: () => ({ displayName: "牌友" }),
   },
 };
@@ -67,9 +74,12 @@ require.cache[session] = {
   filename: session,
   loaded: true,
   exports: {
-    clearScoreSession: () => undefined,
+    clearHostRoomPassword: () => undefined,
+    clearScoreSession: () => { scoreSessionClears += 1; },
     credentialForRoom: () => null,
+    getHostRoomPassword: () => "",
     getScoreSession: () => null,
+    saveHostRoomPassword: (roomId, password) => passwordSaves.push({ roomId, password }),
     saveScoreSession: () => undefined,
   },
 };
@@ -121,6 +131,40 @@ function createPage(definition, data) {
     },
   };
 }
+
+test("room creation omits settlement pricing and saves the host password locally", async () => {
+  accessToken = "host-token";
+  createCalls.length = 0;
+  passwordSaves.length = 0;
+  scoreSessionClears = 0;
+  const page = createPage(mahjongPage, {
+    isLoggedIn: true,
+    creating: false,
+    roomName: "周五牌局",
+    roomPassword: "2468",
+    confirmPassword: "2468",
+    publishNearby: false,
+    errorMessage: "",
+  });
+
+  await page.createRoom();
+
+  assert.deepEqual(createCalls, [{
+    token: "host-token",
+    input: {
+      name: "周五牌局",
+      maxPlayers: 4,
+      password: "2468",
+      scene: "generic",
+      gameType: "mahjong",
+      latitude: undefined,
+      longitude: undefined,
+    },
+  }]);
+  assert.deepEqual(passwordSaves, [{ roomId: "room-1", password: "2468" }]);
+  assert.equal(scoreSessionClears, 1);
+  accessToken = "";
+});
 
 test("external scene preview and join use inviteScene", async () => {
   previewCalls.length = 0;

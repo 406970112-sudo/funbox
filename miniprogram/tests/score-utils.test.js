@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { capSummary, formatCNY, formatDistance, formatScore, giftCapHint, parsePoints, parseYuanToCents } = require("../utils/score-format");
+const { formatCNY, formatDistance, formatScore, parsePoints, parseYuanToCents } = require("../utils/score-format");
 const { buildInviteContent, extractInviteToken } = require("../utils/invite");
 const QRCode = require("../libs/qrcode");
 
@@ -16,16 +16,11 @@ test("money conversion uses integer cents", () => {
   assert.equal(formatCNY(1234), "¥12.34");
 });
 
-test("score and cap formatting reflects room rules", () => {
+test("score formatting reflects room rules", () => {
   assert.equal(formatScore(5), "+5");
   assert.equal(formatScore(-3), "-3");
   assert.equal(parsePoints("10"), 10);
   assert.equal(parsePoints("0"), null);
-  assert.equal(capSummary(10, 100), "10 分 / ¥10.00");
-  assert.equal(capSummary(0, 100), "不封顶");
-  assert.equal(giftCapHint(10, 100, 6), "封顶提示：10 分 / ¥10.00");
-  assert.equal(giftCapHint(10, 100, 13), "已超过封顶 3 分，仍可继续提交");
-  assert.equal(giftCapHint(0, 100, 13), "本房间未设置封顶提示");
   assert.equal(formatDistance(1560), "1.6 公里");
 });
 
@@ -58,4 +53,15 @@ test("mini program registers scoring pages and location privacy declaration", ()
     }
   }
   assert.ok(config.requiredPrivateInfos.includes("getLocation"));
+});
+
+test("room templates remove caps and only expose the settlement rate inside the host sheet", () => {
+  const root = path.resolve(__dirname, "..");
+  const createTemplate = fs.readFileSync(path.join(root, "pages/score/mahjong/index.wxml"), "utf8");
+  const roomTemplate = fs.readFileSync(path.join(root, "pages/score/room/index.wxml"), "utf8");
+
+  assert.doesNotMatch(createTemplate, /封顶|每分金额/);
+  assert.doesNotMatch(roomTemplate, /封顶|rateText|capText/);
+  assert.equal((roomTemplate.match(/每分金额/g) || []).length, 1);
+  assert.match(roomTemplate, /hostRoomPassword/);
 });

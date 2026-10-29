@@ -11,8 +11,6 @@
       <text class="preview-title">{{previewRoom.name}}</text>
       <text class="preview-code">{{previewRoom.code}}</text>
       <view class="preview-rule-row">
-        <view><text class="preview-label">每分</text><text class="preview-value">{{previewRateText}}</text></view>
-        <view><text class="preview-label">封顶提示</text><text class="preview-value">{{previewCapText}}</text></view>
         <view><text class="preview-label">人数</text><text class="preview-value">{{previewRoom.maxPlayers}} 人</text></view>
       </view>
     </view>
@@ -40,9 +38,12 @@
 
   <block wx:elif="{{room}}">
     <view class="room-hero">
+      <view class="room-tile-rail" aria-hidden="true">
+        <text>東</text><text>南</text><text class="red">中</text><text>西</text><text>北</text>
+      </view>
       <view class="room-top">
         <view>
-          <text class="room-kicker">MAHJONG · {{room.code}}</text>
+          <text class="room-kicker">牌桌 · {{room.code}}</text>
           <text class="room-title">{{room.name}}</text>
         </view>
         <view class="realtime-pill realtime-{{realtimeStatus}}">
@@ -51,8 +52,6 @@
         </view>
       </view>
       <view class="room-metrics">
-        <view class="metric"><text class="metric-label">每分金额</text><text class="metric-value">{{rateText}}</text></view>
-        <view class="metric"><text class="metric-label">封顶提示</text><text class="metric-value">{{capText}}</text></view>
         <view class="metric"><text class="metric-label">当前人数</text><text class="metric-value">{{activePlayers}} / {{room.maxPlayers}}</text></view>
       </view>
       <text class="room-state">{{room.status === 'waiting' ? '等待开始' : room.status === 'active' ? '牌局进行中' : room.status === 'settled' ? '已结算' : '已取消'}}</text>
@@ -62,7 +61,7 @@
     <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
 
     <block wx:if="{{room.status === 'waiting'}}">
-      <view class="invite-card">
+      <view wx:if="{{isHost}}" class="invite-card">
         <view class="invite-copy">
           <text class="section-kicker">邀请牌友</text>
           <text class="invite-title">扫码或转发加入</text>
@@ -70,6 +69,10 @@
           <view class="room-code-box" bindtap="copyRoomCode">
             <text class="room-code-value">{{room.code}}</text>
             <text class="room-code-copy">复制房间码</text>
+          </view>
+          <view wx:if="{{hostRoomPassword}}" class="room-password-box">
+            <text class="room-password-label">房间密码</text>
+            <text class="room-password-value">{{hostRoomPassword}}</text>
           </view>
           <button wx:if="{{isHost && inviteToken}}" class="share-button" open-type="share">发送邀请给牌友</button>
         </view>
@@ -82,17 +85,25 @@
       </view>
 
       <view class="section-head">
-        <text class="section-title">已加入玩家</text>
+        <text class="section-title">围桌牌友</text>
         <text class="section-meta">{{activePlayers}} / {{room.maxPlayers}} 人</text>
       </view>
-      <view class="player-list">
-        <view wx:for="{{participants}}" wx:key="id" class="player-row">
-          <view class="seat-badge seat-{{item.role}}">{{item.role === 'host' ? '房' : item.rank}}</view>
+      <view class="seat-grid">
+        <view wx:for="{{participants}}" wx:key="id" class="player-row seat-card">
+          <view class="seat-badge seat-{{item.role}}">{{item.seatMark}}</view>
           <view class="player-copy">
             <text class="player-name">{{item.displayName}}<text wx:if="{{item.isSelf}}" class="self-tag">我</text></text>
-            <text class="player-sub">{{item.role === 'host' ? '房主' : '玩家'}}</text>
+            <text class="player-sub">{{item.role === 'host' ? '房主 · 已入座' : '牌友 · 已入座'}}</text>
           </view>
           <text class="player-score">{{item.scoreText}}</text>
+        </view>
+        <view wx:for="{{vacantSeats}}" wx:key="key" class="player-row seat-card vacant-seat">
+          <view class="seat-badge">{{item.mark}}</view>
+          <view class="player-copy">
+            <text class="player-name">等牌友入座</text>
+            <text class="player-sub">位置还热着</text>
+          </view>
+          <text class="player-score">—</text>
         </view>
       </view>
 
@@ -104,15 +115,14 @@
 
     <block wx:elif="{{room.status === 'active'}}">
       <view class="section-head">
-        <text class="section-title">当前总分</text>
-        <text class="section-meta">按分数从高到低</text>
+        <text class="section-title">牌桌积分榜</text>
+        <text class="section-meta">实时比分</text>
       </view>
       <view class="score-board">
         <view wx:for="{{participants}}" wx:key="id" class="score-row {{item.isSelf ? 'self-row' : ''}}">
           <text class="rank {{item.rankClass}}">{{item.rank}}</text>
           <view class="score-name-block">
             <text class="score-name">{{item.displayName}}<text wx:if="{{item.isSelf}}" class="self-tag">我</text></text>
-            <text class="score-amount">{{item.amountText}}</text>
           </view>
           <text class="score-value {{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.scoreText}}</text>
         </view>
@@ -120,10 +130,10 @@
 
       <view class="give-card">
         <view class="section-head compact-head">
-          <text class="section-title">批量给分</text>
+          <text class="section-title">这局怎么给</text>
           <text class="section-meta">赢家无需填写</text>
         </view>
-        <text class="give-hint">填写你要给每位玩家的分数，一次提交全部入账；封顶仅作提示。</text>
+        <text class="give-hint">填好这局要给的分，一次交账。</text>
         <view wx:for="{{recipients}}" wx:key="id" class="give-row">
           <view class="give-player">
             <text class="give-name">{{item.displayName}}</text>
@@ -137,14 +147,13 @@
             <text class="give-total-label">本次给出</text>
             <text class="give-total-value">{{giftTotal}} 分</text>
           </view>
-          <text class="cap-remaining {{overCap ? 'over-cap' : ''}}">{{capRemainingText}}</text>
         </view>
         <button class="primary-button" loading="{{busy}}" disabled="{{busy || !canSubmitGifts}}" bindtap="submitGifts">确认给分</button>
       </view>
 
       <view wx:if="{{giftHistory.length}}" class="history-card">
         <view class="section-head compact-head">
-          <text class="section-title">给分记录</text>
+          <text class="section-title">牌桌记事</text>
           <text class="section-meta">最近 {{giftHistory.length}} 笔</text>
         </view>
         <view wx:for="{{giftHistory}}" wx:key="id" class="history-row">
@@ -155,14 +164,15 @@
         </view>
       </view>
 
-      <button wx:if="{{isHost && giftHistory.length}}" class="settle-button" bindtap="openSettlement">结束并结算</button>
+      <button wx:if="{{isHost && giftHistory.length}}" class="settle-button" bindtap="openSettlement">散场结算</button>
     </block>
 
     <block wx:elif="{{room.status === 'settled'}}">
       <view class="settled-hero">
-        <text class="settled-kicker">FINAL RESULT</text>
-        <text class="settled-title">牌局结算完成</text>
-        <text class="settled-subtitle">按 {{rateText}} 计算，封顶参考 {{capText}}</text>
+        <view class="settled-tiles" aria-hidden="true"><text>東</text><text>南</text><text class="red">中</text><text>發</text></view>
+        <text class="settled-kicker">这桌，散场了</text>
+        <text class="settled-title">输赢已理清</text>
+        <text class="settled-subtitle">最终输赢与转账如下</text>
       </view>
 
       <view class="result-list">
@@ -198,7 +208,7 @@
     </block>
   </block>
 
-  <view wx:if="{{qrExpanded && room && room.status === 'waiting'}}" class="qr-preview-mask" bindtap="closeQrExpanded" catchtouchmove="noop">
+  <view wx:if="{{qrExpanded && isHost && inviteToken && room && room.status === 'waiting'}}" class="qr-preview-mask" bindtap="closeQrExpanded" catchtouchmove="noop">
     <view class="qr-preview-card" catchtap="noop">
       <text class="qr-preview-title">邀请二维码</text>
       <view class="qr-preview-stage" bindtap="toggleQrExpanded">
@@ -209,12 +219,20 @@
     </view>
   </view>
 
-  <view wx:if="{{settlementOpen && room}}" class="sheet-mask" bindtap="closeSettlement">
+  <view wx:if="{{settlementOpen && isHost && room && room.status === 'active'}}" class="sheet-mask" bindtap="closeSettlement">
     <view class="settlement-sheet" catchtap="noop">
       <view class="sheet-handle"></view>
       <text class="sheet-title">确认结算</text>
       <text class="sheet-desc">请核对每名玩家的当前分数与预计金额。</text>
-      <view class="settlement-rule">{{rateText}} · 封顶参考 {{capText}}</view>
+      <view class="field settlement-rate-field">
+        <text class="field-label">每分金额</text>
+        <view class="settlement-rate-input">
+          <text class="settlement-rate-prefix">¥</text>
+          <input class="settlement-rate-field-input" type="digit" placeholder="1" value="{{settlementRateInput}}" bindinput="handleSettlementRateInput" />
+          <text class="settlement-rate-suffix">元/分</text>
+        </view>
+        <text wx:if="{{settlementRateError}}" class="settlement-rate-error">{{settlementRateError}}</text>
+      </view>
       <view class="settlement-list">
         <view wx:for="{{settlementRows}}" wx:key="participantId" class="settlement-row">
           <text>{{item.name}}</text>
@@ -223,7 +241,7 @@
         </view>
       </view>
       <view class="danger-note">结算后不可修改，请再次确认。</view>
-      <button class="danger-button" loading="{{busy}}" disabled="{{busy}}" bindtap="confirmSettlement">确认并结算</button>
+      <button class="danger-button" loading="{{busy}}" disabled="{{busy || !settlementRateValid}}" bindtap="confirmSettlement">确认并结算</button>
       <button class="secondary-button" bindtap="closeSettlement">取消</button>
     </view>
   </view>

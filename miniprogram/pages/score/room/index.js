@@ -11,9 +11,16 @@ const {
   submitScoreGifts,
 } = require("../../../utils/score-api");
 const { getAccessToken, getStoredUser } = require("../../../utils/auth");
-const { clearScoreSession, credentialForRoom, getScoreSession, saveScoreSession } = require("../../../utils/score-session");
+const {
+  clearHostRoomPassword,
+  clearScoreSession,
+  credentialForRoom,
+  getHostRoomPassword,
+  getScoreSession,
+  saveScoreSession,
+} = require("../../../utils/score-session");
 const { buildInviteContent } = require("../../../utils/invite");
-const { capSummary, formatCNY, formatScore, giftCapHint, parsePoints } = require("../../../utils/score-format");
+const { formatCNY, formatScore, parsePoints, parseYuanToCents } = require("../../../utils/score-format");
 const { connectScoreRealtime } = require("../../../utils/score-realtime");
 const { drawScoreQRCode } = require("../../../utils/score-qr");
 
@@ -79,26 +86,22 @@ Page({
     inviteToken: "",
     inviteScene: "",
     previewRoom: null,
-    previewRateText: "",
-    previewCapText: "",
     joinNeeded: false,
     joinNickname: "",
     joining: false,
     room: null,
     self: null,
     isHost: false,
+    hostRoomPassword: "",
     activePlayers: 0,
     canStart: false,
     startLabel: "至少 2 人才能开始",
     participants: [],
+    vacantSeats: [],
     recipients: [],
     giftTotal: 0,
-    overCap: false,
     canSubmitGifts: false,
-    capRemainingText: "",
     giftHistory: [],
-    rateText: "",
-    capText: "",
     realtimeStatus: "connecting",
     qrSize: 112,
     qrLargeSize: 320,
@@ -106,6 +109,9 @@ Page({
     qrCodeLoading: false,
     qrExpanded: false,
     settlementOpen: false,
+    settlementRateInput: "",
+    settlementRateValid: false,
+    settlementRateError: "",
     settlementRows: [],
     settlementTransfers: [],
   },
@@ -138,7 +144,11 @@ Page({
   },
 
   onShow() {
-    if (this.credential && this.data.room && !this.pageOptions.invite && !this.pageOptions.scene) {
+    if (this.credential && this.data.room) {
+      if (this.data.realtimeStatus === "offline") {
+        this.stopRealtime();
+        this.startRealtime();
+      }
       this.refreshRoom();
     }
   },
@@ -179,8 +189,6 @@ Page({
       this.setData({
         loading: false,
         previewRoom: preview.room,
-        previewRateText: `${formatCNY(preview.room.centsPerPoint)} / 分`,
-        previewCapText: capSummary(preview.room.capPoints, preview.room.centsPerPoint),
         joinNeeded: true,
         joinNickname: user && user.displayName ? user.displayName : "",
       });
@@ -245,10 +253,26 @@ Page({
   },
 
   refreshRoom() {
-    return this.loadRoom({ quiet: true });
+    if (!this.credential || !this.data.roomId) return Promise.resolve();
+    if (this.refreshPromise) {
+      this.refreshQueued = true;
+      return this.refreshPromise;
+    }
+    this.refreshQueued = false;
+    this.refreshPromise = this.loadRoom({ quiet: true }).finally(() => {
+      this.refreshPromise = null;
+      if (this.refreshQueued) {
+        this.refreshQueued = false;
+        this.refreshRoom();
+      }
+    });
+    return this.refreshPromise;
   },
 
   async applyRoom(room) {
+    if (this.data.room && this.data.room.id === room.id && Number(room.version) < Number(this.data.room.version)) {
+      return false;
+    }
     const participantMap = {};
     room.participants.forEach((participant) => {
       participantMap[participant.id] = participant;
@@ -256,7 +280,20 @@ Page({
     const selfID = room.selfParticipantId || (getScoreSession() && getScoreSession().participantId);
     const self = participantMap[selfID] || null;
     const isHost = Boolean(self && self.role === "host");
+    let hostRoomPassword = isHost ? getHostRoomPassword(room.id) : "";
+    if (isHost && (room.status === "settled" || room.status === "cancelled")) {
+      clearHostRoomPassword(room.id);
+      hostRoomPassword = "";
+    }
     const activePlayers = room.participants.filter((participant) => participant.status === "active").length;
+    const seatMarks = ["東", "南", "西", "北"];
+    const seatMap = {};
+    room.participants
+      .filter((participant) => participant.status === "active")
+      .sort((left, right) => String(left.joinedAt).localeCompare(String(right.joinedAt)))
+      .forEach((participant, index) => {
+        seatMap[participant.id] = seatMarks[index] || String(index + 1);
+      });
     const participants = room.participants
       .filter((participant) => participant.status === "active")
       .sort((left, right) => right.totalPoints - left.totalPoints || String(left.joinedAt).localeCompare(String(right.joinedAt)))
@@ -264,10 +301,14 @@ Page({
         ...participant,
         rank: index + 1,
         rankClass: index < 3 ? `rank-${index + 1}` : "",
+        seatMark: seatMap[participant.id] || "友",
         scoreText: formatScore(participant.totalPoints),
-        amountText: formatCNY(participant.amountCents),
         isSelf: participant.id === selfID,
       }));
+    const vacantSeats = Array.from({ length: Math.max(0, room.maxPlayers - activePlayers) }, (_, index) => ({
+      key: `vacant-${index}`,
+      mark: seatMarks[activePlayers + index] || "＋",
+    }));
     const recipients = room.status === "active"
       ? participants.filter((participant) => participant.id !== selfID).map((participant) => ({
         ...participant,
@@ -275,9 +316,6 @@ Page({
       }))
       : [];
     const giftTotal = recipients.reduce((sum, item) => sum + (parsePoints(item.pointsInput) || 0), 0);
-    const capPoints = room.capPoints || 0;
-    const overCap = Boolean(capPoints && giftTotal > capPoints);
-    const capRemainingText = giftCapHint(capPoints, room.centsPerPoint, giftTotal);
     const settlementRows = room.settlement
       ? room.settlement.balances.map((balance) => ({
         ...balance,
@@ -291,7 +329,7 @@ Page({
         totalPoints: participant.totalPoints,
         amountCents: participant.amountCents,
         scoreText: formatScore(participant.totalPoints),
-        amountText: formatCNY(participant.amountCents),
+        amountText: "",
       }));
     const settlementTransfers = room.settlement
       ? room.settlement.transfers.map((transfer, index) => ({
@@ -315,29 +353,33 @@ Page({
       room,
       self,
       isHost,
+      hostRoomPassword,
       activePlayers,
       canStart: activePlayers >= 2,
       startLabel: activePlayers >= 2 ? "开始牌局" : "至少 2 人才能开始",
       participants,
+      vacantSeats,
       recipients,
       giftHistory,
-      rateText: `${formatCNY(room.centsPerPoint)} / 分`,
-      capText: capSummary(room.capPoints, room.centsPerPoint),
       settlementRows,
       settlementTransfers,
       giftTotal,
-      overCap,
       canSubmitGifts: giftTotal > 0,
-      capRemainingText,
       realtimeStatus: this.data.realtimeStatus,
       qrExpanded: room.status === "waiting" ? this.data.qrExpanded : false,
+      settlementOpen: room.status === "active" ? this.data.settlementOpen : false,
     });
+    if (isHost && room.status === "active" && this.data.settlementOpen) {
+      this.updateSettlementPreview(this.data.settlementRateInput);
+    }
+    this.lastRoomSyncAt = Date.now();
     this.startRealtime();
     this.startPolling();
     if (isHost && room.status === "waiting") {
       await this.ensureInviteToken();
       this.ensureInviteCode();
     }
+    return true;
   },
 
   async ensureInviteToken() {
@@ -438,14 +480,10 @@ Page({
       item.id === participantId ? { ...item, pointsInput: value } : item
     ));
     const giftTotal = recipients.reduce((sum, item) => sum + (parsePoints(item.pointsInput) || 0), 0);
-    const capPoints = this.data.room.capPoints || 0;
-    const capRemainingText = giftCapHint(capPoints, this.data.room.centsPerPoint, giftTotal);
     this.setData({
       recipients,
       giftTotal,
-      overCap: Boolean(capPoints && giftTotal > capPoints),
       canSubmitGifts: giftTotal > 0,
-      capRemainingText,
       errorMessage: "",
     });
   },
@@ -471,19 +509,48 @@ Page({
   },
 
   openSettlement() {
-    if (!this.data.isHost) return;
-    this.setData({ settlementOpen: true, errorMessage: "" });
+    if (!this.data.isHost || !this.data.room || this.data.room.status !== "active") return;
+    this.setData({
+      settlementOpen: true,
+      settlementRateInput: "1",
+      settlementRateError: "",
+      errorMessage: "",
+    }, () => this.updateSettlementPreview("1"));
   },
 
   closeSettlement() {
     if (!this.data.busy) this.setData({ settlementOpen: false });
   },
 
+  handleSettlementRateInput(event) {
+    this.updateSettlementPreview(event.detail.value);
+  },
+
+  updateSettlementPreview(value) {
+    const rateInput = String(value == null ? "" : value);
+    const centsPerPoint = parseYuanToCents(rateInput);
+    const settlementRows = this.data.settlementRows.map((row) => ({
+      ...row,
+      amountText: centsPerPoint ? formatCNY((Number(row.totalPoints) || 0) * centsPerPoint) : "—",
+    }));
+    this.setData({
+      settlementRateInput: rateInput,
+      settlementRateValid: Boolean(centsPerPoint),
+      settlementRateError: centsPerPoint ? "" : "请输入大于 0、最多两位小数的每分金额。",
+      settlementRows,
+    });
+  },
+
   async confirmSettlement() {
     if (this.data.busy || !this.data.settlementOpen) return;
+    const centsPerPoint = parseYuanToCents(this.data.settlementRateInput);
+    if (!centsPerPoint) {
+      this.setData({ settlementRateValid: false, settlementRateError: "请输入大于 0、最多两位小数的每分金额。" });
+      return;
+    }
     const result = await showModal({
       title: "确认结算？",
-      content: "结算后房间会立即结束，分数和金额都不能再修改。",
+      content: `将按 ${formatCNY(centsPerPoint)} / 分结算。结算后房间会立即结束，分数和金额都不能再修改。`,
       confirmText: "确认结算",
       confirmColor: "#b4472f",
       cancelText: "再看看",
@@ -491,7 +558,7 @@ Page({
     if (!result.confirm) return;
     this.setData({ busy: true, errorMessage: "", feedback: "" });
     try {
-      const room = await settleScoreRoom(this.credential, this.data.room);
+      const room = await settleScoreRoom(this.credential, this.data.room, centsPerPoint);
       await this.applyRoom(room);
       this.setData({ busy: false, settlementOpen: false, feedback: "牌局已结算。" });
     } catch (error) {
@@ -515,10 +582,13 @@ Page({
       credential: this.credential,
       roomId: this.data.room.id,
       onInvalidate: (version) => {
-        if (!this.data.room || version <= this.data.room.version || this.data.busy) return;
+        if (!this.data.room || version <= this.data.room.version) return;
         this.refreshRoom();
       },
-      onStatus: (status) => this.setData({ realtimeStatus: status }),
+      onStatus: (status) => {
+        this.setData({ realtimeStatus: status });
+        if (status === "online" && this.data.room) this.refreshRoom();
+      },
     });
   },
 
@@ -532,9 +602,12 @@ Page({
     if (this.pollTimer) return;
     this.pollTimer = setInterval(() => {
       if (this.data.room && this.data.room.status !== "settled" && this.data.room.status !== "cancelled") {
-        this.refreshRoom();
+        const lastSync = this.lastRoomSyncAt || 0;
+        if (this.data.realtimeStatus !== "online" || Date.now() - lastSync >= 15000) {
+          this.refreshRoom();
+        }
       }
-    }, 15000);
+    }, 3000);
   },
 
   goHome() {

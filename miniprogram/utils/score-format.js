@@ -29,19 +29,6 @@ function parsePoints(value) {
   return points;
 }
 
-function capSummary(capPoints, centsPerPoint) {
-  if (!capPoints) return "不封顶";
-  return `${capPoints} 分 / ${formatCNY(capPoints * centsPerPoint)}`;
-}
-
-function giftCapHint(capPoints, centsPerPoint, giftTotal) {
-  const cap = Math.max(0, Math.trunc(Number(capPoints) || 0));
-  const total = Math.max(0, Math.trunc(Number(giftTotal) || 0));
-  if (!cap) return "本房间未设置封顶提示";
-  if (total > cap) return `已超过封顶 ${total - cap} 分，仍可继续提交`;
-  return `封顶提示：${capSummary(cap, centsPerPoint)}`;
-}
-
 function formatDistance(meters) {
   const value = Math.max(0, Math.trunc(Number(meters) || 0));
   if (value < 1000) return `${value} 米`;
@@ -58,11 +45,9 @@ function roomStatusLabel(status) {
 }
 
 module.exports = {
-  capSummary,
   formatCNY,
   formatDistance,
   formatScore,
-  giftCapHint,
   parsePoints,
   parseYuanToCents,
   roomStatusLabel,
