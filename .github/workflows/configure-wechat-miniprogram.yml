@@ -55,11 +55,12 @@ jobs:
             -o BatchMode=yes \
             -o ConnectTimeout=15 \
             deploy/alicloud/ubuntu-22.04/configure-wechat-miniprogram-secret.sh \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/configure-wechat-miniprogram-secret.sh"
+            deploy/alicloud/ubuntu-22.04/repair-backend.sh \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
           printf '%s\n' "$WECHAT_MINIPROGRAM_APP_SECRET" | ssh \
             -i ~/.ssh/deploy_key \
             -p "${DEPLOY_PORT:-22}" \
             -o BatchMode=yes \
             -o ConnectTimeout=15 \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "sudo -n bash /tmp/configure-wechat-miniprogram-secret.sh; sudo -n systemctl restart my-first-expo-app-backend.service; sleep 5; sudo -n systemctl status my-first-expo-app-backend.service --no-pager || true; sudo -n journalctl -u my-first-expo-app-backend.service -n 100 --no-pager || true; sudo -n systemctl is-active my-first-expo-app-backend.service || true"
+            "sudo -n bash /tmp/configure-wechat-miniprogram-secret.sh && sudo -n bash /tmp/repair-backend.sh"
