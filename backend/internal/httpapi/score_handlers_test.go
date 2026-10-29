@@ -206,6 +206,15 @@ func TestScoreHTTPMahjongInvitePasswordHintAndNearbyFlow(t *testing.T) {
 	if room.Status != score.RoomSettled || room.CentsPerPoint != 300 || room.Settlement == nil {
 		t.Fatalf("settled mahjong room = %+v", room)
 	}
+	balances := make(map[string]int64, len(room.Settlement.Balances))
+	for _, balance := range room.Settlement.Balances {
+		balances[balance.ParticipantID] = balance.AmountCents
+	}
+	if balances[created.Actor.ParticipantID] != -2700 ||
+		balances[joined.Actor.ParticipantID] != 2100 ||
+		balances[invited.Actor.ParticipantID] != 600 {
+		t.Fatalf("settlement balances = %+v", room.Settlement.Balances)
+	}
 }
 
 func TestScoreHTTPZhaJinHuaFlow(t *testing.T) {
