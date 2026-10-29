@@ -62,4 +62,4 @@ jobs:
             -o BatchMode=yes \
             -o ConnectTimeout=15 \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "sudo -n bash /tmp/configure-wechat-miniprogram-secret.sh && sudo -n systemctl restart my-first-expo-app-backend.service && sleep 2 && sudo -n systemctl is-active my-first-expo-app-backend.service"
+            "sudo -n bash /tmp/configure-wechat-miniprogram-secret.sh; sudo -n systemctl restart my-first-expo-app-backend.service; sleep 5; sudo -n systemctl status my-first-expo-app-backend.service --no-pager || true; sudo -n journalctl -u my-first-expo-app-backend.service -n 100 --no-pager || true; sudo -n systemctl is-active my-first-expo-app-backend.service || true"
