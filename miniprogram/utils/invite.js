@@ -12,7 +12,13 @@ function extractInviteToken(value) {
   if (/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(text)) {
     return text;
   }
-  const sceneMatch = text.match(/(?:^|\?)scene=([^&#]+)/i);
+  return "";
+}
+
+function extractInviteScene(value) {
+  const text = String(value == null ? "" : value).trim();
+  if (!text) return "";
+  const sceneMatch = text.match(/(?:^|[?&])scene=([^&#]+)/i);
   if (sceneMatch) {
     try {
       return decodeURIComponent(sceneMatch[1]);
@@ -29,5 +35,6 @@ function buildInviteContent(inviteToken) {
 
 module.exports = {
   buildInviteContent,
+  extractInviteScene,
   extractInviteToken,
 };

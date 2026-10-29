@@ -1,9 +1,11 @@
 const {
   getScoreErrorMessage,
   getScoreRoom,
+  issueScoreInviteCode,
   issueScoreInviteToken,
   joinScoreRoom,
   previewScoreInvite,
+  previewScoreInviteScene,
   settleScoreRoom,
   startScoreRoom,
   submitScoreGifts,
@@ -21,6 +23,52 @@ function showModal(options) {
   });
 }
 
+function decodeOption(value) {
+  const text = String(value == null ? "" : value);
+  if (!text) return "";
+  try {
+    return decodeURIComponent(text);
+  } catch (error) {
+    return text;
+  }
+}
+
+function getQrLargeSize() {
+  let width = 375;
+  let height = 667;
+  try {
+    const info = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
+    width = info.windowWidth || width;
+    height = info.windowHeight || height;
+  } catch (error) {
+    // Keep conservative defaults when window information is unavailable.
+  }
+  return Math.max(220, Math.min(360, Math.floor(width - 64), Math.floor(height * 0.58)));
+}
+
+function writeQrImageFile(imageBase64, roomId, mediaType) {
+  return new Promise((resolve, reject) => {
+    const extension = mediaType === "image/png" ? "png" : mediaType === "image/jpeg" ? "jpg" : "img";
+    const filePath = `${wx.env.USER_DATA_PATH}/score-invite-${roomId}-${Date.now()}.${extension}`;
+    wx.getFileSystemManager().writeFile({
+      filePath,
+      data: imageBase64,
+      encoding: "base64",
+      success: () => resolve(filePath),
+      fail: reject,
+    });
+  });
+}
+
+function removeQrImageFile(filePath) {
+  if (!filePath || !wx.getFileSystemManager) return;
+  try {
+    wx.getFileSystemManager().unlink({ filePath, fail: () => undefined });
+  } catch (error) {
+    // Temporary image cleanup is best effort.
+  }
+}
+
 Page({
   data: {
     loading: true,
@@ -29,6 +77,7 @@ Page({
     feedback: "",
     roomId: "",
     inviteToken: "",
+    inviteScene: "",
     previewRoom: null,
     previewRateText: "",
     previewCapText: "",
@@ -52,16 +101,25 @@ Page({
     capText: "",
     realtimeStatus: "connecting",
     qrSize: 112,
+    qrLargeSize: 320,
+    qrImageSrc: "",
+    qrCodeLoading: false,
+    qrExpanded: false,
     settlementOpen: false,
     settlementRows: [],
     settlementTransfers: [],
   },
 
   onLoad(options) {
+    this.pageActive = true;
     this.pageOptions = options || {};
     this.loadAccessToken = getAccessToken();
+    if (options.scene) {
+      this.prepareInviteScene(decodeOption(options.scene));
+      return;
+    }
     if (options.invite) {
-      this.prepareInvite(decodeURIComponent(options.invite));
+      this.prepareInvite(decodeOption(options.invite));
       return;
     }
     if (!options.roomId) {
@@ -80,14 +138,17 @@ Page({
   },
 
   onShow() {
-    if (this.credential && this.data.room && !this.pageOptions.invite) {
+    if (this.credential && this.data.room && !this.pageOptions.invite && !this.pageOptions.scene) {
       this.refreshRoom();
     }
   },
 
   onUnload() {
+    this.pageActive = false;
     this.stopRealtime();
     if (this.pollTimer) clearInterval(this.pollTimer);
+    if (this.qrRenderTimer) clearTimeout(this.qrRenderTimer);
+    removeQrImageFile(this.data.qrImageSrc);
   },
 
   onPullDownRefresh() {
@@ -95,9 +156,18 @@ Page({
   },
 
   async prepareInvite(inviteToken) {
-    this.setData({ inviteToken, loading: true, errorMessage: "" });
+    this.setData({ inviteToken, inviteScene: "", loading: true, errorMessage: "" });
+    return this.prepareInvitePreview(() => previewScoreInvite(inviteToken));
+  },
+
+  async prepareInviteScene(inviteScene) {
+    this.setData({ inviteToken: "", inviteScene, loading: true, errorMessage: "" });
+    return this.prepareInvitePreview(() => previewScoreInviteScene(inviteScene));
+  },
+
+  async prepareInvitePreview(loadPreview) {
     try {
-      const preview = await previewScoreInvite(inviteToken);
+      const preview = await loadPreview();
       const accountToken = getAccessToken();
       if (preview.selfParticipantId && accountToken) {
         this.credential = { kind: "account", token: accountToken };
@@ -132,8 +202,11 @@ Page({
     }
     this.setData({ joining: true, errorMessage: "" });
     try {
+      const inviteCredential = this.data.inviteScene
+        ? { inviteScene: this.data.inviteScene }
+        : { inviteToken: this.data.inviteToken };
       const result = await joinScoreRoom({
-        inviteToken: this.data.inviteToken,
+        ...inviteCredential,
         displayName,
       });
       saveScoreSession({
@@ -257,11 +330,13 @@ Page({
       canSubmitGifts: giftTotal > 0,
       capRemainingText,
       realtimeStatus: this.data.realtimeStatus,
+      qrExpanded: room.status === "waiting" ? this.data.qrExpanded : false,
     });
     this.startRealtime();
     this.startPolling();
     if (isHost && room.status === "waiting") {
       await this.ensureInviteToken();
+      this.ensureInviteCode();
     }
   },
 
@@ -269,21 +344,75 @@ Page({
     if (!this.credential || !this.data.isHost || this.data.room.status !== "waiting") return;
     try {
       const inviteToken = this.data.inviteToken || await issueScoreInviteToken(this.credential, this.data.room.id);
-      this.setData({ inviteToken }, () => this.renderInviteCode());
+      this.setData({ inviteToken }, () => this.renderInviteCode(
+        this.data.qrExpanded ? "roomQrLarge" : "roomQr",
+        this.data.qrExpanded ? this.data.qrLargeSize : this.data.qrSize
+      ));
     } catch (error) {
       if (this.data.isHost) this.setData({ feedback: getScoreErrorMessage(error) });
     }
   },
 
-  renderInviteCode() {
-    if (!this.data.inviteToken) return;
-    setTimeout(() => {
+  async ensureInviteCode() {
+    if (!this.credential || !this.data.isHost || !this.data.room || this.data.room.status !== "waiting") return;
+    if (this.data.qrImageSrc || this.data.qrCodeLoading || !this.data.room.id) return;
+    this.setData({ qrCodeLoading: true });
+    try {
+      const result = await issueScoreInviteCode(this.credential, this.data.room.id);
+      if (!result || !result.imageBase64) throw new Error("缺少微信邀请码图片。");
+      const filePath = await writeQrImageFile(result.imageBase64, this.data.room.id, result.mediaType);
+      if (this.pageActive === false || !this.data.room || this.data.room.status !== "waiting") {
+        removeQrImageFile(filePath);
+        if (this.pageActive !== false) this.setData({ qrCodeLoading: false });
+        return;
+      }
+      const previousFile = this.data.qrImageSrc;
+      this.setData({ qrImageSrc: filePath, qrCodeLoading: false, feedback: "" });
+      removeQrImageFile(previousFile);
+      if (this.qrRenderTimer) clearTimeout(this.qrRenderTimer);
+    } catch (error) {
+      if (this.pageActive === false) return;
+      this.setData({
+        qrCodeLoading: false,
+        feedback: getScoreErrorMessage(error),
+      });
+      this.renderInviteCode(this.data.qrExpanded ? "roomQrLarge" : "roomQr", this.data.qrExpanded ? this.data.qrLargeSize : this.data.qrSize);
+    }
+  },
+
+  renderInviteCode(canvasId, size) {
+    if (!this.data.inviteToken || this.data.qrImageSrc) return;
+    const targetExpanded = canvasId === "roomQrLarge";
+    if (this.qrRenderTimer) clearTimeout(this.qrRenderTimer);
+    this.qrRenderTimer = setTimeout(() => {
+      if (!this.data.inviteToken || this.data.qrImageSrc || this.data.qrExpanded !== targetExpanded) return;
       try {
-        drawScoreQRCode(this, "roomQr", buildInviteContent(this.data.inviteToken), this.data.qrSize);
+        drawScoreQRCode(this, canvasId, buildInviteContent(this.data.inviteToken), size);
       } catch (error) {
         this.setData({ feedback: "二维码生成失败，请使用房间码加入。" });
       }
     }, 60);
+  },
+
+  toggleQrExpanded() {
+    if (!this.data.inviteToken && !this.data.qrImageSrc) return;
+    const qrExpanded = !this.data.qrExpanded;
+    const patch = { qrExpanded };
+    if (qrExpanded) patch.qrLargeSize = getQrLargeSize();
+    this.setData(patch, () => {
+      if (this.data.qrImageSrc) return;
+      this.renderInviteCode(
+        qrExpanded ? "roomQrLarge" : "roomQr",
+        qrExpanded ? this.data.qrLargeSize : this.data.qrSize
+      );
+    });
+  },
+
+  closeQrExpanded() {
+    if (!this.data.qrExpanded) return;
+    this.setData({ qrExpanded: false }, () => {
+      if (!this.data.qrImageSrc) this.renderInviteCode("roomQr", this.data.qrSize);
+    });
   },
 
   copyRoomCode() {

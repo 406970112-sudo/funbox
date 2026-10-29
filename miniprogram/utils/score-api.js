@@ -8,6 +8,7 @@ const SCORE_ERROR_MESSAGES = {
   score_cap_exceeded: "本次给分超过房间封顶。",
   score_force_open_locked: "当前还不能强开。",
   score_invite_invalid: "这不是有效的房间邀请，请让房主重新分享。",
+  score_invite_code_unavailable: "微信邀请码暂不可用，请使用房间码或转发邀请。",
   score_invalid_input: "请检查房间设置或分数输入。",
   score_invalid_state: "房间状态已经变化，请刷新后重试。",
   invalid_request_body: "服务端尚未更新，暂不支持当前房间参数。请部署最新后端后重试。",
@@ -60,13 +61,21 @@ function joinScoreRoom(input) {
 }
 
 async function previewScoreInvite(inviteToken) {
+  return previewScoreInviteCredential({ inviteToken });
+}
+
+async function previewScoreInviteScene(inviteScene) {
+  return previewScoreInviteCredential({ inviteScene });
+}
+
+async function previewScoreInviteCredential(credential) {
   const token = getAccessToken();
   try {
     return await scoreRequest({
       path: "/score-rooms/invite-preview",
       method: "POST",
       bearerToken: token,
-      data: { inviteToken },
+      data: credential,
     });
   } catch (error) {
     if (!token || error.statusCode !== 401) throw error;
@@ -74,7 +83,7 @@ async function previewScoreInvite(inviteToken) {
     return scoreRequest({
       path: "/score-rooms/invite-preview",
       method: "POST",
-      data: { inviteToken },
+      data: credential,
     });
   }
 }
@@ -115,6 +124,16 @@ function issueScoreInviteToken(credential, roomId) {
   }).then((response) => response.inviteToken);
 }
 
+function issueScoreInviteCode(credential, roomId) {
+  return scoreRequest({
+    path: `/score-rooms/${encodeURIComponent(roomId)}/invite-code`,
+    method: "POST",
+    bearerToken: credential.token,
+    header: bearerHeader(credential),
+    data: {},
+  });
+}
+
 function createRealtimeTicket(credential, roomId) {
   return scoreRequest({
     path: `/score-rooms/${encodeURIComponent(roomId)}/realtime-ticket`,
@@ -153,11 +172,13 @@ module.exports = {
   createScoreRoom,
   getScoreErrorMessage,
   getScoreRoom,
+  issueScoreInviteCode,
   issueScoreInviteToken,
   joinScoreRoom,
   listNearbyScoreRooms,
   mutateRoom,
   previewScoreInvite,
+  previewScoreInviteScene,
   settleScoreRoom,
   startScoreRoom,
   submitScoreGifts,

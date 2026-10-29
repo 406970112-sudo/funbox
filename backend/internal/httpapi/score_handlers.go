@@ -51,6 +51,7 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/participants/{participantID}/remove", api.withScoreActor(api.withAPIPipeline(api.handleRemoveScoreParticipant)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/settle", api.withScoreActor(api.withAPIPipeline(api.handleSettleScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/invite-token", api.withScoreActor(api.withAPIPipeline(api.handleScoreInviteToken)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/invite-code", api.withScoreActor(api.withAPIPipeline(api.handleScoreInviteCode)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/realtime-ticket", api.withScoreActor(api.withAPIPipeline(api.handleCreateScoreRealtimeTicket)))
 }
 
@@ -334,6 +335,16 @@ func (s *Server) handleScoreInviteToken(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusCreated, map[string]any{"inviteToken": token})
 }
 
+func (s *Server) handleScoreInviteCode(w http.ResponseWriter, r *http.Request) {
+	actor, _ := scoreActorFromContext(r.Context())
+	result, err := s.scoreService.IssueInviteCode(r.Context(), actor)
+	if err != nil {
+		s.writeScoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (s *Server) handleCreateScoreRealtimeTicket(w http.ResponseWriter, r *http.Request) {
 	actor, _ := scoreActorFromContext(r.Context())
 	ticket, expiresAt, err := s.realtimeHub.IssueTicket(scorePrincipal(actor.ParticipantID))
@@ -386,6 +397,8 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": "score_action_forbidden"})
 	case errors.Is(err, score.ErrInviteInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invite_invalid"})
+	case errors.Is(err, score.ErrInviteCodeUnavailable):
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "score_invite_code_unavailable"})
 	case errors.Is(err, score.ErrPasswordRequired):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_room_password_required"})
 	case errors.Is(err, score.ErrPasswordInvalid):

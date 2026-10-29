@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
@@ -21,25 +22,26 @@ import (
 )
 
 var (
-	ErrUnauthorized       = errors.New("score authentication required")
-	ErrForbidden          = errors.New("score action forbidden")
-	ErrInviteInvalid      = errors.New("score invite token is invalid")
-	ErrInvalidInput       = errors.New("invalid score input")
-	ErrRoomFull           = errors.New("score room is full")
-	ErrNicknameConflict   = errors.New("score nickname is already in use")
-	ErrInvalidState       = errors.New("score room is in an invalid state")
-	ErrVersionConflict    = errors.New("score room version conflict")
-	ErrActionIDReused     = errors.New("score client action id was reused")
-	ErrRoundNotFound      = errors.New("score round not found")
-	ErrGiftBatchNotFound  = errors.New("score gift batch not found")
-	ErrParticipantMissing = errors.New("score participant not found")
-	ErrNotYourTurn        = errors.New("not the current player's turn")
-	ErrForceOpenLocked    = errors.New("force open is not available yet")
-	ErrInvalidZJHHand     = errors.New("zha jin hua hand not found")
-	ErrPasswordRequired   = errors.New("score room password is required")
-	ErrPasswordInvalid    = errors.New("score room password is invalid")
-	ErrCapExceeded        = errors.New("score gift cap exceeded")
-	ErrLocationInvalid    = errors.New("score location is invalid")
+	ErrUnauthorized          = errors.New("score authentication required")
+	ErrForbidden             = errors.New("score action forbidden")
+	ErrInviteInvalid         = errors.New("score invite token is invalid")
+	ErrInvalidInput          = errors.New("invalid score input")
+	ErrRoomFull              = errors.New("score room is full")
+	ErrNicknameConflict      = errors.New("score nickname is already in use")
+	ErrInvalidState          = errors.New("score room is in an invalid state")
+	ErrVersionConflict       = errors.New("score room version conflict")
+	ErrActionIDReused        = errors.New("score client action id was reused")
+	ErrRoundNotFound         = errors.New("score round not found")
+	ErrGiftBatchNotFound     = errors.New("score gift batch not found")
+	ErrParticipantMissing    = errors.New("score participant not found")
+	ErrNotYourTurn           = errors.New("not the current player's turn")
+	ErrForceOpenLocked       = errors.New("force open is not available yet")
+	ErrInvalidZJHHand        = errors.New("zha jin hua hand not found")
+	ErrPasswordRequired      = errors.New("score room password is required")
+	ErrPasswordInvalid       = errors.New("score room password is invalid")
+	ErrCapExceeded           = errors.New("score gift cap exceeded")
+	ErrLocationInvalid       = errors.New("score location is invalid")
+	ErrInviteCodeUnavailable = errors.New("score invite code unavailable")
 )
 
 type Actor struct {
@@ -76,6 +78,7 @@ type CreateRoomResult struct {
 type JoinRoomInput struct {
 	Code        string `json:"code,omitempty"`
 	InviteToken string `json:"inviteToken,omitempty"`
+	InviteScene string `json:"inviteScene,omitempty"`
 	DisplayName string `json:"displayName"`
 	Password    string `json:"password,omitempty"`
 }
@@ -88,11 +91,27 @@ type JoinRoomResult struct {
 
 type InvitePreviewInput struct {
 	InviteToken string `json:"inviteToken"`
+	InviteScene string `json:"inviteScene,omitempty"`
 }
 
 type InvitePreviewResult struct {
 	Room              RoomSnapshot `json:"room"`
 	SelfParticipantID string       `json:"selfParticipantId,omitempty"`
+}
+
+type InviteCodeResult struct {
+	InviteScene string `json:"inviteScene"`
+	ImageBase64 string `json:"imageBase64"`
+	MediaType   string `json:"mediaType"`
+	Width       int    `json:"width"`
+}
+
+type MiniProgramCodeGenerator interface {
+	Generate(ctx context.Context, scene string) ([]byte, string, int, error)
+}
+
+type ServiceOptions struct {
+	MiniProgramCodeGenerator MiniProgramCodeGenerator
 }
 
 type NearbyRoomsInput struct {
@@ -157,10 +176,11 @@ func (e *VersionConflictError) Error() string { return ErrVersionConflict.Error(
 func (e *VersionConflictError) Unwrap() error { return ErrVersionConflict }
 
 type Service struct {
-	store      *Store
-	signingKey []byte
-	guestTTL   time.Duration
-	now        func() time.Time
+	store               *Store
+	signingKey          []byte
+	guestTTL            time.Duration
+	inviteCodeGenerator MiniProgramCodeGenerator
+	now                 func() time.Time
 }
 
 type tokenClaims struct {
@@ -173,14 +193,19 @@ type tokenClaims struct {
 }
 
 func NewService(store *Store, signingKey []byte, guestTTL time.Duration) *Service {
+	return NewServiceWithOptions(store, signingKey, guestTTL, ServiceOptions{})
+}
+
+func NewServiceWithOptions(store *Store, signingKey []byte, guestTTL time.Duration, options ServiceOptions) *Service {
 	if guestTTL <= 0 {
 		guestTTL = 7 * 24 * time.Hour
 	}
 	return &Service{
-		store:      store,
-		signingKey: append([]byte(nil), signingKey...),
-		guestTTL:   guestTTL,
-		now:        time.Now,
+		store:               store,
+		signingKey:          append([]byte(nil), signingKey...),
+		guestTTL:            guestTTL,
+		inviteCodeGenerator: options.MiniProgramCodeGenerator,
+		now:                 time.Now,
 	}
 }
 
@@ -351,13 +376,14 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	}
 	code := strings.TrimSpace(input.Code)
 	inviteToken := strings.TrimSpace(input.InviteToken)
-	usedInviteToken := inviteToken != ""
-	if usedInviteToken {
-		claims, err := s.parseToken(inviteToken, "score_invite")
+	inviteScene := strings.TrimSpace(input.InviteScene)
+	usedInviteCredential := inviteToken != "" || inviteScene != ""
+	if usedInviteCredential {
+		_, resolvedCode, err := s.resolveInviteCredential(ctx, inviteToken, inviteScene)
 		if err != nil {
-			return JoinRoomResult{}, ErrInviteInvalid
+			return JoinRoomResult{}, err
 		}
-		code = claims.Code
+		code = resolvedCode
 	}
 	if len(code) != 6 {
 		return JoinRoomResult{}, fmt.Errorf("room code: %w", ErrInvalidInput)
@@ -388,7 +414,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if activePlayers >= maxPlayers {
 		return JoinRoomResult{}, ErrRoomFull
 	}
-	if passwordHash != "" && !usedInviteToken {
+	if passwordHash != "" && !usedInviteCredential {
 		if input.Password == "" {
 			return JoinRoomResult{}, ErrPasswordRequired
 		}
@@ -432,18 +458,16 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 
 func (s *Service) PreviewInvite(ctx context.Context, userID string, input InvitePreviewInput) (InvitePreviewResult, error) {
 	token := strings.TrimSpace(input.InviteToken)
-	if token == "" {
-		return InvitePreviewResult{}, fmt.Errorf("invite token: %w", ErrInvalidInput)
-	}
-	claims, err := s.parseToken(token, "score_invite")
-	if err != nil {
-		return InvitePreviewResult{}, ErrInviteInvalid
-	}
-	room, err := s.store.loadRoomSnapshot(ctx, s.store.db, claims.RoomID)
+	scene := strings.TrimSpace(input.InviteScene)
+	roomID, code, err := s.resolveInviteCredential(ctx, token, scene)
 	if err != nil {
 		return InvitePreviewResult{}, err
 	}
-	if room.Code != claims.Code {
+	room, err := s.store.loadRoomSnapshot(ctx, s.store.db, roomID)
+	if err != nil {
+		return InvitePreviewResult{}, err
+	}
+	if room.Code != code {
 		return InvitePreviewResult{}, ErrInviteInvalid
 	}
 	result := InvitePreviewResult{Room: room}
@@ -452,7 +476,7 @@ func (s *Service) PreviewInvite(ctx context.Context, userID string, input Invite
 		err := s.store.db.QueryRowContext(ctx, `
 			SELECT id FROM score_participants
 			WHERE room_id = ? AND user_id = ? AND status = 'active'
-		`, claims.RoomID, userID).Scan(&participantID)
+		`, roomID, userID).Scan(&participantID)
 		if err == nil {
 			result.SelfParticipantID = participantID
 			room.SelfParticipantID = participantID
@@ -467,6 +491,34 @@ func (s *Service) PreviewInvite(ctx context.Context, userID string, input Invite
 		return InvitePreviewResult{}, ErrRoomFull
 	}
 	return result, nil
+}
+
+func (s *Service) resolveInviteCredential(ctx context.Context, inviteToken, inviteScene string) (string, string, error) {
+	if inviteToken != "" && inviteScene != "" {
+		return "", "", fmt.Errorf("invite credential: %w", ErrInvalidInput)
+	}
+	if inviteToken != "" {
+		claims, err := s.parseToken(inviteToken, "score_invite")
+		if err != nil {
+			return "", "", ErrInviteInvalid
+		}
+		return claims.RoomID, claims.Code, nil
+	}
+	if inviteScene == "" || len([]rune(inviteScene)) > 32 {
+		return "", "", fmt.Errorf("invite credential: %w", ErrInvalidInput)
+	}
+	var roomID, code string
+	err := s.store.db.QueryRowContext(ctx, `
+		SELECT id, code FROM score_rooms
+		WHERE external_invite_code = ? AND status = 'waiting'
+	`, inviteScene).Scan(&roomID, &code)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", "", ErrInviteInvalid
+	}
+	if err != nil {
+		return "", "", fmt.Errorf("resolve score invite scene: %w", err)
+	}
+	return roomID, code, nil
 }
 
 func (s *Service) ListNearbyRooms(ctx context.Context, input NearbyRoomsInput) (NearbyRoomsResult, error) {
@@ -1287,6 +1339,96 @@ func (s *Service) IssueInviteToken(ctx context.Context, actor Actor) (string, er
 		return "", ErrInvalidState
 	}
 	return s.signToken(tokenClaims{Type: "score_invite", RoomID: actor.RoomID, Code: code}, s.guestTTL)
+}
+
+func (s *Service) IssueInviteCode(ctx context.Context, actor Actor) (InviteCodeResult, error) {
+	if actor.Role != ParticipantHost {
+		return InviteCodeResult{}, ErrForbidden
+	}
+	if err := s.validateActor(ctx, s.store.db, actor, false); err != nil {
+		return InviteCodeResult{}, err
+	}
+	if s.inviteCodeGenerator == nil {
+		return InviteCodeResult{}, ErrInviteCodeUnavailable
+	}
+	scene, err := s.ensureExternalInviteCode(ctx, actor.RoomID)
+	if err != nil {
+		return InviteCodeResult{}, err
+	}
+	image, mediaType, width, err := s.inviteCodeGenerator.Generate(ctx, scene)
+	if err != nil {
+		return InviteCodeResult{}, fmt.Errorf("%w: %v", ErrInviteCodeUnavailable, err)
+	}
+	return InviteCodeResult{
+		InviteScene: scene,
+		ImageBase64: base64.StdEncoding.EncodeToString(image),
+		MediaType:   mediaType,
+		Width:       width,
+	}, nil
+}
+
+func (s *Service) ensureExternalInviteCode(ctx context.Context, roomID string) (string, error) {
+	var existing sql.NullString
+	err := s.store.db.QueryRowContext(ctx, `
+		SELECT external_invite_code FROM score_rooms
+		WHERE id = ? AND status = 'waiting'
+	`, roomID).Scan(&existing)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrInvalidState
+	}
+	if err != nil {
+		return "", fmt.Errorf("load score external invite code: %w", err)
+	}
+	if existing.Valid && strings.TrimSpace(existing.String) != "" {
+		return existing.String, nil
+	}
+
+	for attempt := 0; attempt < 5; attempt++ {
+		scene, err := randomInviteScene()
+		if err != nil {
+			return "", err
+		}
+		result, err := s.store.db.ExecContext(ctx, `
+			UPDATE score_rooms SET external_invite_code = ?
+			WHERE id = ? AND status = 'waiting'
+				AND (external_invite_code IS NULL OR external_invite_code = '')
+		`, scene, roomID)
+		if err != nil {
+			if strings.Contains(strings.ToLower(err.Error()), "unique") {
+				continue
+			}
+			return "", fmt.Errorf("store score external invite code: %w", err)
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return "", fmt.Errorf("inspect score external invite update: %w", err)
+		}
+		if affected > 0 {
+			return scene, nil
+		}
+		err = s.store.db.QueryRowContext(ctx, `
+			SELECT external_invite_code FROM score_rooms
+			WHERE id = ? AND status = 'waiting'
+		`, roomID).Scan(&existing)
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrInvalidState
+		}
+		if err != nil {
+			return "", fmt.Errorf("reload score external invite code: %w", err)
+		}
+		if existing.Valid && strings.TrimSpace(existing.String) != "" {
+			return existing.String, nil
+		}
+	}
+	return "", fmt.Errorf("%w: could not allocate invite scene", ErrInviteCodeUnavailable)
+}
+
+func randomInviteScene() (string, error) {
+	var buffer [16]byte
+	if _, err := rand.Read(buffer[:]); err != nil {
+		return "", fmt.Errorf("generate score invite scene: %w", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(buffer[:]), nil
 }
 
 func (s *Service) IssueGuestToken(ctx context.Context, participantID string) (string, error) {

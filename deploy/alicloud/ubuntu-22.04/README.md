@@ -179,6 +179,7 @@ sudo BRANCH=your-branch bash /srv/my-first-expo-app/deploy/alicloud/ubuntu-22.04
 - `DEPLOY_SSH_KEY`：部署用户对应的 SSH 私钥全文。
 - `DEPLOY_KNOWN_HOSTS`：服务器 SSH 主机公钥记录，可在可信终端执行 `ssh-keyscan -H 服务器公网IP` 获取。
 - `STOCK_ALERT_SENDKEY`：Server酱 SendKey，用于股票交易提醒的微信推送；在 `Settings > Secrets and variables > Actions` 中配置后，每次部署会自动写入服务器 `backend/.env`。
+- `WECHAT_MINIPROGRAM_APP_SECRET`：FunBox 小程序 AppSecret；配置后部署会写入后端并启用微信小程序码，支持微信外部扫一扫直接拉起房间邀请页。
 
 部署用户必须能够免密执行更新脚本需要的 `sudo` 命令。工作流通过 `create-source-archive.sh` 打包当前提交中已跟踪的前端、Go 后端、邮件智能体、部署脚本及根目录 npm 配置，再上传到服务器构建。设计文档、设计脚本、小程序、独立邮件后端副本和未跟踪的本地文件不进入部署包。
 

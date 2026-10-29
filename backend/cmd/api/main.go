@@ -34,6 +34,7 @@ import (
 	"my-first-expo-app/backend/internal/translation"
 	"my-first-expo-app/backend/internal/tts"
 	"my-first-expo-app/backend/internal/user"
+	"my-first-expo-app/backend/internal/wechatminiprogram"
 )
 
 func main() {
@@ -141,7 +142,26 @@ func main() {
 		log.Fatalf("load auth signing key failed: %v", err)
 	}
 	authService := auth.NewService(userStore, signingKey, cfg.Auth.TokenTTL)
-	scoreService := score.NewService(scoreStore, signingKey, 7*24*time.Hour)
+	scoreOptions := score.ServiceOptions{}
+	if cfg.WeChatMiniProgram.AppSecret != "" {
+		inviteCodeClient, err := wechatminiprogram.NewClient(wechatminiprogram.Config{
+			AppID:          cfg.WeChatMiniProgram.AppID,
+			AppSecret:      cfg.WeChatMiniProgram.AppSecret,
+			Page:           cfg.WeChatMiniProgram.Page,
+			EnvVersion:     cfg.WeChatMiniProgram.EnvVersion,
+			Width:          cfg.WeChatMiniProgram.CodeWidth,
+			CheckPath:      cfg.WeChatMiniProgram.CheckPath,
+			RequestTimeout: cfg.WeChatMiniProgram.RequestTimeout,
+		})
+		if err != nil {
+			log.Printf("wechat mini program invite code disabled: %v", err)
+		} else {
+			scoreOptions.MiniProgramCodeGenerator = inviteCodeClient
+		}
+	} else {
+		log.Printf("wechat mini program invite code disabled: missing WECHAT_MINIPROGRAM_APP_SECRET")
+	}
+	scoreService := score.NewServiceWithOptions(scoreStore, signingKey, 7*24*time.Hour, scoreOptions)
 
 	var readingProvider reading.Provider
 	switch cfg.Reading.ProviderMode {

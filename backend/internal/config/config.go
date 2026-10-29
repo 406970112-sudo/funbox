@@ -29,6 +29,7 @@ type Config struct {
 	TinyPNG            TinyPNGConfig
 	TTS                TTSConfig
 	Volc               VolcConfig
+	WeChatMiniProgram  WeChatMiniProgramConfig
 }
 
 type AuthConfig struct {
@@ -231,6 +232,16 @@ type VolcConfig struct {
 	ResourceID  string
 }
 
+type WeChatMiniProgramConfig struct {
+	AppID          string
+	AppSecret      string
+	Page           string
+	EnvVersion     string
+	CodeWidth      int
+	CheckPath      bool
+	RequestTimeout time.Duration
+}
+
 func Load() (Config, error) {
 	appEnv := envFirst("APP_ENV", "NODE_ENV", "development")
 	providerDefault := "mock"
@@ -430,6 +441,15 @@ func Load() (Config, error) {
 				"wss://openspeech.bytedance.com/api/v3/tts/unidirectional/stream",
 			),
 			ResourceID: envFirst("VOLC_RESOURCE_ID", ""),
+		},
+		WeChatMiniProgram: WeChatMiniProgramConfig{
+			AppID:          envFirst("WECHAT_MINIPROGRAM_APP_ID", ""),
+			AppSecret:      envFirst("WECHAT_MINIPROGRAM_APP_SECRET", ""),
+			Page:           envFirst("WECHAT_MINIPROGRAM_CODE_PAGE", "pages/score/room/index"),
+			EnvVersion:     envFirst("WECHAT_MINIPROGRAM_ENV_VERSION", "release"),
+			CodeWidth:      intFirst("WECHAT_MINIPROGRAM_CODE_WIDTH", "", "430"),
+			CheckPath:      boolFirst("WECHAT_MINIPROGRAM_CHECK_PATH", "true"),
+			RequestTimeout: durationFromMs("WECHAT_MINIPROGRAM_REQUEST_TIMEOUT_MS", "", "10000"),
 		},
 	}
 

@@ -73,9 +73,11 @@
           </view>
           <button wx:if="{{isHost && inviteToken}}" class="share-button" open-type="share">发送邀请给牌友</button>
         </view>
-        <view class="qr-box">
-          <canvas wx:if="{{inviteToken}}" canvas-id="roomQr" class="qr-canvas" style="width: {{qrSize}}px; height: {{qrSize}}px;"></canvas>
-          <text wx:else class="qr-placeholder">生成邀请中…</text>
+        <view class="qr-box" bindtap="toggleQrExpanded" aria-role="button" aria-label="邀请二维码，点击放大">
+          <image wx:if="{{inviteToken && qrImageSrc}}" class="qr-image" src="{{qrImageSrc}}" mode="aspectFit" style="width: {{qrSize}}px; height: {{qrSize}}px;" />
+          <canvas wx:elif="{{inviteToken && !qrExpanded}}" canvas-id="roomQr" class="qr-canvas" style="width: {{qrSize}}px; height: {{qrSize}}px;"></canvas>
+          <text wx:elif="{{inviteToken && qrExpanded}}" class="qr-placeholder">二维码已放大</text>
+          <text wx:else class="qr-placeholder">{{qrCodeLoading ? '生成微信邀请码中…' : '生成邀请中…'}}</text>
         </view>
       </view>
 
@@ -195,6 +197,17 @@
       </view>
     </block>
   </block>
+
+  <view wx:if="{{qrExpanded && room && room.status === 'waiting'}}" class="qr-preview-mask" bindtap="closeQrExpanded" catchtouchmove="noop">
+    <view class="qr-preview-card" catchtap="noop">
+      <text class="qr-preview-title">邀请二维码</text>
+      <view class="qr-preview-stage" bindtap="toggleQrExpanded">
+        <image wx:if="{{qrImageSrc}}" class="qr-preview-image" src="{{qrImageSrc}}" mode="aspectFit" style="width: {{qrLargeSize}}px; height: {{qrLargeSize}}px;" />
+        <canvas wx:elif="{{inviteToken}}" canvas-id="roomQrLarge" class="qr-preview-image" style="width: {{qrLargeSize}}px; height: {{qrLargeSize}}px;"></canvas>
+      </view>
+      <text class="qr-preview-hint">再次点击二维码收起</text>
+    </view>
+  </view>
 
   <view wx:if="{{settlementOpen && room}}" class="sheet-mask" bindtap="closeSettlement">
     <view class="settlement-sheet" catchtap="noop">

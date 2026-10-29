@@ -72,6 +72,7 @@ func (s *Store) migrate() error {
 			cap_points INTEGER NOT NULL DEFAULT 0 CHECK(cap_points BETWEEN 0 AND 2147483647),
 			game_type TEXT NOT NULL DEFAULT 'generic' CHECK(game_type IN ('generic', 'mahjong', 'zhajinhua')),
 			password_hash TEXT NOT NULL DEFAULT '',
+			external_invite_code TEXT,
 			latitude REAL,
 			longitude REAL,
 			version INTEGER NOT NULL CHECK(version >= 1),
@@ -262,6 +263,7 @@ func (s *Store) migrate() error {
 		{name: "cap_points", definition: "INTEGER NOT NULL DEFAULT 0 CHECK(cap_points BETWEEN 0 AND 2147483647)"},
 		{name: "game_type", definition: "TEXT NOT NULL DEFAULT 'generic' CHECK(game_type IN ('generic', 'mahjong', 'zhajinhua'))"},
 		{name: "password_hash", definition: "TEXT NOT NULL DEFAULT ''"},
+		{name: "external_invite_code", definition: "TEXT"},
 		{name: "latitude", definition: "REAL"},
 		{name: "longitude", definition: "REAL"},
 	} {
@@ -283,6 +285,13 @@ func (s *Store) migrate() error {
 		ON score_rooms(status, game_type, latitude, longitude)
 	`); err != nil {
 		return fmt.Errorf("create score nearby index: %w", err)
+	}
+	if _, err := s.db.Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_score_rooms_external_invite_code
+		ON score_rooms(external_invite_code)
+		WHERE external_invite_code IS NOT NULL AND external_invite_code != ''
+	`); err != nil {
+		return fmt.Errorf("create score external invite index: %w", err)
 	}
 	return nil
 }

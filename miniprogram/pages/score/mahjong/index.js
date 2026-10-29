@@ -2,7 +2,7 @@ const { createScoreRoom, getScoreErrorMessage, joinScoreRoom, listNearbyScoreRoo
 const { clearScoreSession, saveScoreSession } = require("../../../utils/score-session");
 const { getAccessToken, getStoredUser } = require("../../../utils/auth");
 const { capSummary, formatCNY, formatDistance, parseYuanToCents } = require("../../../utils/score-format");
-const { extractInviteToken } = require("../../../utils/invite");
+const { extractInviteScene, extractInviteToken } = require("../../../utils/invite");
 
 function getLocation() {
   return new Promise((resolve, reject) => {
@@ -153,9 +153,15 @@ Page({
 
   scanToJoin() {
     wx.scanCode({
-      scanType: ["qrCode"],
+      scanType: ["qrCode", "wxCode"],
       success: (result) => {
-        const inviteToken = extractInviteToken(result.result || result.path || "");
+        const scannedValue = result.path || result.result || "";
+        const inviteScene = extractInviteScene(scannedValue);
+        if (inviteScene) {
+          wx.navigateTo({ url: `/pages/score/room/index?scene=${encodeURIComponent(inviteScene)}` });
+          return;
+        }
+        const inviteToken = extractInviteToken(scannedValue);
         if (!inviteToken) {
           this.setData({ errorMessage: "未识别到有效的牌局邀请。" });
           return;
