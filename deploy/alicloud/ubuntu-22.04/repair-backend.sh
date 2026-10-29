@@ -9,6 +9,8 @@ if [[ -z "$APP_ROOT" || ! -f "$APP_ROOT/backend/go.mod" ]]; then
 fi
 
 cd "$APP_ROOT/backend"
+chown root:www-data .env
+chmod 640 .env
 /usr/local/go/bin/go build -o ./bin/api ./cmd/api
 chown www-data:www-data ./bin/api
 systemctl restart my-first-expo-app-backend.service
