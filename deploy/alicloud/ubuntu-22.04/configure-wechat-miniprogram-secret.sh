@@ -5,6 +5,7 @@ set -Eeuo pipefail
 CURRENT_ENV="/srv/my-first-expo-app-current/backend/.env"
 LEGACY_ENV="/srv/my-first-expo-app/backend/.env"
 APP_ID="wx1c056466c78d8934"
+APP_GROUP="${APP_GROUP:-www-data}"
 
 if [[ -f "$CURRENT_ENV" ]]; then
   env_file="$CURRENT_ENV"
@@ -49,8 +50,8 @@ if [[ "$app_secret_written" -eq 0 ]]; then
   printf 'WECHAT_MINIPROGRAM_APP_SECRET=%s\n' "$app_secret" >>"$temp_file"
 fi
 
-chown --reference="$env_file" "$temp_file"
-chmod --reference="$env_file" "$temp_file"
+chown root:"$APP_GROUP" "$temp_file"
+chmod 640 "$temp_file"
 mv -f "$temp_file" "$env_file"
 trap - EXIT
 
