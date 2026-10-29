@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "功能反馈",
   "enablePullDownRefresh": false,
-  "backgroundColor": "#f4f1e8"
+  "navigationBarBackgroundColor": "#f5f7fa",
+  "backgroundColor": "#f5f7fa"
 }

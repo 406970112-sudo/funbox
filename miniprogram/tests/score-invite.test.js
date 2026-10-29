@@ -48,7 +48,6 @@ require.cache[scoreAPI] = {
         actor: { participantId: "participant-1" },
       };
     },
-    listNearbyScoreRooms: async () => [],
     previewScoreInvite: async (inviteToken) => {
       previewCalls.push({ inviteToken });
       return { room: { id: "room-1", name: "牌局", code: "123456", centsPerPoint: 100, capPoints: 10, maxPlayers: 4 } };
@@ -148,7 +147,6 @@ test("room creation omits settlement pricing and saves the host password locally
     roomName: "周五牌局",
     roomPassword: "2468",
     confirmPassword: "2468",
-    publishNearby: false,
     errorMessage: "",
   });
 
@@ -162,8 +160,6 @@ test("room creation omits settlement pricing and saves the host password locally
       password: "2468",
       scene: "generic",
       gameType: "mahjong",
-      latitude: undefined,
-      longitude: undefined,
     },
   }]);
   assert.deepEqual(passwordSaves, [{ roomId: "room-1", password: "2468" }]);
@@ -185,7 +181,6 @@ test("anonymous room creation submits the guest host nickname and stores the par
     hostNickname: "游客房主",
     roomPassword: "2468",
     confirmPassword: "2468",
-    publishNearby: false,
     errorMessage: "",
   });
 
@@ -199,8 +194,6 @@ test("anonymous room creation submits the guest host nickname and stores the par
       password: "2468",
       scene: "generic",
       gameType: "mahjong",
-      latitude: undefined,
-      longitude: undefined,
       displayName: "游客房主",
     },
   }]);

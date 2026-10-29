@@ -1,6 +1,6 @@
 <view class="room-page">
   <view wx:if="{{loading}}" class="state-panel">
-    <view class="loading-tile">中</view>
+    <view class="loading-tile">±</view>
     <text class="state-title">正在同步牌局</text>
     <text class="state-desc">稍等一下，马上把最新分数带回来。</text>
   </view>
@@ -38,9 +38,6 @@
 
   <block wx:elif="{{room}}">
     <view class="room-hero">
-      <view class="room-tile-rail" aria-hidden="true">
-        <text>東</text><text>南</text><text class="red">中</text><text>西</text><text>北</text>
-      </view>
       <view class="room-top">
         <view>
           <text class="room-kicker">牌桌 · {{room.code}}</text>
@@ -51,10 +48,12 @@
           <text>{{realtimeStatus === 'online' ? '实时同步' : realtimeStatus === 'connecting' ? '连接中' : '离线'}}</text>
         </view>
       </view>
-      <view class="room-metrics">
-        <view class="metric"><text class="metric-label">当前人数</text><text class="metric-value">{{activePlayers}} / {{room.maxPlayers}}</text></view>
+      <view class="room-footer">
+        <view class="room-metrics">
+          <view class="metric"><text class="metric-label">当前人数</text><text class="metric-value">{{activePlayers}} / {{room.maxPlayers}}</text></view>
+        </view>
+        <text class="room-state state-{{room.status}}">{{room.status === 'waiting' ? '等待开始' : room.status === 'active' ? '牌局进行中' : room.status === 'settled' ? '已结算' : '已取消'}}</text>
       </view>
-      <text class="room-state">{{room.status === 'waiting' ? '等待开始' : room.status === 'active' ? '牌局进行中' : room.status === 'settled' ? '已结算' : '已取消'}}</text>
     </view>
 
     <view wx:if="{{feedback}}" class="success-banner">{{feedback}}</view>
@@ -73,10 +72,11 @@
 
     <block wx:if="{{room.status === 'waiting'}}">
       <view wx:if="{{isHost}}" class="invite-card">
+        <text class="section-kicker">邀请牌友</text>
+        <text class="invite-title">扫码或转发加入</text>
+        <text class="invite-desc">邀请链接和二维码已包含入房凭证，填写昵称即可加入。</text>
+        <view class="invite-main">
         <view class="invite-copy">
-          <text class="section-kicker">邀请牌友</text>
-          <text class="invite-title">扫码或转发加入</text>
-          <text class="invite-desc">邀请链接和二维码已包含入房凭证，填写昵称即可加入。</text>
           <view class="room-code-box" bindtap="copyRoomCode">
             <text class="room-code-value">{{room.code}}</text>
             <text class="room-code-copy">复制房间码</text>
@@ -85,14 +85,16 @@
             <text class="room-password-label">房间密码</text>
             <text class="room-password-value">{{hostRoomPassword}}</text>
           </view>
-          <button wx:if="{{isHost && inviteToken}}" class="share-button" open-type="share">发送邀请给牌友</button>
         </view>
         <view class="qr-box" bindtap="toggleQrExpanded" aria-role="button" aria-label="邀请二维码，点击放大">
           <image wx:if="{{inviteToken && qrImageSrc}}" class="qr-image" src="{{qrImageSrc}}" mode="aspectFit" style="width: {{qrSize}}px; height: {{qrSize}}px;" />
           <canvas wx:elif="{{inviteToken && !qrExpanded}}" canvas-id="roomQr" class="qr-canvas" style="width: {{qrSize}}px; height: {{qrSize}}px;"></canvas>
           <text wx:elif="{{inviteToken && qrExpanded}}" class="qr-placeholder">二维码已放大</text>
           <text wx:else class="qr-placeholder">{{qrCodeLoading ? '生成微信邀请码中…' : '生成邀请中…'}}</text>
+          <text wx:if="{{inviteToken}}" class="qr-expand-hint">点击放大</text>
         </view>
+        </view>
+        <button wx:if="{{isHost && inviteToken}}" class="share-button" open-type="share">发送邀请给牌友</button>
       </view>
 
       <view class="section-head">
@@ -132,6 +134,7 @@
       <view class="score-board">
         <view wx:for="{{participants}}" wx:key="id" class="score-row {{item.isSelf ? 'self-row' : ''}}">
           <text class="rank {{item.rankClass}}">{{item.rank}}</text>
+          <view class="score-seat">{{item.seatMark}}</view>
           <view class="score-name-block">
             <text class="score-name">{{item.displayName}}<text wx:if="{{item.isSelf}}" class="self-tag">我</text></text>
           </view>
@@ -180,7 +183,7 @@
 
     <block wx:elif="{{room.status === 'settled'}}">
       <view class="settled-hero">
-        <view class="settled-tiles" aria-hidden="true"><text>東</text><text>南</text><text class="red">中</text><text>發</text></view>
+        <view class="settled-art art art-score" aria-hidden="true"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" /></view>
         <text class="settled-kicker">这桌，散场了</text>
         <text class="settled-title">输赢已理清</text>
         <text class="settled-subtitle">最终输赢与转账如下</text>
@@ -244,11 +247,12 @@
         </view>
         <text wx:if="{{settlementRateError}}" class="settlement-rate-error">{{settlementRateError}}</text>
       </view>
+      <view class="settlement-table-head"><text>牌友</text><text>当前分数</text><text>预计金额</text></view>
       <view class="settlement-list">
         <view wx:for="{{settlementRows}}" wx:key="participantId" class="settlement-row">
           <text>{{item.name}}</text>
-          <text>{{item.scoreText}} 分</text>
-          <text>{{item.amountText}}</text>
+          <text class="{{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.scoreText}} 分</text>
+          <text class="{{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.amountText}}</text>
         </view>
       </view>
       <view class="danger-note">结算后不可修改，请再次确认。</view>

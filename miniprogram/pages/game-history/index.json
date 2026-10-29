@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "最近牌局",
+  "navigationBarBackgroundColor": "#f5f7fa",
   "enablePullDownRefresh": true,
-  "backgroundColor": "#f4f1e8"
+  "backgroundColor": "#f5f7fa"
 }

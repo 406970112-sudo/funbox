@@ -50,7 +50,7 @@ test("local QR encoder produces a scannable module matrix", () => {
   assert.equal(qr.isDark(0, count - 1), true);
 });
 
-test("mini program registers scoring pages and location privacy declaration", () => {
+test("mini program registers scoring pages without requesting location access", () => {
   const root = path.resolve(__dirname, "..");
   const config = JSON.parse(fs.readFileSync(path.join(root, "app.json"), "utf8"));
   for (const page of [
@@ -76,7 +76,8 @@ test("mini program registers scoring pages and location privacy declaration", ()
     assert.equal(fs.existsSync(path.join(root, item.iconPath)), true, item.iconPath);
     assert.equal(fs.existsSync(path.join(root, item.selectedIconPath)), true, item.selectedIconPath);
   }
-  assert.ok(config.requiredPrivateInfos.includes("getLocation"));
+  assert.equal((config.requiredPrivateInfos || []).includes("getLocation"), false);
+  assert.equal(Object.hasOwn(config.permission || {}, "scope.userLocation"), false);
 });
 
 test("recent game history maps the current participant, result, type and time", () => {

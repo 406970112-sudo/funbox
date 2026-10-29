@@ -1,10 +1,120 @@
 page {
+  --fb-canvas: #f5f7fa;
+  --fb-surface: #ffffff;
+  --fb-primary: #2d5bff;
+  --fb-ink: #172139;
+  --fb-muted: #7b879c;
+  --fb-coral: #ff765e;
+  --fb-line: #eaf0f7;
   min-height: 100%;
   background: #f5f7fa;
-  color: #1f2937;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--fb-ink);
+  font-family: "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+  line-height: 1.5;
 }
 
 button::after {
   border: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+.fb-brand {
+  display: block;
+  color: #2d5bff;
+  font-size: 43rpx;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -2rpx;
+  line-height: 1.15;
+}
+
+.fb-card {
+  box-sizing: border-box;
+  border: 1rpx solid rgba(255,255,255,0.95);
+  border-radius: 32rpx;
+  background: #fff;
+  box-shadow: 0 12rpx 36rpx rgba(38,76,133,0.035);
+}
+
+.fb-arrow {
+  flex-shrink: 0;
+  color: #8490a4;
+  font-size: 44rpx;
+  line-height: 1;
+}
+
+/* Every illustration occupies one square of the shared 3 by 2 atlas. */
+.art {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  width: 240rpx;
+  height: 240rpx;
+  pointer-events: none;
+}
+
+.art .art-atlas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 200%;
+  max-width: none;
+}
+
+.art-mahjong .art-atlas {
+  left: -100%;
+}
+
+.art-landlord .art-atlas {
+  left: -200%;
+}
+
+.art-poker .art-atlas {
+  top: -100%;
+}
+
+.art-feedback .art-atlas {
+  top: -100%;
+  left: -100%;
+}
+
+.art-score .art-atlas {
+  top: -100%;
+  left: -200%;
+}
+
+.fb-score-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 68rpx;
+  height: 78rpx;
+  border: 2rpx solid #e1e9fc;
+  border-radius: 14rpx;
+  background: #fff;
+  box-shadow: 5rpx 7rpx 0 #d9e5ff;
+  color: #2d5bff;
+  font-size: 44rpx;
+  font-weight: 800;
+  transform: rotate(-8deg);
+}
+
+@keyframes fb-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12rpx);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+
 }

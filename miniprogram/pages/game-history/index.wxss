@@ -1,10 +1,8 @@
 .history-page {
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 38rpx 28rpx 90rpx;
-  background:
-    radial-gradient(circle at 92% 4%, rgba(44, 107, 78, 0.16), transparent 32%),
-    linear-gradient(180deg, #f5f1e7 0%, #f7f5ef 62%, #f0eee6 100%);
+  padding: 30rpx 30rpx calc(44rpx + env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 90% 5%, #eaf2ff 0%, transparent 38%), var(--fb-canvas);
 }
 
 .hero-kicker,
@@ -23,56 +21,77 @@
 }
 
 .history-hero {
-  padding: 12rpx 8rpx 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 6rpx 2rpx 28rpx;
+  animation: fb-reveal 0.3s ease-out both;
+}
+
+.hero-copy-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-art {
+  width: 170rpx;
+  height: 170rpx;
 }
 
 .hero-kicker {
-  color: #2f755b;
-  font-size: 20rpx;
-  font-weight: 900;
-  letter-spacing: 3rpx;
+  color: var(--fb-primary);
+  font-size: 24rpx;
+  font-weight: 800;
 }
 
 .hero-title {
   margin-top: 12rpx;
-  color: #14251d;
-  font-size: 46rpx;
+  color: var(--fb-ink);
+  font-size: 44rpx;
   font-weight: 900;
+  letter-spacing: -1rpx;
 }
 
 .hero-copy {
   margin-top: 10rpx;
-  color: #6e786f;
-  font-size: 23rpx;
-  line-height: 1.6;
+  color: #66758d;
+  font-size: 24rpx;
+  line-height: 1.8;
 }
 
 .filter-scroll {
   width: 100%;
-  margin: 4rpx 0 24rpx;
+  margin: 4rpx 0 26rpx;
   white-space: nowrap;
 }
 
 .filter-row {
-  display: inline-flex;
-  gap: 12rpx;
-  padding: 2rpx 4rpx;
+  display: flex;
+  gap: 8rpx;
+  padding: 6rpx;
+  border-radius: 24rpx;
+  background: #e8eef8;
 }
 
 .filter-chip {
-  padding: 14rpx 25rpx;
-  border: 1rpx solid #d8ded6;
-  border-radius: 999rpx;
-  background: rgba(255, 253, 247, 0.86);
-  color: #667168;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 14rpx 8rpx;
+  border-radius: 20rpx;
+  color: #64738b;
   font-size: 23rpx;
   font-weight: 700;
 }
 
 .filter-active {
-  border-color: #1d6b4f;
-  background: #1d6b4f;
-  color: #fffdf7;
+  background: var(--fb-primary);
+  box-shadow: 0 6rpx 16rpx rgba(45, 91, 255, 0.16);
+  color: var(--fb-surface);
 }
 
 .state-card {
@@ -80,24 +99,25 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  min-height: 230rpx;
-  padding: 32rpx;
-  border: 1rpx solid rgba(34, 72, 54, 0.12);
-  border-radius: 26rpx;
-  background: rgba(255, 253, 247, 0.94);
-  color: #778078;
+  min-height: 280rpx;
+  padding: 40rpx 30rpx;
+  color: #66758d;
   font-size: 24rpx;
   text-align: center;
 }
 
 .state-error {
-  flex-direction: row;
-  background: #fff0eb;
-  color: #a34531;
+  background: #fff0ed;
+  color: #c74d38;
+  overflow-wrap: anywhere;
 }
 
 .state-action {
-  margin-left: 18rpx;
+  margin-top: 18rpx;
+  padding: 14rpx 28rpx;
+  border-radius: 18rpx;
+  background: var(--fb-surface);
+  color: var(--fb-primary);
   font-weight: 800;
 }
 
@@ -106,7 +126,7 @@
   height: 18rpx;
   margin-bottom: 16rpx;
   border-radius: 50%;
-  background: #2f755b;
+  background: var(--fb-primary);
   animation: pulse 1.1s ease-in-out infinite;
 }
 
@@ -116,7 +136,7 @@
 }
 
 .empty-title {
-  color: #405047;
+  color: var(--fb-ink);
   font-size: 28rpx;
   font-weight: 900;
 }
@@ -124,23 +144,19 @@
 .empty-desc {
   max-width: 520rpx;
   margin-top: 10rpx;
-  color: #8a938c;
-  font-size: 22rpx;
-  line-height: 1.6;
+  color: #66758d;
+  font-size: 23rpx;
+  line-height: 1.8;
 }
 
 .record-list {
   display: flex;
   flex-direction: column;
-  gap: 18rpx;
+  gap: 20rpx;
 }
 
 .record-card {
-  padding: 24rpx;
-  border: 1rpx solid rgba(34, 72, 54, 0.12);
-  border-radius: 24rpx;
-  background: rgba(255, 253, 247, 0.95);
-  box-shadow: 0 14rpx 34rpx rgba(40, 55, 45, 0.05);
+  padding: 28rpx 30rpx;
 }
 
 .record-top {
@@ -156,16 +172,19 @@
 }
 
 .record-type {
-  color: #2f755b;
-  font-size: 19rpx;
-  font-weight: 900;
-  letter-spacing: 1rpx;
+  display: inline-block;
+  padding: 3rpx 14rpx;
+  border-radius: 99rpx;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 20rpx;
+  font-weight: 700;
 }
 
 .record-name {
   overflow: hidden;
-  margin-top: 7rpx;
-  color: #1b2a22;
+  margin-top: 12rpx;
+  color: var(--fb-ink);
   font-size: 29rpx;
   font-weight: 900;
   text-overflow: ellipsis;
@@ -173,13 +192,16 @@
 }
 
 .record-result {
+  max-width: 48%;
   flex-shrink: 0;
+  overflow-wrap: anywhere;
   text-align: right;
 }
 
 .result-score {
-  font-size: 30rpx;
+  font-size: 36rpx;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .result-amount {
@@ -188,14 +210,14 @@
   font-weight: 800;
 }
 
-.result-win { color: #1d7a51; }
-.result-loss { color: #b4472f; }
-.result-even { color: #6f7971; }
+.result-win { color: var(--fb-primary); }
+.result-loss { color: #c74d38; }
+.result-even { color: #66758d; }
 
 .record-divider {
   height: 1rpx;
-  margin: 20rpx 0 16rpx;
-  background: #e8e9e2;
+  margin: 24rpx 0 18rpx;
+  background: var(--fb-line);
 }
 
 .record-line {
@@ -208,28 +230,27 @@
 .record-label {
   flex-shrink: 0;
   width: 104rpx;
-  color: #8b948d;
-  font-size: 21rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
+  line-height: 1.6;
 }
 
 .record-value {
   min-width: 0;
   flex: 1;
-  color: #526158;
-  font-size: 22rpx;
-  line-height: 1.5;
+  color: #64738b;
+  font-size: 23rpx;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .pagination {
-  margin-top: 26rpx;
-  padding: 24rpx;
-  border: 1rpx solid rgba(34, 72, 54, 0.12);
-  border-radius: 24rpx;
-  background: rgba(255, 253, 247, 0.94);
+  margin-top: 28rpx;
+  padding: 26rpx 30rpx;
 }
 
 .page-summary {
-  color: #667168;
+  color: #66758d;
   font-size: 22rpx;
   text-align: center;
 }
@@ -241,20 +262,44 @@
 }
 
 .page-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   flex: 1;
+  min-width: 0;
+  min-height: 48px;
   margin: 0;
-  border-radius: 16rpx;
-  background: #edf0e8;
-  color: #526158;
-  font-size: 24rpx;
+  padding: 20rpx 14rpx;
+  border-radius: 22rpx;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 26rpx;
   font-weight: 800;
+  line-height: 1.5;
 }
 
 .page-button-primary {
-  background: #1d6b4f;
-  color: #fffdf7;
+  background: var(--fb-primary);
+  color: var(--fb-surface);
 }
 
 .page-button[disabled] {
-  opacity: 0.42;
+  background: #eef1f7;
+  color: #98a4b8;
+}
+
+@media (max-width: 350px) {
+  .history-art {
+    width: 140rpx;
+    height: 140rpx;
+  }
+
+  .record-top {
+    gap: 14rpx;
+  }
+
+  .result-score {
+    font-size: 32rpx;
+  }
 }

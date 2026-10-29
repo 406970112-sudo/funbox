@@ -1,86 +1,40 @@
 <view class="home-page">
-  <view class="topbar">
-    <view>
-      <text class="eyebrow">FUNBOX · 牌局记分</text>
-      <text class="headline">今晚打牌，分数交给 FunBox</text>
+  <view class="home-hero">
+    <view class="topbar">
+      <view><text class="fb-brand">FunBox</text><text class="brand-caption">棋牌记分</text></view>
+      <view class="account-pill" bindtap="openProfile"><text class="account-dot">{{isLoggedIn ? '已' : '游'}}</text><text class="account-name">{{userName}}</text><text class="account-arrow">›</text></view>
     </view>
-    <view class="account-pill" bindtap="openProfile">
-      <text class="account-dot">{{isLoggedIn ? '已' : '游'}}</text>
-      <text class="account-name">{{userName}}</text>
+    <view class="hero-content">
+      <view class="hero-copy"><text class="headline">好友相聚，</text><text class="headline">每局<text class="headline-accent">都算数。</text></text></view>
+      <view class="hero-art art"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
   </view>
-
-  <view wx:if="{{backendStatus === 'offline'}}" class="offline-banner">
-    <text>牌局服务暂时离线，请检查网络后重试。</text>
-    <text class="offline-action" bindtap="checkBackend">重试</text>
-  </view>
-
+  <view wx:if="{{backendStatus === 'offline'}}" class="offline-banner"><text>牌局服务暂时离线，请检查网络后重试。</text><text class="offline-action" bindtap="checkBackend">重试</text></view>
   <view wx:if="{{activeSession}}" class="resume-card" bindtap="resumeRoom">
-    <view>
-      <text class="resume-kicker">上次加入的牌局</text>
-      <text class="resume-title">继续查看当前分数</text>
-    </view>
-    <text class="resume-arrow">›</text>
+    <view class="fb-score-mark">±</view>
+    <view class="resume-copy"><text class="resume-kicker">上次加入的牌局</text><text class="resume-title">继续查看当前分数</text></view>
+    <text class="fb-arrow">›</text>
   </view>
-
-  <view class="section-head">
-    <text class="section-title">选择牌局</text>
-    <text class="section-note">当前可用的记分场景</text>
-  </view>
-
+  <view class="section-head"><text class="section-title">选择牌局</text><text class="section-note">不同玩法，一样清楚</text></view>
   <view class="scene-grid">
     <view class="scene-card mahjong-card" bindtap="openMahjong">
-      <view class="scene-glow"></view>
-      <view class="mahjong-tiles">
-        <view class="tile tile-east"><text>東</text></view>
-        <view class="tile tile-dot"><view class="dot dot-one"></view><view class="dot dot-two"></view><view class="dot dot-three"></view></view>
-        <view class="tile tile-red"><text>中</text></view>
-      </view>
-      <view class="scene-copy">
-        <text class="scene-kicker">4 人牌局</text>
-        <text class="scene-title">麻将记分</text>
-        <text class="scene-desc">输家给分，赢家收分；散场自动算清输赢。</text>
-      </view>
-      <view class="scene-action">立即开局 <text>→</text></view>
+      <view class="scene-copy"><text class="scene-title">麻将记分</text><text class="scene-desc">4 人牌局 · 给分与结算</text><text class="scene-pill available-pill">已开放</text></view>
+      <view class="scene-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="scene-arrow">›</text>
     </view>
-
-    <view class="small-scenes">
-      <view class="scene-card small-card landlord-card" data-scene="斗地主" bindtap="showComingSoon">
-        <view class="playing-cards">
-          <view class="mini-card black-card">♠ A</view>
-          <view class="mini-card red-card">♥ K</view>
-        </view>
-        <view class="small-copy">
-          <text class="small-title">斗地主</text>
-          <text class="small-desc">三人对战记分</text>
-        </view>
-        <text class="coming-pill">敬请期待</text>
-      </view>
-
-      <view class="scene-card small-card zhajinhua-card" data-scene="炸金花" bindtap="showComingSoon">
-        <view class="playing-cards">
-          <view class="mini-card red-card">♦ Q</view>
-          <view class="mini-card gold-card">♣ J</view>
-        </view>
-        <view class="small-copy">
-          <text class="small-title">炸金花</text>
-          <text class="small-desc">轮流加注，实时看池</text>
-        </view>
-        <text class="coming-pill">敬请期待</text>
-      </view>
+    <view class="scene-card landlord-card" data-scene="斗地主" bindtap="showComingSoon">
+      <view class="scene-copy"><text class="scene-title">斗地主</text><text class="scene-desc">三人对战记分</text><text class="scene-pill">敬请期待</text></view>
+      <view class="scene-art art art-landlord"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
+    </view>
+    <view class="scene-card poker-card" data-scene="炸金花" bindtap="showComingSoon">
+      <view class="scene-copy"><text class="scene-title">炸金花</text><text class="scene-desc">轮流加注，实时看池</text><text class="scene-pill">敬请期待</text></view>
+      <view class="scene-art art art-poker"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
   </view>
-
-  <view class="principles">
+  <view class="principles fb-card">
     <text class="principles-title">记分原则</text>
-    <view class="principle-row"><text class="principle-index">01</text><text>只记录给分，赢家不需要给自己加分</text></view>
-    <view class="principle-row"><text class="principle-index">02</text><text>支持一次给多位玩家批量提交</text></view>
-    <view class="principle-row"><text class="principle-index">03</text><text>房主确认结算后，统一生成各家输赢</text></view>
+    <view class="principle-row"><text class="principle-index">01</text><text>只记录给分，赢家无需重复加分</text></view>
+    <view class="principle-row"><text class="principle-index">02</text><text>一次可给多位玩家批量提交</text></view>
+    <view class="principle-row"><text class="principle-index">03</text><text>房主确认结算，统一生成输赢</text></view>
   </view>
-
-  <view class="service-status status-{{backendStatus}}">
-    <view class="status-dot"></view>
-    <text>牌局服务 {{statusLabel}}</text>
-    <text class="status-message">{{backendMessage}}</text>
-  </view>
+  <view class="service-status status-{{backendStatus}}"><view class="status-dot"></view><text>牌局服务 {{statusLabel}}</text><text wx:if="{{backendStatus === 'offline'}}" class="status-message">{{backendMessage}}</text></view>
 </view>

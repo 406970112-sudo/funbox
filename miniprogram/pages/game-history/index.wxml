@@ -1,8 +1,11 @@
 <view class="history-page">
   <view class="history-hero">
-    <text class="hero-kicker">GAME ARCHIVE</text>
-    <text class="hero-title">最近牌局</text>
-    <text class="hero-copy">查看本人参与的已结算牌局，每页展示 5 场。</text>
+    <view class="hero-copy-wrap">
+      <text class="hero-kicker">FunBox / 牌局记录</text>
+      <text class="hero-title">最近牌局</text>
+      <text class="hero-copy">查看本人参与的已结算牌局，每页展示 5 场。</text>
+    </view>
+    <view class="history-art art art-score"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
   </view>
 
   <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
@@ -17,23 +20,23 @@
     </view>
   </scroll-view>
 
-  <view wx:if="{{loading}}" class="state-card">
+  <view wx:if="{{loading}}" class="state-card fb-card">
     <view class="state-pulse"></view>
     <text>正在加载牌局记录…</text>
   </view>
 
-  <view wx:elif="{{errorMessage}}" class="state-card state-error" bindtap="retryLoad">
+  <view wx:elif="{{errorMessage}}" class="state-card fb-card state-error" bindtap="retryLoad">
     <text>{{errorMessage}}</text>
     <text class="state-action">重新加载</text>
   </view>
 
-  <view wx:elif="{{!rooms.length}}" class="state-card">
+  <view wx:elif="{{!rooms.length}}" class="state-card fb-card">
     <text class="empty-title">这个时间范围内暂无牌局</text>
     <text class="empty-desc">可以切换时间范围，或完成一场牌局后再来看看。</text>
   </view>
 
   <view wx:else class="record-list">
-    <view class="record-card" wx:for="{{rooms}}" wx:key="id">
+    <view class="record-card fb-card" wx:for="{{rooms}}" wx:key="id">
       <view class="record-top">
         <view class="record-title-wrap">
           <text class="record-type">{{item.gameTypeText}}</text>
@@ -56,7 +59,7 @@
     </view>
   </view>
 
-  <view class="pagination">
+  <view class="pagination fb-card">
     <view class="page-summary">第 {{page}} / {{totalPages}} 页 · 共 {{total}} 场</view>
     <view class="page-actions">
       <button class="page-button" disabled="{{!hasPrev || loading}}" bindtap="previousPage">上一页</button>

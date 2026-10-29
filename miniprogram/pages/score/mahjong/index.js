@@ -1,19 +1,7 @@
-const { createScoreRoom, getScoreErrorMessage, joinScoreRoom, listNearbyScoreRooms } = require("../../../utils/score-api");
+const { createScoreRoom, getScoreErrorMessage, joinScoreRoom } = require("../../../utils/score-api");
 const { clearScoreSession, saveHostRoomPassword, saveScoreSession } = require("../../../utils/score-session");
 const { getAccessToken, getStoredUser } = require("../../../utils/auth");
-const { formatDistance } = require("../../../utils/score-format");
 const { extractInviteScene, extractInviteToken } = require("../../../utils/invite");
-
-function getLocation() {
-  return new Promise((resolve, reject) => {
-    wx.getLocation({
-      type: "gcj02",
-      isHighAccuracy: true,
-      success: resolve,
-      fail: reject,
-    });
-  });
-}
 
 Page({
   data: {
@@ -24,20 +12,11 @@ Page({
     hostNickname: "",
     roomPassword: "",
     confirmPassword: "",
-    publishNearby: true,
     creating: false,
     roomCode: "",
     joinPassword: "",
     nickname: "",
     joining: false,
-    showNearby: false,
-    nearbyLoading: false,
-    nearbyRadius: 3000,
-    nearbyRooms: [],
-    selectedNearby: null,
-    nearbyPassword: "",
-    nearbyNickname: "",
-    joiningNearby: false,
     errorMessage: "",
   },
 
@@ -55,7 +34,6 @@ Page({
       isLoggedIn: Boolean(getAccessToken()),
       userName: user && user.displayName ? user.displayName : "游客",
       nickname: this.data.nickname || (user && user.displayName ? user.displayName : ""),
-      nearbyNickname: this.data.nearbyNickname || (user && user.displayName ? user.displayName : ""),
     });
   },
 
@@ -71,10 +49,6 @@ Page({
     const field = event.currentTarget.dataset.field;
     const value = event.detail.value;
     this.setData({ [field]: value, errorMessage: "" });
-  },
-
-  toggleNearbyPublish(event) {
-    this.setData({ publishNearby: event.detail.value });
   },
 
   openAuth() {
@@ -93,31 +67,12 @@ Page({
 
     this.setData({ creating: true, errorMessage: "" });
     try {
-      let location = null;
-      if (this.data.publishNearby) {
-        try {
-          location = await getLocation();
-        } catch (error) {
-          const proceed = await new Promise((resolve) => {
-            wx.showModal({
-              title: "无法获取位置",
-              content: "房间仍可创建，但不会出现在附近房间列表。是否继续？",
-              confirmText: "继续创建",
-              success: (result) => resolve(result.confirm),
-              fail: () => resolve(false),
-            });
-          });
-          if (!proceed) return;
-        }
-      }
       const result = await createScoreRoom(getAccessToken(), {
         name: roomName,
         maxPlayers: 4,
         password,
         scene: "generic",
         gameType: "mahjong",
-        latitude: location ? location.latitude : undefined,
-        longitude: location ? location.longitude : undefined,
         ...(this.data.isLoggedIn ? {} : { displayName: hostNickname }),
       });
       saveHostRoomPassword(result.room.id, password);
@@ -186,74 +141,4 @@ Page({
     wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(result.room.id)}` });
   },
 
-  async searchNearby() {
-    if (this.data.nearbyLoading) return;
-    this.setData({ nearbyLoading: true, errorMessage: "" });
-    try {
-      const location = await getLocation();
-      const rooms = await listNearbyScoreRooms({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        radiusMeters: this.data.nearbyRadius,
-        gameType: "mahjong",
-      });
-      this.setData({
-        showNearby: true,
-        nearbyRooms: rooms.map((room) => ({
-          ...room,
-          distanceText: formatDistance(room.distanceMeters),
-        })),
-      });
-      if (!rooms.length) wx.showToast({ title: "附近暂无等待中的房间", icon: "none" });
-    } catch (error) {
-      this.setData({ errorMessage: error && error.errMsg ? "定位失败，请授权位置后重试。" : getScoreErrorMessage(error) });
-    } finally {
-      this.setData({ nearbyLoading: false });
-    }
-  },
-
-  changeNearbyRadius(event) {
-    this.setData({ nearbyRadius: Number(event.currentTarget.dataset.radius) });
-    this.searchNearby();
-  },
-
-  selectNearby(event) {
-    const room = this.data.nearbyRooms.find((item) => item.id === event.currentTarget.dataset.roomId);
-    if (!room) return;
-    this.setData({
-      selectedNearby: room,
-      nearbyPassword: "",
-      nearbyNickname: this.data.nickname || this.data.userName,
-    });
-  },
-
-  closeNearbySheet() {
-    this.setData({ selectedNearby: null, nearbyPassword: "", errorMessage: "" });
-  },
-
-  noop() {},
-
-  handleNearbyField(event) {
-    this.setData({ [event.currentTarget.dataset.field]: event.detail.value, errorMessage: "" });
-  },
-
-  async joinNearby() {
-    if (this.data.joiningNearby || !this.data.selectedNearby) return;
-    const displayName = this.data.nearbyNickname.trim();
-    if (!/^\d{4,6}$/.test(this.data.nearbyPassword)) return this.setData({ errorMessage: "请输入 4～6 位房间密码。" });
-    if (!displayName) return this.setData({ errorMessage: "请输入牌局内显示的昵称。" });
-    this.setData({ joiningNearby: true, errorMessage: "" });
-    try {
-      const result = await joinScoreRoom({
-        code: this.data.selectedNearby.code,
-        password: this.data.nearbyPassword,
-        displayName,
-      });
-      this.enterJoinedRoom(result);
-    } catch (error) {
-      this.setData({ errorMessage: getScoreErrorMessage(error) });
-    } finally {
-      this.setData({ joiningNearby: false });
-    }
-  },
 });

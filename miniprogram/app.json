@@ -10,23 +10,15 @@
   ],
   "window": {
     "navigationBarTitleText": "FunBox",
-    "navigationBarBackgroundColor": "#f4f1e8",
+    "navigationBarBackgroundColor": "#f5f7fa",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f4f1e8",
+    "backgroundColor": "#f5f7fa",
     "backgroundTextStyle": "dark"
   },
-  "permission": {
-    "scope.userLocation": {
-      "desc": "用于搜索附近正在等待加入的麻将房间"
-    }
-  },
-  "requiredPrivateInfos": [
-    "getLocation"
-  ],
   "tabBar": {
-    "color": "#7b847d",
-    "selectedColor": "#1d6b4f",
-    "backgroundColor": "#fffdf7",
+    "color": "#96a1b3",
+    "selectedColor": "#2d5bff",
+    "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [
       {
