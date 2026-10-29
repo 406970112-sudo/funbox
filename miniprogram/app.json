@@ -1,13 +1,28 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/index/index",
+    "pages/auth/index",
+    "pages/score/mahjong/index",
+    "pages/score/room/index"
   ],
   "window": {
     "navigationBarTitleText": "FunBox",
-    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarBackgroundColor": "#f4f1e8",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f5f7fa",
+    "backgroundColor": "#f4f1e8",
     "backgroundTextStyle": "dark"
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于搜索附近正在等待加入的麻将房间"
+    }
+  },
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
+  "networkTimeout": {
+    "request": 15000,
+    "connectSocket": 15000
   },
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"my-first-expo-app/backend/internal/realtime"
@@ -32,6 +33,7 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	mux.HandleFunc("POST /api/v1/score-rooms", api.withAuth(api.withAPIPipeline(api.handleCreateScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/join", api.withRateLimitedAPIPipeline("score-join", api.handleJoinScoreRoom))
 	mux.HandleFunc("POST /api/v1/score-rooms/invite-preview", api.withOptionalAuth(api.withRateLimitedAPIPipeline("score-join", api.handlePreviewScoreInvite)))
+	mux.HandleFunc("GET /api/v1/score-rooms/nearby", api.withRateLimitedAPIPipeline("score-nearby", api.handleNearbyScoreRooms))
 	mux.HandleFunc("GET /api/v1/score-rooms/history", api.withAuth(api.withAPIPipeline(api.handleScoreRoomHistory)))
 	mux.HandleFunc("GET /api/v1/score-rooms/{roomID}", api.withScoreActor(api.withAPIPipeline(api.handleGetScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/start", api.withScoreActor(api.withAPIPipeline(api.handleStartScoreRoom)))
@@ -128,6 +130,33 @@ func (s *Server) handlePreviewScoreInvite(w http.ResponseWriter, r *http.Request
 		userID = account.ID
 	}
 	result, err := s.scoreService.PreviewInvite(r.Context(), userID, input)
+	if err != nil {
+		s.writeScoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (s *Server) handleNearbyScoreRooms(w http.ResponseWriter, r *http.Request) {
+	latitude, latitudeErr := strconv.ParseFloat(strings.TrimSpace(r.URL.Query().Get("latitude")), 64)
+	longitude, longitudeErr := strconv.ParseFloat(strings.TrimSpace(r.URL.Query().Get("longitude")), 64)
+	if latitudeErr != nil || longitudeErr != nil {
+		s.writeScoreError(w, score.ErrLocationInvalid)
+		return
+	}
+	radiusMeters := 0
+	if raw := strings.TrimSpace(r.URL.Query().Get("radiusMeters")); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil {
+			s.writeScoreError(w, score.ErrInvalidInput)
+			return
+		}
+		radiusMeters = value
+	}
+	result, err := s.scoreService.ListNearbyRooms(r.Context(), score.NearbyRoomsInput{
+		Latitude: latitude, Longitude: longitude, RadiusMeters: radiusMeters,
+		GameType: score.GameType(strings.TrimSpace(r.URL.Query().Get("gameType"))),
+	})
 	if err != nil {
 		s.writeScoreError(w, err)
 		return
@@ -357,6 +386,12 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": "score_action_forbidden"})
 	case errors.Is(err, score.ErrInviteInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invite_invalid"})
+	case errors.Is(err, score.ErrPasswordRequired):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_room_password_required"})
+	case errors.Is(err, score.ErrPasswordInvalid):
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": "score_room_password_invalid"})
+	case errors.Is(err, score.ErrLocationInvalid):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_location_invalid"})
 	case errors.Is(err, score.ErrRoomNotFound), errors.Is(err, score.ErrRoundNotFound), errors.Is(err, score.ErrGiftBatchNotFound), errors.Is(err, score.ErrParticipantMissing), errors.Is(err, score.ErrInvalidZJHHand):
 		writeJSON(w, http.StatusNotFound, map[string]any{"error": "score_not_found"})
 	case errors.Is(err, score.ErrRoomFull):
@@ -371,6 +406,8 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invalid_input"})
 	case errors.Is(err, score.ErrBalancesNotZero):
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": "score_balances_not_zero"})
+	case errors.Is(err, score.ErrCapExceeded):
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": "score_cap_exceeded"})
 	case errors.Is(err, score.ErrNotYourTurn):
 		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_not_your_turn"})
 	case errors.Is(err, score.ErrForceOpenLocked):

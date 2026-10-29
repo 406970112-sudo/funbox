@@ -1,0 +1,46 @@
+<view class="auth-page">
+  <view class="brand">
+    <view class="brand-mark">牌</view>
+    <view>
+      <text class="brand-title">FunBox 账号</text>
+      <text class="brand-subtitle">登录后可创建和管理自己的牌局</text>
+    </view>
+  </view>
+
+  <view class="auth-card">
+    <view class="tabs">
+      <view class="tab {{mode === 'login' ? 'tab-active' : ''}}" data-mode="login" bindtap="switchMode">登录</view>
+      <view class="tab {{mode === 'register' ? 'tab-active' : ''}}" data-mode="register" bindtap="switchMode">注册</view>
+    </view>
+
+    <view class="field">
+      <text class="field-label">手机号</text>
+      <input class="field-input" data-field="username" maxlength="11" type="number" placeholder="11 位手机号" value="{{username}}" bindinput="handleInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">密码</text>
+      <input class="field-input" data-field="password" maxlength="72" password="{{true}}" placeholder="{{mode === 'register' ? '至少 8 位，包含字母和数字' : '请输入密码'}}" value="{{password}}" bindinput="handleInput" />
+    </view>
+
+    <block wx:if="{{mode === 'register'}}">
+      <view class="field">
+        <text class="field-label">昵称</text>
+        <input class="field-input" data-field="displayName" maxlength="32" placeholder="用于牌局内显示" value="{{displayName}}" bindinput="handleInput" />
+      </view>
+      <view class="field">
+        <text class="field-label">密保问题</text>
+        <input class="field-input" data-field="securityQuestion" maxlength="64" placeholder="例如：我的第一所学校？" value="{{securityQuestion}}" bindinput="handleInput" />
+      </view>
+      <view class="field">
+        <text class="field-label">密保答案</text>
+        <input class="field-input" data-field="securityAnswer" maxlength="64" placeholder="忘记密码时使用" value="{{securityAnswer}}" bindinput="handleInput" />
+      </view>
+    </block>
+
+    <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
+    <button class="primary-button" loading="{{loading}}" disabled="{{loading}}" bindtap="handleSubmit">
+      {{mode === 'register' ? '注册并登录' : '登录'}}
+    </button>
+    <text class="guest-tip">游客无需登录，也可以扫码或通过房间码加入牌局。</text>
+  </view>
+</view>

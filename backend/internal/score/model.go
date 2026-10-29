@@ -27,6 +27,14 @@ const (
 	SceneZhaJinHua ScoreScene = "zhajinhua"
 )
 
+type GameType string
+
+const (
+	GameTypeGeneric   GameType = "generic"
+	GameTypeMahjong   GameType = "mahjong"
+	GameTypeZhaJinHua GameType = "zhajinhua"
+)
+
 type ParticipantRole string
 
 const (
@@ -65,9 +73,12 @@ type RoomSnapshot struct {
 	Name                 string            `json:"name"`
 	Mode                 string            `json:"mode"`
 	Scene                ScoreScene        `json:"scene"`
+	GameType             GameType          `json:"gameType"`
 	Status               RoomStatus        `json:"status"`
 	MaxPlayers           int               `json:"maxPlayers"`
 	CentsPerPoint        int64             `json:"centsPerPoint"`
+	CapPoints            int64             `json:"capPoints"`
+	RequiresPassword     bool              `json:"requiresPassword"`
 	Version              int64             `json:"version"`
 	EventSequence        int64             `json:"eventSequence"`
 	CreatedAt            time.Time         `json:"createdAt"`
@@ -85,6 +96,9 @@ type RoomSnapshot struct {
 	Settlement           *Settlement       `json:"settlement,omitempty"`
 	SelfParticipantID    string            `json:"selfParticipantId,omitempty"`
 	InviteToken          string            `json:"inviteToken,omitempty"`
+	PasswordHash         string            `json:"-"`
+	Latitude             *float64          `json:"-"`
+	Longitude            *float64          `json:"-"`
 }
 
 type Participant struct {

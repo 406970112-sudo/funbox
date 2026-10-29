@@ -1,31 +1,40 @@
-const { API_BASE_URL } = require("../../config/index");
 const { request } = require("../../utils/request");
+const { getAccessToken, getStoredUser } = require("../../utils/auth");
+const { getScoreSession } = require("../../utils/score-session");
 
 Page({
   data: {
-    apiBaseUrl: API_BASE_URL,
     checking: false,
     backendStatus: "idle",
     statusLabel: "检测中",
-    backendMessage: "等待连接",
+    backendMessage: "正在连接牌局服务…",
+    isLoggedIn: false,
+    userName: "游客",
+    activeSession: null,
   },
 
   onLoad() {
     this.checkBackend();
   },
 
-  async checkBackend() {
-    if (this.data.checking) {
-      return;
-    }
+  onShow() {
+    const user = getStoredUser();
+    const session = getScoreSession();
+    this.setData({
+      isLoggedIn: Boolean(getAccessToken()),
+      userName: user && user.displayName ? user.displayName : "游客",
+      activeSession: session,
+    });
+  },
 
+  async checkBackend() {
+    if (this.data.checking) return;
     this.setData({
       checking: true,
       backendStatus: "checking",
       statusLabel: "检测中",
-      backendMessage: "正在连接统一后端…",
+      backendMessage: "正在连接牌局服务…",
     });
-
     try {
       const result = await request({ path: "/system/ping" });
       this.setData({
@@ -39,8 +48,25 @@ Page({
         checking: false,
         backendStatus: "offline",
         statusLabel: "离线",
-        backendMessage: error.message || "后端连接失败",
+        backendMessage: error.message || "牌局服务连接失败",
       });
     }
+  },
+
+  openMahjong() {
+    wx.navigateTo({ url: "/pages/score/mahjong/index" });
+  },
+
+  showComingSoon(event) {
+    wx.showToast({ title: `${event.currentTarget.dataset.scene}敬请期待`, icon: "none" });
+  },
+
+  openAuth() {
+    wx.navigateTo({ url: "/pages/auth/index" });
+  },
+
+  resumeRoom() {
+    if (!this.data.activeSession) return;
+    wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(this.data.activeSession.roomId)}` });
   },
 });

@@ -69,6 +69,11 @@ func (s *Store) migrate() error {
 			status TEXT NOT NULL CHECK(status IN ('waiting', 'active', 'settled', 'cancelled')),
 			max_players INTEGER NOT NULL CHECK(max_players BETWEEN 2 AND 8),
 			cents_per_point INTEGER NOT NULL CHECK(cents_per_point BETWEEN 1 AND 1000000),
+			cap_points INTEGER NOT NULL DEFAULT 0 CHECK(cap_points BETWEEN 0 AND 2147483647),
+			game_type TEXT NOT NULL DEFAULT 'generic' CHECK(game_type IN ('generic', 'mahjong', 'zhajinhua')),
+			password_hash TEXT NOT NULL DEFAULT '',
+			latitude REAL,
+			longitude REAL,
 			version INTEGER NOT NULL CHECK(version >= 1),
 			event_sequence INTEGER NOT NULL DEFAULT 0 CHECK(event_sequence >= 0),
 			created_at INTEGER NOT NULL,
@@ -250,6 +255,61 @@ func (s *Store) migrate() error {
 			return fmt.Errorf("run score database migration: %w", err)
 		}
 	}
+	for _, column := range []struct {
+		name       string
+		definition string
+	}{
+		{name: "cap_points", definition: "INTEGER NOT NULL DEFAULT 0 CHECK(cap_points BETWEEN 0 AND 2147483647)"},
+		{name: "game_type", definition: "TEXT NOT NULL DEFAULT 'generic' CHECK(game_type IN ('generic', 'mahjong', 'zhajinhua'))"},
+		{name: "password_hash", definition: "TEXT NOT NULL DEFAULT ''"},
+		{name: "latitude", definition: "REAL"},
+		{name: "longitude", definition: "REAL"},
+	} {
+		if err := s.ensureRoomColumn(column.name, column.definition); err != nil {
+			return err
+		}
+	}
+	if _, err := s.db.Exec(`
+		UPDATE score_rooms
+		SET game_type = 'zhajinhua'
+		WHERE game_type = 'generic' AND id IN (
+			SELECT room_id FROM score_room_game_configs WHERE scene = 'zhajinhua'
+		)
+	`); err != nil {
+		return fmt.Errorf("backfill score room game type: %w", err)
+	}
+	if _, err := s.db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_score_rooms_nearby
+		ON score_rooms(status, game_type, latitude, longitude)
+	`); err != nil {
+		return fmt.Errorf("create score nearby index: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) ensureRoomColumn(name, definition string) error {
+	rows, err := s.db.Query(`PRAGMA table_info(score_rooms)`)
+	if err != nil {
+		return fmt.Errorf("inspect score room schema: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid, notNull, primaryKey int
+		var columnName, columnType string
+		var defaultValue any
+		if err := rows.Scan(&cid, &columnName, &columnType, &notNull, &defaultValue, &primaryKey); err != nil {
+			return fmt.Errorf("scan score room schema: %w", err)
+		}
+		if columnName == name {
+			return nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate score room schema: %w", err)
+	}
+	if _, err := s.db.Exec(`ALTER TABLE score_rooms ADD COLUMN ` + name + ` ` + definition); err != nil {
+		return fmt.Errorf("add score room column %s: %w", name, err)
+	}
 	return nil
 }
 
@@ -258,16 +318,18 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 	var status string
 	var createdAt, expiresAt int64
 	var startedAt, settledAt, cancelledAt sql.NullInt64
+	var latitude, longitude sql.NullFloat64
 	err := q.QueryRowContext(ctx, `
 		SELECT id, code, host_user_id, name, mode, status, max_players,
-			cents_per_point, version, event_sequence, created_at, started_at,
-			settled_at, cancelled_at, expires_at
+			cents_per_point, cap_points, game_type, password_hash, latitude, longitude,
+			version, event_sequence, created_at, started_at, settled_at, cancelled_at, expires_at
 		FROM score_rooms WHERE id = ?
 	`, roomID).Scan(
 		&snapshot.ID, &snapshot.Code, &snapshot.HostUserID, &snapshot.Name,
 		&snapshot.Mode, &status, &snapshot.MaxPlayers, &snapshot.CentsPerPoint,
-		&snapshot.Version, &snapshot.EventSequence, &createdAt, &startedAt,
-		&settledAt, &cancelledAt, &expiresAt,
+		&snapshot.CapPoints, &snapshot.GameType, &snapshot.PasswordHash, &latitude, &longitude,
+		&snapshot.Version, &snapshot.EventSequence, &createdAt, &startedAt, &settledAt,
+		&cancelledAt, &expiresAt,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RoomSnapshot{}, ErrRoomNotFound
@@ -281,6 +343,11 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 	snapshot.SettledAt = nullableUnixTime(settledAt)
 	snapshot.CancelledAt = nullableUnixTime(cancelledAt)
 	snapshot.ExpiresAt = time.Unix(expiresAt, 0).UTC()
+	snapshot.RequiresPassword = snapshot.PasswordHash != ""
+	if latitude.Valid && longitude.Valid {
+		snapshot.Latitude = &latitude.Float64
+		snapshot.Longitude = &longitude.Float64
+	}
 
 	scene, settings, err := loadRoomGameConfig(ctx, q, roomID)
 	if err != nil {

@@ -2,8 +2,11 @@ package score
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -44,6 +47,56 @@ func TestOpenStoreCreatesScoreSchema(t *testing.T) {
 		if name != table {
 			t.Fatalf("table lookup = %q, want %q", name, table)
 		}
+	}
+}
+
+func TestOpenStoreMigratesLegacyRoomSchema(t *testing.T) {
+	databasePath := filepath.Join(t.TempDir(), "legacy-score.db")
+	db, err := sql.Open("sqlite", databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = db.Exec(`
+		CREATE TABLE score_rooms (
+			id TEXT PRIMARY KEY,
+			code TEXT NOT NULL CHECK(length(code) = 6),
+			host_user_id TEXT NOT NULL,
+			name TEXT NOT NULL CHECK(length(name) BETWEEN 1 AND 40),
+			mode TEXT NOT NULL CHECK(mode IN ('generic')),
+			status TEXT NOT NULL CHECK(status IN ('waiting', 'active', 'settled', 'cancelled')),
+			max_players INTEGER NOT NULL CHECK(max_players BETWEEN 2 AND 8),
+			cents_per_point INTEGER NOT NULL CHECK(cents_per_point BETWEEN 1 AND 1000000),
+			version INTEGER NOT NULL CHECK(version >= 1),
+			event_sequence INTEGER NOT NULL DEFAULT 0 CHECK(event_sequence >= 0),
+			created_at INTEGER NOT NULL,
+			started_at INTEGER,
+			settled_at INTEGER,
+			cancelled_at INTEGER,
+			expires_at INTEGER NOT NULL
+		);
+		INSERT INTO score_rooms (
+			id, code, host_user_id, name, mode, status, max_players,
+			cents_per_point, version, event_sequence, created_at, expires_at
+		) VALUES ('legacy-room', '123456', 'user-1', '旧牌局', 'generic', 'waiting', 4, 50, 1, 0, 1, 2);
+	`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err := OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	room, err := store.loadRoomSnapshot(context.Background(), store.db, "legacy-room")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if room.GameType != GameTypeGeneric || room.CapPoints != 0 || room.RequiresPassword || room.Latitude != nil || room.Longitude != nil {
+		t.Fatalf("migrated legacy room = %+v", room)
 	}
 }
 
@@ -196,6 +249,95 @@ func TestServiceDirectGiftBatchUsesDefaultRateAndSettlesWithOverride(t *testing.
 	}
 }
 
+func TestServiceMahjongPasswordCapNearbyAndLockedSettlementRate(t *testing.T) {
+	service := newTestService(t)
+	ctx := context.Background()
+	latitude, longitude := 30.5728, 104.0668
+	created, err := service.CreateRoom(ctx, "host-user", "Host", CreateRoomInput{
+		Name: "周五麻将", GameType: GameTypeMahjong, Password: "1234",
+		MaxPlayers: 4, CentsPerPoint: 200, CapPoints: 5,
+		Latitude: &latitude, Longitude: &longitude,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Room.GameType != GameTypeMahjong || !created.Room.RequiresPassword ||
+		created.Room.CapPoints != 5 || created.Room.CentsPerPoint != 200 {
+		t.Fatalf("mahjong room = %+v", created.Room)
+	}
+	encodedRoom, err := json.Marshal(created.Room)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encodedRoom), "1234") || strings.Contains(string(encodedRoom), created.Room.PasswordHash) {
+		t.Fatal("room response leaked room password material")
+	}
+	if _, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest"}); !errors.Is(err, ErrPasswordRequired) {
+		t.Fatalf("missing password error = %v", err)
+	}
+	if _, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest", Password: "9999"}); !errors.Is(err, ErrPasswordInvalid) {
+		t.Fatalf("invalid password error = %v", err)
+	}
+	guest, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest", Password: "1234"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	nearby, err := service.ListNearbyRooms(ctx, NearbyRoomsInput{
+		Latitude: latitude + 0.001, Longitude: longitude, RadiusMeters: 3000, GameType: GameTypeMahjong,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(nearby.Rooms) != 1 || nearby.Rooms[0].Code != created.Room.Code || !nearby.Rooms[0].RequiresPassword {
+		t.Fatalf("nearby rooms = %+v", nearby.Rooms)
+	}
+	farAway, err := service.ListNearbyRooms(ctx, NearbyRoomsInput{
+		Latitude: latitude + 0.2, Longitude: longitude, RadiusMeters: 1000, GameType: GameTypeMahjong,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(farAway.Rooms) != 0 {
+		t.Fatalf("far nearby rooms = %+v", farAway.Rooms)
+	}
+	defaults, err := service.CreateRoom(ctx, "default-host", "Default Host", CreateRoomInput{
+		Name: "默认麻将", GameType: GameTypeMahjong, Password: "5678",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if defaults.Room.MaxPlayers != 4 || defaults.Room.CentsPerPoint != 100 || defaults.Room.CapPoints != 10 {
+		t.Fatalf("mahjong defaults = %+v", defaults.Room)
+	}
+
+	room, err := service.StartRoom(ctx, created.Actor, commandMeta("start-mahjong", guest.Room))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.StartRound(ctx, created.Actor, commandMeta("mahjong-round", room), StartRoundInput{}); !errors.Is(err, ErrInvalidState) {
+		t.Fatalf("mahjong start round error = %v, want ErrInvalidState", err)
+	}
+	if _, err := service.SubmitGifts(ctx, created.Actor, commandMeta("over-cap", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 6}},
+	}); !errors.Is(err, ErrCapExceeded) {
+		t.Fatalf("cap error = %v", err)
+	}
+	room, err = service.SubmitGifts(ctx, created.Actor, commandMeta("at-cap", room), SubmitGiftsInput{
+		Allocations: []GiftAllocationInput{{ToParticipantID: guest.Actor.ParticipantID, Points: 5}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	settled, err := service.SettleRoom(ctx, created.Actor, commandMeta("settle-mahjong", room), SettleRoomInput{CentsPerPoint: 999})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if settled.CentsPerPoint != 200 || settled.Settlement == nil || len(settled.Settlement.Transfers) != 1 ||
+		settled.Settlement.Transfers[0].AmountCents != 1000 {
+		t.Fatalf("mahjong settlement = %+v", settled)
+	}
+}
+
 func TestServiceZhaJinHuaTurnPotForceOpenAndSettlement(t *testing.T) {
 	service := newTestService(t)
 	ctx := context.Background()
@@ -207,7 +349,7 @@ func TestServiceZhaJinHuaTurnPotForceOpenAndSettlement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if created.Room.Scene != SceneZhaJinHua || created.Room.ZhaJinHuaSettings.ForceOpenThreshold != 2 {
+	if created.Room.Scene != SceneZhaJinHua || created.Room.GameType != GameTypeZhaJinHua || created.Room.ZhaJinHuaSettings.ForceOpenThreshold != 2 {
 		t.Fatalf("created zha jin hua room = %+v", created.Room)
 	}
 	guest, err := service.JoinRoom(ctx, JoinRoomInput{Code: created.Room.Code, DisplayName: "Guest"})

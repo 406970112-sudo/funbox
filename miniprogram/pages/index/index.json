@@ -1,4 +1,5 @@
 {
-  "navigationBarTitleText": "FunBox",
+  "navigationBarTitleText": "FunBox 牌局",
+  "navigationBarBackgroundColor": "#f5f1e7",
   "enablePullDownRefresh": false
 }

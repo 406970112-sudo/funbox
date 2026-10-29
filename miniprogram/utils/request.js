@@ -16,9 +16,9 @@ function getErrorMessage(response) {
   return `请求失败（HTTP ${response.statusCode}）`;
 }
 
-function request({ path, method = "GET", data, auth = false, header = {} }) {
+function request({ path, method = "GET", data, auth = false, bearerToken = "", header = {} }) {
   return new Promise((resolve, reject) => {
-    const token = auth ? wx.getStorageSync(ACCESS_TOKEN_STORAGE_KEY) : "";
+    const token = bearerToken || (auth ? wx.getStorageSync(ACCESS_TOKEN_STORAGE_KEY) : "");
     const requestHeader = {
       "content-type": "application/json",
       ...header,
@@ -40,9 +40,11 @@ function request({ path, method = "GET", data, auth = false, header = {} }) {
           return;
         }
 
+        const body = response && response.data;
         const error = new Error(getErrorMessage(response));
         error.statusCode = response.statusCode;
         error.response = response;
+        error.code = body && body.error ? body.error : "";
         reject(error);
       },
       fail(error) {

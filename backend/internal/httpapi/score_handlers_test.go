@@ -110,6 +110,78 @@ func TestScoreHTTPFlow(t *testing.T) {
 	}
 }
 
+func TestScoreHTTPMahjongPasswordAndNearbyFlow(t *testing.T) {
+	tempDir := t.TempDir()
+	databasePath := filepath.Join(tempDir, "funbox.db")
+	userStore, err := user.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = userStore.Close() })
+	socialStore, err := social.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = socialStore.Close() })
+	scoreStore, err := score.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = scoreStore.Close() })
+
+	cfg := config.Config{
+		Auth:     config.AuthConfig{TokenTTL: time.Hour},
+		Server:   config.ServerConfig{Host: "127.0.0.1", ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second},
+		Security: config.SecurityConfig{MaxRequestBodyBytes: 64 << 10, RateLimitMax: 100, RateLimitWindow: time.Minute},
+		Storage:  config.StorageConfig{AvatarDir: filepath.Join(tempDir, "avatars"), MaxAvatarBytes: 1 << 20},
+	}
+	signingKey := []byte(strings.Repeat("s", 32))
+	authService := auth.NewService(userStore, signingKey, time.Hour)
+	scoreService := score.NewService(scoreStore, signingKey, 7*24*time.Hour)
+	httpServer := NewServer(cfg, nil, nil, authService, socialStore, nil, scoreService)
+	testServer := httptest.NewServer(httpServer.Handler)
+	t.Cleanup(testServer.Close)
+
+	registered := scoreRequestJSON[sessionResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/auth/register", map[string]any{
+		"username": "13800138003", "password": "password-123", "displayName": "Host",
+		"securityQuestion": "Question?", "securityAnswer": "Answer",
+	}, "", http.StatusCreated)
+	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
+		"name": "Nearby Mahjong", "maxPlayers": 4, "centsPerPoint": 100,
+		"capPoints": 8, "password": "2468", "scene": "generic", "gameType": "mahjong",
+		"latitude": 30.5728, "longitude": 104.0668,
+	}, registered.AccessToken, http.StatusCreated)
+
+	nearby := scoreRequestJSON[score.NearbyRoomsResult](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/score-rooms/nearby?latitude=30.5728&longitude=104.0668&radiusMeters=3000&gameType=mahjong",
+		nil, "", http.StatusOK)
+	if len(nearby.Rooms) != 1 || nearby.Rooms[0].Code != created.Room.Code || !nearby.Rooms[0].RequiresPassword {
+		t.Fatalf("nearby response = %+v", nearby)
+	}
+	scoreRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
+		"code": created.Room.Code, "displayName": "Guest", "password": "0000",
+	}, "", http.StatusForbidden)
+	joined := scoreRequestJSON[score.JoinRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/join", map[string]any{
+		"code": created.Room.Code, "displayName": "Guest", "password": "2468",
+	}, "", http.StatusCreated)
+	if joined.Room.ID != created.Room.ID || joined.Room.GameType != score.GameTypeMahjong {
+		t.Fatalf("joined room = %+v", joined.Room)
+	}
+	room := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/start",
+		map[string]any{"clientActionId": "start-nearby", "expectedRoomVersion": joined.Room.Version},
+		registered.AccessToken, http.StatusOK).Room
+	overCap := scoreRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID+"/gifts",
+		map[string]any{
+			"clientActionId": "over-cap", "expectedRoomVersion": room.Version,
+			"allocations": []map[string]any{{"toParticipantId": joined.Actor.ParticipantID, "points": 9}},
+		}, registered.AccessToken, http.StatusUnprocessableEntity)
+	if overCap["error"] != "score_cap_exceeded" {
+		t.Fatalf("over cap response = %+v", overCap)
+	}
+}
+
 func TestScoreHTTPZhaJinHuaFlow(t *testing.T) {
 	tempDir := t.TempDir()
 	databasePath := filepath.Join(tempDir, "funbox.db")

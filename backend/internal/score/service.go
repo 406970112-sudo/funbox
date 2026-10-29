@@ -10,11 +10,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -33,6 +36,10 @@ var (
 	ErrNotYourTurn        = errors.New("not the current player's turn")
 	ErrForceOpenLocked    = errors.New("force open is not available yet")
 	ErrInvalidZJHHand     = errors.New("zha jin hua hand not found")
+	ErrPasswordRequired   = errors.New("score room password is required")
+	ErrPasswordInvalid    = errors.New("score room password is invalid")
+	ErrCapExceeded        = errors.New("score gift cap exceeded")
+	ErrLocationInvalid    = errors.New("score location is invalid")
 )
 
 type Actor struct {
@@ -52,6 +59,11 @@ type CreateRoomInput struct {
 	MaxPlayers         int        `json:"maxPlayers"`
 	CentsPerPoint      int64      `json:"centsPerPoint"`
 	Scene              ScoreScene `json:"scene,omitempty"`
+	GameType           GameType   `json:"gameType,omitempty"`
+	Password           string     `json:"password,omitempty"`
+	CapPoints          int64      `json:"capPoints,omitempty"`
+	Latitude           *float64   `json:"latitude,omitempty"`
+	Longitude          *float64   `json:"longitude,omitempty"`
 	ForceOpenThreshold int        `json:"forceOpenThreshold,omitempty"`
 }
 
@@ -65,6 +77,7 @@ type JoinRoomInput struct {
 	Code        string `json:"code,omitempty"`
 	InviteToken string `json:"inviteToken,omitempty"`
 	DisplayName string `json:"displayName"`
+	Password    string `json:"password,omitempty"`
 }
 
 type JoinRoomResult struct {
@@ -80,6 +93,32 @@ type InvitePreviewInput struct {
 type InvitePreviewResult struct {
 	Room              RoomSnapshot `json:"room"`
 	SelfParticipantID string       `json:"selfParticipantId,omitempty"`
+}
+
+type NearbyRoomsInput struct {
+	Latitude     float64  `json:"latitude"`
+	Longitude    float64  `json:"longitude"`
+	RadiusMeters int      `json:"radiusMeters"`
+	GameType     GameType `json:"gameType,omitempty"`
+	Limit        int      `json:"limit,omitempty"`
+}
+
+type NearbyRoomSummary struct {
+	ID               string   `json:"id"`
+	Code             string   `json:"code"`
+	Name             string   `json:"name"`
+	HostDisplayName  string   `json:"hostDisplayName"`
+	GameType         GameType `json:"gameType"`
+	ActivePlayers    int      `json:"activePlayers"`
+	MaxPlayers       int      `json:"maxPlayers"`
+	CentsPerPoint    int64    `json:"centsPerPoint"`
+	CapPoints        int64    `json:"capPoints"`
+	RequiresPassword bool     `json:"requiresPassword"`
+	DistanceMeters   int      `json:"distanceMeters"`
+}
+
+type NearbyRoomsResult struct {
+	Rooms []NearbyRoomSummary `json:"rooms"`
 }
 
 type StartRoundInput struct {
@@ -150,9 +189,7 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	displayName = strings.TrimSpace(displayName)
 	input.Name = strings.TrimSpace(input.Name)
 	input.Scene = ScoreScene(strings.TrimSpace(string(input.Scene)))
-	if input.Scene == "" {
-		input.Scene = SceneGeneric
-	}
+	input.GameType = GameType(strings.TrimSpace(string(input.GameType)))
 	if input.CentsPerPoint == 0 {
 		input.CentsPerPoint = 100
 	}
@@ -162,8 +199,52 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	if displayName == "" || len([]rune(displayName)) > 48 || input.Name == "" || len([]rune(input.Name)) > 40 {
 		return CreateRoomResult{}, fmt.Errorf("room or display name: %w", ErrInvalidInput)
 	}
+	if input.GameType == "" {
+		if input.Scene == SceneZhaJinHua {
+			input.GameType = GameTypeZhaJinHua
+		} else {
+			input.GameType = GameTypeGeneric
+		}
+	}
+	switch input.GameType {
+	case GameTypeMahjong:
+		input.Scene = SceneGeneric
+		input.ForceOpenThreshold = 0
+		if input.MaxPlayers == 0 {
+			input.MaxPlayers = 4
+		}
+		if input.CapPoints == 0 {
+			input.CapPoints = 10
+		}
+		if input.Password == "" {
+			return CreateRoomResult{}, ErrPasswordRequired
+		}
+	case GameTypeZhaJinHua:
+		input.Scene = SceneZhaJinHua
+	case GameTypeGeneric:
+		if input.Scene == "" {
+			input.Scene = SceneGeneric
+		}
+		if input.Scene != SceneGeneric {
+			return CreateRoomResult{}, fmt.Errorf("room game type and scene: %w", ErrInvalidInput)
+		}
+	default:
+		return CreateRoomResult{}, fmt.Errorf("room game type: %w", ErrInvalidInput)
+	}
 	if input.MaxPlayers < 2 || input.MaxPlayers > 8 || input.CentsPerPoint < 1 || input.CentsPerPoint > 1_000_000 {
 		return CreateRoomResult{}, fmt.Errorf("room settings: %w", ErrInvalidInput)
+	}
+	if input.CapPoints < 0 || input.CapPoints > 2_147_483_647 {
+		return CreateRoomResult{}, fmt.Errorf("room cap: %w", ErrInvalidInput)
+	}
+	if input.Password != "" && !validRoomPassword(input.Password) {
+		return CreateRoomResult{}, fmt.Errorf("room password: %w", ErrInvalidInput)
+	}
+	if (input.Latitude == nil) != (input.Longitude == nil) {
+		return CreateRoomResult{}, ErrLocationInvalid
+	}
+	if input.Latitude != nil && (!validLatitude(*input.Latitude) || !validLongitude(*input.Longitude)) {
+		return CreateRoomResult{}, ErrLocationInvalid
 	}
 	switch input.Scene {
 	case SceneGeneric:
@@ -179,8 +260,17 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 		return CreateRoomResult{}, fmt.Errorf("room scene: %w", ErrInvalidInput)
 	}
 
+	passwordHash := ""
+	if input.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return CreateRoomResult{}, fmt.Errorf("hash room password: %w", err)
+		}
+		passwordHash = string(hash)
+	}
+
 	for attempt := 0; attempt < 12; attempt++ {
-		result, retry, err := s.createRoomWithCode(ctx, hostUserID, displayName, input)
+		result, retry, err := s.createRoomWithCode(ctx, hostUserID, displayName, input, passwordHash)
 		if !retry {
 			return result, err
 		}
@@ -188,7 +278,7 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	return CreateRoomResult{}, fmt.Errorf("generate unique room code: %w", ErrInvalidState)
 }
 
-func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayName string, input CreateRoomInput) (CreateRoomResult, bool, error) {
+func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayName string, input CreateRoomInput, passwordHash string) (CreateRoomResult, bool, error) {
 	code, err := randomRoomCode()
 	if err != nil {
 		return CreateRoomResult{}, false, err
@@ -204,9 +294,12 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO score_rooms (
 			id, code, host_user_id, name, mode, status, max_players,
-			cents_per_point, version, event_sequence, created_at, expires_at
-		) VALUES (?, ?, ?, ?, 'generic', 'waiting', ?, ?, 1, 0, ?, ?)
-	`, roomID, code, hostUserID, input.Name, input.MaxPlayers, input.CentsPerPoint, now.Unix(), now.Add(s.guestTTL).Unix())
+			cents_per_point, cap_points, game_type, password_hash, latitude, longitude,
+			version, event_sequence, created_at, expires_at
+		) VALUES (?, ?, ?, ?, 'generic', 'waiting', ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+	`, roomID, code, hostUserID, input.Name, input.MaxPlayers, input.CentsPerPoint,
+		input.CapPoints, input.GameType, passwordHash, input.Latitude, input.Longitude,
+		now.Unix(), now.Add(s.guestTTL).Unix())
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "unique") {
 			return CreateRoomResult{}, true, nil
@@ -274,13 +367,13 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 		return JoinRoomResult{}, fmt.Errorf("begin join score room: %w", err)
 	}
 	defer tx.Rollback()
-	var roomID, status string
+	var roomID, status, passwordHash string
 	var maxPlayers, activePlayers int
 	err = tx.QueryRowContext(ctx, `
-		SELECT r.id, r.status, r.max_players,
+		SELECT r.id, r.status, r.max_players, r.password_hash,
 			(SELECT COUNT(*) FROM score_participants p WHERE p.room_id = r.id AND p.status = 'active')
 		FROM score_rooms r WHERE r.code = ? AND r.status IN ('waiting', 'active')
-	`, code).Scan(&roomID, &status, &maxPlayers, &activePlayers)
+	`, code).Scan(&roomID, &status, &maxPlayers, &passwordHash, &activePlayers)
 	if errors.Is(err, sql.ErrNoRows) {
 		return JoinRoomResult{}, ErrRoomNotFound
 	}
@@ -292,6 +385,14 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	}
 	if activePlayers >= maxPlayers {
 		return JoinRoomResult{}, ErrRoomFull
+	}
+	if passwordHash != "" {
+		if input.Password == "" {
+			return JoinRoomResult{}, ErrPasswordRequired
+		}
+		if bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(input.Password)) != nil {
+			return JoinRoomResult{}, ErrPasswordInvalid
+		}
 	}
 	participantID := uuid.NewString()
 	_, err = tx.ExecContext(ctx, `
@@ -366,6 +467,96 @@ func (s *Service) PreviewInvite(ctx context.Context, userID string, input Invite
 	return result, nil
 }
 
+func (s *Service) ListNearbyRooms(ctx context.Context, input NearbyRoomsInput) (NearbyRoomsResult, error) {
+	if !validLatitude(input.Latitude) || !validLongitude(input.Longitude) {
+		return NearbyRoomsResult{}, ErrLocationInvalid
+	}
+	if input.GameType == "" {
+		input.GameType = GameTypeMahjong
+	}
+	if input.GameType != GameTypeMahjong && input.GameType != GameTypeGeneric {
+		return NearbyRoomsResult{}, fmt.Errorf("nearby game type: %w", ErrInvalidInput)
+	}
+	if input.RadiusMeters == 0 {
+		input.RadiusMeters = 3000
+	}
+	if input.RadiusMeters < 100 || input.RadiusMeters > 20_000 {
+		return NearbyRoomsResult{}, fmt.Errorf("nearby radius: %w", ErrInvalidInput)
+	}
+	if input.Limit == 0 {
+		input.Limit = 20
+	}
+	if input.Limit < 1 || input.Limit > 50 {
+		return NearbyRoomsResult{}, fmt.Errorf("nearby limit: %w", ErrInvalidInput)
+	}
+
+	latitudeDelta := float64(input.RadiusMeters) / 111_320
+	longitudeScale := math.Cos(input.Latitude * math.Pi / 180)
+	if math.Abs(longitudeScale) < 0.0001 {
+		longitudeScale = 0.0001
+	}
+	longitudeDelta := float64(input.RadiusMeters) / (111_320 * math.Abs(longitudeScale))
+	rows, err := s.store.db.QueryContext(ctx, `
+		SELECT r.id, r.code, r.name, r.game_type, r.max_players, r.cents_per_point,
+			r.cap_points, CASE WHEN r.password_hash <> '' THEN 1 ELSE 0 END,
+			r.latitude, r.longitude, h.display_name,
+			(SELECT COUNT(*) FROM score_participants p
+			 WHERE p.room_id = r.id AND p.status = 'active')
+		FROM score_rooms r
+		JOIN score_participants h
+			ON h.room_id = r.id AND h.role = 'host' AND h.status = 'active'
+		WHERE r.status = 'waiting' AND r.game_type = ?
+			AND r.latitude IS NOT NULL AND r.longitude IS NOT NULL
+			AND r.latitude BETWEEN ? AND ? AND r.longitude BETWEEN ? AND ?
+		ORDER BY r.created_at DESC
+		LIMIT 100
+	`, input.GameType,
+		input.Latitude-latitudeDelta, input.Latitude+latitudeDelta,
+		input.Longitude-longitudeDelta, input.Longitude+longitudeDelta,
+	)
+	if err != nil {
+		return NearbyRoomsResult{}, fmt.Errorf("query nearby score rooms: %w", err)
+	}
+	defer rows.Close()
+
+	rooms := make([]NearbyRoomSummary, 0)
+	for rows.Next() {
+		var room NearbyRoomSummary
+		var latitude, longitude float64
+		var requiresPassword int
+		if err := rows.Scan(
+			&room.ID, &room.Code, &room.Name, &room.GameType, &room.MaxPlayers,
+			&room.CentsPerPoint, &room.CapPoints, &requiresPassword,
+			&latitude, &longitude, &room.HostDisplayName, &room.ActivePlayers,
+		); err != nil {
+			return NearbyRoomsResult{}, fmt.Errorf("scan nearby score room: %w", err)
+		}
+		if room.ActivePlayers >= room.MaxPlayers {
+			continue
+		}
+		distance := haversineMeters(input.Latitude, input.Longitude, latitude, longitude)
+		if distance > float64(input.RadiusMeters) {
+			continue
+		}
+		room.RequiresPassword = requiresPassword == 1
+		room.DistanceMeters = int(math.Round(distance))
+		rooms = append(rooms, room)
+	}
+	if err := rows.Err(); err != nil {
+		return NearbyRoomsResult{}, fmt.Errorf("iterate nearby score rooms: %w", err)
+	}
+	sort.Slice(rooms, func(i, j int) bool {
+		if rooms[i].DistanceMeters != rooms[j].DistanceMeters {
+			return rooms[i].DistanceMeters < rooms[j].DistanceMeters
+		}
+		return rooms[i].Code < rooms[j].Code
+	})
+	if len(rooms) > input.Limit {
+		rooms = rooms[:input.Limit]
+	}
+	return NearbyRoomsResult{Rooms: rooms}, nil
+}
+
 func (s *Service) StartRoom(ctx context.Context, actor Actor, meta CommandMeta) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "room.start", nil, func(tx *sql.Tx, room RoomSnapshot) error {
 		if actor.Role != ParticipantHost {
@@ -384,7 +575,7 @@ func (s *Service) StartRound(ctx context.Context, actor Actor, meta CommandMeta,
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
-		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil {
+		if room.GameType == GameTypeMahjong || room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil {
 			return ErrInvalidState
 		}
 		now := s.now().UTC().Unix()
@@ -749,6 +940,9 @@ func (s *Service) SubmitGifts(ctx context.Context, actor Actor, meta CommandMeta
 			totalPoints += allocation.Points
 			allocations[index] = allocation
 		}
+		if room.CapPoints > 0 && totalPoints > room.CapPoints {
+			return ErrCapExceeded
+		}
 
 		var number int
 		if err := tx.QueryRowContext(ctx, `
@@ -974,6 +1168,9 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 		}
 		centsPerPoint := input.CentsPerPoint
 		if centsPerPoint == 0 {
+			centsPerPoint = room.CentsPerPoint
+		}
+		if room.GameType == GameTypeMahjong {
 			centsPerPoint = room.CentsPerPoint
 		}
 		if centsPerPoint < 1 || centsPerPoint > 1_000_000 {
@@ -1424,6 +1621,37 @@ func bumpRoomAndAppendEvent(ctx context.Context, tx *sql.Tx, roomID, actorID, ev
 		return 0, fmt.Errorf("append score room event: %w", err)
 	}
 	return sequence, nil
+}
+
+func validRoomPassword(value string) bool {
+	if len(value) < 4 || len(value) > 6 {
+		return false
+	}
+	for _, char := range value {
+		if char < '0' || char > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func validLatitude(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0) && value >= -90 && value <= 90
+}
+
+func validLongitude(value float64) bool {
+	return !math.IsNaN(value) && !math.IsInf(value, 0) && value >= -180 && value <= 180
+}
+
+func haversineMeters(lat1, lon1, lat2, lon2 float64) float64 {
+	const earthRadiusMeters = 6_371_000.0
+	lat1Radians := lat1 * math.Pi / 180
+	lat2Radians := lat2 * math.Pi / 180
+	deltaLat := (lat2 - lat1) * math.Pi / 180
+	deltaLon := (lon2 - lon1) * math.Pi / 180
+	a := math.Sin(deltaLat/2)*math.Sin(deltaLat/2) +
+		math.Cos(lat1Radians)*math.Cos(lat2Radians)*math.Sin(deltaLon/2)*math.Sin(deltaLon/2)
+	return earthRadiusMeters * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 }
 
 func (s *Service) signToken(claims tokenClaims, ttl time.Duration) (string, error) {

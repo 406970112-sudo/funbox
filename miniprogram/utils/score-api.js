@@ -1,0 +1,164 @@
+const { request } = require("./request");
+const { clearSession, getAccessToken } = require("./auth");
+
+const SCORE_ERROR_MESSAGES = {
+  score_action_forbidden: "当前身份不能执行这个操作。",
+  score_action_id_reused: "操作标识已失效，请刷新后重试。",
+  score_balances_not_zero: "所有玩家的累计分数没有归零，暂时不能结算。",
+  score_cap_exceeded: "本次给分超过房间封顶。",
+  score_force_open_locked: "当前还不能强开。",
+  score_invite_invalid: "这不是有效的房间邀请，请让房主重新分享。",
+  score_invalid_input: "请检查房间设置或分数输入。",
+  score_invalid_state: "房间状态已经变化，请刷新后重试。",
+  invalid_request_body: "服务端尚未更新，暂不支持当前房间参数。请部署最新后端后重试。",
+  score_location_invalid: "位置信息无效，请重新定位。",
+  score_nickname_conflict: "这个昵称已被房间内其他玩家使用。",
+  score_not_found: "房间不存在或已经失效。",
+  score_not_your_turn: "还没轮到你操作。",
+  rate_limited: "操作太频繁，请稍后再试。",
+  score_request_failed: "记分服务暂时不可用，请稍后重试。",
+  score_room_forbidden: "你不在这个房间中。",
+  score_room_full: "房间人数已满。",
+  score_room_password_invalid: "房间密码不正确。",
+  score_room_password_required: "请输入房间密码。",
+  score_version_conflict: "房间已有新操作，数据已为你刷新。",
+  unauthorized: "身份已失效，请重新加入房间。",
+};
+
+function bearerHeader(credential) {
+  return credential && credential.token
+    ? { Authorization: `Bearer ${credential.token}` }
+    : {};
+}
+
+async function scoreRequest(options) {
+  try {
+    return await request(options);
+  } catch (error) {
+    const body = error && error.response && error.response.data;
+    error.scoreCode = (body && body.error) || error.code || "";
+    error.snapshot = body && body.room ? body.room : null;
+    throw error;
+  }
+}
+
+function createScoreRoom(token, input) {
+  return scoreRequest({
+    path: "/score-rooms",
+    method: "POST",
+    bearerToken: token,
+    data: input,
+  });
+}
+
+function joinScoreRoom(input) {
+  return scoreRequest({
+    path: "/score-rooms/join",
+    method: "POST",
+    data: input,
+  });
+}
+
+async function previewScoreInvite(inviteToken) {
+  const token = getAccessToken();
+  try {
+    return await scoreRequest({
+      path: "/score-rooms/invite-preview",
+      method: "POST",
+      bearerToken: token,
+      data: { inviteToken },
+    });
+  } catch (error) {
+    if (!token || error.statusCode !== 401) throw error;
+    clearSession();
+    return scoreRequest({
+      path: "/score-rooms/invite-preview",
+      method: "POST",
+      data: { inviteToken },
+    });
+  }
+}
+
+function getScoreRoom(credential, roomId) {
+  return scoreRequest({
+    path: `/score-rooms/${encodeURIComponent(roomId)}`,
+    bearerToken: credential.token,
+    header: bearerHeader(credential),
+  }).then((response) => response.room);
+}
+
+function listNearbyScoreRooms({ latitude, longitude, radiusMeters = 3000, gameType = "mahjong" }) {
+  return scoreRequest({
+    path: `/score-rooms/nearby?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&radiusMeters=${encodeURIComponent(radiusMeters)}&gameType=${encodeURIComponent(gameType)}`,
+  }).then((response) => response.rooms || []);
+}
+
+function startScoreRoom(credential, room) {
+  return mutateRoom(credential, room, "/start");
+}
+
+function submitScoreGifts(credential, room, allocations) {
+  return mutateRoom(credential, room, "/gifts", { allocations });
+}
+
+function settleScoreRoom(credential, room) {
+  return mutateRoom(credential, room, "/settle", {});
+}
+
+function issueScoreInviteToken(credential, roomId) {
+  return scoreRequest({
+    path: `/score-rooms/${encodeURIComponent(roomId)}/invite-token`,
+    method: "POST",
+    bearerToken: credential.token,
+    header: bearerHeader(credential),
+    data: {},
+  }).then((response) => response.inviteToken);
+}
+
+function createRealtimeTicket(credential, roomId) {
+  return scoreRequest({
+    path: `/score-rooms/${encodeURIComponent(roomId)}/realtime-ticket`,
+    method: "POST",
+    bearerToken: credential.token,
+    header: bearerHeader(credential),
+    data: {},
+  }).then((response) => response.ticket);
+}
+
+async function mutateRoom(credential, room, suffix, extra) {
+  const response = await scoreRequest({
+    path: `/score-rooms/${encodeURIComponent(room.id)}${suffix}`,
+    method: "POST",
+    bearerToken: credential.token,
+    header: bearerHeader(credential),
+    data: {
+      clientActionId: createClientActionId(),
+      expectedRoomVersion: room.version,
+      ...(extra || {}),
+    },
+  });
+  return response.room;
+}
+
+function createClientActionId() {
+  return `score-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function getScoreErrorMessage(error) {
+  return (error && SCORE_ERROR_MESSAGES[error.scoreCode]) || (error && error.message) || "记分操作失败，请稍后重试。";
+}
+
+module.exports = {
+  createRealtimeTicket,
+  createScoreRoom,
+  getScoreErrorMessage,
+  getScoreRoom,
+  issueScoreInviteToken,
+  joinScoreRoom,
+  listNearbyScoreRooms,
+  mutateRoom,
+  previewScoreInvite,
+  settleScoreRoom,
+  startScoreRoom,
+  submitScoreGifts,
+};

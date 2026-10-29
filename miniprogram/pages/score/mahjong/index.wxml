@@ -1,0 +1,172 @@
+<view class="mahjong-page">
+  <view class="hero">
+    <view class="hero-top">
+      <view class="back-button" bindtap="goBack">‹</view>
+      <view class="account-link" bindtap="openAuth">
+        <text class="account-mark">{{isLoggedIn ? '已' : '游'}}</text>
+        <text>{{userName}}</text>
+      </view>
+    </view>
+    <view class="hero-content">
+      <view>
+        <text class="hero-kicker">MAHJONG SCORE</text>
+        <text class="hero-title">麻将领风，账目分明</text>
+        <text class="hero-desc">赢家不用自己加分。输家一次选择收款人，批量给分。</text>
+      </view>
+      <view class="hero-tiles">
+        <view class="hero-tile">東</view>
+        <view class="hero-tile red">中</view>
+        <view class="hero-tile">發</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="mode-tabs">
+    <view class="mode-tab {{mode === 'create' ? 'active' : ''}}" data-mode="create" bindtap="switchMode">创建房间</view>
+    <view class="mode-tab {{mode === 'join' ? 'active' : ''}}" data-mode="join" bindtap="switchMode">加入房间</view>
+  </view>
+
+  <view wx:if="{{mode === 'create'}}" class="form-card">
+    <view class="form-head">
+      <text class="form-title">房主设置</text>
+      <text class="form-badge">4 人麻将</text>
+    </view>
+
+    <view class="field">
+      <text class="field-label">房间名</text>
+      <input class="field-input" data-field="roomName" maxlength="40" placeholder="例如：周五老友局" value="{{roomName}}" bindinput="handleField" />
+    </view>
+
+    <view class="field-row">
+      <view class="field half">
+        <text class="field-label">房间密码</text>
+        <input class="field-input" data-field="roomPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{roomPassword}}" bindinput="handleField" />
+      </view>
+      <view class="field half">
+        <text class="field-label">确认密码</text>
+        <input class="field-input" data-field="confirmPassword" maxlength="6" type="number" placeholder="再次输入" value="{{confirmPassword}}" bindinput="handleField" />
+      </view>
+    </view>
+
+    <view class="field-row">
+      <view class="field half">
+        <text class="field-label">每分金额</text>
+        <view class="money-input">
+          <text class="money-prefix">¥</text>
+          <input class="money-field" data-field="rateInput" type="digit" placeholder="1" value="{{rateInput}}" bindinput="handleField" />
+          <text class="money-suffix">元/分</text>
+        </view>
+        <text class="field-help">{{rateText}}</text>
+      </view>
+      <view class="field half">
+        <text class="field-label">每局封顶</text>
+        <view class="money-input">
+          <input class="money-field" data-field="capInput" type="number" placeholder="10" value="{{capInput}}" bindinput="handleField" />
+          <text class="money-suffix">分</text>
+        </view>
+        <text class="field-help">{{capText}}</text>
+      </view>
+    </view>
+
+    <view class="switch-row">
+      <view>
+        <text class="switch-title">公开到附近房间</text>
+        <text class="switch-desc">创建时获取一次位置，只展示距离，不展示精确坐标。</text>
+      </view>
+      <switch color="#1d6b4f" checked="{{publishNearby}}" bindchange="toggleNearbyPublish" />
+    </view>
+
+    <view class="rule-strip">
+      <text class="rule-number">01</text>
+      <text>一次给分可填写多名收款人，提交后立即入账。</text>
+    </view>
+    <view class="rule-strip">
+      <text class="rule-number">02</text>
+      <text>每名付款方单次给分不得超过 {{capText}}。</text>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
+    <button class="primary-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createRoom">
+      {{isLoggedIn ? '创建麻将房间' : '登录后创建房间'}}
+    </button>
+  </view>
+
+  <view wx:else class="join-stack">
+    <view class="quick-actions">
+      <view class="quick-card scan-card" bindtap="scanToJoin">
+        <view class="quick-icon">⌗</view>
+        <view>
+          <text class="quick-title">扫一扫加入</text>
+          <text class="quick-desc">扫描房主展示的邀请二维码</text>
+        </view>
+      </view>
+      <view class="quick-card nearby-card" bindtap="searchNearby">
+        <view class="quick-icon">⌖</view>
+        <view>
+          <text class="quick-title">附近房间</text>
+          <text class="quick-desc">{{nearbyLoading ? '正在搜索…' : '查看 3 公里内等待中的房间'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="form-card join-card">
+      <view class="form-head">
+        <text class="form-title">输入房间码</text>
+        <text class="form-badge">游客可加入</text>
+      </view>
+      <view class="field">
+        <text class="field-label">6 位房间码</text>
+        <input class="field-input code-input" data-field="roomCode" maxlength="6" type="number" placeholder="000000" value="{{roomCode}}" bindinput="handleField" />
+      </view>
+      <view class="field">
+        <text class="field-label">房间密码</text>
+        <input class="field-input" data-field="joinPassword" maxlength="6" type="number" placeholder="请输入房主设置的密码" value="{{joinPassword}}" bindinput="handleField" />
+      </view>
+      <view class="field">
+        <text class="field-label">你的昵称</text>
+        <input class="field-input" data-field="nickname" maxlength="48" placeholder="牌局内显示的名字" value="{{nickname}}" bindinput="handleField" />
+      </view>
+      <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
+      <button class="primary-button" loading="{{joining}}" disabled="{{joining}}" bindtap="joinByCode">加入牌局</button>
+    </view>
+
+    <view wx:if="{{showNearby}}" class="nearby-results">
+      <view class="nearby-head">
+        <text class="form-title">附近房间</text>
+        <view class="radius-row">
+          <text class="radius-pill {{nearbyRadius === 1000 ? 'selected' : ''}}" data-radius="1000" bindtap="changeNearbyRadius">1km</text>
+          <text class="radius-pill {{nearbyRadius === 3000 ? 'selected' : ''}}" data-radius="3000" bindtap="changeNearbyRadius">3km</text>
+          <text class="radius-pill {{nearbyRadius === 5000 ? 'selected' : ''}}" data-radius="5000" bindtap="changeNearbyRadius">5km</text>
+        </view>
+      </view>
+      <view wx:if="{{!nearbyRooms.length}}" class="empty-nearby">附近暂时没有等待中的房间</view>
+      <view wx:for="{{nearbyRooms}}" wx:key="id" class="nearby-room" data-room-id="{{item.id}}" bindtap="selectNearby">
+        <view class="room-main">
+          <text class="room-name">{{item.name}}</text>
+          <text class="room-meta">房主 {{item.hostDisplayName}} · {{item.activePlayers}}/{{item.maxPlayers}} 人 · {{item.distanceText}}</text>
+          <text class="room-rule">{{item.rateText}} · 封顶 {{item.capText}}</text>
+        </view>
+        <text class="room-code">{{item.code}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{selectedNearby}}" class="sheet-mask" bindtap="closeNearbySheet">
+    <view class="join-sheet" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <text class="sheet-kicker">加入 {{selectedNearby.name}}</text>
+      <text class="sheet-meta">{{selectedNearby.rateText}} · 封顶 {{selectedNearby.capText}} · {{selectedNearby.distanceText}}</text>
+      <view class="field">
+        <text class="field-label">房间密码</text>
+        <input class="field-input" data-field="nearbyPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{nearbyPassword}}" bindinput="handleNearbyField" />
+      </view>
+      <view class="field">
+        <text class="field-label">你的昵称</text>
+        <input class="field-input" data-field="nearbyNickname" maxlength="48" placeholder="牌局内显示的名字" value="{{nearbyNickname}}" bindinput="handleNearbyField" />
+      </view>
+      <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
+      <button class="primary-button" loading="{{joiningNearby}}" disabled="{{joiningNearby}}" bindtap="joinNearby">确认加入</button>
+      <button class="sheet-cancel" bindtap="closeNearbySheet">取消</button>
+    </view>
+  </view>
+</view>
