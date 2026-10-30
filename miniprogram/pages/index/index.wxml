@@ -12,16 +12,16 @@
   <view class="section-head"><text class="section-title">选择牌局</text><text class="section-note">不同玩法，一样清楚</text></view>
   <view class="scene-grid">
     <view class="scene-card mahjong-card" bindtap="openMahjong">
-      <view class="scene-copy"><text class="scene-title">麻将记分</text><text class="scene-desc">4 人牌局 · 给分与结算</text><text class="scene-pill available-pill">已开放</text></view>
-      <view class="scene-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="scene-arrow">›</text>
+      <view class="scene-copy"><text class="scene-title">麻将记分</text><text class="scene-desc">4 人牌局 · 给分与结算</text></view>
+      <view class="scene-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
     <view class="scene-card poker-card" bindtap="openPoker">
-      <view class="scene-copy"><text class="scene-title">炸金花</text><text class="scene-desc">轮流加注，实时看池</text><text class="scene-pill available-pill">已开放</text></view>
+      <view class="scene-copy"><text class="scene-title">炸金花</text><text class="scene-desc">轮流加注，实时看池</text></view>
       <view class="scene-art art art-poker"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
     <view class="scene-card general-card" bindtap="openGeneral">
-      <view class="scene-copy"><text class="scene-title">通用记分</text><text class="scene-desc">灵活人数 · 给分与结算</text><text class="scene-pill">已开放</text></view>
-      <image class="scene-art general-art" src="/assets/illustrations/general-score.png" mode="aspectFit" aria-hidden="true" /><text class="scene-arrow">›</text>
+      <view class="scene-copy"><text class="scene-title">通用记分</text><text class="scene-desc">灵活人数 · 给分与结算</text></view>
+      <image class="scene-art general-art" src="/assets/illustrations/general-score.png" mode="aspectFit" aria-hidden="true" />
     </view>
   </view>
 </view>

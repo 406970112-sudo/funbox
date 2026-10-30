@@ -1,2 +1,8 @@
 @import "../mahjong/index.wxss";
-.poker-settings{margin-top:32rpx}.poker-settings .field{margin-top:20rpx}
+.poker-settings{margin-top:32rpx}
+.poker-settings .field{margin-top:20rpx}
+.poker-settings .rule-title{display:block;line-height:1.5}
+.poker-settings .rule-title-spaced{margin-top:28rpx}
+.poker-settings .rule-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:20rpx}
+.poker-settings .rule-grid .field{min-width:0}
+.poker-settings .rule-grid .field-label{display:flex;align-items:flex-end;height:38rpx;white-space:nowrap}

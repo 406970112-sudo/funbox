@@ -45,6 +45,11 @@
   height: 200rpx;
 }
 
+.history-entry-card,
+.feedback-card {
+  height: 168rpx;
+}
+
 .identity-card {
   display: flex;
   align-items: center;
@@ -98,23 +103,6 @@
   margin-top: 5rpx;
   color: #8490a4;
   font-size: 23rpx;
-}
-
-.loading-dot {
-  flex-shrink: 0;
-  width: 12rpx;
-  height: 12rpx;
-  border-radius: 50%;
-  background: #2d5bff;
-  animation: profile-pulse 1s ease-in-out infinite;
-}
-
-@keyframes profile-pulse {
-  50% {
-    opacity: .3;
-  }
-
-
 }
 
 .guest-card {
@@ -172,13 +160,11 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
-  padding: 22rpx 28rpx;
+  padding: 18rpx 28rpx;
   margin-top: 24rpx;
   box-sizing: border-box;
   overflow: hidden;
   border-radius: 32rpx;
-  background: #2d5bff;
-  color: #fff;
 }
 
 .history-entry-copy {
@@ -196,24 +182,20 @@
 .history-entry-desc {
   max-width: 310rpx;
   margin-top: 8rpx;
-  color: #dce7ff;
+  color: #7b879c;
   font-size: 22rpx;
 }
 
 .history-art {
-  width: 155rpx;
-  height: 155rpx;
-}
-
-.history-entry-card .fb-arrow {
-  color: #fff;
+  width: 118rpx;
+  height: 118rpx;
 }
 
 .feedback-card {
   display: flex;
   align-items: center;
   gap: 12rpx;
-  padding: 24rpx 28rpx;
+  padding: 18rpx 28rpx;
   margin-top: 24rpx;
 }
 
@@ -234,8 +216,8 @@
 }
 
 .feedback-art {
-  width: 126rpx;
-  height: 126rpx;
+  width: 118rpx;
+  height: 118rpx;
 }
 
 .profile-footer {
@@ -262,14 +244,10 @@
     height: 250rpx;
   }
 
-  .feedback-art {
-    width: 100rpx;
-    height: 100rpx;
-  }
-
+  .feedback-art,
   .history-art {
-    width: 130rpx;
-    height: 130rpx;
+    width: 108rpx;
+    height: 108rpx;
   }
 
 

@@ -205,6 +205,20 @@ func TestScoreHTTPZJHV2CapShowdownAndExplicitNoBonus(t *testing.T) {
 	}
 }
 
+func TestScoreHTTPZJHV2CreatesUnlimitedRoom(t *testing.T) {
+	srv := newZJHV2HTTPServer(t)
+	client, base := srv.Client(), srv.URL+"/api/v1/score-rooms"
+	settings := map[string]any{"rulesVersion": 2, "antePoints": 1, "maxBetPoints": 10, "compareThreshold": 3, "baoziBonusPoints": 10, "shunjinBonusPoints": 5}
+	created := scoreRequestJSON[map[string]any](t, client, http.MethodPost, base, map[string]any{
+		"name": "不限人数金花局", "displayName": "房主", "maxPlayers": 0, "centsPerPoint": 100,
+		"scene": "zhajinhua", "gameType": "zhajinhua", "zhaJinHuaSettings": settings,
+	}, "", http.StatusCreated)
+	room := object(t, created, "room")
+	if room["maxPlayers"] != float64(0) || room["centsPerPoint"] != float64(100) {
+		t.Fatalf("unlimited room creation lost defaults: %v", room)
+	}
+}
+
 func newZJHV2HTTPServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	temp := t.TempDir()

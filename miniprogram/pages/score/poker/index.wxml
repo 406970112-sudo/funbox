@@ -10,7 +10,7 @@
     <view class="hero-content">
       <view>
         <text class="hero-title">好友围桌，轻松记分</text>
-        <text class="hero-desc">2～12 人牌局 · 每一场，账都清楚</text>
+        <text class="hero-desc">2 人起牌局 · 人数不限 · 每一场，账都清楚</text>
       </view>
       <view class="entry-art art art-poker"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
@@ -50,18 +50,21 @@
     </view>
 
     <view class="poker-settings">
-<text class="form-title">基础规则</text>
-<view class="field"><text class="field-label">人数上限（2～12）</text><input class="field-input" type="number" data-field="maxPlayers" value="{{maxPlayers}}" bindinput="handleField" disabled="{{creating}}" /></view>
-<view class="field"><text class="field-label">底注（分）</text><input class="field-input" type="number" data-field="antePoints" value="{{antePoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
-<view class="field"><text class="field-label">每分金额（元，创建后固定）</text><input class="field-input" type="digit" data-field="rate" value="{{rate}}" bindinput="handleField" disabled="{{creating}}" /></view>
-<view class="field"><text class="field-label">基准单注封顶（看牌按 2 倍）</text><input class="field-input" type="number" data-field="maxBetPoints" value="{{maxBetPoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
-<view class="field"><text class="field-label">剩余几人可比牌（2～人数上限）</text><input class="field-input" type="number" data-field="compareThreshold" value="{{compareThreshold}}" bindinput="handleField" disabled="{{creating}}" /></view>
-<text class="form-title">喜钱 · 每人支付</text>
-<view class="field"><text class="field-label">豹子（分）</text><input class="field-input" type="number" data-field="baoziBonusPoints" value="{{baoziBonusPoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
-<view class="field"><text class="field-label">顺金（分）</text><input class="field-input" type="number" data-field="shunjinBonusPoints" value="{{shunjinBonusPoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
-</view><view class="score-note">
+      <text class="form-title rule-title">基础规则</text>
+      <view class="rule-grid">
+        <view class="field"><text class="field-label">底注（分）</text><input class="field-input" type="number" data-field="antePoints" value="{{antePoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
+        <view class="field"><text class="field-label">每分金额（元）</text><input class="field-input" type="digit" data-field="rate" value="{{rate}}" bindinput="handleField" disabled="{{creating}}" /></view>
+        <view class="field"><text class="field-label">单注封顶（分）</text><input class="field-input" type="number" data-field="maxBetPoints" value="{{maxBetPoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
+        <view class="field"><text class="field-label">剩余可比牌人数</text><input class="field-input" type="number" data-field="compareThreshold" value="{{compareThreshold}}" bindinput="handleField" disabled="{{creating}}" /></view>
+      </view>
+      <text class="form-title rule-title rule-title-spaced">喜钱 · 每人支付</text>
+      <view class="rule-grid">
+        <view class="field"><text class="field-label">豹子（分）</text><input class="field-input" type="number" data-field="baoziBonusPoints" value="{{baoziBonusPoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
+        <view class="field"><text class="field-label">顺金（分）</text><input class="field-input" type="number" data-field="shunjinBonusPoints" value="{{shunjinBonusPoints}}" bindinput="handleField" disabled="{{creating}}" /></view>
+      </view>
+    </view><view class="score-note">
       <text class="score-note-icon" aria-hidden="true">i</text>
-      <text>封顶前不限圈，封顶后最多再走 3 圈</text>
+      <text>每分金额创建后固定 · 看牌按 2 倍 · 封顶后再走 3 圈</text>
     </view>
 
     <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>

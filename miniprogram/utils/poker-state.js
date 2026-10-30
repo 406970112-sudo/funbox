@@ -1,9 +1,9 @@
 const {formatCNY,formatScore,parseYuanToCents}=require('./score-format');
 function createPokerInput(d){
- const integer=(key,min,max)=>{const value=Number(d[key]);if(!/^\d+$/.test(String(d[key]))||!Number.isSafeInteger(value)||value<min||value>max)throw new Error('请检查人数和规则整数范围。');return value;};
+ const integer=(key,min,max=Number.MAX_SAFE_INTEGER)=>{const value=Number(d[key]);if(!/^\d+$/.test(String(d[key]))||!Number.isSafeInteger(value)||value<min||value>max)throw new Error('请检查规则整数范围。');return value;};
  const centsPerPoint=parseYuanToCents(d.rate);if(!centsPerPoint)throw new Error('每分金额需大于 0，最多两位小数。');
  const antePoints=integer('antePoints',1,1000000),maxBetPoints=integer('maxBetPoints',antePoints,1000000);
- return {name:d.roomName.trim(),displayName:d.hostNickname.trim(),password:d.roomPassword,scene:'generic',gameType:'zhajinhua',maxPlayers:integer('maxPlayers',2,12),centsPerPoint,zhaJinHuaSettings:{rulesVersion:2,antePoints,maxBetPoints,compareThreshold:integer('compareThreshold',2,Number(d.maxPlayers)),baoziBonusPoints:integer('baoziBonusPoints',0,1000000),shunjinBonusPoints:integer('shunjinBonusPoints',0,1000000)}};
+ return {name:d.roomName.trim(),displayName:d.hostNickname.trim(),password:d.roomPassword,scene:'generic',gameType:'zhajinhua',maxPlayers:0,centsPerPoint,zhaJinHuaSettings:{rulesVersion:2,antePoints,maxBetPoints,compareThreshold:integer('compareThreshold',2),baoziBonusPoints:integer('baoziBonusPoints',0,1000000),shunjinBonusPoints:integer('shunjinBonusPoints',0,1000000)}};
 }
 function derivePoker(room,selfId,flags={}){
  const hand=room.currentZhaJinHuaHand||null,settings=(hand&&hand.settings)||room.zhaJinHuaSettings||{},phase=hand&&hand.phase||'',participants=room.participants||[];

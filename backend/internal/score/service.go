@@ -284,7 +284,7 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 		input.ForceOpenThreshold = settings.CompareThreshold
 		maxPlayersLimit = 12
 	}
-	flexiblePlayers := input.GameType == GameTypeGeneric && input.MaxPlayers == 0
+	flexiblePlayers := input.MaxPlayers == 0 && (input.GameType == GameTypeGeneric || (input.GameType == GameTypeZhaJinHua && input.ZhaJinHuaSettings != nil))
 	if (!flexiblePlayers && (input.MaxPlayers < 2 || input.MaxPlayers > maxPlayersLimit)) || input.CentsPerPoint < 1 || input.CentsPerPoint > 1_000_000 {
 		return CreateRoomResult{}, fmt.Errorf("room settings: %w", ErrInvalidInput)
 	}
@@ -307,7 +307,7 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 		if input.ForceOpenThreshold == 0 {
 			input.ForceOpenThreshold = 2
 		}
-		if input.ForceOpenThreshold < 2 || input.ForceOpenThreshold > input.MaxPlayers {
+		if input.ForceOpenThreshold < 2 || (input.MaxPlayers > 0 && input.ForceOpenThreshold > input.MaxPlayers) {
 			return CreateRoomResult{}, fmt.Errorf("zha jin hua settings: %w", ErrInvalidInput)
 		}
 	default:
@@ -347,7 +347,7 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 	defer tx.Rollback()
 	// Keep legacy SQLite's 2..8 CHECK intact; the flag carries flexible capacity.
 	storedMaxPlayers := min(input.MaxPlayers, 8)
-	flexiblePlayers := input.GameType == GameTypeGeneric && input.MaxPlayers == 0
+	flexiblePlayers := input.MaxPlayers == 0 && (input.GameType == GameTypeGeneric || (input.GameType == GameTypeZhaJinHua && input.ZhaJinHuaSettings != nil))
 	if flexiblePlayers {
 		storedMaxPlayers = 8
 	}
@@ -531,7 +531,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 		}
 		return JoinRoomResult{}, fmt.Errorf("insert score guest: %w", err)
 	}
-	if v2 && (status == string(RoomActive) || activePlayers >= maxPlayers) {
+	if v2 && (status == string(RoomActive) || (maxPlayers > 0 && activePlayers >= maxPlayers)) {
 		if _, err := tx.ExecContext(ctx, `INSERT INTO score_zjh_seats(participant_id,seat_status) VALUES (?, 'pending')`, participantID); err != nil {
 			return JoinRoomResult{}, err
 		}

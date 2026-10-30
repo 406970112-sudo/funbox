@@ -148,3 +148,15 @@ test("identity card opens account settings only for signed-in users", () => {
   page.openSettings();
   assert.equal(navigations[1].url, "/pages/auth/index");
 });
+
+test("profile entry cards are compact white surfaces below the identity card", () => {
+  const template = fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.wxml"), "utf8");
+  const styles = fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.wxss"), "utf8");
+
+  assert.match(template, /wx:if="\{\{isLoggedIn\}\}" class="profile-card history-entry-card fb-card" bindtap="openHistory"/);
+  assert.match(template, /class="profile-card feedback-card fb-card" bindtap="openFeedback"/);
+  assert.match(styles, /\.profile-card\s*\{[^}]*height:\s*200rpx;/s);
+  assert.match(styles, /\.history-entry-card,\s*\.feedback-card\s*\{[^}]*height:\s*168rpx;/s);
+  assert.doesNotMatch(styles, /\.history-entry-card\s*\{[^}]*background:\s*#2d5bff;/s);
+  assert.doesNotMatch(styles, /\.history-entry-card\s+\.fb-arrow\s*\{/);
+});

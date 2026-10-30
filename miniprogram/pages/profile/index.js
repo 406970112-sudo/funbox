@@ -38,7 +38,6 @@ function syncAppAuthState() {
 Page({
   data: {
     isLoggedIn: false,
-    userLoading: false,
     userError: "",
     displayName: "游客",
     initial: "游",
@@ -58,7 +57,6 @@ Page({
   resetLoggedOut() {
     this.setData({
       isLoggedIn: false,
-      userLoading: false,
       userError: "",
       displayName: "游客",
       initial: "游",
@@ -91,7 +89,7 @@ Page({
 
     const cachedUser = getStoredUser();
     if (cachedUser) this.applyUser(cachedUser);
-    this.setData({ userLoading: true, userError: "" });
+    this.setData({ userError: "" });
     try {
       const user = await getCurrentUser();
       if (generation !== this.loadGeneration) return;
@@ -107,10 +105,7 @@ Page({
         return;
       }
       this.setData({ userError: error.message || "个人信息刷新失败，请稍后重试。" });
-    } finally {
-      if (generation === this.loadGeneration) this.setData({ userLoading: false });
     }
-
   },
 
   retryLoad() {

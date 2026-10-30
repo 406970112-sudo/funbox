@@ -10,7 +10,6 @@
     <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" binderror="handleAvatarError" />
     <view wx:else class="avatar avatar-fallback">{{initial}}</view>
     <view class="identity-copy"><text class="identity-name">{{displayName}}</text><text wx:if="{{maskedUsername}}" class="identity-meta">{{maskedUsername}}</text><text class="identity-date">{{registeredAt}}</text></view>
-    <view wx:if="{{userLoading}}" class="loading-dot"></view>
     <text class="fb-arrow">›</text>
   </view>
   <view wx:else class="profile-card guest-card fb-card" bindtap="openAuth" role="button" aria-label="登录或注册 FunBox">
@@ -18,7 +17,7 @@
     <text class="fb-arrow">›</text>
   </view>
   <view wx:if="{{userError}}" class="inline-error" bindtap="retryLoad"><text>{{userError}}</text><text class="inline-retry">重试</text></view>
-  <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card" bindtap="openHistory">
+  <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card fb-card" bindtap="openHistory">
     <view class="history-entry-copy"><text class="history-entry-title">最近牌局</text><text class="history-entry-desc">按时间回看参与者和输赢</text></view>
     <view class="history-art art art-score"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="fb-arrow">›</text>
   </view>

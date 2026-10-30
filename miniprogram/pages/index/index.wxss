@@ -172,27 +172,6 @@
   font-size: 23rpx;
 }
 
-.scene-pill {
-  display: inline-block;
-  margin-top: 13rpx;
-  padding: 3rpx 16rpx;
-  border-radius: 99rpx;
-  background: #d4e5ff;
-  color: #2d5bff;
-  font-size: 20rpx;
-  font-weight: 700;
-}
-
-.available-pill {
-  background: #cff0df;
-  color: #278461;
-}
-
-.poker-card .scene-pill {
-  background: #ffded6;
-  color: #c95744;
-}
-
 .scene-art {
   position: absolute;
   top: 50%;
@@ -200,14 +179,6 @@
   width: 250rpx;
   height: 250rpx;
   transform: translateY(-50%);
-}
-
-.scene-arrow {
-  position: absolute;
-  right: 17rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 38rpx;
 }
 
 .principles {

@@ -32,7 +32,9 @@ type ZhaJinHuaMemberInput struct {
 }
 
 func validateV2Settings(v ZhaJinHuaSettings) error {
-	if v.RulesVersion != 2 || v.MaxPlayers < 2 || v.MaxPlayers > 12 || v.AntePoints < 1 || v.AntePoints > 1_000_000_000 || v.MaxBetPoints < v.AntePoints || v.MaxBetPoints > 1_000_000_000 || v.CompareThreshold < 2 || v.CompareThreshold > v.MaxPlayers || v.BaoziBonusPoints < 0 || v.BaoziBonusPoints > 1_000_000_000 || v.ShunjinBonusPoints < 0 || v.ShunjinBonusPoints > 1_000_000_000 {
+	validPlayers := v.MaxPlayers == 0 || (v.MaxPlayers >= 2 && v.MaxPlayers <= 12)
+	validThreshold := v.CompareThreshold >= 2 && (v.MaxPlayers == 0 || v.CompareThreshold <= v.MaxPlayers)
+	if v.RulesVersion != 2 || !validPlayers || v.AntePoints < 1 || v.AntePoints > 1_000_000_000 || v.MaxBetPoints < v.AntePoints || v.MaxBetPoints > 1_000_000_000 || !validThreshold || v.BaoziBonusPoints < 0 || v.BaoziBonusPoints > 1_000_000_000 || v.ShunjinBonusPoints < 0 || v.ShunjinBonusPoints > 1_000_000_000 {
 		return ErrInvalidInput
 	}
 	return nil
@@ -438,7 +440,7 @@ func (s *Service) ManageZhaJinHuaMember(ctx context.Context, a Actor, m CommandM
 			if target.SeatStatus != "pending" {
 				return ErrInvalidState
 			}
-			if len(seatedV2(r.Participants)) >= r.MaxPlayers {
+			if r.MaxPlayers > 0 && len(seatedV2(r.Participants)) >= r.MaxPlayers {
 				return ErrRoomFull
 			}
 			status = "seated"

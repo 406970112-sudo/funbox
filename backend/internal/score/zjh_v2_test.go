@@ -39,6 +39,82 @@ func TestV2CreationSupportsTwelveAndAnte(t *testing.T) {
 	}
 }
 
+func TestV2RoomSupportsUnlimitedSeats(t *testing.T) {
+	s := newTestService(t)
+	ctx := context.Background()
+	settings := v2Settings()
+	settings.MaxPlayers = 0
+	created, err := s.CreateRoom(ctx, "host", "Host", CreateRoomInput{Name: "Poker", GameType: GameTypeZhaJinHua, MaxPlayers: 0, CentsPerPoint: 100, ZhaJinHuaSettings: &settings})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Room.MaxPlayers != 0 {
+		t.Fatalf("max players = %d, want unlimited", created.Room.MaxPlayers)
+	}
+	var physicalMax, unlimited int
+	if err := s.store.db.QueryRow(`SELECT max_players, unlimited_players FROM score_rooms WHERE id=?`, created.Room.ID).Scan(&physicalMax, &unlimited); err != nil {
+		t.Fatal(err)
+	}
+	if physicalMax != 8 || unlimited != 1 {
+		t.Fatalf("stored capacity max=%d unlimited=%d", physicalMax, unlimited)
+	}
+	seatStatus := func(room RoomSnapshot, participantID string) string {
+		for _, participant := range room.Participants {
+			if participant.ID == participantID {
+				return participant.SeatStatus
+			}
+		}
+		return ""
+	}
+
+	updatedSettings := v2Settings()
+	updatedSettings.MaxPlayers = 0
+	updatedSettings.AntePoints = 2
+	updatedSettings.MaxBetPoints = 10
+	room, err := s.UpdateZhaJinHuaSettings(ctx, created.Actor, CommandMeta{}, UpdateZhaJinHuaSettingsInput{Settings: &updatedSettings})
+	if err != nil {
+		t.Fatalf("update unlimited-room settings: %v", err)
+	}
+	if room.MaxPlayers != 0 || room.ZhaJinHuaSettings.AntePoints != 2 || room.ZhaJinHuaSettings.MaxBetPoints != 10 {
+		t.Fatalf("updated settings lost unlimited capacity: %+v", room.ZhaJinHuaSettings)
+	}
+	for i := 1; i < 13; i++ {
+		joined, err := s.JoinRoom(ctx, JoinRoomInput{Code: room.Code, DisplayName: fmt.Sprintf("P%d", i)})
+		if err != nil {
+			t.Fatalf("join %d: %v", i, err)
+		}
+		if seatStatus(joined.Room, joined.Room.SelfParticipantID) == "pending" {
+			t.Fatalf("waiting-room join %d was pending", i)
+		}
+		room = joined.Room
+	}
+	if len(room.Participants) != 13 {
+		t.Fatalf("participants=%d, want 13", len(room.Participants))
+	}
+	room, err = s.StartRoom(ctx, created.Actor, CommandMeta{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	late, err := s.JoinRoom(ctx, JoinRoomInput{Code: room.Code, DisplayName: "Late"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if seatStatus(late.Room, late.Room.SelfParticipantID) != "pending" {
+		t.Fatal("active-room join should remain pending")
+	}
+	room, err = s.ManageZhaJinHuaMember(ctx, created.Actor, CommandMeta{}, late.Actor.ParticipantID, ZhaJinHuaMemberInput{Action: "admit"})
+	if err != nil {
+		t.Fatalf("admit unlimited player: %v", err)
+	}
+	room, err = s.StartZhaJinHuaHand(ctx, created.Actor, CommandMeta{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(room.CurrentZhaJinHuaHand.Players) != 14 {
+		t.Fatalf("hand players=%d, want 14", len(room.CurrentZhaJinHuaHand.Players))
+	}
+}
+
 func v2Room(t *testing.T, count int, settings ZhaJinHuaSettings) (*Service, RoomSnapshot, []Actor) {
 	t.Helper()
 	s := newTestService(t)
