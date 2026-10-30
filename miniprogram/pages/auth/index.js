@@ -29,6 +29,12 @@ Page({
     if (!this.data.loading) this.setData({ agreed: !this.data.agreed, errorMessage: "" });
   },
 
+  handleAgreementChange(event) {
+    if (this.data.loading) return;
+    const values = event && event.detail && Array.isArray(event.detail.value) ? event.detail.value : [];
+    this.setData({ agreed: values.includes("agree"), errorMessage: "" });
+  },
+
   openLegal(event) {
     if (this.data.loading) return;
     const type = event.currentTarget.dataset.type === "privacy" ? "privacy" : "terms";

@@ -130,6 +130,7 @@ module.exports = {
     giftHistory: [],
     realtimeStatus: "connecting",
     realtimeError: "",
+    syncWarning: "",
     qrSize: 112,
     qrLargeSize: 320,
     qrImageSrc: "",
@@ -295,7 +296,12 @@ module.exports = {
     try {
       const room = await getScoreRoom(this.credential, this.data.roomId);
       await this.applyRoom(room);
+      this.setData({ syncWarning: "" });
     } catch (error) {
+      if (quiet && this.data.room && error.isNetworkError) {
+        this.setData({ syncWarning: "网络暂不稳定，正在重试同步，当前显示上次记录。" });
+        return;
+      }
       if (error && error.statusCode === 401 && this.credential.kind === "guest") {
         clearScoreSession();
       }
@@ -443,7 +449,7 @@ module.exports = {
     this.startPolling();
     if (isHost && canInviteRoom(room)) {
       await this.ensureInviteToken();
-      this.ensureInviteCode();
+      this.ensureInviteCode({ automatic: true });
     }
     return true;
   },
@@ -496,7 +502,8 @@ module.exports = {
   },
 
   async ensureInviteToken() {
-    if (!this.credential || !this.data.isHost || !canInviteRoom(this.data.room)) return;
+    if (!this.credential || !this.data.isHost || !canInviteRoom(this.data.room) || this.data.inviteToken || this.inviteTokenPending) return;
+    this.inviteTokenPending = true;
     try {
       const inviteToken = this.data.inviteToken || await issueScoreInviteToken(this.credential, this.data.room.id);
       this.setData({ inviteToken }, () => this.renderInviteCode(
@@ -505,12 +512,14 @@ module.exports = {
       ));
     } catch (error) {
       if (this.data.isHost) this.setData({ feedback: getScoreErrorMessage(error) });
+    } finally {
+      this.inviteTokenPending = false;
     }
   },
 
-  async ensureInviteCode() {
+  async ensureInviteCode(options) {
     if (!this.credential || !this.data.isHost || !this.data.room || !canInviteRoom(this.data.room)) return;
-    if (this.data.qrImageSrc || this.data.qrCodeLoading || !this.data.room.id) return;
+    if (this.data.qrImageSrc || this.data.qrCodeLoading || (options && options.automatic && this.data.qrCodeFailed) || !this.data.room.id) return;
     this.setData({ qrCodeLoading: true, qrCodeFailed: false });
     try {
       const result = await issueScoreInviteCode(this.credential, this.data.room.id);
@@ -530,7 +539,7 @@ module.exports = {
       this.setData({
         qrCodeLoading: false,
         qrCodeFailed: true,
-        feedback: getScoreErrorMessage(error),
+        feedback: "微信邀请码暂不可用，已切换备用二维码；也可转发邀请或使用房间码加入。",
       });
       this.renderInviteCode(this.data.qrExpanded ? "roomQrLarge" : "roomQr", this.data.qrExpanded ? this.data.qrLargeSize : this.data.qrSize);
     }

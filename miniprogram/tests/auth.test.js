@@ -141,6 +141,18 @@ test("mini program login keeps WeChat primary and phone credentials as a fallbac
   assert.match(template, /class="wechat-button"/);
   assert.match(template, /src="\/assets\/icons\/wechat\.png"/);
   assert.match(template, /class="phone-fallback" data-mode="login" bindtap="switchMode"/);
-  assert.doesNotMatch(template, /wechat-bubble|phone-button|legacy-hint/);
+  assert.match(template, /<checkbox-group class="agreement-row agreement-row-wechat" bindchange="handleAgreementChange">/);
+  assert.match(template, /<checkbox class="agreement-checkbox" value="agree" checked="\{\{agreed\}\}" disabled="\{\{loading\}\}"/);
+  assert.doesNotMatch(template, /wechat-bubble|phone-button|legacy-hint|class="agreement-toggle"|class="agreement-check"|无需填写手机号和密码/);
   assert.ok(fs.existsSync(path.resolve(__dirname, "../assets/icons/wechat.png")));
+});
+
+test("mini program native agreement checkbox updates consent state", () => {
+  const page = createAuthPage({ agreed: false });
+
+  page.handleAgreementChange({ detail: { value: ["agree"] } });
+  assert.equal(page.data.agreed, true);
+
+  page.handleAgreementChange({ detail: { value: [] } });
+  assert.equal(page.data.agreed, false);
 });

@@ -39,6 +39,7 @@
   </view>
 
   <block wx:elif="{{room}}">
+    <view wx:if="{{syncWarning}}" class="feedback-banner" role="status">{{syncWarning}}</view>
     <view class="room-hero">
       <view class="room-top">
         <view>
