@@ -64,7 +64,7 @@ http://127.0.0.1:3000/api/v1
 验证命令：`node --test miniprogram/tests/*.test.js`。实施、接口与验收记录见 `../docs/zhajinhua-ui-v2/implementation.md`。
 
 - `pages/index/index`：首页牌局场景入口，麻将可用，炸金花显示“敬请期待”
-- `pages/auth/index`：手机号注册、登录
+- `pages/auth/index`：微信一键注册／登录，保留手机号密码入口
 - `pages/profile/index`：个人信息、最近牌局和功能反馈入口
 - `pages/profile-settings/index`：更换头像、修改昵称和退出登录
 - `pages/score/mahjong/index`：麻将房间创建、扫码优先加入和手动房间码加入弹层
@@ -83,3 +83,7 @@ http://127.0.0.1:3000/api/v1
 - 在微信公众平台配置 `https://www.xwhub.cn` 为 request 合法域名，并将 `wss://www.xwhub.cn` 配置为 socket 合法域名。
 - 更换头像和上传反馈截图还需将 `https://www.xwhub.cn` 配置为 uploadFile 合法域名；头像支持 JPG、PNG，最大 3 MB。
 - 邀请分享继续使用小程序页面路径；房主房间页同时从后端获取微信小程序码，因此小程序内“扫一扫加入”和微信外部“扫一扫”均可进入邀请房间。后端需配置 `WECHAT_MINIPROGRAM_APP_SECRET`，正式环境还需确保小程序房间页已经发布。
+
+## 微信一键注册／登录
+
+登录页默认展示微信快捷入口，首次登录自动创建账号；游客开局不主动触发微信登录。老用户先用手机号密码登录，再进入个人设置绑定微信，以保留原有数据。协议链接可查看本地用户协议与隐私政策，默认不勾选。后端沿用现有 AppID / AppSecret 和 JWT；真实微信登录需后端部署后真机联调。详见 [实施与验收说明](../docs/wechat-login/README.md)。

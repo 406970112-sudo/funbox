@@ -5,6 +5,7 @@
     "pages/profile-settings/index",
     "pages/game-history/index",
     "pages/auth/index",
+    "pages/legal/index",
     "pages/feedback/index",
     "pages/score/mahjong/index",
     "pages/score/general/index",

@@ -203,3 +203,7 @@ go run ./cmd/api
 3. 数据目录自动备份
 4. 对象存储
 5. 任务队列
+
+## 微信一键登录
+
+原生小程序使用微信身份登录，首次自动建号；老账号先密码登录再主动绑定微信。配置复用 `WECHAT_MINIPROGRAM_APP_ID` 和 `WECHAT_MINIPROGRAM_APP_SECRET`，服务端自动迁移身份绑定表，继续签发原有 JWT。接口、错误与验收步骤见 [微信登录说明](../docs/wechat-login/README.md)。

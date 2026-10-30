@@ -141,7 +141,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("load auth signing key failed: %v", err)
 	}
-	authService := auth.NewService(userStore, signingKey, cfg.Auth.TokenTTL)
+	var weChatLoginClient auth.WeChatLoginClient
 	scoreOptions := score.ServiceOptions{}
 	if cfg.WeChatMiniProgram.AppSecret != "" {
 		inviteCodeClient, err := wechatminiprogram.NewClient(wechatminiprogram.Config{
@@ -154,13 +154,15 @@ func main() {
 			RequestTimeout: cfg.WeChatMiniProgram.RequestTimeout,
 		})
 		if err != nil {
-			log.Printf("wechat mini program invite code disabled: %v", err)
+			log.Printf("wechat mini program login and invite code disabled: %v", err)
 		} else {
 			scoreOptions.MiniProgramCodeGenerator = inviteCodeClient
+			weChatLoginClient = inviteCodeClient
 		}
 	} else {
-		log.Printf("wechat mini program invite code disabled: missing WECHAT_MINIPROGRAM_APP_SECRET")
+		log.Printf("wechat mini program login and invite code disabled: missing WECHAT_MINIPROGRAM_APP_SECRET")
 	}
+	authService := auth.NewService(userStore, signingKey, cfg.Auth.TokenTTL, weChatLoginClient)
 	scoreService := score.NewServiceWithOptions(scoreStore, signingKey, 7*24*time.Hour, scoreOptions)
 
 	var readingProvider reading.Provider

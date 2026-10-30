@@ -1,4 +1,5 @@
 const {
+  bindWeChat,
   clearSession,
   getAccessToken,
   getAuthErrorMessage,
@@ -20,6 +21,8 @@ function resolveAvatarUrl(value) {
 
 Page({
   data: {
+    wechatBound: false,
+    bindingWeChat: false,
     displayName: "",
     initial: "我",
     avatarUrl: "",
@@ -61,6 +64,7 @@ Page({
       ...(preserveName ? {} : { displayName }),
       initial: Array.from(displayName)[0],
       avatarUrl: resolveAvatarUrl(user.avatarUrl),
+      wechatBound: Boolean(user.wechatBound),
     });
   },
 
@@ -98,13 +102,31 @@ Page({
 
   handleError(error, token) {
     if (!this.isCurrentSession(token)) return;
-    if (error && error.statusCode === 401) {
+    if (error && error.statusCode === 401 && error.code !== "wechat_code_invalid") {
       clearSession();
       getApp().syncAuthState();
       this.redirectToAuth();
       return;
     }
     this.setData({ errorMessage: getAuthErrorMessage(error) });
+  },
+
+  async bindWeChatAccount() {
+    if (this.data.bindingWeChat || this.data.wechatBound || this.data.userLoading || this.data.saving || this.data.uploading) return;
+    const token = getAccessToken();
+    if (!token) { this.redirectToAuth(); return; }
+    this.setData({ bindingWeChat: true, errorMessage: "" });
+    try {
+      const user = await bindWeChat({ isActive: () => !this.unloaded });
+      if (!this.isCurrentSession(token)) return;
+      this.applyUser(user, true);
+      getApp().syncAuthState();
+      wx.showToast({ title: "微信已绑定", icon: "success" });
+    } catch (error) {
+      if (error.code !== "session_changed") this.handleError(error, token);
+    } finally {
+      if (!this.unloaded) this.setData({ bindingWeChat: false });
+    }
   },
 
   async saveName() {
@@ -176,7 +198,7 @@ Page({
   },
 
   logout() {
-    if (this.data.saving || this.data.uploading || this.data.userLoading || this.confirmingLogout) return;
+    if (this.data.saving || this.data.uploading || this.data.bindingWeChat || this.data.userLoading || this.confirmingLogout) return;
     const token = getAccessToken();
     this.confirmingLogout = true;
     wx.showModal({

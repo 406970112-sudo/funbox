@@ -1,0 +1,8 @@
+<view class="legal-page">
+  <text class="fb-brand">FunBox</text>
+  <text class="legal-title">{{title}}</text>
+  <view wx:for="{{sections}}" wx:key="title" class="legal-section fb-card">
+    <text class="legal-heading">{{item.title}}</text>
+    <text class="legal-body">{{item.body}}</text>
+  </view>
+</view>

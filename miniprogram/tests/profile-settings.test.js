@@ -216,3 +216,37 @@ test("leaving settings ignores late authentication errors and navigation", async
     wx.request = originalRequest;
   }
 });
+
+test("settings binds WeChat only after an explicit tap and retains the legacy account", async () => {
+  let loginCalls = 0;
+  global.wx.login = options => { loginCalls += 1; options.success({ code: "bind-code" }); };
+  const page = createPage();
+  await page.loadProfile();
+  assert.equal(loginCalls, 0);
+  responseUser = { ...responseUser, wechatBound: true };
+  await page.bindWeChatAccount();
+  assert.equal(loginCalls, 1);
+  assert.equal(page.data.wechatBound, true);
+  assert.equal(getStoredUser().id, "u1");
+  assert.equal(requests.at(-1).url, API_BASE_URL + "/users/me/wechat");
+  assert.equal(requests.at(-1).header.Authorization, "Bearer account-token");
+  await page.bindWeChatAccount();
+  assert.equal(loginCalls, 1);
+});
+
+test("an invalid WeChat binding code keeps the authenticated legacy session for retry", async () => {
+  global.wx.login = options => options.success({ code: "expired-code" });
+  const page = createPage();
+  await page.loadProfile();
+  requestError = { statusCode: 401, data: { error: "wechat_code_invalid" } };
+  await page.bindWeChatAccount();
+  assert.equal(storage.accessToken, "account-token");
+  assert.equal(getStoredUser().id, "u1");
+  assert.equal(navigations.length, 0);
+  assert.match(page.data.errorMessage, /重试/);
+  assert.equal(page.data.bindingWeChat, false);
+  requestError = null;
+  responseUser = { ...responseUser, wechatBound: true };
+  await page.bindWeChatAccount();
+  assert.equal(page.data.wechatBound, true);
+});

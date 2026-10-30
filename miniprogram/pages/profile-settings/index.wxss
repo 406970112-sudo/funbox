@@ -187,3 +187,7 @@
   font-size: 22rpx;
   text-align: center;
 }
+
+.wechat-binding-card { margin-top: 28rpx; padding: 30rpx; }
+.wechat-bind-button { margin: 24rpx 0 0; min-height: 44px; border-radius: 20rpx; background: #e8f7ef; color: #16824b; font-size: 27rpx; font-weight: 800; }
+.wechat-bind-button[disabled] { background: #f0f4f3; color: #87968c; }

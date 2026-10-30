@@ -20,6 +20,10 @@
   </view>
   <view wx:if="{{errorMessage}}" class="inline-error"><text>{{errorMessage}}</text><text wx:if="{{loadFailed}}" class="retry-link" bindtap="loadProfile">重试</text></view>
   <button class="save-button" bindtap="saveName" loading="{{saving || userLoading}}" disabled="{{saving || uploading || userLoading}}">{{userLoading ? '正在读取资料' : (saving ? '正在保存' : '保存昵称')}}</button>
-  <button class="logout-button" bindtap="logout" disabled="{{saving || uploading || userLoading}}">退出登录</button>
+  <view class="wechat-binding-card fb-card">
+    <view><text class="section-title">微信登录</text><text class="section-desc">{{wechatBound ? '已绑定，可用微信一键登录当前账号' : '绑定后可用微信登录，保留原有账号和牌局记录'}}</text></view>
+    <button class="wechat-bind-button" bindtap="bindWeChatAccount" loading="{{bindingWeChat}}" disabled="{{wechatBound || bindingWeChat || userLoading || saving || uploading}}">{{wechatBound ? '已绑定微信' : '绑定微信'}}</button>
+  </view>
+  <button class="logout-button" bindtap="logout" disabled="{{saving || uploading || bindingWeChat || userLoading}}">退出登录</button>
   <view class="settings-footer"><text>开心玩，清楚记。</text></view>
 </view>

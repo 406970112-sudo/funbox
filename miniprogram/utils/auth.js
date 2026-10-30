@@ -2,7 +2,13 @@ const { request, uploadFile } = require("./request");
 const { ACCESS_TOKEN_STORAGE_KEY } = require("../config/index");
 
 const USER_STORAGE_KEY = "funboxUser";
+let sessionRevision = 0;
 const AUTH_ERROR_MESSAGES = {
+  wechat_code_invalid: "微信登录凭证已失效，请点击重试。",
+  wechat_unavailable: "微信登录暂不可用，请稍后重试或使用手机号密码登录。",
+  wechat_login_failed: "未能获取微信登录凭证，请重试。",
+  wechat_already_bound: "当前微信或账号已有绑定，请使用原账号登录；如需处理，请通过功能反馈联系维护者。",
+  session_changed: "登录状态已变化，请重新操作。",
   avatar_required: "请选择一张头像图片。",
   avatar_too_large: "头像不能超过 3 MB。",
   avatar_type_invalid: "头像仅支持 JPG 或 PNG 格式。",
@@ -29,33 +35,89 @@ function saveSession(session) {
   if (!session || !session.accessToken) {
     throw new Error("登录响应缺少访问令牌。");
   }
+  sessionRevision += 1;
   wx.setStorageSync(ACCESS_TOKEN_STORAGE_KEY, session.accessToken);
   wx.setStorageSync(USER_STORAGE_KEY, session.user || null);
 }
 
 function clearSession() {
+  sessionRevision += 1;
   wx.removeStorageSync(ACCESS_TOKEN_STORAGE_KEY);
   wx.removeStorageSync(USER_STORAGE_KEY);
 }
 
-async function login(username, password) {
+async function login(username, password, { isActive } = {}) {
+  const commit = sessionAttempt(isActive);
   const session = await request({
     path: "/auth/login",
     method: "POST",
     data: { username, password },
   });
-  saveSession(session);
+  commit(session);
   return session;
 }
 
-async function register(input) {
+async function register(input, { isActive } = {}) {
+  const commit = sessionAttempt(isActive);
   const session = await request({
     path: "/auth/register",
     method: "POST",
     data: input,
   });
-  saveSession(session);
+  commit(session);
   return session;
+}
+
+function authError(code, message) {
+  const error = new Error(message || AUTH_ERROR_MESSAGES[code]);
+  error.code = code;
+  return error;
+}
+
+function sessionAttempt(isActive = () => true) {
+  const revision = sessionRevision;
+  const token = getAccessToken();
+  const check = () => {
+    if (revision !== sessionRevision || token !== getAccessToken() || !isActive()) {
+      throw authError("session_changed");
+    }
+  };
+  const commit = (session) => { check(); saveSession(session); };
+  commit.check = check;
+  return commit;
+}
+
+function getWeChatCode() {
+  return new Promise((resolve, reject) => {
+    wx.login({
+      timeout: 10000,
+      success(result) {
+        if (result && result.code) resolve(result.code);
+        else reject(authError("wechat_login_failed"));
+      },
+      fail() { reject(authError("wechat_login_failed")); },
+    });
+  });
+}
+
+async function loginWithWeChat({ isActive } = {}) {
+  const commit = sessionAttempt(isActive);
+  const code = await getWeChatCode();
+  commit.check();
+  const session = await request({ path: "/auth/wechat/login", method: "POST", data: { code } });
+  commit(session);
+  return session;
+}
+
+async function bindWeChat({ isActive } = {}) {
+  const token = getAccessToken();
+  if (!token) throw authError("unauthorized", "请先登录原账号，再绑定微信。");
+  const attempt = sessionAttempt(isActive);
+  const code = await getWeChatCode();
+  attempt.check();
+  const response = await request({ path: "/users/me/wechat", method: "POST", data: { code }, bearerToken: token });
+  attempt.check();
+  return storeUpdatedUser(response, token);
 }
 
 async function getCurrentUser() {
@@ -103,6 +165,8 @@ function getAuthErrorMessage(error) {
 }
 
 module.exports = {
+  bindWeChat,
+  loginWithWeChat,
   clearSession,
   getAccessToken,
   getAuthErrorMessage,

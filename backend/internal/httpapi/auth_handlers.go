@@ -55,7 +55,7 @@ type recoveryResetRequest struct {
 
 type updateProfileRequest struct {
 	Birthday    *string `json:"birthday"`
-	DisplayName string `json:"displayName"`
+	DisplayName string  `json:"displayName"`
 }
 
 type changePasswordRequest struct {
@@ -64,6 +64,8 @@ type changePasswordRequest struct {
 }
 
 type authUserResponse struct {
+	AccountType string     `json:"accountType"`
+	WeChatBound bool       `json:"wechatBound"`
 	AvatarURL   string     `json:"avatarUrl"`
 	Birthday    string     `json:"birthday"`
 	CreatedAt   string     `json:"createdAt"`
@@ -364,19 +366,33 @@ func (s *Server) publicUser(account user.User) authUserResponse {
 		}
 	}
 
+	username := account.Username
+	if account.AccountType == "wechat" {
+		username = ""
+	}
 	return authUserResponse{
+		AccountType: account.AccountType,
+		WeChatBound: account.WeChatBound,
 		AvatarURL:   avatarURL,
 		Birthday:    account.Birthday,
 		CreatedAt:   account.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		DisplayName: account.DisplayName,
 		ID:          account.ID,
 		Role:        account.Role,
-		Username:    account.Username,
+		Username:    username,
 	}
 }
 
 func (s *Server) writeAuthError(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, auth.ErrWeChatCodeInvalid):
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "wechat_code_invalid"})
+	case errors.Is(err, auth.ErrWeChatUnavailable):
+		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "wechat_unavailable"})
+	case errors.Is(err, auth.ErrWeChatBusy):
+		writeJSON(w, http.StatusTooManyRequests, map[string]any{"error": "rate_limited"})
+	case errors.Is(err, user.ErrWeChatAlreadyBound):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "wechat_already_bound"})
 	case errors.Is(err, auth.ErrBirthdayInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "birthday_invalid"})
 	case errors.Is(err, auth.ErrUsernameInvalid):

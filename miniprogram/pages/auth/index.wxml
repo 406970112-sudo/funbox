@@ -15,6 +15,20 @@
   </view>
 
   <view class="auth-card fb-card">
+    <block wx:if="{{mode === 'wechat'}}">
+      <text class="welcome-title">欢迎来到 FunBox</text>
+      <text class="welcome-subtitle">首次登录将自动创建账号</text>
+      <button class="wechat-button" loading="{{loading}}" disabled="{{loading}}" bindtap="handleWeChatLogin">
+        <view class="wechat-icon" aria-hidden="true"><view class="wechat-bubble bubble-large"><view class="wechat-eye"></view><view class="wechat-eye"></view></view><view class="wechat-bubble bubble-small"><view class="wechat-eye"></view><view class="wechat-eye"></view></view></view>
+        <text>{{loading ? '正在登录' : '微信一键登录'}}</text>
+      </button>
+      <text class="login-assurance">无需填写手机号和密码</text>
+      <view class="auth-divider"><view></view><text>或</text><view></view></view>
+      <button class="phone-button" data-mode="login" bindtap="switchMode" disabled="{{loading}}">手机号密码登录</button>
+      <text class="legacy-hint">已有账号？登录后可绑定微信，保留原有数据</text>
+    </block>
+    <block wx:else>
+      <button class="back-wechat" data-mode="wechat" bindtap="switchMode" disabled="{{loading}}">‹ 返回微信快捷登录</button>
     <view class="tabs">
       <view class="tab {{mode === 'login' ? 'tab-active' : ''}}" data-mode="login" bindtap="switchMode">登录</view>
       <view class="tab {{mode === 'register' ? 'tab-active' : ''}}" data-mode="register" bindtap="switchMode">注册</view>
@@ -47,16 +61,23 @@
       </view>
     </block>
 
-    <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
     <button class="primary-button" loading="{{loading}}" disabled="{{loading}}" bindtap="handleSubmit">
       {{mode === 'register' ? '注册并登录' : '登录'}}
     </button>
+    </block>
+    <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
+    <view class="agreement-row">
+      <view class="agreement-toggle" role="checkbox" aria-checked="{{agreed}}" aria-label="同意用户协议和隐私政策" bindtap="toggleAgreement"><view class="agreement-check {{agreed ? 'is-checked' : ''}}">{{agreed ? '✓' : ''}}</view></view>
+      <view class="agreement-copy"><text bindtap="toggleAgreement">我已阅读并同意 </text><text class="agreement-link" data-type="terms" bindtap="openLegal">《用户协议》</text><text> 和 </text><text class="agreement-link" data-type="privacy" bindtap="openLegal">《隐私政策》</text></view>
+    </view>
   </view>
-  <view class="guest-note">
+  <view class="guest-note" bindtap="continueAsGuest" role="button" aria-label="暂不登录，继续游客使用">
     <view class="fb-score-mark" aria-hidden="true">±</view>
     <view class="guest-copy">
       <text class="guest-title">先开一局，也没问题</text>
-      <text class="guest-tip">游客无需登录，也可以创建房间、扫码或通过房间码加入牌局。</text>
+      <text class="guest-tip">游客也可创建房间、扫码加入牌局</text>
     </view>
+    <text class="guest-arrow">›</text>
   </view>
+  <text class="auth-footer">好友相聚 · 轻松记分</text>
 </view>

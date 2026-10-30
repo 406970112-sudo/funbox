@@ -216,3 +216,31 @@
     height: 220rpx;
   }
 }
+
+.welcome-title, .welcome-subtitle, .login-assurance, .legacy-hint, .auth-footer { display: block; text-align: center; }
+.welcome-title { margin-top: 10rpx; color: var(--fb-ink); font-size: 38rpx; font-weight: 900; }
+.welcome-subtitle { margin-top: 12rpx; color: var(--fb-muted); font-size: 25rpx; }
+.wechat-button, .phone-button { display: flex; align-items: center; justify-content: center; gap: 20rpx; box-sizing: border-box; width: 100%; min-height: 100rpx; padding: 22rpx 16rpx; border-radius: 22rpx; font-size: 30rpx; font-weight: 800; line-height: 1.5; }
+.wechat-button { margin-top: 38rpx; background: #07c160; color: #fff; }
+.wechat-button[disabled] { background: #8bdab0; color: #fff; }
+.wechat-icon { position: relative; width: 54rpx; height: 44rpx; flex-shrink: 0; }
+.wechat-bubble { position: absolute; display: flex; align-items: center; justify-content: center; gap: 8rpx; border-radius: 50%; background: #fff; }
+.bubble-large { top: 0; left: 0; width: 38rpx; height: 32rpx; }
+.bubble-small { right: 0; bottom: 0; width: 31rpx; height: 26rpx; border: 2rpx solid #07c160; }
+.wechat-bubble::after { content: ''; position: absolute; bottom: -3rpx; left: 7rpx; width: 9rpx; height: 10rpx; background: #fff; transform: skewY(-28deg); }
+.wechat-eye { position: relative; z-index: 1; width: 4rpx; height: 4rpx; border-radius: 50%; background: #07c160; }
+.login-assurance { margin-top: 18rpx; color: var(--fb-muted); font-size: 22rpx; }
+.auth-divider { display: flex; align-items: center; gap: 26rpx; margin: 30rpx 0; color: var(--fb-muted); font-size: 23rpx; }
+.auth-divider view { flex: 1; height: 1rpx; background: #e2e9f4; }
+.phone-button { margin: 0; border: 2rpx solid #cddcff; background: #f0f5ff; color: var(--fb-primary); font-size: 28rpx; }
+.legacy-hint { margin-top: 18rpx; color: var(--fb-muted); font-size: 21rpx; line-height: 1.7; }
+.back-wechat { min-height: 44px; margin: -10rpx 0 16rpx; padding: 0; background: transparent; color: var(--fb-primary); text-align: left; font-size: 25rpx; line-height: 44px; }
+.agreement-row { display: flex; align-items: center; margin: 28rpx -8rpx -8rpx; }
+.agreement-toggle { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 72rpx; min-width: 36px; height: 88rpx; min-height: 44px; }
+.agreement-check { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 32rpx; height: 32rpx; border: 2rpx solid #a2adbf; border-radius: 50%; color: #fff; font-size: 23rpx; }
+.agreement-check.is-checked { border-color: var(--fb-primary); background: var(--fb-primary); }
+.agreement-copy { flex: 1; color: var(--fb-muted); font-size: 21rpx; line-height: 1.9; }
+.agreement-link { color: var(--fb-primary); }
+.guest-arrow { color: var(--fb-primary); font-size: 46rpx; }
+.auth-footer { margin-top: 28rpx; color: #98a4b9; font-size: 21rpx; }
+@media (max-width: 350px) { .auth-page { padding-left: 24rpx; padding-right: 24rpx; } .auth-card { padding: 28rpx; } .welcome-title { font-size: 35rpx; } .legacy-hint, .agreement-copy { font-size: 22rpx; } }

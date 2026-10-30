@@ -24,6 +24,8 @@ var (
 )
 
 type User struct {
+	AccountType            string
+	WeChatBound            bool
 	ID                     string
 	Username               string
 	PasswordHash           string
@@ -123,6 +125,16 @@ func (s *Store) migrate() error {
 			created_at INTEGER NOT NULL,
 			updated_at INTEGER NOT NULL
 		)`,
+		`CREATE TABLE IF NOT EXISTS wechat_identities (
+            appid TEXT NOT NULL,
+            openid TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            unionid TEXT NOT NULL DEFAULT '',
+            created_at INTEGER NOT NULL,
+            PRIMARY KEY (appid, openid),
+            UNIQUE (appid, user_id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )`,
 		`CREATE TABLE IF NOT EXISTS user_role_changes (
 			id TEXT PRIMARY KEY,
 			target_user_id TEXT NOT NULL,
@@ -148,6 +160,7 @@ func (s *Store) migrate() error {
 		name       string
 		definition string
 	}{
+		{name: "account_type", definition: "TEXT NOT NULL DEFAULT 'password'"},
 		{name: "security_question", definition: "TEXT NOT NULL DEFAULT ''"},
 		{name: "security_answer_hash", definition: "TEXT NOT NULL DEFAULT ''"},
 		{name: "recovery_failed_attempts", definition: "INTEGER NOT NULL DEFAULT 0"},
@@ -219,6 +232,7 @@ func (s *Store) Create(
 ) (User, error) {
 	now := time.Now().UTC()
 	created := User{
+		AccountType:        "password",
 		ID:                 uuid.NewString(),
 		Username:           username,
 		PasswordHash:       passwordHash,
@@ -611,7 +625,8 @@ const userSelect = `SELECT
 	id, username, password_hash, display_name, birthday, role, avatar_file,
 	security_question, security_answer_hash,
 	recovery_failed_attempts, recovery_locked_until,
-	token_version, created_at, updated_at
+	token_version, created_at, updated_at, account_type,
+    EXISTS (SELECT 1 FROM wechat_identities wi WHERE wi.user_id = users.id)
 	FROM users`
 
 type rowScanner interface {
@@ -639,6 +654,8 @@ func scanUser(row rowScanner) (User, error) {
 		&result.TokenVersion,
 		&createdAt,
 		&updatedAt,
+		&result.AccountType,
+		&result.WeChatBound,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return User{}, ErrNotFound

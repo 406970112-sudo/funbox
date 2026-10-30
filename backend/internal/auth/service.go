@@ -60,10 +60,11 @@ type Store interface {
 }
 
 type Service struct {
-	issuer     string
-	signingKey []byte
-	store      Store
-	tokenTTL   time.Duration
+	weChatClient WeChatLoginClient
+	issuer       string
+	signingKey   []byte
+	store        Store
+	tokenTTL     time.Duration
 }
 
 type Session struct {
@@ -81,12 +82,17 @@ type recoveryClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewService(store Store, signingKey []byte, tokenTTL time.Duration) *Service {
+func NewService(store Store, signingKey []byte, tokenTTL time.Duration, weChatClients ...WeChatLoginClient) *Service {
+	var weChatClient WeChatLoginClient
+	if len(weChatClients) > 0 {
+		weChatClient = weChatClients[0]
+	}
 	return &Service{
-		issuer:     "funbox-api",
-		signingKey: signingKey,
-		store:      store,
-		tokenTTL:   tokenTTL,
+		issuer:       "funbox-api",
+		weChatClient: weChatClient,
+		signingKey:   signingKey,
+		store:        store,
+		tokenTTL:     tokenTTL,
 	}
 }
 
@@ -155,7 +161,7 @@ func (s *Service) Login(ctx context.Context, username string, password string) (
 		return Session{}, err
 	}
 
-	if bcrypt.CompareHashAndPassword([]byte(found.PasswordHash), []byte(password)) != nil {
+	if found.PasswordHash == "" || bcrypt.CompareHashAndPassword([]byte(found.PasswordHash), []byte(password)) != nil {
 		return Session{}, ErrInvalidCredentials
 	}
 	return s.sessionForUser(found)

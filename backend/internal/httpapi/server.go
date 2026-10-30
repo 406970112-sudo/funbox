@@ -864,6 +864,8 @@ func newServer(
 	registerPriceRadarRoutes(mux, api)
 	registerNovelAgentRoutes(mux, api)
 	mux.HandleFunc("POST /api/v1/auth/register", api.withAuthPipeline(api.handleRegister))
+	mux.HandleFunc("POST /api/v1/auth/wechat/login", api.withAuthPipeline(api.handleWeChatLogin))
+	mux.HandleFunc("POST /api/v1/users/me/wechat", api.withAuth(api.withRateLimitedAPIPipeline("wechat-bind", api.handleBindWeChat)))
 	mux.HandleFunc("POST /api/v1/auth/login", api.withAuthPipeline(api.handleLogin))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/question", api.withAuthPipeline(api.handleRecoveryQuestion))
 	mux.HandleFunc("POST /api/v1/auth/password-recovery/verify", api.withAuthPipeline(api.handleRecoveryAnswer))
