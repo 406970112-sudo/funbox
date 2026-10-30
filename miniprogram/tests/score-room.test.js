@@ -143,6 +143,36 @@ test("successful invitation join opens the returned snapshot without another roo
   assert.equal(storage.funboxScoreSessionV1.guestToken, "guest-token");
 });
 
+test("scanned scene joins with a nickname and does not submit room code or password", async () => {
+  joinCalls.length = 0;
+  const page = createPage({
+    inviteScene: "scene-123", inviteToken: "", joinNeeded: true,
+    joinNickname: " 小林 ", previewRoom: { id: "room-1", requiresPassword: true },
+  });
+  page.startRealtime = () => undefined;
+  page.startPolling = () => undefined;
+
+  await page.joinFromInvite();
+
+  assert.deepEqual(joinCalls, [{ inviteScene: "scene-123", displayName: "小林" }]);
+  assert.equal(page.data.joinNeeded, false);
+  assert.equal(page.data.self.displayName, "小林");
+});
+
+test("invitation confirmation rejects a blank nickname and ignores repeated pending submission", async () => {
+  joinCalls.length = 0;
+  const page = createPage({ inviteToken: "invite-token", joinNickname: "  ", joinNeeded: true, previewRoom: { id: "room-1" } });
+  await page.joinFromInvite();
+  assert.equal(joinCalls.length, 0);
+  assert.equal(page.data.joinNeeded, true);
+  assert.match(page.data.errorMessage, /昵称/);
+
+  page.data.joinNickname = "小林";
+  page.data.joining = true;
+  await page.joinFromInvite();
+  assert.equal(joinCalls.length, 0);
+});
+
 test("retrying a failed invitation keeps its original credential and prevents overlapping loads", async () => {
   for (const data of [{ inviteToken: "invite-token" }, { inviteScene: "scene-1" }]) {
     const page = createPage({ ...data, loading: false, errorMessage: "timeout" });

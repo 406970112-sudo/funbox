@@ -16,10 +16,6 @@
       <view class="scene-copy"><text class="scene-title">麻将记分</text><text class="scene-desc">4 人牌局 · 给分与结算</text><text class="scene-pill available-pill">已开放</text></view>
       <view class="scene-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="scene-arrow">›</text>
     </view>
-    <view class="scene-card landlord-card" data-scene="斗地主" bindtap="showComingSoon">
-      <view class="scene-copy"><text class="scene-title">斗地主</text><text class="scene-desc">三人对战记分</text><text class="scene-pill">敬请期待</text></view>
-      <view class="scene-art art art-landlord"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
-    </view>
     <view class="scene-card poker-card" data-scene="炸金花" bindtap="showComingSoon">
       <view class="scene-copy"><text class="scene-title">炸金花</text><text class="scene-desc">轮流加注，实时看池</text><text class="scene-pill">敬请期待</text></view>
       <view class="scene-art art art-poker"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>

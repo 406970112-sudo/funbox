@@ -12,11 +12,15 @@ Page({
     hostNickname: "",
     authNickname: "",
     roomPassword: "666666",
+    editingField: "",
     creating: false,
     roomCode: "",
     joinPassword: "",
     nickname: "",
     joining: false,
+    manualJoinOpen: false,
+    manualKeyboardHeight: 0,
+    scanning: false,
     errorMessage: "",
   },
 
@@ -49,17 +53,52 @@ Page({
   },
 
   switchMode(event) {
-    this.setData({ mode: event.currentTarget.dataset.mode, errorMessage: "" });
+    if (this.data.joining || this.data.creating) return;
+    this.closeManualJoin();
+    this.setData({ mode: event.currentTarget.dataset.mode, editingField: "", errorMessage: "" });
   },
+
+  openManualJoin() {
+    if (this.data.scanning) return;
+    this.setData({ manualJoinOpen: true, manualKeyboardHeight: 0, errorMessage: "" });
+  },
+
+  closeManualJoin() {
+    if (this.data.joining) return;
+    this.setData({ manualJoinOpen: false, manualKeyboardHeight: 0, errorMessage: "" });
+    wx.hideKeyboard();
+  },
+
+  handleManualKeyboard(event) {
+    if (!this.data.manualJoinOpen) return;
+    this.setData({ manualKeyboardHeight: Math.max(0, Number(event.detail.height) || 0) });
+  },
+
+  noop() {},
 
   goBack() {
     wx.navigateBack();
   },
 
   handleField(event) {
+    if (this.data.creating) return;
     const field = event.currentTarget.dataset.field;
     const value = event.detail.value;
     this.setData({ [field]: value, errorMessage: "" });
+  },
+
+  beginInlineEdit(event) {
+    if (this.data.creating) return;
+    const field = event.currentTarget.dataset.field;
+    if (field !== "roomName" && field !== "roomPassword") return;
+    this.setData({ editingField: field });
+  },
+
+  endInlineEdit(event) {
+    // A previous input can blur after the next one has already gained focus.
+    if (this.data.editingField === event.currentTarget.dataset.field) {
+      this.setData({ editingField: "" });
+    }
   },
 
   openAuth() {
@@ -75,7 +114,7 @@ Page({
     if (!hostNickname) return this.setData({ errorMessage: "请输入房主昵称。" });
     if (!/^\d{4,6}$/.test(password)) return this.setData({ errorMessage: "房间密码需为 4～6 位数字。" });
 
-    this.setData({ creating: true, errorMessage: "" });
+    this.setData({ creating: true, editingField: "", errorMessage: "" });
     try {
       const result = await createScoreRoom(getAccessToken(), {
         name: roomName,
@@ -104,6 +143,8 @@ Page({
   },
 
   scanToJoin() {
+    if (this.data.scanning || this.data.manualJoinOpen) return;
+    this.setData({ scanning: true, errorMessage: "" });
     wx.scanCode({
       scanType: ["qrCode", "wxCode"],
       success: (result) => {
@@ -120,7 +161,11 @@ Page({
         }
         wx.navigateTo({ url: `/pages/score/room/index?invite=${encodeURIComponent(inviteToken)}` });
       },
-      fail: () => undefined,
+      fail: (error) => {
+        if (/cancel/i.test(error.errMsg || "")) return;
+        this.setData({ errorMessage: "无法打开扫码，请检查相机权限后重试，也可以输入房间码加入。" });
+      },
+      complete: () => this.setData({ scanning: false }),
     });
   },
 
@@ -134,6 +179,8 @@ Page({
     this.setData({ joining: true, errorMessage: "" });
     try {
       const result = await joinScoreRoom({ code, password: this.data.joinPassword, displayName });
+      this.setData({ manualJoinOpen: false, manualKeyboardHeight: 0 });
+      wx.hideKeyboard();
       this.enterJoinedRoom(result);
     } catch (error) {
       this.setData({ errorMessage: getScoreErrorMessage(error) });

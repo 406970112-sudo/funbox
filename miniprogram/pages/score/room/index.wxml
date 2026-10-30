@@ -6,27 +6,28 @@
   </view>
 
   <view wx:elif="{{joinNeeded && previewRoom}}" class="join-preview">
-    <view class="preview-hero">
-      <text class="preview-kicker">收到麻将邀请</text>
-      <text class="preview-title">{{previewRoom.name}}</text>
-      <text class="preview-code">{{previewRoom.code}}</text>
-      <view class="preview-rule-row">
-        <view><text class="preview-label">人数</text><text class="preview-value">{{previewRoom.maxPlayers}} 人</text></view>
-      </view>
+    <view class="preview-welcome">
+      <view class="preview-invite-icon" aria-hidden="true"><view></view><view></view></view>
+      <text class="preview-kicker">好友邀请你加入牌局</text>
+      <text class="preview-headline">牌友都在，等你入座</text>
     </view>
-    <view class="form-card">
-      <view class="form-head">
-        <text class="form-title">加入牌局</text>
-        <text class="form-badge">邀请免密加入</text>
+    <view class="preview-room-card">
+      <view class="preview-room-info">
+        <view class="preview-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
+        <view class="preview-room-copy"><text class="preview-title">{{previewRoom.name}}</text><text class="preview-room-meta">麻将记分 · {{previewRoom.maxPlayers}} 人牌局</text><text class="preview-status">{{previewRoom.status === 'active' ? '牌局进行中' : '等待加入'}}</text></view>
       </view>
-      <view class="field">
-        <text class="field-label">你的昵称</text>
-        <input class="field-input" data-field="joinNickname" maxlength="48" placeholder="牌局内显示的名字" value="{{joinNickname}}" bindinput="handleJoinField" />
-      </view>
-      <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
+      <view class="preview-verified"><text class="verified-check" aria-hidden="true">✓</text><text>邀请已验证，无需房间码和密码</text></view>
+    </view>
+    <view class="preview-confirm">
+      <text class="preview-name-label">怎么称呼你？</text>
+      <input class="field-input" data-field="joinNickname" maxlength="48" placeholder="牌局内显示的名字" value="{{joinNickname}}" bindinput="handleJoinField" disabled="{{joining}}" />
+      <text class="preview-name-help">仅在本局内显示，可修改</text>
+      <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
       <button class="primary-button" loading="{{joining}}" disabled="{{joining}}" bindtap="joinFromInvite">确认加入</button>
-      <button class="secondary-button" bindtap="goHome">返回首页</button>
+      <text class="preview-confirm-help">确认后进入房间</text>
     </view>
+    <text class="preview-footer">扫码与邀请链接，均可快捷入桌</text>
+    <button class="preview-home" bindtap="goHome" disabled="{{joining}}">返回首页</button>
   </view>
 
   <view wx:elif="{{errorMessage && !room}}" class="state-panel error-state">

@@ -70,10 +70,6 @@ button {
   left: -100%;
 }
 
-.art-landlord .art-atlas {
-  left: -200%;
-}
-
 .art-poker .art-atlas {
   top: -100%;
 }

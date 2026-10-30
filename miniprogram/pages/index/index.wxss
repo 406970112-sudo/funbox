@@ -137,11 +137,6 @@
   animation-delay: .04s;
 }
 
-.landlord-card {
-  background: #e8f1ff;
-  animation-delay: .08s;
-}
-
 .poker-card {
   background: #fff0ed;
   animation-delay: .12s;
