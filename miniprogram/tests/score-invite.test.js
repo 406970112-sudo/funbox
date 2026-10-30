@@ -33,7 +33,7 @@ require.cache[scoreAPI] = {
       return {
         room: { id: "room-1" },
         actor: { participantId: "participant-host" },
-        ...(input.displayName ? { guestToken: "host-guest-token" } : {}),
+        ...(!token ? { guestToken: "host-guest-token" } : {}),
       };
     },
     getScoreErrorMessage: (error) => error.message,
@@ -149,8 +149,8 @@ test("room creation omits settlement pricing and saves the host password locally
     isLoggedIn: true,
     creating: false,
     roomName: "周五牌局",
+    hostNickname: "本局房主",
     roomPassword: "2468",
-    confirmPassword: "2468",
     errorMessage: "",
   });
 
@@ -164,6 +164,7 @@ test("room creation omits settlement pricing and saves the host password locally
       password: "2468",
       scene: "generic",
       gameType: "mahjong",
+      displayName: "本局房主",
     },
   }]);
   assert.deepEqual(passwordSaves, [{ roomId: "room-1", password: "2468" }]);
@@ -184,7 +185,6 @@ test("anonymous room creation submits the guest host nickname and stores the par
     roomName: "游客牌局",
     hostNickname: "游客房主",
     roomPassword: "2468",
-    confirmPassword: "2468",
     errorMessage: "",
   });
 
@@ -208,6 +208,37 @@ test("anonymous room creation submits the guest host nickname and stores the par
   }]);
   assert.equal(scoreSessionClears, 0);
   assert.deepEqual(navigateCalls, ["/pages/score/room/index?roomId=room-1&created=1"]);
+});
+
+test("logged-in host nickname prefills the account name while preserving manual edits", () => {
+  accessToken = "host-token";
+  const page = createPage(mahjongPage, {
+    isLoggedIn: false,
+    hostNickname: "",
+    authNickname: "",
+  });
+
+  page.syncAuth();
+  assert.equal(page.data.isLoggedIn, true);
+  assert.equal(page.data.hostNickname, "牌友");
+
+  page.data.hostNickname = "本局房主";
+  page.syncAuth();
+  assert.equal(page.data.hostNickname, "本局房主");
+  accessToken = "";
+});
+
+test("anonymous host nickname remains an editable empty input", () => {
+  accessToken = "";
+  const page = createPage(mahjongPage, {
+    isLoggedIn: false,
+    hostNickname: "",
+    authNickname: "",
+  });
+
+  page.syncAuth();
+  assert.equal(page.data.isLoggedIn, false);
+  assert.equal(page.data.hostNickname, "");
 });
 
 test("external scene preview and join use inviteScene", async () => {

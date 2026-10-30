@@ -114,3 +114,16 @@ test("room templates remove caps and only expose the settlement rate inside the 
   assert.match(createTemplate, /房主昵称/);
   assert.match(roomTemplate, /登录并绑定/);
 });
+
+test("mahjong room creation uses friend-room defaults and has no password confirmation", () => {
+  const root = path.resolve(__dirname, "..");
+  const createScript = fs.readFileSync(path.join(root, "pages/score/mahjong/index.js"), "utf8");
+  const createTemplate = fs.readFileSync(path.join(root, "pages/score/mahjong/index.wxml"), "utf8");
+
+  assert.match(createScript, /roomName:\s*"老友局"/);
+  assert.match(createScript, /roomPassword:\s*"666666"/);
+  assert.doesNotMatch(createScript, /confirmPassword/);
+  assert.doesNotMatch(createTemplate, /确认密码|confirmPassword/);
+  assert.match(createTemplate, /data-field="hostNickname"/);
+  assert.match(createTemplate, /data-field="roomPassword"/);
+});

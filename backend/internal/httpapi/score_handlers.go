@@ -100,10 +100,12 @@ func (s *Server) handleCreateScoreRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hostUserID := ""
-	displayName := input.DisplayName
+	displayName := strings.TrimSpace(input.DisplayName)
 	if account, ok := authenticatedUserFromContext(r.Context()); ok {
 		hostUserID = account.ID
-		displayName = account.DisplayName
+		if displayName == "" {
+			displayName = account.DisplayName
+		}
 	}
 	result, err := s.scoreService.CreateRoom(r.Context(), hostUserID, displayName, input)
 	if err != nil {

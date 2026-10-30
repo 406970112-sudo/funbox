@@ -27,25 +27,27 @@
       <text class="form-badge">{{isLoggedIn ? '4 人牌局' : '游客可创建'}}</text>
     </view>
 
-    <view class="field">
-      <text class="field-label">房间名</text>
-      <input class="field-input" data-field="roomName" maxlength="40" placeholder="例如：周五老友局" value="{{roomName}}" bindinput="handleField" />
+    <view class="room-name-row">
+      <text class="room-name-label">房间名</text>
+      <input class="room-name-input" data-field="roomName" maxlength="40" placeholder="老友局" value="{{roomName}}" bindinput="handleField" />
+      <text class="room-name-edit">可修改</text>
     </view>
 
-    <view wx:if="{{!isLoggedIn}}" class="field">
+    <view class="field">
       <text class="field-label">房主昵称</text>
       <input class="field-input" data-field="hostNickname" maxlength="48" placeholder="本局内显示的房主名字" value="{{hostNickname}}" bindinput="handleField" />
     </view>
 
-    <view class="field-row">
-      <view class="field half">
+    <view class="field">
+      <view class="field-label-row">
         <text class="field-label">房间密码</text>
-        <input class="field-input" data-field="roomPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{roomPassword}}" bindinput="handleField" />
+        <text class="field-hint">4～6 位数字</text>
       </view>
-      <view class="field half">
-        <text class="field-label">确认密码</text>
-        <input class="field-input" data-field="confirmPassword" maxlength="6" type="number" placeholder="再次输入" value="{{confirmPassword}}" bindinput="handleField" />
+      <view class="password-control">
+        <input class="password-input" data-field="roomPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{roomPassword}}" bindinput="handleField" />
+        <view class="password-lock" aria-hidden="true"></view>
       </view>
+      <view class="field-help"><text class="field-help-dot"></text><text>已填入默认密码，可直接创建或修改</text></view>
     </view>
 
     <view class="score-note">
@@ -66,7 +68,7 @@
         <text class="quick-title">扫码入桌</text>
         <text class="quick-desc">扫描房主邀请码，直接加入牌局</text>
       </view>
-      <text class="scan-arrow" aria-hidden="true">&gt;</text>
+      <text class="scan-arrow" aria-hidden="true">›</text>
     </view>
 
     <view class="form-card join-card">

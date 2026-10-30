@@ -8,10 +8,10 @@ Page({
     mode: "create",
     isLoggedIn: false,
     userName: "游客",
-    roomName: "今晚麻将",
+    roomName: "老友局",
     hostNickname: "",
-    roomPassword: "",
-    confirmPassword: "",
+    authNickname: "",
+    roomPassword: "666666",
     creating: false,
     roomCode: "",
     joinPassword: "",
@@ -30,10 +30,21 @@ Page({
 
   syncAuth() {
     const user = getStoredUser();
+    const isLoggedIn = Boolean(getAccessToken());
+    const wasLoggedIn = this.data.isLoggedIn;
+    const authNickname = user && user.displayName ? user.displayName : "";
+    let hostNickname = this.data.hostNickname;
+    if (isLoggedIn && (!wasLoggedIn || !hostNickname || hostNickname === this.data.authNickname)) {
+      hostNickname = authNickname;
+    } else if (!isLoggedIn && wasLoggedIn && hostNickname === this.data.authNickname) {
+      hostNickname = "";
+    }
     this.setData({
-      isLoggedIn: Boolean(getAccessToken()),
+      isLoggedIn,
       userName: user && user.displayName ? user.displayName : "游客",
       nickname: this.data.nickname || (user && user.displayName ? user.displayName : ""),
+      authNickname,
+      hostNickname,
     });
   },
 
@@ -61,9 +72,8 @@ Page({
     const hostNickname = this.data.hostNickname.trim();
     const password = this.data.roomPassword;
     if (!roomName) return this.setData({ errorMessage: "请输入房间名。" });
-    if (!this.data.isLoggedIn && !hostNickname) return this.setData({ errorMessage: "请输入房主昵称。" });
+    if (!hostNickname) return this.setData({ errorMessage: "请输入房主昵称。" });
     if (!/^\d{4,6}$/.test(password)) return this.setData({ errorMessage: "房间密码需为 4～6 位数字。" });
-    if (password !== this.data.confirmPassword) return this.setData({ errorMessage: "两次输入的房间密码不一致。" });
 
     this.setData({ creating: true, errorMessage: "" });
     try {
@@ -73,7 +83,7 @@ Page({
         password,
         scene: "generic",
         gameType: "mahjong",
-        ...(this.data.isLoggedIn ? {} : { displayName: hostNickname }),
+        displayName: hostNickname,
       });
       saveHostRoomPassword(result.room.id, password);
       if (result.guestToken) {

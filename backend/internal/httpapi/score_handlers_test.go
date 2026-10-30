@@ -61,10 +61,23 @@ func TestScoreHTTPFlow(t *testing.T) {
 		"securityQuestion": "Question?", "securityAnswer": "Answer",
 	}, "", http.StatusCreated)
 	created := scoreRequestJSON[score.CreateRoomResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms", map[string]any{
-		"name": "Friday game", "maxPlayers": 4,
+		"name": "Friday game", "displayName": "Host at table", "maxPlayers": 4,
 	}, registered.AccessToken, http.StatusCreated)
 	if created.Room.CentsPerPoint != 100 {
 		t.Fatalf("default cents per point = %d, want 100", created.Room.CentsPerPoint)
+	}
+	if len(created.Room.Participants) != 1 || created.Room.Participants[0].DisplayName != "Host at table" {
+		t.Fatalf("logged-in host display name = %+v", created.Room.Participants)
+	}
+	reloaded := scoreRequestJSON[scoreRoomResponse](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/score-rooms/"+created.Room.ID, nil, registered.AccessToken, http.StatusOK).Room
+	if len(reloaded.Participants) != 1 || reloaded.Participants[0].DisplayName != "Host at table" {
+		t.Fatalf("reloaded logged-in host display name = %+v", reloaded.Participants)
+	}
+	me := scoreRequestJSON[map[string]authUserResponse](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/auth/me", nil, registered.AccessToken, http.StatusOK)
+	if me["user"].DisplayName != "Host" {
+		t.Fatalf("room nickname changed account display name: %q", me["user"].DisplayName)
 	}
 	preview := scoreRequestJSON[score.InvitePreviewResult](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/score-rooms/invite-preview", map[string]any{
 		"inviteToken": created.InviteToken,

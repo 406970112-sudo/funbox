@@ -122,7 +122,7 @@
   box-shadow: 0 12rpx 36rpx rgba(38,76,133,.035);
 }
 
-.form-head,.field-row {
+.form-head {
   display: flex;
 }
 
@@ -150,6 +150,44 @@
   font-size: 19rpx;
 }
 
+.room-name-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  height: 78rpx;
+  margin-top: 18rpx;
+  padding: 0 22rpx;
+  border: 2rpx solid #eef2f8;
+  border-radius: 17rpx;
+  background: #f7f9fc;
+}
+
+.room-name-label {
+  flex-shrink: 0;
+  color: #8b97a9;
+  font-size: 21rpx;
+  font-weight: 600;
+}
+
+.room-name-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  color: #536177;
+  font-size: 25rpx;
+  font-weight: 600;
+  text-align: right;
+}
+
+.room-name-edit {
+  flex-shrink: 0;
+  padding-left: 16rpx;
+  border-left: 2rpx solid #e3e9f2;
+  color: #a1acbb;
+  font-size: 19rpx;
+}
+
 .field {
   margin-top: 27rpx;
 }
@@ -160,6 +198,24 @@
   color: #34425b;
   font-size: 25rpx;
   font-weight: 700;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 12rpx;
+}
+
+.field-label-row .field-label {
+  margin-bottom: 0;
+}
+
+.field-hint {
+  flex-shrink: 0;
+  color: #97a2b4;
+  font-size: 20rpx;
 }
 
 .field-input {
@@ -181,13 +237,79 @@
   letter-spacing: 12rpx;
 }
 
-.field-row {
-  gap: 20rpx;
+.password-control {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 88rpx;
+  min-height: 44px;
+  padding: 0 22rpx;
+  border: 2rpx solid #b9cbff;
+  border-radius: 17rpx;
+  background: #fff;
+  box-shadow: 0 0 0 6rpx rgba(45,91,255,.055);
 }
 
-.field.half {
+.password-input {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  padding: 0;
+  color: #1f2c43;
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 5rpx;
+}
+
+.password-lock {
+  position: relative;
+  flex-shrink: 0;
+  width: 30rpx;
+  height: 30rpx;
+  margin-left: 18rpx;
+  opacity: .72;
+}
+
+.password-lock::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 7rpx;
+  width: 16rpx;
+  height: 15rpx;
+  border: 3rpx solid #66758d;
+  border-bottom: 0;
+  border-radius: 12rpx 12rpx 0 0;
+}
+
+.password-lock::after {
+  content: "";
+  position: absolute;
+  top: 13rpx;
+  left: 3rpx;
+  width: 24rpx;
+  height: 16rpx;
+  border-radius: 5rpx;
+  background: #66758d;
+}
+
+.field-help {
+  display: flex;
+  align-items: center;
+  gap: 11rpx;
+  margin-top: 12rpx;
+  color: #8793a6;
+  font-size: 20rpx;
+  line-height: 1.5;
+}
+
+.field-help-dot {
+  flex-shrink: 0;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #2d5bff;
 }
 
 .score-note {

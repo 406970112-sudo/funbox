@@ -279,6 +279,33 @@ test("host-only room data includes the locally saved room password", async () =>
   assert.equal(page.data.hostRoomPassword, "2468");
 });
 
+test("room data keeps the room-scoped host nickname", async () => {
+  const page = createPage({});
+  page.startRealtime = () => undefined;
+  page.startPolling = () => undefined;
+
+  await page.applyRoom({
+    id: "room-room-nickname",
+    version: 2,
+    status: "waiting",
+    maxPlayers: 4,
+    selfParticipantId: "participant-host",
+    participants: [{
+      id: "participant-host",
+      role: "host",
+      status: "active",
+      displayName: "本局房主",
+      totalPoints: 0,
+      joinedAt: "2026-10-29T00:00:00Z",
+    }],
+    giftBatches: [],
+  });
+
+  assert.equal(page.data.self.displayName, "本局房主");
+  assert.equal(page.data.participants[0].displayName, "本局房主");
+  assert.equal(page.data.settlementRows[0].name, "本局房主");
+});
+
 test("guest room data never exposes the host room password", async () => {
   const { saveHostRoomPassword } = require("../utils/score-session");
   saveHostRoomPassword("room-guest", "2468");
