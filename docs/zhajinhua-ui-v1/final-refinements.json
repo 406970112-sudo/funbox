@@ -1,0 +1,15 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "corrections": [
+    {
+      "board": 2,
+      "prompt": "Make ONE very small precise correction to the existing 4-screen Funbox Chinese UI board. Preserve every layout, every illustration, color, screen1 and2 entirely, all controls and Chinese text. Screen3 is BEFORE paying compare follow, pot98分 / ¥49.00. Screen4 is AFTER 已跟注10分: its BACKGROUND pot MUST now show108分 and¥54.00 because98+10=108. Change ONLY those TWO BACKGROUND numbers in the RIGHTMOST SCREEN4. Screen3 remains98/49. No other changes. Exact exchange 1分=¥0.50. Keep sharp text.",
+      "output": "/Users/mac/.codex/generated_images/01a18b4e-6dff-7d93-b68e-e93ec4d58e38/exec-c7df2512-1beb-4668-9d2c-6dc2b779239a.png"
+    },
+    {
+      "board": 3,
+      "prompt": "Make ONLY two tiny precise label corrections to this existing full 4-screen Chinese Funbox UI design board. Keep all other pixels, layouts, illustrations, values, colors and labels unchanged. (1) In screen1 the small title above364分 pot is incorrectly 本场底注. Replace that title verbatim with 公共积分池. 364分 and¥182.00 unchanged; it is total pot, not ante. (2) In screen3 the last aggregate row in BOTH 本场账单 and 整桌累计 is mistakenly shown as5号 老王. This row is aggregate of four omitted players, NOT a single named player: replace its seatbadge+name with 其余4人合计 in both places, keeping −24分/−¥12.00 and−74分/−¥37.00 unchanged. All other row values and controls stay. Clear crisp Chinese, no redesign.",
+      "output": "/Users/mac/.codex/generated_images/01a18b4e-6dff-7d93-b68e-e93ec4d58e38/exec-10c439e3-e483-445a-a30f-fdc9d5692644.png"
+    }
+  ]
+}

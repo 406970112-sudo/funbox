@@ -1,0 +1,15 @@
+{
+  "tool": "image_gen.imagegen",
+  "edits": [
+    {
+      "key": "A",
+      "path": "/Users/mac/.codex/generated_images/01a18adf-45f0-7183-b7ea-fa4a894537b9/exec-48a84aa7-c4ea-4d76-9d8e-f0ac8b4f4558.png",
+      "prompt": "Make a surgical edit to this FunBox V3 design board. Preserve all four mobile screens, their layout, texts, original illustration rendering and all colors unchanged. ONLY correct two sample icons in the bottom icon strip: The icon labelled 记分 currently shows conversation bubbles. Replace it with the project's existing BLUE-EDGED WHITE +/- SCORING TILE (blue plus at top, small gray divider, coral minus at bottom), softly rounded 3D, same style and size as the other icons. The icon labelled 战绩 currently includes a crown: remove the crown and instead use a small white receipt with THREE BLUE horizontal lines paired with a small cobalt CHECKMARK badge, in the same existing rounded 3D atlas style. Do not alter the scan/mahjong/poker/settlement samples. Do not add any chat or achievement functions. Everything else exactly unchanged."
+    },
+    {
+      "key": "C",
+      "path": "/Users/mac/.codex/generated_images/01a18adf-45f0-7183-b7ea-fa4a894537b9/exec-bd5aed28-ce5a-4769-9727-4308b5ef06a3.png",
+      "prompt": "Make a surgical correction to this FunBox V3 design board. Preserve all four screens, original illustration shapes, layout, all point totals, amounts, colors, buttons and bottom state strip unchanged. In the FIRST screen dimmed background header, REMOVE the password '密码666666' and remove any '已准备' readiness tags (no readiness feature); show only room name 老友局 and room code '牌桌 · 682915' behind modal. In the SECOND screen's top room header, REMOVE password '密码666666' completely; show only 老友局, green 已结算 status badge, and smaller '牌桌 · 682915'. A settled room must never show password. Do not add anything to replace the removed credential, leave whitespace. No other changes."
+    }
+  ]
+}

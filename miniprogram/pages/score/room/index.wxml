@@ -180,7 +180,12 @@
         </view>
       </view>
 
-      <button wx:if="{{isHost && giftHistory.length}}" class="settle-button" bindtap="openSettlement">{{isGeneral ? '结束并结算' : '散场结算'}}</button>
+      <view wx:if="{{isHost && giftHistory.length}}" class="settle-dock">
+        <view class="settle-dock-spacer"></view>
+        <view class="settle-dock-bar">
+          <button class="settle-button" bindtap="openSettlement">{{isGeneral ? '结束并结算' : '散场结算'}}</button>
+        </view>
+      </view>
     </block>
 
     <block wx:elif="{{room.status === 'settled'}}">

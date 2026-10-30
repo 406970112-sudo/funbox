@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 let accessToken = "";
 let currentUser = null;
@@ -59,12 +61,20 @@ function createPage() {
   };
 }
 
-test("profile page shows login and register entries for a guest", async () => {
+test("profile page shows one tappable auth entry for a guest", async () => {
   accessToken = "";
   const page = createPage();
   await page.loadProfile();
   assert.equal(page.data.isLoggedIn, false);
   assert.equal(page.data.displayName, "游客");
+
+  navigations.length = 0;
+  page.openAuth();
+  assert.equal(navigations[0].url, "/pages/auth/index");
+
+  const template = fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.wxml"), "utf8");
+  assert.match(template, /class="profile-card guest-card fb-card" bindtap="openAuth"/);
+  assert.doesNotMatch(template, /login-button|register-button|bindtap="openLogin"|bindtap="openRegister"/);
 });
 
 test("profile page loads current user details and opens the history entrance", async () => {
@@ -91,6 +101,30 @@ test("profile page loads current user details and opens the history entrance", a
   assert.equal(navigations[0].url, "/pages/game-history/index");
 });
 
+test("WeChat users do not render a missing-phone placeholder", async () => {
+  accessToken = "wechat-token";
+  currentUserError = null;
+  currentUser = {
+    id: "wechat-user",
+    accountType: "wechat",
+    username: "",
+    displayName: "微信牌友",
+    wechatBound: true,
+    createdAt: "2026-10-30T00:00:00Z",
+  };
+  const page = createPage();
+  await page.loadProfile();
+
+  assert.equal(page.data.isLoggedIn, true);
+  assert.equal(page.data.maskedUsername, "");
+  assert.match(page.data.registeredAt, /2026 年 10 月加入/);
+
+  const template = fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.wxml"), "utf8");
+  assert.match(template, /wx:if="\{\{maskedUsername\}\}" class="identity-meta"/);
+  assert.doesNotMatch(template, /未设置手机号/);
+  assert.doesNotMatch(fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.js"), "utf8"), /未设置手机号/);
+});
+
 test("expired profile sessions clear local state", async () => {
   accessToken = "expired-token";
   currentUserError = Object.assign(new Error("unauthorized"), { statusCode: 401 });
@@ -112,5 +146,5 @@ test("identity card opens account settings only for signed-in users", () => {
 
   accessToken = "";
   page.openSettings();
-  assert.equal(navigations[1].url, "/pages/auth/index?mode=login");
+  assert.equal(navigations[1].url, "/pages/auth/index");
 });

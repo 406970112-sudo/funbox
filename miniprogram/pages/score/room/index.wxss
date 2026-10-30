@@ -577,6 +577,26 @@
   color: #c74d38;
 }
 
+.settle-dock-spacer {
+  height: calc(46px + 32rpx + 2rpx + env(safe-area-inset-bottom));
+}
+
+.settle-dock-bar {
+  position: fixed;
+  z-index: 10;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  padding: 16rpx 28rpx calc(16rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid #e6eaf4;
+  background: rgba(245,247,250,.98);
+}
+
+.settle-dock-bar .settle-button {
+  margin: 0;
+}
+
 .danger-button {
   background: #c74d38;
   color: #fff;

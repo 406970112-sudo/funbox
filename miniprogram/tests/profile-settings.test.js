@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const { API_BASE_URL } = require("../config/index");
 
 const storage = {};
@@ -69,6 +71,13 @@ test("settings loads the current account with an absolute avatar URL", async () 
   assert.equal(page.data.displayName, "牌友");
   assert.equal(page.data.avatarUrl, API_BASE_URL.replace(/\/api\/v1\/?$/, "") + "/avatars/old.png");
   assert.equal(requests[0].header.Authorization, "Bearer account-token");
+});
+
+test("settings does not render the WeChat login or binding card", () => {
+  const template = fs.readFileSync(path.resolve(__dirname, "../pages/profile-settings/index.wxml"), "utf8");
+
+  assert.doesNotMatch(template, /微信登录|绑定微信|wechat-binding-card|wechat-bind-button/);
+  assert.match(template, /bindtap="logout"/);
 });
 
 test("saving a nickname trims it and updates persistent account state", async () => {

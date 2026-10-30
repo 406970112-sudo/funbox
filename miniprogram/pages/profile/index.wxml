@@ -9,13 +9,13 @@
   <view wx:if="{{isLoggedIn}}" class="profile-card identity-card fb-card" bindtap="openSettings" role="button" aria-label="编辑个人资料">
     <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" binderror="handleAvatarError" />
     <view wx:else class="avatar avatar-fallback">{{initial}}</view>
-    <view class="identity-copy"><text class="identity-name">{{displayName}}</text><text class="identity-meta">{{maskedUsername}}</text><text class="identity-date">{{registeredAt}}</text></view>
+    <view class="identity-copy"><text class="identity-name">{{displayName}}</text><text wx:if="{{maskedUsername}}" class="identity-meta">{{maskedUsername}}</text><text class="identity-date">{{registeredAt}}</text></view>
     <view wx:if="{{userLoading}}" class="loading-dot"></view>
     <text class="fb-arrow">›</text>
   </view>
-  <view wx:else class="profile-card guest-card fb-card">
-    <view class="guest-identity"><view class="avatar avatar-fallback">游</view><view class="guest-copy"><text class="guest-title">游客模式</text><text class="guest-desc">登录后查看最近牌局</text></view></view>
-    <view class="guest-actions"><button class="login-button" bindtap="openLogin">登录</button><button class="register-button" bindtap="openRegister">注册</button></view>
+  <view wx:else class="profile-card guest-card fb-card" bindtap="openAuth" role="button" aria-label="登录或注册 FunBox">
+    <view class="guest-identity"><view class="avatar avatar-fallback">游</view><view class="guest-copy"><text class="guest-title">游客模式</text><text class="guest-desc">登录或注册，保存你的牌局记录</text></view></view>
+    <text class="fb-arrow">›</text>
   </view>
   <view wx:if="{{userError}}" class="inline-error" bindtap="retryLoad"><text>{{userError}}</text><text class="inline-retry">重试</text></view>
   <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card" bindtap="openHistory">

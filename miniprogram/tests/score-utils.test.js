@@ -117,6 +117,24 @@ test("room templates remove caps and keep settlement rates out of active scoring
   assert.match(roomTemplate, /登录并绑定/);
 });
 
+test("active score rooms keep the settlement action fixed above history content", () => {
+  const root = path.resolve(__dirname, "..");
+  const roomTemplate = fs.readFileSync(path.join(root, "pages/score/room/index.wxml"), "utf8");
+  const roomStyle = fs.readFileSync(path.join(root, "pages/score/room/index.wxss"), "utf8");
+  const activeTemplate = roomTemplate
+    .split('<block wx:elif="{{room.status === \'active\'}}">')[1]
+    .split('<block wx:elif="{{room.status === \'settled\'}}">')[0];
+
+  assert.match(activeTemplate, /<view wx:if="\{\{isHost && giftHistory\.length\}\}" class="settle-dock">/);
+  assert.match(activeTemplate, /class="settle-dock-spacer"/);
+  assert.match(activeTemplate, /class="settle-dock-bar"[\s\S]*class="settle-button" bindtap="openSettlement"/);
+  assert.match(roomStyle, /\.settle-dock-bar\s*\{[^}]*position:\s*fixed;/s);
+  assert.match(roomStyle, /\.settle-dock-bar\s*\{[^}]*bottom:\s*0;/s);
+  assert.match(roomStyle, /\.settle-dock-bar\s*\{[^}]*z-index:\s*10;/s);
+  assert.match(roomStyle, /\.settle-dock-bar\s*\{[^}]*env\(safe-area-inset-bottom\)/s);
+  assert.match(roomStyle, /\.settle-dock-spacer\s*\{[^}]*height:\s*calc\(46px \+ 32rpx \+ 2rpx \+ env\(safe-area-inset-bottom\)\);/s);
+});
+
 test("mahjong room creation uses friend-room defaults and has no password confirmation", () => {
   const root = path.resolve(__dirname, "..");
   const createScript = fs.readFileSync(path.join(root, "utils/score-entry-base.js"), "utf8");

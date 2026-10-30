@@ -1,0 +1,34 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "jobs": [
+    {
+      "file": "01-entry-and-room.png",
+      "references": [
+        "/Users/mac/Documents/ChatGPT/funbox/docs/zhajinhua-ui-v1/01-entry-and-room.png",
+        "/Users/mac/Documents/ChatGPT/funbox/docs/mahjong-experience-v3/01-home-and-entry.png"
+      ],
+      "prompt": "Use case precise-object-edit / Chinese UI mockup correction. Image1 is the EDIT TARGET, image2 is the EXACT BASELINE HOMEPAGE REFERENCE. User explicitly rejected redesigning homepage. Keep Image1 screen2 creation, screen3 invite, screen4 waiting and all bottom notes completely unchanged. Replace ONLY leftmost HOME SCREEN of image1 with the leftmost home screen of image2, preserve its exact original layout and content: small FunBox blue wordmark + 棋牌记分, top-right 游客 account pill, headline \"好友相聚，\" then \"每局都算数。\" with 都算数 blue; same small grouped poker A+coral pawn+blue die+score tile at TOP RIGHT of hero, same \"选择牌局\" and \"不同玩法，一样清楚\", two shallow horizontal pastel cards with text LEFT and original illustrations RIGHT: mint麻将记分 /4人牌局·给分与结算 /已开放; peach炸金花 /轮流加注，实时看池 /已开放. These are horizontal cards, not vertically large illustration posters. Keep bottom green dot牌局服务正常 and original 首页/我的 tabs. Homepage MUST HAVE NO 记分原则 or 记分规则 section. The ONLY change from reference image2 homepage is the existing 炸金花 card now enabled with 已开放 badge and small chevron at right instead of 敬请期待. Do not invent new hero slogans, change illustration positions or sizes, add new description, add menu or alter colors. Entire board other screens remain as image1. Update only board header UI V1 to UI V2. Flat pale blue canvas #f5f7fa, white cards, cobalt #2d5bff, retain exact visual quality."
+    },
+    {
+      "file": "02-turn-and-compare.png",
+      "references": [
+        "/Users/mac/Documents/ChatGPT/funbox/docs/zhajinhua-ui-v1/02-turn-and-compare.png"
+      ],
+      "prompt": "Edit ONLY the PUBLIC POT cards in all FOUR mobile screens of this existing Funbox UI design board. User says the big poker illustrations are completely unreasonable: numeric MONEY AND POINTS must dominate. REMOVE ALL poker cards, chips, dice and score-tile illustrations from INSIDE pot cards; no replacement art, icons, gauge, graphic or empty art reservation. Give numeric content 90 percent of the pot area. Design an elegant full-width white numeric pot card: small muted label 公共积分池, very LARGE bold cobalt currency left, large bold dark points right or on next clear line, small neutral rate 1分=¥0.50. Visually money about42px logical, points about30px logical; labels11-12px. Compact premium typography, no approximation symbols. In screen1 exact MONEY ¥44.00 and POINTS88分. Screen2 ¥49.00 and98分. Screen3 prepay background ¥49.00 and98分. Screen4 paid background ¥54.00 and108分. Currency and points BOTH prominent, clearly labeled, no invented values. Keep original pot card bounds where possible, use horizontal balanced numerical layout, no huge vertical gap. Preserve ALL other controls, actor notification banners, player grids, contributions, compare bottom sheets, selectedtie, paragraphs, colors, board notes and other illustration use OUTSIDE pot cards. Particularly screen1 seat1=11, screen2seat1=21 and 3 separate bottomactions must remain. Existing friendly app colors #f5f7fa #fff #2d5bff #172139. Update header UI V1 to UI V2 only. Do not redesign any other part."
+    },
+    {
+      "file": "03-cap-bonus-and-members.png",
+      "references": [
+        "/Users/mac/Documents/ChatGPT/funbox/docs/zhajinhua-ui-v1/03-cap-bonus-and-members.png"
+      ],
+      "prompt": "Make ONLY a targeted correction to SCREEN1's public pot area in the LEFTMOST phone of this existing Chinese Funbox board. User rejected large decorative poker cards dominating the pool. REMOVE the ENTIRE large poker/dice/stack illustration from the region between room header and the red cap status card. Replace that whole region with ONE full-width white compact card dominated by text: small label 公共积分池; VERY LARGE bold cobalt ¥182.00; LARGE bold dark364分, both immediately readable, small muted1分=¥0.50. Money about42px logical, points30px. Typography uses the whole available width with generous but compact whitespace, absolutely NO reserved artwork column. No poker, chips, dice or illustration anywhere INSIDE this pool card. Keep red 已封顶 第3/3圈 card and step indicators below, and original 3seatcards, actions and all state exactly unchanged; slight upward reflow only if needed. Keep remaining SCREEN2 bonus, SCREEN3 round-summary, SCREEN4 management completely unchanged, especially bonus每人10总收70, zero-sum totals, numericseatlabels, separate look andfoldcontrols. Keep original overall colors, illustrations outsidepot, typography, borders and all bottom notes. Header UI V1 to UI V2 only. No other design changes."
+    },
+    {
+      "file": "04-ledger-settlement-and-feedback.png",
+      "references": [
+        "/Users/mac/Documents/ChatGPT/funbox/docs/zhajinhua-ui-v1/04-ledger-settlement-and-feedback.png"
+      ],
+      "prompt": "Edit ONLY the rightmost screen's 奖池金额动效预览 section and associated motion toggle in this existing Funbox UI board. Preserve ALL first3 screens and all other content exactly. User demands MONEY AND POINTS prominent, illustrations must not dominate public pot display. In the 3 small pot-preview cards REMOVE every stack of chips and all decorative illustrations. Replace with typography-first mini previews: card1 ¥20 and40分; card2 ¥120 and240分; card3 ¥500 and1000分. Currency largest boldcobalt, points secondary bolddark, tinyrate1分=¥0.50 or sharedrateabove. No pictures, no reserved illustration region, no fake progress toward monetary target. A thin blue edge/tiny shimmer behind numbers can indicate amount-change intensity; do not imply chips or reward tiers. Replace captions 少量筹码/较多筹码/更多筹码 with 数值轻显 / 增量浮现 / 短暂高亮 respectively. Replace explanatorytext 金额增大筹码视觉渐丰 with \"金额与分数优先，变化时短暂强调\". Toggle 显示奖池动效 can remain or read 金额变化动效. Retain original palette, white rounded cards, readable Chinese. Keep currentdate2026-10-30, numericseatlabels, fixedrate. No new graphics or redesign. Header UI V1 to UI V2."
+    }
+  ]
+}

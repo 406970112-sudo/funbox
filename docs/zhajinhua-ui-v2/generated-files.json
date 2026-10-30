@@ -1,0 +1,21 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "outputs": [
+    {
+      "file": "01-entry-and-room.png",
+      "path": "/Users/mac/.codex/generated_images/01a18b4e-6dff-7d93-b68e-e93ec4d58e38/exec-3190836e-0c0c-4f29-ac32-3ef8bf688f8c.png"
+    },
+    {
+      "file": "02-turn-and-compare.png",
+      "path": "/Users/mac/.codex/generated_images/01a18b4e-6dff-7d93-b68e-e93ec4d58e38/exec-9640fd2c-ee2e-4da7-bf57-cf216483f0c6.png"
+    },
+    {
+      "file": "03-cap-bonus-and-members.png",
+      "path": "/Users/mac/.codex/generated_images/01a18b4e-6dff-7d93-b68e-e93ec4d58e38/exec-6f1d6f91-75fc-4ddd-97a7-e6eb9e879a15.png"
+    },
+    {
+      "file": "04-ledger-settlement-and-feedback.png",
+      "path": "/Users/mac/.codex/generated_images/01a18b4e-6dff-7d93-b68e-e93ec4d58e38/exec-7a42a24b-0d44-493f-81c3-ea33fbf65719.png"
+    }
+  ]
+}

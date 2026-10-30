@@ -6,7 +6,7 @@ const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 function maskPhone(value) {
   const text = String(value || "").trim();
   if (/^1\d{10}$/.test(text)) return `${text.slice(0, 3)}****${text.slice(-4)}`;
-  return text || "未设置手机号";
+  return text;
 }
 
 function formatRegisteredAt(value) {
@@ -131,20 +131,16 @@ Page({
     wx.navigateTo({ url: "/pages/game-history/index" });
   },
 
-  openLogin() {
-    wx.navigateTo({ url: "/pages/auth/index?mode=login" });
+  openAuth() {
+    wx.navigateTo({ url: "/pages/auth/index" });
   },
 
   openSettings() {
     if (!getAccessToken()) {
-      this.openLogin();
+      this.openAuth();
       return;
     }
     wx.navigateTo({ url: "/pages/profile-settings/index" });
-  },
-
-  openRegister() {
-    wx.navigateTo({ url: "/pages/auth/index?mode=register" });
   },
 
   openFeedback() {

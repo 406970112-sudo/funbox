@@ -134,3 +134,13 @@ test("mini program password template binds the visibility state and drops streng
   assert.match(template, /wx:if="\{\{mode === 'login'\}\}"/);
   assert.doesNotMatch(template, /至少 8 位|包含字母和数字/);
 });
+
+test("mini program login keeps WeChat primary and phone credentials as a fallback", () => {
+  const template = fs.readFileSync(path.resolve(__dirname, "../pages/auth/index.wxml"), "utf8");
+
+  assert.match(template, /class="wechat-button"/);
+  assert.match(template, /src="\/assets\/icons\/wechat\.png"/);
+  assert.match(template, /class="phone-fallback" data-mode="login" bindtap="switchMode"/);
+  assert.doesNotMatch(template, /wechat-bubble|phone-button|legacy-hint/);
+  assert.ok(fs.existsSync(path.resolve(__dirname, "../assets/icons/wechat.png")));
+});

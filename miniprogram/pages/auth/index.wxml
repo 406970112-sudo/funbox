@@ -19,13 +19,11 @@
       <text class="welcome-title">欢迎来到 FunBox</text>
       <text class="welcome-subtitle">首次登录将自动创建账号</text>
       <button class="wechat-button" loading="{{loading}}" disabled="{{loading}}" bindtap="handleWeChatLogin">
-        <view class="wechat-icon" aria-hidden="true"><view class="wechat-bubble bubble-large"><view class="wechat-eye"></view><view class="wechat-eye"></view></view><view class="wechat-bubble bubble-small"><view class="wechat-eye"></view><view class="wechat-eye"></view></view></view>
+        <image class="wechat-icon" src="/assets/icons/wechat.png" mode="aspectFit" aria-hidden="true" />
         <text>{{loading ? '正在登录' : '微信一键登录'}}</text>
       </button>
       <text class="login-assurance">无需填写手机号和密码</text>
-      <view class="auth-divider"><view></view><text>或</text><view></view></view>
-      <button class="phone-button" data-mode="login" bindtap="switchMode" disabled="{{loading}}">手机号密码登录</button>
-      <text class="legacy-hint">已有账号？登录后可绑定微信，保留原有数据</text>
+      <button class="phone-fallback" data-mode="login" bindtap="switchMode" disabled="{{loading}}">手机号密码登录 / 注册</button>
     </block>
     <block wx:else>
       <button class="back-wechat" data-mode="wechat" bindtap="switchMode" disabled="{{loading}}">‹ 返回微信快捷登录</button>

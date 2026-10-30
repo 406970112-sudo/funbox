@@ -149,34 +149,6 @@
   line-height: 1.7;
 }
 
-.guest-actions {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  width: 116rpx;
-  gap: 12rpx;
-}
-
-.login-button,.register-button {
-  margin: 0;
-  padding: 10rpx;
-  border-radius: 16rpx;
-  font-size: 25rpx;
-  font-weight: 800;
-  line-height: 1.5;
-}
-
-.login-button {
-  background: #2d5bff;
-  color: #fff;
-}
-
-.register-button {
-  border: 2rpx solid #2d5bff;
-  background: #fff;
-  color: #2d5bff;
-}
-
 .inline-error {
   display: flex;
   align-items: center;
