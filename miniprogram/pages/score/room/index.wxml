@@ -90,10 +90,10 @@
         </view>
         <view class="qr-box" bindtap="toggleQrExpanded" aria-role="button" aria-label="邀请二维码，点击放大">
           <image wx:if="{{inviteToken && qrImageSrc}}" class="qr-image" src="{{qrImageSrc}}" mode="aspectFit" style="width: {{qrSize}}px; height: {{qrSize}}px;" />
-          <canvas wx:elif="{{inviteToken && !qrExpanded}}" canvas-id="roomQr" class="qr-canvas" style="width: {{qrSize}}px; height: {{qrSize}}px;"></canvas>
-          <text wx:elif="{{inviteToken && qrExpanded}}" class="qr-placeholder">二维码已放大</text>
-          <text wx:else class="qr-placeholder">{{qrCodeLoading ? '生成微信邀请码中…' : '生成邀请中…'}}</text>
-          <text wx:if="{{inviteToken}}" class="qr-expand-hint">点击放大</text>
+          <canvas wx:elif="{{inviteToken && qrCodeFailed && !qrCodeLoading && !qrExpanded}}" canvas-id="roomQr" class="qr-canvas" style="width: {{qrSize}}px; height: {{qrSize}}px;"></canvas>
+          <text wx:elif="{{inviteToken && qrCodeFailed && !qrCodeLoading && qrExpanded}}" class="qr-placeholder">二维码已放大</text>
+          <text wx:else class="qr-placeholder">{{inviteToken || qrCodeLoading ? '生成微信邀请码中…' : '生成邀请中…'}}</text>
+          <text wx:if="{{inviteToken && (qrImageSrc || (qrCodeFailed && !qrCodeLoading))}}" class="qr-expand-hint">点击放大</text>
         </view>
         </view>
         <button wx:if="{{isHost && inviteToken}}" class="share-button" open-type="share">发送邀请给牌友</button>
@@ -229,7 +229,8 @@
       <text class="qr-preview-title">邀请二维码</text>
       <view class="qr-preview-stage" bindtap="toggleQrExpanded">
         <image wx:if="{{qrImageSrc}}" class="qr-preview-image" src="{{qrImageSrc}}" mode="aspectFit" style="width: {{qrLargeSize}}px; height: {{qrLargeSize}}px;" />
-        <canvas wx:elif="{{inviteToken}}" canvas-id="roomQrLarge" class="qr-preview-image" style="width: {{qrLargeSize}}px; height: {{qrLargeSize}}px;"></canvas>
+        <canvas wx:elif="{{inviteToken && qrCodeFailed && !qrCodeLoading}}" canvas-id="roomQrLarge" class="qr-preview-image" style="width: {{qrLargeSize}}px; height: {{qrLargeSize}}px;"></canvas>
+        <text wx:else class="qr-placeholder">生成微信邀请码中…</text>
       </view>
       <text class="qr-preview-hint">再次点击二维码收起</text>
     </view>

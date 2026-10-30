@@ -20,6 +20,9 @@ const scoreSessionSaves = [];
 let scoreSessionClears = 0;
 const navigateCalls = [];
 const imageWriteCalls = [];
+const qrDrawCalls = [];
+const defaultInviteCode = async () => ({ imageBase64: "jpeg", mediaType: "image/jpeg", width: 430 });
+let issueInviteCode = defaultInviteCode;
 let accessToken = "";
 
 const scoreAPI = require.resolve("../utils/score-api");
@@ -38,7 +41,7 @@ require.cache[scoreAPI] = {
     },
     getScoreErrorMessage: (error) => error.message,
     getScoreRoom: async () => ({ room: {} }),
-    issueScoreInviteCode: async () => ({ imageBase64: "jpeg", mediaType: "image/jpeg", width: 430 }),
+    issueScoreInviteCode: (...args) => issueInviteCode(...args),
     issueScoreInviteToken: async () => "token",
     joinScoreRoom: async (input) => {
       joinCalls.push(input);
@@ -98,17 +101,14 @@ require.cache[realtime] = {
   loaded: true,
   exports: { connectScoreRealtime: () => () => undefined },
 };
-const scoreQR = require.resolve("../utils/score-qr");
-require.cache[scoreQR] = {
-  id: scoreQR,
-  filename: scoreQR,
-  loaded: true,
-  exports: { drawScoreQRCode: () => undefined },
-};
-
 const pageDefinitions = [];
 global.Page = (definition) => pageDefinitions.push(definition);
 global.wx = {
+  createCanvasContext: (canvasId) => ({
+    setFillStyle() {},
+    fillRect() {},
+    draw() { qrDrawCalls.push(canvasId); },
+  }),
   env: { USER_DATA_PATH: "/tmp" },
   getFileSystemManager: () => ({
     writeFile: (options) => {
@@ -282,6 +282,65 @@ test("WeChat invite image is stored with its JPEG media extension", async () => 
   assert.equal(page.data.qrCodeLoading, false);
   assert.match(page.data.qrImageSrc, /\.jpg$/);
   assert.equal(imageWriteCalls[0].encoding, "base64");
+});
+
+test("pending WeChat invite code never draws a square QR, including expanded preview", async (t) => {
+  qrDrawCalls.length = 0;
+  let resolveCode;
+  issueInviteCode = () => new Promise((resolve) => { resolveCode = resolve; });
+  t.after(() => { issueInviteCode = defaultInviteCode; });
+  const page = createPage(roomPage, {
+    isHost: true,
+    room: { id: "room-1", status: "waiting" },
+  });
+  page.credential = { token: "host-token" };
+  t.after(() => clearTimeout(page.qrRenderTimer));
+
+  await page.ensureInviteToken();
+  const request = page.ensureInviteCode();
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  assert.equal(page.data.qrCodeLoading, true);
+  assert.deepEqual(qrDrawCalls, []);
+  page.toggleQrExpanded();
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  assert.deepEqual(qrDrawCalls, []);
+
+  resolveCode(await defaultInviteCode());
+  await request;
+  assert.equal(page.data.qrCodeLoading, false);
+  assert.ok(page.data.qrImageSrc);
+  assert.deepEqual(qrDrawCalls, []);
+});
+
+test("failed WeChat invite code draws fallback QR and suppresses it during retry", async (t) => {
+  qrDrawCalls.length = 0;
+  issueInviteCode = async () => { throw new Error("邀请码获取失败"); };
+  t.after(() => { issueInviteCode = defaultInviteCode; });
+  const page = createPage(roomPage, {
+    inviteToken: "token",
+    isHost: true,
+    room: { id: "room-1", status: "waiting" },
+  });
+  page.credential = { token: "host-token" };
+  t.after(() => clearTimeout(page.qrRenderTimer));
+  await page.ensureInviteCode();
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  assert.equal(page.data.qrCodeFailed, true);
+  assert.deepEqual(qrDrawCalls, ["roomQr"]);
+  page.toggleQrExpanded();
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  assert.deepEqual(qrDrawCalls, ["roomQr", "roomQrLarge"]);
+
+  let resolveCode;
+  issueInviteCode = () => new Promise((resolve) => { resolveCode = resolve; });
+  const request = page.ensureInviteCode();
+  assert.equal(page.data.qrCodeFailed, false);
+  page.closeQrExpanded();
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  assert.deepEqual(qrDrawCalls, ["roomQr", "roomQrLarge"]);
+  resolveCode(await defaultInviteCode());
+  await request;
+  assert.ok(page.data.qrImageSrc);
 });
 
 test("internal scanner routes mini program code paths by scene", () => {

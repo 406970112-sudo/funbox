@@ -123,6 +123,7 @@ Page({
     qrLargeSize: 320,
     qrImageSrc: "",
     qrCodeLoading: false,
+    qrCodeFailed: false,
     qrExpanded: false,
     settlementOpen: false,
     settlementRateInput: "",
@@ -477,7 +478,7 @@ Page({
   async ensureInviteCode() {
     if (!this.credential || !this.data.isHost || !this.data.room || this.data.room.status !== "waiting") return;
     if (this.data.qrImageSrc || this.data.qrCodeLoading || !this.data.room.id) return;
-    this.setData({ qrCodeLoading: true });
+    this.setData({ qrCodeLoading: true, qrCodeFailed: false });
     try {
       const result = await issueScoreInviteCode(this.credential, this.data.room.id);
       if (!result || !result.imageBase64) throw new Error("缺少微信邀请码图片。");
@@ -495,6 +496,7 @@ Page({
       if (this.pageActive === false) return;
       this.setData({
         qrCodeLoading: false,
+        qrCodeFailed: true,
         feedback: getScoreErrorMessage(error),
       });
       this.renderInviteCode(this.data.qrExpanded ? "roomQrLarge" : "roomQr", this.data.qrExpanded ? this.data.qrLargeSize : this.data.qrSize);
@@ -502,11 +504,11 @@ Page({
   },
 
   renderInviteCode(canvasId, size) {
-    if (!this.data.inviteToken || this.data.qrImageSrc) return;
+    if (!this.data.inviteToken || this.data.qrImageSrc || !this.data.qrCodeFailed || this.data.qrCodeLoading) return;
     const targetExpanded = canvasId === "roomQrLarge";
     if (this.qrRenderTimer) clearTimeout(this.qrRenderTimer);
     this.qrRenderTimer = setTimeout(() => {
-      if (!this.data.inviteToken || this.data.qrImageSrc || this.data.qrExpanded !== targetExpanded) return;
+      if (!this.data.inviteToken || this.data.qrImageSrc || !this.data.qrCodeFailed || this.data.qrCodeLoading || this.data.qrExpanded !== targetExpanded) return;
       try {
         drawScoreQRCode(this, canvasId, buildInviteContent(this.data.inviteToken), size);
       } catch (error) {
