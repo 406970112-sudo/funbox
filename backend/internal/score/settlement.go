@@ -17,7 +17,7 @@ type settlementResult struct {
 	ok   bool
 }
 
-func MinimumTransfers(balances map[string]int64, order []string) ([]Transfer, error) {
+func orderedSettlementBalances(balances map[string]int64, order []string) ([]settlementBalance, error) {
 	var total int64
 	for _, amount := range balances {
 		total += amount
@@ -50,6 +50,50 @@ func MinimumTransfers(balances map[string]int64, order []string) ([]Transfer, er
 			return records[i].id < records[j].id
 		}
 	})
+	return records, nil
+}
+
+// SettlementTransfers keeps exact minimization for small groups. Large groups
+// use stable debtor/creditor matching so settlement cannot exhaustively search
+// an unbounded state space while holding the database transaction.
+func SettlementTransfers(balances map[string]int64, order []string) ([]Transfer, error) {
+	records, err := orderedSettlementBalances(balances, order)
+	if err != nil {
+		return nil, err
+	}
+	if len(records) <= 12 {
+		return MinimumTransfers(balances, order)
+	}
+	debtors := make([]settlementBalance, 0)
+	creditors := make([]settlementBalance, 0)
+	for _, record := range records {
+		if record.amount < 0 {
+			debtors = append(debtors, record)
+		} else {
+			creditors = append(creditors, record)
+		}
+	}
+	plan := make([]Transfer, 0, len(records)-1)
+	for d, c := 0, 0; d < len(debtors) && c < len(creditors); {
+		amount := min64(-debtors[d].amount, creditors[c].amount)
+		plan = append(plan, Transfer{FromParticipantID: debtors[d].id, ToParticipantID: creditors[c].id, AmountCents: amount})
+		debtors[d].amount += amount
+		creditors[c].amount -= amount
+		if debtors[d].amount == 0 {
+			d++
+		}
+		if creditors[c].amount == 0 {
+			c++
+		}
+	}
+	return plan, nil
+}
+
+func MinimumTransfers(balances map[string]int64, order []string) ([]Transfer, error) {
+	records, err := orderedSettlementBalances(balances, order)
+	if err != nil {
+		return nil, err
+	}
 	if len(records) == 0 {
 		return []Transfer{}, nil
 	}

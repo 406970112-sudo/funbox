@@ -1,0 +1,100 @@
+<view class="mahjong-page {{mode === 'join' ? 'mahjong-join-page' : ''}}">
+  <view class="hero">
+    <view class="hero-top">
+      <text class="entry-brand">FunBox / 棋牌记分</text>
+      <view class="account-link" bindtap="openAuth">
+        <text class="account-mark">{{isLoggedIn ? '已' : '游'}}</text>
+        <text>{{userName}}</text>
+      </view>
+    </view>
+    <view class="hero-content">
+      <view>
+        <text class="hero-title">好友相聚，轻松记分</text>
+        <text class="hero-desc">灵活人数 · 给分清楚，结束好结算</text>
+      </view>
+      <image class="entry-art" src="/assets/illustrations/general-score.png" mode="aspectFit" aria-hidden="true" />
+    </view>
+  </view>
+
+  <view class="mode-tabs">
+    <view class="mode-tab {{mode === 'create' ? 'active' : ''}}" data-mode="create" bindtap="switchMode">创建房间</view>
+    <view class="mode-tab {{mode === 'join' ? 'active' : ''}}" data-mode="join" bindtap="switchMode">加入房间</view>
+  </view>
+
+  <view wx:if="{{mode === 'create'}}" class="form-card">
+    <view class="form-head">
+      <text class="form-title">开一局</text>
+      <text class="form-badge">灵活人数</text>
+    </view>
+
+    <view class="room-name-row">
+      <view class="inline-control room-name-control {{editingField === 'roomName' ? 'inline-control-active' : ''}}">
+        <input class="inline-input room-name-input" style="width: {{roomName.length > 8 ? 270 : (roomName.length || 4) * 30 + 12}}rpx;" data-field="roomName" maxlength="40" placeholder="输入房间名" value="{{roomName}}" bindinput="handleField" bindfocus="beginInlineEdit" bindblur="endInlineEdit" bindconfirm="endInlineEdit" focus="{{editingField === 'roomName'}}" disabled="{{creating}}" confirm-type="done" aria-label="房间名，点按修改" />
+        <button class="inline-edit" data-field="roomName" bindtap="beginInlineEdit" disabled="{{creating}}" aria-label="编辑房间名"><view class="edit-pencil" aria-hidden="true"></view></button>
+      </view>
+    </view>
+    <text class="create-settings-hint">名称、密码均可点按修改</text>
+
+    <view class="field">
+      <text class="field-label">你的昵称</text>
+      <input class="field-input" data-field="hostNickname" maxlength="48" placeholder="输入本局使用的昵称" value="{{hostNickname}}" bindinput="handleField" disabled="{{creating}}" aria-label="房主昵称" />
+    </view>
+
+    <view class="password-row">
+      <view class="password-lock" aria-hidden="true"></view>
+      <text class="password-label">房间密码</text>
+      <view class="inline-control password-control {{editingField === 'roomPassword' ? 'inline-control-active' : ''}}">
+        <input class="inline-input password-input" style="width: {{roomPassword.length ? roomPassword.length * 18 + 8 : 164}}rpx;" data-field="roomPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{roomPassword}}" bindinput="handleField" bindfocus="beginInlineEdit" bindblur="endInlineEdit" bindconfirm="endInlineEdit" focus="{{editingField === 'roomPassword'}}" disabled="{{creating}}" confirm-type="done" aria-label="房间密码，4～6 位数字，点按修改" />
+        <button class="inline-edit" data-field="roomPassword" bindtap="beginInlineEdit" disabled="{{creating}}" aria-label="编辑房间密码"><view class="edit-pencil" aria-hidden="true"></view></button>
+      </view>
+    </view>
+
+    <view class="score-note">
+      <text class="score-note-icon" aria-hidden="true">i</text>
+      <text>先记分，结束时再设置金额</text>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
+    <button class="primary-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createRoom">
+      创建房间
+    </button>
+  </view>
+
+  <view wx:else class="join-stack">
+    <view class="scan-card">
+      <text class="scan-recommend">推荐方式</text>
+      <view class="scan-illustration" aria-hidden="true">
+        <view class="scan-halo"></view><view class="scan-ray ray-left"></view><view class="scan-ray ray-right"></view>
+        <view class="scan-phone"><view class="phone-speaker"></view><image class="phone-scan" src="/assets/icons/scan.png" mode="aspectFit" /><view class="phone-home"></view></view>
+      </view>
+      <text class="scan-title">扫一扫，加入好友房间</text>
+      <text class="scan-desc">扫描房主出示的房间邀请码</text>
+      <button class="primary-button scan-button" loading="{{scanning}}" disabled="{{scanning}}" bindtap="scanToJoin"><image class="button-scan-icon" src="/assets/icons/scan-white.png" mode="aspectFit" aria-hidden="true" /><text>扫码加入</text></button>
+      <text class="scan-help">扫码后确认昵称即可加入房间</text>
+    </view>
+    <view wx:if="{{errorMessage && !manualJoinOpen}}" class="error-banner scan-error" role="alert">{{errorMessage}}</view>
+    <button class="manual-entry" bindtap="openManualJoin"><image class="keyboard-icon" src="/assets/icons/keyboard.png" mode="aspectFit" aria-hidden="true" /><text>输入房间码加入</text><text class="manual-arrow" aria-hidden="true">›</text></button>
+    <view class="join-bottom-note">
+      <text class="invite-tip">收到好友邀请？点击邀请链接即可加入</text>
+      <text class="join-footer">游客也可加入，无需注册</text>
+    </view>
+  </view>
+  <text wx:if="{{mode === 'create'}}" class="create-footer">创建后邀请好友，即可开始记分</text>
+</view>
+
+<view wx:if="{{manualJoinOpen}}" class="manual-mask" bindtap="closeManualJoin" catchtouchmove="noop">
+  <view class="manual-sheet" style="bottom: {{manualKeyboardHeight}}px;" catchtap="noop" role="dialog" aria-label="输入房间码加入">
+    <view class="sheet-handle" aria-hidden="true"></view>
+    <view class="sheet-heading"><text class="sheet-title">输入房间码加入</text><button class="sheet-close" disabled="{{joining}}" bindtap="closeManualJoin" aria-label="关闭">×</button></view>
+    <text class="sheet-desc">没有邀请码时，也可以手动加入</text>
+    <scroll-view class="manual-fields" scroll-y enhanced show-scrollbar="{{false}}" style="max-height: calc(100vh - {{manualKeyboardHeight}}px - 230rpx);">
+      <view class="sheet-content">
+        <view class="field"><view class="field-label-row"><text class="field-label">房间码</text><text class="field-hint">6 位数字</text></view><input class="field-input" data-field="roomCode" maxlength="6" type="number" placeholder="输入 6 位房间码" value="{{roomCode}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /></view>
+        <view class="field"><text class="field-label">房间密码</text><input class="field-input" data-field="joinPassword" maxlength="6" type="number" placeholder="输入 4～6 位数字密码" value="{{joinPassword}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /></view>
+        <view class="field"><view class="field-label-row"><text class="field-label">你的昵称</text><text class="field-hint">仅在本局内显示</text></view><input class="field-input" data-field="nickname" maxlength="48" placeholder="房间内显示的名字" value="{{nickname}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /></view>
+        <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
+        <button class="primary-button" loading="{{joining}}" disabled="{{joining}}" bindtap="joinByCode">加入房间</button>
+      </view>
+    </scroll-view>
+  </view>
+</view>

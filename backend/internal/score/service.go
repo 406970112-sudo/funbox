@@ -284,7 +284,8 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 		input.ForceOpenThreshold = settings.CompareThreshold
 		maxPlayersLimit = 12
 	}
-	if input.MaxPlayers < 2 || input.MaxPlayers > maxPlayersLimit || input.CentsPerPoint < 1 || input.CentsPerPoint > 1_000_000 {
+	flexiblePlayers := input.GameType == GameTypeGeneric && input.MaxPlayers == 0
+	if (!flexiblePlayers && (input.MaxPlayers < 2 || input.MaxPlayers > maxPlayersLimit)) || input.CentsPerPoint < 1 || input.CentsPerPoint > 1_000_000 {
 		return CreateRoomResult{}, fmt.Errorf("room settings: %w", ErrInvalidInput)
 	}
 	if input.CapPoints < 0 || input.CapPoints > 2_147_483_647 {
@@ -344,13 +345,19 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 		return CreateRoomResult{}, false, fmt.Errorf("begin create score room: %w", err)
 	}
 	defer tx.Rollback()
+	// Keep legacy SQLite's 2..8 CHECK intact; the flag carries flexible capacity.
+	storedMaxPlayers := min(input.MaxPlayers, 8)
+	flexiblePlayers := input.GameType == GameTypeGeneric && input.MaxPlayers == 0
+	if flexiblePlayers {
+		storedMaxPlayers = 8
+	}
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO score_rooms (
-			id, code, host_user_id, name, mode, status, max_players,
+			id, code, host_user_id, name, mode, status, max_players, unlimited_players,
 			cents_per_point, cap_points, game_type, password_hash, latitude, longitude,
 			version, event_sequence, created_at, expires_at
-		) VALUES (?, ?, ?, ?, 'generic', 'waiting', ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
-	`, roomID, code, hostUserID, input.Name, min(input.MaxPlayers, 8), input.CentsPerPoint,
+		) VALUES (?, ?, ?, ?, 'generic', 'waiting', ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
+	`, roomID, code, hostUserID, input.Name, storedMaxPlayers, flexiblePlayers, input.CentsPerPoint,
 		input.CapPoints, input.GameType, passwordHash, input.Latitude, input.Longitude,
 		now.Unix(), now.Add(s.guestTTL).Unix())
 	if err != nil {
@@ -460,8 +467,8 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 		return JoinRoomResult{}, err
 	}
 	v2 := joinRoom.ZhaJinHuaSettings.RulesVersion == 2
+	maxPlayers = joinRoom.MaxPlayers
 	if v2 {
-		maxPlayers = joinRoom.MaxPlayers
 		activePlayers = len(seatedV2(joinRoom.Participants))
 	}
 	if status != string(RoomWaiting) && !v2 {
@@ -504,7 +511,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 			return JoinRoomResult{}, fmt.Errorf("find existing score participant: %w", err)
 		}
 	}
-	if activePlayers >= maxPlayers && !v2 {
+	if maxPlayers > 0 && activePlayers >= maxPlayers && !v2 {
 		return JoinRoomResult{}, ErrRoomFull
 	}
 	participantID := uuid.NewString()
@@ -581,7 +588,7 @@ func (s *Service) PreviewInvite(ctx context.Context, userID string, input Invite
 			return InvitePreviewResult{}, err
 		}
 	}
-	if room.ZhaJinHuaSettings.RulesVersion != 2 && len(activeParticipants(room.Participants)) >= room.MaxPlayers {
+	if room.MaxPlayers > 0 && room.ZhaJinHuaSettings.RulesVersion != 2 && len(activeParticipants(room.Participants)) >= room.MaxPlayers {
 		return InvitePreviewResult{}, ErrRoomFull
 	}
 	return result, nil
@@ -645,7 +652,7 @@ func (s *Service) ListNearbyRooms(ctx context.Context, input NearbyRoomsInput) (
 	}
 	longitudeDelta := float64(input.RadiusMeters) / (111_320 * math.Abs(longitudeScale))
 	rows, err := s.store.db.QueryContext(ctx, `
-		SELECT r.id, r.code, r.name, r.game_type, r.max_players, r.cents_per_point,
+		SELECT r.id, r.code, r.name, r.game_type, CASE WHEN r.unlimited_players = 1 THEN 0 ELSE r.max_players END, r.cents_per_point,
 			r.cap_points, CASE WHEN r.password_hash <> '' THEN 1 ELSE 0 END,
 			r.latitude, r.longitude, h.display_name,
 			(SELECT COUNT(*) FROM score_participants p
@@ -679,7 +686,7 @@ func (s *Service) ListNearbyRooms(ctx context.Context, input NearbyRoomsInput) (
 		); err != nil {
 			return NearbyRoomsResult{}, fmt.Errorf("scan nearby score room: %w", err)
 		}
-		if room.ActivePlayers >= room.MaxPlayers {
+		if room.MaxPlayers > 0 && room.ActivePlayers >= room.MaxPlayers {
 			continue
 		}
 		distance := haversineMeters(input.Latitude, input.Longitude, latitude, longitude)
@@ -1361,7 +1368,7 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 				AmountCents:   amount,
 			})
 		}
-		transfers, err := MinimumTransfers(balances, order)
+		transfers, err := SettlementTransfers(balances, order)
 		if err != nil {
 			return err
 		}

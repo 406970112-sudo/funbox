@@ -259,6 +259,38 @@
   gap: 18rpx;
 }
 
+.general-room .seat-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12rpx;
+}
+
+.general-room .seat-card {
+  min-height: 112rpx;
+  flex-wrap: nowrap;
+}
+
+.general-room .seat-badge,.general-room .score-seat {
+  border-radius: 50%;
+}
+
+.general-room .settlement-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.general-room .settlement-list {
+  height: 26vh;
+  flex-shrink: 1;
+  min-height: 80rpx;
+}
+
+.general-room .settlement-sheet > view:not(.settlement-list),
+.general-room .settlement-sheet > text,
+.general-room .settlement-sheet > button {
+  flex-shrink: 0;
+}
+
 .seat-card {
   box-sizing: border-box;
   flex-wrap: wrap;

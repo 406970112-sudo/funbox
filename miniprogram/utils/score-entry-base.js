@@ -156,7 +156,7 @@ module.exports = {
         }
         const inviteToken = extractInviteToken(scannedValue);
         if (!inviteToken) {
-          this.setData({ errorMessage: "未识别到有效的牌局邀请。" });
+          this.setData({ errorMessage: this.data.gameType === "generic" ? "未识别到有效的房间邀请。" : "未识别到有效的牌局邀请。" });
           return;
         }
         wx.navigateTo({ url: `/pages/score/room/index?invite=${encodeURIComponent(inviteToken)}` });
@@ -175,7 +175,7 @@ module.exports = {
     const displayName = this.data.nickname.trim();
     if (code.length !== 6 || !/^\d{6}$/.test(code)) return this.setData({ errorMessage: "请输入 6 位房间码。" });
     if (!/^\d{4,6}$/.test(this.data.joinPassword)) return this.setData({ errorMessage: "请输入 4～6 位房间密码。" });
-    if (!displayName) return this.setData({ errorMessage: "请输入牌局内显示的昵称。" });
+    if (!displayName) return this.setData({ errorMessage: this.data.gameType === "generic" ? "请输入房间内显示的昵称。" : "请输入牌局内显示的昵称。" });
     this.setData({ joining: true, errorMessage: "" });
     try {
       const result = await joinScoreRoom({ code, password: this.data.joinPassword, displayName });

@@ -142,6 +142,15 @@
   animation-delay: .12s;
 }
 
+.general-card {
+  background: #eaf2ff;
+  animation-delay: .2s;
+}
+
+.general-art {
+  pointer-events: none;
+}
+
 .scene-copy {
   position: relative;
   z-index: 1;

@@ -52,6 +52,8 @@ Page({
 
   openPoker() { wx.navigateTo({ url: "/pages/score/poker/index" }); },
 
+  openGeneral() { wx.navigateTo({ url: "/pages/score/general/index" }); },
+
   openMahjong() {
     wx.navigateTo({ url: "/pages/score/mahjong/index" });
   },

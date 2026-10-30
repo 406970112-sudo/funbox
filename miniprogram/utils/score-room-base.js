@@ -98,6 +98,7 @@ function removeQrImageFile(filePath) {
 
 module.exports = {
   data: {
+    isGeneral: false,
     loading: true,
     busy: false,
     errorMessage: "",
@@ -221,6 +222,7 @@ module.exports = {
     try {
       const preview = await loadPreview();
       if (this.routePoker && this.routePoker(preview.room, true)) return;
+      this.setRoomTheme(preview.room);
       const accountToken = getAccessToken();
       const savedSession = getScoreSession();
       if (savedSession && savedSession.roomId === preview.room.id) {
@@ -324,6 +326,8 @@ module.exports = {
     if (this.data.room && this.data.room.id === room.id && Number(room.version) < Number(this.data.room.version)) {
       return false;
     }
+    this.setRoomTheme(room);
+    const isGeneral = room.gameType === "generic";
     const participantMap = {};
     room.participants.forEach((participant) => {
       participantMap[participant.id] = participant;
@@ -346,7 +350,9 @@ module.exports = {
       .filter((participant) => participant.status === "active")
       .sort((left, right) => String(left.joinedAt).localeCompare(String(right.joinedAt)))
       .forEach((participant, index) => {
-        seatMap[participant.id] = seatMarks[index] || String(index + 1);
+        seatMap[participant.id] = isGeneral
+          ? (Array.from((participant.displayName || "").trim())[0] || "友")
+          : seatMarks[index] || String(index + 1);
       });
     const participants = room.participants
       .filter((participant) => participant.status === "active")
@@ -359,7 +365,7 @@ module.exports = {
         scoreText: formatScore(participant.totalPoints),
         isSelf: participant.id === selfID,
       }));
-    const vacantSeats = Array.from({ length: Math.max(0, room.maxPlayers - activePlayers) }, (_, index) => ({
+    const vacantSeats = Array.from({ length: isGeneral ? 0 : Math.max(0, room.maxPlayers - activePlayers) }, (_, index) => ({
       key: `vacant-${index}`,
       mark: seatMarks[activePlayers + index] || "＋",
     }));
@@ -415,7 +421,7 @@ module.exports = {
       hostRoomPassword,
       activePlayers,
       canStart: activePlayers >= 2,
-      startLabel: activePlayers >= 2 ? "开始牌局" : "至少 2 人才能开始",
+      startLabel: activePlayers >= 2 ? (isGeneral ? "开始记分" : "开始牌局") : "至少 2 人才能开始",
       participants,
       vacantSeats,
       recipients,
@@ -446,6 +452,14 @@ module.exports = {
     if (this.data.bindingAccount) return;
     this.accountBindingPaused = false;
     wx.navigateTo({ url: "/pages/auth/index" });
+  },
+
+  setRoomTheme(room) {
+    const isGeneral = room.gameType === "generic";
+    this.setData({ isGeneral, settlementRateText: formatCNY(room.centsPerPoint) });
+    if (wx.setNavigationBarTitle && room.gameType !== "zhajinhua") {
+      wx.setNavigationBarTitle({ title: isGeneral ? "通用记分" : "麻将牌局" });
+    }
   },
 
   maybeBindParticipantAccount() {
@@ -642,7 +656,7 @@ module.exports = {
   },
 
   async confirmSettlement() {
-    if (this.data.busy || !this.data.settlementOpen) return;
+    if (this.data.busy || !this.data.settlementOpen || !this.data.isHost || !this.data.room || this.data.room.status !== "active") return;
     const centsPerPoint = parseYuanToCents(this.data.settlementRateInput);
     if (!centsPerPoint) {
       this.setData({ settlementRateValid: false, settlementRateError: "请输入大于 0、最多两位小数的每分金额。" });
@@ -660,7 +674,7 @@ module.exports = {
     try {
       const room = await settleScoreRoom(this.credential, this.data.room, centsPerPoint);
       await this.applyRoom(room);
-      this.setData({ busy: false, settlementOpen: false, feedback: "牌局已结算。" });
+      this.setData({ busy: false, settlementOpen: false, feedback: this.data.isGeneral ? "本次记分已结算。" : "牌局已结算。" });
     } catch (error) {
       this.handleMutationError(error);
     }
@@ -738,7 +752,7 @@ module.exports = {
   onShareAppMessage() {
     const room = this.data.room;
     if (!this.data.inviteToken || !room || !canInviteRoom(room)) {
-      return { title: "FunBox 麻将记分", path: "/pages/index/index" };
+      return { title: this.data.isGeneral ? "FunBox 通用记分" : "FunBox 麻将记分", path: "/pages/index/index" };
     }
     return {
       title: room ? `邀请你加入「${room.name}」` : "邀请你加入麻将牌局",

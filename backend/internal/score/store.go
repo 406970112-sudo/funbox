@@ -266,6 +266,7 @@ func (s *Store) migrate() error {
 		{name: "cap_points", definition: "INTEGER NOT NULL DEFAULT 0 CHECK(cap_points BETWEEN 0 AND 2147483647)"},
 		{name: "game_type", definition: "TEXT NOT NULL DEFAULT 'generic' CHECK(game_type IN ('generic', 'mahjong', 'zhajinhua'))"},
 		{name: "password_hash", definition: "TEXT NOT NULL DEFAULT ''"},
+		{name: "unlimited_players", definition: "INTEGER NOT NULL DEFAULT 0 CHECK(unlimited_players IN (0, 1))"},
 		{name: "external_invite_code", definition: "TEXT"},
 		{name: "latitude", definition: "REAL"},
 		{name: "longitude", definition: "REAL"},
@@ -331,23 +332,27 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 	var createdAt, expiresAt int64
 	var startedAt, settledAt, cancelledAt sql.NullInt64
 	var latitude, longitude sql.NullFloat64
+	var unlimitedPlayers bool
 	err := q.QueryRowContext(ctx, `
 		SELECT id, code, host_user_id, name, mode, status, max_players,
 			cents_per_point, cap_points, game_type, password_hash, latitude, longitude,
-			version, event_sequence, created_at, started_at, settled_at, cancelled_at, expires_at
+			version, event_sequence, created_at, started_at, settled_at, cancelled_at, expires_at, unlimited_players
 		FROM score_rooms WHERE id = ?
 	`, roomID).Scan(
 		&snapshot.ID, &snapshot.Code, &snapshot.HostUserID, &snapshot.Name,
 		&snapshot.Mode, &status, &snapshot.MaxPlayers, &snapshot.CentsPerPoint,
 		&snapshot.CapPoints, &snapshot.GameType, &snapshot.PasswordHash, &latitude, &longitude,
 		&snapshot.Version, &snapshot.EventSequence, &createdAt, &startedAt, &settledAt,
-		&cancelledAt, &expiresAt,
+		&cancelledAt, &expiresAt, &unlimitedPlayers,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RoomSnapshot{}, ErrRoomNotFound
 	}
 	if err != nil {
 		return RoomSnapshot{}, fmt.Errorf("load score room: %w", err)
+	}
+	if unlimitedPlayers {
+		snapshot.MaxPlayers = 0
 	}
 	snapshot.Status = RoomStatus(status)
 	snapshot.CreatedAt = time.Unix(createdAt, 0).UTC()

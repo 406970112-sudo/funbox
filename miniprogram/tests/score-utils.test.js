@@ -102,14 +102,16 @@ test("recent game history maps the current participant, result, type and time", 
   assert.notEqual(items[0].timeText, "时间未知");
 });
 
-test("room templates remove caps and only expose the settlement rate inside the host sheet", () => {
+test("room templates remove caps and keep settlement rates out of active scoring", () => {
   const root = path.resolve(__dirname, "..");
   const createTemplate = fs.readFileSync(path.join(root, "pages/score/mahjong/index.wxml"), "utf8");
   const roomTemplate = fs.readFileSync(path.join(root, "pages/score/room/index.wxml"), "utf8");
 
   assert.doesNotMatch(createTemplate, /封顶|每分金额/);
   assert.doesNotMatch(roomTemplate, /封顶|rateText|capText/);
-  assert.equal((roomTemplate.match(/每分金额/g) || []).length, 1);
+  const activeTemplate = roomTemplate.split('<block wx:elif="{{room.status === \'active\'}}">')[1].split('<block wx:elif="{{room.status === \'settled\'}}">')[0];
+  assert.doesNotMatch(activeTemplate, /每分金额|settlementRateText/);
+  assert.equal((roomTemplate.match(/每分金额/g) || []).length, 2);
   assert.match(roomTemplate, /hostRoomPassword/);
   assert.match(createTemplate, /房主昵称/);
   assert.match(roomTemplate, /登录并绑定/);

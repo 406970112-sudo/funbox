@@ -1,38 +1,38 @@
-<view class="room-page">
+<view class="room-page {{isGeneral ? 'general-room' : ''}}">
   <view wx:if="{{loading}}" class="state-panel">
     <view class="loading-tile">±</view>
-    <text class="state-title">正在同步牌局</text>
+    <text class="state-title">{{isGeneral ? '正在同步房间' : '正在同步牌局'}}</text>
     <text class="state-desc">稍等一下，马上把最新分数带回来。</text>
   </view>
 
   <view wx:elif="{{joinNeeded && previewRoom}}" class="join-preview">
     <view class="preview-welcome">
       <view class="preview-invite-icon" aria-hidden="true"><view></view><view></view></view>
-      <text class="preview-kicker">好友邀请你加入牌局</text>
-      <text class="preview-headline">牌友都在，等你入座</text>
+      <text class="preview-kicker">{{isGeneral ? '好友邀请你加入房间' : '好友邀请你加入牌局'}}</text>
+      <text class="preview-headline">{{isGeneral ? '好友都在，等你加入' : '牌友都在，等你入座'}}</text>
     </view>
     <view class="preview-room-card">
       <view class="preview-room-info">
-        <view class="preview-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
-        <view class="preview-room-copy"><text class="preview-title">{{previewRoom.name}}</text><text class="preview-room-meta">麻将记分 · {{previewRoom.maxPlayers}} 人牌局</text><text class="preview-status">{{previewRoom.status === 'active' ? '牌局进行中' : '等待加入'}}</text></view>
+        <image wx:if="{{isGeneral}}" class="preview-art" src="/assets/illustrations/general-score.png" mode="aspectFit" aria-hidden="true" /><view wx:else class="preview-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
+        <view class="preview-room-copy"><text class="preview-title">{{previewRoom.name}}</text><text class="preview-room-meta">{{isGeneral ? '通用记分 · 灵活人数' : '麻将记分 · ' + previewRoom.maxPlayers + ' 人牌局'}}</text><text class="preview-status">{{previewRoom.status === 'active' ? (isGeneral ? '记分进行中' : '牌局进行中') : '等待加入'}}</text></view>
       </view>
       <view class="preview-verified"><text class="verified-check" aria-hidden="true">✓</text><text>邀请已验证，无需房间码和密码</text></view>
     </view>
     <view class="preview-confirm">
       <text class="preview-name-label">怎么称呼你？</text>
-      <input class="field-input" data-field="joinNickname" maxlength="48" placeholder="牌局内显示的名字" value="{{joinNickname}}" bindinput="handleJoinField" disabled="{{joining}}" />
+      <input class="field-input" data-field="joinNickname" maxlength="48" placeholder="{{isGeneral ? '房间内显示的名字' : '牌局内显示的名字'}}" value="{{joinNickname}}" bindinput="handleJoinField" disabled="{{joining}}" />
       <text class="preview-name-help">仅在本局内显示，可修改</text>
       <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
       <button class="primary-button" loading="{{joining}}" disabled="{{joining}}" bindtap="joinFromInvite">确认加入</button>
       <text class="preview-confirm-help">确认后进入房间</text>
     </view>
-    <text class="preview-footer">扫码与邀请链接，均可快捷入桌</text>
+    <text class="preview-footer">{{isGeneral ? '扫码与邀请链接，均可快捷加入' : '扫码与邀请链接，均可快捷入桌'}}</text>
     <button class="preview-home" bindtap="goHome" disabled="{{joining}}">返回首页</button>
   </view>
 
   <view wx:elif="{{errorMessage && !room}}" class="state-panel error-state">
     <view class="error-mark">!</view>
-    <text class="state-title">无法打开牌局</text>
+    <text class="state-title">{{isGeneral ? '无法打开房间' : '无法打开牌局'}}</text>
     <text class="state-desc">{{errorMessage}}</text>
     <button wx:if="{{canRetryLoad}}" class="primary-button compact" bindtap="retryOpenRoom">重新加载</button>
     <button class="{{canRetryLoad ? 'secondary-button' : 'primary-button'}} compact" bindtap="goHome">返回首页</button>
@@ -42,7 +42,7 @@
     <view class="room-hero">
       <view class="room-top">
         <view>
-          <text class="room-kicker">牌桌 · {{room.code}}</text>
+          <text class="room-kicker">{{isGeneral ? '房间' : '牌桌'}} · {{room.code}}</text>
           <text class="room-title">{{room.name}}</text>
         </view>
         <view class="realtime-pill realtime-{{realtimeStatus}}" bindtap="retryRealtime">
@@ -52,9 +52,9 @@
       </view>
       <view class="room-footer">
         <view class="room-metrics">
-          <view class="metric"><text class="metric-label">当前人数</text><text class="metric-value">{{activePlayers}} / {{room.maxPlayers}}</text></view>
+          <view class="metric"><text class="metric-label">当前人数</text><text class="metric-value">{{activePlayers}}{{room.maxPlayers ? ' / ' + room.maxPlayers : ''}}</text></view>
         </view>
-        <text class="room-state state-{{room.status}}">{{room.status === 'waiting' ? '等待开始' : room.status === 'active' ? '牌局进行中' : room.status === 'settled' ? '已结算' : '已取消'}}</text>
+        <text class="room-state state-{{room.status}}">{{room.status === 'waiting' ? '等待开始' : room.status === 'active' ? (isGeneral ? '记分进行中' : '牌局进行中') : room.status === 'settled' ? '已结算' : '已取消'}}</text>
       </view>
     </view>
 
@@ -64,7 +64,7 @@
     <view wx:if="{{showAccountBinding && room.status !== 'cancelled'}}" class="account-bind-card {{accountBound ? 'account-bind-complete' : ''}}">
       <view class="account-bind-copy">
         <text class="account-bind-title">{{accountBound ? '本局战绩已关联账号' : '登录后记录本局战绩'}}</text>
-        <text class="account-bind-desc">{{accountBound ? '散场结算后，本局会出现在你的个人战绩中。' : '游客也能继续记分；登录后会追溯到当前座位，不影响已有分数。'}}</text>
+        <text class="account-bind-desc">{{isGeneral ? (accountBound ? "结束结算后，本次记分会出现在你的个人战绩中。" : "游客也能继续记分；登录后可关联当前身份，不影响已有分数。") : (accountBound ? "散场结算后，本局会出现在你的个人战绩中。" : "游客也能继续记分；登录后会追溯到当前座位，不影响已有分数。")}}</text>
       </view>
       <button wx:if="{{!accountBound && isLoggedIn}}" class="account-bind-button" loading="{{bindingAccount}}" disabled="{{bindingAccount}}" bindtap="bindParticipantAccount">
         {{bindingAccount ? '绑定中…' : '绑定本局战绩'}}
@@ -74,7 +74,7 @@
 
     <block wx:if="{{room.status === 'waiting'}}">
       <view wx:if="{{isHost}}" class="invite-card">
-        <text class="section-kicker">邀请牌友</text>
+        <text class="section-kicker">{{isGeneral ? '邀请好友' : '邀请牌友'}}</text>
         <text class="invite-title">扫码或转发加入</text>
         <text class="invite-desc">邀请链接和二维码已包含入房凭证，填写昵称即可加入。</text>
         <view class="invite-main">
@@ -96,19 +96,19 @@
           <text wx:if="{{inviteToken && (qrImageSrc || (qrCodeFailed && !qrCodeLoading))}}" class="qr-expand-hint">点击放大</text>
         </view>
         </view>
-        <button wx:if="{{isHost && inviteToken}}" class="share-button" open-type="share">发送邀请给牌友</button>
+        <button wx:if="{{isHost && inviteToken}}" class="share-button" open-type="share">{{isGeneral ? '发送邀请给好友' : '发送邀请给牌友'}}</button>
       </view>
 
       <view class="section-head">
-        <text class="section-title">围桌牌友</text>
-        <text class="section-meta">{{activePlayers}} / {{room.maxPlayers}} 人</text>
+        <text class="section-title">{{isGeneral ? '房间成员' : '围桌牌友'}}</text>
+        <text class="section-meta">{{activePlayers}}{{room.maxPlayers ? ' / ' + room.maxPlayers : ''}} 人</text>
       </view>
       <view class="seat-grid">
         <view wx:for="{{participants}}" wx:key="id" class="player-row seat-card">
           <view class="seat-badge seat-{{item.role}}">{{item.seatMark}}</view>
           <view class="player-copy">
             <text class="player-name">{{item.displayName}}<text wx:if="{{item.isSelf}}" class="self-tag">我</text></text>
-            <text class="player-sub">{{item.role === 'host' ? '房主 · 已入座' : '牌友 · 已入座'}}</text>
+            <text class="player-sub">{{isGeneral ? (item.role === 'host' ? '房主 · 已加入' : '成员 · 已加入') : (item.role === 'host' ? '房主 · 已入座' : '牌友 · 已入座')}}</text>
           </view>
           <text class="player-score">{{item.scoreText}}</text>
         </view>
@@ -125,12 +125,12 @@
       <button wx:if="{{isHost}}" class="primary-button" loading="{{busy}}" disabled="{{busy || !canStart}}" bindtap="startRoom">
         {{startLabel}}
       </button>
-      <view wx:else class="waiting-note">已加入，等待房主开始牌局。</view>
+      <view wx:else class="waiting-note">{{isGeneral ? '已加入，等待房主开始记分。' : '已加入，等待房主开始牌局。'}}</view>
     </block>
 
     <block wx:elif="{{room.status === 'active'}}">
       <view class="section-head">
-        <text class="section-title">牌桌积分榜</text>
+        <text class="section-title">{{isGeneral ? '积分榜' : '牌桌积分榜'}}</text>
         <text class="section-meta">实时比分</text>
       </view>
       <view class="score-board">
@@ -146,10 +146,10 @@
 
       <view class="give-card">
         <view class="section-head compact-head">
-          <text class="section-title">这局怎么给</text>
-          <text class="section-meta">赢家无需填写</text>
+          <text class="section-title">{{isGeneral ? '给好友记分' : '这局怎么给'}}</text>
+          <text class="section-meta">{{isGeneral ? '可一次给多人' : '赢家无需填写'}}</text>
         </view>
-        <text class="give-hint">填好这局要给的分，一次交账。</text>
+        <text class="give-hint">{{isGeneral ? '填好要给出的分数，一次提交。' : '填好这局要给的分，一次交账。'}}</text>
         <view wx:for="{{recipients}}" wx:key="id" class="give-row">
           <view class="give-player">
             <text class="give-name">{{item.displayName}}</text>
@@ -169,7 +169,7 @@
 
       <view wx:if="{{giftHistory.length}}" class="history-card">
         <view class="section-head compact-head">
-          <text class="section-title">牌桌记事</text>
+          <text class="section-title">{{isGeneral ? '记分记录' : '牌桌记事'}}</text>
           <text class="section-meta">最近 {{giftHistory.length}} 笔</text>
         </view>
         <view wx:for="{{giftHistory}}" wx:key="id" class="history-row">
@@ -180,15 +180,15 @@
         </view>
       </view>
 
-      <button wx:if="{{isHost && giftHistory.length}}" class="settle-button" bindtap="openSettlement">散场结算</button>
+      <button wx:if="{{isHost && giftHistory.length}}" class="settle-button" bindtap="openSettlement">{{isGeneral ? '结束并结算' : '散场结算'}}</button>
     </block>
 
     <block wx:elif="{{room.status === 'settled'}}">
       <view class="settled-hero">
         <view class="settled-art art art-score" aria-hidden="true"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" /></view>
-        <text class="settled-kicker">这桌，散场了</text>
-        <text class="settled-title">输赢已理清</text>
-        <text class="settled-subtitle">最终输赢与转账如下</text>
+        <text class="settled-kicker">{{isGeneral ? '本次记分已结束' : '这桌，散场了'}}</text>
+        <text class="settled-title">{{isGeneral ? '账目已理清' : '输赢已理清'}}</text>
+        <text class="settled-subtitle">{{isGeneral ? '最终积分与转账建议如下' : '最终输赢与转账如下'}}</text>
       </view>
 
       <view class="result-list">
@@ -202,7 +202,7 @@
       </view>
 
       <view class="transfer-card">
-        <text class="section-kicker">转账建议</text>
+        <text wx:if="{{isGeneral}}" class="section-meta">每分金额 {{settlementRateText}} / 分</text><text class="section-kicker">转账建议</text>
         <view wx:if="{{!settlementTransfers.length}}" class="no-transfer">本局无需转账</view>
         <view wx:for="{{settlementTransfers}}" wx:key="key" class="transfer-row">
           <text class="transfer-from">{{item.fromName}}</text>
@@ -217,7 +217,7 @@
     <block wx:else>
       <view class="state-panel error-state">
         <view class="error-mark">×</view>
-        <text class="state-title">牌局已取消</text>
+        <text class="state-title">{{isGeneral ? '记分已取消' : '牌局已取消'}}</text>
         <text class="state-desc">本房间没有产生需要结算的账目。</text>
         <button class="primary-button compact" bindtap="goHome">返回首页</button>
       </view>
@@ -239,8 +239,8 @@
   <view wx:if="{{settlementOpen && isHost && room && room.status === 'active'}}" class="sheet-mask" bindtap="closeSettlement">
     <view class="settlement-sheet" catchtap="noop">
       <view class="sheet-handle"></view>
-      <text class="sheet-title">确认结算</text>
-      <text class="sheet-desc">请核对每名玩家的当前分数与预计金额。</text>
+      <text class="sheet-title">确认结算</text><text wx:if="{{isGeneral}}" class="section-meta">仅房主可操作</text>
+      <text class="sheet-desc">{{isGeneral ? '请核对每名成员的当前分数与预计金额。' : '请核对每名玩家的当前分数与预计金额。'}}</text>
       <view class="field settlement-rate-field">
         <text class="field-label">每分金额</text>
         <view class="settlement-rate-input">
@@ -250,14 +250,14 @@
         </view>
         <text wx:if="{{settlementRateError}}" class="settlement-rate-error">{{settlementRateError}}</text>
       </view>
-      <view class="settlement-table-head"><text>牌友</text><text>当前分数</text><text>预计金额</text></view>
-      <view class="settlement-list">
+      <view class="settlement-table-head"><text>{{isGeneral ? '成员' : '牌友'}}</text><text>当前分数</text><text>预计金额</text></view>
+      <scroll-view class="settlement-list" scroll-y enhanced show-scrollbar="{{false}}">
         <view wx:for="{{settlementRows}}" wx:key="participantId" class="settlement-row">
           <text>{{item.name}}</text>
           <text class="{{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.scoreText}} 分</text>
           <text class="{{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.amountText}}</text>
         </view>
-      </view>
+      </scroll-view>
       <view class="danger-note">结算后不可修改，请再次确认。</view>
       <button class="danger-button" loading="{{busy}}" disabled="{{busy || !settlementRateValid}}" bindtap="confirmSettlement">确认并结算</button>
       <button class="secondary-button" bindtap="closeSettlement">取消</button>

@@ -46,7 +46,7 @@ function roomStatusLabel(status) {
 
 function gameTypeLabel(gameType) {
   return {
-    generic: "牌局",
+    generic: "通用记分",
     mahjong: "麻将",
     zhajinhua: "炸金花",
   }[gameType] || "牌局";
