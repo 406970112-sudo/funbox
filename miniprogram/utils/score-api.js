@@ -191,10 +191,10 @@ function createRealtimeTicket(credential, roomId) {
   }).then((response) => response.ticket);
 }
 
-async function mutateRoom(credential, room, suffix, extra) {
+async function mutateRoom(credential, room, suffix, extra, method = "POST") {
   const response = await scoreRequest({
     path: `/score-rooms/${encodeURIComponent(room.id)}${suffix}`,
-    method: "POST",
+    method,
     bearerToken: credential.token,
     header: bearerHeader(credential),
     data: {
@@ -232,3 +232,13 @@ module.exports = {
   startScoreRoom,
   submitScoreGifts,
 };
+
+function startPokerHand(c,r){return mutateRoom(c,r,'/zha-jin-hua/hands');}
+function pokerAction(c,r,id,input){return mutateRoom(c,r,`/zha-jin-hua/hands/${encodeURIComponent(id)}/actions`,input);}
+function confirmPokerBonuses(c,r,id,bonuses){return mutateRoom(c,r,`/zha-jin-hua/hands/${encodeURIComponent(id)}/bonus`,{bonuses});}
+function managePokerMember(c,r,id,action){return mutateRoom(c,r,`/participants/${encodeURIComponent(id)}/seat`,{action});}
+function updatePokerSettings(c,r,settings){return mutateRoom(c,r,'/zha-jin-hua/settings',{settings},'PATCH');}
+Object.assign(module.exports,{startPokerHand,pokerAction,confirmPokerBonuses,managePokerMember,updatePokerSettings});
+
+function cancelPokerHand(c,r,id){return mutateRoom(c,r,`/zha-jin-hua/hands/${encodeURIComponent(id)}/cancel`);}
+module.exports.cancelPokerHand=cancelPokerHand;

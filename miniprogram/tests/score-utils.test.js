@@ -117,7 +117,7 @@ test("room templates remove caps and only expose the settlement rate inside the 
 
 test("mahjong room creation uses friend-room defaults and has no password confirmation", () => {
   const root = path.resolve(__dirname, "..");
-  const createScript = fs.readFileSync(path.join(root, "pages/score/mahjong/index.js"), "utf8");
+  const createScript = fs.readFileSync(path.join(root, "utils/score-entry-base.js"), "utf8");
   const createTemplate = fs.readFileSync(path.join(root, "pages/score/mahjong/index.wxml"), "utf8");
 
   assert.match(createScript, /roomName:\s*"老友局"/);

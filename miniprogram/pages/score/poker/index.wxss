@@ -1,0 +1,2 @@
+@import "../mahjong/index.wxss";
+.poker-settings{margin-top:32rpx}.poker-settings .field{margin-top:20rpx}

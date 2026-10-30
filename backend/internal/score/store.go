@@ -57,6 +57,9 @@ func (s *Store) Close() error {
 
 func (s *Store) migrate() error {
 	statements := []string{
+		`CREATE TABLE IF NOT EXISTS score_zjh_v2_settings(room_id TEXT PRIMARY KEY REFERENCES score_rooms(id), settings_json TEXT NOT NULL, pending_host_id TEXT NOT NULL DEFAULT '')`,
+		`CREATE TABLE IF NOT EXISTS score_zjh_v2_hands(hand_id TEXT PRIMARY KEY REFERENCES score_zjh_hands(id), hand_json TEXT NOT NULL)`,
+		`CREATE TABLE IF NOT EXISTS score_zjh_seats(participant_id TEXT PRIMARY KEY REFERENCES score_participants(id), seat_status TEXT NOT NULL)`,
 		`PRAGMA foreign_keys = ON`,
 		`PRAGMA busy_timeout = 5000`,
 		`PRAGMA journal_mode = WAL`,
@@ -370,6 +373,9 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 		return RoomSnapshot{}, err
 	}
 	snapshot.Participants = participants
+	if err := loadV2Room(ctx, q, &snapshot); err != nil {
+		return RoomSnapshot{}, err
+	}
 
 	rounds, err := loadRoundList(ctx, q, roomID, `status = 'confirmed'`)
 	if err != nil {
@@ -400,7 +406,11 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 		return RoomSnapshot{}, err
 	}
 	snapshot.CurrentZhaJinHuaHand = currentZhaJinHuaHand
-	zhaJinHuaHands, err := loadFinishedZhaJinHuaHands(ctx, q, roomID)
+	historyPredicate := `status = 'finished'`
+	if snapshot.ZhaJinHuaSettings.RulesVersion == 2 {
+		historyPredicate = `status IN ('finished', 'cancelled')`
+	}
+	zhaJinHuaHands, err := loadZhaJinHuaHandList(ctx, q, roomID, historyPredicate)
 	if err != nil {
 		return RoomSnapshot{}, err
 	}
@@ -727,6 +737,17 @@ func loadZhaJinHuaHandList(ctx context.Context, q queryer, roomID, statusPredica
 		return nil, fmt.Errorf("close zha jin hua hands: %w", err)
 	}
 	for index := range hands {
+		var data string
+		err := q.QueryRowContext(ctx, `SELECT hand_json FROM score_zjh_v2_hands WHERE hand_id=?`, hands[index].ID).Scan(&data)
+		if err == nil {
+			if err := json.Unmarshal([]byte(data), &hands[index]); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
 		if err := loadZhaJinHuaPlayers(ctx, q, &hands[index]); err != nil {
 			return nil, err
 		}

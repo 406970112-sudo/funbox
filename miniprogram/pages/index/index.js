@@ -13,7 +13,7 @@ Page({
 
   onLoad() {
     wx.showShareMenu({ menus: ["shareAppMessage", "shareTimeline"] });
-    this.checkBackend();
+
   },
 
   onShow() {
@@ -49,6 +49,8 @@ Page({
       });
     }
   },
+
+  openPoker() { wx.navigateTo({ url: "/pages/score/poker/index" }); },
 
   openMahjong() {
     wx.navigateTo({ url: "/pages/score/mahjong/index" });

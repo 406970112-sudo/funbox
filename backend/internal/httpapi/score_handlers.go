@@ -50,7 +50,9 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/zha-jin-hua/hands", api.withScoreActor(api.withAPIPipeline(api.handleStartZhaJinHuaHand)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/zha-jin-hua/hands/{handID}/actions", api.withScoreActor(api.withAPIPipeline(api.handleSubmitZhaJinHuaAction)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/zha-jin-hua/hands/{handID}/cancel", api.withScoreActor(api.withAPIPipeline(api.handleCancelZhaJinHuaHand)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/zha-jin-hua/hands/{handID}/bonus", api.withScoreActor(api.withAPIPipeline(api.handleConfirmZhaJinHuaBonuses)))
 	mux.HandleFunc("PATCH /api/v1/score-rooms/{roomID}/zha-jin-hua/settings", api.withScoreActor(api.withAPIPipeline(api.handleUpdateZhaJinHuaSettings)))
+	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/participants/{participantID}/seat", api.withScoreActor(api.withAPIPipeline(api.handleManageZhaJinHuaMember)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/participants/{participantID}/remove", api.withScoreActor(api.withAPIPipeline(api.handleRemoveScoreParticipant)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/settle", api.withScoreActor(api.withAPIPipeline(api.handleSettleScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/invite-token", api.withScoreActor(api.withAPIPipeline(api.handleScoreInviteToken)))
@@ -322,6 +324,7 @@ func (s *Server) handleSubmitZhaJinHuaAction(w http.ResponseWriter, r *http.Requ
 		Points              int64                     `json:"points"`
 		TargetParticipantID string                    `json:"targetParticipantId"`
 		WinnerParticipantID string                    `json:"winnerParticipantId"`
+		Outcome             string                    `json:"outcome"`
 	}
 	if err := decodeJSONBody(r, &body); err != nil {
 		writeRequestBodyError(w, err)
@@ -331,6 +334,7 @@ func (s *Server) handleSubmitZhaJinHuaAction(w http.ResponseWriter, r *http.Requ
 	room, err := s.scoreService.SubmitZhaJinHuaAction(r.Context(), actor, body.meta(), r.PathValue("handID"), score.ZhaJinHuaActionInput{
 		ActionType: body.ActionType, Points: body.Points,
 		TargetParticipantID: body.TargetParticipantID, WinnerParticipantID: body.WinnerParticipantID,
+		Outcome: body.Outcome,
 	})
 	s.writeScoreMutation(w, http.StatusOK, room, err)
 }
@@ -344,7 +348,8 @@ func (s *Server) handleCancelZhaJinHuaHand(w http.ResponseWriter, r *http.Reques
 func (s *Server) handleUpdateZhaJinHuaSettings(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		scoreCommandBody
-		ForceOpenThreshold int `json:"forceOpenThreshold"`
+		ForceOpenThreshold int                      `json:"forceOpenThreshold"`
+		Settings           *score.ZhaJinHuaSettings `json:"settings"`
 	}
 	if err := decodeJSONBody(r, &body); err != nil {
 		writeRequestBodyError(w, err)
@@ -353,7 +358,42 @@ func (s *Server) handleUpdateZhaJinHuaSettings(w http.ResponseWriter, r *http.Re
 	actor, _ := scoreActorFromContext(r.Context())
 	room, err := s.scoreService.UpdateZhaJinHuaSettings(r.Context(), actor, body.meta(), score.UpdateZhaJinHuaSettingsInput{
 		ForceOpenThreshold: body.ForceOpenThreshold,
+		Settings:           body.Settings,
 	})
+	s.writeScoreMutation(w, http.StatusOK, room, err)
+}
+
+func (s *Server) handleConfirmZhaJinHuaBonuses(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		scoreCommandBody
+		Bonuses []score.ZhaJinHuaBonusEntry `json:"bonuses"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	// An explicit [] confirms that the host checked and found no qualifying hand.
+	// An omitted or null list must never accidentally finalize the hand.
+	if body.Bonuses == nil {
+		s.writeScoreError(w, score.ErrInvalidInput)
+		return
+	}
+	actor, _ := scoreActorFromContext(r.Context())
+	room, err := s.scoreService.ConfirmZhaJinHuaBonuses(r.Context(), actor, body.meta(), r.PathValue("handID"), score.ZhaJinHuaBonusInput{Bonuses: body.Bonuses})
+	s.writeScoreMutation(w, http.StatusOK, room, err)
+}
+
+func (s *Server) handleManageZhaJinHuaMember(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		scoreCommandBody
+		Action string `json:"action"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	actor, _ := scoreActorFromContext(r.Context())
+	room, err := s.scoreService.ManageZhaJinHuaMember(r.Context(), actor, body.meta(), r.PathValue("participantID"), score.ZhaJinHuaMemberInput{Action: body.Action})
 	s.writeScoreMutation(w, http.StatusOK, room, err)
 }
 

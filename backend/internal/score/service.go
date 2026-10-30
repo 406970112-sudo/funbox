@@ -58,17 +58,18 @@ type CommandMeta struct {
 }
 
 type CreateRoomInput struct {
-	Name               string     `json:"name"`
-	DisplayName        string     `json:"displayName,omitempty"`
-	MaxPlayers         int        `json:"maxPlayers"`
-	CentsPerPoint      int64      `json:"centsPerPoint"`
-	Scene              ScoreScene `json:"scene,omitempty"`
-	GameType           GameType   `json:"gameType,omitempty"`
-	Password           string     `json:"password,omitempty"`
-	CapPoints          int64      `json:"capPoints,omitempty"`
-	Latitude           *float64   `json:"latitude,omitempty"`
-	Longitude          *float64   `json:"longitude,omitempty"`
-	ForceOpenThreshold int        `json:"forceOpenThreshold,omitempty"`
+	ZhaJinHuaSettings  *ZhaJinHuaSettings `json:"zhaJinHuaSettings,omitempty"`
+	Name               string             `json:"name"`
+	DisplayName        string             `json:"displayName,omitempty"`
+	MaxPlayers         int                `json:"maxPlayers"`
+	CentsPerPoint      int64              `json:"centsPerPoint"`
+	Scene              ScoreScene         `json:"scene,omitempty"`
+	GameType           GameType           `json:"gameType,omitempty"`
+	Password           string             `json:"password,omitempty"`
+	CapPoints          int64              `json:"capPoints,omitempty"`
+	Latitude           *float64           `json:"latitude,omitempty"`
+	Longitude          *float64           `json:"longitude,omitempty"`
+	ForceOpenThreshold int                `json:"forceOpenThreshold,omitempty"`
 }
 
 type CreateRoomResult struct {
@@ -171,10 +172,12 @@ type SettleRoomInput struct {
 }
 
 type UpdateZhaJinHuaSettingsInput struct {
-	ForceOpenThreshold int `json:"forceOpenThreshold"`
+	Settings           *ZhaJinHuaSettings `json:"settings,omitempty"`
+	ForceOpenThreshold int                `json:"forceOpenThreshold"`
 }
 
 type ZhaJinHuaActionInput struct {
+	Outcome             string              `json:"outcome,omitempty"`
 	ActionType          ZhaJinHuaActionType `json:"actionType"`
 	Points              int64               `json:"points,omitempty"`
 	TargetParticipantID string              `json:"targetParticipantId,omitempty"`
@@ -266,7 +269,22 @@ func (s *Service) CreateRoom(ctx context.Context, hostUserID, displayName string
 	default:
 		return CreateRoomResult{}, fmt.Errorf("room game type: %w", ErrInvalidInput)
 	}
-	if input.MaxPlayers < 2 || input.MaxPlayers > 8 || input.CentsPerPoint < 1 || input.CentsPerPoint > 1_000_000 {
+	maxPlayersLimit := 8
+	if input.ZhaJinHuaSettings != nil {
+		if input.GameType != GameTypeZhaJinHua {
+			return CreateRoomResult{}, ErrInvalidInput
+		}
+		settings := *input.ZhaJinHuaSettings
+		settings.MaxPlayers = input.MaxPlayers
+		if err := validateV2Settings(settings); err != nil {
+			return CreateRoomResult{}, err
+		}
+		settings.ForceOpenThreshold = settings.CompareThreshold
+		input.ZhaJinHuaSettings = &settings
+		input.ForceOpenThreshold = settings.CompareThreshold
+		maxPlayersLimit = 12
+	}
+	if input.MaxPlayers < 2 || input.MaxPlayers > maxPlayersLimit || input.CentsPerPoint < 1 || input.CentsPerPoint > 1_000_000 {
 		return CreateRoomResult{}, fmt.Errorf("room settings: %w", ErrInvalidInput)
 	}
 	if input.CapPoints < 0 || input.CapPoints > 2_147_483_647 {
@@ -332,7 +350,7 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 			cents_per_point, cap_points, game_type, password_hash, latitude, longitude,
 			version, event_sequence, created_at, expires_at
 		) VALUES (?, ?, ?, ?, 'generic', 'waiting', ?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)
-	`, roomID, code, hostUserID, input.Name, input.MaxPlayers, input.CentsPerPoint,
+	`, roomID, code, hostUserID, input.Name, min(input.MaxPlayers, 8), input.CentsPerPoint,
 		input.CapPoints, input.GameType, passwordHash, input.Latitude, input.Longitude,
 		now.Unix(), now.Add(s.guestTTL).Unix())
 	if err != nil {
@@ -362,9 +380,14 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 		INSERT INTO score_room_game_configs (
 			room_id, scene, force_open_threshold, force_open_fee_points, updated_at
 		) VALUES (?, ?, ?, ?, ?)
-	`, roomID, input.Scene, input.ForceOpenThreshold, legacyForceOpenFee, now.Unix())
+	`, roomID, input.Scene, min(input.ForceOpenThreshold, 8), legacyForceOpenFee, now.Unix())
 	if err != nil {
 		return CreateRoomResult{}, false, fmt.Errorf("insert score room game config: %w", err)
+	}
+	if input.ZhaJinHuaSettings != nil {
+		if err := saveV2Settings(ctx, tx, roomID, *input.ZhaJinHuaSettings); err != nil {
+			return CreateRoomResult{}, false, err
+		}
 	}
 	room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
 	if err != nil {
@@ -432,7 +455,16 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if err != nil {
 		return JoinRoomResult{}, fmt.Errorf("find score room: %w", err)
 	}
-	if status != string(RoomWaiting) {
+	joinRoom, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+	if err != nil {
+		return JoinRoomResult{}, err
+	}
+	v2 := joinRoom.ZhaJinHuaSettings.RulesVersion == 2
+	if v2 {
+		maxPlayers = joinRoom.MaxPlayers
+		activePlayers = len(seatedV2(joinRoom.Participants))
+	}
+	if status != string(RoomWaiting) && !v2 {
 		return JoinRoomResult{}, fmt.Errorf("joining started room: %w", ErrInvalidState)
 	}
 	if passwordHash != "" && !usedInviteCredential {
@@ -472,7 +504,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 			return JoinRoomResult{}, fmt.Errorf("find existing score participant: %w", err)
 		}
 	}
-	if activePlayers >= maxPlayers {
+	if activePlayers >= maxPlayers && !v2 {
 		return JoinRoomResult{}, ErrRoomFull
 	}
 	participantID := uuid.NewString()
@@ -491,6 +523,11 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 			return JoinRoomResult{}, ErrNicknameConflict
 		}
 		return JoinRoomResult{}, fmt.Errorf("insert score guest: %w", err)
+	}
+	if v2 && (status == string(RoomActive) || activePlayers >= maxPlayers) {
+		if _, err := tx.ExecContext(ctx, `INSERT INTO score_zjh_seats(participant_id,seat_status) VALUES (?, 'pending')`, participantID); err != nil {
+			return JoinRoomResult{}, err
+		}
 	}
 	if _, err := bumpRoomAndAppendEvent(ctx, tx, roomID, participantID, "participant.joined", map[string]any{"participantId": participantID}, now); err != nil {
 		return JoinRoomResult{}, err
@@ -524,7 +561,7 @@ func (s *Service) PreviewInvite(ctx context.Context, userID string, input Invite
 	if err != nil {
 		return InvitePreviewResult{}, err
 	}
-	if room.Code != code {
+	if room.Code != code || (room.ZhaJinHuaSettings.RulesVersion == 2 && room.Status != RoomWaiting && room.Status != RoomActive) {
 		return InvitePreviewResult{}, ErrInviteInvalid
 	}
 	result := InvitePreviewResult{Room: room}
@@ -544,7 +581,7 @@ func (s *Service) PreviewInvite(ctx context.Context, userID string, input Invite
 			return InvitePreviewResult{}, err
 		}
 	}
-	if len(activeParticipants(room.Participants)) >= room.MaxPlayers {
+	if room.ZhaJinHuaSettings.RulesVersion != 2 && len(activeParticipants(room.Participants)) >= room.MaxPlayers {
 		return InvitePreviewResult{}, ErrRoomFull
 	}
 	return result, nil
@@ -567,7 +604,7 @@ func (s *Service) resolveInviteCredential(ctx context.Context, inviteToken, invi
 	var roomID, code string
 	err := s.store.db.QueryRowContext(ctx, `
 		SELECT id, code FROM score_rooms
-		WHERE external_invite_code = ? AND status = 'waiting'
+		WHERE external_invite_code = ? AND `+scoreInviteOpenPredicate+`
 	`, inviteScene).Scan(&roomID, &code)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", "", ErrInviteInvalid
@@ -673,6 +710,9 @@ func (s *Service) StartRoom(ctx context.Context, actor Actor, meta CommandMeta) 
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
+		if room.ZhaJinHuaSettings.RulesVersion == 2 && len(seatedV2(room.Participants)) < 2 {
+			return ErrInvalidState
+		}
 		if room.Status != RoomWaiting || len(activeParticipants(room.Participants)) < 2 {
 			return ErrInvalidState
 		}
@@ -755,6 +795,9 @@ func (s *Service) StartRound(ctx context.Context, actor Actor, meta CommandMeta,
 
 func (s *Service) UpdateZhaJinHuaSettings(ctx context.Context, actor Actor, meta CommandMeta, input UpdateZhaJinHuaSettingsInput) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "zjh.settings.update", input, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.ZhaJinHuaSettings.RulesVersion == 2 {
+			return s.updateV2Settings(ctx, tx, room, actor, input)
+		}
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
@@ -778,6 +821,9 @@ func (s *Service) UpdateZhaJinHuaSettings(ctx context.Context, actor Actor, meta
 
 func (s *Service) StartZhaJinHuaHand(ctx context.Context, actor Actor, meta CommandMeta) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "zjh.hand.start", nil, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.ZhaJinHuaSettings.RulesVersion == 2 {
+			return s.startV2Hand(ctx, tx, room, actor)
+		}
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
@@ -825,6 +871,9 @@ func (s *Service) SubmitZhaJinHuaAction(ctx context.Context, actor Actor, meta C
 		ZhaJinHuaActionInput
 	}{HandID: handID, ZhaJinHuaActionInput: input}
 	return s.mutate(ctx, actor, meta, "zjh.action", payload, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.ZhaJinHuaSettings.RulesVersion == 2 {
+			return s.actionV2(ctx, tx, room, actor, handID, input)
+		}
 		if room.Scene != SceneZhaJinHua || room.Status != RoomActive || room.CurrentZhaJinHuaHand == nil ||
 			room.CurrentZhaJinHuaHand.ID != handID {
 			return ErrInvalidZJHHand
@@ -969,6 +1018,9 @@ func (s *Service) SubmitZhaJinHuaAction(ctx context.Context, actor Actor, meta C
 
 func (s *Service) CancelZhaJinHuaHand(ctx context.Context, actor Actor, meta CommandMeta, handID string) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "zjh.hand.cancel", map[string]string{"handId": handID}, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.ZhaJinHuaSettings.RulesVersion == 2 {
+			return s.cancelV2(ctx, tx, room, actor, handID)
+		}
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
@@ -1021,6 +1073,9 @@ func (s *Service) SubmitEntry(ctx context.Context, actor Actor, meta CommandMeta
 
 func (s *Service) SubmitGifts(ctx context.Context, actor Actor, meta CommandMeta, input SubmitGiftsInput) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "gifts.submit", input, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.ZhaJinHuaSettings.RulesVersion == 2 {
+			return ErrInvalidState
+		}
 		if room.Scene != SceneGeneric || room.Status != RoomActive || room.CurrentRound != nil {
 			return ErrInvalidState
 		}
@@ -1080,6 +1135,9 @@ func (s *Service) SubmitGifts(ctx context.Context, actor Actor, meta CommandMeta
 
 func (s *Service) ReverseGiftBatch(ctx context.Context, actor Actor, meta CommandMeta, batchID string) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "gifts.reverse", map[string]string{"batchId": batchID}, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.ZhaJinHuaSettings.RulesVersion == 2 {
+			return ErrInvalidState
+		}
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
@@ -1236,6 +1294,9 @@ func (s *Service) CancelRoom(ctx context.Context, actor Actor, meta CommandMeta)
 
 func (s *Service) RemoveParticipant(ctx context.Context, actor Actor, meta CommandMeta, participantID string) (RoomSnapshot, error) {
 	return s.mutate(ctx, actor, meta, "participant.remove", map[string]string{"participantId": participantID}, func(tx *sql.Tx, room RoomSnapshot) error {
+		if room.ZhaJinHuaSettings.RulesVersion == 2 {
+			return ErrInvalidState
+		}
 		if actor.Role != ParticipantHost || participantID == actor.ParticipantID {
 			return ErrForbidden
 		}
@@ -1271,8 +1332,11 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 			return ErrForbidden
 		}
 		if room.Status != RoomActive || room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil ||
-			(len(room.Rounds) == 0 && len(room.GiftBatches) == 0 && len(room.ZhaJinHuaHands) == 0) {
+			(room.ZhaJinHuaSettings.RulesVersion != 2 && len(room.Rounds) == 0 && len(room.GiftBatches) == 0 && len(room.ZhaJinHuaHands) == 0) {
 			return ErrInvalidState
+		}
+		if room.ZhaJinHuaSettings.RulesVersion == 2 && input.CentsPerPoint != 0 && input.CentsPerPoint != room.CentsPerPoint {
+			return ErrInvalidInput
 		}
 		centsPerPoint := input.CentsPerPoint
 		if centsPerPoint == 0 {
@@ -1462,7 +1526,7 @@ func (s *Service) IssueInviteToken(ctx context.Context, actor Actor) (string, er
 		return "", err
 	}
 	var code string
-	if err := s.store.db.QueryRowContext(ctx, `SELECT code FROM score_rooms WHERE id = ? AND status = 'waiting'`, actor.RoomID).Scan(&code); err != nil {
+	if err := s.store.db.QueryRowContext(ctx, `SELECT code FROM score_rooms WHERE id = ? AND `+scoreInviteOpenPredicate, actor.RoomID).Scan(&code); err != nil {
 		return "", ErrInvalidState
 	}
 	return s.signToken(tokenClaims{Type: "score_invite", RoomID: actor.RoomID, Code: code}, s.guestTTL)
@@ -1498,7 +1562,7 @@ func (s *Service) ensureExternalInviteCode(ctx context.Context, roomID string) (
 	var existing sql.NullString
 	err := s.store.db.QueryRowContext(ctx, `
 		SELECT external_invite_code FROM score_rooms
-		WHERE id = ? AND status = 'waiting'
+		WHERE id = ? AND `+scoreInviteOpenPredicate+`
 	`, roomID).Scan(&existing)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", ErrInvalidState
@@ -1517,7 +1581,7 @@ func (s *Service) ensureExternalInviteCode(ctx context.Context, roomID string) (
 		}
 		result, err := s.store.db.ExecContext(ctx, `
 			UPDATE score_rooms SET external_invite_code = ?
-			WHERE id = ? AND status = 'waiting'
+			WHERE id = ? AND `+scoreInviteOpenPredicate+`
 				AND (external_invite_code IS NULL OR external_invite_code = '')
 		`, scene, roomID)
 		if err != nil {
@@ -1535,7 +1599,7 @@ func (s *Service) ensureExternalInviteCode(ctx context.Context, roomID string) (
 		}
 		err = s.store.db.QueryRowContext(ctx, `
 			SELECT external_invite_code FROM score_rooms
-			WHERE id = ? AND status = 'waiting'
+			WHERE id = ? AND `+scoreInviteOpenPredicate+`
 		`, roomID).Scan(&existing)
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", ErrInvalidState

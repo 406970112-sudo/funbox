@@ -9,23 +9,15 @@
       <view class="hero-art art"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
   </view>
-  <view wx:if="{{backendStatus === 'offline'}}" class="offline-banner"><text>牌局服务暂时离线，请检查网络后重试。</text><text class="offline-action" bindtap="checkBackend">重试</text></view>
   <view class="section-head"><text class="section-title">选择牌局</text><text class="section-note">不同玩法，一样清楚</text></view>
   <view class="scene-grid">
     <view class="scene-card mahjong-card" bindtap="openMahjong">
       <view class="scene-copy"><text class="scene-title">麻将记分</text><text class="scene-desc">4 人牌局 · 给分与结算</text><text class="scene-pill available-pill">已开放</text></view>
       <view class="scene-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="scene-arrow">›</text>
     </view>
-    <view class="scene-card poker-card" data-scene="炸金花" bindtap="showComingSoon">
-      <view class="scene-copy"><text class="scene-title">炸金花</text><text class="scene-desc">轮流加注，实时看池</text><text class="scene-pill">敬请期待</text></view>
+    <view class="scene-card poker-card" bindtap="openPoker">
+      <view class="scene-copy"><text class="scene-title">炸金花</text><text class="scene-desc">轮流加注，实时看池</text><text class="scene-pill available-pill">已开放</text></view>
       <view class="scene-art art art-poker"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
   </view>
-  <view class="principles fb-card">
-    <text class="principles-title">记分原则</text>
-    <view class="principle-row"><text class="principle-index">01</text><text>只记录给分，赢家无需重复加分</text></view>
-    <view class="principle-row"><text class="principle-index">02</text><text>一次可给多位玩家批量提交</text></view>
-    <view class="principle-row"><text class="principle-index">03</text><text>房主确认结算，统一生成输赢</text></view>
-  </view>
-  <view class="service-status status-{{backendStatus}}"><view class="status-dot"></view><text>牌局服务 {{statusLabel}}</text><text wx:if="{{backendStatus === 'offline'}}" class="status-message">{{backendMessage}}</text></view>
 </view>

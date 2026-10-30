@@ -67,41 +67,43 @@ const (
 )
 
 type RoomSnapshot struct {
-	ID                   string            `json:"id"`
-	Code                 string            `json:"code"`
-	HostUserID           string            `json:"hostUserId"`
-	Name                 string            `json:"name"`
-	Mode                 string            `json:"mode"`
-	Scene                ScoreScene        `json:"scene"`
-	GameType             GameType          `json:"gameType"`
-	Status               RoomStatus        `json:"status"`
-	MaxPlayers           int               `json:"maxPlayers"`
-	CentsPerPoint        int64             `json:"centsPerPoint"`
-	CapPoints            int64             `json:"capPoints"`
-	RequiresPassword     bool              `json:"requiresPassword"`
-	Version              int64             `json:"version"`
-	EventSequence        int64             `json:"eventSequence"`
-	CreatedAt            time.Time         `json:"createdAt"`
-	StartedAt            *time.Time        `json:"startedAt,omitempty"`
-	SettledAt            *time.Time        `json:"settledAt,omitempty"`
-	CancelledAt          *time.Time        `json:"cancelledAt,omitempty"`
-	ExpiresAt            time.Time         `json:"expiresAt"`
-	Participants         []Participant     `json:"participants"`
-	CurrentRound         *Round            `json:"currentRound,omitempty"`
-	Rounds               []Round           `json:"rounds"`
-	GiftBatches          []GiftBatch       `json:"giftBatches"`
-	ZhaJinHuaSettings    ZhaJinHuaSettings `json:"zhaJinHuaSettings"`
-	CurrentZhaJinHuaHand *ZhaJinHuaHand    `json:"currentZhaJinHuaHand,omitempty"`
-	ZhaJinHuaHands       []ZhaJinHuaHand   `json:"zhaJinHuaHands"`
-	Settlement           *Settlement       `json:"settlement,omitempty"`
-	SelfParticipantID    string            `json:"selfParticipantId,omitempty"`
-	InviteToken          string            `json:"inviteToken,omitempty"`
-	PasswordHash         string            `json:"-"`
-	Latitude             *float64          `json:"-"`
-	Longitude            *float64          `json:"-"`
+	PendingHostParticipantID string            `json:"pendingHostParticipantId,omitempty"`
+	ID                       string            `json:"id"`
+	Code                     string            `json:"code"`
+	HostUserID               string            `json:"hostUserId"`
+	Name                     string            `json:"name"`
+	Mode                     string            `json:"mode"`
+	Scene                    ScoreScene        `json:"scene"`
+	GameType                 GameType          `json:"gameType"`
+	Status                   RoomStatus        `json:"status"`
+	MaxPlayers               int               `json:"maxPlayers"`
+	CentsPerPoint            int64             `json:"centsPerPoint"`
+	CapPoints                int64             `json:"capPoints"`
+	RequiresPassword         bool              `json:"requiresPassword"`
+	Version                  int64             `json:"version"`
+	EventSequence            int64             `json:"eventSequence"`
+	CreatedAt                time.Time         `json:"createdAt"`
+	StartedAt                *time.Time        `json:"startedAt,omitempty"`
+	SettledAt                *time.Time        `json:"settledAt,omitempty"`
+	CancelledAt              *time.Time        `json:"cancelledAt,omitempty"`
+	ExpiresAt                time.Time         `json:"expiresAt"`
+	Participants             []Participant     `json:"participants"`
+	CurrentRound             *Round            `json:"currentRound,omitempty"`
+	Rounds                   []Round           `json:"rounds"`
+	GiftBatches              []GiftBatch       `json:"giftBatches"`
+	ZhaJinHuaSettings        ZhaJinHuaSettings `json:"zhaJinHuaSettings"`
+	CurrentZhaJinHuaHand     *ZhaJinHuaHand    `json:"currentZhaJinHuaHand,omitempty"`
+	ZhaJinHuaHands           []ZhaJinHuaHand   `json:"zhaJinHuaHands"`
+	Settlement               *Settlement       `json:"settlement,omitempty"`
+	SelfParticipantID        string            `json:"selfParticipantId,omitempty"`
+	InviteToken              string            `json:"inviteToken,omitempty"`
+	PasswordHash             string            `json:"-"`
+	Latitude                 *float64          `json:"-"`
+	Longitude                *float64          `json:"-"`
 }
 
 type Participant struct {
+	SeatStatus  string            `json:"seatStatus,omitempty"`
 	ID          string            `json:"id"`
 	UserID      string            `json:"userId,omitempty"`
 	DisplayName string            `json:"displayName"`
@@ -159,7 +161,14 @@ type GiftItem struct {
 }
 
 type ZhaJinHuaSettings struct {
-	ForceOpenThreshold int `json:"forceOpenThreshold"`
+	RulesVersion       int   `json:"rulesVersion,omitempty"`
+	AntePoints         int64 `json:"antePoints,omitempty"`
+	MaxBetPoints       int64 `json:"maxBetPoints,omitempty"`
+	CompareThreshold   int   `json:"compareThreshold,omitempty"`
+	BaoziBonusPoints   int64 `json:"baoziBonusPoints,omitempty"`
+	ShunjinBonusPoints int64 `json:"shunjinBonusPoints,omitempty"`
+	MaxPlayers         int   `json:"maxPlayers,omitempty"`
+	ForceOpenThreshold int   `json:"forceOpenThreshold"`
 }
 
 type ZhaJinHuaHandStatus string
@@ -185,25 +194,43 @@ const (
 	ZhaJinHuaActionForceOpen ZhaJinHuaActionType = "force_open"
 )
 
+type ZhaJinHuaComparison struct {
+	ActorParticipantID string `json:"actorParticipantId"`
+	Points             int64  `json:"points"`
+}
 type ZhaJinHuaHand struct {
-	ID                       string              `json:"id"`
-	RoomID                   string              `json:"roomId"`
-	Number                   int                 `json:"number"`
-	Status                   ZhaJinHuaHandStatus `json:"status"`
-	PotPoints                int64               `json:"potPoints"`
-	CurrentBetPoints         int64               `json:"currentBetPoints"`
-	CurrentTurnParticipantID string              `json:"currentTurnParticipantId,omitempty"`
-	ForceOpenThreshold       int                 `json:"forceOpenThreshold"`
-	WinnerParticipantID      string              `json:"winnerParticipantId,omitempty"`
-	CreatedBy                string              `json:"createdBy"`
-	CreatedAt                time.Time           `json:"createdAt"`
-	FinishedAt               *time.Time          `json:"finishedAt,omitempty"`
-	CancelledAt              *time.Time          `json:"cancelledAt,omitempty"`
-	Players                  []ZhaJinHuaPlayer   `json:"players"`
-	Actions                  []ZhaJinHuaAction   `json:"actions"`
+	RulesVersion             int                  `json:"rulesVersion,omitempty"`
+	Phase                    string               `json:"phase,omitempty"`
+	Settings                 ZhaJinHuaSettings    `json:"settings"`
+	CircleNumber             int                  `json:"circleNumber"`
+	CapCirclesRemaining      int                  `json:"capCirclesRemaining"`
+	PendingComparison        *ZhaJinHuaComparison `json:"pendingComparison,omitempty"`
+	CirclePending            []string             `json:"circlePending,omitempty"`
+	CapStarted               bool                 `json:"capStarted,omitempty"`
+	ID                       string               `json:"id"`
+	RoomID                   string               `json:"roomId"`
+	Number                   int                  `json:"number"`
+	Status                   ZhaJinHuaHandStatus  `json:"status"`
+	PotPoints                int64                `json:"potPoints"`
+	CurrentBetPoints         int64                `json:"currentBetPoints"`
+	CurrentTurnParticipantID string               `json:"currentTurnParticipantId,omitempty"`
+	ForceOpenThreshold       int                  `json:"forceOpenThreshold"`
+	WinnerParticipantID      string               `json:"winnerParticipantId,omitempty"`
+	CreatedBy                string               `json:"createdBy"`
+	CreatedAt                time.Time            `json:"createdAt"`
+	FinishedAt               *time.Time           `json:"finishedAt,omitempty"`
+	CancelledAt              *time.Time           `json:"cancelledAt,omitempty"`
+	Players                  []ZhaJinHuaPlayer    `json:"players"`
+	Actions                  []ZhaJinHuaAction    `json:"actions"`
 }
 
 type ZhaJinHuaPlayer struct {
+	Seen               bool                  `json:"seen"`
+	ExitReason         string                `json:"exitReason,omitempty"`
+	GamePoints         int64                 `json:"gamePoints"`
+	BonusPoints        int64                 `json:"bonusPoints"`
+	DeltaPoints        int64                 `json:"deltaPoints"`
+	BonusKind          string                `json:"bonusKind,omitempty"`
 	ParticipantID      string                `json:"participantId"`
 	Position           int                   `json:"position"`
 	Status             ZhaJinHuaPlayerStatus `json:"status"`
@@ -212,6 +239,7 @@ type ZhaJinHuaPlayer struct {
 }
 
 type ZhaJinHuaAction struct {
+	Outcome             string              `json:"outcome,omitempty"`
 	Sequence            int                 `json:"sequence"`
 	ActionType          ZhaJinHuaActionType `json:"actionType"`
 	ActorParticipantID  string              `json:"actorParticipantId"`

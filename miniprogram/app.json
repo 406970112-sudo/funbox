@@ -7,7 +7,9 @@
     "pages/auth/index",
     "pages/feedback/index",
     "pages/score/mahjong/index",
-    "pages/score/room/index"
+    "pages/score/room/index",
+    "pages/score/poker/index",
+    "pages/score/poker-room/index"
   ],
   "window": {
     "navigationBarTitleText": "FunBox",
