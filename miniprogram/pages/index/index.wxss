@@ -9,6 +9,132 @@
   animation: fb-reveal .3s ease-out both;
 }
 
+.website-card {
+  display: flex;
+  align-items: center;
+  gap: 22rpx;
+  box-sizing: border-box;
+  min-height: 144rpx;
+  margin-top: 28rpx;
+  padding: 24rpx;
+  border: 2rpx solid #dbe5ff;
+  border-radius: 28rpx;
+  background: #fff;
+}
+
+.website-logo {
+  flex-shrink: 0;
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 20rpx;
+}
+
+.website-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.website-title, .website-address {
+  display: block;
+}
+
+.website-title {
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.website-address {
+  margin-top: 2rpx;
+  color: #7b879c;
+  font-size: 24rpx;
+}
+
+.website-button {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 14rpx 20rpx;
+  border-radius: 18rpx;
+  background: #edf3ff;
+  color: #2d5bff;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.website-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+  background: rgba(17, 24, 34, .58);
+}
+
+.website-dialog {
+  box-sizing: border-box;
+  width: 590rpx;
+  max-width: 100%;
+  padding: 48rpx 36rpx 36rpx;
+  border-radius: 32rpx;
+  background: #fff;
+  text-align: center;
+}
+
+.website-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112rpx;
+  height: 112rpx;
+  margin: 0 auto 24rpx;
+  border-radius: 50%;
+  background: #20c773;
+}
+
+.website-check {
+  width: 44rpx;
+  height: 24rpx;
+  margin-top: -12rpx;
+  border-bottom: 9rpx solid #fff;
+  border-left: 9rpx solid #fff;
+  transform: rotate(-45deg);
+}
+
+.website-dialog-title {
+  display: block;
+  font-size: 38rpx;
+  font-weight: 800;
+}
+
+.website-dialog-hint {
+  display: block;
+  margin-top: 10rpx;
+  color: #7b879c;
+  font-size: 26rpx;
+}
+
+.website-dialog-url {
+  display: block;
+  margin-top: 26rpx;
+  padding: 24rpx 12rpx;
+  border-radius: 18rpx;
+  background: #f0f3f8;
+  font-size: 28rpx;
+}
+
+.website-confirm {
+  margin-top: 30rpx;
+  padding: 24rpx 0;
+  border-radius: 20rpx;
+  background: #2d5bff;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 .topbar {
   display: flex;
   align-items: center;

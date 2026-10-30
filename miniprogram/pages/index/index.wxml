@@ -24,4 +24,21 @@
       <image class="scene-art general-art" src="/assets/illustrations/general-score.png" mode="aspectFit" aria-hidden="true" />
     </view>
   </view>
+  <view wx:if="{{showWebsiteEntry}}" class="website-card" bindtap="copyWebsite" role="button" aria-label="更多功能，复制 xwhub.cn 网址">
+    <image class="website-logo" src="/assets/icons/funbox-logo.png" mode="aspectFit" aria-hidden="true" />
+    <view class="website-copy">
+      <text class="website-title">更多功能</text>
+      <text class="website-address">访问 xwhub.cn</text>
+    </view>
+    <button class="website-button" catchtap="copyWebsite" disabled="{{copyingWebsite}}">{{copyingWebsite ? '复制中' : '复制网址'}}</button>
+  </view>
+</view>
+<view wx:if="{{showWebsiteDialog}}" class="website-mask" catchtouchmove="noop">
+  <view class="website-dialog" role="dialog" aria-label="网址已复制，请打开浏览器粘贴访问" catchtap="noop">
+    <view class="website-success" aria-hidden="true"><view class="website-check" /></view>
+    <text class="website-dialog-title">网址已复制</text>
+    <text class="website-dialog-hint">请打开浏览器，粘贴网址访问</text>
+    <text class="website-dialog-url" selectable>{{websiteUrl}}</text>
+    <button class="website-confirm" bindtap="closeWebsiteDialog">我知道了</button>
+  </view>
 </view>
