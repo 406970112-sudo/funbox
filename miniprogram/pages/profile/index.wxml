@@ -21,6 +21,10 @@
     <view class="history-entry-copy"><text class="history-entry-title">最近牌局</text><text class="history-entry-desc">按时间回看参与者和输赢</text></view>
     <view class="history-art art art-score"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="fb-arrow">›</text>
   </view>
+  <view class="profile-card history-entry-card fb-card" bindtap="openMemeFavorites" role="button" aria-label="查看我的藏图">
+    <view class="history-entry-copy"><text class="history-entry-title">我的藏图</text><text class="history-entry-desc">收藏的表情包，随时再翻翻</text></view>
+    <image class="history-art" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" /><text class="fb-arrow">›</text>
+  </view>
   <view class="profile-card feedback-card fb-card" bindtap="openFeedback">
     <view class="feedback-copy"><text class="feedback-title">功能反馈</text><text class="feedback-desc">上传截图，告诉我们你的问题</text></view>
     <view class="feedback-art art art-feedback"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="fb-arrow">›</text>

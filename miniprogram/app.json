@@ -45,5 +45,14 @@
     "connectSocket": 15000
   },
   "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "subPackages": [
+    {
+      "root": "packages/meme",
+      "pages": [
+        "library/index",
+        "detail/index"
+      ]
+    }
+  ]
 }

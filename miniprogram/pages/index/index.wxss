@@ -415,3 +415,7 @@
 
 
 }
+
+.meme-entry { position:relative; display:flex; align-items:center; min-height:230rpx; box-sizing:border-box; padding:30rpx; overflow:hidden; border:2rpx solid white; border-radius:32rpx; background:#eeeaff; }
+.meme-entry-art {position:absolute;right:0;top:0;width:310rpx;height:230rpx;}
+.meme-caption {display:block;margin-top:20rpx;color:#8d83a8;font-size:22rpx;}

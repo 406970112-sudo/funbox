@@ -1,0 +1,292 @@
+<view class="meme-page">
+  <view class="sticky-head">
+    <view
+      wx:if="{{!(tab === 'favorites' && favoriteMode === 'favorites' && loggedIn)}}"
+      class="search-box"
+    ><text class="search-icon">⌕</text><input
+        value="{{q}}"
+        bindinput="onInput"
+        bindconfirm="search"
+        confirm-type="search"
+        placeholder="{{tab === 'categories' ? '搜索分类名称' : '搜索表情包、分类'}}"
+        aria-label="搜索表情包或分类"
+      /><button bindtap="search">搜索</button></view>
+    <view
+      class="source"
+      bindtap="copySource"
+    >ChineseBQB · {{tab === 'categories' ? categoryTotal + ' 个分类' : '按已有标签与分类搜索'}} ↗</view>
+    <view class="tabs">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="id"
+        class="tab {{tab === item.id ? 'selected' : ''}}"
+        data-tab="{{item.id}}"
+        bindtap="changeTab"
+      >{{item.title}}</view>
+    </view>
+  </view>
+  <view
+    wx:if="{{searches.length && !q && tab !== 'ranking' && tab !== 'favorites'}}"
+    class="search-history"
+  ><text class="muted">最近搜索</text><text
+      wx:for="{{searches}}"
+      wx:key="*this"
+      class="history-chip"
+      data-q="{{item}}"
+      bindtap="historySearch"
+    >{{item}}</text><text
+      class="link"
+      bindtap="clearHistory"
+    >清除</text></view>
+  <block wx:if="{{tab === 'categories'}}">
+    <scroll-view
+      class="groups"
+      scroll-x
+    >
+      <view
+        class="group {{group === item ? 'active' : ''}}"
+        wx:for="{{groups}}"
+        wx:key="*this"
+        data-group="{{item}}"
+        bindtap="chooseGroup"
+      >{{item}}</view>
+    </scroll-view>
+    <view class="section-heading">全部原生分类 <text class="muted">{{categoryTotal}} 个，可按名称搜索</text></view>
+    <view class="category-grid">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-card"
+        data-id="{{item.id}}"
+        data-title="{{item.title}}"
+        bindtap="chooseCategory"
+      >
+        <image
+          wx:if="{{item.coverUrl}}"
+          src="{{item.coverUrl}}"
+          mode="aspectFit"
+          lazy-load
+        /><text class="category-name">{{item.title}}</text><text class="muted">{{item.count}} 张</text><text
+          wx:if="{{item.originalTitle && item.originalTitle !== item.title}}"
+          class="original-title"
+        >原名 {{item.originalTitle}}</text>
+      </view>
+    </view>
+  </block>
+  <block wx:else>
+    <block wx:if="{{tab === 'ranking'}}">
+      <view class="rank-heading">FunBox 站内热门 <text
+          class="link"
+          bindtap="explainRanking"
+        >榜单说明 ⓘ</text></view>
+      <view class="filters">
+        <view
+          class="chip {{period === 'day' && !date ? 'active' : ''}}"
+          data-period="day"
+          bindtap="changePeriod"
+        >今日</view>
+        <view
+          class="chip {{period === 'week' ? 'active' : ''}}"
+          data-period="week"
+          bindtap="changePeriod"
+        >本周</view>
+        <view
+          class="chip {{period === 'all' ? 'active' : ''}}"
+          data-period="all"
+          bindtap="changePeriod"
+        >总榜</view><button
+          class="history-button"
+          bindtap="loadDates"
+          loading="{{datesLoading}}"
+        >历史日榜</button>
+      </view>
+      <view
+        wx:if="{{dates.length}}"
+        class="date-row"
+      >
+        <picker
+          range="{{dates}}"
+          value="{{dateIndex}}"
+          bindchange="chooseDate"
+        ><text class="link">{{date || '选择日期'}} ⌄</text></picker><text
+          wx:if="{{datesCursor}}"
+          class="link"
+          bindtap="loadDates"
+        >更多日期</text>
+      </view>
+      <view class="rank-notice">{{rankNotice || '根据本站有效浏览、收藏与保存生成'}}</view>
+      <view class="rank-meta">{{rankingMeta}}</view>
+      <view class="rank-list">
+        <view
+          wx:for="{{items}}"
+          wx:key="id"
+          class="rank-card"
+          data-id="{{item.id}}"
+          bindtap="openImage"
+        ><text
+            wx:if="{{rankMode === 'ranking' && item.rank}}"
+            class="rank-number"
+          >{{item.rank}}</text>
+          <image
+            wx:if="{{!item.unavailable && !broken[item.id]}}"
+            src="{{item.thumbnailUrl}}"
+            mode="aspectFit"
+            lazy-load
+            data-id="{{item.id}}"
+            binderror="imageError"
+          />
+          <view
+            wx:else
+            class="rank-placeholder"
+          >图片暂不可用</view>
+          <view class="rank-copy"><text class="rank-title">{{item.title}}</text><text class="muted">{{item.animated ? '动图' : '静图'}} · {{item.categories[0].title || '表情包'}}</text><text
+              wx:if="{{rankMode === 'ranking'}}"
+              class="score"
+            >站内热度 {{item.score}}</text><text
+              wx:else
+              class="curated"
+            >精选推荐 · 热度积累中</text></view>
+        </view>
+      </view>
+    </block>
+    <block wx:else>
+      <view
+        wx:if="{{tab === 'favorites'}}"
+        class="collection-head"
+      >
+        <view class="filters"><text
+            class="chip {{favoriteMode === 'favorites' ? 'active' : ''}}"
+            data-mode="favorites"
+            bindtap="changeFavoriteMode"
+          >我的收藏</text><text
+            class="chip {{favoriteMode === 'recent' ? 'active' : ''}}"
+            data-mode="recent"
+            bindtap="changeFavoriteMode"
+          >最近浏览</text><text
+            wx:if="{{loggedIn && pendingCount}}"
+            class="chip {{favoriteMode === 'pending' ? 'active' : ''}}"
+            data-mode="pending"
+            bindtap="changeFavoriteMode"
+          >待同步 {{pendingCount}}</text></view>
+        <view class="collection-note">{{loggedIn ? (favoriteMode === 'pending' ? '待同步操作保存在本机，可重试同步' : '账号云收藏，按收藏顺序排列') : '仅保存在本机，清理微信数据后将丢失'}}<text
+            wx:if="{{!loggedIn}}"
+            class="link"
+            bindtap="login"
+          > 登录同步 ›</text></view>
+        <view
+          wx:if="{{syncMessage}}"
+          class="sync-note"
+        >{{syncMessage}}<text
+            class="link"
+            bindtap="syncFavorites"
+          > 重试同步</text></view>
+      </view>
+      <view
+        wx:if="{{!(tab === 'favorites' && favoriteMode === 'favorites' && loggedIn)}}"
+        class="filters"
+      >
+        <view
+          class="chip {{type === '' ? 'active' : ''}}"
+          data-type=""
+          bindtap="changeType"
+        >全部</view>
+        <view
+          class="chip {{type === 'false' ? 'active' : ''}}"
+          data-type="false"
+          bindtap="changeType"
+        >静图</view>
+        <view
+          class="chip {{type === 'true' ? 'active' : ''}}"
+          data-type="true"
+          bindtap="changeType"
+        >动图</view>
+        <picker
+          wx:if="{{tab === 'all'}}"
+          class="sort"
+          range="{{sortOptions}}"
+          value="{{sortIndex}}"
+          bindchange="changeSort"
+        >{{sortOptions[sortIndex]}} ⌄</picker>
+      </view>
+      <view
+        wx:if="{{category}}"
+        class="category-filter"
+      >{{categoryTitle || category}}<text bindtap="clearCategory"> 清除 ×</text></view>
+      <view class="result-count">{{loading ? '正在查找…' : total + ' 张图片'}}<text wx:if="{{q}}"> · “{{q}}”</text></view>
+      <view class="image-grid">
+        <view
+          class="image-tile"
+          wx:for="{{items}}"
+          wx:key="id"
+        >
+          <view
+            class="tile-media"
+            data-id="{{item.id}}"
+            bindtap="openImage"
+          >
+            <image
+              wx:if="{{!item.unavailable && !broken[item.id]}}"
+              src="{{item.thumbnailUrl}}"
+              mode="aspectFit"
+              lazy-load
+              data-id="{{item.id}}"
+              binderror="imageError"
+            />
+            <view
+              wx:else
+              class="missing"
+            >{{item.unavailable ? '内容已下架' : '图片暂不可用'}}<text>{{item.unavailable ? '可移除此收藏' : '点按详情可重试'}}</text></view><text
+              wx:if="{{item.animated}}"
+              class="gif-badge"
+            >动图</text>
+          </view><text class="tile-title">{{item.title}}</text><text
+            wx:if="{{(item.unavailable || broken[item.id]) && tab === 'favorites' && favoriteMode === 'favorites'}}"
+            class="remove-link"
+            data-id="{{item.id}}"
+            bindtap="removeUnavailable"
+          >移除收藏</text>
+        </view>
+      </view>
+      <view
+        wx:if="{{items.length}}"
+        class="pagination"
+      ><button
+          bindtap="previous"
+          disabled="{{page === 1 || loading}}"
+        >上一页</button><text>第 {{page}} 页</text><button
+          bindtap="next"
+          disabled="{{!nextCursor || loading}}"
+        >下一页</button></view>
+      <view
+        wx:if="{{items.length && !nextCursor && !loading}}"
+        class="end-note"
+      >已经到底了</view>
+    </block>
+  </block>
+  <view
+    wx:if="{{loading}}"
+    class="loading-state"
+  >
+    <view class="skeleton-grid">
+      <view
+        wx:for="{{[1,2,3,4,5,6]}}"
+        wx:key="*this"
+      />
+    </view><text>正在加载，请稍候…</text>
+  </view>
+  <view
+    wx:if="{{error}}"
+    class="error-state"
+  ><text>{{error}}</text><button bindtap="retry">重试</button></view>
+  <view
+    wx:if="{{!loading && !error && (tab === 'categories' ? !categories.length : !items.length)}}"
+    class="empty-state"
+  ><text class="empty-icon">⌕</text><text>{{tab === 'favorites' ? '这里还没有图片' : '没有找到，换个词试试'}}</text><text class="muted">搜索仅匹配已有名称、标签和分类</text><button
+      data-tab="categories"
+      bindtap="changeTab"
+    >浏览全部分类</button></view>
+  <view
+    class="source-footer"
+    bindtap="copySource"
+  >来源 ChineseBQB · 点击复制来源网址</view>
+</view>

@@ -49,6 +49,7 @@ LEGACY_JWT_SECRET_FILE=""
 PAYMENT_QR_STORAGE_DIR=""
 LEGACY_PAYMENT_QR_STORAGE_DIR=""
 FEEDBACK_STORAGE_DIR=""
+MEME_MEDIA_STORAGE_DIR=""
 LEGACY_FEEDBACK_STORAGE_DIR=""
 
 log() {
@@ -326,6 +327,21 @@ prepare_membership_storage() {
   esac
 
   install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$PAYMENT_QR_STORAGE_DIR"
+}
+
+prepare_meme_storage() {
+  local configured_dir
+  configured_dir="$(read_env_value "$BACKEND_ROOT/.env" "MEME_MEDIA_DIR")"
+  MEME_MEDIA_STORAGE_DIR="$(resolve_persistent_path "$configured_dir" "data/memes")"
+  case "$MEME_MEDIA_STORAGE_DIR" in
+    "$PERSISTENT_ROOT"/*) ;;
+    *)
+      echo "Meme media storage path must resolve inside $PERSISTENT_ROOT."
+      exit 1
+      ;;
+  esac
+  install -d -o "$APP_USER" -g "$APP_GROUP" -m 750 "$MEME_MEDIA_STORAGE_DIR"
+  set_env_value "$BACKEND_ROOT/.env" "MEME_MEDIA_DIR" "$MEME_MEDIA_STORAGE_DIR"
 }
 
 prepare_feedback_storage() {
@@ -884,6 +900,8 @@ prepare_membership_storage
 log "Prepared backend membership storage"
 prepare_feedback_storage
 log "Prepared backend feedback storage"
+prepare_meme_storage
+log "Prepared persistent meme media storage"
 
 cd "$APP_ROOT"
 
@@ -980,6 +998,7 @@ runuser -u "$APP_USER" -- test -w "$AUDIO_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$AVATAR_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$PAYMENT_QR_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$FEEDBACK_STORAGE_DIR"
+runuser -u "$APP_USER" -- test -w "$MEME_MEDIA_STORAGE_DIR"
 runuser -u "$APP_USER" -- test -w "$(dirname "$DATABASE_FILE")"
 runuser -u "$APP_USER" -- test -w "$(dirname "$JWT_SECRET_FILE")"
 bash "$APP_ROOT/deploy/alicloud/ubuntu-22.04/wait-for-service.sh" "$BACKEND_SERVICE" "http://127.0.0.1:${BACKEND_PORT}/healthz"

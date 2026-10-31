@@ -81,7 +81,9 @@ bash deploy/alicloud/ubuntu-22.04/deploy-project.sh
 - `APP_GROUP`
 - `GOPROXY`
 
-`PERSISTENT_ROOT` 必须是位于应用和 release 目录之外的绝对路径。部署脚本会把 SQLite 数据库、用户头像、反馈图片、JWT 密钥和收款码保存到该目录；旧 `.env` 中的相对路径会自动改写为共享目录中的绝对路径。默认值为 `/srv/my-first-expo-app-shared`。
+`PERSISTENT_ROOT` 必须是位于应用和 release 目录之外的绝对路径。部署脚本会把 SQLite 数据库、用户头像、反馈图片、JWT 密钥、收款码和表情包媒体保存到该目录；旧 `.env` 中的相对路径会自动改写为共享目录中的绝对路径。默认值为 `/srv/my-first-expo-app-shared`。
+
+表情包媒体使用 `MEME_MEDIA_DIR`，默认固定到 `$PERSISTENT_ROOT/data/memes`，由 Go 服务校验可见性并读取，不直接通过公开目录绕过下架状态。首次启动会在后台同步 ChineseBQB 索引与媒体；图片镜像占用约 515 MiB 原图及额外缩略图空间，持续更新需要可访问 `https://zhaoolee.com`。同步失败保留上一份索引，可从管理员同步/状态 API 重试。需要暂停自动任务时设置 `MEME_WORKER_ENABLED=false`，现有镜像仍可读取。上线前将实际 API/图片 HTTPS 域名配置为微信 request 和 downloadFile 合法域名。
 
 首次从 release 内的数据目录切换到共享目录时，更新脚本会通过 SQLite 在线备份迁移上一版数据库，并复制数据库当前引用的头像、JWT 密钥、反馈图片与收款码。迁移仅在共享数据库尚不存在时执行，后续发布不会覆盖已有共享数据。GitHub Actions 通过 `PREVIOUS_APP_ROOT=/srv/my-first-expo-app-current` 指定上一版应用目录。
 

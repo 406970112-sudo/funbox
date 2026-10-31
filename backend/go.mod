@@ -8,13 +8,13 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
+	golang.org/x/image v0.23.0
 	golang.org/x/crypto v0.32.0
 	golang.org/x/text v0.21.0
 	modernc.org/sqlite v1.34.5
 )
 
 require (
-	github.com/6tail/lunar-go v1.4.6 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect

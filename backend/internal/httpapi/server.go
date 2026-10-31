@@ -37,6 +37,7 @@ import (
 	"my-first-expo-app/backend/internal/lotterylab"
 	"my-first-expo-app/backend/internal/marketradar"
 	"my-first-expo-app/backend/internal/membership"
+	"my-first-expo-app/backend/internal/meme"
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
 	"my-first-expo-app/backend/internal/novelagent"
@@ -63,6 +64,9 @@ import (
 )
 
 type Server struct {
+	memeService               *meme.Service
+	memeContext               context.Context
+	memeMediaRateLimiter      *RateLimiter
 	accessStore               *access.Store
 	authService               *auth.Service
 	blogService               *blog.Service
@@ -752,7 +756,16 @@ func newServer(
 	} else {
 		quietHomeService = quiethome.NewService(quietHomeStore, socialStore, realtimeHub)
 	}
+	memeStore, memeErr := meme.OpenStore(cfg.Database.Path)
+	var memeService *meme.Service
+	if memeErr != nil {
+		log.Printf("open meme database: %v", memeErr)
+	} else {
+		memeService = meme.NewService(memeStore, cfg.Meme.MediaDir)
+	}
 	api := &Server{
+		memeService:               memeService,
+		memeMediaRateLimiter:      NewRateLimiter(time.Minute, 360),
 		accessStore:               accessStore,
 		authService:               authService,
 		blogService:               blogService,
@@ -860,6 +873,7 @@ func newServer(
 	registerQuietHomeRoutes(mux, api)
 	registerBlogRoutes(mux, api)
 	registerHomeRecommendationRoutes(mux, api)
+	registerMemeRoutes(mux, api)
 	registerPlantIDRoutes(mux, api)
 	registerPriceRadarRoutes(mux, api)
 	registerNovelAgentRoutes(mux, api)
@@ -909,6 +923,12 @@ func newServer(
 	handler := api.withGlobalMiddleware(mux)
 
 	monitorContext, monitorCancel := context.WithCancel(context.Background())
+	api.memeContext = monitorContext
+	var memeDone chan struct{}
+	if memeService != nil && cfg.Meme.WorkerEnabled {
+		memeDone = make(chan struct{})
+		go func() { defer close(memeDone); memeService.Run(monitorContext) }()
+	}
 	if quietHomeService != nil {
 		go quietHomeService.Run(monitorContext, 30*time.Second)
 	}
@@ -929,6 +949,15 @@ func newServer(
 		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
+	}
+	if memeStore != nil {
+		server.RegisterOnShutdown(func() {
+			monitorCancel()
+			if memeDone != nil {
+				<-memeDone
+			}
+			_ = memeStore.Close()
+		})
 	}
 	if whereIsItStore != nil {
 		server.RegisterOnShutdown(func() {

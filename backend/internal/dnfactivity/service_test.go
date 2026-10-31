@@ -50,6 +50,7 @@ func newTestService(t *testing.T) *Service {
 		PageSize:     20,
 		MaxFavorites: 30,
 	}, store)
+	service.now = func() time.Time { return time.Date(2026, 8, 4, 12, 0, 0, 0, time.Local) }
 	service.mu.Lock()
 	service.lastSync = time.Now()
 	service.mu.Unlock()

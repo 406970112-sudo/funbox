@@ -24,6 +24,11 @@
       <image class="scene-art general-art" src="/assets/illustrations/general-score.png" mode="aspectFit" aria-hidden="true" />
     </view>
   </view>
+  <view class="section-head"><text class="section-title">发现更多</text><text class="section-note">好玩的，随手打开</text></view>
+  <view class="meme-entry" bindtap="openMemes" role="button" aria-label="表情包，分类搜图，热门排行">
+    <view class="scene-copy"><text class="scene-title">表情包</text><text class="scene-desc">分类搜图 · 热门排行</text><text class="meme-caption">找张好图，快乐接梗</text></view>
+    <image class="meme-entry-art" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" />
+  </view>
   <view wx:if="{{showWebsiteEntry}}" class="website-card" bindtap="copyWebsite" role="button" aria-label="更多功能，复制 xwhub.cn 网址">
     <image class="website-logo" src="/assets/icons/funbox-logo.png" mode="aspectFit" aria-hidden="true" />
     <view class="website-copy">

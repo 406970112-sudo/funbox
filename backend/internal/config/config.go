@@ -7,7 +7,13 @@ import (
 	"time"
 )
 
+type MemeConfig struct {
+	MediaDir      string
+	WorkerEnabled bool
+}
+
 type Config struct {
+	Meme               MemeConfig
 	AppEnv             string
 	Auth               AuthConfig
 	Database           DatabaseConfig
@@ -259,6 +265,7 @@ func Load() (Config, error) {
 		novelAgentEnabledDefault = "true"
 	}
 	cfg := Config{
+		Meme:   MemeConfig{MediaDir: envFirst("MEME_MEDIA_DIR", "./storage/memes"), WorkerEnabled: boolFirst("MEME_WORKER_ENABLED", "true")},
 		AppEnv: appEnv,
 		Auth: AuthConfig{
 			JWTSecret:         envFirst("AUTH_JWT_SECRET", ""),

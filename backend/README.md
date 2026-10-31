@@ -4,6 +4,8 @@
 
 当前已经接入用户鉴权、个人资料、头像文件、TTS 和翻译模块，后续可以继续增加订单、任务和日志等能力。
 
+表情包模块位于 `internal/meme/`，公开 `/api/v1/memes` 分类/搜索/榜单与 `/api/v1/meme-media/` 图片接口，账号收藏需要 JWT，管理同步/标签/下架需要管理员身份。启用 `MEME_WORKER_ENABLED=true` 后后台同步 ChineseBQB；`MEME_MEDIA_DIR` 必须使用持久存储（生产部署脚本自动设置到共享目录），生成的本地镜像不提交 Git。接口、来源和发布前检查见 [表情包实施说明](../docs/meme-design-v1/implementation.md)。
+
 ## 目录结构
 
 - `cmd/api`

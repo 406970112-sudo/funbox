@@ -52,6 +52,7 @@ backend/.gocache/
 backend/.gomodcache/
 backend/tmp/
 backend/data/
+backend/storage/memes/
 
 # generated native folders
 /ios

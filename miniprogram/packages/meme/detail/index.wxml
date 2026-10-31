@@ -1,0 +1,105 @@
+<view class="detail-page">
+  <view
+    wx:if="{{loading}}"
+    class="status"
+  >正在加载图片…</view>
+  <view
+    wx:if="{{error}}"
+    class="status"
+  ><text>{{error}}</text><button bindtap="load">重新加载</button></view>
+  <block wx:if="{{image}}">
+    <view class="hero-image">
+      <image
+        wx:if="{{!imageFailed}}"
+        src="{{image.url}}"
+        mode="aspectFit"
+        bindtap="preview"
+        binderror="imageError"
+      />
+      <view
+        wx:else
+        class="image-failure"
+      >
+        <image
+          src="{{image.thumbnailUrl}}"
+          mode="aspectFit"
+          bindtap="preview"
+        /><text>原图加载失败，已保留缩略图</text><button bindtap="retryImage">重试原图</button>
+      </view><text class="format-badge">{{image.animated ? '动图' : '静图'}}</text>
+    </view>
+    <view class="image-title">{{image.title}}</view>
+    <view class="metadata"><text
+        wx:for="{{image.categories}}"
+        wx:key="id"
+        class="category"
+        data-id="{{item.id}}"
+        data-title="{{item.title}}"
+        bindtap="openCategory"
+      >{{item.title}}</text><text class="format">{{image.format}} · {{sizeLabel}} · {{image.width}}×{{image.height}}</text></view>
+    <view
+      class="source"
+      bindtap="copySource"
+    >来源 ChineseBQB ↗</view>
+    <view
+      wx:if="{{image.label && image.label !== image.title}}"
+      class="source"
+    >原始标签：{{image.label}}</view>
+    <view class="action-row"><button
+        bindtap="favorite"
+        loading="{{favoriteBusy}}"
+        disabled="{{favoriteBusy}}"
+      >{{favorite ? '★ 已收藏' : '☆ 收藏'}}</button><button open-type="share">↗ 分享页面</button></view>
+    <button
+      class="primary"
+      bindtap="shareImage"
+      disabled="{{busy}}"
+      loading="{{busy}}"
+    >分享图片</button><button
+      class="secondary"
+      bindtap="save"
+      disabled="{{busy}}"
+    >保存到相册</button>
+    <view
+      wx:if="{{busy}}"
+      class="hint"
+    >下载及处理中 {{progress}}%</view>
+    <view
+      wx:if="{{actionError}}"
+      class="action-error"
+    ><text>{{actionError}}</text><button
+        wx:if="{{permissionDenied}}"
+        bindtap="openSettings"
+      >打开权限设置</button><text
+        class="link"
+        bindtap="preview"
+      >预览原图 ›</text></view>
+    <view class="hint">动图可预览，分享与保存效果以微信客户端为准</view>
+    <view class="hint">分享菜单打开不表示已发送成功</view>
+    <block wx:if="{{related.length}}">
+      <view class="section-title">同类表情</view>
+      <view class="related-grid">
+        <view
+          wx:for="{{related}}"
+          wx:key="id"
+          class="related-card"
+          data-id="{{item.id}}"
+          bindtap="openRelated"
+        >
+          <image
+            wx:if="{{!broken[item.id]}}"
+            src="{{item.thumbnailUrl}}"
+            mode="aspectFit"
+            lazy-load
+            data-id="{{item.id}}"
+            binderror="relatedError"
+          />
+          <view
+            wx:else
+            class="related-placeholder"
+          >图片暂不可用</view><text>{{item.title}}</text>
+        </view>
+      </view>
+    </block>
+    <view class="footer"><text bindtap="copySource">查看来源</text><text bindtap="report">内容反馈 / 申请下架</text></view>
+  </block>
+</view>

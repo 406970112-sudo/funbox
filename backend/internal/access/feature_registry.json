@@ -813,5 +813,27 @@
     "status": "available",
     "featured": true,
     "initialRoles": ["normal", "vip", "svip", "admin"]
+  },
+  {
+    "id": "memes",
+    "name": "表情包",
+    "tagline": "分类搜图 · 热门排行",
+    "description": "浏览分类、搜索表情包，收藏与保存，查看 FunBox 站内热门。",
+    "icon": "sticker-emoji",
+    "category": "生活",
+    "route": "/tools/memes",
+    "accentColor": "#2d5bff",
+    "badges": [
+      "分类搜图"
+    ],
+    "usageLabel": "找表情",
+    "status": "available",
+    "featured": true,
+    "initialRoles": [
+      "normal",
+      "vip",
+      "svip",
+      "admin"
+    ]
   }
 ]

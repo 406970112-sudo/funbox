@@ -90,6 +90,8 @@ Page({
     }
   },
 
+  openMemes() { wx.navigateTo({ url: "/packages/meme/library/index" }); },
+
   openPoker() { wx.navigateTo({ url: "/pages/score/poker/index" }); },
 
   openGeneral() { wx.navigateTo({ url: "/pages/score/general/index" }); },

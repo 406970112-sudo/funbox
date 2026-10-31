@@ -42,7 +42,10 @@ const glyphMaps = {
   ),
 };
 
-const sourceFiles = sourceRoots.flatMap((root) => listFiles(path.join(frontendRoot, root)));
+const sourceFiles = [
+  ...sourceRoots.flatMap((root) => listFiles(path.join(frontendRoot, root))),
+  path.join(frontendRoot, '..', 'backend/internal/access/feature_registry.json'),
+];
 const stringLiterals = collectStringLiterals(sourceFiles);
 
 for (const [family, glyphMap] of Object.entries(glyphMaps)) {

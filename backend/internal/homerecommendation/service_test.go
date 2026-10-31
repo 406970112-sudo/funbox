@@ -248,6 +248,7 @@ func TestOverridesAndValidation(t *testing.T) {
 
 func TestEventsDeduplicateAndAudit(t *testing.T) {
 	service, _ := newTestService(t)
+	service.nowFunc = func() time.Time { return time.Date(2026, 8, 2, 12, 0, 0, 0, time.UTC) }
 	created, err := service.CreateSlot(context.Background(), "admin-1", SlotInput{
 		FeatureID: "card-score",
 		Enabled:   boolPtr(true),

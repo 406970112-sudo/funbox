@@ -130,6 +130,10 @@ Page({
     wx.navigateTo({ url: "/pages/auth/index" });
   },
 
+  openMemeFavorites() {
+    wx.navigateTo({ url: "/packages/meme/library/index?tab=favorites" });
+  },
+
   openSettings() {
     if (!getAccessToken()) {
       this.openAuth();

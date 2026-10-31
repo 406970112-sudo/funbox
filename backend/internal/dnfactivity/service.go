@@ -15,12 +15,12 @@ const (
 )
 
 type ServiceConfig struct {
-	SourceURL      string
-	SyncInterval   time.Duration
-	CacheTTL       time.Duration
-	PageSize       int
-	MaxFavorites   int
-	DetailTimeout  time.Duration
+	SourceURL     string
+	SyncInterval  time.Duration
+	CacheTTL      time.Duration
+	PageSize      int
+	MaxFavorites  int
+	DetailTimeout time.Duration
 }
 
 type Service struct {
@@ -30,6 +30,7 @@ type Service struct {
 	mu        sync.Mutex
 	lastSync  time.Time
 	attempted sync.Map
+	now       func() time.Time
 }
 
 func NewService(cfg ServiceConfig, store *Store) *Service {
@@ -52,6 +53,7 @@ func NewService(cfg ServiceConfig, store *Store) *Service {
 		cfg:      cfg,
 		store:    store,
 		provider: NewProvider(ProviderConfig(cfg)),
+		now:      time.Now,
 	}
 }
 
@@ -116,7 +118,7 @@ func (s *Service) Overview(ctx context.Context) (Overview, error) {
 	if err != nil {
 		return Overview{}, err
 	}
-	today := time.Now().Format("2006-01-02")
+	today := s.now().Format("2006-01-02")
 	activities := make([]Activity, 0, len(rows))
 	overview := Overview{
 		Source:    sourceLabel,
@@ -158,7 +160,7 @@ func (s *Service) List(ctx context.Context, query ListQuery) (ActivityList, erro
 	if err != nil {
 		return ActivityList{}, err
 	}
-	today := time.Now().Format("2006-01-02")
+	today := s.now().Format("2006-01-02")
 	queryText := strings.ToLower(strings.TrimSpace(query.Query))
 	status := strings.TrimSpace(query.Status)
 	activities := make([]Activity, 0, len(rows))
@@ -218,7 +220,7 @@ func (s *Service) Get(ctx context.Context, id string) (Activity, error) {
 			}
 		}
 	}
-	today := time.Now().Format("2006-01-02")
+	today := s.now().Format("2006-01-02")
 	_, _, stale, err := s.loadRows(ctx)
 	if err != nil {
 		return Activity{}, err
@@ -232,7 +234,7 @@ func (s *Service) Calendar(ctx context.Context, year int, month int) (CalendarMo
 		return CalendarMonth{}, err
 	}
 	if year <= 0 {
-		year = time.Now().Year()
+		year = s.now().Year()
 	}
 	if month < 1 || month > 12 {
 		return CalendarMonth{}, ErrInvalidInput

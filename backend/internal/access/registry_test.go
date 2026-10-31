@@ -1,6 +1,7 @@
 package access_test
 
 import (
+	"context"
 	"testing"
 
 	"my-first-expo-app/backend/internal/access"
@@ -39,14 +40,14 @@ func TestRegistryAcceptsGameRoutesAndRejectsUnknownPrefixes(t *testing.T) {
 		t.Fatalf("open access store: %v", err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	if err := store.SyncRegistry(t.Context(), []access.FeatureDefinition{valid}); err != nil {
+	if err := store.SyncRegistry(context.Background(), []access.FeatureDefinition{valid}); err != nil {
 		t.Fatalf("sync game feature: %v", err)
 	}
 
 	invalid := valid
 	invalid.ID = "unknown"
 	invalid.Route = "/secret/entry"
-	if err := store.SyncRegistry(t.Context(), []access.FeatureDefinition{invalid}); err == nil {
+	if err := store.SyncRegistry(context.Background(), []access.FeatureDefinition{invalid}); err == nil {
 		t.Fatal("registry accepted unknown route prefix")
 	}
 }
