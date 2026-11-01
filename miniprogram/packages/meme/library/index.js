@@ -10,6 +10,7 @@ const {
 Page({
   data: {
     mode: 'library',
+    onlineDetailsExpanded: false,
     onlineSources: [],
     onlineSelected: [],
     onlineStatuses: [],
@@ -187,6 +188,9 @@ Page({
       onlineSearched: false, onlineHasMore: false, onlineStatuses: [], onlineNotice: ''});
     if (mode === 'online') return this.loadOnlineSources();
     return this.refresh();
+  },
+  toggleOnlineDetails() {
+    this.setData({onlineDetailsExpanded: !this.data.onlineDetailsExpanded});
   },
   async loadOnlineSources() {
     const generation = this._sourcesGeneration = (this._sourcesGeneration || 0) + 1;

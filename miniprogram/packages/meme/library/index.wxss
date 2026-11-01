@@ -625,7 +625,13 @@ button {
 .mode-button { flex: 1; margin: 0; font-size: 26rpx; line-height: 64rpx; color: #68717b; background: transparent; border-radius: 12rpx; }
 .mode-button::after, .source-chip::after { border: 0; }
 .mode-button.active { color: #1c262e; background: #fff; font-weight: 600; }
-.online-panel { margin: 22rpx 0; padding: 22rpx; border: 1rpx solid #e5e9ed; border-radius: 20rpx; background: #fff; }
+.online-panel { margin: 22rpx 0; border: 1rpx solid #e5e9ed; border-radius: 20rpx; background: #fff; overflow: hidden; }
+.online-toggle { display: flex; align-items: center; gap: 14rpx; width: 100%; margin: 0; padding: 22rpx; text-align: left; line-height: 40rpx; color: #17243d; background: transparent; border-radius: 0; }
+.online-toggle-title { flex-shrink: 0; font-size: 24rpx; font-weight: 600; }
+.online-summary { flex: 1; min-width: 0; font-size: 22rpx; color: #737e89; }
+.online-toggle-action { display: flex; align-items: center; gap: 6rpx; flex-shrink: 0; font-size: 22rpx; color: #2d5bff; }
+.online-toggle-action .expanded { transform: rotate(180deg); }
+.online-details { padding: 0 22rpx 22rpx; }
 .online-intro { font-size: 24rpx; color: #596673; margin-bottom: 16rpx; }
 .online-sources { display: flex; flex-wrap: wrap; gap: 12rpx; }
 .source-chip { margin: 0; padding: 0 20rpx; font-size: 24rpx; line-height: 58rpx; background: #f3f5f7; color: #4f5b68; border-radius: 30rpx; }

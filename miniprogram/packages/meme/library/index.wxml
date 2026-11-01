@@ -34,7 +34,13 @@
     </view>
   </view>
   <view wx:if="{{mode === 'online'}}" class="online-panel">
-    <view class="online-intro">多站搜索 · 结果按来源返回，不代表热度排名</view>
+    <button class="online-toggle" bindtap="toggleOnlineDetails" aria-expanded="{{onlineDetailsExpanded}}" aria-label="{{onlineDetailsExpanded ? '收起多站搜索信息' : '展开多站搜索信息'}}">
+      <text class="online-toggle-title">多站搜索</text>
+      <text class="online-summary">{{sourcesLoading ? '正在加载来源…' : (sourcesError ? '来源加载失败' : '已选 ' + onlineSelected.length + ' 个来源')}}</text>
+      <view class="online-toggle-action"><text>{{onlineDetailsExpanded ? '收起' : '展开'}}</text><view class="chevron-icon {{onlineDetailsExpanded ? 'expanded' : ''}}" aria-hidden="true" /></view>
+    </button>
+    <view wx:if="{{onlineDetailsExpanded}}" class="online-details">
+    <view class="online-intro">结果按来源返回，不代表热度排名</view>
     <view wx:if="{{sourcesLoading}}" class="muted">正在加载来源…</view>
     <view wx:if="{{sourcesError}}" class="sync-note">{{sourcesError}}<button class="history-button" bindtap="loadOnlineSources">重试来源</button></view>
     <view class="online-sources">
@@ -44,6 +50,7 @@
     <view wx:for="{{onlineStatuses}}" wx:key="id" class="online-source-note {{item.status === 'error' ? 'source-error' : ''}}">{{item.title}} · {{item.status === 'ok' ? '已返回' : (item.status === 'empty' ? '没有结果' : (item.status === 'disabled' ? '不可用' : '搜索失败'))}}<text wx:if="{{item.message}}"> · {{item.message}}</text><text wx:if="{{item.status === 'error'}}" class="link" bindtap="retry"> 重试</text></view>
     <view wx:if="{{onlineNotice}}" class="online-source-note">{{onlineNotice}}</view>
     <view wx:if="{{onlineAttribution}}" class="online-source-note link" bindtap="copyOnlineAttribution">搜索适配 {{onlineAttribution.name}} · 复制项目来源</view>
+    </view>
   </view>
   <view
     wx:if="{{mode === 'library' && searches.length && !q && tab !== 'ranking' && tab !== 'favorites'}}"
