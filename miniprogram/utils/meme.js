@@ -13,6 +13,10 @@ const PREFIX = 'funbox.meme.';
 function mediaUrl(url) {
   if (!url) return '';
   const origin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  // Reverse proxies can return an internal HTTP origin. Route media through
+  // the same trusted gateway as API requests, including cached favorites.
+  const absolute = url.match(/^https?:\/\/[^/?#]+(\/api\/v1\/meme-media\/[a-f0-9]{64}\/(?:original|thumbnail))$/i);
+  if (absolute) return origin + absolute[1];
   if (url.startsWith('/api/v1/meme-media/')) return origin + url;
   if (url.startsWith('/meme-media/')) return API_BASE_URL + url;
   return url.startsWith(API_BASE_URL + '/meme-media/') ? url : '';

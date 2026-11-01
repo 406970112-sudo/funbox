@@ -9,6 +9,21 @@ function api() {
   return fs.existsSync(p) ? require(p) : {};
 }
 
+test('media from API responses uses the configured HTTPS gateway even with an internal origin', () => {
+  const id = '000b8ab7c92d640065d7285cd68055baa3aa3635aee189020988c77d9e38c0c4';
+  const normalized = api().normalizeImage({
+    id,
+    url: 'http://39.107.136.182/api/v1/meme-media/' + id + '/original',
+    thumbnailUrl: 'http://39.107.136.182/api/v1/meme-media/' + id + '/thumbnail'
+  });
+  assert.equal(normalized.url, 'https://www.xwhub.cn/api/v1/meme-media/' + id + '/original');
+  assert.equal(normalized.thumbnailUrl, 'https://www.xwhub.cn/api/v1/meme-media/' + id + '/thumbnail');
+  assert.equal(api().mediaUrl('/api/v1/meme-media/' + id + '/original'), normalized.url);
+  assert.equal(api().mediaUrl(normalized.url), normalized.url);
+  assert.equal(api().mediaUrl('https://untrusted.example/other/image.jpg'), '');
+  assert.equal(api().mediaUrl('file:///api/v1/meme-media/' + id + '/original'), '');
+});
+
 function env() {
   const values = new Map();
   let token = '';
