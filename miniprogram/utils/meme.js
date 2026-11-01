@@ -15,7 +15,7 @@ function mediaUrl(url) {
   const origin = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
   // Reverse proxies can return an internal HTTP origin. Route media through
   // the same trusted gateway as API requests, including cached favorites.
-  const absolute = url.match(/^https?:\/\/[^/?#]+(\/api\/v1\/meme-media\/[a-f0-9]{64}\/(?:original|thumbnail))$/i);
+  const absolute = url.match(/^https?:\/\/[^/?#]+(\/api\/v1\/meme-media\/(?:online-)?[a-f0-9]{64}\/(?:original|thumbnail))$/i);
   if (absolute) return origin + absolute[1];
   if (url.startsWith('/api/v1/meme-media/')) return origin + url;
   if (url.startsWith('/meme-media/')) return API_BASE_URL + url;
@@ -201,6 +201,15 @@ function createMemeClient(options = {}) {
     },
     list: input => send({
       path: '/memes?' + query(input)
+    }),
+    onlineSources: () => send({path: '/memes/online/sources'}),
+    onlineSearch: input => send({
+      path: '/memes/online/search?' + query({
+        q: input.q,
+        sources: input.sources.join(','),
+        page: input.page,
+        limit: 36
+      })
     }),
     categories: input => send({
       path: '/memes/categories?' + query(input)

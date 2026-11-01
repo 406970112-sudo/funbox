@@ -9,6 +9,16 @@ const {
 } = require('../../../utils/auth');
 Page({
   data: {
+    mode: 'library',
+    onlineSources: [],
+    onlineSelected: [],
+    onlineStatuses: [],
+    onlineHasMore: false,
+    onlineSearched: false,
+    onlineNotice: '',
+    sourcesLoading: false,
+    sourcesError: '',
+    onlineAttribution: null,
     tabs: [{
       id: 'all',
       title: '全部'
@@ -65,6 +75,7 @@ Page({
     this._active = true;
     this._lastToken = getAccessToken();
     this.setData({
+      mode: options.mode === 'online' ? 'online' : 'library',
       tab: ['all', 'categories', 'ranking', 'favorites'].includes(options.tab) ? options.tab : 'all',
       q: options.q || '',
       category: options.category || '',
@@ -84,7 +95,8 @@ Page({
     wx.showShareMenu({
       menus: ['shareAppMessage']
     });
-    await this.refresh();
+    if (this.data.mode === 'online') await this.loadOnlineSources();
+    else await this.refresh();
   },
   onShow() {
     this._active = true;
@@ -92,7 +104,7 @@ Page({
     const token = getAccessToken();
     const changed = token !== this._lastToken;
     this._lastToken = token;
-    if (changed && this.data.tab === 'favorites') {
+    if (changed && this.data.mode !== 'online' && this.data.tab === 'favorites') {
       this.pager.cancel();
       this.setData({
         items: [],
@@ -109,10 +121,14 @@ Page({
     else if (changed) this.refresh();
     if (this._resumeRequest) {
       this._resumeRequest = false;
-      if (this.data.tab === 'categories') this.loadCategories();
+      if (this.data.mode === 'online') {
+        if (!this.data.onlineSources.length) this.loadOnlineSources();
+        else this.loadOnline(this._onlineRequestedPage || 1);
+      } else if (this.data.tab === 'categories') this.loadCategories();
       else if (this.data.tab === 'ranking') this.loadRanking();
       else this.pager.retry();
-    } else if (!changed && this.data.tab === 'favorites') this.refreshFavorites();
+    } else if (this.data.mode === 'online' && !this.data.onlineSources.length && !this.data.sourcesLoading) this.loadOnlineSources();
+    else if (!changed && this.data.mode !== 'online' && this.data.tab === 'favorites') this.refreshFavorites();
     if (this._scrollTop) wx.pageScrollTo({
       scrollTop: this._scrollTop,
       duration: 0
@@ -122,8 +138,11 @@ Page({
     this._resumeRequest = this.data.loading;
     this._active = false;
     this._generation++;
+    this._sourcesGeneration = (this._sourcesGeneration || 0) + 1;
     this.setData({
-      datesLoading: false
+      datesLoading: false,
+      sourcesLoading: false,
+      loading: false
     });
     if (this.pager) this.pager.cancel();
   },
@@ -144,7 +163,7 @@ Page({
         pendingItems: this.client.localFavorites().slice(0, 6).map(normalizeImage),
         pendingCount: this.client.localFavorites().length
       });
-      if ((refresh || this.data.favoriteMode === 'pending') && this.data.tab === 'favorites') await this.refresh();
+      if (this.data.mode !== 'online' && (refresh || this.data.favoriteMode === 'pending') && this.data.tab === 'favorites') await this.refresh();
     } catch (error) {
       if (this._active) this.setData({
         syncMessage: error.message
@@ -156,7 +175,72 @@ Page({
       q: e.detail.value
     });
   },
+  async changeMode(e) {
+    const mode = e.currentTarget.dataset.mode;
+    if (!['library', 'online'].includes(mode) || mode === this.data.mode) return;
+    this._generation++;
+    this.pager.cancel();
+    if (mode === 'online') this._libraryQuery = this.data.q;
+    else this._onlineDraft = this.data.q;
+    this.setData({mode, q: mode === 'online' ? (this._onlineDraft || '') : (this._libraryQuery || ''),
+      items: [], loading: false, error: '', page: 1, nextCursor: '', total: 0,
+      onlineSearched: false, onlineHasMore: false, onlineStatuses: [], onlineNotice: ''});
+    if (mode === 'online') return this.loadOnlineSources();
+    return this.refresh();
+  },
+  async loadOnlineSources() {
+    const generation = this._sourcesGeneration = (this._sourcesGeneration || 0) + 1;
+    this.setData({sourcesLoading: true, sourcesError: ''});
+    try {
+      const r = await this.client.onlineSources();
+      if (!this._active || generation !== this._sourcesGeneration || this.data.mode !== 'online') return;
+      const items = (r.items || []).map(x => ({...x, selected: x.enabled && (!this._sourcesLoaded || this.data.onlineSelected.includes(x.id))}));
+      this._sourcesLoaded = true;
+      this.setData({onlineSources: items, onlineSelected: items.filter(x => x.selected).map(x => x.id),
+        onlineAttribution: r.attribution || null, sourcesLoading: false});
+    } catch (_) {
+      if (this._active && generation === this._sourcesGeneration) this.setData({sourcesLoading: false, sourcesError: '来源加载失败，请重试'});
+    }
+  },
+  toggleOnlineSource(e) {
+    const id = e.currentTarget.dataset.id;
+    const source = this.data.onlineSources.find(x => x.id === id);
+    if (!source || !source.enabled || this.data.loading) return;
+    const selected = this.data.onlineSelected.includes(id) ? this.data.onlineSelected.filter(x => x !== id) : [...this.data.onlineSelected, id];
+    this._generation++;
+    this.setData({onlineSelected: selected, onlineSources: this.data.onlineSources.map(x => ({...x, selected: selected.includes(x.id)})),
+      onlineSearched: false, items: [], error: '', page: 1, onlineHasMore: false, onlineStatuses: [], onlineNotice: ''});
+  },
+  async loadOnline(page = 1) {
+    if (!this._onlineQuery || !this.data.onlineSelected.length || this.data.mode !== 'online') return;
+    const generation = ++this._generation;
+    this._onlineRequestedPage = page;
+    this.setData({loading: true, error: '', onlineSearched: true});
+    try {
+      const r = await this.client.onlineSearch({q: this._onlineQuery, sources: this._onlineSelected, page, limit: 36});
+      if (!this._active || generation !== this._generation || this.data.mode !== 'online') return;
+      this.setData({items: (r.items || []).map(normalizeImage), page: r.page || page,
+        onlineHasMore: !!r.hasMore, onlineStatuses: r.sources || [], onlineNotice: r.notice || '',
+        loading: false, broken: {}});
+    } catch (_) {
+      if (this._active && generation === this._generation) this.setData({loading: false, error: '联网搜索失败，请稍后重试'});
+    }
+  },
+  copyOnlineAttribution() {
+    const url = this.data.onlineAttribution && this.data.onlineAttribution.url;
+    if (url) wx.setClipboardData({data: url});
+  },
   search() {
+    if (this.data.mode === 'online') {
+      const q = this.data.q.trim();
+      this._generation++;
+      this.setData({q, items: [], loading: false, error: '', onlineStatuses: [], onlineNotice: '', onlineHasMore: false, onlineSearched: false, page: 1});
+      if (!q) return;
+      if (!this.data.onlineSelected.length) {this.setData({error: '请先选择至少一个可用来源'}); return;}
+      this._onlineQuery = q;
+      this._onlineSelected = [...this.data.onlineSelected];
+      return this.loadOnline(1);
+    }
     this.client.rememberSearch(this.data.q.trim());
     this.setData({
       q: this.data.q.trim(),
@@ -286,6 +370,7 @@ Page({
     };
   },
   refresh() {
+    if (this.data.mode === 'online') return;
     this._generation++;
     this.pager.cancel();
     if (this.data.tab === 'categories') return this.loadCategories();
@@ -379,6 +464,7 @@ Page({
   },
   next() {
     if (this.data.loading) return;
+    if (this.data.mode === 'online') return this.data.onlineHasMore ? this.loadOnline(this.data.page + 1) : undefined;
     if (this._localItems && this.data.tab === 'favorites' && (this.data.favoriteMode !== 'favorites' || !getAccessToken())) this.localPage(this.data.page + 1);
     else this.pager.next();
     wx.pageScrollTo({
@@ -388,6 +474,7 @@ Page({
   },
   previous() {
     if (this.data.loading) return;
+    if (this.data.mode === 'online') return this.data.page > 1 ? this.loadOnline(this.data.page - 1) : undefined;
     if (this.data.tab === 'favorites' && (this.data.favoriteMode !== 'favorites' || !getAccessToken())) this.localPage(this.data.page - 1);
     else this.pager.previous();
     wx.pageScrollTo({
@@ -396,6 +483,7 @@ Page({
     });
   },
   retry() {
+    if (this.data.mode === 'online') return this._onlineQuery && this.data.onlineSelected.length ? this.loadOnline(this._onlineRequestedPage || 1) : this.search();
     if (this.data.tab === 'all' || (this.data.tab === 'favorites' && this.data.favoriteMode === 'favorites' && getAccessToken())) return this.pager.retry();
     return this.refresh();
   },
@@ -440,6 +528,10 @@ Page({
     });
   },
   onShareAppMessage() {
+    if (this.data.mode === 'online') return {
+      title: 'FunBox 联网搜图',
+      path: '/packages/meme/library/index?mode=online&q=' + encodeURIComponent(this.data.q)
+    };
     return {
       title: this.data.categoryTitle ? this.data.categoryTitle + ' · 表情包' : 'FunBox 表情包',
       path: '/packages/meme/library/index?category=' + encodeURIComponent(this.data.category) + '&title=' + encodeURIComponent(this.data.categoryTitle) + '&q=' + encodeURIComponent(this.data.q)

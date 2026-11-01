@@ -22,6 +22,8 @@ func registerMemeRoutes(mux *http.ServeMux, s *Server) {
 		mux.HandleFunc(pattern, s.withAuth(s.withAdmin(s.withAPIPipeline(s.memeAvailable(h)))))
 	}
 	public("GET /api/v1/memes", s.handleMemes)
+	public("GET /api/v1/memes/online/sources", s.handleMemeOnlineSources)
+	mux.HandleFunc("GET /api/v1/memes/online/search", s.withOptionalAuth(s.withRateLimitedAPIPipeline("meme-online-search", s.memeAvailable(s.handleMemeOnlineSearch))))
 	public("GET /api/v1/memes/categories", s.handleMemeCategories)
 	public("GET /api/v1/memes/rankings", s.handleMemeRankings)
 	public("GET /api/v1/memes/ranking-dates", s.handleMemeDates)
@@ -231,4 +233,38 @@ func (s *Server) memeMediaLimiter() *RateLimiter {
 		return s.memeMediaRateLimiter
 	}
 	return s.rateLimiter
+}
+
+func (s *Server) handleMemeOnlineSources(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, 200, map[string]any{"items": s.memeService.OnlineSources(), "attribution": map[string]string{"name": "o98k-ok/meme", "url": "https://github.com/o98k-ok/meme"}})
+}
+func (s *Server) handleMemeOnlineSearch(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	page, limit := 1, 36
+	var e error
+	if raw := q.Get("page"); raw != "" {
+		page, e = strconv.Atoi(raw)
+		if e != nil {
+			s.memeError(w, meme.ErrInvalid)
+			return
+		}
+	}
+	if raw := q.Get("limit"); raw != "" {
+		limit, e = strconv.Atoi(raw)
+		if e != nil {
+			s.memeError(w, meme.ErrInvalid)
+			return
+		}
+	}
+	var ids []string
+	if raw := q.Get("sources"); raw != "" {
+		ids = strings.Split(raw, ",")
+	}
+	p, e := s.memeService.OnlineSearch(r.Context(), q.Get("q"), ids, page, limit, s.memeUser(r))
+	if e != nil {
+		s.memeError(w, e)
+		return
+	}
+	s.memeImages(r, p.Items)
+	writeJSON(w, 200, p)
 }

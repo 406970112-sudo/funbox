@@ -19,23 +19,26 @@ type Category struct {
 	Group         string `json:"group"`
 }
 type Image struct {
-	Unavailable  bool          `json:"unavailable,omitempty"`
-	ID           string        `json:"id"`
-	Title        string        `json:"title"`
-	Label        string        `json:"label"`
-	URL          string        `json:"url"`
-	ThumbnailURL string        `json:"thumbnailUrl"`
-	Width        int           `json:"width"`
-	Height       int           `json:"height"`
-	Animated     bool          `json:"animated"`
-	Bytes        int64         `json:"bytes"`
-	Format       string        `json:"format"`
-	Categories   []CategoryRef `json:"categories"`
-	Favorite     bool          `json:"favorite,omitempty"`
-	Rank         int           `json:"rank,omitempty"`
-	Score        int           `json:"score,omitempty"`
-	Src          string        `json:"-"`
-	Thumb        string        `json:"-"`
+	SourceID      string        `json:"sourceId,omitempty"`
+	SourceName    string        `json:"sourceName,omitempty"`
+	SourcePageURL string        `json:"sourcePageUrl,omitempty"`
+	Unavailable   bool          `json:"unavailable,omitempty"`
+	ID            string        `json:"id"`
+	Title         string        `json:"title"`
+	Label         string        `json:"label"`
+	URL           string        `json:"url"`
+	ThumbnailURL  string        `json:"thumbnailUrl"`
+	Width         int           `json:"width"`
+	Height        int           `json:"height"`
+	Animated      bool          `json:"animated"`
+	Bytes         int64         `json:"bytes"`
+	Format        string        `json:"format"`
+	Categories    []CategoryRef `json:"categories"`
+	Favorite      bool          `json:"favorite,omitempty"`
+	Rank          int           `json:"rank,omitempty"`
+	Score         int           `json:"score,omitempty"`
+	Src           string        `json:"-"`
+	Thumb         string        `json:"-"`
 }
 type Source struct {
 	Name     string `json:"name"`

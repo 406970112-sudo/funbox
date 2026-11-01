@@ -209,3 +209,20 @@ go run ./cmd/api
 ## 微信一键登录
 
 原生小程序使用微信身份登录，首次自动建号；老账号先密码登录再主动绑定微信。配置复用 `WECHAT_MINIPROGRAM_APP_ID` 和 `WECHAT_MINIPROGRAM_APP_SECRET`，服务端自动迁移身份绑定表，继续签发原有 JWT。接口、错误与验收步骤见 [微信登录说明](../docs/wechat-login/README.md)。
+
+联网表情搜索：`GET /api/v1/memes/online/sources` 与
+`GET /api/v1/memes/online/search?q=猫&sources=doutula,pdan&page=1&limit=36`。
+默认启用斗图啦、胖哒（现皮蛋表情包）、搜狗；抖音仅在配置 Cookie 后启用。
+趣斗图与斗图 API 当前接口不可用，来源列表明确标为禁用。
+
+服务端环境变量：`MEME_ONLINE_ENABLED=false` 关闭所有来源；
+`MEME_ONLINE_SOURCES=doutula,pdan,sougou,douyin` 选择允许的来源；
+`MEME_DOUYIN_COOKIE` 仅供服务端使用，不返回客户端或写入日志。
+每个来源请求最多 8 秒、3 MiB，最多 4 个来源同时请求；分页最多 50 页，
+每页最多 60 张。聚合分页缓存最多 16 个查询会话、3 分钟（每会话最多 50 页），失败缓存 10 秒；
+搜索接口复用 API 频率限制。媒体请求最多 25 秒、20 MiB、4000 万像素，
+只支持经解码校验的 PNG/JPEG/GIF/WebP，并复用现有落盘缓存。
+联网媒体缓存最多保留 256 个文件、512 MiB，超出时淘汰旧文件，收藏记录保留。
+在线记录单独持久存储于 `meme_online`，不受图库导入覆盖，不参与图库分类计数。
+供应商可能限流、要求验证或变更接口，状态逐个来源返回，不把请求失败当无结果。
+参见 [归属说明](NOTICE-meme-online.md)。

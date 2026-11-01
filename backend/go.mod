@@ -8,8 +8,9 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
-	golang.org/x/image v0.23.0
 	golang.org/x/crypto v0.32.0
+	golang.org/x/image v0.23.0
+	golang.org/x/net v0.34.0
 	golang.org/x/text v0.21.0
 	modernc.org/sqlite v1.34.5
 )

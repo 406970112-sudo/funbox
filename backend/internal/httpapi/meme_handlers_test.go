@@ -141,3 +141,40 @@ func TestMemeEventAndMediaRequestBudgets(t *testing.T) {
 		}
 	}
 }
+
+func TestMemeOnlineRoutesAndSearchRateLimit(t *testing.T) {
+	t.Setenv("MEME_ONLINE_ENABLED", "false")
+	st, e := meme.OpenStore(":memory:")
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer st.Close()
+	api := &Server{cfg: config.Config{Security: config.SecurityConfig{MaxRequestBodyBytes: 1 << 20}}, memeService: meme.NewService(st, t.TempDir()), rateLimiter: NewRateLimiter(time.Minute, 2)}
+	mux := http.NewServeMux()
+	registerMemeRoutes(mux, api)
+	call := func(path string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		mux.ServeHTTP(w, httptest.NewRequest("GET", path, nil))
+		return w
+	}
+	w := call("/api/v1/memes/online/sources")
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"id":"douyin"`) || strings.Contains(w.Body.String(), "Cookie=server") {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	w = call("/api/v1/memes/online/search?q=cat")
+	var p meme.OnlinePage
+	if json.Unmarshal(w.Body.Bytes(), &p) != nil || w.Code != 200 || len(p.Sources) != 6 || len(p.Items) != 0 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	for _, s := range p.Sources {
+		if s.Status != "disabled" {
+			t.Fatal(s)
+		}
+	}
+	if w = call("/api/v1/memes/online/search?q=cat&page=no"); w.Code != 400 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	if w = call("/api/v1/memes/online/search?q=cat"); w.Code != 429 {
+		t.Fatal("search not rate limited", w.Code, w.Body.String())
+	}
+}

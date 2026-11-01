@@ -52,7 +52,7 @@ func OpenStore(path string) (*Store, error) {
 	}
 	db.SetMaxOpenConns(1)
 	s := &Store{db: db, now: time.Now}
-	_, e = db.Exec(`PRAGMA busy_timeout=5000;CREATE TABLE IF NOT EXISTS meme_catalog(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);CREATE TABLE IF NOT EXISTS meme_admin(id TEXT PRIMARY KEY,hidden INTEGER NOT NULL DEFAULT 0,labels TEXT NOT NULL DEFAULT '');CREATE TABLE IF NOT EXISTS meme_favorites(user_id TEXT,image_id TEXT,created TEXT,PRIMARY KEY(user_id,image_id));CREATE TABLE IF NOT EXISTS meme_events(day TEXT,image_id TEXT,actor TEXT,type TEXT,event_id TEXT,score INTEGER,UNIQUE(day,image_id,actor,type),UNIQUE(actor,event_id));CREATE TABLE IF NOT EXISTS meme_snapshots(day TEXT PRIMARY KEY,data TEXT);CREATE TABLE IF NOT EXISTS meme_state(key TEXT PRIMARY KEY,value TEXT);`)
+	_, e = db.Exec(`PRAGMA busy_timeout=5000;CREATE TABLE IF NOT EXISTS meme_online(id TEXT PRIMARY KEY,data TEXT NOT NULL);CREATE TABLE IF NOT EXISTS meme_catalog(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL);CREATE TABLE IF NOT EXISTS meme_admin(id TEXT PRIMARY KEY,hidden INTEGER NOT NULL DEFAULT 0,labels TEXT NOT NULL DEFAULT '');CREATE TABLE IF NOT EXISTS meme_favorites(user_id TEXT,image_id TEXT,created TEXT,PRIMARY KEY(user_id,image_id));CREATE TABLE IF NOT EXISTS meme_events(day TEXT,image_id TEXT,actor TEXT,type TEXT,event_id TEXT,score INTEGER,UNIQUE(day,image_id,actor,type),UNIQUE(actor,event_id));CREATE TABLE IF NOT EXISTS meme_snapshots(day TEXT PRIMARY KEY,data TEXT);CREATE TABLE IF NOT EXISTS meme_state(key TEXT PRIMARY KEY,value TEXT);`)
 	if e != nil {
 		db.Close()
 		return nil, e
@@ -263,6 +263,13 @@ func (s *Store) List(ctx context.Context, q Query, user string) (Page, error) {
 		if err != nil {
 			return Page{}, err
 		}
+		for i, im := range all {
+			if im.Unavailable && strings.HasPrefix(im.ID, "online-") {
+				if online, e := s.getOnline(ctx, im.ID, user); e == nil {
+					all[i] = online
+				}
+			}
+		}
 		sort.Slice(all, func(i, j int) bool { return all[i].ID < all[j].ID })
 	}
 	versionHash := sha256.New()
@@ -367,6 +374,10 @@ func (s *Store) Categories(ctx context.Context, q, group string) ([]Category, So
 	return out, c.Source, e
 }
 func (s *Store) Get(ctx context.Context, id, user string) (Image, []Image, error) {
+	if strings.HasPrefix(id, "online-") {
+		im, e := s.getOnline(ctx, id, user)
+		return im, []Image{}, e
+	}
 	_, all, e := s.visible(ctx, user)
 	if e != nil {
 		return Image{}, nil, e
@@ -405,6 +416,13 @@ func (s *Store) AdminUpdate(ctx context.Context, id string, hidden bool, labels 
 		if im.Image.ID == id {
 			found = true
 		}
+	}
+	if !found && strings.HasPrefix(id, "online-") {
+		var n int
+		if e = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM meme_online WHERE id=?`, id).Scan(&n); e != nil {
+			return e
+		}
+		found = n > 0
 	}
 	if !found {
 		return ErrNotFound

@@ -33,16 +33,19 @@ func validPath(p, prefix string) bool {
 }
 
 type Service struct {
-	Store         *Store
-	Dir           string
-	base          string
-	client        *http.Client
-	syncMu        sync.Mutex
-	mirrorMu      sync.Mutex
-	mediaLocks    sync.Map
-	downloadSlots chan struct{}
-	statusMu      sync.Mutex
-	status        Status
+	online           *onlineEngine
+	onlineMediaMu    sync.Mutex
+	onlineMediaLocks [64]sync.Mutex
+	Store            *Store
+	Dir              string
+	base             string
+	client           *http.Client
+	syncMu           sync.Mutex
+	mirrorMu         sync.Mutex
+	mediaLocks       sync.Map
+	downloadSlots    chan struct{}
+	statusMu         sync.Mutex
+	status           Status
 }
 type Status struct {
 	Mirroring    bool   `json:"mirroring"`
@@ -63,7 +66,7 @@ func NewService(s *Store, dir string) *Service {
 	if strings.TrimSpace(dir) == "" {
 		dir = "./storage/memes"
 	}
-	svc := &Service{downloadSlots: make(chan struct{}, 6), Store: s, Dir: dir, base: upstream, client: &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(r *http.Request, via []*http.Request) error { return fmt.Errorf("redirect forbidden") }}}
+	svc := &Service{online: newOnlineEngine(), downloadSlots: make(chan struct{}, 6), Store: s, Dir: dir, base: upstream, client: &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(r *http.Request, via []*http.Request) error { return fmt.Errorf("redirect forbidden") }}}
 	var raw string
 	if s.db.QueryRow(`SELECT value FROM meme_state WHERE key='status'`).Scan(&raw) == nil {
 		json.Unmarshal([]byte(raw), &svc.status)
@@ -113,8 +116,14 @@ func (s *Service) Media(ctx context.Context, id, kind string) (string, string, e
 		p = im.Thumb
 	}
 	file := filepath.Join(s.Dir, id+"-"+kind)
-	lock, _ := s.mediaLocks.LoadOrStore(id+"-"+kind, &sync.Mutex{})
-	mu := lock.(*sync.Mutex)
+	var mu *sync.Mutex
+	if im.SourceID != "" {
+		h := sha256.Sum256([]byte(id + kind))
+		mu = &s.onlineMediaLocks[int(h[0])%len(s.onlineMediaLocks)]
+	} else {
+		lock, _ := s.mediaLocks.LoadOrStore(id+"-"+kind, &sync.Mutex{})
+		mu = lock.(*sync.Mutex)
+	}
 	mu.Lock()
 	defer mu.Unlock()
 	if cached, err := os.Open(file); err == nil {
@@ -133,7 +142,15 @@ func (s *Service) Media(ctx context.Context, id, kind string) (string, string, e
 	case <-ctx.Done():
 		return "", "", ctx.Err()
 	}
-	b, e := s.fetch(ctx, p, 20<<20)
+	var b []byte
+	if im.SourceID != "" {
+		if !allowedMediaHost(im.SourceID, p) {
+			return "", "", ErrInvalid
+		}
+		b, e = onlineFetch(ctx, s.online.mediaClient, p, "", 20<<20)
+	} else {
+		b, e = s.fetch(ctx, p, 20<<20)
+	}
 	if e != nil {
 		return "", "", e
 	}
@@ -151,7 +168,7 @@ func (s *Service) Media(ctx context.Context, id, kind string) (string, string, e
 	if _, _, e = image.Decode(bytes.NewReader(b)); e != nil {
 		return "", "", fmt.Errorf("corrupt image: %w", e)
 	}
-	if kind == "original" {
+	if kind == "original" && im.SourceID == "" {
 		h := sha256.Sum256(b)
 		if hex.EncodeToString(h[:]) != id {
 			return "", "", fmt.Errorf("media content hash mismatch")
@@ -174,6 +191,9 @@ func (s *Service) Media(ctx context.Context, id, kind string) (string, string, e
 	}
 	if e = os.Rename(tmp.Name(), file); e != nil {
 		return "", "", e
+	}
+	if im.SourceID != "" {
+		s.pruneOnlineMedia(filepath.Base(file), 256, 512<<20)
 	}
 	return file, mime, nil
 }

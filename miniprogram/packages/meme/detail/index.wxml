@@ -35,11 +35,11 @@
         data-id="{{item.id}}"
         data-title="{{item.title}}"
         bindtap="openCategory"
-      >{{item.title}}</text><text class="format">{{image.format}} · {{sizeLabel}} · {{image.width}}×{{image.height}}</text></view>
+      >{{item.title}}</text><text class="format">{{image.format || '图片'}}<text wx:if="{{image.bytes > 0}}"> · {{sizeLabel}}</text><text wx:if="{{image.width * image.height > 0}}"> · {{image.width}}×{{image.height}}</text></text></view>
     <view
       class="source"
       bindtap="copySource"
-    >来源 ChineseBQB ↗</view>
+    >来源 {{image.sourceName || image.sourceId || 'ChineseBQB'}}{{image.sourcePageUrl || !image.sourceId ? ' · 点击复制网址' : ''}}</view>
     <view
       wx:if="{{image.label && image.label !== image.title}}"
       class="source"
@@ -100,6 +100,6 @@
         </view>
       </view>
     </block>
-    <view class="footer"><text bindtap="copySource">查看来源</text><text bindtap="report">内容反馈 / 申请下架</text></view>
+    <view class="footer"><text wx:if="{{image.sourcePageUrl || !image.sourceId}}" bindtap="copySource">复制来源网址</text><text bindtap="report">内容反馈 / 申请下架</text></view>
   </block>
 </view>

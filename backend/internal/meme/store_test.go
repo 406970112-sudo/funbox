@@ -64,9 +64,9 @@ func TestEventsFavoritesRankingAndHistory(t *testing.T) {
 	s := newTestStore(t)
 	ctx := context.Background()
 	c, a := fixture(10)
-	s.Import(ctx, c, a)
 	now := time.Date(2026, 10, 30, 16, 0, 0, 0, time.UTC)
 	s.now = func() time.Time { return now }
+	s.Import(ctx, c, a)
 	p, _ := s.List(ctx, Query{}, "")
 	id := p.Items[0].ID
 	ok, e := s.Event(ctx, id, "view", "evt1", "anon")

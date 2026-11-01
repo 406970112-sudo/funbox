@@ -24,6 +24,32 @@ test('media from API responses uses the configured HTTPS gateway even with an in
   assert.equal(api().mediaUrl('file:///api/v1/meme-media/' + id + '/original'), '');
 });
 
+test('online media behind an internal HTTP origin uses the HTTPS gateway and rejects malformed IDs', () => {
+  const id = 'online-000b8ab7c92d640065d7285cd68055baa3aa3635aee189020988c77d9e38c0c4';
+  const internal = 'http://39.107.136.182/api/v1/meme-media/';
+  const gateway = 'https://www.xwhub.cn/api/v1/meme-media/';
+  const normalized = api().normalizeImage({
+    id,
+    url: internal + id + '/original',
+    thumbnailUrl: internal + id + '/thumbnail'
+  });
+  assert.equal(normalized.url, gateway + id + '/original');
+  assert.equal(normalized.thumbnailUrl, gateway + id + '/thumbnail');
+  assert.equal(api().mediaUrl(normalized.url), gateway + id + '/original');
+  for (const malicious of [
+    'online-' + 'a'.repeat(63),
+    'online-' + 'a'.repeat(65),
+    'online-' + 'g'.repeat(64),
+    'online-online-' + 'a'.repeat(64),
+    id + '/..',
+    id + '%2f..'
+  ]) {
+    assert.equal(api().mediaUrl(internal + malicious + '/original'), '', malicious);
+  }
+  assert.equal(api().mediaUrl(internal + id + '/original?url=https://evil.example/image.jpg'), '');
+  assert.equal(api().mediaUrl('https://evil.example/images/' + id + '/thumbnail'), '');
+});
+
 function env() {
   const values = new Map();
   let token = '';
@@ -247,14 +273,15 @@ test('home entry navigates to meme subpackage while score routes stay functional
   assert.deepEqual(routes, ['/packages/meme/library/index', '/pages/score/mahjong/index', '/pages/score/poker/index', '/pages/score/general/index']);
 });
 
-function loadPage(file, client, token = '') {
+function loadPage(file, client, token = '', platformOverrides = {}) {
   let definition;
   const platform = {
     showShareMenu() {},
     navigateTo() {},
     pageScrollTo() {},
     showToast() {},
-    previewImage() {}
+    previewImage() {},
+    ...platformOverrides
   };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../packages/meme/' + file + '/index.js'), 'utf8'), {
     require: name => name.includes('auth') ? {
@@ -791,4 +818,149 @@ test('a favorite for another image added during an active merge is drained befor
   await Promise.all([x, y]);
   assert.deepEqual([...cloud].sort(), ['x', 'y']);
   assert.equal(c.pendingFavorite('y'), undefined);
+});
+
+test('online client emits explicit multi-source search contract without changing gateway media handling', async () => {
+  const calls = [];
+  const client = api().createMemeClient({ request: async input => { calls.push(input); return {items: []}; } });
+  assert.equal(typeof client.onlineSources, 'function');
+  await client.onlineSources();
+  await client.onlineSearch({q: '猫', sources: ['doutula', 'pdan'], page: 2});
+  assert.equal(calls[0].path, '/memes/online/sources');
+  assert.equal(calls[1].path, '/memes/online/search?q=%E7%8C%AB&sources=doutula%2Cpdan&page=2&limit=36');
+});
+
+function onlineClient(overrides = {}) {
+  return {
+    searches: () => [], rememberSearch() {}, localFavorites: () => [],
+    list: async () => ({items: [], total: 0}),
+    onlineSources: async () => ({items: [
+      {id: 'doutula', title: '斗图啦', enabled: true},
+      {id: 'pdan', title: '皮蛋', enabled: true},
+      {id: 'douyin', title: '抖音', enabled: false, reason: '未配置 Cookie'}
+    ], attribution: {name: 'meme', url: 'https://github.com/o98k-ok/meme'}}),
+    onlineSearch: async () => ({items: [], page: 1, hasMore: false, sources: [], cached: false}),
+    ...overrides
+  };
+}
+const eventMode = mode => ({currentTarget: {dataset: {mode}}});
+
+test('online mode does not query blank words or disabled sources and submits only on search', async () => {
+  const calls = [];
+  const page = loadPage('library', onlineClient({onlineSearch: async input => {
+    calls.push(input); return {items: [{...image('abc'), sourceName: '斗图啦'}], page: input.page, hasMore: input.page === 1,
+      sources: [{id: 'doutula', title: '斗图啦', status: 'ok'}, {id: 'pdan', title: '皮蛋', status: 'error', message: '暂不可用'}], cached: false};
+  }}));
+  await page.onLoad({});
+  assert.equal(typeof page.changeMode, 'function');
+  await page.changeMode(eventMode('online'));
+  await page.search();
+  assert.equal(calls.length, 0);
+  page.toggleOnlineSource({currentTarget: {dataset: {id: 'douyin'}}});
+  assert.deepEqual(Array.from(page.data.onlineSelected), ['doutula', 'pdan']);
+  page.onInput({detail: {value: ' 猫 '}});
+  assert.equal(calls.length, 0);
+  await page.search();
+  assert.equal(calls[0].q, '猫');
+  assert.equal(calls[0].page, 1);
+  assert.equal(calls[0].limit, 36);
+  assert.equal(page.data.items[0].sourceName, '斗图啦');
+  assert.equal(page.data.onlineStatuses[1].status, 'error');
+  assert.equal(page.data.onlineHasMore, true);
+  page.onInput({detail: {value: '未提交'}});
+  await page.next();
+  assert.equal(calls[1].q, '猫');
+  assert.equal(calls[1].page, 2);
+  assert.equal(page.data.onlineHasMore, false);
+  await page.next();
+  assert.equal(calls.length, 2);
+  await page.previous();
+  assert.equal(calls[2].page, 1);
+  await page.changeMode(eventMode('library'));
+  assert.equal(page.data.tab, 'all');
+  assert.equal(page.data.q, '');
+});
+
+test('online failures use safe retry and stale requests cannot overwrite gallery after switching', async () => {
+  let resolve;
+  let fail = true;
+  const page = loadPage('library', onlineClient({onlineSearch: async () => {
+    if (fail) throw new Error('Cookie=secret upstream body');
+    return new Promise(r => {resolve = r;});
+  }}));
+  await page.onLoad({});
+  await page.changeMode(eventMode('online'));
+  page.onInput({detail: {value: '猫'}});
+  await page.search();
+  assert.ok(page.data.error);
+  assert.equal(page.data.error.includes('secret'), false);
+  fail = false;
+  const pending = page.retry();
+  await page.changeMode(eventMode('library'));
+  resolve({items: [image('stale')], page: 1, hasMore: true, sources: [], cached: false});
+  await pending;
+  assert.equal(page.data.items.length, 0);
+  assert.equal(page.data.mode, 'library');
+});
+
+
+test('online detail copies actual provider page and keeps original library attribution fallback', () => {
+  const urls = [];
+  const page = loadPage('detail', {}, '', {setClipboardData: o => urls.push(o.data)});
+  page.data.image = {...image('a'), sourceId: 'doutula', sourceName: '斗图啦', sourcePageUrl: 'https://www.doutula.com/photo/123'};
+  page.copySource();
+  assert.equal(urls[0], 'https://www.doutula.com/photo/123');
+  page.data.image.sourcePageUrl = '';
+  page.copySource();
+  assert.equal(urls.length, 1);
+  page.data.image = image('library');
+  page.copySource();
+  assert.equal(urls[1], 'https://zhaoolee.com/ChineseBQB/');
+});
+
+test('unavailable source list retries independently without running a keyword search', async () => {
+  let failed = true;
+  let searches = 0;
+  const client = onlineClient({onlineSources: async () => {
+    if (failed) throw new Error('private upstream detail');
+    return {items: [{id: 'doutula', title: '斗图啦', enabled: true}], attribution: null};
+  }, onlineSearch: async () => {searches++;}});
+  const page = loadPage('library', client);
+  await page.onLoad({});
+  await page.changeMode(eventMode('online'));
+  assert.ok(page.data.sourcesError);
+  assert.equal(page.data.sourcesError.includes('private'), false);
+  failed = false;
+  await page.loadOnlineSources();
+  assert.equal(page.data.sourcesError, '');
+  assert.deepEqual(Array.from(page.data.onlineSelected), ['doutula']);
+  assert.equal(searches, 0);
+});
+
+test('shared online entry keeps the keyword draft and waits for explicit submit', async () => {
+  let galleryLoads = 0;
+  let onlineLoads = 0;
+  const page = loadPage('library', onlineClient({
+    list: async () => {galleryLoads++; return {items: [], total: 0};},
+    onlineSearch: async () => {onlineLoads++; return {items: [], page: 1, hasMore: false, sources: [], cached: false};}
+  }));
+  await page.onLoad({mode: 'online', q: '猫'});
+  assert.equal(page.data.mode, 'online');
+  assert.equal(page.data.q, '猫');
+  assert.equal(galleryLoads, 0);
+  assert.equal(onlineLoads, 0);
+  assert.match(page.onShareAppMessage().path, /mode=online/);
+});
+
+test('submitting while sources load does not strand the source selector', async () => {
+  let complete;
+  const page = loadPage('library', onlineClient({onlineSources: () => new Promise(r => {complete = r;})}));
+  await page.onLoad({});
+  const pending = page.changeMode(eventMode('online'));
+  page.onInput({detail: {value: '猫'}});
+  await page.search();
+  complete({items: [{id: 'doutula', title: '斗图啦', enabled: true}], attribution: null});
+  await pending;
+  assert.equal(page.data.sourcesLoading, false);
+  assert.deepEqual(Array.from(page.data.onlineSelected), ['doutula']);
 });

@@ -204,9 +204,10 @@ Page({
     });
   },
   copySource() {
-    wx.setClipboardData({
-      data: 'https://zhaoolee.com/ChineseBQB/'
-    });
+    const image = this.data.image;
+    const online = image && (image.sourceId || image.sourceName);
+    const url = online ? image.sourcePageUrl : 'https://zhaoolee.com/ChineseBQB/';
+    if (url && /^https:\/\//i.test(url)) wx.setClipboardData({data: url});
   },
   report() {
     wx.navigateTo({
