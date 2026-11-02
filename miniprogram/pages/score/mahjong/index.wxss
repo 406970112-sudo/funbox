@@ -654,3 +654,35 @@
   }
 
 }
+
+/* Join entry: one scan on arrival, with no perpetual idle animation. */
+.join-stack { animation: join-reveal .3s ease-out both; }
+.mode-tab { transition: color .16s, background .16s, box-shadow .16s; }
+.scan-phone { animation: scan-phone-arrive .4s ease-out both; }
+.scan-beam { position: absolute; top: 66rpx; left: 18rpx; width: 90rpx; height: 4rpx; background: #638aff; border-radius: 4rpx; box-shadow: 0 -12rpx 18rpx 8rpx rgba(99,138,255,.16); animation: scan-sweep .9s .2s ease-in-out both; }
+.primary-button,.manual-entry { transition: transform .12s ease-out, opacity .12s ease-out; }
+.motion-pressed { transform: scale(.975); opacity: .88; }
+.manual-mask { animation: join-mask-in .2s ease-out both; }
+.manual-sheet { animation: join-sheet-rise .28s cubic-bezier(.2,.7,.25,1) both; transition: bottom .2s ease-out; }
+.field-input { transition: border-color .16s, box-shadow .16s, background .16s; }
+.join-field-focused { border-color: #2d5bff; box-shadow: 0 0 0 5rpx #edf3ff; background: #fcfdff; }
+.join-field-error { border-color: #df826e; background: #fffaf8; }
+.join-field-error-text { display: block; margin-top: 10rpx; font-size: 22rpx; color: #c95744; }
+.join-success-check { display: inline-flex; align-items: center; justify-content: center; width: 36rpx; height: 36rpx; margin-right: 14rpx; border: 2rpx solid #fff; border-radius: 50%; animation: join-reveal .18s ease-out both; }
+@keyframes join-reveal { from { opacity: 0; transform: translateY(16rpx); } to { opacity: 1; transform: none; } }
+@keyframes scan-phone-arrive { from { opacity: 0; transform: translateY(12rpx) rotate(-10deg); } to { opacity: 1; transform: rotate(-5deg); } }
+@keyframes scan-sweep { 0% { opacity: 0; transform: translateY(-10rpx); } 25%,70% { opacity: 1; } 100% { opacity: 0; transform: translateY(78rpx); } }
+@keyframes join-tile-arrive { from { opacity: 0; margin-top: 18rpx; } to { opacity: 1; margin-top: 0; } }
+@keyframes join-mask-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes join-sheet-rise { from { transform: translateY(100%); } to { transform: none; } }
+.motion-reduced .hero,.motion-reduced .join-stack,.motion-reduced .scan-phone,.motion-reduced .scan-mahjong-art,.motion-reduced.manual-mask,.motion-reduced .manual-sheet,.motion-reduced .join-success-check { animation: none; }
+.motion-reduced .scan-beam { display: none; }
+.motion-reduced .manual-sheet,.motion-reduced .primary-button,.motion-reduced .manual-entry { transition: none; }
+.motion-reduced .motion-pressed { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .mahjong-page view,.mahjong-page button,.manual-mask,.manual-mask view { animation: none !important; transition: none !important; }
+  .scan-beam { display: none; }
+}
+
+/* Reuse the original raster art so porcelain, glyphs and lighting stay identical. */
+.scan-mahjong-art { position: absolute; top: 104rpx; left: 138rpx; width: 174rpx; height: 174rpx; animation: join-tile-arrive .45s .1s ease-out both; }

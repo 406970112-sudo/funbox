@@ -18,6 +18,10 @@ module.exports = {
     joinPassword: "",
     nickname: "",
     joining: false,
+    joinSucceeded: false,
+    joinErrorField: "",
+    focusedJoinField: "",
+    reducedMotion: false,
     manualJoinOpen: false,
     manualKeyboardHeight: 0,
     scanning: false,
@@ -25,12 +29,31 @@ module.exports = {
   },
 
   onLoad() {
+    this.entryVisible = true;
     this.syncAuth();
   },
 
   onShow() {
+    this.entryVisible = true;
+    this.setData({ joining: !!this.joinRequestPending, joinSucceeded: false, reducedMotion: !!wx.getStorageSync("funboxMahjongReducedMotionV1") });
     this.syncAuth();
   },
+
+  onHide() {
+    this.entryVisible = false;
+    if (this.joinSuccessTimer) clearTimeout(this.joinSuccessTimer);
+    this.joinSuccessTimer = null;
+    if (this.finishJoinSuccess) this.finishJoinSuccess();
+    this.finishJoinSuccess = null;
+  },
+
+  onUnload() { this.onHide(); },
+
+  focusJoinField(event) {
+    this.setData({ focusedJoinField: event.currentTarget.dataset.field });
+  },
+
+  blurJoinField() { this.setData({ focusedJoinField: "" }); },
 
   syncAuth() {
     const user = getStoredUser();
@@ -60,12 +83,12 @@ module.exports = {
 
   openManualJoin() {
     if (this.data.scanning) return;
-    this.setData({ manualJoinOpen: true, manualKeyboardHeight: 0, errorMessage: "" });
+    this.setData({ manualJoinOpen: true, manualKeyboardHeight: 0, joinErrorField: "", errorMessage: "" });
   },
 
   closeManualJoin() {
     if (this.data.joining) return;
-    this.setData({ manualJoinOpen: false, manualKeyboardHeight: 0, errorMessage: "" });
+    this.setData({ manualJoinOpen: false, manualKeyboardHeight: 0, joinErrorField: "", errorMessage: "" });
     wx.hideKeyboard();
   },
 
@@ -84,7 +107,7 @@ module.exports = {
     if (this.data.creating) return;
     const field = event.currentTarget.dataset.field;
     const value = event.detail.value;
-    this.setData({ [field]: value, errorMessage: "" });
+    this.setData({ [field]: value, errorMessage: "", joinErrorField: "" });
   },
 
   beginInlineEdit(event) {
@@ -173,19 +196,32 @@ module.exports = {
     if (this.data.joining) return;
     const code = this.data.roomCode.trim();
     const displayName = this.data.nickname.trim();
-    if (code.length !== 6 || !/^\d{6}$/.test(code)) return this.setData({ errorMessage: "请输入 6 位房间码。" });
-    if (!/^\d{4,6}$/.test(this.data.joinPassword)) return this.setData({ errorMessage: "请输入 4～6 位房间密码。" });
-    if (!displayName) return this.setData({ errorMessage: this.data.gameType === "generic" ? "请输入房间内显示的昵称。" : "请输入牌局内显示的昵称。" });
-    this.setData({ joining: true, errorMessage: "" });
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) return this.setData({ joinErrorField: "roomCode", errorMessage: "请输入 6 位房间码。" });
+    if (!/^\d{4,6}$/.test(this.data.joinPassword)) return this.setData({ joinErrorField: "joinPassword", errorMessage: "请输入 4～6 位房间密码。" });
+    if (!displayName) return this.setData({ joinErrorField: "nickname", errorMessage: this.data.gameType === "generic" ? "请输入房间内显示的昵称。" : "请输入牌局内显示的昵称。" });
+    this.joinRequestPending = true;
+    this.setData({ joining: true, joinSucceeded: false, joinErrorField: "", errorMessage: "" });
     try {
       const result = await joinScoreRoom({ code, password: this.data.joinPassword, displayName });
+      saveScoreSession({ roomId: result.room.id, guestToken: result.guestToken, participantId: result.actor.participantId });
+      if (this.entryVisible === false) return;
+      this.setData({ joinSucceeded: true });
+      if (this.data.gameType !== "generic" && !this.data.reducedMotion) {
+        await new Promise(resolve => {
+          this.finishJoinSuccess = resolve;
+          this.joinSuccessTimer = setTimeout(() => { this.joinSuccessTimer = null; this.finishJoinSuccess = null; resolve(); }, 180);
+        });
+      }
+      if (this.entryVisible === false) return;
       this.setData({ manualJoinOpen: false, manualKeyboardHeight: 0 });
       wx.hideKeyboard();
       this.enterJoinedRoom(result);
     } catch (error) {
-      this.setData({ errorMessage: getScoreErrorMessage(error) });
+      const joinErrorField = /password/.test(error.code || "") ? "joinPassword" : /not_found|code/.test(error.code || "") ? "roomCode" : "";
+      if (this.entryVisible !== false) this.setData({ errorMessage: getScoreErrorMessage(error), joinErrorField, joinSucceeded: false });
     } finally {
-      this.setData({ joining: false });
+      this.joinRequestPending = false;
+      if (this.entryVisible !== false) this.setData({ joining: false });
     }
   },
 
@@ -195,7 +231,7 @@ module.exports = {
       guestToken: result.guestToken,
       participantId: result.actor.participantId,
     });
-    wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(result.room.id)}` });
+    wx.navigateTo({ url: `/pages/score/room/index?roomId=${encodeURIComponent(result.room.id)}${this.data.gameType === "generic" ? "" : "&joined=1"}` });
   },
 
 };

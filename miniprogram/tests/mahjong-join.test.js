@@ -76,7 +76,7 @@ test("manual submission keeps the sheet open on failure and can retry with edite
   assert.deepEqual(joinRequest, { code: "123456", password: "666666", displayName: "小林" });
   assert.equal(storage.funboxScoreSessionV1.guestToken, "guest-1");
   assert.equal(page.data.manualJoinOpen, false);
-  assert.equal(navigations.at(-1), "/pages/score/room/index?roomId=room-1");
+  assert.equal(navigations.at(-1), "/pages/score/room/index?roomId=room-1&joined=1");
 });
 
 test("pending join cannot be dismissed or submitted twice", async () => {
@@ -137,4 +137,42 @@ test("scanner cancellation is quiet but unreadable invitations and camera failur
   scanOptions.complete();
   assert.ok(page.data.errorMessage);
   assert.equal(page.data.manualJoinOpen, false);
+});
+
+test("manual join shows success only after the request resolves and cancels navigation when hidden", async () => {
+  let finish;
+  submitJoin = () => new Promise(resolve => { finish = resolve; });
+  const page = createPage({ manualJoinOpen: true, roomCode: "123456", joinPassword: "2468", nickname: "小林" });
+  const pending = page.joinByCode();
+  assert.equal(page.data.joinSucceeded, false);
+  finish({ room: { id: "room-hidden" }, guestToken: "guest-hidden", actor: { participantId: "player-hidden" } });
+  await Promise.resolve();
+  assert.equal(page.data.joinSucceeded, true);
+  page.onHide();
+  await pending;
+  assert.notEqual(navigations.at(-1), "/pages/score/room/index?roomId=room-hidden&joined=1");
+  assert.equal(storage.funboxScoreSessionV1.roomId, "room-hidden");
+});
+test("manual credential validation marks the corresponding field and keeps all inputs", async () => {
+  const page = createPage({ manualJoinOpen: true, roomCode: "123", joinPassword: "2468", nickname: "小林" });
+  await page.joinByCode();
+  assert.equal(page.data.joinErrorField, "roomCode");
+  assert.equal(page.data.nickname, "小林");
+  field(page, "roomCode", "123456");
+  assert.equal(page.data.joinErrorField, "");
+});
+
+test('returning to the entry while a join is in flight cannot submit twice', async () => {
+  let finish;
+  let requests = 0;
+  submitJoin = () => { requests += 1; return new Promise(resolve => { finish = resolve; }); };
+  const page = createPage({ manualJoinOpen: true, roomCode: '123456', joinPassword: '2468', nickname: '小林' });
+  const pending = page.joinByCode();
+  page.onHide();
+  page.onShow();
+  assert.equal(page.data.joining, true);
+  await page.joinByCode();
+  assert.equal(requests, 1);
+  finish({ room: { id: 'room-return' }, guestToken: 'token', actor: { participantId: 'p' } });
+  await pending;
 });

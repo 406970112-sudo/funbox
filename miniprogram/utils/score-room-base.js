@@ -24,6 +24,7 @@ const { buildInviteContent } = require("./invite");
 const { formatCNY, formatScore, parsePoints, parseYuanToCents } = require("./score-format");
 const { connectScoreRealtime } = require("./score-realtime");
 const { drawScoreQRCode } = require("./score-qr");
+const { motionPage, motionData } = require("./mahjong-motion");
 
 // Legacy waiting-room invites remain unchanged. V2 poker can also invite
 // between hands, after the current frozen hand has finished and cleared.
@@ -97,7 +98,9 @@ function removeQrImageFile(filePath) {
 }
 
 module.exports = {
+  ...motionPage,
   data: {
+    ...motionData,
     isGeneral: false,
     loading: true,
     busy: false,
@@ -143,6 +146,7 @@ module.exports = {
     settlementRateError: "",
     settlementRows: [],
     settlementTransfers: [],
+    hasSettlementTransfers: false,
   },
 
   onLoad(options) {
@@ -162,6 +166,7 @@ module.exports = {
       this.setData({ loading: false, errorMessage: "缺少牌局信息。" });
       return;
     }
+    this.justJoined = options.joined === "1";
     const roomId = decodeURIComponent(options.roomId);
     const credential = credentialForRoom(roomId, this.loadAccessToken);
     if (!credential) {
@@ -186,6 +191,8 @@ module.exports = {
   onHide() {
     this.pageVisible = false;
     this.stopRealtime();
+    this.motionResuming = true;
+    this.clearMahjongMotion();
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.pollTimer = null;
   },
@@ -281,6 +288,7 @@ module.exports = {
         joinNeeded: false,
         previewRoom: null,
       });
+      this.justJoined = true;
       await this.applyRoom(result.room);
     } catch (error) {
       this.setData({ errorMessage: getScoreErrorMessage(error) });
@@ -332,6 +340,7 @@ module.exports = {
     if (this.data.room && this.data.room.id === room.id && Number(room.version) < Number(this.data.room.version)) {
       return false;
     }
+    const previousRoom = this.data.room;
     this.setRoomTheme(room);
     const isGeneral = room.gameType === "generic";
     const participantMap = {};
@@ -434,12 +443,18 @@ module.exports = {
       giftHistory,
       settlementRows,
       settlementTransfers,
+      hasSettlementTransfers: settlementTransfers.length > 0,
       giftTotal,
       canSubmitGifts: giftTotal > 0,
       realtimeStatus: this.data.realtimeStatus,
       qrExpanded: canInviteRoom(room) ? this.data.qrExpanded : false,
       settlementOpen: room.status === "active" ? this.data.settlementOpen : false,
     });
+    this.updateMahjongMotion(previousRoom, room, participants);
+    if (this.justJoined && room.gameType === "mahjong") {
+      this.justJoined = false;
+      this.showMahjongNotice("加入成功，已为你入座", { motionScene: this.data.reducedMotion ? "" : "joined" }, 650);
+    }
     if (isHost && room.status === "active" && this.data.settlementOpen) {
       this.updateSettlementPreview(this.data.settlementRateInput);
     }
@@ -461,6 +476,10 @@ module.exports = {
   },
 
   setRoomTheme(room) {
+    if (room.gameType === "mahjong" && !this.motionInitialized) {
+      this.motionInitialized = true;
+      this.initMahjongMotion();
+    }
     const isGeneral = room.gameType === "generic";
     this.setData({ isGeneral, settlementRateText: formatCNY(room.centsPerPoint) });
     if (wx.setNavigationBarTitle && room.gameType !== "zhajinhua") {
@@ -581,7 +600,7 @@ module.exports = {
   },
 
   copyRoomCode() {
-    wx.setClipboardData({ data: this.data.room.code });
+    wx.setClipboardData({ data: this.data.room.code, success: () => this.showMahjongNotice("房间码已复制", { roomCodeCopied: true }, 1000) });
   },
 
   async startRoom() {
@@ -626,6 +645,7 @@ module.exports = {
       this.setData({ recipients: this.data.recipients.map((item) => ({ ...item, pointsInput: "" })) });
       await this.applyRoom(room);
       this.setData({ busy: false, feedback: "给分已入账。" });
+      this.showMahjongNotice("给分已入账", { giftConfirmed: true });
     } catch (error) {
       this.handleMutationError(error);
     }
@@ -710,6 +730,10 @@ module.exports = {
         this.refreshRoom();
       },
       onStatus: (status, reason) => {
+        if (this.pageVisible === false || this.pageActive === false) return;
+        const reconnected = status === "online" && this.hadRealtimeConnection && this.data.realtimeStatus !== "online";
+        if (status === "online") this.hadRealtimeConnection = true;
+        if (reconnected) this.showMahjongNotice("已重连，正在同步最新分数");
         this.setData({
           realtimeStatus: status,
           realtimeError: status === "online" ? "" : (REALTIME_ERRORS[reason] || this.data.realtimeError),

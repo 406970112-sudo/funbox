@@ -1,4 +1,4 @@
-<view class="mahjong-page {{mode === 'join' ? 'mahjong-join-page' : ''}}">
+<view class="mahjong-page {{reducedMotion ? 'motion-reduced' : ''}} {{mode === 'join' ? 'mahjong-join-page' : ''}}">
   <view class="hero">
     <view class="hero-top">
       <text class="entry-brand">FunBox / 棋牌记分</text>
@@ -65,15 +65,15 @@
       <text class="scan-recommend">推荐方式</text>
       <view class="scan-illustration" aria-hidden="true">
         <view class="scan-halo"></view><view class="scan-ray ray-left"></view><view class="scan-ray ray-right"></view>
-        <view class="scan-phone"><view class="phone-speaker"></view><image class="phone-scan" src="/assets/icons/scan.png" mode="aspectFit" /><view class="phone-home"></view></view>
+        <view class="scan-phone"><view class="phone-speaker"></view><image class="phone-scan" src="/assets/icons/scan.png" mode="aspectFit" /><view class="scan-beam"></view><view class="phone-home"></view></view><view class="scan-mahjong-art art art-mahjong"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" /></view>
       </view>
       <text class="scan-title">扫一扫，加入好友牌局</text>
       <text class="scan-desc">扫描房主出示的房间邀请码</text>
-      <button class="primary-button scan-button" loading="{{scanning}}" disabled="{{scanning}}" bindtap="scanToJoin"><image class="button-scan-icon" src="/assets/icons/scan-white.png" mode="aspectFit" aria-hidden="true" /><text>扫码加入</text></button>
+      <button class="primary-button scan-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{scanning}}" disabled="{{scanning}}" bindtap="scanToJoin"><image class="button-scan-icon" src="/assets/icons/scan-white.png" mode="aspectFit" aria-hidden="true" /><text>扫码加入</text></button>
       <text class="scan-help">扫码后确认昵称即可入桌</text>
     </view>
     <view wx:if="{{errorMessage && !manualJoinOpen}}" class="error-banner scan-error" role="alert">{{errorMessage}}</view>
-    <button class="manual-entry" bindtap="openManualJoin"><image class="keyboard-icon" src="/assets/icons/keyboard.png" mode="aspectFit" aria-hidden="true" /><text>输入房间码加入</text><text class="manual-arrow" aria-hidden="true">›</text></button>
+    <button class="manual-entry" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" bindtap="openManualJoin"><image class="keyboard-icon" src="/assets/icons/keyboard.png" mode="aspectFit" aria-hidden="true" /><text>输入房间码加入</text><text class="manual-arrow" aria-hidden="true">›</text></button>
     <view class="join-bottom-note">
       <text class="invite-tip">收到好友邀请？点击邀请链接即可加入</text>
       <text class="join-footer">游客也可加入，无需注册</text>
@@ -82,18 +82,18 @@
   <text wx:if="{{mode === 'create'}}" class="create-footer">创建后邀请好友，即可开始记分</text>
 </view>
 
-<view wx:if="{{manualJoinOpen}}" class="manual-mask" bindtap="closeManualJoin" catchtouchmove="noop">
+<view wx:if="{{manualJoinOpen}}" class="manual-mask {{reducedMotion ? 'motion-reduced' : ''}}" bindtap="closeManualJoin" catchtouchmove="noop">
   <view class="manual-sheet" style="bottom: {{manualKeyboardHeight}}px;" catchtap="noop" role="dialog" aria-label="输入房间码加入">
     <view class="sheet-handle" aria-hidden="true"></view>
     <view class="sheet-heading"><text class="sheet-title">输入房间码加入</text><button class="sheet-close" disabled="{{joining}}" bindtap="closeManualJoin" aria-label="关闭">×</button></view>
     <text class="sheet-desc">没有邀请码时，也可以手动加入</text>
     <scroll-view class="manual-fields" scroll-y enhanced show-scrollbar="{{false}}" style="max-height: calc(100vh - {{manualKeyboardHeight}}px - 230rpx);">
       <view class="sheet-content">
-        <view class="field"><view class="field-label-row"><text class="field-label">房间码</text><text class="field-hint">6 位数字</text></view><input class="field-input" data-field="roomCode" maxlength="6" type="number" placeholder="输入 6 位房间码" value="{{roomCode}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /></view>
-        <view class="field"><text class="field-label">房间密码</text><input class="field-input" data-field="joinPassword" maxlength="6" type="number" placeholder="输入 4～6 位数字密码" value="{{joinPassword}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /></view>
-        <view class="field"><view class="field-label-row"><text class="field-label">你的昵称</text><text class="field-hint">仅在本局内显示</text></view><input class="field-input" data-field="nickname" maxlength="48" placeholder="牌局内显示的名字" value="{{nickname}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /></view>
-        <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
-        <button class="primary-button" loading="{{joining}}" disabled="{{joining}}" bindtap="joinByCode">加入牌局</button>
+        <view class="field"><view class="field-label-row"><text class="field-label">房间码</text><text class="field-hint">6 位数字</text></view><input class="field-input {{focusedJoinField === 'roomCode' ? 'join-field-focused' : ''}} {{joinErrorField === 'roomCode' ? 'join-field-error' : ''}}" bindfocus="focusJoinField" bindblur="blurJoinField" data-field="roomCode" maxlength="6" type="number" placeholder="输入 6 位房间码" value="{{roomCode}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /><text wx:if="{{joinErrorField === 'roomCode'}}" class="join-field-error-text">{{errorMessage}}</text></view>
+        <view class="field"><text class="field-label">房间密码</text><input class="field-input {{focusedJoinField === 'joinPassword' ? 'join-field-focused' : ''}} {{joinErrorField === 'joinPassword' ? 'join-field-error' : ''}}" bindfocus="focusJoinField" bindblur="blurJoinField" data-field="joinPassword" maxlength="6" type="number" password="{{true}}" placeholder="输入 4～6 位数字密码" value="{{joinPassword}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /><text wx:if="{{joinErrorField === 'joinPassword'}}" class="join-field-error-text">{{errorMessage}}</text></view>
+        <view class="field"><view class="field-label-row"><text class="field-label">你的昵称</text><text class="field-hint">仅在本局内显示</text></view><input class="field-input {{focusedJoinField === 'nickname' ? 'join-field-focused' : ''}} {{joinErrorField === 'nickname' ? 'join-field-error' : ''}}" bindfocus="focusJoinField" bindblur="blurJoinField" data-field="nickname" maxlength="48" placeholder="牌局内显示的名字" value="{{nickname}}" bindinput="handleField" adjust-position="{{false}}" bindkeyboardheightchange="handleManualKeyboard" disabled="{{joining}}" /><text wx:if="{{joinErrorField === 'nickname'}}" class="join-field-error-text">{{errorMessage}}</text></view>
+        <view wx:if="{{errorMessage && !joinErrorField}}" class="error-banner" role="alert">{{errorMessage}}</view>
+        <button class="primary-button" hover-class="motion-pressed" loading="{{joining && !joinSucceeded}}" disabled="{{joining}}" bindtap="joinByCode"><text wx:if="{{joinSucceeded}}" class="join-success-check">✓</text>{{joinSucceeded ? '加入成功' : joining ? '正在加入…' : '加入牌局'}}</button>
       </view>
     </scroll-view>
   </view>
