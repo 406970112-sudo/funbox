@@ -1126,3 +1126,71 @@ test('shared media runner confirms large originals and reports cancellation and 
   assert.match(page.data.actionError, /已取消/);
   assert.equal(page.data.permissionDenied, false);
 });
+
+test('account switch resets private appended pager before any resume, bottom reach or delayed merge', async () => {
+  let token = 'A', finishA, finishB, finishMerge;
+  const calls = [];
+  const page = loadPage('library', onlineClient({
+    favorites: input => {
+      calls.push({token, cursor: input.cursor});
+      if (token === 'A' && !input.cursor) return Promise.resolve({items: [image('private-A')], nextCursor: 'A-cursor', total: 2});
+      if (token === 'A') return new Promise(resolve => {finishA = resolve;});
+      return new Promise(resolve => {finishB = resolve;});
+    },
+    mergeFavorites: () => new Promise(resolve => {finishMerge = resolve;})
+  }), () => token);
+  await page.onLoad({tab: 'favorites'});
+  const pendingA = page.next();
+  assert.equal(calls[1].cursor, 'A-cursor');
+  page.onHide(); token = 'B'; page.onShow();
+  assert.equal(page.data.items.length, 0);
+  assert.equal(page.pager.state.items.length, 0);
+  assert.equal(page.data.nextCursor, '');
+  assert.equal(page.data.page, 1);
+  assert.equal(page._resumeRequest, false);
+  assert.deepEqual(calls[2], {token: 'B', cursor: ''});
+  await page.onReachBottom();
+  assert.equal(calls.length, 3);
+  finishB({items: [image('B')], nextCursor: 'B-cursor', total: 2});
+  await Promise.resolve(); await Promise.resolve();
+  assert.deepEqual(Array.from(page.data.items, x => x.id), ['B']);
+  finishA({items: [image('late-private-A')], nextCursor: 'A-next'}); await pendingA;
+  assert.deepEqual(Array.from(page.data.items, x => x.id), ['B']);
+  assert.equal(page.data.nextCursor, 'B-cursor');
+  finishMerge({failed: 0}); await Promise.resolve(); await Promise.resolve();
+  assert.equal(calls.length, 3); // delayed sync must not reset/re-fetch B browsing
+  assert.deepEqual(Array.from(page.data.items, x => x.id), ['B']);
+});
+
+test('same-account local favorites reconcile removals and additions while keeping appended depth', async () => {
+  let items = Array.from({length: 40}, (_, i) => image(String(i)));
+  const page = loadPage('library', onlineClient({localFavorites: () => items}));
+  await page.onLoad({tab: 'favorites'}); await page.next();
+  assert.equal(page.data.items.length, 40);
+  page.onHide(); items = [image('new'), ...items.slice(0, -1)]; page.onShow();
+  assert.equal(page.data.items.length, 40);
+  assert.equal(page.data.page, 2);
+  assert.equal(page.data.items[0].id, 'new');
+  assert.equal(page.data.items.some(x => x.id === '39'), false);
+});
+
+test('same-account recent browsing reads newly remembered detail when returning', async () => {
+  let recent = [image('old')];
+  const page = loadPage('library', onlineClient({recent: () => recent}));
+  await page.onLoad({tab: 'favorites'});
+  await page.changeFavoriteMode({currentTarget: {dataset: {mode: 'recent'}}});
+  page.onHide(); recent = [image('new'), image('old')]; page.onShow();
+  assert.deepEqual(Array.from(page.data.items, x => x.id), ['new', 'old']);
+});
+
+test('pager reset discards retained items, filters, cursor history and requested retry page', async () => {
+  const calls = [];
+  const pager = api().createPager(async input => {calls.push(input); return {items: [image('private')], nextCursor: 'private-cursor', total: 9};}, () => {}, {append: true});
+  await pager.load({q: 'private-filter'}); await pager.next(); pager.reset();
+  assert.equal(pager.state.items.length, 0); assert.equal(pager.state.nextCursor, '');
+  assert.equal(pager.state.page, 1); assert.equal(pager.state.total, 0);
+  await pager.next(); assert.equal(calls.length, 2);
+  await pager.retry();
+  assert.equal(calls[2].cursor, ''); assert.equal(calls[2].q, undefined);
+  assert.equal(pager.state.page, 1);
+});

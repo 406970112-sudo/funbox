@@ -113,26 +113,28 @@ Page({
     if (!this.client) return;
     const token = getAccessToken();
     const changed = token !== this._lastToken;
+    const privateCollection = this.data.mode !== 'online' && this.data.tab === 'favorites';
     this._lastToken = token;
     if (changed) {
       this._favoriteGeneration = (this._favoriteGeneration || 0) + 1;
-      this.setData({favoriteBusy: {}, items: this.decorateFavorites(this.data.items.map(x => ({...x, favorite: false})))});
+      this.setData({favoriteBusy: {}, items: privateCollection ? [] : this.decorateFavorites(this.data.items.map(x => ({...x, favorite: false})))});
     } else this.setData({items: this.decorateFavorites(this.data.items)});
-    if (changed && this.data.mode !== 'online' && this.data.tab === 'favorites') {
-      this.pager.cancel();
-      this.setData({
-        items: [],
-        pendingItems: [],
-        pendingCount: 0,
-        total: 0,
-        syncMessage: ''
-      });
+    if (changed && privateCollection) {
+      // The pager owns retained results as well as the visible array. Invalidate
+      // both before B can resume or page using any of A's private cursors.
+      this._resumeRequest = false;
+      this._localItems = null;
+      this._scrollTop = 0;
+      this.pager.reset();
+      this.setData({pendingItems: [], pendingCount: 0, syncMessage: ''});
     }
-    this.setData({
-      loggedIn: !!token
-    });
-    if (token) this.syncFavorites(changed);
-    else if (changed) this.refresh();
+    this.setData({loggedIn: !!token});
+    if (changed && privateCollection) this.refreshFavorites(true);
+    else if (!changed && privateCollection && (this.data.favoriteMode !== 'favorites' || !token)) this.refreshFavorites();
+    // New-account page one is independent of a potentially slow merge. A late
+    // merge must not reset the new account's already loaded browsing depth.
+    if (token) this.syncFavorites();
+    else if (changed && !privateCollection) this.refresh();
     if (this._resumeRequest) {
       this._resumeRequest = false;
       if (this.data.mode === 'online') {
@@ -181,7 +183,10 @@ Page({
         pendingCount: this.client.localFavorites().length
       });
       this.setData({items: this.decorateFavorites(this.data.items)});
-      if (this.data.mode !== 'online' && (refresh === true || this.data.favoriteMode === 'pending') && this.data.tab === 'favorites') await this.refresh();
+      if (this.data.mode !== 'online' && this.data.tab === 'favorites') {
+        if (refresh === true) await this.refresh();
+        else if (this.data.favoriteMode === 'pending') this.refreshFavorites();
+      }
     } catch (error) {
       if (this._active && token === getAccessToken()) this.setData({
         syncMessage: error.message

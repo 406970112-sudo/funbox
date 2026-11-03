@@ -380,6 +380,13 @@ function createPager(fetchPage, onChange = () => {}, options = {}) {
     retry() {
       if (!state.loading) return loadPage(requestedPage);
     },
+    reset() {
+      generation++;
+      filters = {};
+      cursors = [''];
+      requestedPage = 1;
+      update({items: [], page: 1, nextCursor: '', total: 0, loading: false, error: '', source: null});
+    },
     cancel() {
       generation++;
       state.loading = false;

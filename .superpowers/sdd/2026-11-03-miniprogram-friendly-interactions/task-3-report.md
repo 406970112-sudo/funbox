@@ -36,3 +36,19 @@ Final verification:
 ## Remaining limitations
 
 Integrated simulator/visual checks belong to the controller's Task 4. No production media searches, favorites or scoring writes were used for this task. Native action-sheet appearance, OS album authorization, animated GIF behavior and actual share targets require simulator/device checking. Online provider availability and source-reported hasMore are external contracts; existing backend cursor snapshot conflicts reset to page one. A fresh ordinary library response without favorite metadata can only show local pending/known favorite state until authoritative detail/cloud favorites are loaded; no full-account favorites prefetch was introduced.
+
+## Review fix round 1 — private pager account boundary and local collection return
+
+Read task-3-review.md and reproduced the P1 with a behavioral VM test: A page one contains private-A/A-cursor; A page two is deferred; hide; switch to B; return with B merge deferred. Before the fix, the retained pager still contained one A item after the visible array had been cleared. Also reproduced stale same-account guest favorites and recent browsing after returning from detail.
+
+Added four regression tests before production changes. RED command `node --test miniprogram/tests/meme.test.js` produced 42 pass / 4 fail: retained private pager item (1 instead of 0), old guest favorite first item, missing new recent detail, and missing pager.reset method.
+
+Changes:
+
+- Added pager.reset() to invalidate generation, clear retained items and cursor history, reset requested retry page to one, discard old filters, and clear loading/error/source/total state.
+- A changed-account private collection now clears suspended resume intent, local collection cache and saved private scroll position, resets both pager and visible state, and immediately starts page one for B. Its initialization does not depend on merge completion. Bottom reach cannot use A's cursor; a late A response cannot replace B's data. Finishing delayed B synchronization does not reset or reload B's current browsing depth.
+- Same-account local favorites/pending/recent returns reread actual scoped client collections and retain the previously appended page depth. Main library return behavior remains covered by the existing test preserving appended items without fetching page one. Pending collection synchronization also reconciles at current depth rather than unconditionally resetting.
+
+GREEN focused command `node --test miniprogram/tests/meme.test.js`: 46 pass / 0 fail. The account test includes delayed B merge, bottom reach during B page-one initialization and late A completion after B has loaded; the pager test also checks retry's page-one cursor and discarded old filters.
+
+Final full command `node --test miniprogram/tests/*.test.js`: **275 pass / 0 fail**, duration 4739.637 ms. The full suite includes concurrent score changes; no unrelated failures observed. `git diff --check -- miniprogram/packages/meme/library/index.js miniprogram/utils/meme.js miniprogram/tests/meme.test.js` exited 0. No WXML/WXSS changes in this fix round; existing native compiler results still describe the unchanged templates/styles. Integrated simulator/device checks remain with Task 4.
