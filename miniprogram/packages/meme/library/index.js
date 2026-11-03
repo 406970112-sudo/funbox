@@ -117,24 +117,28 @@ Page({
     this._lastToken = token;
     if (changed) {
       this._favoriteGeneration = (this._favoriteGeneration || 0) + 1;
-      this.setData({favoriteBusy: {}, items: privateCollection ? [] : this.decorateFavorites(this.data.items.map(x => ({...x, favorite: false})))});
-    } else this.setData({items: this.decorateFavorites(this.data.items)});
-    if (changed && privateCollection) {
-      // The pager owns retained results as well as the visible array. Invalidate
-      // both before B can resume or page using any of A's private cursors.
+      this._operationGeneration = (this._operationGeneration || 0) + 1;
+      this._generation++;
+      // Public responses also contain per-account flags and user-bound cursors.
+      // Reset the owner of retained items, not just the rendered favorite flags.
       this._resumeRequest = false;
       this._localItems = null;
       this._scrollTop = 0;
+      this._onlineRequestedPage = 1;
       this.pager.reset();
-      this.setData({pendingItems: [], pendingCount: 0, syncMessage: ''});
-    }
+      this.setData({favoriteBusy: {}, busy: false, items: [], loading: false,
+        page: 1, nextCursor: '', total: 0, onlineHasMore: false,
+        pendingItems: [], pendingCount: 0, syncMessage: ''});
+    } else this.setData({items: this.decorateFavorites(this.data.items)});
     this.setData({loggedIn: !!token});
-    if (changed && privateCollection) this.refreshFavorites(true);
-    else if (!changed && privateCollection && (this.data.favoriteMode !== 'favorites' || !token)) this.refreshFavorites();
-    // New-account page one is independent of a potentially slow merge. A late
-    // merge must not reset the new account's already loaded browsing depth.
+    // Page one starts without waiting for a merge; a late merge only decorates
+    // the new identity's items and cannot reset its browsing depth.
+    if (changed) {
+      if (this.data.mode === 'online') {
+        if (this._onlineQuery) this.loadOnline(1);
+      } else this.refresh();
+    } else if (privateCollection && (this.data.favoriteMode !== 'favorites' || !token)) this.refreshFavorites();
     if (token) this.syncFavorites();
-    else if (changed && !privateCollection) this.refresh();
     if (this._resumeRequest) {
       this._resumeRequest = false;
       if (this.data.mode === 'online') {

@@ -7,6 +7,7 @@ Page({
   data: {
     recentRoom: null,
     resumeBusy: false,
+    resumeState: "checking",
     resumeError: "",
     checking: false,
     backendStatus: "idle",
@@ -29,48 +30,95 @@ Page({
   onShow() {
     this._websiteHidden = false;
     this._resumeGeneration = (this._resumeGeneration || 0) + 1;
-    this.setData({ recentRoom: getRecentScoreRoom(), resumeError: "", resumeBusy: false });
+    this._resumeLookup = null;
+    this._resumeNavigating = false;
+    this.setData({ recentRoom: getRecentScoreRoom(), resumeError: "", resumeBusy: false, resumeState: "checking" });
     const user = getStoredUser();
     this.setData({
       isLoggedIn: Boolean(getAccessToken()),
       userName: user && user.displayName ? user.displayName : "游客",
     });
+    return this.validateRecentRoom();
   },
 
   onHide() {
     this._websiteHidden = true;
+    this._resumeLookup = null;
     this._resumeGeneration = (this._resumeGeneration || 0) + 1;
     this.closeWebsiteDialog();
   },
 
-  async resumeRoom() {
+  resumeRoom() {
+    return this.validateRecentRoom(true);
+  },
+
+  validateRecentRoom(navigate = false) {
     const recent = getRecentScoreRoom();
-    if (this.data.resumeBusy || !recent) return;
+    if (!recent || this._websiteHidden || this._resumeNavigating) return;
     const session = recent.credentialKind === "guest" ? getScoreSession() : null;
-    const credential = recent.credentialKind === "account" ? { kind: "account", token: getAccessToken() } : session && { kind: "guest", token: session.guestToken };
+    const accountToken = getAccessToken();
+    const accountUser = getStoredUser();
+    const accountId = accountUser && accountUser.id;
+    const credential = recent.credentialKind === "account" ? { kind: "account", token: accountToken } : session && { kind: "guest", token: session.guestToken };
     if (!credential || !credential.token) return;
     const generation = this._resumeGeneration;
-    this.setData({ resumeBusy: true, resumeError: "" });
-    const current = () => {
-      const value = getRecentScoreRoom();
+    const snapshot = JSON.stringify(recent);
+    const identityCurrent = () => {
+      const user = getStoredUser();
       const activeSession = credential.kind === "guest" ? getScoreSession() : null;
-      const identityMatches = credential.kind === "guest"
+      const identityMatches = getAccessToken() === accountToken && (user && user.id) === accountId && (credential.kind === "guest"
         ? activeSession && activeSession.roomId === recent.roomId && activeSession.guestToken === credential.token && activeSession.sessionId === recent.guestSessionId
-        : getAccessToken() === credential.token && getStoredUser() && getStoredUser().id === recent.userId;
-      return this._resumeGeneration === generation && identityMatches && value && JSON.stringify(value) === JSON.stringify(recent);
+        : accountId === recent.userId);
+      return !this._websiteHidden && this._resumeGeneration === generation && identityMatches;
     };
-    try {
-      const room = await getScoreRoom(credential, recent.roomId);
-      if (!current()) return;
-      saveRecentScoreRoom(room, credential);
-      if (room.status !== "active" && room.status !== "waiting") { this.setData({ recentRoom: null, resumeError: "牌局已结束。" }); return; }
-      const route = room.gameType === "zhajinhua" ? "poker-room" : "room";
-      wx.navigateTo({ url: `/pages/score/${route}/index?roomId=${encodeURIComponent(room.id)}${credential.kind === "account" ? "&identity=account" : ""}` });
-    } catch (error) {
-      if (!current()) return;
-      if (error.statusCode === 401 || error.statusCode === 403 || error.statusCode === 404) { clearRecentScoreRoom(recent.roomId); this.setData({ recentRoom: null }); }
-      this.setData({ resumeError: getScoreErrorMessage(error) });
-    } finally { if (this._resumeGeneration === generation) this.setData({ resumeBusy: false }); }
+    const current = () => identityCurrent() && JSON.stringify(getRecentScoreRoom()) === snapshot;
+    // A tap can promote the visible background lookup to one navigation intent.
+    const pending = this._resumeLookup;
+    if (pending && pending.current()) {
+      if (navigate) { pending.navigate = true; this.setData({ resumeBusy: true }); }
+      return pending.promise;
+    }
+    const lookup = { current, navigate };
+    this._resumeLookup = lookup;
+    this.setData({ resumeBusy: navigate, resumeState: "checking", resumeError: "" });
+    lookup.promise = (async () => {
+      try {
+        const room = await getScoreRoom(credential, recent.roomId);
+        if (!current()) return;
+        if (room.status !== "active" && room.status !== "waiting") {
+          clearRecentScoreRoom(recent.roomId);
+          this.setData({ recentRoom: null, resumeError: "牌局已结束。" });
+          return;
+        }
+        saveRecentScoreRoom(room, credential);
+        this.setData({ recentRoom: getRecentScoreRoom(), resumeState: "ready" });
+        if (lookup.navigate) {
+          this._resumeNavigating = true;
+          const savedSnapshot = JSON.stringify(getRecentScoreRoom());
+          const route = room.gameType === "zhajinhua" ? "poker-room" : "room";
+          wx.navigateTo({ url: `/pages/score/${route}/index?roomId=${encodeURIComponent(room.id)}${credential.kind === "account" ? "&identity=account" : ""}`,
+            fail: () => {
+              if (identityCurrent() && JSON.stringify(getRecentScoreRoom()) === savedSnapshot) {
+                this._resumeNavigating = false;
+                this.setData({ resumeError: "打开牌局失败，请重试" });
+              }
+            } });
+        }
+      } catch (error) {
+        if (!current()) return;
+        if (error.statusCode === 401 || error.statusCode === 403 || error.statusCode === 404) {
+          clearRecentScoreRoom(recent.roomId);
+          this.setData({ recentRoom: null });
+        }
+        this.setData({ resumeState: "retry", resumeError: getScoreErrorMessage(error) });
+      } finally {
+        if (this._resumeLookup === lookup) {
+          this._resumeLookup = null;
+          if (identityCurrent()) this.setData({ resumeBusy: false });
+        }
+      }
+    })();
+    return lookup.promise;
   },
 
   copyWebsite() {

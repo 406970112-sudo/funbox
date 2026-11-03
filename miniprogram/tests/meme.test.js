@@ -1020,7 +1020,7 @@ test('list favorites retain pending sync intentions, restore persistence failure
   const work = page.toggleFavorite(event);
   token = 'B'; page.onShow(); finish(); await work;
   assert.equal(page.data.favoriteBusy.a, undefined);
-  assert.equal(page.data.items[0].favorite, false);
+  assert.equal(page.data.items.length, 0);
 });
 
 test('list longpress previews original, favorites, shares and suppresses following navigation', async () => {
@@ -1193,4 +1193,51 @@ test('pager reset discards retained items, filters, cursor history and requested
   await pager.retry();
   assert.equal(calls[2].cursor, ''); assert.equal(calls[2].q, undefined);
   assert.equal(pager.state.page, 1);
+});
+
+test('public account switch discards favorite fallback, cursor and suspended A request before independent B page one', async () => {
+  for (const failB of [false, true]) {
+    let token = 'A', finishA, finishB, rejectB, finishMerge;
+    const calls = [];
+    const page = loadPage('library', onlineClient({
+      list: input => {
+        calls.push({token, cursor: input.cursor});
+        if (token === 'A' && !input.cursor) return Promise.resolve({items:[{...image('A'), favorite:true}], nextCursor:'A-cursor'});
+        if (token === 'A') return new Promise(r => {finishA=r;});
+        return new Promise((r,j) => {finishB=r; rejectB=j;});
+      }, mergeFavorites: () => new Promise(r => {finishMerge=r;})
+    }), () => token);
+    await page.onLoad({}); const old = page.next(); page.onHide(); token='B'; page.onShow();
+    assert.deepEqual(calls[2], {token:'B',cursor:''});
+    assert.equal(page.data.items.length, 0); assert.equal(page.pager.state.items.length, 0);
+    await page.onReachBottom(); assert.equal(calls.length, 3);
+    if (failB) rejectB(Error('offline')); else finishB({items:[image('B')], nextCursor:'B-cursor'});
+    await Promise.resolve(); await Promise.resolve();
+    finishA({items:[{...image('late-A'),favorite:true}],nextCursor:'A-next'}); await old;
+    finishMerge({failed:0}); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(Array.from(page.data.items,x=>x.id), failB ? [] : ['B']);
+    assert.ok(page.data.items.every(x=>!x.favorite));
+    assert.ok(!calls.some(x=>x.token==='B' && x.cursor.startsWith('A')));
+  }
+});
+test('online and ranking account switch clear retained favorite fallback and restart independent requests', async () => {
+  for (const mode of ['online', 'ranking']) {
+    let token='A', finishB;
+    const calls=[];
+    const fetch = input => {
+      calls.push({token, page:input.page});
+      if(token==='A') return Promise.resolve({items:[{...image('A'),favorite:true}],page:input.page,hasMore:true,mode:'ranking'});
+      return new Promise(r=>{finishB=r;});
+    };
+    const page=loadPage('library',onlineClient({onlineSearch:fetch,rankings:fetch,mergeFavorites:()=>new Promise(()=>{})}),()=>token);
+    await page.onLoad(mode==='online'?{mode:'online',q:'猫'}:{tab:'ranking'});
+    if(mode==='online') await page.search();
+    page.onHide(); token='B'; page.onShow();
+    assert.equal(page.data.items.length,0);
+    assert.equal(calls.length,2);
+    if(mode==='online') assert.equal(calls[1].page,1);
+    finishB({items:[image('B')],page:1,hasMore:false,mode:'ranking'}); for(let i=0;i<6;i++) await Promise.resolve();
+    assert.deepEqual(Array.from(page.data.items,x=>x.id),['B'], mode + ':' + page.data.error);
+    assert.equal(!!page.data.items[0].favorite,false);
+  }
 });

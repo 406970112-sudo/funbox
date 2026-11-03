@@ -10,8 +10,8 @@
     </view>
   </view>
   <view wx:if="{{recentRoom}}" class="resume-card">
-    <view><text class="scene-title">继续「{{recentRoom.name}}」</text><text class="scene-desc">{{recentRoom.status === 'active' ? '进行中' : '等待开始'}}</text></view>
-    <button class="resume-button" loading="{{resumeBusy}}" disabled="{{resumeBusy}}" bindtap="resumeRoom">继续牌局</button>
+    <view><text class="scene-title">继续「{{recentRoom.name}}」</text><text class="scene-desc">{{resumeState === 'checking' ? '正在确认牌局状态…' : resumeState === 'retry' ? '状态待确认，请重试' : recentRoom.status === 'active' ? '进行中' : '等待开始'}}</text></view>
+    <button class="resume-button" loading="{{resumeBusy}}" disabled="{{resumeBusy}}" bindtap="resumeRoom">{{resumeState === 'retry' ? '重试并继续' : '继续牌局'}}</button>
   </view>
   <view wx:if="{{resumeError}}" class="resume-card resume-error" role="alert">{{resumeError}}</view>
   <view class="section-head"><text class="section-title">选择牌局</text><text class="section-note">不同玩法，一样清楚</text></view>

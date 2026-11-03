@@ -115,7 +115,7 @@ test('terminal and expired resume show feedback; transient failures preserve rec
     const page={...definition,data:{...definition.data,recentRoom:recent},setData(p){Object.assign(this.data,p);}};
     await page.resumeRoom();
     assert.ok(page.data.resumeError);
-    assert.equal(cleared,scenario==='expired'?1:0);
+    assert.equal(cleared,scenario!=='network'?1:0);
     assert.equal(page.data.recentRoom===null,scenario!=='network');
   }
 });
@@ -127,7 +127,90 @@ test('resume coalesces repeated taps and rejects a switched account', async () =
     require:p=>p.includes('score-api')?{getScoreRoom:()=>{reads++;return new Promise(r=>{finish=r;});}}:p.includes('score-session')?{getRecentScoreRoom:()=>recent,saveRecentScoreRoom:()=>{throw Error('stale save');}}:p.includes('auth')?{getAccessToken:()=> 'token',getStoredUser:()=>user}:{},
     Page:p=>{definition=p;},wx:{navigateTo:()=>{navigation++;}} });
   const page={...definition,data:{...definition.data},setData(p){Object.assign(this.data,p);}};
-  const pending=page.resumeRoom(); await page.resumeRoom(); assert.equal(reads,1);
-  user={id:'other'}; finish({id:'r',status:'active'}); await pending;
+  const pending=page.resumeRoom(); const repeated=page.resumeRoom(); assert.equal(reads,1);
+  user={id:'other'}; finish({id:'r',status:'active'}); await Promise.all([pending, repeated]);
   assert.equal(navigation,0);
+});
+
+function freshHome(kind = 'account') {
+  let definition;
+  const state = {token: 'A', user: {id: 'u'}, session: {roomId: 'r', sessionId: 's', guestToken: 'g'},
+    recent: {roomId: 'r', name: 'old', status: 'active', credentialKind: kind, userId: 'u', guestSessionId: 's'}};
+  const reads = [], routes = [];
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../pages/index/index.js'), 'utf8'), {
+    require: p => p.includes('score-api') ? {
+      getScoreRoom: () => new Promise((resolve, reject) => reads.push({resolve, reject})), getScoreErrorMessage: () => '连接失败，请重试'
+    } : p.includes('score-session') ? {
+      getRecentScoreRoom: () => state.recent, getScoreSession: () => state.session,
+      saveRecentScoreRoom: room => {state.recent = {...state.recent, name: room.name, status: room.status};},
+      clearRecentScoreRoom: id => {if (state.recent && state.recent.roomId === id) state.recent = null;}
+    } : p.includes('auth') ? {getAccessToken: () => state.token, getStoredUser: () => state.user} : {},
+    Page: p => {definition = p;}, wx: {navigateTo: o => routes.push(o.url)}
+  });
+  const page = {...definition, data: {...definition.data}, setData(p) {Object.assign(this.data, p);}};
+  return {state, reads, routes, page};
+}
+const homeTick = async () => {for (let i = 0; i < 6; i++) await Promise.resolve();};
+
+test('home checks status on show and refreshes waiting room name before advertising it', async () => {
+  const h = freshHome(); h.page.onShow();
+  assert.equal(h.reads.length, 1);
+  assert.equal(h.page.data.resumeState, 'checking');
+  h.reads[0].resolve({id: 'r', name: 'new', status: 'waiting', gameType: 'generic'}); await homeTick();
+  assert.equal(h.page.data.resumeState, 'ready');
+  assert.equal(h.page.data.recentRoom.status, 'waiting'); assert.equal(h.page.data.recentRoom.name, 'new');
+  assert.equal(h.routes.length, 0);
+});
+test('home background clears terminal and definitive invalid rooms but preserves network recovery', async () => {
+  for (const scenario of ['settled', 'cancelled', 401, 403, 404, 'network']) {
+    const h = freshHome(); h.page.onShow(); assert.equal(h.reads.length, 1);
+    if (typeof scenario === 'number' || scenario === 'network') h.reads[0].reject({statusCode: scenario});
+    else h.reads[0].resolve({id: 'r', status: scenario});
+    await homeTick();
+    assert.equal(!!h.state.recent, scenario === 'network', String(scenario));
+    assert.equal(!!h.page.data.recentRoom, scenario === 'network');
+    if (scenario === 'network') {
+      assert.equal(h.page.data.resumeState, 'retry');
+      const retry = h.page.resumeRoom(); assert.equal(h.reads.length, 2);
+      h.reads[1].resolve({id:'r', status:'active', gameType:'zhajinhua'}); await retry;
+      assert.match(h.routes[0], /poker-room/);
+    }
+  }
+});
+test('tap during background lookup coalesces read and navigation; later tap revalidates', async () => {
+  const h = freshHome(); h.page.onShow();
+  const a = h.page.resumeRoom(), b = h.page.resumeRoom();
+  assert.equal(h.reads.length, 1);
+  h.reads[0].resolve({id:'r', status:'active'}); await Promise.all([a,b]);
+  assert.equal(h.routes.length, 1);
+  const duplicate = h.page.resumeRoom(); assert.equal(h.reads.length, 1); await duplicate; assert.equal(h.routes.length, 1);
+  h.page.onHide(); h.page.onShow(); h.reads[1].resolve({id:'r', status:'active'}); await homeTick();
+  const tap = h.page.resumeRoom(); assert.equal(h.reads.length, 3);
+  h.reads[2].resolve({id:'r', status:'waiting'}); await tap;
+  assert.equal(h.routes.length, 2);
+});
+test('home background and queued taps reject hide, user/token and guest-session changes', async () => {
+  for (const change of ['hide', 'user', 'token', 'guestToken', 'guestSession', 'guestAccount']) {
+    const h = freshHome(change.startsWith('guest') ? 'guest' : 'account');
+    h.page.onShow(); const tap = h.page.resumeRoom(); assert.equal(h.reads.length, 1);
+    if (change === 'hide') h.page.onHide();
+    if (change === 'user') h.state.user = {id:'B'};
+    if (change === 'token' || change === 'guestAccount') h.state.token = 'B';
+    if (change === 'guestToken') h.state.session.guestToken = 'new';
+    if (change === 'guestSession') h.state.session.sessionId = 'new';
+    let updates=0; const original=h.page.setData;
+    h.page.setData=function(p) {updates++; original.call(this,p);};
+    h.reads[0].resolve({id:'r', status:'settled'}); await tap;
+    assert.equal(updates,0,change);
+    assert.equal(h.routes.length, 0, change); assert.ok(h.state.recent, change);
+  }
+});
+test('hidden validation never publishes completion and a later visible lookup owns the card', async () => {
+  const h = freshHome(); h.page.onShow(); const tap = h.page.resumeRoom(); h.page.onHide();
+  let updates = 0; const original = h.page.setData;
+  h.page.setData = function(p) {updates++; original.call(this,p);};
+  h.reads[0].resolve({id:'r',status:'waiting'}); await tap;
+  assert.equal(updates,0);
+  h.page.onShow(); h.reads[1].resolve({id:'r',name:'fresh',status:'active'}); await homeTick();
+  assert.equal(h.page.data.recentRoom.name,'fresh'); assert.equal(h.page.data.resumeBusy,false);
 });
