@@ -99,3 +99,5 @@
 .poker-invite-card .share-button { margin-top: 12rpx; padding: 12rpx; font-size: 24rpx; border-radius: 14rpx; }
 .poker-invite-card .qr-box { width: 96px; min-height: 96px; padding: 4px; }
 .poker-invite-card .qr-expand-hint { margin-top: 4rpx; }
+
+.personal-transfer { margin: 18rpx 0; color: #234a9a; font-size: 32rpx; font-weight: 600; line-height: 1.5; overflow-wrap: break-word; }

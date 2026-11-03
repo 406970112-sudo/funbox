@@ -2,25 +2,22 @@ const base=require('../../../utils/score-room-base');
 const api=require('../../../utils/score-api');
 const {formatCNY}=require('../../../utils/score-format');
 const {derivePoker,shouldRemind,createPokerInput,potChangeFeedback}=require('../../../utils/poker-state');
-const {getScoreSession,saveRecentScoreRoom}=require('../../../utils/score-session');
+const {saveRecentScoreRoom}=require('../../../utils/score-session');
 function confirm(title,content){return new Promise(resolve=>wx.showModal({title,content,confirmColor:'#2d5bff',success:r=>resolve(r.confirm),fail:()=>resolve(false)}));}
 Page({...base,
  data:{...base.data,qrSize:96,poker:null,offline:false,sheet:'',targetId:'',outcome:'',winnerId:'',raiseBase:'',bonusSelections:[],bonusRows:[],bonusEnabled:false,expandedBonusId:'',bonusChecked:false,reducedMotion:false,potMotion:true,vibrate:true,potPulse:false,settingsDraft:{},vibrationKeys:[]},
  onLoad(options){
   if(wx.getWindowInfo){try{this.setData({windowWidth:wx.getWindowInfo().windowWidth});}catch(e){}}
   const prefs=wx.getStorageSync('funboxPokerFeedback')||{};this.setData({reducedMotion:!!prefs.reducedMotion,potMotion:prefs.potMotion!==false,vibrate:prefs.vibrate!==false});
-  this.networkHandler=r=>this.handleNetwork(r);
-  if(wx.onNetworkStatusChange)wx.onNetworkStatusChange(this.networkHandler);
-  if(wx.getNetworkType)wx.getNetworkType({success:r=>this.networkHandler({isConnected:r.networkType!=='none'})});
   base.onLoad.call(this,options);
  },
- onUnload(){if(wx.offNetworkStatusChange)wx.offNetworkStatusChange(this.networkHandler);if(this.pulseTimer)clearTimeout(this.pulseTimer);base.onUnload.call(this);},
- async handleNetwork(r){this.setData({offline:!r.isConnected,networkSyncing:!!r.isConnected});this.updatePoker();if(r.isConnected){await this.refreshRoom();this.setData({networkSyncing:false});this.updatePoker();}},
- updatePoker(){if(!this.data.room)return;const id=this.data.room.selfParticipantId||(getScoreSession()||{}).participantId;this.setData({poker:derivePoker(this.data.room,id,{offline:this.data.offline||this.data.networkSyncing,busy:this.data.busy,width:this.data.windowWidth})});},
+ onUnload(){if(this.pulseTimer)clearTimeout(this.pulseTimer);base.onUnload.call(this);},
+
+ updatePoker(){if(!this.data.room)return;const id=this.currentParticipantId(this.data.room);this.setData({poker:derivePoker(this.data.room,id,{offline:this.data.offline||this.data.networkSyncing,busy:this.data.busy,width:this.data.windowWidth})});},
  async applyRoom(room){
   const old=this.data.room;if(old&&old.id===room.id&&room.version<old.version)return false;
   if(old&&old.id===room.id&&old.version===room.version&&!this.data.loading&&this.data.poker?.betweenHands){saveRecentScoreRoom(room,this.credential);this.lastRoomSyncAt=Date.now();this.maybeBindParticipantAccount();return false;}
-  const id=room.selfParticipantId||(getScoreSession()||{}).participantId;
+  const id=this.currentParticipantId(room);
   const remind=shouldRemind(old,room,id),key=room.currentZhaJinHuaHand?`${room.currentZhaJinHuaHand.id}:${(room.currentZhaJinHuaHand.actions||[]).length}`:'';
   await base.applyRoom.call(this,room);this.updatePoker();
   if(remind&&this.pageVisible!==false&&!this.remindedKeys?.has(key)){this.remindedKeys=this.remindedKeys||new Set();this.remindedKeys.add(key);if(this.data.vibrate&&wx.vibrateShort)wx.vibrateShort({type:'light'});}
@@ -50,8 +47,13 @@ Page({...base,
   return true;
  },
  async ensureInviteToken(){return base.ensureInviteToken.call(this);},
- async confirmCurrent(title,content){const reviewed=this.data.room;const id=reviewed&&reviewed.id,version=reviewed&&reviewed.version;const ok=await confirm(title,content);if(!ok)return false;if(!this.data.room||this.data.room.id!==id||this.data.room.version!==version){this.setData({errorMessage:'牌局已经变化，请重新核对后操作。'});return false;}return true;},
- async runMutation(fn){if(this.data.busy||this.data.offline||this.data.networkSyncing||!this.data.room)return;this.setData({busy:true,errorMessage:''});this.updatePoker();try{await this.applyRoom(await fn());}catch(e){if(e.snapshot)await this.applyRoom(e.snapshot);else await this.refreshRoom();this.setData({errorMessage:api.getScoreErrorMessage(e)});}finally{this.setData({busy:false});this.updatePoker();}},
+ async confirmCurrent(title,content){
+  if(this.data.busy||this.confirmationPending||this.writesPaused())return false;
+  const reviewed=this.data.room;this.confirmationPending=true;this.setData({busy:true,errorMessage:''});this.updatePoker();
+  try{const ok=await confirm(title,content);if(!ok)return false;if(this.writesPaused()){this.setData({errorMessage:'网络中断或尚未完成同步，请稍后重试。'});return false;}if(!this.data.room||this.data.room.id!==reviewed?.id||this.data.room.version!==reviewed?.version){this.setData({errorMessage:'牌局已经变化，请重新核对后操作。'});return false;}return true;}
+  finally{this.confirmationPending=false;this.setData({busy:false});this.updatePoker();}
+ },
+ async runMutation(fn){if(this.data.busy||this.confirmationPending||this.writesPaused()||!this.data.room)return;this.setData({busy:true,errorMessage:''});this.updatePoker();try{await this.applyRoom(await fn());}catch(e){if(e.snapshot)await this.applyRoom(e.snapshot);else await this.refreshRoom();this.setData({errorMessage:api.getScoreErrorMessage(e)});}finally{this.setData({busy:false});this.updatePoker();}},
  async startHand(){if(!this.data.poker.canStart)return;await this.runMutation(async()=>{let room=this.data.room;if(room.status==='waiting')room=await api.startScoreRoom(this.credential,room);return api.startPokerHand(this.credential,room);});},
  act(input){const h=this.data.poker.hand;if(!h)return;return this.runMutation(()=>api.pokerAction(this.credential,this.data.room,h.id,input));},
  follow(){if(this.data.poker.canAct)return this.act({actionType:'follow'});},

@@ -28,9 +28,18 @@ module.exports = {
     errorMessage: "",
   },
 
-  onLoad() {
+  onLoad(options = {}) {
     this.entryVisible = true;
     this.syncAuth();
+    const prefill = {};
+    for (const [key, limit] of [["roomName", 40], ["hostNickname", 48]]) {
+      if (typeof options[key] !== "string") continue;
+      let value = options[key];
+      try { value = decodeURIComponent(value); } catch (error) { /* Keep malformed literal input editable. */ }
+      value = value.trim().slice(0, limit);
+      if (value) prefill[key] = value;
+    }
+    this.setData(prefill);
   },
 
   onShow() {

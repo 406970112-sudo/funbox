@@ -30,3 +30,28 @@ function canCancelRoom(room, isHost) {
   return !(room.giftBatches || []).length && !(room.rounds || []).length && !(room.zhaJinHuaHands || []).length && !room.currentRound && !room.currentZhaJinHuaHand;
 }
 module.exports = { giftDraft, giftHistory, canCancelRoom };
+
+// All money comes from the server settlement, in integer cents.
+function settlementView(room, selfId) {
+  const { formatCNY, formatScore } = require('./score-format');
+  const people = Object.fromEntries((room.participants || []).map(p => [p.id, p]));
+  const settlement = room.settlement || { balances: [], transfers: [] };
+  const name = id => people[id]?.displayName || '玩家';
+  const known = !!people[selfId];
+  const personalSettlementRows = known ? (settlement.transfers || []).filter(t => t.fromParticipantId === selfId || t.toParticipantId === selfId).map((t, i) => ({
+    key: String(i), text: t.fromParticipantId === selfId ? `你需给${name(t.toParticipantId)} ${formatCNY(t.amountCents)}` : `你可收${name(t.fromParticipantId)} ${formatCNY(t.amountCents)}`,
+  })) : [];
+  const balances = (settlement.balances || []).map(b => `${name(b.participantId)}：${formatScore(b.totalPoints)} 分，${formatCNY(b.amountCents)}`);
+  const transfers = (settlement.transfers || []).map(t => `${name(t.fromParticipantId)} → ${name(t.toParticipantId)}：${formatCNY(t.amountCents)}`);
+  return {
+    personalSettlementRows,
+    personalSettlementTitle: !known ? '查看全桌结算建议' : personalSettlementRows.length ? '你的转账建议' : '你无需转账',
+    settlementCopyText: [room.name || '未命名牌局', `每分金额：${formatCNY(room.centsPerPoint)} / 分`, '最终余额', ...balances, '转账建议（仅供核对，不代表已付款）', ...(transfers.length ? transfers : ['无需转账'])].join('\n'),
+  };
+}
+function rematchRoute(room, self) {
+  if (!room || room.status !== 'settled' || !['mahjong', 'generic'].includes(room.gameType)) return '';
+  return `/pages/score/${room.gameType === 'generic' ? 'general' : 'mahjong'}/index?roomName=${encodeURIComponent(room.name || '')}&hostNickname=${encodeURIComponent(self?.displayName || '')}`;
+}
+module.exports.settlementView = settlementView;
+module.exports.rematchRoute = rematchRoute;

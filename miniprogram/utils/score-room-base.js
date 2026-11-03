@@ -27,7 +27,7 @@ const { buildInviteContent } = require("./invite");
 const { formatCNY, formatScore, parsePoints, parseYuanToCents } = require("./score-format");
 const { connectScoreRealtime } = require("./score-realtime");
 const { drawScoreQRCode } = require("./score-qr");
-const { giftDraft, giftHistory: deriveGiftHistory, canCancelRoom } = require("./score-ux");
+const { giftDraft, giftHistory: deriveGiftHistory, canCancelRoom, settlementView, rematchRoute } = require("./score-ux");
 const { motionPage, motionData } = require("./mahjong-motion");
 
 // Legacy waiting-room invites remain unchanged. V2 poker can also invite
@@ -108,6 +108,14 @@ module.exports = {
     isGeneral: false,
     loading: true,
     busy: false,
+    offline: false,
+    networkSyncing: false,
+    networkRecoveryError: "",
+    settlementError: "",
+    settlementCopyError: "",
+    personalSettlementTitle: "",
+    personalSettlementRows: [],
+    settlementCopyText: "",
     errorMessage: "",
     actionError: "",
     canRetryLoad: false,
@@ -160,6 +168,7 @@ module.exports = {
   onLoad(options) {
     this.pageActive = true;
     this.pageVisible = true;
+    this.startNetworkWatch();
     this.pageOptions = options || {};
     this.loadAccessToken = getAccessToken();
     if (options.scene) {
@@ -190,6 +199,7 @@ module.exports = {
 
   onShow() {
     this.pageVisible = true;
+    this.startNetworkWatch();
     this.setData({ isLoggedIn: Boolean(getAccessToken()) });
     if (this.credential && this.data.room) {
       this.startRealtime();
@@ -200,6 +210,10 @@ module.exports = {
 
   onHide() {
     this.pageVisible = false;
+    this.networkGeneration = (this.networkGeneration || 0) + 1;
+    this.stopNetworkWatch();
+    if (this.data.room) this.setData({ networkSyncing: true });
+    this.networkStateChanged();
     this.stopRealtime();
     this.motionResuming = true;
     this.clearMahjongMotion();
@@ -272,7 +286,7 @@ module.exports = {
   },
 
   async joinFromInvite() {
-    if (this.data.joining || !this.data.previewRoom) return;
+    if (this.data.joining || this.writesPaused() || !this.data.previewRoom) return;
     const displayName = this.data.joinNickname.trim();
     if (!displayName) {
       this.setData({ errorMessage: "请输入牌局内显示的昵称。" });
@@ -308,28 +322,102 @@ module.exports = {
   },
 
   async loadRoom(options) {
-    if (!this.credential || !this.data.roomId) return;
+    if (!this.credential || !this.data.roomId || this.pageActive === false || this.pageVisible === false) return false;
+    const generation = this.networkGeneration || 0;
+    const current = () => generation === (this.networkGeneration || 0) && this.pageActive !== false && this.pageVisible !== false;
     const quiet = options && options.quiet;
     if (!quiet) this.setData({ loading: true, errorMessage: "", canRetryLoad: false });
     try {
       const room = await getScoreRoom(this.credential, this.data.roomId);
+      if (!current()) return false;
+      if (this.data.room && this.data.room.id === room.id && Number(room.version) < Number(this.data.room.version)) {
+        if (this.data.networkSyncing) this.setData({ networkRecoveryError: "同步未完成，请重试同步最新记录。" });
+        return false;
+      }
       await this.applyRoom(room);
+      if (!current()) return false;
       this.setData({ syncWarning: "" });
+      if (!this.data.offline) {
+        this.setData({ networkSyncing: false, networkRecoveryError: "" });
+        this.networkStateChanged();
+        this.maybeBindParticipantAccount();
+        if (this.data.isHost && canInviteRoom(this.data.room)) {
+          this.ensureInviteToken();
+          this.ensureInviteCode({ automatic: true });
+        }
+      }
+      return true;
     } catch (error) {
+      if (!current()) return false;
+      if (this.data.networkSyncing) this.setData({ networkRecoveryError: "同步失败，操作仍已暂停，请重试同步。" });
       if (quiet && this.data.room && error.isNetworkError) {
         this.setData({ syncWarning: "网络暂不稳定，正在重试同步，当前显示上次记录。" });
-        return;
+        return false;
       }
-      if (error && error.statusCode === 401 && this.credential.kind === "guest") {
-        clearScoreSession();
-      }
+      if (error && error.statusCode === 401 && this.credential.kind === "guest") clearScoreSession();
       this.setData({ errorMessage: getScoreErrorMessage(error), canRetryLoad: Boolean(error.isNetworkError) });
       if (!quiet) this.setData({ loading: false });
+      return false;
     }
   },
 
+  startNetworkWatch() {
+    if (this.networkHandler || this.pageActive === false || this.pageVisible === false) return;
+    const epoch = this.networkWatchEpoch = (this.networkWatchEpoch || 0) + 1;
+    let receivedEvent = false;
+    const current = () => this.networkWatchEpoch === epoch && this.pageActive !== false && this.pageVisible !== false;
+    this.networkHandler = result => {
+      if (!current()) return;
+      receivedEvent = true;
+      this.handleNetwork(result);
+    };
+    if (wx.onNetworkStatusChange) wx.onNetworkStatusChange(this.networkHandler);
+    if (wx.getNetworkType) wx.getNetworkType({ success: result => {
+      if (current() && !receivedEvent) this.handleNetwork({ isConnected: result.networkType !== "none" });
+    } });
+  },
+
+  stopNetworkWatch() {
+    this.networkWatchEpoch = (this.networkWatchEpoch || 0) + 1;
+    if (this.networkHandler && wx.offNetworkStatusChange) wx.offNetworkStatusChange(this.networkHandler);
+    this.networkHandler = null;
+  },
+
+  networkStateChanged() {
+    if (this.updatePoker) this.updatePoker();
+  },
+
+  async handleNetwork(result) {
+    if (this.pageActive === false || this.pageVisible === false) return false;
+    if (!result.isConnected) {
+      this.networkGeneration = (this.networkGeneration || 0) + 1;
+      this.setData({ offline: true, networkSyncing: true, networkRecoveryError: "" });
+      this.networkStateChanged();
+      return false;
+    }
+    const recovering = this.data.offline || this.data.networkSyncing;
+    if (!recovering) return true;
+    if (this.data.offline) this.networkGeneration = (this.networkGeneration || 0) + 1;
+    this.setData({ offline: false, networkSyncing: true, networkRecoveryError: "" });
+    this.networkStateChanged();
+    if (!this.credential && !this.data.room) {
+      // An unjoined invitation has no prior seat snapshot to reconcile.
+      this.setData({ networkSyncing: false });
+      return true;
+    }
+    return this.refreshRoom();
+  },
+
+  writesPaused() {
+    return this.data.offline || this.data.networkSyncing || this.pageActive === false || this.pageVisible === false;
+  },
+
+  retryNetworkSync() {
+    if (!this.data.offline) return this.refreshRoom();
+  },
+
   refreshRoom() {
-    if (!this.credential || !this.data.roomId) return Promise.resolve();
+    if (!this.credential || !this.data.roomId) return Promise.resolve(false);
     if (this.refreshPromise) {
       this.refreshQueued = true;
       return this.refreshPromise;
@@ -358,7 +446,7 @@ module.exports = {
     room.participants.forEach((participant) => {
       participantMap[participant.id] = participant;
     });
-    const selfID = room.selfParticipantId || (getScoreSession() && getScoreSession().participantId);
+    const selfID = this.currentParticipantId(room);
     const self = participantMap[selfID] || null;
     const isHost = Boolean(self && self.role === "host");
     const isLoggedIn = Boolean(getAccessToken());
@@ -448,13 +536,14 @@ module.exports = {
       vacantSeats,
       recipients,
       giftHistory,
+      ...settlementView(room, self && self.id),
       canCancelRoom: canCancelRoom(room, isHost),
       settlementRows,
       settlementTransfers,
       hasSettlementTransfers: settlementTransfers.length > 0,
       giftTotal: draft.total,
       giftPreview: draft.preview,
-      giftError: recipients.some(item => String(item.pointsInput || "").trim()) && !draft.valid ? "请输入有效的正整数，总分不能超过 2147483647。" : "",
+      giftError: this.data.giftError || (recipients.some(item => String(item.pointsInput || "").trim()) && !draft.valid ? "请输入有效的正整数，总分不能超过 2147483647。" : ""),
       canSubmitGifts: draft.valid,
       realtimeStatus: this.data.realtimeStatus,
       qrExpanded: canInviteRoom(room) ? this.data.qrExpanded : false,
@@ -472,11 +561,16 @@ module.exports = {
     this.maybeBindParticipantAccount();
     this.startRealtime();
     this.startPolling();
-    if (isHost && canInviteRoom(room)) {
+    if (isHost && canInviteRoom(room) && !this.writesPaused()) {
       await this.ensureInviteToken();
       this.ensureInviteCode({ automatic: true });
     }
     return true;
+  },
+
+  currentParticipantId(room) {
+    const session = getScoreSession();
+    return room.selfParticipantId || (session && session.roomId === room.id && this.credential && this.credential.kind === "guest" && this.credential.token === session.guestToken ? session.participantId : "");
   },
 
   openAccountLogin() {
@@ -498,7 +592,7 @@ module.exports = {
   },
 
   maybeBindParticipantAccount() {
-    if (this.accountBindingPaused) return;
+    if (this.accountBindingPaused || this.writesPaused()) return;
     if (!this.credential || this.credential.kind !== "guest" || !this.data.room) return;
     if (!this.data.showAccountBinding || this.data.accountBound || this.data.bindingAccount) return;
     if (!getAccessToken()) return;
@@ -506,7 +600,7 @@ module.exports = {
   },
 
   async bindParticipantAccount() {
-    if (!this.credential || this.credential.kind !== "guest" || !this.data.room || this.data.bindingAccount) return;
+    if (this.writesPaused() || !this.credential || this.credential.kind !== "guest" || !this.data.room || this.data.bindingAccount) return;
     if (!getAccessToken()) {
       this.openAccountLogin();
       return;
@@ -531,7 +625,7 @@ module.exports = {
   },
 
   async ensureInviteToken() {
-    if (!this.credential || !this.data.isHost || !canInviteRoom(this.data.room) || this.data.inviteToken || this.inviteTokenPending) return;
+    if (this.writesPaused() || !this.credential || !this.data.isHost || !canInviteRoom(this.data.room) || this.data.inviteToken || this.inviteTokenPending) return;
     this.inviteTokenPending = true;
     try {
       const inviteToken = this.data.inviteToken || await issueScoreInviteToken(this.credential, this.data.room.id);
@@ -547,7 +641,7 @@ module.exports = {
   },
 
   async ensureInviteCode(options) {
-    if (!this.credential || !this.data.isHost || !this.data.room || !canInviteRoom(this.data.room)) return;
+    if (this.writesPaused() || !this.credential || !this.data.isHost || !this.data.room || !canInviteRoom(this.data.room)) return;
     if (this.data.qrImageSrc || this.data.qrCodeLoading || (options && options.automatic && this.data.qrCodeFailed) || !this.data.room.id) return;
     this.setData({ qrCodeLoading: true, qrCodeFailed: false });
     try {
@@ -614,12 +708,13 @@ module.exports = {
   },
 
   async confirmRoomAction(title, content, operation) {
-    if (this.data.busy || !this.data.room) return;
+    if (this.data.busy || this.writesPaused() || !this.data.room) return;
     const reviewed = this.data.room;
     this.setData({ busy: true, errorMessage: "", actionError: "" });
     try {
       const result = await showModal({ title, content, confirmText: "确认", confirmColor: "#2d5bff", cancelText: "再想想" });
       if (!result.confirm) return;
+      if (this.writesPaused()) { this.setData({ actionError: "网络中断或尚未完成同步，请稍后重试。" }); return; }
       if (!this.data.room || this.data.room.id !== reviewed.id || this.data.room.version !== reviewed.version) {
         this.setData({ errorMessage: "房间状态已变化，请重新核对后操作。", actionError: "房间状态已变化，请重新核对后操作。" });
         return;
@@ -632,13 +727,13 @@ module.exports = {
   },
 
   async startRoom() {
-    if (this.data.busy || !this.data.isHost || !this.data.canStart || !this.data.room || this.data.room.status !== "waiting") return;
+    if (this.data.busy || this.writesPaused() || !this.data.isHost || !this.data.canStart || !this.data.room || this.data.room.status !== "waiting") return;
     const start = async room => { await this.applyRoom(await startScoreRoom(this.credential, room)); this.setData({ feedback: "牌局已开始，可以给分了。" }); };
     if (this.data.room.gameType === "mahjong" && this.data.activePlayers < 4) {
       return this.confirmRoomAction(`以当前 ${this.data.activePlayers} 人开始？`, "开始后本局成员固定。", start);
     }
     this.setData({ busy: true, errorMessage: "", feedback: "" });
-    try { await start(this.data.room); } catch (error) { this.handleMutationError(error); }
+    try { await start(this.data.room); } catch (error) { await this.handleMutationError(error, "actionError"); }
     finally { this.setData({ busy: false }); }
   },
 
@@ -673,7 +768,7 @@ module.exports = {
   },
 
   async submitGifts() {
-    if (this.data.busy || !this.data.room) return;
+    if (this.data.busy || this.writesPaused() || !this.data.room) return;
     const draft = giftDraft(this.data.recipients);
     if (!draft.valid) { this.setData({ giftError: "请输入有效的正整数，总分不能超过 2147483647。" }); return; }
     const allocations = this.data.recipients.filter(item => String(item.pointsInput || "").trim()).map(item => ({ toParticipantId: item.id, points: parsePoints(item.pointsInput) }));
@@ -684,12 +779,12 @@ module.exports = {
       await this.applyRoom(room);
       this.setData({ busy: false, feedback: "给分已入账。" });
       this.showMahjongNotice("给分已入账", { giftConfirmed: true });
-    } catch (error) { this.handleMutationError(error); this.setData({ giftError: getScoreErrorMessage(error) }); }
+    } catch (error) { await this.handleMutationError(error, "giftError"); }
   },
 
   async reverseGift(event) {
     const id = event.currentTarget.dataset.id;
-    if (this.data.busy || !this.data.isHost || !this.data.room || this.data.room.status !== "active" || !this.data.giftHistory.some(item => item.id === id && item.canReverse)) return;
+    if (this.data.busy || this.writesPaused() || !this.data.isHost || !this.data.room || this.data.room.status !== "active" || !this.data.giftHistory.some(item => item.id === id && item.canReverse)) return;
     return this.confirmRoomAction("撤销这笔给分？", "会新增一笔反向记录，原记录保留。", async room => {
       await this.applyRoom(await reverseScoreGiftBatch(this.credential, room, id));
       this.setData({ feedback: "给分已撤销。" });
@@ -697,7 +792,7 @@ module.exports = {
   },
 
   async cancelRoom() {
-    if (this.data.busy || !canCancelRoom(this.data.room, this.data.isHost)) return;
+    if (this.data.busy || this.writesPaused() || !canCancelRoom(this.data.room, this.data.isHost)) return;
     const active = this.data.room.status === "active";
     return this.confirmRoomAction(active ? "结束空房间？" : "取消房间？", "仅无记分记录的房间可取消，操作后不能恢复。", async room => {
       await this.applyRoom(await cancelScoreRoom(this.credential, room));
@@ -711,6 +806,7 @@ module.exports = {
       settlementOpen: true,
       settlementRateInput: "1",
       settlementRateError: "",
+      settlementError: "",
       errorMessage: "",
     }, () => this.updateSettlementPreview("1"));
   },
@@ -739,35 +835,46 @@ module.exports = {
   },
 
   async confirmSettlement() {
-    if (this.data.busy || !this.data.settlementOpen || !this.data.isHost || !this.data.room || this.data.room.status !== "active") return;
+    if (this.data.busy || this.writesPaused() || !this.data.settlementOpen || !this.data.isHost || !this.data.room || this.data.room.status !== "active") return;
     const centsPerPoint = parseYuanToCents(this.data.settlementRateInput);
     if (!centsPerPoint) {
       this.setData({ settlementRateValid: false, settlementRateError: "请输入大于 0、最多两位小数的每分金额。" });
       return;
     }
-    const result = await showModal({
-      title: "确认结算？",
-      content: `将按 ${formatCNY(centsPerPoint)} / 分结算。结算后房间会立即结束，分数和金额都不能再修改。`,
-      confirmText: "确认结算",
-      confirmColor: "#b4472f",
-      cancelText: "再看看",
-    });
-    if (!result.confirm) return;
-    this.setData({ busy: true, errorMessage: "", feedback: "" });
+    const reviewed = this.data.room;
+    this.setData({ busy: true, settlementError: "", errorMessage: "", feedback: "" });
     try {
-      const room = await settleScoreRoom(this.credential, this.data.room, centsPerPoint);
+      const result = await showModal({ title: "确认结算？", content: `将按 ${formatCNY(centsPerPoint)} / 分结算。结算后房间会立即结束，分数和金额都不能再修改。`, confirmText: "确认结算", confirmColor: "#b4472f", cancelText: "再看看" });
+      if (!result.confirm) return;
+      if (this.writesPaused()) { this.setData({ settlementError: "网络中断或尚未完成同步，请稍后重试。" }); return; }
+      if (!this.data.room || this.data.room.id !== reviewed.id || this.data.room.version !== reviewed.version) {
+        this.setData({ settlementError: "房间状态已变化，请核对后重新结算。" }); return;
+      }
+      const room = await settleScoreRoom(this.credential, reviewed, centsPerPoint);
       await this.applyRoom(room);
-      this.setData({ busy: false, settlementOpen: false, feedback: this.data.isGeneral ? "本次记分已结算。" : "牌局已结算。" });
+      this.setData({ settlementOpen: false, feedback: this.data.isGeneral ? "本次记分已结算。" : "牌局已结算。" });
     } catch (error) {
-      this.handleMutationError(error);
-    }
+      await this.handleMutationError(error, "settlementError");
+    } finally { this.setData({ busy: false }); }
   },
 
-  handleMutationError(error) {
-    if (error && error.snapshot) {
-      this.applyRoom(error.snapshot);
-    }
-    this.setData({ busy: false, errorMessage: getScoreErrorMessage(error) });
+  async handleMutationError(error, field) {
+    if (error && error.snapshot) await this.applyRoom(error.snapshot);
+    this.setData({ busy: false, errorMessage: getScoreErrorMessage(error), ...(field ? { [field]: getScoreErrorMessage(error) } : {}) });
+  },
+
+  copySettlement() {
+    if (!this.data.room || this.data.room.status !== "settled") return;
+    this.setData({ settlementCopyError: "" });
+    const view = settlementView(this.data.room, this.data.self && this.data.self.id);
+    wx.setClipboardData({ data: view.settlementCopyText, fail: () => {
+      if (this.pageActive !== false) this.setData({ settlementCopyError: "复制失败，请重试复制结算清单。" });
+    } });
+  },
+
+  rematch() {
+    const url = rematchRoute(this.data.room, this.data.self);
+    if (url) wx.navigateTo({ url });
   },
 
   startRealtime() {
@@ -776,15 +883,17 @@ module.exports = {
     if (this.realtimeClose && this.realtimeRoomID === this.data.room.id) return;
     this.stopRealtime();
     this.realtimeRoomID = this.data.room.id;
+    const epoch = this.realtimeEpoch;
+    const current = () => epoch === this.realtimeEpoch && this.pageActive !== false && this.pageVisible !== false;
     this.realtimeClose = connectScoreRealtime({
       credential: this.credential,
       roomId: this.data.room.id,
       onInvalidate: (version) => {
-        if (!this.data.room || version <= this.data.room.version) return;
+        if (!current() || !this.data.room || version <= this.data.room.version) return;
         this.refreshRoom();
       },
       onStatus: (status, reason) => {
-        if (this.pageVisible === false || this.pageActive === false) return;
+        if (!current()) return;
         const reconnected = status === "online" && this.hadRealtimeConnection && this.data.realtimeStatus !== "online";
         if (status === "online") this.hadRealtimeConnection = true;
         if (reconnected) this.showMahjongNotice("已重连，正在同步最新分数");
@@ -812,6 +921,7 @@ module.exports = {
   },
 
   stopRealtime() {
+    this.realtimeEpoch = (this.realtimeEpoch || 0) + 1;
     if (this.realtimeClose) this.realtimeClose();
     this.realtimeClose = null;
     this.realtimeRoomID = "";
