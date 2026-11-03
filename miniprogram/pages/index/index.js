@@ -1,8 +1,13 @@
 const { request } = require("../../utils/request");
 const { getAccessToken, getStoredUser } = require("../../utils/auth");
+const { getRecentScoreRoom, saveRecentScoreRoom, clearRecentScoreRoom, getScoreSession } = require("../../utils/score-session");
+const { getScoreRoom, getScoreErrorMessage } = require("../../utils/score-api");
 
 Page({
   data: {
+    recentRoom: null,
+    resumeBusy: false,
+    resumeError: "",
     checking: false,
     backendStatus: "idle",
     statusLabel: "检测中",
@@ -23,6 +28,8 @@ Page({
 
   onShow() {
     this._websiteHidden = false;
+    this._resumeGeneration = (this._resumeGeneration || 0) + 1;
+    this.setData({ recentRoom: getRecentScoreRoom(), resumeError: "", resumeBusy: false });
     const user = getStoredUser();
     this.setData({
       isLoggedIn: Boolean(getAccessToken()),
@@ -32,7 +39,31 @@ Page({
 
   onHide() {
     this._websiteHidden = true;
+    this._resumeGeneration = (this._resumeGeneration || 0) + 1;
     this.closeWebsiteDialog();
+  },
+
+  async resumeRoom() {
+    const recent = getRecentScoreRoom();
+    if (this.data.resumeBusy || !recent) return;
+    const session = recent.credentialKind === "guest" ? getScoreSession() : null;
+    const credential = recent.credentialKind === "account" ? { kind: "account", token: getAccessToken() } : session && { kind: "guest", token: session.guestToken };
+    if (!credential || !credential.token) return;
+    const generation = this._resumeGeneration;
+    this.setData({ resumeBusy: true, resumeError: "" });
+    const current = () => { const value = getRecentScoreRoom(); return this._resumeGeneration === generation && value && JSON.stringify(value) === JSON.stringify(recent); };
+    try {
+      const room = await getScoreRoom(credential, recent.roomId);
+      if (!current()) return;
+      saveRecentScoreRoom(room, credential);
+      if (room.status !== "active" && room.status !== "waiting") { this.setData({ recentRoom: null, resumeError: "牌局已结束。" }); return; }
+      const route = room.gameType === "zhajinhua" ? "poker-room" : "room";
+      wx.navigateTo({ url: `/pages/score/${route}/index?roomId=${encodeURIComponent(room.id)}${credential.kind === "account" ? "&identity=account" : ""}` });
+    } catch (error) {
+      if (!current()) return;
+      if (error.statusCode === 401 || error.statusCode === 403 || error.statusCode === 404) { clearRecentScoreRoom(recent.roomId); this.setData({ recentRoom: null }); }
+      this.setData({ resumeError: getScoreErrorMessage(error) });
+    } finally { if (this._resumeGeneration === generation) this.setData({ resumeBusy: false }); }
   },
 
   copyWebsite() {

@@ -72,3 +72,17 @@ test("home keeps three score entries without availability pills or arrow decorat
   assert.doesNotMatch(styles, /\.scene-arrow\s*\{/);
   assert.doesNotMatch(styles, /\.scene-pill\s*\{|\.available-pill\s*\{|\.poker-card\s+\.scene-pill\s*\{/);
 });
+
+test('resume validates the account room before navigating without joining', async () => {
+  let definition, navigated = '', reads = 0;
+  const recent = { roomId: 'r', credentialKind: 'account', userId: 'u', gameType: 'generic', status: 'active' };
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../pages/index/index.js'), 'utf8'), {
+    require: (p) => p.includes('score-api') ? { getScoreRoom: async (credential) => { reads++; assert.equal(credential.kind, 'account'); return { id: 'r', status: 'active', gameType: 'generic' }; } } : p.includes('score-session') ? { getRecentScoreRoom: () => recent, saveRecentScoreRoom: () => {} } : p.includes('auth') ? { getAccessToken: () => 'account', getStoredUser: () => ({ id: 'u' }) } : {},
+    Page: p => { definition = p; }, wx: { navigateTo: o => { navigated = o.url; } },
+  });
+  const page = { ...definition, data: { ...definition.data, recentRoom: recent }, setData(p) { Object.assign(this.data, p); } };
+  await page.resumeRoom();
+  assert.equal(reads, 1);
+  assert.match(navigated, /roomId=r/);
+  assert.match(navigated, /identity=account/);
+});

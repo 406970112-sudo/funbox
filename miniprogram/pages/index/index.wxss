@@ -419,3 +419,7 @@
 .meme-entry { position:relative; display:flex; align-items:center; min-height:230rpx; box-sizing:border-box; padding:30rpx; overflow:hidden; border:2rpx solid white; border-radius:32rpx; background:#eeeaff; }
 .meme-entry-art {position:absolute;right:0;top:0;width:310rpx;height:230rpx;}
 .meme-caption {display:block;margin-top:20rpx;color:#8d83a8;font-size:22rpx;}
+
+.resume-card { margin: 24rpx 32rpx; padding: 28rpx; border-radius: 24rpx; background: #fff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.resume-button { background: #2d5bff; color: #fff; font-size: 26rpx; margin: 0; }
+.resume-error { width: 100%; color: #b4472f; font-size: 24rpx; margin-top: 12rpx; }

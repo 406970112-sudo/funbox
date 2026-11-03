@@ -92,6 +92,7 @@ require.cache[session] = {
     getScoreSession: () => null,
     saveHostRoomPassword: (roomId, password) => passwordSaves.push({ roomId, password }),
     saveScoreSession: (value) => scoreSessionSaves.push(value),
+    saveRecentScoreRoom: () => {},
   },
 };
 const realtime = require.resolve("../utils/score-realtime");

@@ -9,6 +9,11 @@
       <view class="hero-art art"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     </view>
   </view>
+  <view wx:if="{{recentRoom}}" class="resume-card">
+    <view><text class="scene-title">继续「{{recentRoom.name}}」</text><text class="scene-desc">{{recentRoom.status === 'active' ? '进行中' : '等待开始'}}</text></view>
+    <button class="resume-button" loading="{{resumeBusy}}" disabled="{{resumeBusy}}" bindtap="resumeRoom">继续牌局</button>
+    <text wx:if="{{resumeError}}" class="resume-error">{{resumeError}}</text>
+  </view>
   <view class="section-head"><text class="section-title">选择牌局</text><text class="section-note">不同玩法，一样清楚</text></view>
   <view class="scene-grid">
     <view class="scene-card mahjong-card" bindtap="openMahjong">

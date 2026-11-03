@@ -462,3 +462,16 @@ test("overlapping refreshes are coalesced into one follow-up fetch", async () =>
 
   assert.equal(loadCalls, 2);
 });
+
+test('recipient order stays in join order when scores change and preserves drafts', async () => {
+  const page = createPage({ recipients: [{ id: 'b', pointsInput: '5' }] });
+  page.pageActive = false;
+  page.credential = { kind: 'guest', token: 'token' };
+  const participants = [
+    { id: 'a', role: 'guest', status: 'active', displayName: 'A', totalPoints: 0, joinedAt: '1' },
+    { id: 'b', role: 'guest', status: 'active', displayName: 'B', totalPoints: -2, joinedAt: '2' },
+    { id: 'c', role: 'guest', status: 'active', displayName: 'C', totalPoints: 9, joinedAt: '3' },
+  ];
+  await page.applyRoom({ id: 'stable', gameType: 'generic', status: 'active', version: 1, selfParticipantId: 'a', participants, giftBatches: [] });
+  assert.deepEqual(page.data.recipients.map(p => [p.id, p.pointsInput]), [['b', '5'], ['c', '']]);
+});

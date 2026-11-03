@@ -19,6 +19,7 @@ const {
   getHostRoomPassword,
   getScoreSession,
   saveScoreSession,
+  saveRecentScoreRoom,
 } = require("./score-session");
 const { buildInviteContent } = require("./invite");
 const { formatCNY, formatScore, parsePoints, parseYuanToCents } = require("./score-format");
@@ -168,7 +169,9 @@ module.exports = {
     }
     this.justJoined = options.joined === "1";
     const roomId = decodeURIComponent(options.roomId);
-    const credential = credentialForRoom(roomId, this.loadAccessToken);
+    const credential = options.identity === "account" && this.loadAccessToken
+      ? { kind: "account", token: this.loadAccessToken }
+      : credentialForRoom(roomId, this.loadAccessToken);
     if (!credential) {
       this.setData({ loading: false, errorMessage: "尚未加入该牌局，请返回后重新加入。" });
       return;
@@ -340,6 +343,7 @@ module.exports = {
     if (this.data.room && this.data.room.id === room.id && Number(room.version) < Number(this.data.room.version)) {
       return false;
     }
+    saveRecentScoreRoom(room, this.credential);
     const previousRoom = this.data.room;
     this.setRoomTheme(room);
     const isGeneral = room.gameType === "generic";
@@ -385,7 +389,9 @@ module.exports = {
       mark: seatMarks[activePlayers + index] || "＋",
     }));
     const recipients = room.status === "active"
-      ? participants.filter((participant) => participant.id !== selfID).map((participant) => ({
+      ? participants.filter((participant) => participant.id !== selfID)
+        .sort((left, right) => String(left.joinedAt).localeCompare(String(right.joinedAt)) || String(left.id).localeCompare(String(right.id)))
+        .map((participant) => ({
         ...participant,
         pointsInput: this.data.recipients.find((item) => item.id === participant.id)?.pointsInput || "",
       }))
