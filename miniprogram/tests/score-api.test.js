@@ -166,3 +166,25 @@ test("score API preserves backend error codes and snapshots", async () => {
     (error) => error.statusCode === 409 && error.scoreCode === "score_version_conflict" && error.snapshot.version === 9,
   );
 });
+
+test("gift reversal and room cancellation send server version and independent action IDs", async () => {
+  const { reverseScoreGiftBatch, cancelScoreRoom } = require("../utils/score-api");
+  const snapshot = { id: "room/a", version: 8, status: "active" };
+  calls.length = 0;
+  global.wx.request = (options) => {
+    calls.push(options);
+    options.success({ statusCode: 200, data: { room: snapshot } });
+  };
+  assert.deepEqual(await reverseScoreGiftBatch({ kind: "guest", token: "guest-token" }, snapshot, "batch/a"), snapshot);
+  assert.deepEqual(await cancelScoreRoom({ kind: "account", token: "account-token" }, snapshot), snapshot);
+  assert.match(calls[0].url, /\/score-rooms\/room%2Fa\/gifts\/batch%2Fa\/reverse$/);
+  assert.match(calls[1].url, /\/score-rooms\/room%2Fa\/cancel$/);
+  assert.equal(calls[0].header.Authorization, "Bearer guest-token");
+  assert.equal(calls[1].header.Authorization, "Bearer account-token");
+  for (const call of calls) {
+    assert.equal(call.method, "POST");
+    assert.equal(call.data.expectedRoomVersion, 8);
+    assert.match(call.data.clientActionId, /^score-.+/);
+  }
+  assert.notEqual(calls[0].data.clientActionId, calls[1].data.clientActionId);
+});

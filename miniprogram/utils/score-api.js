@@ -154,6 +154,14 @@ function submitScoreGifts(credential, room, allocations) {
   return mutateRoom(credential, room, "/gifts", { allocations });
 }
 
+function reverseScoreGiftBatch(credential, room, batchID) {
+  return mutateRoom(credential, room, `/gifts/${encodeURIComponent(batchID)}/reverse`);
+}
+
+function cancelScoreRoom(credential, room) {
+  return mutateRoom(credential, room, "/cancel");
+}
+
 function settleScoreRoom(credential, room, centsPerPoint) {
   return mutateRoom(credential, room, "/settle", {
     centsPerPoint,
@@ -216,6 +224,8 @@ function getScoreErrorMessage(error) {
 
 module.exports = {
   bindScoreParticipantAccount,
+  cancelScoreRoom,
+  reverseScoreGiftBatch,
   createRealtimeTicket,
   createScoreRoom,
   getScoreErrorMessage,

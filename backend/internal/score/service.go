@@ -1291,7 +1291,21 @@ func (s *Service) CancelRoom(ctx context.Context, actor Actor, meta CommandMeta)
 		if actor.Role != ParticipantHost {
 			return ErrForbidden
 		}
-		if room.Status != RoomWaiting || len(room.Rounds) != 0 {
+		canCancelActive := room.Status == RoomActive && (room.GameType == GameTypeMahjong || room.GameType == GameTypeGeneric)
+		if (room.Status != RoomWaiting && !canCancelActive) || len(room.GiftBatches) != 0 ||
+			len(room.Rounds) != 0 || room.CurrentRound != nil ||
+			len(room.ZhaJinHuaHands) != 0 || room.CurrentZhaJinHuaHand != nil {
+			return ErrInvalidState
+		}
+		// Snapshots omit cancelled rounds; persisted history still prevents deleting the room.
+		var hasHistory bool
+		if err := tx.QueryRowContext(ctx, `SELECT
+			EXISTS(SELECT 1 FROM score_gift_batches WHERE room_id = ?) OR
+			EXISTS(SELECT 1 FROM score_rounds WHERE room_id = ?) OR
+			EXISTS(SELECT 1 FROM score_zjh_hands WHERE room_id = ?)`, room.ID, room.ID, room.ID).Scan(&hasHistory); err != nil {
+			return err
+		}
+		if hasHistory {
 			return ErrInvalidState
 		}
 		_, err := tx.ExecContext(ctx, `UPDATE score_rooms SET status = 'cancelled', cancelled_at = ? WHERE id = ?`, s.now().UTC().Unix(), room.ID)
