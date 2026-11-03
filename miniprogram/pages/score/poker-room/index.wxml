@@ -54,7 +54,7 @@
       <view class="membership-copy"><text class="card-title">有 {{poker.pendingMembers.length}} 位牌友申请入座</text><text class="muted">{{poker.betweenHands ? '开场前请先确认，让牌友及时入座。' : '本场结束后可确认入座，先查看申请。'}}</text></view>
       <button class="tiny admission-button" data-sheet="members" bindtap="openSheet" disabled="{{busy}}"><text>{{poker.betweenHands ? '去处理' : '查看申请'}}</text><view class="toolbar-arrow" aria-hidden="true"></view></button>
     </view>
-    <view wx:if="{{poker.ended}}" class="card"><text class="poker-title">这桌，账已理清</text><text class="muted">全部曾参与玩家已计入 · 每分 {{poker.rateMoney}}</text></view>
+    <view wx:if="{{poker.ended}}" class="card"><text class="poker-title">{{room.status === 'cancelled' ? '房间已取消' : '这桌，账已理清'}}</text><text class="muted">{{room.status === 'cancelled' ? '本房间没有产生账目。' : '全部曾参与玩家已计入 · 每分 ' + poker.rateMoney}}</text></view>
     <block wx:elif="{{poker.betweenHands}}">
       <view wx:if="{{isHost}}" class="invite-card poker-invite-card">
         <view class="invite-main">
@@ -74,6 +74,8 @@
         </view>
         </view>
       </view>
+      <button wx:if="{{canCancelRoom}}" class="secondary-button" disabled="{{busy}}" bindtap="cancelRoom">取消房间</button>
+      <button wx:if="{{room.status === 'waiting'}}" class="secondary-button" disabled="{{busy}}" bindtap="goHome">返回首页</button>
       <view class="card"><text class="card-title">{{poker.latestFinishedHand ? '本场已记，继续开场' : '牌友都在，准备开场'}}</text><text class="muted">每分金额固定 · 名单变动后请核对下场座位</text></view>
     </block>
     <block wx:else>
@@ -111,7 +113,7 @@
       <text wx:else class="muted">等待房主核对本场有无喜钱</text>
     </view>
     <view wx:if="{{poker.betweenHands && poker.latestFinishedHand}}" class="card"><text class="card-title">本场账单（含喜钱）</text><view wx:for="{{poker.resultPlayers}}" wx:key="id" class="ledger-row"><text>{{item.name}}</text><text>{{item.deltaText}} 分</text><text>{{item.money}}</text></view></view>
-    <view wx:if="{{poker.ended}}" class="card"><view wx:for="{{poker.members}}" wx:key="id" class="ledger-row"><text>{{item.displayName}} {{item.seatStatus === 'left' ? '· 已离场' : ''}}</text><text>{{item.scoreText}} 分</text><text>{{item.money}}</text></view><text class="card-title">转账建议</text><view wx:for="{{settlementTransfers}}" wx:key="key" class="ledger-row"><text>{{item.fromName}} → {{item.toName}}</text><text>{{item.amountText}}</text></view><button class="secondary-button" bindtap="goHome">返回首页</button></view>
+    <view wx:if="{{poker.ended}}" class="card"><view wx:for="{{poker.members}}" wx:key="id" class="ledger-row"><text>{{item.displayName}} {{item.seatStatus === 'left' ? '· 已离场' : ''}}</text><text>{{item.scoreText}} 分</text><text>{{item.money}}</text></view><text wx:if="{{room.status === 'settled'}}" class="card-title">转账建议</text><view wx:for="{{settlementTransfers}}" wx:key="key" class="ledger-row"><text>{{item.fromName}} → {{item.toName}}</text><text>{{item.amountText}}</text></view><button class="secondary-button" bindtap="goHome">返回首页</button></view>
     <view class="action-dock" wx:if="{{!poker.ended}}">
       <block wx:if="{{poker.betweenHands}}"><button class="primary-button" wx:if="{{isHost}}" disabled="{{!poker.canStart}}" loading="{{busy}}" bindtap="startHand">{{poker.canStart ? (poker.latestFinishedHand ? '开始下一场 · 第 ' : '开始第 ') + poker.nextHandNumber + ' 场' : '至少 2 人入座才能开始'}}</button><button wx:if="{{isHost}}" class="secondary-button dismiss-button" data-sheet="ledger" bindtap="openSheet" disabled="{{!poker.canManage}}">散场 · 核对整桌账本</button><text wx:else class="waiting-copy">{{poker.seatNotice === 'left' ? '申请重新入座后，等待房主确认' : poker.seatNotice === 'pending' ? '入座申请已提交，等待房主确认' : '等待房主开场'}}</text></block>
       <block wx:elif="{{poker.canAct}}"><button class="primary-button" bindtap="follow">跟注 {{poker.followPoints}} 分（{{poker.followMoney}}）</button><view class="choices"><button class="secondary-button" disabled="{{!poker.canRaise}}" bindtap="openRaise">加注</button><button class="secondary-button" disabled="{{!poker.canLook}}" bindtap="look">{{poker.canLook ? '我已看牌' : '已看 · 2倍'}}</button><button class="secondary-button" bindtap="fold">弃牌</button></view><button wx:if="{{poker.canCompare}}" class="secondary-button" bindtap="openCompare">比牌（剩 {{poker.liveCount}} 人）</button></block>

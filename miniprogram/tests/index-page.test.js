@@ -86,3 +86,48 @@ test('resume validates the account room before navigating without joining', asyn
   assert.match(navigated, /roomId=r/);
   assert.match(navigated, /identity=account/);
 });
+
+test('resume ignores stale token, guest replacement, and hidden page results', async () => {
+  for (const change of ['token', 'guest', 'hide']) {
+    let definition, resolveRead, navigated = false, token = 't';
+    let recent = {roomId:'r', credentialKind: change === 'guest' ? 'guest' : 'account', userId:'u', guestSessionId:'s', status:'active'};
+    let session = {roomId:'r',guestToken:'g',sessionId:'s'};
+    vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../pages/index/index.js'), 'utf8'), {
+      require: p => p.includes('score-api') ? {getScoreRoom: () => new Promise(r => {resolveRead=r;})} : p.includes('score-session') ? {getRecentScoreRoom:()=>recent,getScoreSession:()=>session,saveRecentScoreRoom:()=>{throw Error('stale save');}} : p.includes('auth') ? {getAccessToken:()=>token,getStoredUser:()=>({id:'u'})} : {},
+      Page:p=>{definition=p;}, wx:{navigateTo:()=>{navigated=true;}} });
+    const page={...definition,data:{...definition.data},setData(p){Object.assign(this.data,p);}};
+    const pending=page.resumeRoom();
+    if(change==='token') token='new';
+    if(change==='guest') session={...session,guestToken:'new'};
+    if(change==='hide') page.onHide();
+    resolveRead({id:'r',status:'active'});
+    await pending;
+    assert.equal(navigated,false,change);
+  }
+});
+
+test('terminal and expired resume show feedback; transient failures preserve recent room', async () => {
+  for(const scenario of ['terminal','expired','network']) {
+    let definition, cleared=0; const recent={roomId:'r',credentialKind:'account',userId:'u',status:'active'};
+    vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../pages/index/index.js'),'utf8'),{
+      require:p=>p.includes('score-api')?{getScoreRoom:async()=>{if(scenario==='terminal')return {id:'r',status:'settled'}; throw Object.assign(new Error('failure'),{statusCode:scenario==='expired'?401:0,isNetworkError:scenario==='network'});},getScoreErrorMessage:()=> 'failure'}:p.includes('score-session')?{getRecentScoreRoom:()=>recent,saveRecentScoreRoom:()=>{},clearRecentScoreRoom:()=>{cleared++;}}:p.includes('auth')?{getAccessToken:()=> 't',getStoredUser:()=>({id:'u'})}:{},
+      Page:p=>{definition=p;},wx:{} });
+    const page={...definition,data:{...definition.data,recentRoom:recent},setData(p){Object.assign(this.data,p);}};
+    await page.resumeRoom();
+    assert.ok(page.data.resumeError);
+    assert.equal(cleared,scenario==='expired'?1:0);
+    assert.equal(page.data.recentRoom===null,scenario!=='network');
+  }
+});
+
+test('resume coalesces repeated taps and rejects a switched account', async () => {
+  let definition, finish, reads=0, navigation=0, user={id:'u'};
+  const recent={roomId:'r',credentialKind:'account',userId:'u',status:'active'};
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../pages/index/index.js'),'utf8'),{
+    require:p=>p.includes('score-api')?{getScoreRoom:()=>{reads++;return new Promise(r=>{finish=r;});}}:p.includes('score-session')?{getRecentScoreRoom:()=>recent,saveRecentScoreRoom:()=>{throw Error('stale save');}}:p.includes('auth')?{getAccessToken:()=> 'token',getStoredUser:()=>user}:{},
+    Page:p=>{definition=p;},wx:{navigateTo:()=>{navigation++;}} });
+  const page={...definition,data:{...definition.data},setData(p){Object.assign(this.data,p);}};
+  const pending=page.resumeRoom(); await page.resumeRoom(); assert.equal(reads,1);
+  user={id:'other'}; finish({id:'r',status:'active'}); await pending;
+  assert.equal(navigation,0);
+});

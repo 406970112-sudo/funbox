@@ -1,5 +1,7 @@
 const {
   bindScoreParticipantAccount,
+  cancelScoreRoom,
+  reverseScoreGiftBatch,
   getScoreErrorMessage,
   getScoreRoom,
   issueScoreInviteCode,
@@ -25,6 +27,7 @@ const { buildInviteContent } = require("./invite");
 const { formatCNY, formatScore, parsePoints, parseYuanToCents } = require("./score-format");
 const { connectScoreRealtime } = require("./score-realtime");
 const { drawScoreQRCode } = require("./score-qr");
+const { giftDraft, giftHistory: deriveGiftHistory, canCancelRoom } = require("./score-ux");
 const { motionPage, motionData } = require("./mahjong-motion");
 
 // Legacy waiting-room invites remain unchanged. V2 poker can also invite
@@ -106,6 +109,7 @@ module.exports = {
     loading: true,
     busy: false,
     errorMessage: "",
+    actionError: "",
     canRetryLoad: false,
     feedback: "",
     roomId: "",
@@ -130,6 +134,9 @@ module.exports = {
     vacantSeats: [],
     recipients: [],
     giftTotal: 0,
+    giftPreview: "",
+    giftError: "",
+    canCancelRoom: false,
     canSubmitGifts: false,
     giftHistory: [],
     realtimeStatus: "connecting",
@@ -396,7 +403,6 @@ module.exports = {
         pointsInput: this.data.recipients.find((item) => item.id === participant.id)?.pointsInput || "",
       }))
       : [];
-    const giftTotal = recipients.reduce((sum, item) => sum + (parsePoints(item.pointsInput) || 0), 0);
     const settlementRows = room.settlement
       ? room.settlement.balances.map((balance) => ({
         ...balance,
@@ -421,13 +427,8 @@ module.exports = {
         amountText: formatCNY(transfer.amountCents),
       }))
       : [];
-    const giftHistory = (room.giftBatches || []).slice(0, 6).map((batch) => ({
-      ...batch,
-      items: batch.gifts.map((gift) => ({
-        ...gift,
-        text: `${participantMap[gift.fromParticipantId]?.displayName || "玩家"} 给 ${participantMap[gift.toParticipantId]?.displayName || "玩家"} ${gift.points} 分`,
-      })),
-    }));
+    const giftHistory = deriveGiftHistory(room.giftBatches || [], participantMap, isHost && room.status === "active");
+    const draft = giftDraft(recipients);
 
     this.setData({
       loading: false,
@@ -447,11 +448,14 @@ module.exports = {
       vacantSeats,
       recipients,
       giftHistory,
+      canCancelRoom: canCancelRoom(room, isHost),
       settlementRows,
       settlementTransfers,
       hasSettlementTransfers: settlementTransfers.length > 0,
-      giftTotal,
-      canSubmitGifts: giftTotal > 0,
+      giftTotal: draft.total,
+      giftPreview: draft.preview,
+      giftError: recipients.some(item => String(item.pointsInput || "").trim()) && !draft.valid ? "请输入有效的正整数，总分不能超过 2147483647。" : "",
+      canSubmitGifts: draft.valid,
       realtimeStatus: this.data.realtimeStatus,
       qrExpanded: canInviteRoom(room) ? this.data.qrExpanded : false,
       settlementOpen: room.status === "active" ? this.data.settlementOpen : false,
@@ -609,52 +613,96 @@ module.exports = {
     wx.setClipboardData({ data: this.data.room.code, success: () => this.showMahjongNotice("房间码已复制", { roomCodeCopied: true }, 1000) });
   },
 
-  async startRoom() {
-    if (this.data.busy || !this.data.isHost) return;
-    this.setData({ busy: true, errorMessage: "", feedback: "" });
+  async confirmRoomAction(title, content, operation) {
+    if (this.data.busy || !this.data.room) return;
+    const reviewed = this.data.room;
+    this.setData({ busy: true, errorMessage: "", actionError: "" });
     try {
-      const room = await startScoreRoom(this.credential, this.data.room);
-      await this.applyRoom(room);
-      this.setData({ busy: false, feedback: "牌局已开始，可以给分了。" });
+      const result = await showModal({ title, content, confirmText: "确认", confirmColor: "#2d5bff", cancelText: "再想想" });
+      if (!result.confirm) return;
+      if (!this.data.room || this.data.room.id !== reviewed.id || this.data.room.version !== reviewed.version) {
+        this.setData({ errorMessage: "房间状态已变化，请重新核对后操作。", actionError: "房间状态已变化，请重新核对后操作。" });
+        return;
+      }
+      await operation(reviewed);
     } catch (error) {
-      this.handleMutationError(error);
+      if (error && error.snapshot) await this.applyRoom(error.snapshot);
+      this.setData({ errorMessage: getScoreErrorMessage(error), actionError: getScoreErrorMessage(error) });
+    } finally { this.setData({ busy: false }); }
+  },
+
+  async startRoom() {
+    if (this.data.busy || !this.data.isHost || !this.data.canStart || !this.data.room || this.data.room.status !== "waiting") return;
+    const start = async room => { await this.applyRoom(await startScoreRoom(this.credential, room)); this.setData({ feedback: "牌局已开始，可以给分了。" }); };
+    if (this.data.room.gameType === "mahjong" && this.data.activePlayers < 4) {
+      return this.confirmRoomAction(`以当前 ${this.data.activePlayers} 人开始？`, "开始后本局成员固定。", start);
     }
+    this.setData({ busy: true, errorMessage: "", feedback: "" });
+    try { await start(this.data.room); } catch (error) { this.handleMutationError(error); }
+    finally { this.setData({ busy: false }); }
+  },
+
+  updateGiftDraft(recipients) {
+    const draft = giftDraft(recipients);
+    const hasInput = recipients.some(item => String(item.pointsInput || "").trim());
+    this.setData({ recipients, giftTotal: draft.total, giftPreview: draft.preview, canSubmitGifts: draft.valid,
+      giftError: hasInput && !draft.valid ? "请输入有效的正整数，总分不能超过 2147483647。" : "" });
   },
 
   handleGiftInput(event) {
     const participantId = event.currentTarget.dataset.id;
-    const value = String(event.detail.value || "").replace(/\D/g, "").slice(0, 10);
-    const recipients = this.data.recipients.map((item) => (
-      item.id === participantId ? { ...item, pointsInput: value } : item
-    ));
-    const giftTotal = recipients.reduce((sum, item) => sum + (parsePoints(item.pointsInput) || 0), 0);
-    this.setData({
-      recipients,
-      giftTotal,
-      canSubmitGifts: giftTotal > 0,
-      errorMessage: "",
-    });
+    const value = String(event.detail.value == null ? "" : event.detail.value);
+    this.updateGiftDraft(this.data.recipients.map(item => item.id === participantId ? { ...item, pointsInput: value } : item));
+  },
+
+  incrementGift(event) {
+    if (this.data.busy) return;
+    const { id, amount } = event.currentTarget.dataset;
+    const increment = Number(amount);
+    if (![1, 5, 10].includes(increment)) return;
+    const item = this.data.recipients.find(entry => entry.id === id);
+    if (!item) return;
+    const text = String(item.pointsInput || "").trim();
+    const previous = text ? parsePoints(text) : 0;
+    if (previous === null) { this.setData({ giftError: "请先修正无效分数。" }); return; }
+    this.updateGiftDraft(this.data.recipients.map(entry => entry.id === id ? { ...entry, pointsInput: String(previous + increment) } : entry));
+  },
+
+  clearGifts() {
+    if (!this.data.busy) this.updateGiftDraft(this.data.recipients.map(item => ({ ...item, pointsInput: "" })));
   },
 
   async submitGifts() {
     if (this.data.busy || !this.data.room) return;
-    const allocations = this.data.recipients
-      .map((item) => ({ toParticipantId: item.id, points: parsePoints(item.pointsInput) }))
-      .filter((item) => item.points);
-    if (!allocations.length) {
-      this.setData({ errorMessage: "请至少给一位玩家填写大于 0 的整数分。" });
-      return;
-    }
-    this.setData({ busy: true, errorMessage: "", feedback: "" });
+    const draft = giftDraft(this.data.recipients);
+    if (!draft.valid) { this.setData({ giftError: "请输入有效的正整数，总分不能超过 2147483647。" }); return; }
+    const allocations = this.data.recipients.filter(item => String(item.pointsInput || "").trim()).map(item => ({ toParticipantId: item.id, points: parsePoints(item.pointsInput) }));
+    this.setData({ busy: true, errorMessage: "", giftError: "", feedback: "" });
     try {
       const room = await submitScoreGifts(this.credential, this.data.room, allocations);
       this.setData({ recipients: this.data.recipients.map((item) => ({ ...item, pointsInput: "" })) });
       await this.applyRoom(room);
       this.setData({ busy: false, feedback: "给分已入账。" });
       this.showMahjongNotice("给分已入账", { giftConfirmed: true });
-    } catch (error) {
-      this.handleMutationError(error);
-    }
+    } catch (error) { this.handleMutationError(error); this.setData({ giftError: getScoreErrorMessage(error) }); }
+  },
+
+  async reverseGift(event) {
+    const id = event.currentTarget.dataset.id;
+    if (this.data.busy || !this.data.isHost || !this.data.room || this.data.room.status !== "active" || !this.data.giftHistory.some(item => item.id === id && item.canReverse)) return;
+    return this.confirmRoomAction("撤销这笔给分？", "会新增一笔反向记录，原记录保留。", async room => {
+      await this.applyRoom(await reverseScoreGiftBatch(this.credential, room, id));
+      this.setData({ feedback: "给分已撤销。" });
+    });
+  },
+
+  async cancelRoom() {
+    if (this.data.busy || !canCancelRoom(this.data.room, this.data.isHost)) return;
+    const active = this.data.room.status === "active";
+    return this.confirmRoomAction(active ? "结束空房间？" : "取消房间？", "仅无记分记录的房间可取消，操作后不能恢复。", async room => {
+      await this.applyRoom(await cancelScoreRoom(this.credential, room));
+      this.setData({ feedback: "房间已取消。" });
+    });
   },
 
   openSettlement() {

@@ -4,6 +4,8 @@ const assert = require("node:assert/strict");
 const joinCalls = [];
 const bindCalls = [];
 const settleCalls = [];
+const lifecycleCalls = [];
+let lifecycleError = null;
 let realtimeOptions = null;
 const scoreAPI = require.resolve("../utils/score-api");
 require.cache[scoreAPI] = {
@@ -43,6 +45,9 @@ require.cache[scoreAPI] = {
         actor: { participantId: "participant-1" },
       };
     },
+    startScoreRoom: async (...args) => { lifecycleCalls.push(["start", ...args]); return args[1]; },
+    cancelScoreRoom: async (...args) => { lifecycleCalls.push(["cancel", ...args]); if (lifecycleError) throw lifecycleError; return args[1]; },
+    reverseScoreGiftBatch: async (...args) => { lifecycleCalls.push(["reverse", ...args]); if (lifecycleError) throw lifecycleError; return args[1]; },
     settleScoreRoom: async (...args) => {
       settleCalls.push(args);
       return { id: "room-1", version: 9, status: "settled", participants: [] };
@@ -474,4 +479,70 @@ test('recipient order stays in join order when scores change and preserves draft
   ];
   await page.applyRoom({ id: 'stable', gameType: 'generic', status: 'active', version: 1, selfParticipantId: 'a', participants, giftBatches: [] });
   assert.deepEqual(page.data.recipients.map(p => [p.id, p.pointsInput]), [['b', '5'], ['c', '']]);
+});
+
+
+test('quick gift controls validate input, show preview and clear all', () => {
+  const page = createPage({recipients:[{id:'b',displayName:'B',pointsInput:''},{id:'c',displayName:'C',pointsInput:''}]});
+  page.incrementGift({currentTarget:{dataset:{id:'b',amount:5}}});
+  assert.equal(page.data.giftTotal, 5);
+  assert.match(page.data.giftPreview,/扣除 5.*B 增加 5/);
+  page.handleGiftInput({currentTarget:{dataset:{id:'c'}},detail:{value:'2147483648'}});
+  assert.equal(page.data.canSubmitGifts,false);
+  assert.ok(page.data.giftError);
+  page.clearGifts();
+  assert.deepEqual(page.data.recipients.map(r=>r.pointsInput),['','']);
+});
+
+test('mahjong start confirmation guards cancellation, duplicate and changed version', async () => {
+  lifecycleCalls.length=0;
+  let modal;
+  const original=wx.showModal; wx.showModal=o=>{modal=o;};
+  try {
+    const room={id:'r',version:1,status:'waiting',gameType:'mahjong'};
+    const page=createPage({room,isHost:true,activePlayers:3,canStart:true}); page.credential={kind:'account',token:'t'}; page.applyRoom=async()=>{};
+    const pending=page.startRoom();
+    await page.startRoom();
+    assert.equal(lifecycleCalls.length,0);
+    modal.success({confirm:false}); await pending;
+    assert.equal(lifecycleCalls.length,0);
+    const stale=page.startRoom(); page.data.room={...room,version:2}; modal.success({confirm:true}); await stale;
+    assert.equal(lifecycleCalls.length,0);
+    const ok=page.startRoom(); modal.success({confirm:true}); await ok;
+    assert.equal(lifecycleCalls.filter(x=>x[0]==='start').length,1);
+  } finally { wx.showModal=original; }
+});
+
+test('host reverse and cancel are guarded, apply conflicts, and preserve draft', async () => {
+  lifecycleCalls.length=0;
+  const room={id:'r',version:1,status:'active',gameType:'generic',giftBatches:[{id:'g',kind:'normal',gifts:[]}],participants:[]};
+  const page=createPage({room,isHost:true,giftHistory:[{id:'g',canReverse:true}],recipients:[{id:'b',pointsInput:'8'}]});
+  page.credential={kind:'account',token:'t'}; let snapshot;
+  page.applyRoom=async r=>{snapshot=r;};
+  lifecycleError=Object.assign(new Error('conflict'),{snapshot:{...room,version:2}});
+  try { await page.reverseGift({currentTarget:{dataset:{id:'g'}}}); assert.equal(snapshot.version,2); assert.equal(page.data.recipients[0].pointsInput,'8'); assert.match(page.data.errorMessage,/conflict/); }
+  finally { lifecycleError=null; }
+  page.data.isHost=false; await page.reverseGift({currentTarget:{dataset:{id:'g'}}});
+  assert.equal(lifecycleCalls.length,1);
+  page.data.isHost=true; await page.cancelRoom(); assert.equal(lifecycleCalls.length,1);
+  page.data.room={...room,giftBatches:[]}; await page.cancelRoom(); assert.equal(lifecycleCalls[1][0],'cancel');
+});
+
+test('reverse and cancel lock while confirmation is pending and surface server rejection', async () => {
+  const original=wx.showModal; let modal; wx.showModal=o=>{modal=o;};
+  lifecycleCalls.length=0;
+  const room={id:'r',version:1,status:'active',gameType:'generic',giftBatches:[{id:'g',kind:'normal',gifts:[]}],participants:[]};
+  const page=createPage({room,isHost:true,giftHistory:[{id:'g',canReverse:true}]}); page.credential={kind:'account',token:'t'}; page.applyRoom=async()=>{};
+  try {
+    const pending=page.reverseGift({currentTarget:{dataset:{id:'g'}}});
+    await page.reverseGift({currentTarget:{dataset:{id:'g'}}});
+    assert.equal(lifecycleCalls.length,0);
+    modal.success({confirm:true}); await pending;
+    assert.equal(lifecycleCalls.length,1);
+    page.data.room={...room,giftBatches:[]};
+    lifecycleError=new Error('persisted history prevents cancellation');
+    const cancel=page.cancelRoom(); await page.cancelRoom(); modal.success({confirm:true}); await cancel;
+    assert.equal(lifecycleCalls.length,2);
+    assert.match(page.data.errorMessage,/persisted history/);
+  } finally { lifecycleError=null; wx.showModal=original; }
 });

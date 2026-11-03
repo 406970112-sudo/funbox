@@ -1167,3 +1167,8 @@
 
 
 }
+
+.quick-row { display: flex; align-items: center; gap: 12rpx; margin: 10rpx 0; }
+.quick-name { flex: 1; font-size: 24rpx; color: #65708a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quick-button { margin: 0; padding: 0 20rpx; min-width: 72rpx; line-height: 56rpx; border-radius: 14rpx; background: #eef3ff; color: #2d5bff; font-size: 24rpx; }
+.give-preview { display: block; margin: 16rpx 0; color: #475675; font-size: 25rpx; line-height: 1.5; }

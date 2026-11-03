@@ -124,10 +124,14 @@
         </view>
       </view>
 
+      <view class="waiting-note">当前 {{activePlayers}} 人 · 开始后本局成员固定</view>
       <button wx:if="{{isHost}}" class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}" disabled="{{busy || !canStart}}" bindtap="startRoom">
         {{startLabel}}
       </button>
       <view wx:else class="waiting-note">{{isGeneral ? '已加入，等待房主开始记分。' : '已加入，等待房主开始牌局。'}}</view>
+      <text wx:if="{{canCancelRoom && actionError}}" class="error-banner" role="alert">{{actionError}}</text>
+      <button wx:if="{{canCancelRoom}}" class="secondary-button" disabled="{{busy}}" bindtap="cancelRoom">取消房间</button>
+      <button class="secondary-button" disabled="{{busy}}" bindtap="goHome">返回首页</button>
     </block>
 
     <block wx:elif="{{room.status === 'active'}}">
@@ -165,7 +169,8 @@
           <text class="section-meta">{{isGeneral ? '可一次给多人' : '赢家无需填写'}}</text>
         </view>
         <text class="give-hint">{{isGeneral ? '填好要给出的分数，一次提交。' : '填好这局要给的分，一次交账。'}}</text>
-        <view wx:for="{{recipients}}" wx:key="id" class="give-row">
+        <view wx:for="{{recipients}}" wx:key="id" class="give-recipient">
+        <view class="give-row">
           <view class="give-player">
             <text class="give-name">{{item.displayName}}</text>
             <text class="give-current">当前 {{item.scoreText}} 分</text>
@@ -173,13 +178,22 @@
           <input class="give-input" data-id="{{item.id}}" type="number" maxlength="10" placeholder="0" value="{{item.pointsInput}}" bindinput="handleGiftInput" />
           <text class="give-unit">分</text>
         </view>
+        <view class="quick-row">
+          <button class="quick-button" data-id="{{item.id}}" data-amount="1" bindtap="incrementGift" disabled="{{busy}}">+1</button>
+          <button class="quick-button" data-id="{{item.id}}" data-amount="5" bindtap="incrementGift" disabled="{{busy}}">+5</button>
+          <button class="quick-button" data-id="{{item.id}}" data-amount="10" bindtap="incrementGift" disabled="{{busy}}">+10</button>
+        </view>
+        </view>
         <view class="give-summary">
           <view>
             <text class="give-total-label">本次给出</text>
             <text class="give-total-value">{{giftTotal}} 分</text>
           </view>
         </view>
-        <button class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}" disabled="{{busy || !canSubmitGifts}}" bindtap="submitGifts">{{giftConfirmed ? '✓ 已入账' : '确认给分'}}</button>
+        <text wx:if="{{giftPreview}}" class="give-preview">{{giftPreview}}</text>
+        <text wx:if="{{giftError}}" class="error-banner" role="alert">{{giftError}}</text>
+        <button class="secondary-button" disabled="{{busy}}" bindtap="clearGifts">清空本次</button>
+        <button class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}" disabled="{{busy || !canSubmitGifts}}" bindtap="submitGifts">确认给出 {{giftTotal}} 分</button>
       </view>
 
       <view wx:if="{{giftHistory.length}}" class="history-card">
@@ -190,10 +204,18 @@
         <view wx:for="{{giftHistory}}" wx:key="id" class="history-row">
           <view class="history-number">{{item.number}}</view>
           <view class="history-copy">
+            <text wx:if="{{item.kind === 'reversal'}}" class="history-line">撤销第 {{item.originalNumber || '—'}} 笔</text>
+            <text wx:elif="{{item.reversed}}" class="history-line">已撤销</text>
             <text wx:for="{{item.items}}" wx:key="toParticipantId" class="history-line">{{item.text}}</text>
           </view>
+          <button wx:if="{{item.canReverse}}" class="quick-button" data-id="{{item.id}}" disabled="{{busy}}" bindtap="reverseGift">撤销</button>
         </view>
+        <text wx:if="{{actionError}}" class="error-banner" role="alert">{{actionError}}</text>
+        <text class="give-hint">{{isHost ? '记录有误可由房主撤销，原记录保留。' : '记录有误请联系房主撤销。'}}</text>
       </view>
+      <text wx:if="{{canCancelRoom && actionError}}" class="error-banner" role="alert">{{actionError}}</text>
+      <button wx:if="{{canCancelRoom}}" class="secondary-button" disabled="{{busy}}" bindtap="cancelRoom">结束空房间</button>
+      <button class="secondary-button" disabled="{{busy}}" bindtap="goHome">返回首页</button>
 
       <view wx:if="{{isHost && giftHistory.length}}" class="settle-dock">
         <view class="settle-dock-spacer"></view>

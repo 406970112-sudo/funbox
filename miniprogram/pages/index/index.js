@@ -51,7 +51,14 @@ Page({
     if (!credential || !credential.token) return;
     const generation = this._resumeGeneration;
     this.setData({ resumeBusy: true, resumeError: "" });
-    const current = () => { const value = getRecentScoreRoom(); return this._resumeGeneration === generation && value && JSON.stringify(value) === JSON.stringify(recent); };
+    const current = () => {
+      const value = getRecentScoreRoom();
+      const activeSession = credential.kind === "guest" ? getScoreSession() : null;
+      const identityMatches = credential.kind === "guest"
+        ? activeSession && activeSession.roomId === recent.roomId && activeSession.guestToken === credential.token && activeSession.sessionId === recent.guestSessionId
+        : getAccessToken() === credential.token && getStoredUser() && getStoredUser().id === recent.userId;
+      return this._resumeGeneration === generation && identityMatches && value && JSON.stringify(value) === JSON.stringify(recent);
+    };
     try {
       const room = await getScoreRoom(credential, recent.roomId);
       if (!current()) return;

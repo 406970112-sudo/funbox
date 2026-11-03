@@ -2,7 +2,7 @@ const base=require('../../../utils/score-room-base');
 const api=require('../../../utils/score-api');
 const {formatCNY}=require('../../../utils/score-format');
 const {derivePoker,shouldRemind,createPokerInput,potChangeFeedback}=require('../../../utils/poker-state');
-const {getScoreSession}=require('../../../utils/score-session');
+const {getScoreSession,saveRecentScoreRoom}=require('../../../utils/score-session');
 function confirm(title,content){return new Promise(resolve=>wx.showModal({title,content,confirmColor:'#2d5bff',success:r=>resolve(r.confirm),fail:()=>resolve(false)}));}
 Page({...base,
  data:{...base.data,qrSize:96,poker:null,offline:false,sheet:'',targetId:'',outcome:'',winnerId:'',raiseBase:'',bonusSelections:[],bonusRows:[],bonusEnabled:false,expandedBonusId:'',bonusChecked:false,reducedMotion:false,potMotion:true,vibrate:true,potPulse:false,settingsDraft:{},vibrationKeys:[]},
@@ -19,7 +19,7 @@ Page({...base,
  updatePoker(){if(!this.data.room)return;const id=this.data.room.selfParticipantId||(getScoreSession()||{}).participantId;this.setData({poker:derivePoker(this.data.room,id,{offline:this.data.offline||this.data.networkSyncing,busy:this.data.busy,width:this.data.windowWidth})});},
  async applyRoom(room){
   const old=this.data.room;if(old&&old.id===room.id&&room.version<old.version)return false;
-  if(old&&old.id===room.id&&old.version===room.version&&!this.data.loading&&this.data.poker?.betweenHands){this.lastRoomSyncAt=Date.now();this.maybeBindParticipantAccount();return false;}
+  if(old&&old.id===room.id&&old.version===room.version&&!this.data.loading&&this.data.poker?.betweenHands){saveRecentScoreRoom(room,this.credential);this.lastRoomSyncAt=Date.now();this.maybeBindParticipantAccount();return false;}
   const id=room.selfParticipantId||(getScoreSession()||{}).participantId;
   const remind=shouldRemind(old,room,id),key=room.currentZhaJinHuaHand?`${room.currentZhaJinHuaHand.id}:${(room.currentZhaJinHuaHand.actions||[]).length}`:'';
   await base.applyRoom.call(this,room);this.updatePoker();
