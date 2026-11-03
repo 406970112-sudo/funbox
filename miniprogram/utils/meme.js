@@ -45,6 +45,7 @@ function createMemeClient(options = {}) {
   const write = (key, value) => storage.set(PREFIX + key, value);
   const getUser = options.getUser || getStoredUser;
   const merging = new Map();
+  const favoriteStates = new Map();
 
   function accountScope() {
     if (!token()) return 'guest';
@@ -178,9 +179,17 @@ function createMemeClient(options = {}) {
     localFavorites: () => entries().filter(x => x.desired).map(x => x.image),
     pendingFavorite: id => entries().find(x => x.image.id === id),
     setLocalFavorite,
+    favoriteState(id, fallback = false) {
+      const pending = entries().find(x => x.image.id === id);
+      if (pending) return pending.desired;
+      const key = accountScope() + ":" + id;
+      return favoriteStates.has(key) ? favoriteStates.get(key) : fallback;
+    },
     mergeFavorites,
     async favorite(image, desired) {
+      const scope = accountScope();
       setLocalFavorite(image, desired);
+      favoriteStates.set(scope + ":" + image.id, desired);
       if (token()) {
         const result = await mergeFavorites();
         if (result.failed) throw new Error('云端同步失败，操作已保留，稍后重试');
@@ -264,7 +273,39 @@ function createMemeClient(options = {}) {
   };
 }
 
-function createPager(fetchPage, onChange = () => {}) {
+async function runImageMedia(page, image, action, platform = wx) {
+  if (page.data.busy || !image || image.unavailable || !image.url) return;
+  const operation = page._operationGeneration || 0;
+  const active = () => page._active && operation === (page._operationGeneration || 0);
+  page.setData({busy: true, progress: 0, actionError: '', permissionDenied: false});
+  try {
+    if (image.bytes > 5 * 1024 * 1024) {
+      const accepted = await new Promise(resolve => platform.showModal({title: '原图较大',
+        content: '本次将下载 ' + (image.bytes / 1024 / 1024).toFixed(1) + ' MB，建议在 Wi-Fi 下操作。',
+        success: r => resolve(r.confirm), fail: () => resolve(false)}));
+      if (!accepted) return;
+    }
+    if (!active()) return;
+    await page.client.media(image, action, platform, progress => {if (active()) page.setData({progress});}, active);
+    if (active() && action === 'save') platform.showToast({title: '已保存到相册', icon: 'success'});
+  } catch (error) {
+    if (active()) page.setData({actionError: /cancel/i.test(error.message) ? '已取消，可重新操作' : error.message + '；可重试或预览原图',
+      permissionDenied: /auth|deny|permission/i.test(error.message)});
+  } finally {
+    if (active()) page.setData({busy: false});
+  }
+}
+
+function uniqueImages(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+function createPager(fetchPage, onChange = () => {}, options = {}) {
   let generation = 0;
   let filters = {};
   let cursors = [''];
@@ -301,7 +342,7 @@ function createPager(fetchPage, onChange = () => {}) {
       if (current !== generation) return;
       cursors[page] = data.nextCursor || '';
       update({
-        items: (data.items || []).map(normalizeImage),
+        items: options.append ? uniqueImages([...(page > 1 ? state.items : []), ...(data.items || []).map(normalizeImage)]) : (data.items || []).map(normalizeImage),
         page,
         nextCursor: data.nextCursor || '',
         total: data.total || 0,
@@ -327,6 +368,7 @@ function createPager(fetchPage, onChange = () => {}) {
         ...input
       };
       cursors = [''];
+      if (options.append) update({items: [], page: 1, nextCursor: '', total: 0});
       return loadPage(1);
     },
     next() {
@@ -336,7 +378,7 @@ function createPager(fetchPage, onChange = () => {}) {
       if (!state.loading && state.page > 1) return loadPage(state.page - 1);
     },
     retry() {
-      return loadPage(requestedPage);
+      if (!state.loading) return loadPage(requestedPage);
     },
     cancel() {
       generation++;
@@ -353,6 +395,8 @@ function getMemeClient() {
 module.exports = {
   createMemeClient,
   createPager,
+  uniqueImages,
+  runImageMedia,
   getMemeClient,
   normalizeImage,
   mediaUrl,

@@ -2,6 +2,8 @@ const {
   getMemeClient,
   createPager,
   normalizeImage,
+  uniqueImages,
+  runImageMedia,
   mediaUrl
 } = require('../../../utils/meme');
 const {
@@ -9,6 +11,12 @@ const {
 } = require('../../../utils/auth');
 Page({
   data: {
+    favoriteBusy: {},
+    busy: false,
+    progress: 0,
+    canRetryImageAction: false,
+    actionError: '',
+    permissionDenied: false,
     mode: 'library',
     onlineDetailsExpanded: false,
     onlineSources: [],
@@ -90,9 +98,10 @@ Page({
     }) : this.client.list(input), patch => {
       if (this._active) this.setData({
         ...patch,
-        broken: {}
+        items: this.decorateFavorites(patch.items),
+        broken: patch.page > 1 ? this.data.broken : {}
       });
-    });
+    }, {append: true});
     wx.showShareMenu({
       menus: ['shareAppMessage']
     });
@@ -105,6 +114,10 @@ Page({
     const token = getAccessToken();
     const changed = token !== this._lastToken;
     this._lastToken = token;
+    if (changed) {
+      this._favoriteGeneration = (this._favoriteGeneration || 0) + 1;
+      this.setData({favoriteBusy: {}, items: this.decorateFavorites(this.data.items.map(x => ({...x, favorite: false})))});
+    } else this.setData({items: this.decorateFavorites(this.data.items)});
     if (changed && this.data.mode !== 'online' && this.data.tab === 'favorites') {
       this.pager.cancel();
       this.setData({
@@ -129,7 +142,7 @@ Page({
       else if (this.data.tab === 'ranking') this.loadRanking();
       else this.pager.retry();
     } else if (this.data.mode === 'online' && !this.data.onlineSources.length && !this.data.sourcesLoading) this.loadOnlineSources();
-    else if (!changed && this.data.mode !== 'online' && this.data.tab === 'favorites') this.refreshFavorites();
+
     if (this._scrollTop) wx.pageScrollTo({
       scrollTop: this._scrollTop,
       duration: 0
@@ -138,12 +151,14 @@ Page({
   onHide() {
     this._resumeRequest = this.data.loading;
     this._active = false;
+    this._operationGeneration = (this._operationGeneration || 0) + 1;
+    this._favoriteGeneration = (this._favoriteGeneration || 0) + 1;
     this._generation++;
     this._sourcesGeneration = (this._sourcesGeneration || 0) + 1;
     this.setData({
       datesLoading: false,
       sourcesLoading: false,
-      loading: false
+      loading: false, busy: false, favoriteBusy: {}
     });
     if (this.pager) this.pager.cancel();
   },
@@ -154,9 +169,10 @@ Page({
     this._scrollTop = e.scrollTop;
   },
   async syncFavorites(refresh = false) {
+    const token = getAccessToken();
     try {
       const result = await this.client.mergeFavorites();
-      if (!this._active) return;
+      if (!this._active || token !== getAccessToken()) return;
       this.setData({
         syncMessage: result.failed ? '部分收藏同步失败，已保留在本机，可重试' : ''
       });
@@ -164,9 +180,10 @@ Page({
         pendingItems: this.client.localFavorites().slice(0, 6).map(normalizeImage),
         pendingCount: this.client.localFavorites().length
       });
-      if (this.data.mode !== 'online' && (refresh || this.data.favoriteMode === 'pending') && this.data.tab === 'favorites') await this.refresh();
+      this.setData({items: this.decorateFavorites(this.data.items)});
+      if (this.data.mode !== 'online' && (refresh === true || this.data.favoriteMode === 'pending') && this.data.tab === 'favorites') await this.refresh();
     } catch (error) {
-      if (this._active) this.setData({
+      if (this._active && token === getAccessToken()) this.setData({
         syncMessage: error.message
       });
     }
@@ -188,6 +205,12 @@ Page({
       onlineSearched: false, onlineHasMore: false, onlineStatuses: [], onlineNotice: ''});
     if (mode === 'online') return this.loadOnlineSources();
     return this.refresh();
+  },
+  async searchOnline() {
+    const q = this.data.q.trim();
+    this._onlineDraft = q;
+    await this.changeMode({currentTarget: {dataset: {mode: 'online'}}});
+    if (this._active && this.data.mode === 'online') return this.search();
   },
   toggleOnlineDetails() {
     this.setData({onlineDetailsExpanded: !this.data.onlineDetailsExpanded});
@@ -216,6 +239,7 @@ Page({
       onlineSearched: false, items: [], error: '', page: 1, onlineHasMore: false, onlineStatuses: [], onlineNotice: ''});
   },
   async loadOnline(page = 1) {
+    if (this.data.loading) return;
     if (!this._onlineQuery || !this.data.onlineSelected.length || this.data.mode !== 'online') return;
     const generation = ++this._generation;
     this._onlineRequestedPage = page;
@@ -223,9 +247,9 @@ Page({
     try {
       const r = await this.client.onlineSearch({q: this._onlineQuery, sources: this._onlineSelected, page, limit: 36});
       if (!this._active || generation !== this._generation || this.data.mode !== 'online') return;
-      this.setData({items: (r.items || []).map(normalizeImage), page: r.page || page,
+      this.setData({items: this.decorateFavorites(uniqueImages([...(page > 1 ? this.data.items : []), ...(r.items || []).map(normalizeImage)])), page: r.page || page,
         onlineHasMore: !!r.hasMore, onlineStatuses: r.sources || [], onlineNotice: r.notice || '',
-        loading: false, broken: {}});
+        loading: false, broken: page > 1 ? this.data.broken : {}});
     } catch (_) {
       if (this._active && generation === this._generation) this.setData({loading: false, error: '联网搜索失败，请稍后重试'});
     }
@@ -457,7 +481,7 @@ Page({
     const all = this._localItems || [];
     const safe = Math.max(1, Math.min(page, Math.ceil(all.length / 36) || 1));
     this.setData({
-      items: all.slice((safe - 1) * 36, safe * 36).map(normalizeImage),
+      items: this.decorateFavorites(all.slice(0, safe * 36).map(normalizeImage)),
       page: safe,
       total: all.length,
       nextCursor: safe * 36 < all.length ? 'local' : '',
@@ -469,22 +493,12 @@ Page({
   next() {
     if (this.data.loading) return;
     if (this.data.mode === 'online') return this.data.onlineHasMore ? this.loadOnline(this.data.page + 1) : undefined;
-    if (this._localItems && this.data.tab === 'favorites' && (this.data.favoriteMode !== 'favorites' || !getAccessToken())) this.localPage(this.data.page + 1);
-    else this.pager.next();
-    wx.pageScrollTo({
-      scrollTop: 0,
-      duration: 0
-    });
+    if (!this.data.nextCursor && this.data.mode !== 'online') return;
+    if (this._localItems && this.data.tab === 'favorites' && (this.data.favoriteMode !== 'favorites' || !getAccessToken())) return this.localPage(this.data.page + 1);
+    return this.pager.next();
   },
-  previous() {
-    if (this.data.loading) return;
-    if (this.data.mode === 'online') return this.data.page > 1 ? this.loadOnline(this.data.page - 1) : undefined;
-    if (this.data.tab === 'favorites' && (this.data.favoriteMode !== 'favorites' || !getAccessToken())) this.localPage(this.data.page - 1);
-    else this.pager.previous();
-    wx.pageScrollTo({
-      scrollTop: 0,
-      duration: 0
-    });
+  onReachBottom() {
+    if (this.data.mode === 'online' || ['all', 'favorites'].includes(this.data.tab)) return this.next();
   },
   retry() {
     if (this.data.mode === 'online') return this._onlineQuery && this.data.onlineSelected.length ? this.loadOnline(this._onlineRequestedPage || 1) : this.search();
@@ -497,11 +511,76 @@ Page({
     });
   },
   openImage(e) {
+    if (this._suppressTap && this._suppressTap.id === e.currentTarget.dataset.id && Date.now() < this._suppressTap.until) {this._suppressTap = null; return;}
     const item = this.data.items.find(x => x.id === e.currentTarget.dataset.id);
     if (item && item.unavailable) return;
     wx.navigateTo({
       url: '/packages/meme/detail/index?id=' + encodeURIComponent(e.currentTarget.dataset.id)
     });
+  },
+  decorateFavorites(items) {
+    return (items || []).map(item => {
+      const pending = this.client.pendingFavorite && this.client.pendingFavorite(item.id);
+      const favorite = pending ? pending.desired : this.client.favoriteState ? this.client.favoriteState(item.id, !!item.favorite || (this.data.tab === 'favorites' && this.data.favoriteMode === 'favorites')) : !!item.favorite;
+      return {...item, favorite};
+    });
+  },
+  async toggleFavorite(e) {
+    const id = e.currentTarget.dataset.id;
+    const item = this.data.items.find(x => x.id === id);
+    if (!item || item.unavailable || this.data.favoriteBusy[id]) return;
+    const desired = !item.favorite;
+    const token = getAccessToken(), generation = this._favoriteGeneration || 0;
+    const active = () => this._active && token === getAccessToken() && generation === (this._favoriteGeneration || 0);
+    this.setData({favoriteBusy: {...this.data.favoriteBusy, [id]: true}, actionError: '', items: this.data.items.map(x => x.id === id ? {...x, favorite: desired} : x)});
+    try {await this.client.favorite(item, desired);}
+    catch (error) {
+      if (active()) {
+        const pending = this.client.pendingFavorite && this.client.pendingFavorite(id);
+        this.setData({items: this.data.items.map(x => x.id === id ? {...x, favorite: pending ? pending.desired : item.favorite} : x),
+          syncMessage: pending ? '收藏操作已保留在本机，云端同步失败，可重试同步' : '', actionError: pending ? '' : error.message});
+      }
+    } finally {
+      if (active()) {const busy = {...this.data.favoriteBusy}; delete busy[id]; this.setData({favoriteBusy: busy});}
+    }
+  },
+  longPressImage(e) {
+    const id = e.currentTarget.dataset.id;
+    const item = this.data.items.find(x => x.id === id);
+    this._suppressTap = {id, until: Date.now() + 1000};
+    if (!item || item.unavailable || this.data.busy) return;
+    wx.showActionSheet({itemList: ['预览原图', item.favorite ? '取消收藏' : '收藏', '分享图片'],
+      success: async result => {
+        if (!this._active) return;
+        this._suppressTap = {id, until: Date.now() + 1000};
+        if (result.tapIndex === 1) return this.toggleFavorite(e);
+        if (result.tapIndex === 0 || result.tapIndex === 2) return this.imageAction(id, result.tapIndex === 0 ? 'preview' : 'share');
+      }});
+  },
+  async imageAction(id, action) {
+    if (this.data.busy) return;
+    const generation = this._operationGeneration || 0;
+    this.setData({busy: true, actionError: '', canRetryImageAction: true});
+    this._lastImageAction = {id, action};
+    try {
+      const result = await this.client.detail(id);
+      if (!this._active || generation !== (this._operationGeneration || 0)) return;
+      const image = normalizeImage(result.image);
+      if (image.unavailable || !image.url) throw new Error('原图暂不可用，请稍后重试');
+      if (action === 'preview') wx.previewImage({urls: [image.url], current: image.url,
+        fail: () => {if (this._active) this.setData({actionError: '预览失败，请重试'});}});
+      else {this.setData({busy: false}); await runImageMedia(this, image, action, wx);}
+    } catch (error) {
+      if (this._active && generation === (this._operationGeneration || 0)) this.setData({actionError: error.message});
+    } finally {
+      if (this._active && generation === (this._operationGeneration || 0)) this.setData({busy: false});
+    }
+  },
+  retryImageAction() {
+    if (this._lastImageAction) return this.imageAction(this._lastImageAction.id, this._lastImageAction.action);
+  },
+  openSettings() {
+    wx.openSetting({fail: () => this.setData({actionError: '无法打开设置，请在微信中检查相册权限'})});
   },
   async removeUnavailable(e) {
     const item = [...this.data.items, ...this.data.pendingItems].find(x => x.id === e.currentTarget.dataset.id);

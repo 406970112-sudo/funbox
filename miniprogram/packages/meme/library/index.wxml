@@ -244,7 +244,7 @@
           hover-class="category-clear-pressed"
           aria-label="清除分类筛选"
         ><text>清除</text><view class="close-icon" aria-hidden="true" /></button></view>
-      <view class="result-count">{{loading ? '正在查找…' : (mode === 'online' ? (onlineSearched ? '本页 ' + items.length + ' 张图片' : '输入关键词开始联网搜索') : total + ' 张图片')}}<text wx:if="{{q && mode === 'library'}}"> · “{{q}}”</text></view>
+      <view class="result-count">{{loading ? '正在查找…' : (mode === 'online' ? (onlineSearched ? '已加载 ' + items.length + ' 张图片' : '输入关键词开始联网搜索') : total + ' 张图片')}}<text wx:if="{{q && mode === 'library'}}"> · “{{q}}”</text></view>
       <view class="image-grid">
         <view
           class="image-tile"
@@ -255,6 +255,7 @@
             class="tile-media"
             data-id="{{item.id}}"
             bindtap="openImage"
+            bindlongpress="longPressImage"
           >
             <image
               wx:if="{{!item.unavailable && !broken[item.id]}}"
@@ -271,7 +272,7 @@
               wx:if="{{item.animated}}"
               class="gif-badge"
             >动图</text>
-          </view><text class="tile-title">{{item.title}}</text><text wx:if="{{mode === 'online' && item.sourceName}}" class="tile-source">{{item.sourceName}}</text><text
+          </view><text class="tile-title">{{item.title}}</text><button wx:if="{{!item.unavailable}}" class="tile-favorite {{item.favorite ? 'is-favorite' : ''}}" data-id="{{item.id}}" catchtap="toggleFavorite" disabled="{{favoriteBusy[item.id]}}" aria-label="{{item.favorite ? '取消收藏' : '收藏图片'}}">{{favoriteBusy[item.id] ? '处理中' : (item.favorite ? '已收藏' : '收藏')}}</button><text wx:if="{{mode === 'online' && item.sourceName}}" class="tile-source">{{item.sourceName}}</text><text
             wx:if="{{mode === 'library' && (item.unavailable || broken[item.id]) && tab === 'favorites' && favoriteMode === 'favorites'}}"
             class="remove-link"
             data-id="{{item.id}}"
@@ -279,16 +280,9 @@
           >移除收藏</text>
         </view>
       </view>
-      <view
-        wx:if="{{items.length || (mode === 'online' && onlineSearched && (page > 1 || onlineHasMore))}}"
-        class="pagination"
-      ><button
-          bindtap="previous"
-          disabled="{{page === 1 || loading}}"
-        >上一页</button><text>第 {{page}} 页</text><button
-          bindtap="next"
-          disabled="{{(mode === 'online' ? !onlineHasMore : !nextCursor) || loading}}"
-        >下一页</button></view>
+      <view wx:if="{{items.length && (mode === 'online' ? onlineHasMore : nextCursor) && !error}}" class="load-more">
+        <button bindtap="next" loading="{{loading}}" disabled="{{loading}}">{{loading ? '正在加载更多…' : '加载更多'}}</button>
+      </view>
       <view
         wx:if="{{items.length && (mode === 'online' ? !onlineHasMore : !nextCursor) && !loading}}"
         class="end-note"
@@ -296,7 +290,7 @@
     </block>
   </block>
   <view
-    wx:if="{{loading}}"
+    wx:if="{{loading && !items.length}}"
     class="loading-state"
   >
     <view class="skeleton-grid">
@@ -313,11 +307,14 @@
   <view
     wx:if="{{!loading && !error && (mode === 'library' && tab === 'categories' ? !categories.length : !items.length)}}"
     class="empty-state"
-  ><view class="empty-icon" aria-hidden="true"><view class="search-icon" /></view><text>{{mode === 'online' ? (onlineSearched ? '本页没有图片，请查看各来源状态' : '输入关键词，选择来源后点击搜索') : (tab === 'favorites' ? '这里还没有图片' : '没有找到，换个词试试')}}</text><text wx:if="{{mode === 'library'}}" class="muted">搜索仅匹配已有名称、标签和分类</text><button
+  ><view class="empty-icon" aria-hidden="true"><view class="search-icon" /></view><text>{{mode === 'online' ? (onlineSearched ? '本页没有图片，请查看各来源状态' : '输入关键词，选择来源后点击搜索') : (tab === 'favorites' ? '这里还没有图片' : '没有找到，换个词试试')}}</text><text wx:if="{{mode === 'library'}}" class="muted">搜索仅匹配已有名称、标签和分类</text><button wx:if="{{mode === 'library' && q && tab !== 'favorites'}}" bindtap="searchOnline">用这个词联网搜图</button><button
       wx:if="{{mode === 'library'}}"
       data-tab="categories"
       bindtap="changeTab"
     >浏览全部分类</button></view>
+  <view wx:if="{{syncMessage && !(mode === 'library' && tab === 'favorites')}}" class="sync-note">{{syncMessage}}<button class="history-button" bindtap="syncFavorites">重试同步</button></view>
+  <view wx:if="{{busy}}" class="action-feedback">正在处理图片… {{progress}}%</view>
+  <view wx:if="{{actionError}}" class="error-state"><text>{{actionError}}</text><button wx:if="{{canRetryImageAction}}" bindtap="retryImageAction">重试图片操作</button><button wx:if="{{permissionDenied}}" bindtap="openSettings">打开权限设置</button></view>
   <view
     wx:if="{{mode === 'library'}}"
     class="source-footer"

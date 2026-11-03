@@ -874,8 +874,8 @@ test('online mode does not query blank words or disabled sources and submits onl
   assert.equal(page.data.onlineHasMore, false);
   await page.next();
   assert.equal(calls.length, 2);
-  await page.previous();
-  assert.equal(calls[2].page, 1);
+  assert.equal(page.data.items.length, 1); // repeated provider ID is deduplicated across appended pages
+  assert.equal(page.data.page, 2);
   await page.changeMode(eventMode('library'));
   assert.equal(page.data.tab, 'all');
   assert.equal(page.data.q, '');
@@ -963,4 +963,166 @@ test('submitting while sources load does not strand the source selector', async 
   await pending;
   assert.equal(page.data.sourcesLoading, false);
   assert.deepEqual(Array.from(page.data.onlineSelected), ['doutula']);
+});
+
+test('continuous pager appends unique IDs, blocks duplicate loads and retains failed cursor', async () => {
+  const queue = [];
+  const pager = api().createPager(input => new Promise((resolve, reject) => queue.push({input, resolve, reject})), () => {}, {append: true});
+  const first = pager.load({q: '猫'});
+  queue[0].resolve({items: [image('a'), image('a')], nextCursor: 'two'});
+  await first;
+  assert.deepEqual(pager.state.items.map(x => x.id), ['a']);
+  const next = pager.next();
+  await pager.next();
+  assert.equal(queue.length, 2);
+  queue[1].reject(new Error('offline'));
+  await next;
+  assert.deepEqual(pager.state.items.map(x => x.id), ['a']);
+  assert.equal(pager.state.nextCursor, 'two');
+  const retry = pager.retry();
+  assert.equal(queue[2].input.cursor, 'two');
+  queue[2].resolve({items: [image('a'), image('b')], nextCursor: ''});
+  await retry;
+  assert.deepEqual(pager.state.items.map(x => x.id), ['a', 'b']);
+  const old = pager.load({q: 'old'});
+  assert.equal(pager.state.items.length, 0);
+  const fresh = pager.load({q: 'new'});
+  queue[4].resolve({items: [image('new')]}); await fresh;
+  queue[3].resolve({items: [image('old')]}); await old;
+  assert.deepEqual(pager.state.items.map(x => x.id), ['new']);
+});
+
+test('empty library hands its query to online sources and searches in one action', async () => {
+  const calls = [];
+  const page = loadPage('library', onlineClient({onlineSearch: async input => {calls.push(input); return {items: [], page: 1};}}));
+  await page.onLoad({q: '猫猫'});
+  await page.searchOnline();
+  assert.equal(page.data.q, '猫猫');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].q, '猫猫');
+  assert.ok(calls[0].sources.length);
+});
+
+test('list favorites retain pending sync intentions, restore persistence failure and ignore account switches', async () => {
+  let token = 'A', pending, finish;
+  const client = onlineClient({pendingFavorite: () => pending, favorite: async (img, desired) => {pending = {desired}; throw new Error('offline');}});
+  const page = loadPage('library', client, () => token);
+  await page.onLoad({});
+  page.data.items = [image('a')];
+  const event = {currentTarget: {dataset: {id: 'a'}}};
+  await page.toggleFavorite(event);
+  assert.equal(page.data.items[0].favorite, true);
+  assert.match(page.data.syncMessage, /重试/);
+  client.favorite = async () => {pending = null; throw new Error('storage full');};
+  await page.toggleFavorite(event);
+  assert.equal(page.data.items[0].favorite, true);
+  client.favorite = () => new Promise(resolve => {finish = resolve;});
+  const work = page.toggleFavorite(event);
+  token = 'B'; page.onShow(); finish(); await work;
+  assert.equal(page.data.favoriteBusy.a, undefined);
+  assert.equal(page.data.items[0].favorite, false);
+});
+
+test('list longpress previews original, favorites, shares and suppresses following navigation', async () => {
+  let sheet, previews = [], shares = [], navigated = 0, favorites = [];
+  const original = {...image('a'), url: '/api/v1/meme-media/a/original'};
+  const client = onlineClient({pendingFavorite: () => null, detail: async () => ({image: original}), favorite: async (img, desired) => favorites.push(desired), media: async img => shares.push(img.url)});
+  const page = loadPage('library', client, '', {showActionSheet: o => {sheet = o;}, previewImage: o => previews.push(o.current), navigateTo: () => navigated++});
+  await page.onLoad({}); page.data.items = [{...image('a'), url: '/api/v1/meme-media/a/thumbnail'}];
+  const e = {currentTarget: {dataset: {id: 'a'}}};
+  await page.longPressImage(e); assert.equal(sheet.itemList.length, 3);
+  await sheet.success({tapIndex: 0});
+  assert.match(previews[0], /original$/);
+  page.openImage(e); assert.equal(navigated, 0);
+  await page.longPressImage(e); await sheet.success({tapIndex: 1}); assert.deepEqual(favorites, [true]);
+  await page.longPressImage(e); await sheet.success({tapIndex: 2}); assert.match(shares[0], /original$/);
+  page.data.items[0].unavailable = true;
+  sheet = null; await page.longPressImage(e); assert.equal(sheet, null);
+});
+
+
+test('detail favorite restores visible state only when no pending intention was persisted', async () => {
+  const client = {detail: async () => ({image: image('a')}), pendingFavorite: () => null,
+    favorite: async () => {throw new Error('storage full');}, remember() {}, event: async () => {}};
+  const page = loadPage('detail', client);
+  await page.onLoad({id: 'a'});
+  await page.favorite();
+  assert.equal(page.data.favorite, false);
+  client.pendingFavorite = () => ({desired: true});
+  await page.favorite();
+  assert.equal(page.data.favorite, true);
+});
+
+test('library append failures retain browse position and retry online page; new queries fence old responses', async () => {
+  let fail = false, resolve;
+  const calls = [], scrolls = [];
+  const page = loadPage('library', onlineClient({onlineSearch: input => {
+    calls.push(input);
+    if (fail) return Promise.reject(new Error('offline'));
+    if (input.q === 'old') return new Promise(r => {resolve = r;});
+    return Promise.resolve({items: [image(input.page === 1 ? 'a' : 'b')], page: input.page, hasMore: true});
+  }}), '', {pageScrollTo: o => scrolls.push(o)});
+  await page.onLoad({}); await page.changeMode(eventMode('online'));
+  page.data.q = 'cat'; await page.search();
+  fail = true; await page.next();
+  assert.equal(page.data.items[0].id, 'a'); assert.equal(page.data.page, 1);
+  fail = false; await page.retry();
+  assert.equal(calls.at(-1).page, 2); assert.equal(page.data.items.length, 2);
+  assert.equal(scrolls.length, 0);
+  page.data.q = 'old'; const old = page.search();
+  page.data.q = 'fresh'; await page.search();
+  resolve({items: [image('stale')], page: 1}); await old;
+  assert.equal(page.data.items[0].id, 'a');
+});
+
+test('detail return keeps appended list and reconciles favorite state without fetching page one', async () => {
+  let calls = 0, favorite = false;
+  const client = onlineClient({list: async () => ({items: [image(++calls === 1 ? 'a' : 'b')], nextCursor: calls === 1 ? 'next' : '', total: 2}), favoriteState: () => favorite});
+  const page = loadPage('library', client);
+  await page.onLoad({}); await page.next(); await Promise.resolve();
+  assert.equal(page.data.items.length, 2);
+  page.onHide(); favorite = true; page.onShow();
+  assert.equal(page.data.items.length, 2); assert.equal(calls, 2);
+  assert.equal(page.data.items[0].favorite, true);
+  await page.changeType({currentTarget: {dataset: {type: 'true'}}});
+  assert.equal(page.data.page, 1); assert.equal(page.data.items.length, 1);
+});
+
+test('detail media controls recover after backgrounding an in-flight operation', async () => {
+  let finish;
+  const client = {detail: async () => ({image: image('a')}), pendingFavorite: () => null, remember() {}, event: async () => {}, media: () => new Promise(r => {finish = r;})};
+  const page = loadPage('detail', client);
+  await page.onLoad({id: 'a'});
+  const task = page.shareImage(); page.onHide(); finish(); await task; page.onShow();
+  assert.equal(page.data.busy, false);
+});
+
+test('successful favorite state survives pending cleanup and stays scoped to its account', async () => {
+  const e = env(); e.token('A-token');
+  const client = api().createMemeClient(e.options);
+  await client.favorite(image('a'), true);
+  assert.equal(client.pendingFavorite('a'), undefined);
+  assert.equal(client.favoriteState('a'), true);
+  e.user('B'); e.token('B-token');
+  assert.equal(client.favoriteState('a'), false);
+  e.user('A'); e.token('A-new-token');
+  assert.equal(client.favoriteState('a'), true);
+  await client.favorite(image('a'), false);
+  assert.equal(client.favoriteState('a', true), false);
+});
+
+test('shared media runner confirms large originals and reports cancellation and permission failures', async () => {
+  let accepted = false, calls = 0;
+  const page = {data: {busy: false}, _active: true, setData(patch) {Object.assign(this.data, patch);}, client: {media: async () => {calls++; throw new Error('auth deny');}}};
+  const platform = {showModal: o => o.success({confirm: accepted})};
+  const large = {...image('a'), bytes: 6 * 1024 * 1024};
+  await api().runImageMedia(page, large, 'share', platform);
+  assert.equal(calls, 0); assert.equal(page.data.busy, false);
+  accepted = true;
+  await api().runImageMedia(page, large, 'share', platform);
+  assert.equal(calls, 1); assert.equal(page.data.permissionDenied, true);
+  page.client.media = async () => {throw new Error('cancel');};
+  await api().runImageMedia(page, image('a'), 'share', platform);
+  assert.match(page.data.actionError, /已取消/);
+  assert.equal(page.data.permissionDenied, false);
 });

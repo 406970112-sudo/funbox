@@ -3,6 +3,7 @@ const {
 } = require('../../../utils/auth');
 const {
   getMemeClient,
+  runImageMedia,
   normalizeImage
 } = require('../../../utils/meme');
 Page({
@@ -53,11 +54,13 @@ Page({
   onHide() {
     this._active = false;
     this._wasHidden = true;
+    this.setData({busy: false});
     this._operationGeneration = (this._operationGeneration || 0) + 1;
     this._generation = (this._generation || 0) + 1;
   },
   onUnload() {
     this._active = false;
+    this._operationGeneration = (this._operationGeneration || 0) + 1;
     this._generation = (this._generation || 0) + 1;
   },
   async load() {
@@ -94,7 +97,9 @@ Page({
   },
   async favorite() {
     if (this.data.favoriteBusy || !this.data.image) return;
-    const desired = !this.data.favorite;
+    const previous = this.data.favorite;
+    const token = getAccessToken();
+    const desired = !previous;
     this.setData({
       favorite: desired,
       favoriteBusy: true,
@@ -103,11 +108,12 @@ Page({
     try {
       await this.client.favorite(this.data.image, desired);
     } catch (e) {
-      if (this._active) this.setData({
-        actionError: e.message
-      });
+      if (this._active && token === getAccessToken()) {
+        const pending = this.client.pendingFavorite(this.data.image.id);
+        this.setData({favorite: pending ? pending.desired : previous, actionError: e.message});
+      }
     } finally {
-      this.setData({
+      if (token === getAccessToken()) this.setData({
         favoriteBusy: false
       });
     }
@@ -146,45 +152,7 @@ Page({
     return this.runMedia('share');
   },
   async runMedia(action) {
-    if (this.data.busy || !this.data.image) return;
-    const operation = this._operationGeneration || 0;
-    const image = this.data.image;
-    this.setData({
-      busy: true,
-      progress: 0,
-      actionError: '',
-      permissionDenied: false
-    });
-    try {
-      if (image.bytes > 5 * 1024 * 1024) {
-        const accepted = await new Promise(resolve => wx.showModal({
-          title: '原图较大',
-          content: '本次将下载 ' + this.data.sizeLabel + '，建议在 Wi-Fi 下操作。',
-          success: r => resolve(r.confirm),
-          fail: () => resolve(false)
-        }));
-        if (!accepted) return;
-      }
-      if (!this._active || operation !== (this._operationGeneration || 0)) return;
-      await this.client.media(image, action, wx, progress => {
-        if (this._active) this.setData({
-          progress
-        });
-      }, () => this._active && operation === (this._operationGeneration || 0));
-      if (this._active && action === 'save') wx.showToast({
-        title: '已保存到相册',
-        icon: 'success'
-      });
-    } catch (e) {
-      if (this._active) this.setData({
-        actionError: /cancel/i.test(e.message) ? '已取消，可重新操作' : e.message + '；可重试、预览原图或分享页面',
-        permissionDenied: /auth|deny|permission/i.test(e.message)
-      });
-    } finally {
-      this.setData({
-        busy: false
-      });
-    }
+    return runImageMedia(this, this.data.image, action, wx);
   },
   openSettings() {
     wx.openSetting({
