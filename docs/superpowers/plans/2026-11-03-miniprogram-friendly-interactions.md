@@ -1,6 +1,6 @@
 # Miniprogram Friendly Interactions Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement all eight approved interaction improvements with the existing FunBox mini program style.
 
@@ -30,10 +30,10 @@
 
 **Interfaces:** Add reverseScoreGiftBatch(credential, room, batchID) and cancelScoreRoom(credential, room), returning server snapshots through mutateRoom. Add saveRecentScoreRoom(room, credential), getRecentScoreRoom(), clearRecentScoreRoom(roomId) to score-session. Recent room stores room ID/name/gameType/status and minimal credential ownership metadata; guest token stays in existing score-session cache, and account metadata scopes to current user ID. Do not clear an unrelated room when clearing an older one.
 
-- [ ] Write failing service tests: host can cancel empty active Mahjong/generic room; nonhost forbidden; gift history blocks even after reversal to zero; round/poker history and settled status blocked; waiting behavior preserved. Run focused tests and observe expected failure.
-- [ ] Broaden CancelRoom guard only to empty active Mahjong/generic rooms with no gift batches, rounds, or poker hands/current hand/current round. Existing waiting-room behavior remains safe. Run Go tests.
-- [ ] Write failing JS API tests for correct reverse/cancel endpoint with credentials/version/action ID, and session tests for account isolation, guest recovery, unrelated clear, terminal clearing. Implement minimal wrappers/cache helpers. Credential cache must not allow guest continuation after its token has been replaced by another room.
-- [ ] Run node --test miniprogram/tests/*.test.js and go test ./... from backend; self-review and commit only task-owned files. Record test evidence and interfaces in report.
+- [x] Write failing service tests: host can cancel empty active Mahjong/generic room; nonhost forbidden; gift history blocks even after reversal to zero; round/poker history and settled status blocked; waiting behavior preserved. Run focused tests and observe expected failure.
+- [x] Broaden CancelRoom guard only to empty active Mahjong/generic rooms with no gift batches, rounds, or poker hands/current hand/current round. Existing waiting-room behavior remains safe. Run Go tests.
+- [x] Write failing JS API tests for correct reverse/cancel endpoint with credentials/version/action ID, and session tests for account isolation, guest recovery, unrelated clear, terminal clearing. Implement minimal wrappers/cache helpers. Credential cache must not allow guest continuation after its token has been replaced by another room.
+- [x] Run node --test miniprogram/tests/*.test.js and go test ./... from backend; self-review and commit only task-owned files. Record test evidence and interfaces in report.
 
 ### Task 2: Home recovery and score-room interaction improvements
 
@@ -41,12 +41,12 @@
 
 **Interfaces:** Consume Task 1 recent-room helpers and reverse/cancel wrappers. Existing score snapshots expose giftBatches kind/reversesBatchId/createdBy. Reversal is host-only. Generic and Mahjong use shared room base; poker overrides applyRoom and lifecycle methods, so preserve method chaining and account binding.
 
-- [ ] Write failing behavioral tests for home resume with guest/account, terminal/expired versus network failure, stale async lookup, and no duplicate joining. Implement home card above scene selection and validate snapshot before navigation; refresh current-room cache from room snapshots for both guest and account users.
-- [ ] Write failing tests for stable recipient order across ranking changes with draft preservation, quick increments/clear and explicit give preview; implement stable joining order and +1/+5/+10, whole-batch clear, total button; keep safe integer limits and invalid input errors visible.
-- [ ] Write failing tests for reversal metadata/host gating/conflict, start confirmation when Mahjong has fewer than four players, and cancel guarding no-history active rooms; implement actions and clear nearby explanations in existing cards, no accounting rules altered.
-- [ ] Write failing tests for online-channel versus true offline, recovered snapshot failure, duplicate submits, and give/settlement local error preservation. Ensure actual network outage blocks writes and recovery requires a successful refresh. Show inline errors in active card/sheet, preserve drafts.
-- [ ] Write failing tests for personal settlement payable/receivable/no-transfer and copy text, safe rematch prefill; implement personal summary and copy in all three modes; add Mahjong/generic rematch navigation to create form with name/nickname only, password must not be in URL. Distinguish return-home from cancel/finish.
-- [ ] Run full Node suite. Preserve existing selectors/interaction feedback where practical, check WXML/WXSS compiler compatibility. Self-review and commit only task-owned files; report complete behavior and remaining simulator checks.
+- [x] Write failing behavioral tests for home resume with guest/account, terminal/expired versus network failure, stale async lookup, and no duplicate joining. Implement home card above scene selection and validate snapshot before navigation; refresh current-room cache from room snapshots for both guest and account users.
+- [x] Write failing tests for stable recipient order across ranking changes with draft preservation, quick increments/clear and explicit give preview; implement stable joining order and +1/+5/+10, whole-batch clear, total button; keep safe integer limits and invalid input errors visible.
+- [x] Write failing tests for reversal metadata/host gating/conflict, start confirmation when Mahjong has fewer than four players, and cancel guarding no-history active rooms; implement actions and clear nearby explanations in existing cards, no accounting rules altered.
+- [x] Write failing tests for online-channel versus true offline, recovered snapshot failure, duplicate submits, and give/settlement local error preservation. Ensure actual network outage blocks writes and recovery requires a successful refresh. Show inline errors in active card/sheet, preserve drafts.
+- [x] Write failing tests for personal settlement payable/receivable/no-transfer and copy text, safe rematch prefill; implement personal summary and copy in all three modes; add Mahjong/generic rematch navigation to create form with name/nickname only, password must not be in URL. Distinguish return-home from cancel/finish.
+- [x] Run full Node suite. Preserve existing selectors/interaction feedback where practical, check WXML/WXSS compiler compatibility. Self-review and commit only task-owned files; report complete behavior and remaining simulator checks.
 
 ### Task 3: Continuous meme browsing and quick actions
 
@@ -54,10 +54,10 @@
 
 **Interfaces:** Reuse client.favorite(), client online/library paging, existing detail download/share actions. Keep existing favorites/recent/ranking/category modes usable. List favorites may be local guest or cloud account with pending sync, reuse that client contract.
 
-- [ ] Write failing behavioral tests for append/dedupe on load more, stale query results ignored, page failure retains images and retries correct cursor, busy prevents duplicate load, filters reset pagination but returning from detail preserves list.
-- [ ] Implement load-more for ordinary library/online/favorites result grids, replacing previous/next page controls there. Preserve initial versus incremental loading/error state and reasonable end state. Do not reset scroll on append; ensure old client pager tests remain meaningful or update to appended behavior.
-- [ ] Write failing tests for list favorite/pending sync, longpress menu preview/favorite/share, click suppression after longpress as needed, no-result online search preserving q. Cloud-sync failures retain the desired local pending state per the existing client; actual persistence failures restore prior visible state. Implement independent catchtap favorite button, longpress native action sheet, shared image actions reused by detail. Unavailable images do not offer invalid share/save actions.
-- [ ] Run Node suite; self-review and commit task-owned files. Report source/client limitations and UI checks.
+- [x] Write failing behavioral tests for append/dedupe on load more, stale query results ignored, page failure retains images and retries correct cursor, busy prevents duplicate load, filters reset pagination but returning from detail preserves list.
+- [x] Implement load-more for ordinary library/online/favorites result grids, replacing previous/next page controls there. Preserve initial versus incremental loading/error state and reasonable end state. Do not reset scroll on append; ensure old client pager tests remain meaningful or update to appended behavior.
+- [x] Write failing tests for list favorite/pending sync, longpress menu preview/favorite/share, click suppression after longpress as needed, no-result online search preserving q. Cloud-sync failures retain the desired local pending state per the existing client; actual persistence failures restore prior visible state. Implement independent catchtap favorite button, longpress native action sheet, shared image actions reused by detail. Unavailable images do not offer invalid share/save actions.
+- [x] Run Node suite; self-review and commit task-owned files. Report source/client limitations and UI checks.
 
 ### Task 4: Integrated verification and documentation
 
