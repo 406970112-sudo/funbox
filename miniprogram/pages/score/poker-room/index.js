@@ -54,7 +54,18 @@ Page({...base,
   finally{this.confirmationPending=false;this.setData({busy:false});this.updatePoker();}
  },
  async runMutation(fn){if(this.data.busy||this.confirmationPending||this.writesPaused()||!this.data.room)return;this.setData({busy:true,errorMessage:''});this.updatePoker();try{await this.applyRoom(await fn());}catch(e){if(e.snapshot)await this.applyRoom(e.snapshot);else await this.refreshRoom();this.setData({errorMessage:api.getScoreErrorMessage(e)});}finally{this.setData({busy:false});this.updatePoker();}},
- async startHand(){if(!this.data.poker.canStart)return;await this.runMutation(async()=>{let room=this.data.room;if(room.status==='waiting')room=await api.startScoreRoom(this.credential,room);return api.startPokerHand(this.credential,room);});},
+ async startHand(){
+  if(!this.data.poker.canStart)return;
+  const generation=this.networkGeneration||0;
+  await this.runMutation(async()=>{
+   let room=this.data.room;
+   if(room.status==='waiting')room=await api.startScoreRoom(this.credential,room);
+   // Starting the room and starting a hand are separate writes. A recovered
+   // connection still invalidates this old intent; only a fresh tap may retry.
+   if(this.writesPaused()||generation!==(this.networkGeneration||0))throw new Error('牌局同步状态已变化，请核对最新记录后重新开场。');
+   return api.startPokerHand(this.credential,room);
+  });
+ },
  act(input){const h=this.data.poker.hand;if(!h)return;return this.runMutation(()=>api.pokerAction(this.credential,this.data.room,h.id,input));},
  follow(){if(this.data.poker.canAct)return this.act({actionType:'follow'});},
  look(){if(this.data.poker.canLook)return this.act({actionType:'look'});},

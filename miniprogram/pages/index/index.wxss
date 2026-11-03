@@ -422,4 +422,4 @@
 
 .resume-card { margin: 24rpx 32rpx; padding: 28rpx; border-radius: 24rpx; background: #fff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; }
 .resume-button { background: #2d5bff; color: #fff; font-size: 26rpx; margin: 0; }
-.resume-error { width: 100%; color: #b4472f; font-size: 24rpx; margin-top: 12rpx; }
+.resume-error { box-sizing: border-box; display: block; overflow-wrap: break-word; color: #b4472f; font-size: 24rpx; margin-top: 12rpx; }

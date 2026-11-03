@@ -1174,5 +1174,6 @@
 .give-preview { display: block; margin: 16rpx 0; color: #475675; font-size: 25rpx; line-height: 1.5; }
 
 .network-warning { padding: 24rpx; margin-bottom: 24rpx; border-radius: 24rpx; background: #eef3ff; color: #385783; font-size: 26rpx; line-height: 1.6; }
+.personal-settlement { margin-bottom: 20rpx; }
 .personal-settlement .section-title, .personal-settlement .section-meta { display: block; }
 .personal-transfer { margin: 20rpx 0; color: #234a9a; font-size: 32rpx; font-weight: 600; line-height: 1.5; overflow-wrap: break-word; }

@@ -1,12 +1,12 @@
-const test=require('node:test');const assert=require('node:assert/strict');const calls=[];let finishAction;let apiError;let readRoom;
-const apiPath=require.resolve('../utils/score-api');require.cache[apiPath]={id:apiPath,filename:apiPath,loaded:true,exports:{getScoreRoom:()=>readRoom(),getScoreErrorMessage:e=>e.message,confirmPokerBonuses:async(c,r,h,bonuses)=>{calls.push({bonuses,h});return {...r,version:r.version+1,currentZhaJinHuaHand:null};},settleScoreRoom:async(c,r,rate)=>{calls.push({settleRate:rate});return {...r,version:r.version+1,status:'settled'};},pokerAction:(c,r,h,input)=>{calls.push({c,r,h,input});if(apiError)return Promise.reject(apiError);return new Promise(resolve=>finishAction=resolve);},startScoreRoom:async(c,r)=>{calls.push({startRoom:r.version});return {...r,status:'active',version:r.version+1};},startPokerHand:async(c,r)=>{calls.push({startHand:r.version});return {...r,version:r.version+1};},updatePokerSettings:async(c,r,settings)=>{calls.push({updateSettings:settings});return {...r,zhaJinHuaSettings:settings,version:r.version+1};},issueScoreInviteCode:async()=>{calls.push({nativeInvite:true});return {imageBase64:'AA==',mediaType:'image/png'};},issueScoreInviteToken:async()=> 'invite'}};
+const test=require('node:test');const assert=require('node:assert/strict');const calls=[];let finishAction;let apiError;let readRoom;let startRoomRequest;
+const apiPath=require.resolve('../utils/score-api');require.cache[apiPath]={id:apiPath,filename:apiPath,loaded:true,exports:{getScoreRoom:()=>readRoom(),getScoreErrorMessage:e=>e.message,confirmPokerBonuses:async(c,r,h,bonuses)=>{calls.push({bonuses,h});return {...r,version:r.version+1,currentZhaJinHuaHand:null};},settleScoreRoom:async(c,r,rate)=>{calls.push({settleRate:rate});return {...r,version:r.version+1,status:'settled'};},pokerAction:(c,r,h,input)=>{calls.push({c,r,h,input});if(apiError)return Promise.reject(apiError);return new Promise(resolve=>finishAction=resolve);},startScoreRoom:async(c,r)=>{calls.push({startRoom:r.version});if(startRoomRequest)return startRoomRequest(r);return {...r,status:'active',version:r.version+1};},startPokerHand:async(c,r)=>{calls.push({startHand:r.version});return {...r,version:r.version+1};},updatePokerSettings:async(c,r,settings)=>{calls.push({updateSettings:settings});return {...r,zhaJinHuaSettings:settings,version:r.version+1};},issueScoreInviteCode:async()=>{calls.push({nativeInvite:true});return {imageBase64:'AA==',mediaType:'image/png'};},issueScoreInviteToken:async()=> 'invite'}};
 let savedSession;
 global.wx={env:{USER_DATA_PATH:'/tmp'},getFileSystemManager:()=>({writeFile:o=>o.success(),unlink:()=>{}}),getStorageSync:key=>key==='funboxScoreSessionV1'?savedSession||'':'',setStorageSync:()=>{},showModal:o=>o.success({confirm:true}),redirectTo:o=>calls.push(o)};
 let pageDefinition;global.Page=d=>pageDefinition=d;require('../pages/score/poker-room/index');const pokerDefinition=pageDefinition;
 const {derivePoker}=require('../utils/poker-state');
 function room(){return {id:'r',version:2,status:'active',gameType:'zhajinhua',maxPlayers:4,centsPerPoint:50,selfParticipantId:'a',zhaJinHuaSettings:{antePoints:1,maxBetPoints:20,compareThreshold:3},participants:[{id:'a',displayName:'甲',role:'host',status:'active',seatStatus:'seated',totalPoints:0},{id:'b',displayName:'乙',status:'active',seatStatus:'seated',totalPoints:0}],currentZhaJinHuaHand:{id:'h',phase:'betting',number:1,currentBetPoints:2,players:[{participantId:'a',status:'active'},{participantId:'b',status:'active'}],currentTurnParticipantId:'a'}};}
 function page(r=room()){return {...pokerDefinition,credential:{token:'token'},data:{...pokerDefinition.data,room:r,poker:derivePoker(r,'a')},setData(patch,cb){for(const [key,value] of Object.entries(patch)){if(key.includes('.')){const [a,b]=key.split('.');this.data[a][b]=value;}else this.data[key]=value;}if(cb)cb();},startRealtime(){},startPolling(){},maybeBindParticipantAccount(){},ensureInviteToken:async()=>{},ensureInviteCode(){},renderInviteCode(){},refreshRoom:pokerDefinition.refreshRoom};}
-test.beforeEach(()=>{calls.length=0;apiError=null;savedSession=null;readRoom=async()=>{throw new Error('read unavailable');};});
+test.beforeEach(()=>{calls.length=0;startRoomRequest=null;apiError=null;savedSession=null;readRoom=async()=>{throw new Error('read unavailable');};});
 test('pending requests lock duplicate follow and restore paid compare on snapshot',async()=>{const p=page();const first=p.payCompare();p.payCompare();p.follow();assert.equal(calls.length,1);assert.equal(p.data.busy,true);const response=room();response.version=3;response.currentZhaJinHuaHand.phase='comparing';response.currentZhaJinHuaHand.pendingComparison={actorParticipantId:'a',points:2};finishAction(response);await first;assert.equal(p.data.sheet,'compare');assert.equal(p.data.poker.comparePending,true);assert.equal(p.data.poker.canAct,false);assert.equal(p.data.busy,false);});
 test('offline blocks writes and conflicts apply authoritative snapshot without replay',async()=>{const p=page();p.data.offline=true;p.updatePoker();await p.follow();assert.equal(calls.length,0);p.data.offline=false;p.updatePoker();const response=room();response.version=4;response.currentZhaJinHuaHand.currentTurnParticipantId='b';apiError={message:'版本变化',snapshot:response};await p.follow();assert.equal(calls.length,1);assert.equal(p.data.room.version,4);assert.equal(p.data.poker.canAct,false);assert.equal(p.data.errorMessage,'版本变化');});
 test('starting first hand uses returned room version after room start',async()=>{const r=room();r.status='waiting';r.currentZhaJinHuaHand=null;const p=page(r);await p.startHand();assert.deepEqual(calls,[{startRoom:2},{startHand:3}]);assert.equal(p.data.room.version,4);});
@@ -34,3 +34,34 @@ test('checked bonus draft submits selected players only',async()=>{const r=room(
 test('settle action uses fixed room rate and closes the ledger',async()=>{const r=room();r.currentZhaJinHuaHand=null;const p=page(r);await p.applyRoom(r);p.data.sheet='ledger';await p.settle();assert.deepEqual(calls,[{settleRate:50}]);assert.equal(p.data.sheet,'');assert.equal(p.data.poker.ended,true);});
 test('unchanged waiting snapshot still checks account binding after login return',async()=>{const r=room();r.currentZhaJinHuaHand=null;const p=page(r);await p.applyRoom(r);let checks=0;p.maybeBindParticipantAccount=()=>checks++;await p.applyRoom({...r});assert.equal(checks,1);});
 test('poker delegates a single native network subscription to base and removes it on hide',()=>{const p=page();let added=0,removed=0,handler;wx.onNetworkStatusChange=f=>{added++;handler=f;};wx.offNetworkStatusChange=f=>{assert.equal(f,handler);removed++;};wx.getNetworkType=o=>o.success({networkType:'wifi'});p.onLoad({});p.onShow();assert.equal(added,1);p.onHide();assert.equal(removed,1);p.onUnload();assert.equal(removed,1);delete wx.onNetworkStatusChange;delete wx.offNetworkStatusChange;delete wx.getNetworkType;});
+
+for (const interruption of ['offline', 'hide', 'recovered']) {
+ test(`initial poker start never continues its second write after ${interruption} while room start is pending`, async () => {
+  const waiting = room(); waiting.status = 'waiting'; waiting.currentZhaJinHuaHand = null;
+  const started = {...waiting, status: 'active', version: 3};
+  const p = page(waiting); p.data.roomId = 'r';
+  let finishStart;
+  startRoomRequest = () => new Promise(resolve => { finishStart = resolve; });
+  readRoom = async () => started;
+  const pending = p.startHand();
+  assert.deepEqual(calls, [{startRoom: 2}]);
+  if (interruption === 'hide') p.onHide();
+  else {
+   await p.handleNetwork({isConnected: false});
+   if (interruption === 'recovered') {
+    await p.handleNetwork({isConnected: true});
+    assert.equal(p.data.networkSyncing, false);
+   }
+  }
+  finishStart(started);
+  await pending;
+  assert.deepEqual(calls, [{startRoom: 2}]);
+  assert.equal(p.data.busy, false);
+  assert.match(p.data.errorMessage, /同步|重新|变化|暂停/);
+  // A subsequent successful read reconciles state; it never retries the hand write.
+  if (interruption === 'hide') p.onShow();
+  if (interruption === 'offline') await p.handleNetwork({isConnected: true});
+  await p.refreshRoom();
+  assert.deepEqual(calls, [{startRoom: 2}]);
+ });
+}
