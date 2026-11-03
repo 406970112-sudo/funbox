@@ -56,7 +56,7 @@
 
 - [ ] Write failing behavioral tests for append/dedupe on load more, stale query results ignored, page failure retains images and retries correct cursor, busy prevents duplicate load, filters reset pagination but returning from detail preserves list.
 - [ ] Implement load-more for ordinary library/online/favorites result grids, replacing previous/next page controls there. Preserve initial versus incremental loading/error state and reasonable end state. Do not reset scroll on append; ensure old client pager tests remain meaningful or update to appended behavior.
-- [ ] Write failing tests for list favorite/rollback, longpress menu preview/favorite/share, click suppression after longpress as needed, no-result online search preserving q. Implement independent catchtap favorite button, longpress native action sheet, shared image actions reused by detail. Unavailable images do not offer invalid share/save actions.
+- [ ] Write failing tests for list favorite/pending sync, longpress menu preview/favorite/share, click suppression after longpress as needed, no-result online search preserving q. Cloud-sync failures retain the desired local pending state per the existing client; actual persistence failures restore prior visible state. Implement independent catchtap favorite button, longpress native action sheet, shared image actions reused by detail. Unavailable images do not offer invalid share/save actions.
 - [ ] Run Node suite; self-review and commit task-owned files. Report source/client limitations and UI checks.
 
 ### Task 4: Integrated verification and documentation
