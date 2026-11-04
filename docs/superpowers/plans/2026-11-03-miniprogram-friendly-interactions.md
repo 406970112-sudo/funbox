@@ -63,6 +63,8 @@
 
 **Files:** miniprogram/README.md, task verification evidence under docs as appropriate; any narrowly scoped fixes found through verification.
 
-- [ ] Review each task and resolve important findings before advancing; final whole-branch review for all eight points and cross-page lifecycle behavior.
-- [ ] Run final Node suite, backend Go suite, git diff --check, native WXML/WXSS compiler and simulator checks for home, waiting, give/reversal/settlement, and meme loading/error/empty states at narrow width. Use synthetic snapshots and no production mutations.
-- [ ] Update README with entry points, host-only reversal, empty-room cancellation rules, deployed-backend compatibility, and validation results; report exact passing checks and real-device limitations.
+- [x] Review each task and resolve important findings before advancing; complete whole-branch review and scoped verification of its final fixes.
+- [x] Run final Node suite (285/285), backend Go suite, git diff --check, native WXML/WXSS compilers (14/16) and JavaScript syntax checks (62). Behavioral tests cover waiting, host reversal/cancel, recovery/errors, settlement and meme paging/empty state.
+- [x] Verify focused native scenarios using synthetic snapshots: home checking/long error at 320px, give preview and offline retention, personal settlement/rematch form, list favorite/longpress/menu/append/deduplication. Record exact observed scope and fixture limitations in the verification document; no production mutations.
+- [x] Update README with entry points, host-only reversal, empty-room cancellation rules, deployed-backend compatibility, and validation results; report exact passing checks and real-device limitations.
+- [ ] Before a production release, perform device-only acceptance for actual scan, haptics, GIFs, photo permission and share receivers; no physical-device result is claimed by this implementation task.
