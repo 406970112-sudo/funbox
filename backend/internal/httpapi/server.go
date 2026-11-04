@@ -40,6 +40,7 @@ import (
 	"my-first-expo-app/backend/internal/meme"
 	"my-first-expo-app/backend/internal/moments"
 	"my-first-expo-app/backend/internal/news"
+	"my-first-expo-app/backend/internal/notebook"
 	"my-first-expo-app/backend/internal/novelagent"
 	"my-first-expo-app/backend/internal/parkinglocation"
 	"my-first-expo-app/backend/internal/partymemorycard"
@@ -92,6 +93,7 @@ type Server struct {
 	marketRadarService        marketRadarSnapshotService
 	membershipService         *membership.Service
 	diaryService              *diary.Service
+	notebookService           *notebook.Service
 	daysLeftStore             *daysleft.Store
 	procrastinatorStore       *procrastinator.Store
 	dnfActivityService        dnfActivityService
@@ -756,6 +758,14 @@ func newServer(
 	} else {
 		quietHomeService = quiethome.NewService(quietHomeStore, socialStore, realtimeHub)
 	}
+	var notebookService *notebook.Service
+	notebookStore, notebookErr := notebook.OpenStore(cfg.Database.Path)
+	if notebookErr != nil {
+		log.Printf("open notebook database: %v", notebookErr)
+	} else {
+		notebookMediaDir := filepath.Join(filepath.Dir(cfg.Database.Path), "notebook-media")
+		notebookService = notebook.NewService(notebookStore, notebookMediaDir, notebook.MaxAudioBytes)
+	}
 	memeStore, memeErr := meme.OpenStore(cfg.Database.Path)
 	var memeService *meme.Service
 	if memeErr != nil {
@@ -791,6 +801,7 @@ func newServer(
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),
 		membershipService:         membershipService,
 		diaryService:              diaryService,
+		notebookService:           notebookService,
 		daysLeftStore:             daysLeftStore,
 		procrastinatorStore:       procrastinatorStore,
 		dnfActivityService:        dnfActivitySvc,
@@ -857,6 +868,7 @@ func newServer(
 	registerGoOutChecklistRoutes(mux, api)
 	registerLeftoverManagerRoutes(mux, api)
 	registerDiaryRoutes(mux, api)
+	registerNotebookRoutes(mux, api)
 	registerCoolingRoutes(mux, api)
 	registerHomeConsumablesRoutes(mux, api)
 	registerDaysLeftRoutes(mux, api)
@@ -949,6 +961,11 @@ func newServer(
 		Handler:      handler,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
+	}
+	if notebookService != nil {
+		server.RegisterOnShutdown(func() {
+			_ = notebookService.Store().Close()
+		})
 	}
 	if memeStore != nil {
 		server.RegisterOnShutdown(func() {

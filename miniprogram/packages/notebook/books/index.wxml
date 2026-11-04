@@ -1,0 +1,81 @@
+<import src="/templates/note-art.wxml" />
+<view class="books-page">
+  <view wx:if="{{isLoggedIn}}">
+    <view class="books-hero">
+      <view class="books-hero-copy">
+        <text class="hero-kicker">FunBox / 笔记本</text>
+        <text class="hero-title">把主题，</text>
+        <text class="hero-title"><text class="hero-accent">分开记。</text></text>
+        <text class="hero-desc">一本一个主题，找起来更清楚。</text>
+      </view>
+      <view class="books-hero-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
+    </view>
+
+    <view class="create-card fb-card">
+      <view class="create-head">
+        <text class="create-title">新建笔记本</text>
+        <text class="create-note">{{books.length}} / 20</text>
+      </view>
+      <input
+        class="book-name-input"
+        value="{{newBookName}}"
+        maxlength="20"
+        placeholder="例如：旅行、项目、读书"
+        placeholder-class="input-placeholder"
+        confirm-type="done"
+        bindinput="onNameInput"
+        bindconfirm="createBook"
+      />
+      <view class="color-row">
+        <view
+          wx:for="{{colors}}"
+          wx:key="*this"
+          class="color-dot {{selectedColor === item ? 'color-dot-active' : ''}}"
+          style="background: {{item}};"
+          data-color="{{item}}"
+          bindtap="selectColor"
+          role="button"
+          aria-label="选择封面色 {{item}}"
+        ></view>
+        <button class="create-button" loading="{{busy}}" disabled="{{busy}}" bindtap="createBook">创建</button>
+      </view>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">我的笔记本</text>
+      <text class="section-note">{{books.length}} 本</text>
+    </view>
+
+    <view wx:if="{{loading}}" class="state-card fb-card">
+      <view class="state-pulse"></view>
+      <text>正在加载笔记本…</text>
+    </view>
+    <view wx:elif="{{error}}" class="state-card fb-card state-error" bindtap="retry">
+      <text>{{error}}</text>
+      <text class="state-action">重新加载</text>
+    </view>
+    <view wx:else class="book-list">
+      <view wx:for="{{books}}" wx:key="id" class="book-row" style="background: {{item.fill}};">
+        <view class="book-cover" style="background: {{item.color}};">
+          <view class="book-cover-spine" aria-hidden="true"></view>
+          <text class="book-initial">{{item.initial}}</text>
+        </view>
+        <view class="book-copy">
+          <text class="book-name">{{item.name}}</text>
+          <text class="book-meta">{{item.noteCount}} 篇笔记</text>
+        </view>
+        <view class="book-actions">
+          <view class="book-action" data-id="{{item.id}}" bindtap="renameBook" role="button" aria-label="重命名 {{item.name}}">重命名</view>
+          <view class="book-action delete" data-id="{{item.id}}" bindtap="deleteBook" role="button" aria-label="删除 {{item.name}}">删除</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="login-card fb-card">
+    <view class="login-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
+    <text class="login-title">登录后管理笔记本</text>
+    <text class="login-desc">工作、生活、灵感分开记录，找起来更轻松。</text>
+    <button class="login-button" bindtap="openLogin">微信快捷登录</button>
+  </view>
+</view>

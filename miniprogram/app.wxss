@@ -114,3 +114,151 @@ button {
 
 
 }
+
+/* Shared notebook illustration. Keep it self-contained and never crop the artwork. */
+.note-art {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 170rpx;
+  height: 155rpx;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.72);
+  transform-origin: center;
+}
+
+.note-art--sm {
+  transform: translate(-50%, -50%) scale(0.55);
+}
+
+.note-art--md {
+  transform: translate(-50%, -50%) scale(0.78);
+}
+
+.note-art--lg {
+  transform: translate(-50%, -50%) scale(0.92);
+}
+
+.note-art-page {
+  position: absolute;
+  top: 8rpx;
+  right: 15rpx;
+  width: 90rpx;
+  height: 122rpx;
+  border-radius: 10rpx 14rpx 14rpx 10rpx;
+  background: linear-gradient(145deg, #ffffff, #f4f7fc 75%, #e6edf8);
+  box-shadow: 8rpx 9rpx 18rpx rgba(52, 76, 128, 0.14), inset 0 0 0 1rpx rgba(255, 255, 255, 0.9);
+  transform: rotate(7deg);
+}
+
+.note-art-page::before {
+  position: absolute;
+  top: 18rpx;
+  left: 9rpx;
+  width: 54rpx;
+  height: 5rpx;
+  border-radius: 5rpx;
+  background: #b9cff8;
+  box-shadow: 0 16rpx 0 #d9e5fa, 0 32rpx 0 #e3ebf8, 0 48rpx 0 #d9e5fa;
+  content: "";
+}
+
+.note-art-cover {
+  position: absolute;
+  top: 9rpx;
+  right: 27rpx;
+  width: 92rpx;
+  height: 126rpx;
+  border-radius: 10rpx 15rpx 15rpx 10rpx;
+  background: linear-gradient(145deg, #5b82ff 0%, #2d5bff 48%, #1d45d6 100%);
+  box-shadow: inset 3rpx 3rpx 0 rgba(255, 255, 255, 0.28), inset -7rpx -8rpx 0 rgba(10, 31, 132, 0.16), 8rpx 14rpx 24rpx rgba(45, 91, 255, 0.26);
+  transform: rotate(-5deg);
+}
+
+.note-art-cover::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 9rpx;
+  width: 8rpx;
+  border-radius: 10rpx 0 0 10rpx;
+  background: rgba(15, 38, 143, 0.19);
+  box-shadow: 2rpx 0 0 rgba(255, 255, 255, 0.12);
+  content: "";
+}
+
+.note-art-cover::after {
+  position: absolute;
+  top: 26rpx;
+  left: 29rpx;
+  width: 37rpx;
+  height: 7rpx;
+  border-radius: 7rpx;
+  background: rgba(255, 255, 255, 0.83);
+  box-shadow: 0 15rpx 0 rgba(255, 255, 255, 0.42), 0 30rpx 0 rgba(255, 255, 255, 0.28);
+  content: "";
+}
+
+.note-art-bookmark {
+  position: absolute;
+  z-index: 4;
+  top: 6rpx;
+  right: 47rpx;
+  width: 17rpx;
+  height: 40rpx;
+  border-radius: 0 0 5rpx 5rpx;
+  background: linear-gradient(180deg, #ff8a73, #ff6c54);
+  box-shadow: 0 7rpx 10rpx rgba(255, 108, 84, 0.2);
+  transform: rotate(-5deg);
+}
+
+.note-art-sticky {
+  position: absolute;
+  z-index: 5;
+  top: 18rpx;
+  left: 16rpx;
+  width: 47rpx;
+  height: 42rpx;
+  border-radius: 7rpx;
+  background: linear-gradient(145deg, #ffe378, #ffd05e);
+  box-shadow: 0 9rpx 16rpx rgba(182, 132, 32, 0.16);
+  transform: rotate(-11deg);
+}
+
+.note-art-sticky::before {
+  position: absolute;
+  top: 14rpx;
+  left: 10rpx;
+  width: 24rpx;
+  height: 3rpx;
+  border-radius: 3rpx;
+  background: rgba(127, 87, 15, 0.25);
+  box-shadow: 0 8rpx 0 rgba(127, 87, 15, 0.15);
+  content: "";
+}
+
+.note-art-badge {
+  position: absolute;
+  z-index: 6;
+  left: 8rpx;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 66rpx;
+  height: 66rpx;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #4b76ff, #2d5bff 55%, #1d45d8);
+  box-shadow: inset 4rpx 4rpx 0 rgba(255, 255, 255, 0.2), inset -6rpx -7rpx 0 rgba(10, 32, 130, 0.17), 0 12rpx 18rpx rgba(45, 91, 255, 0.28);
+  transform: rotate(-6deg);
+}
+
+.note-art-badge::before {
+  width: 26rpx;
+  height: 14rpx;
+  border-left: 7rpx solid #fff;
+  border-bottom: 7rpx solid #fff;
+  border-radius: 2rpx;
+  content: "";
+  transform: rotate(-45deg) translate(2rpx, -2rpx);
+}

@@ -1,3 +1,4 @@
+<import src="/templates/note-art.wxml" />
 <view class="home-page">
   <view class="home-hero">
     <view class="topbar">
@@ -30,9 +31,21 @@
     </view>
   </view>
   <view class="section-head"><text class="section-title">发现更多</text><text class="section-note">好玩的，随手打开</text></view>
-  <view class="meme-entry" bindtap="openMemes" role="button" aria-label="表情包，分类搜图，热门排行">
-    <view class="scene-copy"><text class="scene-title">表情包</text><text class="scene-desc">分类搜图 · 热门排行</text><text class="meme-caption">找张好图，快乐接梗</text></view>
-    <image class="meme-entry-art" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" />
+  <view class="discover-grid">
+    <view class="discover-card notebook-entry" bindtap="openNotebook" role="button" aria-label="笔记本，记录想法、清单和灵感">
+      <view class="discover-copy notebook-copy">
+        <text class="discover-title">笔记本</text>
+        <text class="discover-desc">想法、清单</text><text class="discover-desc">和灵感</text>
+      </view>
+      <view class="notebook-entry-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
+    </view>
+    <view class="discover-card meme-entry" bindtap="openMemes" role="button" aria-label="表情包，分类搜图，热门排行">
+      <view class="discover-copy meme-copy">
+        <text class="discover-title">表情包</text>
+        <text class="discover-desc">分类搜图 ·</text><text class="discover-desc">热门排行</text>
+      </view>
+      <image class="meme-entry-art" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" />
+    </view>
   </view>
   <view wx:if="{{showWebsiteEntry}}" class="website-card" bindtap="copyWebsite" role="button" aria-label="更多功能，复制 xwhub.cn 网址">
     <image class="website-logo" src="/assets/icons/funbox-logo.png" mode="aspectFit" aria-hidden="true" />

@@ -176,6 +176,16 @@ Page({
     }
   },
 
+  openNotebook() {
+    if (!getAccessToken()) {
+      wx.navigateTo({
+        url: `/pages/auth/index?mode=login&returnTo=${encodeURIComponent("/packages/notebook/index/index")}`,
+      });
+      return;
+    }
+    wx.navigateTo({ url: "/packages/notebook/index/index" });
+  },
+
   openMemes() { wx.navigateTo({ url: "/packages/meme/library/index" }); },
 
   openPoker() { wx.navigateTo({ url: "/pages/score/poker/index" }); },

@@ -53,6 +53,16 @@
         "library/index",
         "detail/index"
       ]
+    },
+    {
+      "root": "packages/notebook",
+      "pages": [
+        "index/index",
+        "editor/index",
+        "detail/index",
+        "search/index",
+        "books/index"
+      ]
     }
   ]
 }

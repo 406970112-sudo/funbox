@@ -19,7 +19,7 @@ Page({
     this.unloaded = false;
     let returnTo = "";
     try { returnTo = options && options.returnTo ? decodeURIComponent(options.returnTo) : ""; } catch (error) { /* Ignore malformed return destinations. */ }
-    if (!/^\/pages\/[a-z0-9/_-]+(?:\?.*)?$/i.test(returnTo) || returnTo.split("?")[0] === "/pages/auth/index") returnTo = "";
+    if (!/^\/(?:pages|packages)\/[a-z0-9/_-]+(?:\?.*)?$/i.test(returnTo) || returnTo.split("?")[0] === "/pages/auth/index") returnTo = "";
     this.setData({ mode: options && options.mode === "register" ? "register" : "wechat", returnTo });
   },
 

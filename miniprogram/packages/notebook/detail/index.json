@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "笔记详情",
+  "navigationBarBackgroundColor": "#f5f7fa",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#f5f7fa",
+  "enablePullDownRefresh": true
+}

@@ -1,0 +1,97 @@
+<import src="/templates/note-art.wxml" />
+<view class="detail-page">
+  <block wx:if="{{isLoggedIn}}">
+    <view wx:if="{{loading}}" class="state-card fb-card">
+      <view class="state-pulse"></view>
+      <text>正在打开笔记…</text>
+    </view>
+
+    <view wx:elif="{{error}}" class="state-card fb-card state-error" bindtap="retry">
+      <text>{{error}}</text>
+      <text class="state-action">重新加载</text>
+    </view>
+
+    <block wx:else>
+      <view class="detail-toolbar">
+        <view class="book-pill" style="background: {{bookFill}}; color: {{bookInk}};">{{bookName}}</view>
+        <view class="more-button" bindtap="openMore" role="button" aria-label="更多笔记操作">···</view>
+      </view>
+
+      <view class="detail-cover" style="background: {{bookFill}};">
+        <text class="cover-note">FunBox / {{bookName}}</text>
+        <view class="cover-art" aria-hidden="true"><template is="note-art" data="{{variant: 'lg'}}"></template></view>
+      </view>
+
+      <text class="detail-title">{{title}}</text>
+      <view class="detail-meta-row">
+        <text class="detail-meta">{{updatedLabel}}</text>
+        <text wx:if="{{pinned}}" class="detail-status">已置顶</text>
+      </view>
+      <view wx:if="{{tags.length}}" class="detail-tags">
+        <text wx:for="{{tags}}" wx:key="*this" class="detail-tag"># {{item}}</text>
+      </view>
+
+      <view wx:if="{{body}}" class="detail-body-card fb-card">
+        <text class="detail-body">{{body}}</text>
+      </view>
+
+      <view wx:if="{{checklist.length}}" class="detail-check-card fb-card">
+        <view class="detail-card-head">
+          <text class="detail-card-title">清单</text>
+          <text class="detail-card-count">{{checklist.length}} 项</text>
+        </view>
+        <view wx:for="{{checklist}}" wx:key="id" class="detail-check-row">
+          <view class="detail-check-box {{item.done ? 'detail-check-done' : ''}}">
+            <view class="detail-check-mark"></view>
+          </view>
+          <text class="detail-check-text {{item.done ? 'detail-check-text-done' : ''}}">{{item.text}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{images.length}}" class="detail-media-card fb-card">
+        <view class="detail-card-head">
+          <text class="detail-card-title">图片</text>
+          <text class="detail-card-count">{{images.length}} 张</text>
+        </view>
+        <view class="detail-image-grid">
+          <view wx:for="{{images}}" wx:key="id" class="detail-image-tile" data-index="{{index}}" bindtap="previewImage">
+            <image wx:if="{{item.localPath}}" class="detail-image" src="{{item.localPath}}" mode="aspectFill" />
+            <view wx:else class="detail-image-loading">加载中</view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{audio}}" class="detail-audio-card fb-card">
+        <view class="detail-audio-play {{audioPlaying ? 'detail-audio-playing' : ''}}" bindtap="playAudio" role="button" aria-label="{{audioPlaying ? '暂停语音' : '播放语音'}}">
+          <view class="play-triangle" aria-hidden="true"></view>
+        </view>
+        <view class="detail-audio-copy">
+          <text class="detail-audio-title">语音笔记</text>
+          <text class="detail-audio-meta">{{audio.durationLabel || '点击播放'}}</text>
+        </view>
+      </view>
+
+      <view class="detail-actionbar">
+        <view class="detail-action {{favorite ? 'detail-action-active' : ''}}" bindtap="toggleFavorite" role="button" aria-label="{{favorite ? '取消收藏' : '收藏笔记'}}">
+          <text class="detail-action-icon">{{favorite ? '★' : '☆'}}</text>
+          <text>{{favorite ? '已收藏' : '收藏'}}</text>
+        </view>
+        <button class="detail-action detail-share" open-type="share" aria-label="分享笔记">
+          <text class="share-icon" aria-hidden="true">↗</text>
+          <text>分享</text>
+        </button>
+        <view class="detail-action detail-primary" bindtap="editNote" role="button" aria-label="编辑笔记">
+          <text class="edit-icon" aria-hidden="true"></text>
+          <text>编辑</text>
+        </view>
+      </view>
+    </block>
+  </block>
+
+  <view wx:else class="login-card fb-card">
+    <view class="login-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
+    <text class="login-title">登录后查看笔记</text>
+    <text class="login-desc">这是账号内的私人笔记，登录后即可继续编辑。</text>
+    <button class="login-button" bindtap="openLogin">微信快捷登录</button>
+  </view>
+</view>

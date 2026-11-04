@@ -1,0 +1,180 @@
+<import src="/templates/note-art.wxml" />
+<view class="editor-page">
+  <block wx:if="{{isLoggedIn}}">
+    <view wx:if="{{loading}}" class="state-card fb-card">
+      <view class="state-pulse"></view>
+      <text>正在打开笔记…</text>
+    </view>
+
+    <view wx:elif="{{error}}" class="state-card fb-card state-error" bindtap="retry">
+      <text>{{error}}</text>
+      <text class="state-action">重新加载</text>
+    </view>
+
+    <block wx:else>
+      <view class="editor-topbar">
+        <picker mode="selector" range="{{bookNames}}" value="{{bookIndex}}" bindchange="onBookChange">
+          <view class="book-pill" style="background: {{selectedBookFill}}; color: {{selectedBookInk}};">
+            <text>{{selectedBookName}}</text>
+            <text class="book-pill-arrow">⌄</text>
+          </view>
+        </picker>
+        <text class="save-state save-{{saveState}}">{{saveLabel}}</text>
+        <view class="done-button" bindtap="saveAndClose" role="button" aria-label="完成并返回">完成</view>
+      </view>
+
+      <view class="title-card">
+        <input
+          class="title-input"
+          value="{{title}}"
+          maxlength="80"
+          placeholder="写个标题…"
+          placeholder-class="title-placeholder"
+          bindinput="onTitleInput"
+          confirm-type="next"
+        />
+        <text class="title-hint">想到什么，就先写下来</text>
+        <view class="title-art" aria-hidden="true"><template is="note-art" data="{{variant: 'sm'}}"></template></view>
+      </view>
+
+      <view class="body-card fb-card">
+        <textarea
+          class="body-input"
+          value="{{body}}"
+          maxlength="20000"
+          auto-height
+          placeholder="写点什么…"
+          placeholder-class="body-placeholder"
+          bindinput="onBodyInput"
+          cursor-spacing="120"
+        ></textarea>
+      </view>
+
+      <view class="check-card fb-card">
+        <view class="card-head">
+          <view class="card-title">
+            <view class="list-icon" aria-hidden="true"></view>
+            <text>清单</text>
+          </view>
+          <view class="add-link" bindtap="addChecklistItem" role="button" aria-label="添加清单项">＋ 添加</view>
+        </view>
+        <view wx:if="{{checklist.length}}" class="check-list">
+          <view wx:for="{{checklist}}" wx:key="id" class="check-row">
+            <view
+              class="check-control {{item.done ? 'check-control-active' : ''}}"
+              data-index="{{index}}"
+              bindtap="toggleChecklist"
+              role="checkbox"
+              aria-checked="{{item.done}}"
+              aria-label="标记 {{item.text}}"
+            >
+              <view class="check-mark" aria-hidden="true"></view>
+            </view>
+            <input
+              class="check-input {{item.done ? 'check-input-done' : ''}}"
+              value="{{item.text}}"
+              maxlength="200"
+              placeholder="添加一项"
+              placeholder-class="check-placeholder"
+              data-index="{{index}}"
+              bindinput="onChecklistInput"
+            />
+            <view class="check-delete" data-index="{{index}}" bindtap="removeChecklist" role="button" aria-label="删除清单项">×</view>
+          </view>
+        </view>
+        <view wx:else class="empty-check" bindtap="addChecklistItem">
+          <text>还没有清单项，点这里添加</text>
+        </view>
+      </view>
+
+      <view wx:if="{{images.length}}" class="media-section">
+        <view class="card-head media-head">
+          <text class="section-label">图片</text>
+          <text class="section-count">{{images.length}} / 4</text>
+        </view>
+        <view class="image-grid">
+          <view wx:for="{{images}}" wx:key="id" class="image-tile">
+            <image wx:if="{{item.localPath}}" class="note-image" src="{{item.localPath}}" mode="aspectFill" />
+            <view wx:else class="image-loading">加载中</view>
+            <view class="image-delete" data-index="{{index}}" bindtap="removeImage" role="button" aria-label="移除图片">×</view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{audio}}" class="audio-card fb-card">
+        <view class="audio-play {{audioPlaying ? 'audio-playing' : ''}}" bindtap="playAudio" role="button" aria-label="{{audioPlaying ? '暂停语音' : '播放语音'}}">
+          <view class="play-triangle" aria-hidden="true"></view>
+        </view>
+        <view class="audio-copy">
+          <text class="audio-title">语音笔记</text>
+          <text class="audio-meta">{{audio.durationLabel || '点击播放'}}</text>
+        </view>
+        <view class="audio-delete" bindtap="deleteAudio" role="button" aria-label="删除语音">×</view>
+      </view>
+
+      <view class="tags-section">
+        <view class="card-head">
+          <text class="section-label">标签</text>
+          <text class="section-count">{{tags.length}} / 8</text>
+        </view>
+        <view class="tag-cloud">
+          <view wx:for="{{tags}}" wx:key="*this" class="editor-tag">
+            <text># {{item}}</text>
+            <view class="tag-remove" data-index="{{index}}" bindtap="removeTag" role="button" aria-label="删除标签 {{item}}">×</view>
+          </view>
+          <view wx:if="{{tags.length < 8}}" class="add-tag" bindtap="openTagModal" role="button" aria-label="添加标签">＋ 标签</view>
+        </view>
+      </view>
+
+      <view wx:if="{{uploadingMedia}}" class="uploading-banner">正在上传附件…</view>
+    </block>
+
+    <view wx:if="{{!loading && !error}}" class="format-bar">
+      <view class="format-item format-checklist" bindtap="addChecklistItem" role="button" aria-label="添加清单">
+        <view class="tool-icon tool-list" aria-hidden="true"></view>
+        <text>清单</text>
+      </view>
+      <view class="format-item format-image" bindtap="chooseImages" role="button" aria-label="添加图片">
+        <view class="tool-icon tool-image" aria-hidden="true"></view>
+        <text>图片</text>
+      </view>
+      <view class="format-item format-tags" bindtap="openTagModal" role="button" aria-label="添加标签">
+        <text class="tool-hash" aria-hidden="true">#</text>
+        <text>标签</text>
+      </view>
+      <view class="format-item format-voice {{recording ? 'format-recording' : ''}}" bindtap="toggleRecording" role="button" aria-label="{{recording ? '结束录音' : '录制语音'}}">
+        <view class="tool-icon tool-mic {{recording ? 'tool-mic-recording' : ''}}" aria-hidden="true"></view>
+        <text>{{recording ? recordLabel : '语音'}}</text>
+      </view>
+    </view>
+  </block>
+
+  <view wx:else class="login-card fb-card">
+    <view class="login-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
+    <text class="login-title">登录后开始记录</text>
+    <text class="login-desc">笔记会跟随你的账号保存，换设备也能继续写。</text>
+    <button class="login-button" bindtap="openLogin">微信快捷登录</button>
+  </view>
+
+  <view wx:if="{{showTagModal}}" class="modal-mask" catchtouchmove="noop">
+    <view class="tag-modal" catchtap="noop">
+      <text class="modal-title">添加标签</text>
+      <input
+        class="modal-input"
+        value="{{tagDraft}}"
+        maxlength="20"
+        focus="{{showTagModal}}"
+        placeholder="例如：旅行"
+        placeholder-class="input-placeholder"
+        bindinput="onTagInput"
+        bindconfirm="confirmTag"
+        confirm-type="done"
+      />
+      <text wx:if="{{tagError}}" class="modal-error">{{tagError}}</text>
+      <view class="modal-actions">
+        <button class="modal-cancel" bindtap="closeTagModal">取消</button>
+        <button class="modal-confirm" bindtap="confirmTag">添加</button>
+      </view>
+    </view>
+  </view>
+</view>

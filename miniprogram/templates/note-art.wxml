@@ -1,0 +1,9 @@
+<template name="note-art">
+  <view class="note-art note-art--{{variant}}">
+    <view class="note-art-page"></view>
+    <view class="note-art-cover"></view>
+    <view class="note-art-bookmark"></view>
+    <view class="note-art-sticky"></view>
+    <view class="note-art-badge"></view>
+  </view>
+</template>
