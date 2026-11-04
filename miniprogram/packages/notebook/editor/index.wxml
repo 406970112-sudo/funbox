@@ -131,19 +131,34 @@
 
     <view wx:if="{{!loading && !error}}" class="format-bar">
       <view class="format-item format-checklist" bindtap="addChecklistItem" role="button" aria-label="添加清单">
-        <view class="tool-icon tool-list" aria-hidden="true"></view>
+        <view class="tool-icon tool-list" aria-hidden="true">
+          <view class="tool-list-page"></view>
+          <view class="tool-list-check"></view>
+        </view>
         <text>清单</text>
       </view>
       <view class="format-item format-image" bindtap="chooseImages" role="button" aria-label="添加图片">
-        <view class="tool-icon tool-image" aria-hidden="true"></view>
+        <view class="tool-icon tool-image" aria-hidden="true">
+          <view class="tool-photo-frame">
+            <view class="tool-photo-sun"></view>
+            <view class="tool-photo-hill"></view>
+          </view>
+        </view>
         <text>图片</text>
       </view>
       <view class="format-item format-tags" bindtap="openTagModal" role="button" aria-label="添加标签">
-        <text class="tool-hash" aria-hidden="true">#</text>
+        <view class="tool-icon tool-tag" aria-hidden="true">
+          <view class="tool-tag-shape">
+            <view class="tool-tag-hole"></view>
+          </view>
+        </view>
         <text>标签</text>
       </view>
       <view class="format-item format-voice {{recording ? 'format-recording' : ''}}" bindtap="toggleRecording" role="button" aria-label="{{recording ? '结束录音' : '录制语音'}}">
-        <view class="tool-icon tool-mic {{recording ? 'tool-mic-recording' : ''}}" aria-hidden="true"></view>
+        <view class="tool-icon tool-mic {{recording ? 'tool-mic-recording' : ''}}" aria-hidden="true">
+          <view class="tool-mic-body"></view>
+          <view class="tool-mic-stand"></view>
+        </view>
         <text>{{recording ? recordLabel : '语音'}}</text>
       </view>
     </view>

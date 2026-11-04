@@ -186,6 +186,13 @@ test("notebook route config and shared remove controls are present", () => {
   assert.match(editorWxml, /<view class="book-pill-arrow"/);
   assert.match(editorWxss, /\.book-picker\s*\{[^}]*align-items:\s*center;/s);
   assert.match(editorWxss, /\.book-pill-arrow\s*\{[^}]*border-top:\s*8rpx solid currentColor;/s);
+  assert.match(editorWxml, /class="tool-icon tool-list"/);
+  assert.match(editorWxml, /class="tool-icon tool-image"/);
+  assert.match(editorWxml, /class="tool-icon tool-tag"/);
+  assert.match(editorWxml, /class="tool-icon tool-mic/);
+  assert.doesNotMatch(editorWxml, /tool-hash/);
+  assert.match(editorWxss, /\.tool-tag-shape\s*\{/);
+  assert.match(editorWxss, /\.tool-photo-frame\s*\{/);
 });
 
 test("auth accepts notebook subpackage return destinations", () => {
