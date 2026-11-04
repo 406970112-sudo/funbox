@@ -12,23 +12,25 @@
     </view>
 
     <block wx:else>
-      <view class="detail-toolbar">
-        <view class="book-pill" style="background: {{bookFill}}; color: {{bookInk}};">{{bookName}}</view>
-        <view class="more-button" bindtap="openMore" role="button" aria-label="更多笔记操作">···</view>
+      <view class="detail-context-row">
+        <view class="detail-context-main">
+          <view class="detail-book-dot" style="background: {{bookInk}}; box-shadow: 0 0 0 6rpx {{bookFill}};"></view>
+          <text class="detail-book-name" style="color: {{bookInk}};">{{bookName}}</text>
+          <text class="detail-context-separator">·</text>
+          <text class="detail-updated">{{updatedLabel}}</text>
+          <text wx:if="{{pinned}}" class="detail-status">置顶</text>
+        </view>
+        <button class="more-button" bindtap="openMore" hover-class="more-button-pressed" aria-label="更多笔记操作">···</button>
       </view>
 
-      <view class="detail-cover" style="background: {{bookFill}};">
-        <text class="cover-note">FunBox / {{bookName}}</text>
-        <view class="cover-art" aria-hidden="true"><template is="note-art" data="{{variant: 'lg'}}"></template></view>
-      </view>
-
-      <text class="detail-title">{{title}}</text>
-      <view class="detail-meta-row">
-        <text class="detail-meta">{{updatedLabel}}</text>
-        <text wx:if="{{pinned}}" class="detail-status">已置顶</text>
-      </view>
-      <view wx:if="{{tags.length}}" class="detail-tags">
-        <text wx:for="{{tags}}" wx:key="*this" class="detail-tag"># {{item}}</text>
+      <view class="detail-heading">
+        <view class="detail-title-wrap">
+          <text class="detail-title">{{title}}</text>
+        </view>
+        <view wx:if="{{tags.length}}" class="detail-tags">
+          <text wx:for="{{tags}}" wx:key="*this" class="detail-tag"># {{item}}</text>
+        </view>
+        <text wx:if="{{summaryLabel}}" class="detail-summary">{{summaryLabel}}</text>
       </view>
 
       <view wx:if="{{body}}" class="detail-body-card fb-card">
@@ -38,7 +40,7 @@
       <view wx:if="{{checklist.length}}" class="detail-check-card fb-card">
         <view class="detail-card-head">
           <text class="detail-card-title">清单</text>
-          <text class="detail-card-count">{{checklist.length}} 项</text>
+          <text class="detail-card-count">{{checklistDone}} / {{checklist.length}} 已完成</text>
         </view>
         <view wx:for="{{checklist}}" wx:key="id" class="detail-check-row">
           <view class="detail-check-box {{item.done ? 'detail-check-done' : ''}}">
@@ -71,18 +73,45 @@
         </view>
       </view>
 
-      <view class="detail-actionbar">
-        <view class="detail-action {{favorite ? 'detail-action-active' : ''}}" bindtap="toggleFavorite" role="button" aria-label="{{favorite ? '取消收藏' : '收藏笔记'}}">
-          <text class="detail-action-icon">{{favorite ? '★' : '☆'}}</text>
-          <text>{{favorite ? '已收藏' : '收藏'}}</text>
+      <view class="detail-actionbar" role="toolbar" aria-label="笔记操作">
+        <view
+          class="detail-action {{favorite ? 'detail-action-active' : ''}}"
+          bindtap="toggleFavorite"
+          hover-class="detail-action-pressed"
+          role="button"
+          aria-label="{{favorite ? '取消收藏' : '收藏笔记'}}"
+        >
+          <view class="detail-tool detail-tool-favorite" aria-hidden="true">
+            <image
+              class="detail-tool-image"
+              src="/packages/notebook/assets/icons/{{favorite ? 'favorite-active' : 'favorite-default'}}.png"
+              mode="aspectFit"
+            />
+          </view>
+          <text class="detail-action-label">{{favorite ? '已收藏' : '收藏'}}</text>
         </view>
-        <button class="detail-action detail-share" open-type="share" aria-label="分享笔记">
-          <text class="share-icon" aria-hidden="true">↗</text>
-          <text>分享</text>
+        <button
+          class="detail-action detail-share"
+          open-type="share"
+          hover-class="detail-action-pressed"
+          aria-label="分享笔记"
+        >
+          <view class="detail-tool detail-tool-share" aria-hidden="true">
+            <image class="detail-tool-image" src="/packages/notebook/assets/icons/share.png" mode="aspectFit" />
+          </view>
+          <text class="detail-action-label">分享</text>
         </button>
-        <view class="detail-action detail-primary" bindtap="editNote" role="button" aria-label="编辑笔记">
-          <text class="edit-icon" aria-hidden="true"></text>
-          <text>编辑</text>
+        <view
+          class="detail-action detail-primary"
+          bindtap="editNote"
+          hover-class="detail-action-pressed"
+          role="button"
+          aria-label="编辑笔记"
+        >
+          <view class="detail-tool detail-tool-edit" aria-hidden="true">
+            <image class="detail-tool-image" src="/packages/notebook/assets/icons/edit.png" mode="aspectFit" />
+          </view>
+          <text class="detail-action-label">编辑</text>
         </view>
       </view>
     </block>

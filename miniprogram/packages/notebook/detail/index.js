@@ -6,8 +6,19 @@ const {
   notebookErrorMessage,
   isNotebookUnauthorized,
 } = require("../utils/notebook-api");
-const { decorateNote, formatFullDate, bookTheme } = require("../utils/notebook-format");
+const { decorateNote, formatNoteTime, bookTheme } = require("../utils/notebook-format");
 const { getAccessToken, clearSession } = require("../../../utils/auth");
+
+function noteSummary(body, checklist, images, audio) {
+  const characterCount = Array.from(String(body || "").replace(/\s+/g, "")).length;
+  const doneCount = checklist.filter(item => item.done).length;
+  const parts = [];
+  if (characterCount) parts.push(`${characterCount} 字`);
+  if (checklist.length) parts.push(`清单 ${doneCount}/${checklist.length}`);
+  if (images.length) parts.push(`图片 ${images.length} 张`);
+  if (audio) parts.push("语音 1 段");
+  return parts.join(" · ");
+}
 
 Page({
   data: {
@@ -25,6 +36,8 @@ Page({
     bookFill: "#eaf2ff",
     bookInk: "#2d5bff",
     updatedLabel: "",
+    summaryLabel: "",
+    checklistDone: 0,
     favorite: false,
     pinned: false,
     favoriteBusy: false,
@@ -83,20 +96,24 @@ Page({
       const theme = bookTheme(note.bookColor);
       const images = (note.media || []).filter(item => item.kind === "image").map(item => ({ ...item, localPath: "" }));
       const audio = (note.media || []).find(item => item.kind === "audio") || null;
+      const checklist = (note.checklist || []).map(item => ({ ...item, done: Boolean(item.done) }));
+      const checklistDone = checklist.filter(item => item.done).length;
       this._note = note;
       this.setData({
         loading: false,
         note: decorated,
         title: decorated.displayTitle,
         body: note.body || "",
-        checklist: (note.checklist || []).map(item => ({ ...item, done: Boolean(item.done) })),
+        checklist,
+        checklistDone,
+        summaryLabel: noteSummary(note.body, checklist, images, audio),
         tags: note.tags || [],
         images,
         audio: audio ? { ...audio, durationLabel: "点击播放" } : null,
         bookName: note.bookName,
         bookFill: theme.fill,
         bookInk: theme.ink,
-        updatedLabel: formatFullDate(note.updatedAt),
+        updatedLabel: formatNoteTime(note.updatedAt),
         favorite: Boolean(note.favorite),
         pinned: Boolean(note.pinned),
       });

@@ -156,10 +156,10 @@
 }
 
 .favorite-toggle {
-  gap: 8rpx;
-  min-height: 54rpx;
+  gap: 10rpx;
+  min-height: 56rpx;
   box-sizing: border-box;
-  padding: 0 18rpx;
+  padding: 0 18rpx 0 8rpx;
   border: 2rpx solid #fff;
   border-radius: 18rpx;
   background: #fff;
@@ -167,6 +167,12 @@
   font-size: 21rpx;
   font-weight: 700;
   box-shadow: 0 7rpx 18rpx rgba(38, 76, 133, 0.03);
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
+}
+
+.favorite-toggle-pressed {
+  background: #f4f7fd;
+  transform: scale(0.98);
 }
 
 .favorite-toggle-active {
@@ -175,9 +181,28 @@
   color: #c95e49;
 }
 
-.favorite-star {
-  color: #f1a225;
-  font-size: 26rpx;
+.favorite-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40rpx;
+  width: 40rpx;
+  height: 36rpx;
+  border-radius: 12rpx;
+  background: #fff0ed;
+  box-shadow: inset 0 -3rpx 0 rgba(23, 33, 57, 0.04);
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.favorite-toggle-active .favorite-icon {
+  background: #ffe5df;
+  box-shadow: inset 0 -3rpx 0 rgba(194, 72, 51, 0.06), 0 4rpx 10rpx rgba(255, 118, 94, 0.08);
+}
+
+.favorite-icon-image {
+  display: block;
+  width: 34rpx;
+  height: 28rpx;
 }
 
 .result-head {

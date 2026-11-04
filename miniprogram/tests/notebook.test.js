@@ -195,6 +195,87 @@ test("notebook route config and shared remove controls are present", () => {
   assert.match(editorWxss, /\.tool-photo-frame\s*\{/);
 });
 
+test("notebook detail uses a title-first header and the shared action dock", () => {
+  const detailWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxml"), "utf8");
+  const detailWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxss"), "utf8");
+  assert.doesNotMatch(detailWxml, /detail-cover|detail-toolbar|cover-art/);
+  assert.match(detailWxml, /class="detail-context-row"/);
+  assert.match(detailWxml, /class="detail-title-wrap"/);
+  assert.match(detailWxml, /class="detail-summary"/);
+  assert.doesNotMatch(detailWxss, /\.detail-cover\s*\{|\.detail-toolbar\s*\{|\.cover-art\s*\{/);
+  assert.match(detailWxss, /\.detail-title-wrap::before\s*\{[^}]*background:\s*linear-gradient/s);
+  assert.match(detailWxss, /\.detail-summary\s*\{/);
+  assert.match(detailWxml, /class="detail-actionbar"/);
+  assert.match(detailWxml, /class="detail-tool detail-tool-favorite"/);
+  assert.match(detailWxml, /class="detail-tool detail-tool-share"/);
+  assert.match(detailWxml, /class="detail-tool detail-tool-edit"/);
+  assert.match(detailWxml, /favorite-active.*favorite-default/);
+  assert.match(detailWxml, /assets\/icons\/share\.png/);
+  assert.match(detailWxml, /assets\/icons\/edit\.png/);
+  assert.match(detailWxml, /class="detail-tool-image"/);
+  assert.doesNotMatch(detailWxml, /[★☆↗]/);
+  assert.match(detailWxss, /\.detail-action\s*\{[^}]*flex-direction:\s*column;/s);
+  assert.match(detailWxss, /\.detail-tool-favorite\s*\{[^}]*background:\s*#fff0ed;/s);
+  assert.match(detailWxss, /\.detail-tool-share\s*\{[^}]*background:\s*#e8f7f1;/s);
+  assert.match(detailWxss, /\.detail-tool-edit\s*\{[^}]*background:\s*#eaf2ff;/s);
+  assert.match(detailWxss, /\.detail-tool-image\s*\{[^}]*width:\s*38rpx;[^}]*height:\s*32rpx;/s);
+  for (const icon of ["favorite-default", "favorite-active", "share", "edit"]) {
+    assert.ok(fs.existsSync(path.resolve(ROOT, `packages/notebook/assets/icons/${icon}.png`)));
+  }
+});
+
+test("notebook detail summarizes body, checklist, and image content", async () => {
+  const note = {
+    id: "note-1",
+    title: "去杭州",
+    body: "杭州 周末\n慢走",
+    checklist: [{ id: "c1", text: "订票", done: true }, { id: "c2", text: "订酒店", done: false }],
+    tags: ["杭州"],
+    media: [{ id: "i1", kind: "image" }, { id: "i2", kind: "image" }],
+    bookName: "旅行手记",
+    bookColor: "#2d5bff",
+    updatedAt: "2026-11-04T06:32:00Z",
+    favorite: false,
+    pinned: true,
+  };
+  const stubs = {
+    "../utils/notebook-api": {
+      getNotebookNote: async () => note,
+      updateNotebookNote: async (id, patch) => ({ id, ...patch }),
+      deleteNotebookNote: async () => ({}),
+      downloadNotebookMedia: async () => "",
+      notebookErrorMessage: error => error.message,
+      isNotebookUnauthorized: () => false,
+    },
+    "../utils/notebook-format": {
+      decorateNote: item => ({ ...item, displayTitle: item.title }),
+      formatNoteTime: () => "今天 14:32",
+      bookTheme: () => ({ fill: "#eaf2ff", ink: "#2d5bff" }),
+    },
+    "../../../utils/auth": { getAccessToken: () => "token", clearSession() {} },
+  };
+  const definition = loadPage("packages/notebook/detail/index.js", stubs, { showToast() {} });
+  const page = pageInstance(definition);
+  page._active = true;
+  page.noteId = "note-1";
+  await page.loadNote();
+  assert.equal(page.data.updatedLabel, "今天 14:32");
+  assert.equal(page.data.checklistDone, 1);
+  assert.equal(page.data.summaryLabel, "6 字 · 清单 1/2 · 图片 2 张");
+});
+
+test("search favorite filter reuses the illustrated bookmark without changing pill height", () => {
+  const searchWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxml"), "utf8");
+  const searchWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxss"), "utf8");
+  assert.match(searchWxml, /class="favorite-icon"/);
+  assert.match(searchWxml, /favorite-active.*favorite-default/);
+  assert.match(searchWxml, /class="favorite-icon-image"/);
+  assert.doesNotMatch(searchWxml, /favorite-star|[★☆]/);
+  assert.match(searchWxss, /\.favorite-toggle\s*\{[^}]*min-height:\s*56rpx;[^}]*padding:\s*0 18rpx 0 8rpx;/s);
+  assert.match(searchWxss, /\.favorite-icon\s*\{[^}]*width:\s*40rpx;[^}]*height:\s*36rpx;/s);
+  assert.match(searchWxss, /\.favorite-toggle-active\s*\{[^}]*background:\s*#fff0ed;[^}]*color:\s*#c95e49;/s);
+});
+
 test("auth accepts notebook subpackage return destinations", () => {
   const definition = loadPage("pages/auth/index.js", {
     "../../utils/auth": {},
@@ -244,7 +325,7 @@ test("detail favorite toggles only after the server confirms it", async () => {
     },
     "../utils/notebook-format": {
       decorateNote: note => note,
-      formatFullDate: () => "",
+      formatNoteTime: () => "",
       bookTheme: () => ({ fill: "#eaf2ff", ink: "#2d5bff" }),
     },
     "../../../utils/auth": { getAccessToken: () => "token", clearSession() {} },

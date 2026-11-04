@@ -36,8 +36,20 @@
     </view>
 
     <view class="favorite-row">
-      <view class="favorite-toggle {{favoriteOnly ? 'favorite-toggle-active' : ''}}" bindtap="toggleFavoriteOnly" role="button" aria-label="{{favoriteOnly ? '取消只看收藏' : '只看收藏笔记'}}">
-        <text class="favorite-star">{{favoriteOnly ? '★' : '☆'}}</text>
+      <view
+        class="favorite-toggle {{favoriteOnly ? 'favorite-toggle-active' : ''}}"
+        bindtap="toggleFavoriteOnly"
+        hover-class="favorite-toggle-pressed"
+        role="button"
+        aria-label="{{favoriteOnly ? '取消只看收藏' : '只看收藏笔记'}}"
+      >
+        <view class="favorite-icon" aria-hidden="true">
+          <image
+            class="favorite-icon-image"
+            src="/packages/notebook/assets/icons/{{favoriteOnly ? 'favorite-active' : 'favorite-default'}}.png"
+            mode="aspectFit"
+          />
+        </view>
         <text>只看收藏</text>
       </view>
     </view>
