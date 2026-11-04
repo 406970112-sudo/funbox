@@ -180,6 +180,12 @@ test("notebook route config and shared remove controls are present", () => {
   assert.match(homeWxml, /class="discover-card meme-entry"/);
   assert.match(homeWxss, /\.discover-card\s*\{[^}]*height:\s*230rpx;/s);
   assert.doesNotMatch(homeWxml, /<br\s*\/>/);
+  const editorWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxml"), "utf8");
+  const editorWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxss"), "utf8");
+  assert.doesNotMatch(editorWxml, /book-pill-arrow">⌄/);
+  assert.match(editorWxml, /<view class="book-pill-arrow"/);
+  assert.match(editorWxss, /\.book-picker\s*\{[^}]*align-items:\s*center;/s);
+  assert.match(editorWxss, /\.book-pill-arrow\s*\{[^}]*border-top:\s*8rpx solid currentColor;/s);
 });
 
 test("auth accepts notebook subpackage return destinations", () => {

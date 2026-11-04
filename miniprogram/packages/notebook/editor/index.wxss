@@ -25,26 +25,42 @@
   min-height: 72rpx;
 }
 
+.book-picker {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 62rpx;
+  line-height: 0;
+}
+
 .book-pill {
+  display: flex;
+  align-items: center;
   max-width: 270rpx;
   height: 62rpx;
   box-sizing: border-box;
-  gap: 8rpx;
+  gap: 10rpx;
   padding: 0 18rpx;
   border-radius: 20rpx;
   font-size: 22rpx;
   font-weight: 800;
+  line-height: 1;
 }
 
 .book-pill text:first-child {
   overflow: hidden;
+  line-height: 1.1;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .book-pill-arrow {
-  flex-shrink: 0;
-  font-size: 24rpx;
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-top: 8rpx solid currentColor;
+  border-right: 7rpx solid transparent;
+  border-left: 7rpx solid transparent;
 }
 
 .save-state {

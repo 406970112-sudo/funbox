@@ -13,10 +13,10 @@
 
     <block wx:else>
       <view class="editor-topbar">
-        <picker mode="selector" range="{{bookNames}}" value="{{bookIndex}}" bindchange="onBookChange">
+        <picker class="book-picker" mode="selector" range="{{bookNames}}" value="{{bookIndex}}" bindchange="onBookChange">
           <view class="book-pill" style="background: {{selectedBookFill}}; color: {{selectedBookInk}};">
             <text>{{selectedBookName}}</text>
-            <text class="book-pill-arrow">⌄</text>
+            <view class="book-pill-arrow" aria-hidden="true"></view>
           </view>
         </picker>
         <text class="save-state save-{{saveState}}">{{saveLabel}}</text>
