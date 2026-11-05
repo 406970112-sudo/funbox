@@ -44,6 +44,8 @@ type notebookNoteResponse struct {
 	Tags      []string                `json:"tags"`
 	Pinned    bool                    `json:"pinned"`
 	Favorite  bool                    `json:"favorite"`
+	Encrypted bool                    `json:"encrypted"`
+	Locked    bool                    `json:"locked"`
 	Media     []notebookMediaResponse `json:"media"`
 	CreatedAt time.Time               `json:"createdAt"`
 	UpdatedAt time.Time               `json:"updatedAt"`
@@ -174,6 +176,180 @@ func TestNotebookHTTPFlow(t *testing.T) {
 	}
 }
 
+func notebookRequestJSON[T any](
+	t *testing.T,
+	client *http.Client,
+	method string,
+	url string,
+	body string,
+	accessToken string,
+	unlockToken string,
+	wantStatus int,
+) T {
+	t.Helper()
+	request, err := http.NewRequest(method, url, strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("create notebook request: %v", err)
+	}
+	if body != "" {
+		request.Header.Set("Content-Type", "application/json")
+	}
+	if accessToken != "" {
+		request.Header.Set("Authorization", "Bearer "+accessToken)
+	}
+	if unlockToken != "" {
+		request.Header.Set("X-Notebook-Unlock-Token", unlockToken)
+	}
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatalf("notebook request: %v", err)
+	}
+	defer response.Body.Close()
+	raw, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatalf("read notebook response: %v", err)
+	}
+	if response.StatusCode != wantStatus {
+		t.Fatalf("notebook status=%d want=%d body=%s", response.StatusCode, wantStatus, string(raw))
+	}
+	var payload T
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &payload); err != nil {
+			t.Fatalf("decode notebook response: %v body=%s", err, string(raw))
+		}
+	}
+	return payload
+}
+
+func TestNotebookEncryptedHTTPFlow(t *testing.T) {
+	tempDir := t.TempDir()
+	databasePath := filepath.Join(tempDir, "app.db")
+	users, err := user.OpenStore(databasePath)
+	if err != nil {
+		t.Fatalf("open users: %v", err)
+	}
+	t.Cleanup(func() { _ = users.Close() })
+	socialStore, err := social.OpenStore(databasePath)
+	if err != nil {
+		t.Fatalf("open social: %v", err)
+	}
+	t.Cleanup(func() { _ = socialStore.Close() })
+	cfg := config.Config{
+		Database: config.DatabaseConfig{Path: databasePath},
+		Auth:     config.AuthConfig{TokenTTL: time.Hour},
+		Server:   config.ServerConfig{Host: "127.0.0.1", ReadTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second},
+		Security: config.SecurityConfig{MaxRequestBodyBytes: 2 << 20, RateLimitMax: 200, RateLimitWindow: time.Minute},
+	}
+	authService := auth.NewService(users, []byte(strings.Repeat("k", 32)), time.Hour)
+	server := NewServer(cfg, nil, nil, authService, socialStore, nil)
+	testServer := httptest.NewServer(server.Handler)
+	t.Cleanup(testServer.Close)
+	session := requestJSON[sessionResponse](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/auth/register",
+		`{"username":"13700137013","password":"password-123","displayName":"加密笔记用户","securityQuestion":"昵称？","securityAnswer":"小记"}`,
+		"", http.StatusCreated)
+	token := session.AccessToken
+	books := requestJSON[map[string][]notebookBookResponse](t, testServer.Client(), http.MethodGet, testServer.URL+"/api/v1/notebook/books", "", token, http.StatusOK)
+	bookID := books["books"][0].ID
+
+	requestJSON[map[string]any](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/notebook/security/password",
+		`{"action":"set","new":"secret-123"}`, token, http.StatusOK)
+
+	missingToken := notebookRequestJSON[map[string]string](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/notebook/notes",
+		`{"bookId":"`+bookID+`","title":"加密标题","body":"加密正文","encrypted":true}`,
+		token, "", http.StatusForbidden)
+	if missingToken["error"] != "notebook_note_locked" {
+		t.Fatalf("missing token error = %+v", missingToken)
+	}
+	wrongPassword := notebookRequestJSON[map[string]string](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/notebook/security/unlock", `{"password":"not-the-password"}`,
+		token, "", http.StatusForbidden)
+	if wrongPassword["error"] != "notebook_note_password_mismatch" {
+		t.Fatalf("wrong password error = %+v", wrongPassword)
+	}
+	unlocked := requestJSON[struct {
+		UnlockToken      string `json:"unlockToken"`
+		ExpiresInSeconds int    `json:"expiresInSeconds"`
+	}](t, testServer.Client(), http.MethodPost, testServer.URL+"/api/v1/notebook/security/unlock",
+		`{"password":"secret-123"}`, token, http.StatusOK)
+	if unlocked.UnlockToken == "" || unlocked.ExpiresInSeconds != 1800 {
+		t.Fatalf("unlock response = %+v", unlocked)
+	}
+
+	created := notebookRequestJSON[map[string]notebookNoteResponse](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/notebook/notes",
+		`{"bookId":"`+bookID+`","title":"加密标题","body":"加密正文","tags":["私密"],"encrypted":true}`,
+		token, unlocked.UnlockToken, http.StatusCreated)
+	note := created["note"]
+	if !note.Encrypted || note.Locked || note.Title != "加密标题" || note.Body != "加密正文" {
+		t.Fatalf("created encrypted note = %+v", note)
+	}
+
+	listed := requestJSON[struct {
+		Notes []notebookNoteResponse `json:"notes"`
+	}](t, testServer.Client(), http.MethodGet, testServer.URL+"/api/v1/notebook/notes?limit=100", "", token, http.StatusOK)
+	if len(listed.Notes) != 1 || !listed.Notes[0].Locked || listed.Notes[0].Title != "" || listed.Notes[0].Body != "" {
+		t.Fatalf("locked list = %+v", listed.Notes)
+	}
+	searched := requestJSON[struct {
+		Notes []notebookNoteResponse `json:"notes"`
+	}](t, testServer.Client(), http.MethodGet, testServer.URL+"/api/v1/notebook/notes?q=%E5%8A%A0%E5%AF%86", "", token, http.StatusOK)
+	if len(searched.Notes) != 0 {
+		t.Fatalf("encrypted note appeared in search: %+v", searched.Notes)
+	}
+	locked := requestJSON[map[string]notebookNoteResponse](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/notebook/notes/"+note.ID, "", token, http.StatusOK)
+	if !locked["note"].Locked || locked["note"].Title != "" || len(locked["note"].Media) != 0 {
+		t.Fatalf("locked detail = %+v", locked["note"])
+	}
+	detail := notebookRequestJSON[map[string]notebookNoteResponse](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/notebook/notes/"+note.ID, "", token, unlocked.UnlockToken, http.StatusOK)
+	if detail["note"].Locked || detail["note"].Title != "加密标题" {
+		t.Fatalf("unlocked detail = %+v", detail["note"])
+	}
+
+	pngData, err := base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+	if err != nil {
+		t.Fatalf("decode png: %v", err)
+	}
+	uploaded := uploadNotebookMedia(t, testServer, token, note.ID, "image", "secret.png", pngData, unlocked.UnlockToken)
+	mediaURL := testServer.URL + uploaded.URL
+	mediaRequest, _ := http.NewRequest(http.MethodGet, mediaURL, nil)
+	mediaRequest.Header.Set("Authorization", "Bearer "+token)
+	mediaResponse, err := testServer.Client().Do(mediaRequest)
+	if err != nil {
+		t.Fatalf("locked media request: %v", err)
+	}
+	mediaResponse.Body.Close()
+	if mediaResponse.StatusCode != http.StatusForbidden {
+		t.Fatalf("locked media status = %d", mediaResponse.StatusCode)
+	}
+	mediaRequest, _ = http.NewRequest(http.MethodGet, mediaURL, nil)
+	mediaRequest.Header.Set("Authorization", "Bearer "+token)
+	mediaRequest.Header.Set("X-Notebook-Unlock-Token", unlocked.UnlockToken)
+	mediaResponse, err = testServer.Client().Do(mediaRequest)
+	if err != nil {
+		t.Fatalf("unlocked media request: %v", err)
+	}
+	mediaBody, _ := io.ReadAll(mediaResponse.Body)
+	mediaResponse.Body.Close()
+	if mediaResponse.StatusCode != http.StatusOK || !bytes.Equal(mediaBody, pngData) {
+		t.Fatalf("unlocked media status=%d bytes=%d", mediaResponse.StatusCode, len(mediaBody))
+	}
+
+	notebookRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/notebook/security/lock", "", token, unlocked.UnlockToken, http.StatusOK)
+	lockedAfter := notebookRequestJSON[map[string]notebookNoteResponse](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/notebook/notes/"+note.ID, "", token, unlocked.UnlockToken, http.StatusOK)
+	if !lockedAfter["note"].Locked {
+		t.Fatalf("note remained unlocked after lock: %+v", lockedAfter["note"])
+	}
+	notebookRequestJSON[map[string]any](t, testServer.Client(), http.MethodPost,
+		testServer.URL+"/api/v1/notebook/security/reset", `{"confirm":"DELETE"}`, token, "", http.StatusOK)
+	notebookRequestJSON[map[string]string](t, testServer.Client(), http.MethodGet,
+		testServer.URL+"/api/v1/notebook/notes/"+note.ID, "", token, "", http.StatusNotFound)
+}
+
 func TestNotebookBooksRejectDeletingNonEmptyBook(t *testing.T) {
 	tempDir := t.TempDir()
 	databasePath := filepath.Join(tempDir, "app.db")
@@ -220,7 +396,7 @@ func TestNotebookBooksRejectDeletingNonEmptyBook(t *testing.T) {
 	}
 }
 
-func uploadNotebookMedia(t *testing.T, server *httptest.Server, token, noteID, kind, filename string, body []byte) notebookMediaResponse {
+func uploadNotebookMedia(t *testing.T, server *httptest.Server, token, noteID, kind, filename string, body []byte, unlockToken ...string) notebookMediaResponse {
 	t.Helper()
 	var buffer bytes.Buffer
 	writer := multipart.NewWriter(&buffer)
@@ -242,6 +418,9 @@ func uploadNotebookMedia(t *testing.T, server *httptest.Server, token, noteID, k
 		t.Fatalf("create upload request: %v", err)
 	}
 	request.Header.Set("Authorization", "Bearer "+token)
+	if len(unlockToken) > 0 && unlockToken[0] != "" {
+		request.Header.Set("X-Notebook-Unlock-Token", unlockToken[0])
+	}
 	request.Header.Set("Content-Type", writer.FormDataContentType())
 	response, err := server.Client().Do(request)
 	if err != nil {

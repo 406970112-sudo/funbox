@@ -6,8 +6,12 @@ const {
   uploadNotebookMedia,
   deleteNotebookMedia,
   downloadNotebookMedia,
+  getNotebookSecurity,
+  setNotebookPassword,
+  unlockNotebook,
   notebookErrorMessage,
   isNotebookUnauthorized,
+  isNotebookLockedError,
 } = require("../utils/notebook-api");
 const { bookTheme } = require("../utils/notebook-format");
 const { getAccessToken, clearSession } = require("../../../utils/auth");
@@ -52,6 +56,13 @@ Page({
     recordSeconds: 0,
     recordLabel: "00:00",
     audioPlaying: false,
+    encrypted: false,
+    showPasswordModal: false,
+    passwordMode: "setup",
+    passwordValue: "",
+    passwordConfirm: "",
+    passwordError: "",
+    passwordBusy: false,
   },
 
   onLoad(options = {}) {
@@ -61,6 +72,7 @@ Page({
     this._saveTimer = null;
     this._savePromise = null;
     this._saveAgain = false;
+    this._lastPersistedEncrypted = false;
     this.noteId = options.id ? decodeURIComponent(options.id) : "";
     this.initialBookId = options.bookId ? decodeURIComponent(options.bookId) : "";
     const loggedIn = Boolean(getAccessToken());
@@ -93,13 +105,18 @@ Page({
   async loadEditor() {
     this.setData({ loading: true, error: "" });
     try {
-      const books = await listNotebookBooks();
+      const [books, security] = await Promise.all([listNotebookBooks(), getNotebookSecurity()]);
       if (!this._active) return;
+      this._security = security || {};
       const themed = (books || []).map(book => ({ ...book, ...bookTheme(book.color), initial: String(book.name || "").trim().slice(0, 1) }));
       this._books = themed;
       if (this.noteId) {
         const note = await getNotebookNote(this.noteId);
         if (!this._active) return;
+        if (note.locked) {
+          this.setData({ loading: false, error: "这条加密笔记需要先在详情页解锁。" });
+          return;
+        }
         this.applyLoadedNote(note, themed);
       } else {
         const selected = themed.find(book => book.id === this.initialBookId) || themed[0];
@@ -155,10 +172,12 @@ Page({
       audio,
       pinned: Boolean(note.pinned),
       favorite: Boolean(note.favorite),
-      saveLabel: "已自动保存",
+      encrypted: Boolean(note.encrypted),
+      saveLabel: note.encrypted ? "已加密 · 已自动保存" : "已自动保存",
       saveState: "saved",
     });
     this._hydrating = false;
+    this._lastPersistedEncrypted = Boolean(note.encrypted);
     this.hydrateImages(images);
     if (audio) this.prepareAudio(audio);
   },
@@ -170,7 +189,9 @@ Page({
         if (!this._active) return;
         this.setData({ images: this.data.images.map(item => item.id === image.id ? { ...item, localPath } : item) });
       } catch (error) {
-        if (this._active) wx.showToast({ title: "图片加载失败", icon: "none" });
+        if (!this._active) return;
+        if (isNotebookLockedError(error) || isNotebookUnauthorized(error)) this.handleContentError(error);
+        else wx.showToast({ title: "图片加载失败", icon: "none" });
       }
     }
   },
@@ -286,6 +307,7 @@ Page({
       tags: this.data.tags,
       pinned: this.data.pinned,
       favorite: this.data.favorite,
+      encrypted: this.data.encrypted,
     };
   },
 
@@ -327,11 +349,13 @@ Page({
             ? await updateNotebookNote(this.noteId, payload)
             : await createNotebookNote(payload);
           this.noteId = note.id;
+          this._lastPersistedEncrypted = Boolean(note.encrypted);
           if (options.unloading !== true && this._active) {
             this.setData({
               noteId: note.id,
               pinned: Boolean(note.pinned),
               favorite: Boolean(note.favorite),
+              encrypted: Boolean(note.encrypted),
             });
           }
           this._dirty = JSON.stringify(this.buildPayload()) !== snapshot;
@@ -340,6 +364,10 @@ Page({
           this._dirty = true;
           if (isNotebookUnauthorized(error)) {
             this.handleUnauthorized();
+          } else if (isNotebookLockedError(error)) {
+            this.updateSaveIndicator("error", "解锁已过期，请重新输入密码");
+            this._resumeSaveAfterUnlock = true;
+            if (this._active) this.openPasswordModal("unlock");
           } else if (options.unloading !== true) {
             this.updateSaveIndicator("error", notebookErrorMessage(error));
             if (!options.silent) wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
@@ -350,7 +378,9 @@ Page({
       }
       if (saved) {
         this._dirty = false;
-        if (options.unloading !== true && this._active) this.updateSaveIndicator("saved", "已自动保存");
+        if (options.unloading !== true && this._active) {
+          this.updateSaveIndicator("saved", this.data.encrypted ? "已加密 · 已自动保存" : "已自动保存");
+        }
       }
       return saved;
     })();
@@ -411,7 +441,7 @@ Page({
             const media = await uploadNotebookMedia(this.noteId, "image", file.tempFilePath);
             this.setData({ images: [...this.data.images, { ...media, localPath: file.tempFilePath }] });
           } catch (error) {
-            wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+            this.handleContentError(error);
             break;
           }
         }
@@ -434,7 +464,7 @@ Page({
           await deleteNotebookMedia(image.id);
           this.setData({ images: this.data.images.filter((_, i) => i !== index) });
         } catch (error) {
-          wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+          this.handleContentError(error);
         }
       },
     });
@@ -513,7 +543,7 @@ Page({
       });
     } catch (error) {
       this.setData({ uploadingMedia: false });
-      wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+      this.handleContentError(error);
     }
   },
 
@@ -542,7 +572,7 @@ Page({
       });
       this._audioContext.play();
     } catch (error) {
-      wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+      this.handleContentError(error);
     }
   },
 
@@ -563,7 +593,7 @@ Page({
           await deleteNotebookMedia(audio.id);
           this.setData({ audio: null, audioPlaying: false });
         } catch (error) {
-          wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+          this.handleContentError(error);
         }
       },
     });
@@ -571,6 +601,174 @@ Page({
 
   prepareAudio(audio) {
     this.setData({ audio: { ...audio, localPath: "", durationLabel: "点击播放" } });
+  },
+
+  async toggleEncryption() {
+    if (this.data.passwordBusy || this._savePromise) {
+      wx.showToast({ title: "正在保存，请稍后再试", icon: "none" });
+      return;
+    }
+    if (this.data.encrypted) {
+      this.disableEncryption();
+      return;
+    }
+    try {
+      const security = await getNotebookSecurity();
+      this._security = security || {};
+      if (!security.hasPassword) {
+        this.openPasswordModal("setup");
+        return;
+      }
+      if (!security.unlocked) {
+        this.openPasswordModal("unlock");
+        return;
+      }
+      wx.showModal({
+        title: "开启加密笔记？",
+        content: "标题、正文、清单、标签和附件都会转为密文保存。",
+        confirmText: "开启加密",
+        success: result => {
+          if (result.confirm) this.applyEncryption();
+        },
+      });
+    } catch (error) {
+      if (isNotebookUnauthorized(error)) this.handleUnauthorized();
+      else wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+    }
+  },
+
+  openPasswordModal(mode) {
+    this.setData({
+      showPasswordModal: true,
+      passwordMode: mode,
+      passwordValue: "",
+      passwordConfirm: "",
+      passwordError: "",
+    });
+  },
+
+  closePasswordModal() {
+    if (this.data.passwordBusy) return;
+    const restoreEncrypted = this._resumeSaveAfterUnlock && this.data.encrypted !== this._lastPersistedEncrypted
+      ? this._lastPersistedEncrypted
+      : null;
+    this._resumeSaveAfterUnlock = false;
+    const update = { showPasswordModal: false, passwordValue: "", passwordConfirm: "", passwordError: "" };
+    if (restoreEncrypted !== null) update.encrypted = restoreEncrypted;
+    this.setData(update);
+  },
+
+  onPasswordInput(event) {
+    this.setData({ passwordValue: event.detail.value || "", passwordError: "" });
+  },
+
+  onPasswordConfirmInput(event) {
+    this.setData({ passwordConfirm: event.detail.value || "", passwordError: "" });
+  },
+
+  async submitPasswordModal() {
+    if (this.data.passwordBusy) return;
+    const password = String(this.data.passwordValue || "");
+    if (!password) {
+      this.setData({ passwordError: "请输入笔记密码" });
+      return;
+    }
+    if (this.data.passwordMode === "setup") {
+      const length = Array.from(password).length;
+      if (length < 6 || length > 32) {
+        this.setData({ passwordError: "笔记密码需为 6–32 位" });
+        return;
+      }
+      if (password !== this.data.passwordConfirm) {
+        this.setData({ passwordError: "两次输入的密码不一致" });
+        return;
+      }
+    }
+    this.setData({ passwordBusy: true, passwordError: "" });
+    try {
+      if (this.data.passwordMode === "setup") {
+        await setNotebookPassword("set", "", password);
+        this.setData({ passwordMode: "unlock", passwordConfirm: "" });
+      }
+      await unlockNotebook(password);
+      this.setData({ passwordBusy: false, showPasswordModal: false, passwordValue: "", passwordConfirm: "" });
+      if (this._resumeSaveAfterUnlock) {
+        this._resumeSaveAfterUnlock = false;
+        setTimeout(() => this.saveNow({ silent: false }), 0);
+      } else if (!this.data.encrypted) {
+        wx.showModal({
+          title: "开启加密笔记？",
+          content: "标题、正文、清单、标签和附件都会转为密文保存。",
+          confirmText: "开启加密",
+          success: result => {
+            if (result.confirm) this.applyEncryption();
+          },
+        });
+      }
+    } catch (error) {
+      if (isNotebookUnauthorized(error)) {
+        this.handleUnauthorized();
+        return;
+      }
+      if (error && error.code === "notebook_note_password_already_set") {
+        this.setData({ passwordMode: "unlock", passwordConfirm: "" });
+      }
+      this.setData({ passwordBusy: false, passwordError: notebookErrorMessage(error) });
+    }
+  },
+
+  async applyEncryption() {
+    if (this.data.passwordBusy) return;
+    if (!this.hasContent()) {
+      this.setData({ encrypted: true });
+      wx.showToast({ title: "加密已开启", icon: "none" });
+      return;
+    }
+    this.setData({ encrypted: true });
+    this._dirty = true;
+    const saved = await this.saveNow({ silent: false });
+    if (!saved && this._active) {
+      if (!this._resumeSaveAfterUnlock) this.setData({ encrypted: false });
+      return;
+    }
+    if (saved && this._active) wx.showToast({ title: "已加密保存", icon: "success" });
+  },
+
+  disableEncryption() {
+    wx.showModal({
+      title: "取消这条笔记的加密？",
+      content: "取消后标题、正文、清单、标签和附件会恢复为普通笔记，并重新参与搜索。",
+      confirmText: "取消加密",
+      confirmColor: "#c74d38",
+      success: async result => {
+        if (!result.confirm) return;
+        if (!this.noteId) {
+          this.setData({ encrypted: false, saveState: "saved", saveLabel: "已取消加密" });
+          return;
+        }
+        this.setData({ encrypted: false });
+        this._dirty = true;
+        const saved = await this.saveNow({ silent: false });
+        if (!saved && this._active) {
+          if (!this._resumeSaveAfterUnlock) this.setData({ encrypted: true });
+          return;
+        }
+        if (saved && this._active) wx.showToast({ title: "已取消加密", icon: "none" });
+      },
+    });
+  },
+
+  handleContentError(error) {
+    if (isNotebookUnauthorized(error)) {
+      this.handleUnauthorized();
+      return;
+    }
+    if (isNotebookLockedError(error)) {
+      this.openPasswordModal("unlock");
+      this.setData({ passwordError: notebookErrorMessage(error) });
+      return;
+    }
+    wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
   },
 
   handleUnauthorized() {

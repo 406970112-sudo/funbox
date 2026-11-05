@@ -70,6 +70,8 @@ test("notebook API builds filter query and surfaces stable error copy", async ()
     assert.equal(calls[0].path, "/notebook/notes?bookId=b1&q=%E8%A5%BF%E6%B9%96&tag=%E6%97%85%E8%A1%8C&limit=20");
     assert.equal(api.notebookErrorMessage({ code: "notebook_book_not_empty" }), "笔记本里还有笔记，不能删除");
     assert.equal(api.isNotebookUnauthorized({ statusCode: 401 }), true);
+    assert.equal(api.isNotebookUnauthorized({ statusCode: 403, code: "notebook_note_password_mismatch" }), false);
+    assert.equal(api.notebookErrorMessage({ code: "notebook_note_password_mismatch" }), "笔记密码不正确");
     assert.equal(api.notebookMediaUrl({ url: "/api/v1/notebook/media/abc" }), "https://example.com/api/v1/notebook/media/abc");
   } finally {
     if (oldRequest) require.cache[requestPath] = oldRequest; else delete require.cache[requestPath];
@@ -399,4 +401,237 @@ test("editor book changes mark the note dirty for autosave", () => {
   assert.equal(page.data.selectedBookId, "life");
   assert.equal(page.data.selectedBookName, "生活");
   assert.equal(page._dirty, true);
+});
+
+test("locked notebook notes never derive a visible title or excerpt", () => {
+  const format = require("../packages/notebook/utils/notebook-format");
+  const locked = {
+    id: "secret-note",
+    encrypted: true,
+    locked: true,
+    title: "不应展示的标题",
+    body: "不应展示的正文",
+    checklist: [{ id: "secret-item", text: "不应展示的清单" }],
+    tags: ["私密"],
+    bookName: "生活",
+    bookColor: "#20a97a",
+    updatedAt: "2026-11-04T08:00:00Z",
+  };
+  assert.equal(format.noteTitle(locked), "加密笔记");
+  assert.equal(format.noteExcerpt(locked), "解锁后查看内容");
+  const decorated = format.decorateNote(locked);
+  assert.equal(decorated.locked, true);
+  assert.equal(decorated.featureTag, "");
+  assert.equal(decorated.tagsText, "");
+});
+
+test("encrypted notebook UI exposes lock, unlock, and password setup states", () => {
+  const homeWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/index/index.wxml"), "utf8");
+  const homeWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/index/index.wxss"), "utf8");
+  const detailWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxml"), "utf8");
+  const detailWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxss"), "utf8");
+  const editorWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxml"), "utf8");
+  const editorWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxss"), "utf8");
+  const searchWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxml"), "utf8");
+  const searchWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxss"), "utf8");
+
+  assert.match(homeWxml, /bindtap="openSecurity"/);
+  assert.match(homeWxml, /item\.locked/);
+  assert.match(homeWxml, /showSecuritySheet/);
+  assert.match(homeWxml, /type="password"/);
+  assert.match(homeWxml, /assets\/icons\/lock-default\.png/);
+  assert.match(homeWxml, /lock-active/);
+  assert.match(homeWxss, /\.security-entry\s*\{/);
+  assert.match(homeWxss, /\.security-entry-icon\s*\{[^}]*display:\s*block;/s);
+  assert.match(homeWxss, /\.security-sheet\s*\{/);
+
+  assert.match(detailWxml, /encrypted && locked/);
+  assert.match(detailWxml, /bindtap="openUnlockSheet"/);
+  assert.match(detailWxml, /showUnlockSheet/);
+  assert.match(detailWxml, /class="unlock-input/);
+  assert.match(detailWxml, /加密笔记不支持分享/);
+  assert.match(detailWxml, /wx:if="\{\{!encrypted\}\}"[^>]*open-type="share"/s);
+  assert.match(detailWxml, /assets\/icons\/lock-white\.png/);
+  assert.match(detailWxml, /assets\/icons\/lock-open-white\.png/);
+  assert.match(detailWxml, /<image[^>]+class="detail-encrypted-mark"[^>]+lock-default\.png/);
+  assert.match(detailWxss, /\.detail-lock-card\s*\{/);
+  assert.match(detailWxss, /\.detail-lock-badge-image\s*\{[^}]*display:\s*block;/s);
+  assert.match(detailWxss, /\.detail-encrypted-mark\s*\{[^}]*display:\s*block;[^}]*flex:\s*0 0 16rpx;/s);
+  assert.match(detailWxss, /\.unlock-sheet\s*\{/);
+
+  assert.match(editorWxml, /bindtap="toggleEncryption"/);
+  assert.match(editorWxml, /showPasswordModal/);
+  assert.match(editorWxml, /passwordMode === 'setup'/);
+  assert.match(editorWxml, /忘记密码后，已加密内容无法找回/);
+  assert.match(editorWxml, /lock-active/);
+  assert.match(editorWxss, /\.editor-lock\s*\{/);
+  assert.match(editorWxss, /\.editor-lock-icon\s*\{[^}]*display:\s*block;/s);
+  assert.match(editorWxss, /\.password-modal\s*\{/);
+
+  assert.match(searchWxml, /hasEncryptedNotes/);
+  assert.match(searchWxml, /加密笔记不参与关键词搜索/);
+  assert.match(searchWxss, /\.encrypted-search-note\s*\{/);
+  assert.doesNotMatch(homeWxss + detailWxss + editorWxss + searchWxss, /(?:mini-lock-mark|list-lock-mark|editor-lock-icon|password-modal-lock|encrypted-search-mark|detail-encrypted-mark)::before/);
+  for (const icon of ["lock-default", "lock-active", "lock-white", "lock-open-white"]) {
+    assert.ok(fs.existsSync(path.resolve(ROOT, `packages/notebook/assets/icons/${icon}.png`)));
+  }
+});
+
+test("editor opens password setup before enabling encryption", async () => {
+  const stubs = {
+    "../utils/notebook-api": {
+      listNotebookBooks: async () => [],
+      getNotebookNote: async () => ({}),
+      createNotebookNote: async () => ({}),
+      updateNotebookNote: async () => ({}),
+      uploadNotebookMedia: async () => ({}),
+      deleteNotebookMedia: async () => ({}),
+      downloadNotebookMedia: async () => "",
+      getNotebookSecurity: async () => ({ hasPassword: false, unlocked: false }),
+      setNotebookPassword: async () => ({}),
+      unlockNotebook: async () => ({}),
+      notebookErrorMessage: error => error.message,
+      isNotebookUnauthorized: () => false,
+      isNotebookLockedError: () => false,
+    },
+    "../utils/notebook-format": { bookTheme: () => ({ fill: "#eaf2ff", ink: "#2d5bff" }) },
+    "../../../utils/auth": { getAccessToken: () => "token", clearSession() {} },
+  };
+  const definition = loadPage("packages/notebook/editor/index.js", stubs, { showToast() {} });
+  const page = pageInstance(definition);
+  page._active = true;
+  await page.toggleEncryption();
+  assert.equal(page.data.showPasswordModal, true);
+  assert.equal(page.data.passwordMode, "setup");
+  assert.equal(page.data.encrypted, false);
+});
+
+test("locked detail loads only the redacted server response", async () => {
+  let hideShareCalls = 0;
+  const stubs = {
+    "../utils/notebook-api": {
+      getNotebookNote: async () => ({
+        id: "secret-note",
+        encrypted: true,
+        locked: true,
+        title: "",
+        body: "",
+        checklist: [],
+        tags: [],
+        media: [],
+        bookName: "生活",
+        bookColor: "#20a97a",
+        updatedAt: "2026-11-04T08:00:00Z",
+      }),
+      updateNotebookNote: async () => ({}),
+      deleteNotebookNote: async () => ({}),
+      downloadNotebookMedia: async () => "",
+      unlockNotebook: async () => ({}),
+      notebookErrorMessage: error => error.message,
+      isNotebookUnauthorized: () => false,
+      isNotebookLockedError: () => false,
+    },
+    "../utils/notebook-format": {
+      decorateNote: note => note,
+      formatNoteTime: () => "今天 16:00",
+      bookTheme: () => ({ fill: "#e8f7f1", ink: "#228364" }),
+    },
+    "../../../utils/auth": { getAccessToken: () => "token", clearSession() {} },
+  };
+  const definition = loadPage("packages/notebook/detail/index.js", stubs, {
+    showToast() {},
+    hideShareMenu() { hideShareCalls += 1; },
+    showShareMenu() {},
+  });
+  const page = pageInstance(definition);
+  page._active = true;
+  page.noteId = "secret-note";
+  await page.loadNote();
+  assert.equal(page.data.encrypted, true);
+  assert.equal(page.data.locked, true);
+  assert.equal(page.data.body, "");
+  assert.equal(page.data.title, "");
+  assert.equal(hideShareCalls, 1);
+});
+
+test("notebook API sends the unlock token on protected note requests", async () => {
+  const calls = [];
+  const apiPath = require.resolve("../packages/notebook/utils/notebook-api");
+  const requestPath = require.resolve("../utils/request");
+  const authPath = require.resolve("../utils/auth");
+  const configPath = require.resolve("../config/index");
+  const lockPath = require.resolve("../packages/notebook/utils/notebook-lock-session");
+  const oldRequest = require.cache[requestPath];
+  const oldAuth = require.cache[authPath];
+  const oldConfig = require.cache[configPath];
+  const oldLock = require.cache[lockPath];
+  const oldApi = require.cache[apiPath];
+  require.cache[requestPath] = { id: requestPath, filename: requestPath, loaded: true, exports: {
+    request: async input => { calls.push(input); return { note: { id: "n1", encrypted: true, locked: true } }; },
+    uploadFile: async input => { calls.push(input); return { media: { id: "m1" } }; },
+  } };
+  require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: { getAccessToken: () => "token" } };
+  require.cache[configPath] = { id: configPath, filename: configPath, loaded: true, exports: { API_BASE_URL: "https://example.com/api/v1" } };
+  require.cache[lockPath] = { id: lockPath, filename: lockPath, loaded: true, exports: {
+    clearUnlockSession() {},
+    setUnlockSession() {},
+    getUnlockToken: () => "note-unlock-token",
+  } };
+  delete require.cache[apiPath];
+  try {
+    const api = require("../packages/notebook/utils/notebook-api");
+    await api.getNotebookNote("n1");
+    await api.updateNotebookNote("n1", { title: "hidden" });
+    await api.deleteNotebookMedia("m1");
+    assert.ok(calls.every(call => call.header && call.header["X-Notebook-Unlock-Token"] === "note-unlock-token"));
+  } finally {
+    if (oldRequest) require.cache[requestPath] = oldRequest; else delete require.cache[requestPath];
+    if (oldAuth) require.cache[authPath] = oldAuth; else delete require.cache[authPath];
+    if (oldConfig) require.cache[configPath] = oldConfig; else delete require.cache[configPath];
+    if (oldLock) require.cache[lockPath] = oldLock; else delete require.cache[lockPath];
+    if (oldApi) require.cache[apiPath] = oldApi; else delete require.cache[apiPath];
+  }
+});
+
+test("notebook unlock session is memory-only and account-bound", () => {
+  const authPath = require.resolve("../utils/auth");
+  const lockPath = require.resolve("../packages/notebook/utils/notebook-lock-session");
+  const oldAuth = require.cache[authPath];
+  const oldLock = require.cache[lockPath];
+  let accessToken = "token-a";
+  require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: { getAccessToken: () => accessToken } };
+  delete require.cache[lockPath];
+  try {
+    const lock = require("../packages/notebook/utils/notebook-lock-session");
+    lock.setUnlockSession("note-token", 60);
+    assert.equal(lock.getUnlockToken(), "note-token");
+    accessToken = "token-b";
+    assert.equal(lock.getUnlockToken(), "");
+    assert.equal(lock.hasUnlockSession(), false);
+  } finally {
+    if (oldAuth) require.cache[authPath] = oldAuth; else delete require.cache[authPath];
+    if (oldLock) require.cache[lockPath] = oldLock; else delete require.cache[lockPath];
+  }
+});
+
+test("editor payload carries the note encryption state", () => {
+  const definition = loadPage("packages/notebook/editor/index.js", {
+    "../utils/notebook-api": {},
+    "../utils/notebook-format": { bookTheme: () => ({ fill: "#eaf2ff", ink: "#2d5bff" }) },
+    "../../../utils/auth": { getAccessToken: () => "token", clearSession() {} },
+  }, {});
+  const page = pageInstance(definition, {
+    selectedBookId: "book-1",
+    title: "加密标题",
+    body: "加密正文",
+    checklist: [],
+    tags: ["私密"],
+    pinned: false,
+    favorite: false,
+    encrypted: true,
+  });
+  const payload = page.buildPayload();
+  assert.equal(payload.encrypted, true);
+  assert.equal(payload.title, "加密标题");
+  assert.equal(payload.body, "加密正文");
 });

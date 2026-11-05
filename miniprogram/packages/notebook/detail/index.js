@@ -3,8 +3,10 @@ const {
   updateNotebookNote,
   deleteNotebookNote,
   downloadNotebookMedia,
+  unlockNotebook,
   notebookErrorMessage,
   isNotebookUnauthorized,
+  isNotebookLockedError,
 } = require("../utils/notebook-api");
 const { decorateNote, formatNoteTime, bookTheme } = require("../utils/notebook-format");
 const { getAccessToken, clearSession } = require("../../../utils/auth");
@@ -42,13 +44,19 @@ Page({
     pinned: false,
     favoriteBusy: false,
     audioPlaying: false,
+    encrypted: false,
+    locked: false,
+    showUnlockSheet: false,
+    unlockPassword: "",
+    unlockError: "",
+    unlockBusy: false,
   },
 
   onLoad(options = {}) {
     this._active = true;
     this.noteId = options.id ? decodeURIComponent(options.id) : "";
     this.setData({ isLoggedIn: Boolean(getAccessToken()) });
-    wx.showShareMenu({ menus: ["shareAppMessage"] });
+    if (typeof wx.showShareMenu === "function") wx.showShareMenu({ menus: ["shareAppMessage"] });
   },
 
   onShow() {
@@ -92,13 +100,41 @@ Page({
     try {
       const note = await getNotebookNote(this.noteId);
       if (!this._active || generation !== this._generation) return;
-      const decorated = decorateNote(note);
       const theme = bookTheme(note.bookColor);
+      const encrypted = Boolean(note.encrypted);
+      const locked = Boolean(note.locked);
+      this._note = note;
+      if (encrypted && typeof wx.hideShareMenu === "function") wx.hideShareMenu();
+      else if (!encrypted && typeof wx.showShareMenu === "function") wx.showShareMenu({ menus: ["shareAppMessage"] });
+      if (locked) {
+        this.setData({
+          loading: false,
+          note,
+          title: "",
+          body: "",
+          checklist: [],
+          checklistDone: 0,
+          summaryLabel: "",
+          tags: [],
+          images: [],
+          audio: null,
+          bookName: note.bookName,
+          bookFill: theme.fill,
+          bookInk: theme.ink,
+          updatedLabel: formatNoteTime(note.updatedAt),
+          favorite: Boolean(note.favorite),
+          pinned: Boolean(note.pinned),
+          encrypted: true,
+          locked: true,
+          unlockError: "",
+        });
+        return;
+      }
+      const decorated = decorateNote(note);
       const images = (note.media || []).filter(item => item.kind === "image").map(item => ({ ...item, localPath: "" }));
       const audio = (note.media || []).find(item => item.kind === "audio") || null;
       const checklist = (note.checklist || []).map(item => ({ ...item, done: Boolean(item.done) }));
       const checklistDone = checklist.filter(item => item.done).length;
-      this._note = note;
       this.setData({
         loading: false,
         note: decorated,
@@ -116,6 +152,9 @@ Page({
         updatedLabel: formatNoteTime(note.updatedAt),
         favorite: Boolean(note.favorite),
         pinned: Boolean(note.pinned),
+        encrypted,
+        locked: false,
+        unlockError: "",
       });
       this.hydrateImages(images);
     } catch (error) {
@@ -136,12 +175,18 @@ Page({
         if (!this._active) return;
         this.setData({ images: this.data.images.map(item => item.id === image.id ? { ...item, localPath } : item) });
       } catch (error) {
-        if (this._active) wx.showToast({ title: "图片加载失败", icon: "none" });
+        if (!this._active) return;
+        if (isNotebookLockedError(error) || isNotebookUnauthorized(error)) this.handleError(error);
+        else wx.showToast({ title: "图片加载失败", icon: "none" });
       }
     }
   },
 
   async toggleFavorite() {
+    if (this.data.locked) {
+      this.openUnlockSheet();
+      return;
+    }
     if (this.data.favoriteBusy || !this._note) return;
     const next = !this.data.favorite;
     this.setData({ favoriteBusy: true, favorite: next });
@@ -160,6 +205,16 @@ Page({
 
   openMore() {
     if (!this._note) return;
+    if (this.data.locked) {
+      wx.showActionSheet({
+        itemList: ["删除这条加密笔记"],
+        itemColor: "#172139",
+        success: result => {
+          if (result.tapIndex === 0) this.confirmDelete();
+        },
+      });
+      return;
+    }
     const pinLabel = this.data.pinned ? "取消置顶" : "置顶笔记";
     wx.showActionSheet({
       itemList: [pinLabel, "删除笔记"],
@@ -172,6 +227,10 @@ Page({
   },
 
   async togglePinned() {
+    if (this.data.locked) {
+      this.openUnlockSheet();
+      return;
+    }
     const next = !this.data.pinned;
     try {
       const note = await updateNotebookNote(this.noteId, { pinned: next });
@@ -186,7 +245,7 @@ Page({
 
   confirmDelete() {
     wx.showModal({
-      title: "删除这条笔记？",
+      title: this.data.encrypted ? "删除这条加密笔记？" : "删除这条笔记？",
       content: "删除后将无法在列表中找到它。",
       confirmText: "删除",
       confirmColor: "#c74d38",
@@ -205,6 +264,10 @@ Page({
 
   editNote() {
     if (!this._note) return;
+    if (this.data.locked) {
+      this.openUnlockSheet();
+      return;
+    }
     wx.navigateTo({ url: `/packages/notebook/editor/index?id=${encodeURIComponent(this.noteId)}` });
   },
 
@@ -253,7 +316,70 @@ Page({
       this.setData({ isLoggedIn: false });
       return;
     }
+    if (isNotebookLockedError(error)) {
+      this.setData({
+        locked: true,
+        title: "",
+        body: "",
+        checklist: [],
+        checklistDone: 0,
+        summaryLabel: "",
+        tags: [],
+        images: [],
+        audio: null,
+        showUnlockSheet: true,
+        unlockError: notebookErrorMessage(error),
+      });
+      return;
+    }
     wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+  },
+
+  openUnlockSheet() {
+    this.setData({ showUnlockSheet: true, unlockPassword: "", unlockError: "" });
+  },
+
+  closeUnlockSheet() {
+    if (this.data.unlockBusy) return;
+    this.setData({ showUnlockSheet: false, unlockPassword: "", unlockError: "" });
+  },
+
+  onUnlockInput(event) {
+    this.setData({ unlockPassword: event.detail.value || "", unlockError: "" });
+  },
+
+  async submitUnlock() {
+    if (this.data.unlockBusy) return;
+    const password = String(this.data.unlockPassword || "");
+    if (!password) {
+      this.setData({ unlockError: "请输入笔记密码" });
+      return;
+    }
+    this.setData({ unlockBusy: true, unlockError: "" });
+    try {
+      await unlockNotebook(password);
+      this.setData({ unlockBusy: false, showUnlockSheet: false, unlockPassword: "" });
+      await this.loadNote();
+    } catch (error) {
+      if (isNotebookUnauthorized(error)) {
+        clearSession();
+        this.setData({ isLoggedIn: false, unlockBusy: false, showUnlockSheet: false });
+        return;
+      }
+      this.setData({ unlockBusy: false, unlockError: notebookErrorMessage(error) });
+    }
+  },
+
+  forgotPassword() {
+    wx.showModal({
+      title: "无法找回密码",
+      content: "密码不会以明文保存，无法找回。可删除这条笔记；如果还有其它加密笔记，请回首页使用「清空加密笔记」。",
+      confirmText: "删除笔记",
+      confirmColor: "#c74d38",
+      success: result => {
+        if (result.confirm) this.confirmDelete();
+      },
+    });
   },
 
   openLogin() {
@@ -266,7 +392,12 @@ Page({
     if (this.data.isLoggedIn) this.loadNote();
   },
 
+  noop() {},
+
   onShareAppMessage() {
+    if (this.data.encrypted) {
+      return { title: "FunBox 加密笔记", path: "/packages/notebook/index/index" };
+    }
     return {
       title: this.data.title || "FunBox 笔记",
       path: `/packages/notebook/detail/index?id=${encodeURIComponent(this.noteId || "")}`,

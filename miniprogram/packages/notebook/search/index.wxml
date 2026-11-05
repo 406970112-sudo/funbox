@@ -54,6 +54,11 @@
       </view>
     </view>
 
+    <view wx:if="{{hasEncryptedNotes}}" class="encrypted-search-note">
+      <image class="encrypted-search-mark" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
+      <text>加密笔记不参与关键词搜索，可从首页打开。</text>
+    </view>
+
     <view class="result-head">
       <text class="result-title">搜索结果</text>
       <text class="result-meta">{{hasSearched ? resultCount + ' 条 · 按最近编辑' : '正在整理…'}}</text>
@@ -84,6 +89,7 @@
       >
         <view class="result-top">
           <text wx:if="{{query}}" class="result-query">包含「{{query}}」</text>
+          <text wx:if="{{item.locked}}" class="result-locked">已加密</text>
           <text class="note-time">{{item.timeLabel}}</text>
         </view>
         <text class="result-title-text">{{item.displayTitle}}</text>

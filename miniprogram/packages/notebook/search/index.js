@@ -31,6 +31,7 @@ Page({
     resultCount: 0,
     hasSearched: false,
     referenceNotes: [],
+    hasEncryptedNotes: false,
   },
 
   onLoad() {
@@ -82,6 +83,7 @@ Page({
         books: themedBooks,
         referenceNotes: notes,
         tags: collectTags(notes),
+        hasEncryptedNotes: notes.some(note => Boolean(note.encrypted)),
         loading: false,
       });
       this.runSearch();

@@ -1,10 +1,10 @@
 package httpapi
 
 import (
+	"bytes"
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -15,6 +15,11 @@ func registerNotebookRoutes(mux *http.ServeMux, api *Server) {
 	if api.notebookService == nil {
 		return
 	}
+	mux.HandleFunc("GET /api/v1/notebook/security", api.withAuth(api.withAPIPipeline(api.handleNotebookSecurity)))
+	mux.HandleFunc("POST /api/v1/notebook/security/password", api.withAuth(api.withAPIPipeline(api.handleNotebookPassword)))
+	mux.HandleFunc("POST /api/v1/notebook/security/unlock", api.withAuth(api.withRateLimitedAPIPipeline("notebook-unlock", api.handleNotebookUnlock)))
+	mux.HandleFunc("POST /api/v1/notebook/security/lock", api.withAuth(api.withAPIPipeline(api.handleNotebookLock)))
+	mux.HandleFunc("POST /api/v1/notebook/security/reset", api.withAuth(api.withAPIPipeline(api.handleNotebookReset)))
 	mux.HandleFunc("GET /api/v1/notebook/books", api.withAuth(api.withAPIPipeline(api.handleListNotebookBooks)))
 	mux.HandleFunc("POST /api/v1/notebook/books", api.withAuth(api.withAPIPipeline(api.handleCreateNotebookBook)))
 	mux.HandleFunc("PATCH /api/v1/notebook/books/{bookID}", api.withAuth(api.withAPIPipeline(api.handleUpdateNotebookBook)))
@@ -41,6 +46,107 @@ func (s *Server) withNotebookMediaPipeline(next http.HandlerFunc) http.HandlerFu
 		r.Body = http.MaxBytesReader(w, r.Body, notebook.MaxAudioBytes+(1<<20))
 		next.ServeHTTP(w, r)
 	}
+}
+
+func (s *Server) handleNotebookSecurity(w http.ResponseWriter, r *http.Request) {
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	status, err := s.notebookService.Store().SecurityStatus(r.Context(), account.ID, notebookUnlockToken(r))
+	if err != nil {
+		s.writeNotebookError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"security": status})
+}
+
+func (s *Server) handleNotebookPassword(w http.ResponseWriter, r *http.Request) {
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	var input notebook.PasswordInput
+	if err := decodeJSONBody(r, &input); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	status, err := s.notebookService.Store().SetPassword(r.Context(), account.ID, input)
+	if err != nil {
+		s.writeNotebookError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"security": status})
+}
+
+func (s *Server) handleNotebookUnlock(w http.ResponseWriter, r *http.Request) {
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	var body struct {
+		Password string `json:"password"`
+	}
+	if err := decodeJSONBody(r, &body); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	token, expiresIn, err := s.notebookService.Store().Unlock(r.Context(), account.ID, body.Password)
+	if err != nil {
+		s.writeNotebookError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"unlockToken":      token,
+		"expiresInSeconds": expiresIn,
+	})
+}
+
+func (s *Server) handleNotebookLock(w http.ResponseWriter, r *http.Request) {
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	s.notebookService.Store().Lock(account.ID, notebookUnlockToken(r))
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+func (s *Server) handleNotebookReset(w http.ResponseWriter, r *http.Request) {
+	account, ok := authenticatedUserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+		return
+	}
+	var input notebook.ResetInput
+	if err := decodeJSONBody(r, &input); err != nil {
+		writeRequestBodyError(w, err)
+		return
+	}
+	if err := s.notebookService.ResetEncryption(r.Context(), account.ID, input.Confirm); err != nil {
+		s.writeNotebookError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+func notebookUnlockToken(r *http.Request) string {
+	return strings.TrimSpace(r.Header.Get("X-Notebook-Unlock-Token"))
+}
+
+func (s *Server) notebookDataKey(r *http.Request, userID string) []byte {
+	token := notebookUnlockToken(r)
+	if token == "" {
+		return nil
+	}
+	dataKey, err := s.notebookService.Store().GetDataKey(userID, token)
+	if err != nil {
+		return nil
+	}
+	return dataKey
 }
 
 func (s *Server) handleListNotebookBooks(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +250,7 @@ func (s *Server) handleCreateNotebookNote(w http.ResponseWriter, r *http.Request
 		writeRequestBodyError(w, err)
 		return
 	}
-	note, err := s.notebookService.Store().CreateNote(r.Context(), account.ID, input)
+	note, err := s.notebookService.Store().CreateNoteWithDataKey(r.Context(), account.ID, input, s.notebookDataKey(r, account.ID))
 	if err != nil {
 		s.writeNotebookError(w, err)
 		return
@@ -158,7 +264,14 @@ func (s *Server) handleGetNotebookNote(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
 		return
 	}
-	note, err := s.notebookService.Store().GetNote(r.Context(), account.ID, r.PathValue("noteID"))
+	noteID := r.PathValue("noteID")
+	var note notebook.Note
+	var err error
+	if dataKey := s.notebookDataKey(r, account.ID); len(dataKey) > 0 {
+		note, err = s.notebookService.Store().GetNoteWithDataKey(r.Context(), account.ID, noteID, dataKey)
+	} else {
+		note, err = s.notebookService.Store().GetNote(r.Context(), account.ID, noteID)
+	}
 	if err != nil {
 		s.writeNotebookError(w, err)
 		return
@@ -177,7 +290,7 @@ func (s *Server) handleUpdateNotebookNote(w http.ResponseWriter, r *http.Request
 		writeRequestBodyError(w, err)
 		return
 	}
-	note, err := s.notebookService.Store().UpdateNote(r.Context(), account.ID, r.PathValue("noteID"), patch)
+	note, err := s.notebookService.UpdateNote(r.Context(), account.ID, r.PathValue("noteID"), patch, s.notebookDataKey(r, account.ID))
 	if err != nil {
 		s.writeNotebookError(w, err)
 		return
@@ -215,7 +328,7 @@ func (s *Server) handleUploadNotebookMedia(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	defer file.Close()
-	media, err := s.notebookService.UploadMedia(r.Context(), account.ID, r.PathValue("noteID"), kind, header.Filename, file)
+	media, err := s.notebookService.UploadMedia(r.Context(), account.ID, r.PathValue("noteID"), kind, header.Filename, file, s.notebookDataKey(r, account.ID))
 	if err != nil {
 		s.writeNotebookError(w, err)
 		return
@@ -229,7 +342,7 @@ func (s *Server) handleDeleteNotebookMedia(w http.ResponseWriter, r *http.Reques
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
 		return
 	}
-	if err := s.notebookService.DeleteMedia(r.Context(), account.ID, r.PathValue("mediaID")); err != nil {
+	if err := s.notebookService.DeleteMedia(r.Context(), account.ID, r.PathValue("mediaID"), s.notebookDataKey(r, account.ID)); err != nil {
 		s.writeNotebookError(w, err)
 		return
 	}
@@ -242,27 +355,20 @@ func (s *Server) handleServeNotebookMedia(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
 		return
 	}
-	media, filePath, err := s.notebookService.GetMedia(r.Context(), account.ID, r.PathValue("mediaID"))
+	media, contents, err := s.notebookService.ReadMedia(r.Context(), account.ID, r.PathValue("mediaID"), s.notebookDataKey(r, account.ID))
 	if err != nil {
 		s.writeNotebookError(w, err)
 		return
 	}
-	file, err := os.Open(filePath)
-	if err != nil {
-		s.writeNotebookError(w, notebook.ErrNotFound)
-		return
-	}
-	defer file.Close()
-	info, err := file.Stat()
-	if err != nil {
-		s.writeNotebookError(w, notebook.ErrNotFound)
-		return
-	}
 	w.Header().Set("Content-Type", media.ContentType)
 	w.Header().Set("Content-Disposition", "inline")
-	w.Header().Set("Cache-Control", "private, max-age=300")
+	if media.Encrypted {
+		w.Header().Set("Cache-Control", "private, no-store")
+	} else {
+		w.Header().Set("Cache-Control", "private, max-age=300")
+	}
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	http.ServeContent(w, r, info.Name(), info.ModTime(), file)
+	http.ServeContent(w, r, media.ID, media.CreatedAt, bytes.NewReader(contents))
 }
 
 func (s *Server) notebookNoteResponse(note notebook.Note) notebook.Note {
@@ -298,6 +404,18 @@ func (s *Server) writeNotebookError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusRequestEntityTooLarge, map[string]any{"error": "notebook_media_too_large"})
 	case errors.Is(err, notebook.ErrMediaTypeInvalid):
 		writeJSON(w, http.StatusUnsupportedMediaType, map[string]any{"error": "notebook_media_type_invalid"})
+	case errors.Is(err, notebook.ErrLocked):
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": "notebook_note_locked"})
+	case errors.Is(err, notebook.ErrPasswordMismatch):
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": "notebook_note_password_mismatch"})
+	case errors.Is(err, notebook.ErrPasswordInvalid):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "notebook_note_password_invalid"})
+	case errors.Is(err, notebook.ErrPasswordNotSet):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "notebook_note_password_not_set"})
+	case errors.Is(err, notebook.ErrPasswordAlreadySet):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "notebook_note_password_already_set"})
+	case errors.Is(err, notebook.ErrResetConfirmation):
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "notebook_reset_confirmation_invalid"})
 	case errors.Is(err, notebook.ErrInvalidInput):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "notebook_invalid_input"})
 	default:

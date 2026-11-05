@@ -28,7 +28,12 @@ function formatFullDate(value) {
   return `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日 ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function isLockedNote(note) {
+  return Boolean(note && note.encrypted && note.locked);
+}
+
 function noteExcerpt(note) {
+  if (isLockedNote(note)) return "解锁后查看内容";
   const body = String((note && note.body) || "").replace(/\s+/g, " ").trim();
   if (body) return body;
   const checklist = Array.isArray(note && note.checklist) ? note.checklist : [];
@@ -38,6 +43,7 @@ function noteExcerpt(note) {
 }
 
 function noteTitle(note) {
+  if (isLockedNote(note)) return "加密笔记";
   const title = String((note && note.title) || "").trim();
   if (title) return title;
   const excerpt = noteExcerpt(note);
@@ -54,9 +60,11 @@ function bookTheme(color) {
 
 function decorateNote(note, index = 0) {
   const theme = bookTheme(note && note.bookColor);
-  const tags = Array.isArray(note && note.tags) ? note.tags : [];
+  const locked = isLockedNote(note);
+  const tags = locked || !Array.isArray(note && note.tags) ? [] : note.tags;
   return {
     ...note,
+    locked,
     displayTitle: noteTitle(note),
     excerpt: noteExcerpt(note),
     timeLabel: formatNoteTime(note && note.updatedAt),
@@ -86,6 +94,7 @@ function collectTags(notes) {
 module.exports = {
   formatNoteTime,
   formatFullDate,
+  isLockedNote,
   noteExcerpt,
   noteTitle,
   bookTheme,

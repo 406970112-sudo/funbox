@@ -31,6 +31,11 @@ const (
 	DefaultBookColorWork = "#2d5bff"
 	DefaultBookColorLife = "#20a97a"
 	DefaultBookColorIdea = "#ff765e"
+
+	MinNotebookPasswordRunes = 6
+	MaxNotebookPasswordRunes = 32
+	NotebookUnlockTTL        = 30 * time.Minute
+	NoteEncryptionVersion    = 1
 )
 
 var (
@@ -45,6 +50,13 @@ var (
 	ErrMediaTooLarge     = errors.New("notebook media is too large")
 	ErrMediaTypeInvalid  = errors.New("notebook media type is invalid")
 	ErrDatabasePathEmpty = errors.New("notebook database path is empty")
+
+	ErrLocked             = errors.New("notebook note is locked")
+	ErrPasswordInvalid    = errors.New("notebook password is invalid")
+	ErrPasswordMismatch   = errors.New("notebook password does not match")
+	ErrPasswordNotSet     = errors.New("notebook password is not set")
+	ErrPasswordAlreadySet = errors.New("notebook password already set")
+	ErrResetConfirmation  = errors.New("notebook reset confirmation is invalid")
 )
 
 type Book struct {
@@ -72,6 +84,8 @@ type Media struct {
 	ContentType string    `json:"contentType"`
 	URL         string    `json:"url"`
 	ByteSize    int64     `json:"byteSize"`
+	Encrypted   bool      `json:"-"`
+	StoredName  string    `json:"-"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
@@ -86,9 +100,15 @@ type Note struct {
 	Tags      []string        `json:"tags"`
 	Pinned    bool            `json:"pinned"`
 	Favorite  bool            `json:"favorite"`
+	Encrypted bool            `json:"encrypted"`
+	Locked    bool            `json:"locked"`
 	Media     []Media         `json:"media"`
 	CreatedAt time.Time       `json:"createdAt"`
 	UpdatedAt time.Time       `json:"updatedAt"`
+
+	encryptedPayload  string
+	noteKeyEnc        string
+	encryptionVersion int
 }
 
 type BookInput struct {
@@ -104,6 +124,7 @@ type NoteInput struct {
 	Tags      []string        `json:"tags"`
 	Pinned    bool            `json:"pinned"`
 	Favorite  bool            `json:"favorite"`
+	Encrypted bool            `json:"encrypted"`
 }
 
 type NotePatch struct {
@@ -114,6 +135,7 @@ type NotePatch struct {
 	Tags      *[]string        `json:"tags"`
 	Pinned    *bool            `json:"pinned"`
 	Favorite  *bool            `json:"favorite"`
+	Encrypted *bool            `json:"encrypted"`
 }
 
 type NoteFilter struct {
@@ -128,4 +150,22 @@ type NoteFilter struct {
 type NoteList struct {
 	Notes   []Note `json:"notes"`
 	HasMore bool   `json:"hasMore"`
+}
+
+type SecurityStatus struct {
+	HasPassword        bool       `json:"hasPassword"`
+	PasswordVersion    int        `json:"passwordVersion"`
+	EncryptedNoteCount int        `json:"encryptedNoteCount"`
+	Unlocked           bool       `json:"unlocked"`
+	ExpiresAt          *time.Time `json:"expiresAt,omitempty"`
+}
+
+type PasswordInput struct {
+	Action  string `json:"action"`
+	Current string `json:"current"`
+	New     string `json:"new"`
+}
+
+type ResetInput struct {
+	Confirm string `json:"confirm"`
 }

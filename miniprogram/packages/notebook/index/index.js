@@ -1,6 +1,11 @@
 const {
   listNotebookBooks,
   listNotebookNotes,
+  getNotebookSecurity,
+  setNotebookPassword,
+  unlockNotebook,
+  lockNotebook,
+  resetNotebookEncryption,
   notebookErrorMessage,
   isNotebookUnauthorized,
 } = require("../utils/notebook-api");
@@ -24,6 +29,16 @@ Page({
     recentNotes: [],
     noteCount: 0,
     hasNotes: false,
+    hasSecurityPassword: false,
+    encryptedNoteCount: 0,
+    securityUnlocked: false,
+    showSecuritySheet: false,
+    securityMode: "summary",
+    securityPassword: "",
+    securityNewPassword: "",
+    securityConfirmPassword: "",
+    securityError: "",
+    securityBusy: false,
   },
 
   onLoad() {
@@ -62,9 +77,10 @@ Page({
     this._generation = generation;
     this.setData({ loading: true, error: "" });
     try {
-      const [books, result] = await Promise.all([
+      const [books, result, security] = await Promise.all([
         listNotebookBooks(),
         listNotebookNotes({ limit: 100 }),
+        getNotebookSecurity(),
       ]);
       if (!this._active || generation !== this._generation) return;
       const themedBooks = filterBooks(books, this.data.activeBookId);
@@ -72,6 +88,9 @@ Page({
       this._notes = notes;
       this.setData({
         books: themedBooks,
+        hasSecurityPassword: Boolean(security.hasPassword),
+        encryptedNoteCount: Number(security.encryptedNoteCount) || 0,
+        securityUnlocked: Boolean(security.unlocked),
         filters: [
           { id: "all", name: "全部", count: notes.length },
           ...themedBooks.map(book => ({ id: book.id, name: book.name, count: book.noteCount, fill: book.fill, ink: book.ink })),
@@ -121,6 +140,166 @@ Page({
     wx.navigateTo({ url: "/packages/notebook/search/index" });
   },
 
+  openSecurity() {
+    if (!this.data.isLoggedIn) {
+      this.openLogin();
+      return;
+    }
+    this.setData({
+      showSecuritySheet: true,
+      securityMode: "summary",
+      securityPassword: "",
+      securityNewPassword: "",
+      securityConfirmPassword: "",
+      securityError: "",
+    });
+  },
+
+  closeSecuritySheet() {
+    if (this.data.securityBusy) return;
+    this.setData({
+      showSecuritySheet: false,
+      securityMode: "summary",
+      securityPassword: "",
+      securityNewPassword: "",
+      securityConfirmPassword: "",
+      securityError: "",
+    });
+  },
+
+  beginSecurityUnlock() {
+    this.setData({ securityMode: "unlock", securityPassword: "", securityError: "" });
+  },
+
+  beginPasswordChange() {
+    this.setData({
+      securityMode: "change",
+      securityPassword: "",
+      securityNewPassword: "",
+      securityConfirmPassword: "",
+      securityError: "",
+    });
+  },
+
+  backToSecuritySummary() {
+    if (this.data.securityBusy) return;
+    this.setData({ securityMode: "summary", securityPassword: "", securityNewPassword: "", securityConfirmPassword: "", securityError: "" });
+  },
+
+  onSecurityPasswordInput(event) {
+    this.setData({ securityPassword: event.detail.value || "", securityError: "" });
+  },
+
+  onSecurityNewPasswordInput(event) {
+    this.setData({ securityNewPassword: event.detail.value || "", securityError: "" });
+  },
+
+  onSecurityConfirmPasswordInput(event) {
+    this.setData({ securityConfirmPassword: event.detail.value || "", securityError: "" });
+  },
+
+  async submitSecurityUnlock() {
+    if (this.data.securityBusy) return;
+    if (!this.data.securityPassword) {
+      this.setData({ securityError: "请输入笔记密码" });
+      return;
+    }
+    this.setData({ securityBusy: true, securityError: "" });
+    try {
+      await unlockNotebook(this.data.securityPassword);
+      await this.loadNotes();
+      if (this._active) this.setData({ securityBusy: false, showSecuritySheet: false, securityMode: "summary", securityPassword: "" });
+    } catch (error) {
+      if (isNotebookUnauthorized(error)) {
+        clearSession();
+        this.setData({ isLoggedIn: false, securityBusy: false, showSecuritySheet: false });
+        return;
+      }
+      this.setData({ securityBusy: false, securityError: notebookErrorMessage(error) });
+    }
+  },
+
+  async submitPasswordChange() {
+    if (this.data.securityBusy) return;
+    const next = this.data.securityNewPassword;
+    if (!this.data.securityPassword) {
+      this.setData({ securityError: "请输入当前密码" });
+      return;
+    }
+    if (Array.from(next || "").length < 6 || Array.from(next || "").length > 32) {
+      this.setData({ securityError: "新密码需为 6–32 位" });
+      return;
+    }
+    if (next !== this.data.securityConfirmPassword) {
+      this.setData({ securityError: "两次输入的新密码不一致" });
+      return;
+    }
+    this.setData({ securityBusy: true, securityError: "" });
+    try {
+      await setNotebookPassword("change", this.data.securityPassword, next);
+      await unlockNotebook(next);
+      await this.loadNotes();
+      if (this._active) {
+        this.setData({
+          securityBusy: false,
+          showSecuritySheet: false,
+          securityMode: "summary",
+          securityPassword: "",
+          securityNewPassword: "",
+          securityConfirmPassword: "",
+        });
+        wx.showToast({ title: "密码已更新", icon: "success" });
+      }
+    } catch (error) {
+      if (isNotebookUnauthorized(error)) {
+        clearSession();
+        this.setData({ isLoggedIn: false, securityBusy: false, showSecuritySheet: false });
+        return;
+      }
+      this.setData({ securityBusy: false, securityError: notebookErrorMessage(error) });
+    }
+  },
+
+  async lockSecurity() {
+    if (this.data.securityBusy) return;
+    this.setData({ securityBusy: true });
+    try {
+      await lockNotebook();
+      if (this._active) this.setData({ securityUnlocked: false, securityBusy: false });
+      wx.showToast({ title: "已上锁", icon: "none" });
+    } catch (error) {
+      this.setData({ securityBusy: false });
+      if (isNotebookUnauthorized(error)) clearSession();
+      else wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+    }
+  },
+
+  resetEncryption() {
+    wx.showModal({
+      title: "清空所有加密笔记？",
+      content: "此操作会永久删除全部加密笔记和附件，普通笔记不受影响。忘记密码时使用。",
+      confirmText: "永久删除",
+      confirmColor: "#c74d38",
+      success: async result => {
+        if (!result.confirm) return;
+        this.setData({ securityBusy: true, securityError: "" });
+        try {
+          await resetNotebookEncryption();
+          await this.loadNotes();
+          if (this._active) this.setData({ securityBusy: false, showSecuritySheet: false, securityMode: "summary" });
+          wx.showToast({ title: "已清空加密笔记", icon: "none" });
+        } catch (error) {
+          if (isNotebookUnauthorized(error)) {
+            clearSession();
+            this.setData({ isLoggedIn: false, securityBusy: false, showSecuritySheet: false });
+            return;
+          }
+          this.setData({ securityBusy: false, securityError: notebookErrorMessage(error) });
+        }
+      },
+    });
+  },
+
   createNote() {
     if (!this.data.isLoggedIn) {
       this.openLogin();
@@ -143,6 +322,8 @@ Page({
   retry() {
     this.loadNotes();
   },
+
+  noop() {},
 
   onShareAppMessage() {
     return { title: "FunBox 笔记本", path: "/packages/notebook/index/index" };

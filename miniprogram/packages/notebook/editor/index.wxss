@@ -892,3 +892,134 @@
   0%, 100% { opacity: 0.35; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1); }
 }
+
+.editor-lock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 62rpx;
+  width: 62rpx;
+  height: 62rpx;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 2rpx solid #f2d8a4;
+  border-radius: 20rpx;
+  background: #fffaf0;
+  line-height: 0;
+}
+
+
+.editor-lock-icon {
+  display: block;
+  width: 28rpx;
+  height: 40rpx;
+}
+
+.password-modal {
+  width: 620rpx;
+  max-width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 36rpx 32rpx 30rpx;
+  border-radius: 32rpx;
+  background: #fff;
+}
+
+.password-modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 74rpx;
+  height: 74rpx;
+  margin-bottom: 20rpx;
+  border-radius: 24rpx;
+  background: #fff4dc;
+}
+
+.password-modal-icon-primary {
+  background: #eaf2ff;
+}
+
+.password-modal-lock {
+  display: block;
+  width: 32rpx;
+  height: 45rpx;
+}
+
+.password-modal-title {
+  display: block;
+  color: var(--fb-ink);
+  font-size: 36rpx;
+  font-weight: 900;
+  letter-spacing: -1rpx;
+}
+
+.password-modal-desc {
+  display: block;
+  margin-top: 7rpx;
+  color: #718097;
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+
+.password-field-label {
+  display: block;
+  margin: 24rpx 0 10rpx;
+  color: #586980;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.password-modal-input {
+  width: 100%;
+  height: 84rpx;
+  box-sizing: border-box;
+  padding: 0 22rpx;
+  border: 2rpx solid #dfe7f4;
+  border-radius: 22rpx;
+  background: #fbfcff;
+  color: var(--fb-ink);
+  font-size: 25rpx;
+}
+
+.password-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 20rpx;
+  padding: 16rpx 18rpx;
+  border: 2rpx solid #f5dfb7;
+  border-radius: 18rpx;
+  background: #fff9ed;
+  color: #a87623;
+  font-size: 20rpx;
+  line-height: 1.6;
+}
+
+.password-warning-mark {
+  position: relative;
+  flex: 0 0 22rpx;
+  width: 22rpx;
+  height: 19rpx;
+  margin-top: 2rpx;
+  border: 3rpx solid #c18a2a;
+  border-radius: 5rpx;
+}
+
+.password-warning-mark::after {
+  position: absolute;
+  top: 3rpx;
+  left: 50%;
+  color: #c18a2a;
+  font-size: 17rpx;
+  font-weight: 900;
+  content: "!";
+  transform: translateX(-50%);
+}
+
+.editor-lock-active {
+  border-color: #dce7ff;
+  background: #eaf2ff;
+}

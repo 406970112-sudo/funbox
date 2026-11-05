@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -20,7 +21,9 @@ import (
 var colorPattern = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
 type Store struct {
-	db *sql.DB
+	db       *sql.DB
+	mu       sync.Mutex
+	sessions map[string]notebookSession
 }
 
 func OpenStore(databasePath string) (*Store, error) {
@@ -38,7 +41,7 @@ func OpenStore(databasePath string) (*Store, error) {
 		return nil, fmt.Errorf("open notebook database: %w", err)
 	}
 	db.SetMaxOpenConns(1)
-	store := &Store{db: db}
+	store := &Store{db: db, sessions: make(map[string]notebookSession)}
 	if err := store.migrate(); err != nil {
 		_ = db.Close()
 		return nil, err
@@ -79,6 +82,10 @@ func (s *Store) migrate() error {
 			tags_json TEXT NOT NULL DEFAULT '[]',
 			pinned INTEGER NOT NULL DEFAULT 0,
 			favorite INTEGER NOT NULL DEFAULT 0,
+			encrypted INTEGER NOT NULL DEFAULT 0,
+			encrypted_payload TEXT NOT NULL DEFAULT '',
+			note_key_enc TEXT NOT NULL DEFAULT '',
+			encryption_version INTEGER NOT NULL DEFAULT 0,
 			status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'deleted')),
 			created_at INTEGER NOT NULL,
 			updated_at INTEGER NOT NULL
@@ -95,17 +102,73 @@ func (s *Store) migrate() error {
 			stored_name TEXT NOT NULL,
 			content_type TEXT NOT NULL,
 			byte_size INTEGER NOT NULL,
+			encrypted INTEGER NOT NULL DEFAULT 0,
 			created_at INTEGER NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_notebook_media_note
 			ON notebook_media(note_id, kind, created_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_notebook_media_owner
 			ON notebook_media(owner_id, created_at DESC)`,
+		`CREATE TABLE IF NOT EXISTS notebook_security (
+			owner_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+			password_hash TEXT NOT NULL,
+			key_salt TEXT NOT NULL,
+			data_key_enc TEXT NOT NULL,
+			password_version INTEGER NOT NULL DEFAULT 1,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		)`,
 	}
 	for _, statement := range statements {
 		if _, err := s.db.Exec(statement); err != nil {
 			return fmt.Errorf("run notebook database migration: %w", err)
 		}
+	}
+	columns := []struct {
+		table      string
+		column     string
+		definition string
+	}{
+		{"notebook_notes", "encrypted", "INTEGER NOT NULL DEFAULT 0"},
+		{"notebook_notes", "encrypted_payload", "TEXT NOT NULL DEFAULT ''"},
+		{"notebook_notes", "note_key_enc", "TEXT NOT NULL DEFAULT ''"},
+		{"notebook_notes", "encryption_version", "INTEGER NOT NULL DEFAULT 0"},
+		{"notebook_media", "encrypted", "INTEGER NOT NULL DEFAULT 0"},
+	}
+	for _, column := range columns {
+		if err := s.ensureColumn(column.table, column.column, column.definition); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Store) ensureColumn(table, column, definition string) error {
+	rows, err := s.db.Query(`PRAGMA table_info(` + table + `)`)
+	if err != nil {
+		return fmt.Errorf("inspect notebook schema: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cid int
+		var name, dataType string
+		var notNull, pk int
+		var defaultValue any
+		if err := rows.Scan(&cid, &name, &dataType, &notNull, &defaultValue, &pk); err != nil {
+			return fmt.Errorf("scan notebook schema: %w", err)
+		}
+		if name == column {
+			return nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("read notebook schema: %w", err)
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close notebook schema inspection: %w", err)
+	}
+	if _, err := s.db.Exec(`ALTER TABLE ` + table + ` ADD COLUMN ` + column + ` ` + definition); err != nil {
+		return fmt.Errorf("add notebook column %s.%s: %w", table, column, err)
 	}
 	return nil
 }
@@ -295,7 +358,25 @@ func (s *Store) DeleteBook(ctx context.Context, userID string, bookID string) er
 	return nil
 }
 
+type noteWriteState struct {
+	BookID    string
+	Title     string
+	Body      string
+	Checklist []ChecklistItem
+	Tags      []string
+	Pinned    bool
+	Favorite  bool
+}
+
 func (s *Store) CreateNote(ctx context.Context, userID string, input NoteInput) (Note, error) {
+	return s.createNote(ctx, userID, input, nil)
+}
+
+func (s *Store) CreateNoteWithDataKey(ctx context.Context, userID string, input NoteInput, dataKey []byte) (Note, error) {
+	return s.createNote(ctx, userID, input, dataKey)
+}
+
+func (s *Store) createNote(ctx context.Context, userID string, input NoteInput, dataKey []byte) (Note, error) {
 	bookID := strings.TrimSpace(input.BookID)
 	if bookID == "" {
 		books, err := s.ListBooks(ctx, userID)
@@ -325,8 +406,31 @@ func (s *Store) CreateNote(ctx context.Context, userID string, input NoteInput) 
 	if err != nil {
 		return Note{}, ErrInvalidInput
 	}
+	if input.Encrypted {
+		if len(dataKey) == 0 {
+			return Note{}, ErrLocked
+		}
+		if _, err := s.loadSecurityRecord(ctx, userID); err != nil {
+			return Note{}, err
+		}
+	}
 	now := time.Now().UTC()
 	noteID := uuid.NewString()
+	encryptedPayload := ""
+	noteKeyEnc := ""
+	encryptionVersion := 0
+	storedTitle, storedBody, storedChecklistJSON, storedTagsJSON := title, body, string(checklistJSON), string(tagsJSON)
+	if input.Encrypted {
+		encryptedPayload, noteKeyEnc, err = newNoteEncryption(dataKey, title, body, checklist, tags)
+		if err != nil {
+			return Note{}, fmt.Errorf("encrypt notebook note: %w", err)
+		}
+		storedTitle = ""
+		storedBody = ""
+		storedChecklistJSON = "[]"
+		storedTagsJSON = "[]"
+		encryptionVersion = NoteEncryptionVersion
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return Note{}, fmt.Errorf("begin notebook note: %w", err)
@@ -335,10 +439,12 @@ func (s *Store) CreateNote(ctx context.Context, userID string, input NoteInput) 
 	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO notebook_notes (
 			id, owner_id, book_id, title, body, checklist_json, tags_json,
-			pinned, favorite, status, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
-	`, noteID, userID, bookID, title, body, string(checklistJSON), string(tagsJSON),
-		boolInt(input.Pinned), boolInt(input.Favorite), now.UnixMilli(), now.UnixMilli()); err != nil {
+			pinned, favorite, encrypted, encrypted_payload, note_key_enc, encryption_version,
+			status, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
+	`, noteID, userID, bookID, storedTitle, storedBody, storedChecklistJSON, storedTagsJSON,
+		boolInt(input.Pinned), boolInt(input.Favorite), boolInt(input.Encrypted), encryptedPayload,
+		noteKeyEnc, encryptionVersion, now.UnixMilli(), now.UnixMilli()); err != nil {
 		return Note{}, fmt.Errorf("create notebook note: %w", err)
 	}
 	if _, err := tx.ExecContext(ctx, `UPDATE notebook_books SET updated_at = ? WHERE id = ? AND owner_id = ?`,
@@ -348,100 +454,144 @@ func (s *Store) CreateNote(ctx context.Context, userID string, input NoteInput) 
 	if err := tx.Commit(); err != nil {
 		return Note{}, fmt.Errorf("commit notebook note: %w", err)
 	}
+	if input.Encrypted {
+		return s.GetNoteWithDataKey(ctx, userID, noteID, dataKey)
+	}
 	return s.GetNote(ctx, userID, noteID)
 }
 
 func (s *Store) UpdateNote(ctx context.Context, userID string, noteID string, patch NotePatch) (Note, error) {
-	current, err := s.GetNote(ctx, userID, noteID)
+	current, err := s.getNoteRecord(ctx, userID, noteID)
 	if err != nil {
 		return Note{}, err
 	}
-	bookID := current.BookID
+	if current.Encrypted || (patch.Encrypted != nil && *patch.Encrypted) {
+		return Note{}, ErrLocked
+	}
+	state, err := s.mergeNotePatch(ctx, userID, current, patch)
+	if err != nil {
+		return Note{}, err
+	}
+	if err := s.saveNoteState(ctx, userID, current, state, false, "", "", 0); err != nil {
+		return Note{}, err
+	}
+	return s.GetNote(ctx, userID, noteID)
+}
+
+func (s *Store) mergeNotePatch(ctx context.Context, userID string, current Note, patch NotePatch) (noteWriteState, error) {
+	state := noteWriteState{
+		BookID:    current.BookID,
+		Title:     current.Title,
+		Body:      current.Body,
+		Checklist: current.Checklist,
+		Tags:      current.Tags,
+		Pinned:    current.Pinned,
+		Favorite:  current.Favorite,
+	}
 	if patch.BookID != nil {
-		bookID = strings.TrimSpace(*patch.BookID)
-		if bookID == "" {
-			return Note{}, ErrInvalidInput
+		state.BookID = strings.TrimSpace(*patch.BookID)
+		if state.BookID == "" {
+			return noteWriteState{}, ErrInvalidInput
 		}
-		if _, err := s.GetBook(ctx, userID, bookID); err != nil {
-			return Note{}, err
+		if _, err := s.GetBook(ctx, userID, state.BookID); err != nil {
+			return noteWriteState{}, err
 		}
 	}
-	title := current.Title
 	if patch.Title != nil {
-		title = strings.TrimSpace(*patch.Title)
+		state.Title = strings.TrimSpace(*patch.Title)
 	}
-	body := current.Body
 	if patch.Body != nil {
-		body = strings.TrimSpace(*patch.Body)
+		state.Body = strings.TrimSpace(*patch.Body)
 	}
-	checklist := current.Checklist
 	if patch.Checklist != nil {
-		checklist = *patch.Checklist
+		state.Checklist = *patch.Checklist
 	}
-	tags := current.Tags
 	if patch.Tags != nil {
-		tags = *patch.Tags
+		state.Tags = *patch.Tags
 	}
-	title, body, checklist, tags, err = normalizeNoteContent(title, body, checklist, tags)
+	if patch.Pinned != nil {
+		state.Pinned = *patch.Pinned
+	}
+	if patch.Favorite != nil {
+		state.Favorite = *patch.Favorite
+	}
+	title, body, checklist, tags, err := normalizeNoteContent(state.Title, state.Body, state.Checklist, state.Tags)
 	if err != nil {
-		return Note{}, err
+		return noteWriteState{}, err
 	}
 	if !hasNoteContent(title, body, checklist) {
-		return Note{}, ErrInvalidInput
+		return noteWriteState{}, ErrInvalidInput
 	}
-	checklistJSON, err := json.Marshal(checklist)
-	if err != nil {
-		return Note{}, ErrInvalidInput
-	}
-	tagsJSON, err := json.Marshal(tags)
-	if err != nil {
-		return Note{}, ErrInvalidInput
-	}
-	pinned := current.Pinned
-	if patch.Pinned != nil {
-		pinned = *patch.Pinned
-	}
-	favorite := current.Favorite
-	if patch.Favorite != nil {
-		favorite = *patch.Favorite
-	}
-	now := time.Now().UTC()
+	state.Title = title
+	state.Body = body
+	state.Checklist = checklist
+	state.Tags = tags
+	return state, nil
+}
+
+func (s *Store) saveNoteState(ctx context.Context, userID string, current Note, state noteWriteState, encrypted bool, encryptedPayload, noteKeyEnc string, encryptionVersion int) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return Note{}, fmt.Errorf("begin update notebook note: %w", err)
+		return fmt.Errorf("begin update notebook note: %w", err)
 	}
 	defer tx.Rollback()
+	if err := s.saveNoteStateTx(ctx, tx, userID, current, state, encrypted, encryptedPayload, noteKeyEnc, encryptionVersion); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit notebook note update: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) saveNoteStateTx(ctx context.Context, tx *sql.Tx, userID string, current Note, state noteWriteState, encrypted bool, encryptedPayload, noteKeyEnc string, encryptionVersion int) error {
+	checklistJSON, err := json.Marshal(state.Checklist)
+	if err != nil {
+		return ErrInvalidInput
+	}
+	tagsJSON, err := json.Marshal(state.Tags)
+	if err != nil {
+		return ErrInvalidInput
+	}
+	title, body := state.Title, state.Body
+	storedChecklistJSON, storedTagsJSON := string(checklistJSON), string(tagsJSON)
+	if encrypted {
+		title = ""
+		body = ""
+		storedChecklistJSON = "[]"
+		storedTagsJSON = "[]"
+	}
+	now := time.Now().UTC()
 	result, err := tx.ExecContext(ctx, `
 		UPDATE notebook_notes
 		SET book_id = ?, title = ?, body = ?, checklist_json = ?, tags_json = ?,
-		    pinned = ?, favorite = ?, updated_at = ?
+		    pinned = ?, favorite = ?, encrypted = ?, encrypted_payload = ?, note_key_enc = ?,
+		    encryption_version = ?, updated_at = ?
 		WHERE id = ? AND owner_id = ? AND status = 'active'
-	`, bookID, title, body, string(checklistJSON), string(tagsJSON),
-		boolInt(pinned), boolInt(favorite), now.UnixMilli(), noteID, userID)
+	`, state.BookID, title, body, storedChecklistJSON, storedTagsJSON,
+		boolInt(state.Pinned), boolInt(state.Favorite), boolInt(encrypted), encryptedPayload,
+		noteKeyEnc, encryptionVersion, now.UnixMilli(), current.ID, userID)
 	if err != nil {
-		return Note{}, fmt.Errorf("update notebook note: %w", err)
+		return fmt.Errorf("update notebook note: %w", err)
 	}
 	affected, err := result.RowsAffected()
 	if err != nil {
-		return Note{}, err
+		return err
 	}
 	if affected == 0 {
-		return Note{}, ErrNoteNotFound
+		return ErrNoteNotFound
 	}
 	if _, err := tx.ExecContext(ctx, `UPDATE notebook_books SET updated_at = ? WHERE id = ? AND owner_id = ?`,
-		now.UnixMilli(), bookID, userID); err != nil {
-		return Note{}, fmt.Errorf("touch notebook book: %w", err)
+		now.UnixMilli(), state.BookID, userID); err != nil {
+		return fmt.Errorf("touch notebook book: %w", err)
 	}
-	if current.BookID != bookID {
+	if current.BookID != state.BookID {
 		if _, err := tx.ExecContext(ctx, `UPDATE notebook_books SET updated_at = ? WHERE id = ? AND owner_id = ?`,
 			now.UnixMilli(), current.BookID, userID); err != nil {
-			return Note{}, fmt.Errorf("touch previous notebook book: %w", err)
+			return fmt.Errorf("touch previous notebook book: %w", err)
 		}
 	}
-	if err := tx.Commit(); err != nil {
-		return Note{}, fmt.Errorf("commit notebook note update: %w", err)
-	}
-	return s.GetNote(ctx, userID, noteID)
+	return nil
 }
 
 func (s *Store) DeleteNote(ctx context.Context, userID string, noteID string) error {
@@ -470,9 +620,47 @@ func (s *Store) DeleteNote(ctx context.Context, userID string, noteID string) er
 }
 
 func (s *Store) GetNote(ctx context.Context, userID string, noteID string) (Note, error) {
+	item, err := s.getNoteRecord(ctx, userID, noteID)
+	if err != nil {
+		return Note{}, err
+	}
+	if item.Encrypted {
+		return item, nil
+	}
+	media, err := s.ListMedia(ctx, userID, noteID)
+	if err != nil {
+		return Note{}, err
+	}
+	item.Media = media
+	return item, nil
+}
+
+func (s *Store) GetNoteWithDataKey(ctx context.Context, userID string, noteID string, dataKey []byte) (Note, error) {
+	item, err := s.getNoteRecord(ctx, userID, noteID)
+	if err != nil {
+		return Note{}, err
+	}
+	if item.Encrypted {
+		if len(dataKey) == 0 {
+			return Note{}, ErrLocked
+		}
+		if err := decryptNoteContent(&item, dataKey); err != nil {
+			return Note{}, err
+		}
+	}
+	media, err := s.ListMedia(ctx, userID, noteID)
+	if err != nil {
+		return Note{}, err
+	}
+	item.Media = media
+	return item, nil
+}
+
+func (s *Store) getNoteRecord(ctx context.Context, userID string, noteID string) (Note, error) {
 	row := s.db.QueryRowContext(ctx, `
 		SELECT n.id, n.book_id, b.name, b.color, n.title, n.body, n.checklist_json,
-		       n.tags_json, n.pinned, n.favorite, n.created_at, n.updated_at
+		       n.tags_json, n.pinned, n.favorite, n.encrypted, n.encrypted_payload,
+		       n.note_key_enc, n.encryption_version, n.created_at, n.updated_at
 		FROM notebook_notes n
 		JOIN notebook_books b ON b.id = n.book_id AND b.owner_id = n.owner_id
 		WHERE n.id = ? AND n.owner_id = ? AND n.status = 'active'
@@ -484,11 +672,6 @@ func (s *Store) GetNote(ctx context.Context, userID string, noteID string) (Note
 	if err != nil {
 		return Note{}, err
 	}
-	media, err := s.ListMedia(ctx, userID, noteID)
-	if err != nil {
-		return Note{}, err
-	}
-	item.Media = media
 	return item, nil
 }
 
@@ -509,7 +692,8 @@ func (s *Store) ListNotes(ctx context.Context, userID string, filter NoteFilter)
 	}
 	query := `
 		SELECT n.id, n.book_id, b.name, b.color, n.title, n.body, n.checklist_json,
-		       n.tags_json, n.pinned, n.favorite, n.created_at, n.updated_at
+		       n.tags_json, n.pinned, n.favorite, n.encrypted, n.encrypted_payload,
+		       n.note_key_enc, n.encryption_version, n.created_at, n.updated_at
 		FROM notebook_notes n
 		JOIN notebook_books b ON b.id = n.book_id AND b.owner_id = n.owner_id
 		WHERE n.owner_id = ? AND n.status = 'active'`
@@ -523,12 +707,12 @@ func (s *Store) ListNotes(ctx context.Context, userID string, filter NoteFilter)
 	}
 	if q := strings.TrimSpace(filter.Query); q != "" {
 		like := "%" + escapeLike(q) + "%"
-		query += ` AND (n.title LIKE ? ESCAPE '\' OR n.body LIKE ? ESCAPE '\' OR n.checklist_json LIKE ? ESCAPE '\' OR n.tags_json LIKE ? ESCAPE '\')`
+		query += ` AND n.encrypted = 0 AND (n.title LIKE ? ESCAPE '\' OR n.body LIKE ? ESCAPE '\' OR n.checklist_json LIKE ? ESCAPE '\' OR n.tags_json LIKE ? ESCAPE '\')`
 		args = append(args, like, like, like, like)
 	}
 	if tag := normalizeTag(filter.Tag); tag != "" {
 		like := "%\"" + escapeLike(tag) + "\"%"
-		query += ` AND n.tags_json LIKE ? ESCAPE '\'`
+		query += ` AND n.encrypted = 0 AND n.tags_json LIKE ? ESCAPE '\'`
 		args = append(args, like)
 	}
 	query += ` ORDER BY n.pinned DESC, n.updated_at DESC, n.id DESC LIMIT ? OFFSET ?`
@@ -559,7 +743,7 @@ func (s *Store) ListNotes(ctx context.Context, userID string, filter NoteFilter)
 
 func (s *Store) ListMedia(ctx context.Context, userID string, noteID string) ([]Media, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT m.id, m.note_id, m.owner_id, m.kind, m.content_type, m.byte_size, m.created_at
+		SELECT m.id, m.note_id, m.owner_id, m.kind, m.content_type, m.byte_size, m.encrypted, m.stored_name, m.created_at
 		FROM notebook_media m
 		JOIN notebook_notes n ON n.id = m.note_id AND n.owner_id = m.owner_id
 		WHERE m.owner_id = ? AND m.note_id = ? AND n.status = 'active'
@@ -598,9 +782,9 @@ func (s *Store) CreateMedia(ctx context.Context, media Media, storedName string)
 	media.CreatedAt = now
 	media.URL = ""
 	if _, err := s.db.ExecContext(ctx, `
-		INSERT INTO notebook_media (id, note_id, owner_id, kind, stored_name, content_type, byte_size, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, media.ID, media.NoteID, media.OwnerID, media.Kind, storedName, media.ContentType, media.ByteSize, now.UnixMilli()); err != nil {
+		INSERT INTO notebook_media (id, note_id, owner_id, kind, stored_name, content_type, byte_size, encrypted, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, media.ID, media.NoteID, media.OwnerID, media.Kind, storedName, media.ContentType, media.ByteSize, boolInt(media.Encrypted), now.UnixMilli()); err != nil {
 		return Media{}, fmt.Errorf("create notebook media: %w", err)
 	}
 	return media, nil
@@ -611,12 +795,12 @@ func (s *Store) GetMedia(ctx context.Context, userID string, mediaID string) (Me
 	var storedName string
 	var createdAt int64
 	err := s.db.QueryRowContext(ctx, `
-		SELECT m.id, m.note_id, m.owner_id, m.kind, m.content_type, m.byte_size, m.created_at, m.stored_name
+		SELECT m.id, m.note_id, m.owner_id, m.kind, m.content_type, m.byte_size, m.encrypted, m.stored_name, m.created_at
 		FROM notebook_media m
 		JOIN notebook_notes n ON n.id = m.note_id AND n.owner_id = m.owner_id
 		WHERE m.id = ? AND m.owner_id = ? AND n.status = 'active'
 	`, mediaID, userID).Scan(&item.ID, &item.NoteID, &item.OwnerID, &item.Kind,
-		&item.ContentType, &item.ByteSize, &createdAt, &storedName)
+		&item.ContentType, &item.ByteSize, &item.Encrypted, &storedName, &createdAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Media{}, "", ErrNotFound
 	}
@@ -663,10 +847,11 @@ type noteScanner interface {
 func scanNote(scanner noteScanner) (Note, error) {
 	var item Note
 	var checklistJSON, tagsJSON string
-	var pinned, favorite int
+	var pinned, favorite, encrypted int
 	var createdAt, updatedAt int64
 	if err := scanner.Scan(&item.ID, &item.BookID, &item.BookName, &item.BookColor,
 		&item.Title, &item.Body, &checklistJSON, &tagsJSON, &pinned, &favorite,
+		&encrypted, &item.encryptedPayload, &item.noteKeyEnc, &item.encryptionVersion,
 		&createdAt, &updatedAt); err != nil {
 		return Note{}, err
 	}
@@ -684,18 +869,22 @@ func scanNote(scanner noteScanner) (Note, error) {
 	}
 	item.Pinned = pinned != 0
 	item.Favorite = favorite != 0
+	item.Encrypted = encrypted != 0
 	item.CreatedAt = time.UnixMilli(createdAt).UTC()
 	item.UpdatedAt = time.UnixMilli(updatedAt).UTC()
+	redactEncryptedNote(&item)
 	return item, nil
 }
 
 func scanMedia(scanner interface{ Scan(...any) error }) (Media, error) {
 	var item Media
+	var encrypted int
 	var createdAt int64
 	if err := scanner.Scan(&item.ID, &item.NoteID, &item.OwnerID, &item.Kind,
-		&item.ContentType, &item.ByteSize, &createdAt); err != nil {
+		&item.ContentType, &item.ByteSize, &encrypted, &item.StoredName, &createdAt); err != nil {
 		return Media{}, err
 	}
+	item.Encrypted = encrypted != 0
 	item.CreatedAt = time.UnixMilli(createdAt).UTC()
 	return item, nil
 }

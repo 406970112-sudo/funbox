@@ -23,97 +23,132 @@
         <button class="more-button" bindtap="openMore" hover-class="more-button-pressed" aria-label="更多笔记操作">···</button>
       </view>
 
-      <view class="detail-heading">
-        <view class="detail-title-wrap">
-          <text class="detail-title">{{title}}</text>
-        </view>
-        <view wx:if="{{tags.length}}" class="detail-tags">
-          <text wx:for="{{tags}}" wx:key="*this" class="detail-tag"># {{item}}</text>
-        </view>
-        <text wx:if="{{summaryLabel}}" class="detail-summary">{{summaryLabel}}</text>
-      </view>
-
-      <view wx:if="{{body}}" class="detail-body-card fb-card">
-        <text class="detail-body">{{body}}</text>
-      </view>
-
-      <view wx:if="{{checklist.length}}" class="detail-check-card fb-card">
-        <view class="detail-card-head">
-          <text class="detail-card-title">清单</text>
-          <text class="detail-card-count">{{checklistDone}} / {{checklist.length}} 已完成</text>
-        </view>
-        <view wx:for="{{checklist}}" wx:key="id" class="detail-check-row">
-          <view class="detail-check-box {{item.done ? 'detail-check-done' : ''}}">
-            <view class="detail-check-mark"></view>
+      <block wx:if="{{encrypted && locked}}">
+        <view class="detail-lock-card">
+          <view class="detail-lock-sheet detail-lock-sheet-back" aria-hidden="true"></view>
+          <view class="detail-lock-sheet detail-lock-sheet-front" aria-hidden="true">
+            <view class="detail-lock-lines"></view>
           </view>
-          <text class="detail-check-text {{item.done ? 'detail-check-text-done' : ''}}">{{item.text}}</text>
-        </view>
-      </view>
-
-      <view wx:if="{{images.length}}" class="detail-media-card fb-card">
-        <view class="detail-card-head">
-          <text class="detail-card-title">图片</text>
-          <text class="detail-card-count">{{images.length}} 张</text>
-        </view>
-        <view class="detail-image-grid">
-          <view wx:for="{{images}}" wx:key="id" class="detail-image-tile" data-index="{{index}}" bindtap="previewImage">
-            <image wx:if="{{item.localPath}}" class="detail-image" src="{{item.localPath}}" mode="aspectFill" />
-            <view wx:else class="detail-image-loading">加载中</view>
+          <view class="detail-lock-badge" aria-hidden="true">
+            <image class="detail-lock-badge-image" src="/packages/notebook/assets/icons/lock-white.png" mode="aspectFit" />
           </view>
+          <text class="detail-lock-label">FunBox / 加密笔记</text>
         </view>
-      </view>
 
-      <view wx:if="{{audio}}" class="detail-audio-card fb-card">
-        <view class="detail-audio-play {{audioPlaying ? 'detail-audio-playing' : ''}}" bindtap="playAudio" role="button" aria-label="{{audioPlaying ? '暂停语音' : '播放语音'}}">
-          <view class="play-triangle" aria-hidden="true"></view>
+        <view class="detail-lock-copy">
+          <text class="detail-lock-title">这条笔记已加密</text>
+          <text class="detail-lock-desc">输入笔记密码后，才能查看标题、正文、清单与附件。</text>
         </view>
-        <view class="detail-audio-copy">
-          <text class="detail-audio-title">语音笔记</text>
-          <text class="detail-audio-meta">{{audio.durationLabel || '点击播放'}}</text>
-        </view>
-      </view>
 
-      <view class="detail-actionbar" role="toolbar" aria-label="笔记操作">
-        <view
-          class="detail-action {{favorite ? 'detail-action-active' : ''}}"
-          bindtap="toggleFavorite"
-          hover-class="detail-action-pressed"
-          role="button"
-          aria-label="{{favorite ? '取消收藏' : '收藏笔记'}}"
-        >
-          <view class="detail-tool detail-tool-favorite" aria-hidden="true">
-            <image
-              class="detail-tool-image"
-              src="/packages/notebook/assets/icons/{{favorite ? 'favorite-active' : 'favorite-default'}}.png"
-              mode="aspectFit"
-            />
-          </view>
-          <text class="detail-action-label">{{favorite ? '已收藏' : '收藏'}}</text>
-        </view>
-        <button
-          class="detail-action detail-share"
-          open-type="share"
-          hover-class="detail-action-pressed"
-          aria-label="分享笔记"
-        >
-          <view class="detail-tool detail-tool-share" aria-hidden="true">
-            <image class="detail-tool-image" src="/packages/notebook/assets/icons/share.png" mode="aspectFit" />
-          </view>
-          <text class="detail-action-label">分享</text>
+        <button class="detail-unlock-button" bindtap="openUnlockSheet" hover-class="detail-unlock-button-pressed">
+          <image class="detail-unlock-icon" src="/packages/notebook/assets/icons/lock-open-white.png" mode="aspectFit" aria-hidden="true" />
+          <text>解锁查看</text>
         </button>
-        <view
-          class="detail-action detail-primary"
-          bindtap="editNote"
-          hover-class="detail-action-pressed"
-          role="button"
-          aria-label="编辑笔记"
-        >
-          <view class="detail-tool detail-tool-edit" aria-hidden="true">
-            <image class="detail-tool-image" src="/packages/notebook/assets/icons/edit.png" mode="aspectFit" />
-          </view>
-          <text class="detail-action-label">编辑</text>
+
+        <view class="detail-lock-meta">
+          <text wx:if="{{favorite}}" class="detail-lock-meta-chip">已收藏</text>
+          <text>加密笔记不支持分享</text>
         </view>
-      </view>
+      </block>
+
+      <block wx:else>
+        <view class="detail-heading">
+          <view class="detail-title-wrap">
+            <text class="detail-title">{{title}}</text>
+          </view>
+          <view wx:if="{{encrypted}}" class="detail-encrypted-pill">
+            <image class="detail-encrypted-mark" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
+            <text>已加密</text>
+          </view>
+          <view wx:if="{{tags.length}}" class="detail-tags">
+            <text wx:for="{{tags}}" wx:key="*this" class="detail-tag"># {{item}}</text>
+          </view>
+          <text wx:if="{{summaryLabel}}" class="detail-summary">{{summaryLabel}}</text>
+        </view>
+
+        <view wx:if="{{body}}" class="detail-body-card fb-card">
+          <text class="detail-body">{{body}}</text>
+        </view>
+
+        <view wx:if="{{checklist.length}}" class="detail-check-card fb-card">
+          <view class="detail-card-head">
+            <text class="detail-card-title">清单</text>
+            <text class="detail-card-count">{{checklistDone}} / {{checklist.length}} 已完成</text>
+          </view>
+          <view wx:for="{{checklist}}" wx:key="id" class="detail-check-row">
+            <view class="detail-check-box {{item.done ? 'detail-check-done' : ''}}">
+              <view class="detail-check-mark"></view>
+            </view>
+            <text class="detail-check-text {{item.done ? 'detail-check-text-done' : ''}}">{{item.text}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{images.length}}" class="detail-media-card fb-card">
+          <view class="detail-card-head">
+            <text class="detail-card-title">图片</text>
+            <text class="detail-card-count">{{images.length}} 张</text>
+          </view>
+          <view class="detail-image-grid">
+            <view wx:for="{{images}}" wx:key="id" class="detail-image-tile" data-index="{{index}}" bindtap="previewImage">
+              <image wx:if="{{item.localPath}}" class="detail-image" src="{{item.localPath}}" mode="aspectFill" />
+              <view wx:else class="detail-image-loading">加载中</view>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{audio}}" class="detail-audio-card fb-card">
+          <view class="detail-audio-play {{audioPlaying ? 'detail-audio-playing' : ''}}" bindtap="playAudio" role="button" aria-label="{{audioPlaying ? '暂停语音' : '播放语音'}}">
+            <view class="play-triangle" aria-hidden="true"></view>
+          </view>
+          <view class="detail-audio-copy">
+            <text class="detail-audio-title">语音笔记</text>
+            <text class="detail-audio-meta">{{audio.durationLabel || '点击播放'}}</text>
+          </view>
+        </view>
+
+        <view class="detail-actionbar" role="toolbar" aria-label="笔记操作">
+          <view
+            class="detail-action {{favorite ? 'detail-action-active' : ''}}"
+            bindtap="toggleFavorite"
+            hover-class="detail-action-pressed"
+            role="button"
+            aria-label="{{favorite ? '取消收藏' : '收藏笔记'}}"
+          >
+            <view class="detail-tool detail-tool-favorite" aria-hidden="true">
+              <image
+                class="detail-tool-image"
+                src="/packages/notebook/assets/icons/{{favorite ? 'favorite-active' : 'favorite-default'}}.png"
+                mode="aspectFit"
+              />
+            </view>
+            <text class="detail-action-label">{{favorite ? '已收藏' : '收藏'}}</text>
+          </view>
+          <button
+            wx:if="{{!encrypted}}"
+            class="detail-action detail-share"
+            open-type="share"
+            hover-class="detail-action-pressed"
+            aria-label="分享笔记"
+          >
+            <view class="detail-tool detail-tool-share" aria-hidden="true">
+              <image class="detail-tool-image" src="/packages/notebook/assets/icons/share.png" mode="aspectFit" />
+            </view>
+            <text class="detail-action-label">分享</text>
+          </button>
+          <view
+            class="detail-action detail-primary"
+            bindtap="editNote"
+            hover-class="detail-action-pressed"
+            role="button"
+            aria-label="编辑笔记"
+          >
+            <view class="detail-tool detail-tool-edit" aria-hidden="true">
+              <image class="detail-tool-image" src="/packages/notebook/assets/icons/edit.png" mode="aspectFit" />
+            </view>
+            <text class="detail-action-label">编辑</text>
+          </view>
+        </view>
+      </block>
     </block>
   </block>
 
@@ -122,5 +157,40 @@
     <text class="login-title">登录后查看笔记</text>
     <text class="login-desc">这是账号内的私人笔记，登录后即可继续编辑。</text>
     <button class="login-button" bindtap="openLogin">微信快捷登录</button>
+  </view>
+
+  <view wx:if="{{showUnlockSheet}}" class="unlock-mask" catchtouchmove="noop">
+    <view class="unlock-sheet" catchtap="noop">
+      <view class="unlock-grabber"></view>
+      <view class="unlock-head">
+        <view class="unlock-badge" aria-hidden="true">
+          <image class="unlock-badge-image" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" />
+        </view>
+        <view class="unlock-head-copy">
+          <text class="unlock-title">解锁加密笔记</text>
+          <text class="unlock-caption">输入账号统一的笔记密码</text>
+        </view>
+        <view class="unlock-close" bindtap="closeUnlockSheet" role="button" aria-label="关闭解锁弹层">×</view>
+      </view>
+      <text class="unlock-field-label">笔记密码</text>
+      <input
+        class="unlock-input {{unlockError ? 'unlock-input-error' : ''}}"
+        type="password"
+        value="{{unlockPassword}}"
+        maxlength="32"
+        password
+        focus="{{showUnlockSheet}}"
+        placeholder="请输入笔记密码"
+        placeholder-class="unlock-placeholder"
+        bindinput="onUnlockInput"
+        confirm-type="done"
+        bindconfirm="submitUnlock"
+      />
+      <text wx:if="{{unlockError}}" class="unlock-error">{{unlockError}}</text>
+      <button class="unlock-primary {{unlockBusy ? 'unlock-primary-busy' : ''}}" bindtap="submitUnlock" disabled="{{unlockBusy}}">
+        {{unlockBusy ? '正在解锁…' : '解锁查看'}}
+      </button>
+      <button class="unlock-forgot" bindtap="forgotPassword">忘记密码？</button>
+    </view>
   </view>
 </view>

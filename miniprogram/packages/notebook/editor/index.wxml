@@ -19,6 +19,14 @@
             <view class="book-pill-arrow" aria-hidden="true"></view>
           </view>
         </picker>
+        <button class="editor-lock {{encrypted ? 'editor-lock-active' : ''}}" bindtap="toggleEncryption" aria-label="{{encrypted ? '管理笔记加密' : '开启笔记加密'}}">
+          <image
+            class="editor-lock-icon"
+            src="/packages/notebook/assets/icons/{{encrypted ? 'lock-active' : 'lock-default'}}.png"
+            mode="aspectFit"
+            aria-hidden="true"
+          />
+        </button>
         <text class="save-state save-{{saveState}}">{{saveLabel}}</text>
         <view class="done-button" bindtap="saveAndClose" role="button" aria-label="完成并返回">完成</view>
       </view>
@@ -169,6 +177,58 @@
     <text class="login-title">登录后开始记录</text>
     <text class="login-desc">笔记会跟随你的账号保存，换设备也能继续写。</text>
     <button class="login-button" bindtap="openLogin">微信快捷登录</button>
+  </view>
+
+  <view wx:if="{{showPasswordModal}}" class="modal-mask" catchtouchmove="noop">
+    <view class="password-modal" catchtap="noop">
+      <view class="password-modal-icon {{passwordMode === 'setup' ? 'password-modal-icon-primary' : ''}}" aria-hidden="true">
+        <image
+          class="password-modal-lock"
+          src="/packages/notebook/assets/icons/{{passwordMode === 'setup' ? 'lock-active' : 'lock-default'}}.png"
+          mode="aspectFit"
+        />
+      </view>
+      <text class="password-modal-title">{{passwordMode === 'setup' ? '开启加密笔记' : '解锁加密笔记'}}</text>
+      <text class="password-modal-desc">{{passwordMode === 'setup' ? '此密码将保护你账号下的全部加密笔记' : '输入账号统一的笔记密码后继续'}}</text>
+
+      <text class="password-field-label">笔记密码</text>
+      <input
+        class="password-modal-input"
+        type="password"
+        password
+        value="{{passwordValue}}"
+        maxlength="32"
+        focus="{{showPasswordModal}}"
+        placeholder="{{passwordMode === 'setup' ? '6–32 位字符' : '请输入笔记密码'}}"
+        placeholder-class="input-placeholder"
+        bindinput="onPasswordInput"
+        confirm-type="{{passwordMode === 'setup' ? 'next' : 'done'}}"
+      />
+      <block wx:if="{{passwordMode === 'setup'}}">
+        <text class="password-field-label">再次输入</text>
+        <input
+          class="password-modal-input"
+          type="password"
+          password
+          value="{{passwordConfirm}}"
+          maxlength="32"
+          placeholder="再次输入密码"
+          placeholder-class="input-placeholder"
+          bindinput="onPasswordConfirmInput"
+          confirm-type="done"
+          bindconfirm="submitPasswordModal"
+        />
+        <view class="password-warning">
+          <view class="password-warning-mark" aria-hidden="true"></view>
+          <text>忘记密码后，已加密内容无法找回。请先确认你已理解并妥善记住密码。</text>
+        </view>
+      </block>
+      <text wx:if="{{passwordError}}" class="modal-error">{{passwordError}}</text>
+      <view class="modal-actions">
+        <button class="modal-cancel" bindtap="closePasswordModal">取消</button>
+        <button class="modal-confirm" bindtap="submitPasswordModal" disabled="{{passwordBusy}}">{{passwordBusy ? '处理中…' : (passwordMode === 'setup' ? '开启加密' : '继续')}}</button>
+      </view>
+    </view>
   </view>
 
   <view wx:if="{{showTagModal}}" class="modal-mask" catchtouchmove="noop">

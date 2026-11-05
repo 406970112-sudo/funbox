@@ -10,6 +10,7 @@
   - 详情页：阅读、收藏、置顶、分享、编辑和删除入口。
   - 搜索页：全文搜索、搜索范围、只看收藏、笔记本与标签筛选。
   - 笔记本管理：新建、重命名、删除空笔记本。
+  - 加密笔记：单篇笔记开关、账号统一笔记密码、30 分钟解锁会话、锁定态脱敏、加密附件与密码管理。
 
 ## 2. UI 验收基线
 
@@ -33,18 +34,26 @@
 | GET | `/api/v1/notebook/notes` | 笔记列表，支持 `bookId/q/tag/favorite/limit/offset` |
 | POST | `/api/v1/notebook/notes` | 新建笔记 |
 | GET | `/api/v1/notebook/notes/{noteID}` | 笔记详情（含媒体） |
-| PATCH | `/api/v1/notebook/notes/{noteID}` | 更新内容、笔记本、置顶或收藏 |
+| PATCH | `/api/v1/notebook/notes/{noteID}` | 更新内容、笔记本、置顶、收藏或单篇加密状态 |
 | DELETE | `/api/v1/notebook/notes/{noteID}` | 删除笔记 |
 | POST | `/api/v1/notebook/notes/{noteID}/media` | 上传图片或语音，字段为 `kind` + `file` |
 | GET | `/api/v1/notebook/media/{mediaID}` | 读取私有媒体 |
 | DELETE | `/api/v1/notebook/media/{mediaID}` | 删除附件 |
+| GET | `/api/v1/notebook/security` | 查询密码、加密篇数与解锁状态 |
+| POST | `/api/v1/notebook/security/password` | 设置或修改账号统一笔记密码 |
+| POST | `/api/v1/notebook/security/unlock` | 校验密码并签发 30 分钟解锁令牌 |
+| POST | `/api/v1/notebook/security/lock` | 立即上锁并撤销当前令牌 |
+| POST | `/api/v1/notebook/security/reset` | 确认后清空全部加密笔记与密码 |
 
 ## 4. 数据与存储
 
-- 新表：`notebook_books`、`notebook_notes`、`notebook_media`。
+- 新表：`notebook_books`、`notebook_notes`、`notebook_media`、`notebook_security`。
 - 清单和标签以 JSON 存储，读取时统一归一化。
 - 默认笔记本使用事务初始化，避免首页并行请求造成重复创建。
-- 媒体文件保存在数据库同级的 `notebook-media/` 目录，私有读取必须带登录态。
+- 媒体文件保存在数据库同级的 `notebook-media/` 目录，私有读取必须带登录态；加密笔记的附件同时加密落盘并要求解锁令牌。
+- 加密笔记正文载荷使用 AES-256-GCM 加密，笔记密码使用 Argon2id 派生密钥并以 bcrypt 哈希校验；密码、数据密钥和解锁令牌不会下发给客户端。
+- 锁定态列表和详情只返回所属笔记本、时间、置顶/收藏状态，不返回真实标题、正文、清单、标签、附件或摘要。
+- 加密笔记不参与关键词搜索，也不支持分享；解锁会话 30 分钟，手动上锁、退出登录或冷启动后失效。
 - 单条笔记限制：标题 80 字、正文 20000 字、清单 50 项、标签 8 个、图片 4 张、语音 1 条。
 
 ## 5. 测试与验收命令
@@ -65,3 +74,7 @@ node --test miniprogram/tests/*.test.js
 4. 清单勾选、标签添加/删除、图片选择上传、语音播放。
 5. 详情收藏后，在搜索页开启“只看收藏”仍可找到。
 6. 笔记本新建、重命名和空本删除。
+7. 编辑普通笔记开启加密后，首页显示锁定占位；退出后重新进入需输入笔记密码。
+8. 错误密码不退出账号；密码修改后旧解锁会话失效。
+9. 解锁后可查看、编辑和播放附件；手动上锁后详情和附件再次不可读。
+10. 加密笔记不出现在关键词搜索，取消加密后恢复搜索和分享。

@@ -540,3 +540,36 @@
   0%, 100% { opacity: 0.35; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1); }
 }
+
+.encrypted-search-note {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-height: 66rpx;
+  box-sizing: border-box;
+  margin: -2rpx 0 16rpx;
+  padding: 12rpx 18rpx;
+  border: 2rpx solid #f2d8a4;
+  border-radius: 20rpx;
+  background: #fffaf0;
+  color: #8e6a2e;
+  font-size: 20rpx;
+  line-height: 1.5;
+}
+
+.encrypted-search-mark {
+  display: block;
+  flex: 0 0 20rpx;
+  width: 20rpx;
+  height: 29rpx;
+}
+
+.result-locked {
+  margin-right: auto;
+  padding: 3rpx 9rpx;
+  border-radius: 8rpx;
+  background: #fff4dc;
+  color: #a66b0b;
+  font-size: 18rpx;
+  font-weight: 800;
+}

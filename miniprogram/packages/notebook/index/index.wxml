@@ -23,10 +23,20 @@
   </view>
 
   <block wx:if="{{isLoggedIn}}">
-    <button class="search-bar" bindtap="openSearch" aria-label="搜索笔记、标签或正文">
-      <view class="search-icon" aria-hidden="true"></view>
-      <text class="search-copy">搜索笔记、标签或正文</text>
-    </button>
+    <view class="home-search-row">
+      <button class="search-bar" bindtap="openSearch" aria-label="搜索笔记、标签或正文">
+        <view class="search-icon" aria-hidden="true"></view>
+        <text class="search-copy">搜索笔记、标签或正文</text>
+      </button>
+      <button class="security-entry {{hasSecurityPassword ? 'security-entry-active' : ''}}" bindtap="openSecurity" aria-label="加密笔记设置">
+        <image
+          class="security-entry-icon"
+          src="/packages/notebook/assets/icons/{{hasSecurityPassword ? 'lock-active' : 'lock-default'}}.png"
+          mode="aspectFit"
+          aria-hidden="true"
+        />
+      </button>
+    </view>
 
     <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
       <view class="filter-row">
@@ -67,7 +77,13 @@
         >
           <view class="pinned-top">
             <text class="note-book-label" style="background: {{item.bookFill}}; color: {{item.bookInk}};">{{item.bookName}}</text>
-            <text class="pin-mark" aria-hidden="true">置顶</text>
+            <view class="pin-flags">
+              <text class="pin-mark" aria-hidden="true">置顶</text>
+              <view wx:if="{{item.locked}}" class="pinned-lock">
+                <image class="mini-lock-image" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
+                <text>已加密</text>
+              </view>
+            </view>
           </view>
           <text class="pinned-title">{{item.displayTitle}}</text>
           <text class="pinned-excerpt">{{item.excerpt}}</text>
@@ -93,10 +109,13 @@
             role="button"
             aria-label="打开笔记 {{item.displayTitle}}"
           >
-            <view class="note-icon" style="background: {{item.bookFill}}; color: {{item.bookInk}};">{{item.checklist.length ? '✓' : '文'}}</view>
+            <view class="note-icon {{item.locked ? 'note-icon-locked' : ''}}" style="background: {{item.bookFill}}; color: {{item.bookInk}};">
+              <image wx:if="{{item.locked}}" class="list-lock-image" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
+              <text wx:else>{{item.checklist.length ? '✓' : '文'}}</text>
+            </view>
             <view class="note-row-copy">
               <text class="note-row-title">{{item.displayTitle}}</text>
-              <text class="note-row-meta">{{item.bookName}} · {{item.timeLabel}}</text>
+              <text class="note-row-meta">{{item.bookName}} · {{item.timeLabel}}<text wx:if="{{item.locked}}"> · 已加密</text></text>
             </view>
             <text class="note-row-arrow" aria-hidden="true">›</text>
           </view>
@@ -120,5 +139,67 @@
     <text class="login-title">登录后开始记录</text>
     <text class="login-desc">笔记会跟随你的账号保存，换设备也能继续写。</text>
     <button class="login-button" bindtap="openLogin">微信快捷登录</button>
+  </view>
+
+  <view wx:if="{{showSecuritySheet}}" class="security-mask" catchtouchmove="noop">
+    <view class="security-sheet" catchtap="noop">
+      <view class="security-grabber"></view>
+      <view class="security-head">
+        <view class="security-title-wrap">
+          <text class="security-title">加密笔记</text>
+          <text wx:if="{{hasSecurityPassword}}" class="security-subtitle">{{encryptedNoteCount}} 篇加密笔记 · {{securityUnlocked ? '本次已解锁' : '当前已锁定'}}</text>
+          <text wx:else class="security-subtitle">尚未开启。打开任意笔记，在编辑页点击锁按钮即可。</text>
+        </view>
+        <view class="security-close" bindtap="closeSecuritySheet" role="button" aria-label="关闭加密笔记设置">×</view>
+      </view>
+
+      <block wx:if="{{securityMode === 'summary'}}">
+        <view wx:if="{{hasSecurityPassword}}" class="security-actions">
+          <button wx:if="{{!securityUnlocked}}" class="security-action security-action-primary" bindtap="beginSecurityUnlock">解锁加密笔记</button>
+          <button wx:else class="security-action security-action-primary" bindtap="lockSecurity" disabled="{{securityBusy}}">立即上锁</button>
+          <button class="security-action security-action-secondary" bindtap="beginPasswordChange">修改密码</button>
+        </view>
+        <view wx:if="{{hasSecurityPassword}}" class="security-help-row">
+          <text>忘记密码后无法找回已加密内容。</text>
+          <text class="security-danger-link" bindtap="resetEncryption">清空加密笔记</text>
+        </view>
+        <view wx:else class="security-empty">
+          <image class="security-empty-mark" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
+          <text>开启后，锁定状态不会展示真实标题、摘要、标签和附件。</text>
+        </view>
+      </block>
+
+      <block wx:elif="{{securityMode === 'unlock'}}">
+        <text class="security-field-label">笔记密码</text>
+        <input
+          class="security-input"
+          type="password"
+          password
+          value="{{securityPassword}}"
+          maxlength="32"
+          focus="{{securityMode === 'unlock'}}"
+          placeholder="请输入笔记密码"
+          placeholder-class="security-placeholder"
+          bindinput="onSecurityPasswordInput"
+          confirm-type="done"
+          bindconfirm="submitSecurityUnlock"
+        />
+        <text wx:if="{{securityError}}" class="security-error">{{securityError}}</text>
+        <button class="security-submit" bindtap="submitSecurityUnlock" disabled="{{securityBusy}}">{{securityBusy ? '正在解锁…' : '解锁'}}</button>
+        <button class="security-back" bindtap="backToSecuritySummary">返回</button>
+      </block>
+
+      <block wx:else>
+        <text class="security-field-label">当前密码</text>
+        <input class="security-input" type="password" password value="{{securityPassword}}" maxlength="32" placeholder="输入当前笔记密码" placeholder-class="security-placeholder" bindinput="onSecurityPasswordInput" />
+        <text class="security-field-label">新密码</text>
+        <input class="security-input" type="password" password value="{{securityNewPassword}}" maxlength="32" placeholder="6–32 位字符" placeholder-class="security-placeholder" bindinput="onSecurityNewPasswordInput" />
+        <text class="security-field-label">再次输入</text>
+        <input class="security-input" type="password" password value="{{securityConfirmPassword}}" maxlength="32" placeholder="再次输入新密码" placeholder-class="security-placeholder" bindinput="onSecurityConfirmPasswordInput" />
+        <text wx:if="{{securityError}}" class="security-error">{{securityError}}</text>
+        <button class="security-submit" bindtap="submitPasswordChange" disabled="{{securityBusy}}">{{securityBusy ? '正在更新…' : '更新密码'}}</button>
+        <button class="security-back" bindtap="backToSecuritySummary">返回</button>
+      </block>
+    </view>
   </view>
 </view>

@@ -1363,7 +1363,7 @@ func (s *Server) applyCORS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Diary-Unlock-Token,X-Home-Manual-Unlock-Token")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Diary-Unlock-Token,X-Home-Manual-Unlock-Token,X-Notebook-Unlock-Token")
 	w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition,Content-Length,Retry-After,X-Original-Size,X-Compressed-Size,X-Compression-Ratio")
 }
 
