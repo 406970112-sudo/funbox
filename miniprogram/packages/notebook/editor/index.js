@@ -3,9 +3,6 @@ const {
   getNotebookNote,
   createNotebookNote,
   updateNotebookNote,
-  uploadNotebookMedia,
-  deleteNotebookMedia,
-  downloadNotebookMedia,
   getNotebookSecurity,
   setNotebookPassword,
   unlockNotebook,
@@ -18,11 +15,6 @@ const { getAccessToken, clearSession } = require("../../../utils/auth");
 
 function localID() {
   return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function formatSeconds(value) {
-  const total = Math.max(0, Number(value) || 0);
-  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
 Page({
@@ -42,8 +34,6 @@ Page({
     body: "",
     checklist: [],
     tags: [],
-    images: [],
-    audio: null,
     pinned: false,
     favorite: false,
     saveState: "saved",
@@ -51,11 +41,6 @@ Page({
     showTagModal: false,
     tagDraft: "",
     tagError: "",
-    uploadingMedia: false,
-    recording: false,
-    recordSeconds: 0,
-    recordLabel: "00:00",
-    audioPlaying: false,
     encrypted: false,
     showPasswordModal: false,
     passwordMode: "setup",
@@ -63,6 +48,15 @@ Page({
     passwordConfirm: "",
     passwordError: "",
     passwordBusy: false,
+    passwordAcknowledged: false,
+    showBookSheet: false,
+    keyboardHeight: 0,
+    viewportHeight: 640,
+    passwordPanelHeight: 590,
+    modalFocus: "",
+    scrollTop: 0,
+    checklistDone: 0,
+    dateLabel: "",
   },
 
   onLoad(options = {}) {
@@ -73,46 +67,114 @@ Page({
     this._savePromise = null;
     this._saveAgain = false;
     this._lastPersistedEncrypted = false;
+    this._editorLoaded = false;
     this.noteId = options.id ? decodeURIComponent(options.id) : "";
     this.initialBookId = options.bookId ? decodeURIComponent(options.bookId) : "";
     const loggedIn = Boolean(getAccessToken());
     this.setData({ isLoggedIn: loggedIn, noteId: this.noteId, loading: loggedIn });
-    this.setupRecorder();
+    this.setupViewport();
+    const now = new Date();
+    this.setData({ dateLabel: `${now.getMonth() + 1}月${now.getDate()}日 · 随手记录` });
     if (loggedIn) this.loadEditor();
   },
 
   onHide() {
     this._active = false;
-    if (this.data.recording) this.discardRecording();
-    if (this._audioContext && this.data.audioPlaying) {
-      this._audioContext.pause();
-      this.setData({ audioPlaying: false });
-    }
+    if (this._loadInFlightGeneration) this._retryLoadOnShow = true;
+    this._loadGeneration = (this._loadGeneration || 0) + 1;
+    this._loadInFlightGeneration = null;
+    this._bookRefreshGeneration = (this._bookRefreshGeneration || 0) + 1;
     this.saveNow({ silent: true });
   },
 
   onUnload() {
     this._unloaded = true;
+    this._active = false;
+    this._loadGeneration = (this._loadGeneration || 0) + 1;
+    this._bookRefreshGeneration = (this._bookRefreshGeneration || 0) + 1;
     clearTimeout(this._saveTimer);
-    if (this.data.recording) this.discardRecording();
-    this.saveNow({ silent: true });
-    if (this._audioContext) {
-      this._audioContext.destroy();
-      this._audioContext = null;
+    this.saveNow({ silent: true, unloading: true });
+    if (this._keyboardListener && typeof wx.offKeyboardHeightChange === "function") {
+      wx.offKeyboardHeightChange(this._keyboardListener);
     }
   },
 
+  async onShow() {
+    this._active = true;
+    if (this.data.isLoggedIn) {
+      if (!this._editorLoaded && (this._retryLoadOnShow || !this._loadInFlightGeneration)) {
+        this._retryLoadOnShow = false;
+        await this.loadEditor();
+      } else if (this._editorLoaded && this._refreshBooksOnShow) {
+        await this.refreshBooks();
+      }
+    }
+    if (this.noteId && !this._dirty && !this._savePromise) {
+      this.updateSaveIndicator("saved", this.data.encrypted ? "已加密 · 已自动保存" : "已自动保存");
+    }
+  },
+
+  setupViewport() {
+    const info = typeof wx.getWindowInfo === "function" ? wx.getWindowInfo()
+      : (typeof wx.getSystemInfoSync === "function" ? wx.getSystemInfoSync() : {});
+    this._windowHeight = Number(info.windowHeight) || 640;
+    this.setData({ viewportHeight: this._windowHeight, passwordPanelHeight: Math.min(590, this._windowHeight * .92) });
+    this._keyboardListener = event => this.onKeyboardHeightChange({ detail: event });
+    if (typeof wx.onKeyboardHeightChange === "function") wx.onKeyboardHeightChange(this._keyboardListener);
+  },
+
+  onKeyboardHeightChange(event) {
+    const height = Math.max(0, Number(event.detail && event.detail.height) || 0);
+    const viewportHeight = Math.max(180, (this._windowHeight || 640) - height);
+    this.setData({ keyboardHeight: height, viewportHeight, passwordPanelHeight: Math.min(590, viewportHeight * .96) });
+    this.revealFocusedField();
+  },
+
+  onEditorFocus(event) {
+    this._focusedField = event.currentTarget.id;
+    this.onKeyboardHeightChange({ detail: { height: event.detail.height || this.data.keyboardHeight } });
+  },
+
+  onModalFocus(event) {
+    this.setData({ modalFocus: event.currentTarget.id });
+  },
+
+  onEditorScroll(event) {
+    this._scrollTop = event.detail.scrollTop;
+  },
+
+  revealFocusedField() {
+    if (!this._focusedField || typeof wx.createSelectorQuery !== "function") return;
+    const reveal = () => {
+      if (!this._active || !this._focusedField) return;
+      wx.createSelectorQuery().in(this).select(`#${this._focusedField}`).boundingClientRect()
+        .select(".editor-scroll").boundingClientRect().exec(rects => {
+          const field = rects && rects[0];
+          const scroll = rects && rects[1];
+          if (!field || !scroll) return;
+          const delta = field.bottom > scroll.bottom - 16 ? field.bottom - scroll.bottom + 16
+            : (field.top < scroll.top + 12 ? field.top - scroll.top - 12 : 0);
+          if (delta) this.setData({ scrollTop: Math.max(0, (this._scrollTop || 0) + delta) });
+        });
+    };
+    if (typeof wx.nextTick === "function") wx.nextTick(reveal);
+    else reveal();
+  },
+
   async loadEditor() {
+    const generation = (this._loadGeneration || 0) + 1;
+    this._loadGeneration = generation;
+    this._loadInFlightGeneration = generation;
     this.setData({ loading: true, error: "" });
     try {
       const [books, security] = await Promise.all([listNotebookBooks(), getNotebookSecurity()]);
-      if (!this._active) return;
+      if (!this._active || generation !== this._loadGeneration) return;
       this._security = security || {};
       const themed = (books || []).map(book => ({ ...book, ...bookTheme(book.color), initial: String(book.name || "").trim().slice(0, 1) }));
       this._books = themed;
       if (this.noteId) {
         const note = await getNotebookNote(this.noteId);
-        if (!this._active) return;
+        if (!this._active || generation !== this._loadGeneration) return;
         if (note.locked) {
           this.setData({ loading: false, error: "这条加密笔记需要先在详情页解锁。" });
           return;
@@ -121,6 +183,7 @@ Page({
       } else {
         const selected = themed.find(book => book.id === this.initialBookId) || themed[0];
         const selectedIndex = selected ? Math.max(0, themed.findIndex(book => book.id === selected.id)) : 0;
+        this._editorLoaded = true;
         this.setData({
           loading: false,
           books: themed,
@@ -133,25 +196,53 @@ Page({
         });
       }
     } catch (error) {
-      if (!this._active) return;
+      if (!this._active || generation !== this._loadGeneration) return;
       if (isNotebookUnauthorized(error)) {
         this.handleUnauthorized();
         return;
       }
       this.setData({ loading: false, error: notebookErrorMessage(error) });
+    } finally {
+      if (this._loadInFlightGeneration === generation) this._loadInFlightGeneration = null;
+    }
+  },
+
+  async refreshBooks() {
+    const generation = (this._bookRefreshGeneration || 0) + 1;
+    this._bookRefreshGeneration = generation;
+    try {
+      const books = await listNotebookBooks();
+      if (!this._active || generation !== this._bookRefreshGeneration) return;
+      const themed = (books || []).map(book => ({ ...book, ...bookTheme(book.color) }));
+      const selected = themed.find(book => book.id === this.data.selectedBookId) || themed[0];
+      const previousBookId = this.data.selectedBookId;
+      this._books = themed;
+      this._refreshBooksOnShow = false;
+      this.setData({
+        books: themed,
+        bookNames: themed.map(book => book.name),
+        bookIndex: selected ? Math.max(0, themed.findIndex(book => book.id === selected.id)) : 0,
+        selectedBookId: selected ? selected.id : "",
+        selectedBookName: selected ? selected.name : "选择笔记本",
+        selectedBookFill: selected ? selected.fill : "#eaf2ff",
+        selectedBookInk: selected ? selected.ink : "#2d5bff",
+      });
+      if (this.data.selectedBookId !== previousBookId) this.scheduleSave();
+    } catch (error) {
+      if (!this._active || generation !== this._bookRefreshGeneration) return;
+      if (isNotebookUnauthorized(error)) this.handleUnauthorized();
+      else wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
     }
   },
 
   applyLoadedNote(note, books) {
+    this._editorLoaded = true;
     const book = (books || []).find(item => item.id === note.bookId) || {
       id: note.bookId,
       name: note.bookName,
       color: note.bookColor,
       ...bookTheme(note.bookColor),
     };
-    const media = note.media || [];
-    const images = media.filter(item => item.kind === "image").map(item => ({ ...item, localPath: "" }));
-    const audio = media.find(item => item.kind === "audio") || null;
     this.noteId = note.id;
     this._hydrating = true;
     this.setData({
@@ -168,8 +259,7 @@ Page({
       body: note.body || "",
       checklist: (note.checklist || []).map(item => ({ ...item, id: item.id || localID() })),
       tags: note.tags || [],
-      images,
-      audio,
+      checklistDone: (note.checklist || []).filter(item => item.done).length,
       pinned: Boolean(note.pinned),
       favorite: Boolean(note.favorite),
       encrypted: Boolean(note.encrypted),
@@ -178,22 +268,6 @@ Page({
     });
     this._hydrating = false;
     this._lastPersistedEncrypted = Boolean(note.encrypted);
-    this.hydrateImages(images);
-    if (audio) this.prepareAudio(audio);
-  },
-
-  async hydrateImages(images) {
-    for (const image of images) {
-      try {
-        const localPath = await downloadNotebookMedia(image);
-        if (!this._active) return;
-        this.setData({ images: this.data.images.map(item => item.id === image.id ? { ...item, localPath } : item) });
-      } catch (error) {
-        if (!this._active) return;
-        if (isNotebookLockedError(error) || isNotebookUnauthorized(error)) this.handleContentError(error);
-        else wx.showToast({ title: "图片加载失败", icon: "none" });
-      }
-    }
   },
 
   updateSaveIndicator(state, label) {
@@ -205,6 +279,10 @@ Page({
     this.scheduleSave();
   },
 
+  onBodyLineChange() {
+    if (this._focusedField === "note-body" && this.data.keyboardHeight) this.revealFocusedField();
+  },
+
   onBodyInput(event) {
     this.setData({ body: event.detail.value || "" });
     this.scheduleSave();
@@ -212,6 +290,8 @@ Page({
 
   addChecklistItem() {
     this.setData({ checklist: [...this.data.checklist, { id: localID(), text: "", done: false }] });
+    this._focusedField = `check-${this.data.checklist.length - 1}`;
+    this.revealFocusedField();
     this.scheduleSave();
   },
 
@@ -219,7 +299,7 @@ Page({
     const index = Number(event.currentTarget.dataset.index);
     if (!Number.isInteger(index) || index < 0) return;
     const checklist = this.data.checklist.map((item, i) => i === index ? { ...item, text: event.detail.value || "" } : item);
-    this.setData({ checklist });
+    this.setData({ checklist, checklistDone: checklist.filter(item => item.done).length });
     this.scheduleSave();
   },
 
@@ -227,14 +307,15 @@ Page({
     const index = Number(event.currentTarget.dataset.index);
     if (!Number.isInteger(index) || index < 0) return;
     const checklist = this.data.checklist.map((item, i) => i === index ? { ...item, done: !item.done } : item);
-    this.setData({ checklist });
+    this.setData({ checklist, checklistDone: checklist.filter(item => item.done).length });
     this.scheduleSave();
   },
 
   removeChecklist(event) {
     const index = Number(event.currentTarget.dataset.index);
     if (!Number.isInteger(index) || index < 0) return;
-    this.setData({ checklist: this.data.checklist.filter((_, i) => i !== index) });
+    const checklist = this.data.checklist.filter((_, i) => i !== index);
+    this.setData({ checklist, checklistDone: checklist.filter(item => item.done).length });
     this.scheduleSave();
   },
 
@@ -244,6 +325,7 @@ Page({
 
   closeTagModal() {
     this.setData({ showTagModal: false, tagDraft: "", tagError: "" });
+    if (typeof wx.hideKeyboard === "function") wx.hideKeyboard();
   },
 
   onTagInput(event) {
@@ -279,11 +361,27 @@ Page({
     this.scheduleSave();
   },
 
+  openBookSheet() {
+    if (typeof wx.hideKeyboard === "function") wx.hideKeyboard();
+    this.setData({ showBookSheet: true });
+  },
+
+  closeBookSheet() {
+    this.setData({ showBookSheet: false });
+  },
+
+  manageBooks() {
+    this._refreshBooksOnShow = true;
+    this.closeBookSheet();
+    wx.navigateTo({ url: "/packages/notebook/books/index" });
+  },
+
   onBookChange(event) {
-    const index = Number(event.detail.value);
+    const index = Number(event.currentTarget.dataset.index);
     const book = this._books && this._books[index];
     if (!book || book.id === this.data.selectedBookId) return;
     this.setData({
+      showBookSheet: false,
       bookIndex: index,
       selectedBookId: book.id,
       selectedBookName: book.name,
@@ -391,11 +489,11 @@ Page({
     }
   },
 
+  retrySave() {
+    return this.saveNow({ silent: false });
+  },
+
   async saveAndClose() {
-    if (this.data.recording) {
-      wx.showToast({ title: "请先结束录音", icon: "none" });
-      return;
-    }
     if (!this.hasContent()) {
       if (this.noteId) {
         wx.showToast({ title: "至少保留标题、正文或清单", icon: "none" });
@@ -407,200 +505,6 @@ Page({
     const saved = await this.saveNow();
     if (!saved) return;
     wx.navigateBack();
-  },
-
-  async ensureNote() {
-    if (this.noteId) return true;
-    if (!this.hasContent()) {
-      wx.showToast({ title: "先写一句话再添加附件", icon: "none" });
-      return false;
-    }
-    const saved = await this.saveNow();
-    return saved && Boolean(this.noteId);
-  },
-
-  async chooseImages() {
-    if (this.data.uploadingMedia) return;
-    const remaining = 4 - this.data.images.length;
-    if (remaining <= 0) {
-      wx.showToast({ title: "最多添加 4 张图片", icon: "none" });
-      return;
-    }
-    if (!(await this.ensureNote())) return;
-    wx.chooseMedia({
-      count: remaining,
-      mediaType: ["image"],
-      sourceType: ["album", "camera"],
-      sizeType: ["compressed"],
-      success: async result => {
-        const files = (result.tempFiles || []).slice(0, remaining);
-        if (!files.length) return;
-        this.setData({ uploadingMedia: true });
-        for (const file of files) {
-          try {
-            const media = await uploadNotebookMedia(this.noteId, "image", file.tempFilePath);
-            this.setData({ images: [...this.data.images, { ...media, localPath: file.tempFilePath }] });
-          } catch (error) {
-            this.handleContentError(error);
-            break;
-          }
-        }
-        this.setData({ uploadingMedia: false });
-      },
-    });
-  },
-
-  async removeImage(event) {
-    const index = Number(event.currentTarget.dataset.index);
-    const image = this.data.images[index];
-    if (!image || this.data.uploadingMedia) return;
-    wx.showModal({
-      title: "移除图片？",
-      content: "图片会从这条笔记中删除。",
-      confirmText: "移除",
-      success: async result => {
-        if (!result.confirm) return;
-        try {
-          await deleteNotebookMedia(image.id);
-          this.setData({ images: this.data.images.filter((_, i) => i !== index) });
-        } catch (error) {
-          this.handleContentError(error);
-        }
-      },
-    });
-  },
-
-  setupRecorder() {
-    if (typeof wx.getRecorderManager !== "function") return;
-    this.recorder = wx.getRecorderManager();
-    this.recorder.onStart(() => {
-      this.setData({ recording: true, recordSeconds: 0, recordLabel: "00:00" });
-      clearInterval(this._recordTimer);
-      this._recordTimer = setInterval(() => {
-        const next = this.data.recordSeconds + 1;
-        this.setData({ recordSeconds: next, recordLabel: formatSeconds(next) });
-      }, 1000);
-    });
-    this.recorder.onStop(result => {
-      clearInterval(this._recordTimer);
-      this._recordTimer = null;
-      this.setData({ recording: false });
-      if (this._discardRecording || this._unloaded) {
-        this._discardRecording = false;
-        return;
-      }
-      this.uploadRecordedAudio(result);
-    });
-    this.recorder.onError(() => {
-      clearInterval(this._recordTimer);
-      this._recordTimer = null;
-      this.setData({ recording: false });
-      wx.showToast({ title: "录音失败，请重试", icon: "none" });
-    });
-  },
-
-  discardRecording() {
-    this._discardRecording = true;
-    if (this.recorder) this.recorder.stop();
-    clearInterval(this._recordTimer);
-    this._recordTimer = null;
-    this.setData({ recording: false, recordSeconds: 0, recordLabel: "00:00" });
-  },
-
-  async toggleRecording() {
-    if (this.data.recording) {
-      if (this.recorder) this.recorder.stop();
-      return;
-    }
-    if (this.data.audio) {
-      wx.showToast({ title: "请先删除已有语音", icon: "none" });
-      return;
-    }
-    if (!this.recorder) {
-      wx.showToast({ title: "当前环境不支持录音", icon: "none" });
-      return;
-    }
-    if (!(await this.ensureNote())) return;
-    this._discardRecording = false;
-    this.recorder.start({
-      duration: 60000,
-      format: "mp3",
-      sampleRate: 16000,
-      encodeBitRate: 48000,
-      numberOfChannels: 1,
-    });
-  },
-
-  async uploadRecordedAudio(result) {
-    const tempFilePath = result && result.tempFilePath;
-    if (!tempFilePath) return;
-    this.setData({ uploadingMedia: true });
-    try {
-      const media = await uploadNotebookMedia(this.noteId, "audio", tempFilePath);
-      this.setData({
-        audio: { ...media, localPath: tempFilePath, durationLabel: formatSeconds(Math.round((result.duration || 0) / 1000)) },
-        uploadingMedia: false,
-      });
-    } catch (error) {
-      this.setData({ uploadingMedia: false });
-      this.handleContentError(error);
-    }
-  },
-
-  async playAudio() {
-    if (!this.data.audio) return;
-    if (this.data.audioPlaying) {
-      if (this._audioContext) this._audioContext.stop();
-      this.setData({ audioPlaying: false });
-      return;
-    }
-    try {
-      let localPath = this.data.audio.localPath;
-      if (!localPath) {
-        localPath = await downloadNotebookMedia(this.data.audio);
-        this.setData({ audio: { ...this.data.audio, localPath } });
-      }
-      if (this._audioContext) this._audioContext.destroy();
-      this._audioContext = wx.createInnerAudioContext();
-      this._audioContext.src = localPath;
-      this._audioContext.onPlay(() => this.setData({ audioPlaying: true }));
-      this._audioContext.onEnded(() => this.setData({ audioPlaying: false }));
-      this._audioContext.onStop(() => this.setData({ audioPlaying: false }));
-      this._audioContext.onError(() => {
-        this.setData({ audioPlaying: false });
-        wx.showToast({ title: "语音播放失败", icon: "none" });
-      });
-      this._audioContext.play();
-    } catch (error) {
-      this.handleContentError(error);
-    }
-  },
-
-  async deleteAudio() {
-    const audio = this.data.audio;
-    if (!audio || this.data.uploadingMedia) return;
-    wx.showModal({
-      title: "删除语音？",
-      content: "语音会从这条笔记中删除。",
-      confirmText: "删除",
-      success: async result => {
-        if (!result.confirm) return;
-        try {
-          if (this._audioContext) {
-            this._audioContext.destroy();
-            this._audioContext = null;
-          }
-          await deleteNotebookMedia(audio.id);
-          this.setData({ audio: null, audioPlaying: false });
-        } catch (error) {
-          this.handleContentError(error);
-        }
-      },
-    });
-  },
-
-  prepareAudio(audio) {
-    this.setData({ audio: { ...audio, localPath: "", durationLabel: "点击播放" } });
   },
 
   async toggleEncryption() {
@@ -625,7 +529,7 @@ Page({
       }
       wx.showModal({
         title: "开启加密笔记？",
-        content: "标题、正文、清单、标签和附件都会转为密文保存。",
+        content: "标题、正文、清单和标签都会转为密文保存。",
         confirmText: "开启加密",
         success: result => {
           if (result.confirm) this.applyEncryption();
@@ -644,18 +548,26 @@ Page({
       passwordValue: "",
       passwordConfirm: "",
       passwordError: "",
+      passwordAcknowledged: false,
     });
+  },
+
+  togglePasswordAcknowledged() {
+    this.setData({ passwordAcknowledged: !this.data.passwordAcknowledged, passwordError: "" });
   },
 
   closePasswordModal() {
     if (this.data.passwordBusy) return;
-    const restoreEncrypted = this._resumeSaveAfterUnlock && this.data.encrypted !== this._lastPersistedEncrypted
-      ? this._lastPersistedEncrypted
+    // A cancelled decrypt attempt remains encrypted. A failed encrypt attempt
+    // retains its encryption intent so a later autosave cannot persist plaintext.
+    const restoreEncrypted = this._resumeSaveAfterUnlock && !this.data.encrypted && this._lastPersistedEncrypted
+      ? true
       : null;
     this._resumeSaveAfterUnlock = false;
     const update = { showPasswordModal: false, passwordValue: "", passwordConfirm: "", passwordError: "" };
     if (restoreEncrypted !== null) update.encrypted = restoreEncrypted;
     this.setData(update);
+    if (typeof wx.hideKeyboard === "function") wx.hideKeyboard();
   },
 
   onPasswordInput(event) {
@@ -679,6 +591,10 @@ Page({
         this.setData({ passwordError: "笔记密码需为 6–32 位" });
         return;
       }
+      if (!this.data.passwordAcknowledged) {
+        this.setData({ passwordError: "请先确认已了解并记住密码" });
+        return;
+      }
       if (password !== this.data.passwordConfirm) {
         this.setData({ passwordError: "两次输入的密码不一致" });
         return;
@@ -698,7 +614,7 @@ Page({
       } else if (!this.data.encrypted) {
         wx.showModal({
           title: "开启加密笔记？",
-          content: "标题、正文、清单、标签和附件都会转为密文保存。",
+          content: "标题、正文、清单和标签都会转为密文保存。",
           confirmText: "开启加密",
           success: result => {
             if (result.confirm) this.applyEncryption();
@@ -728,7 +644,7 @@ Page({
     this._dirty = true;
     const saved = await this.saveNow({ silent: false });
     if (!saved && this._active) {
-      if (!this._resumeSaveAfterUnlock) this.setData({ encrypted: false });
+      this.updateSaveIndicator("error", "加密保存失败，点击重试");
       return;
     }
     if (saved && this._active) wx.showToast({ title: "已加密保存", icon: "success" });
@@ -737,7 +653,7 @@ Page({
   disableEncryption() {
     wx.showModal({
       title: "取消这条笔记的加密？",
-      content: "取消后标题、正文、清单、标签和附件会恢复为普通笔记，并重新参与搜索。",
+      content: "取消后标题、正文、清单和标签会恢复为普通笔记，并重新参与搜索。",
       confirmText: "取消加密",
       confirmColor: "#c74d38",
       success: async result => {
@@ -756,19 +672,6 @@ Page({
         if (saved && this._active) wx.showToast({ title: "已取消加密", icon: "none" });
       },
     });
-  },
-
-  handleContentError(error) {
-    if (isNotebookUnauthorized(error)) {
-      this.handleUnauthorized();
-      return;
-    }
-    if (isNotebookLockedError(error)) {
-      this.openPasswordModal("unlock");
-      this.setData({ passwordError: notebookErrorMessage(error) });
-      return;
-    }
-    wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
   },
 
   handleUnauthorized() {

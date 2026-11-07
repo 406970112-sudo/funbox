@@ -1,6 +1,4 @@
-const { request, uploadFile } = require("../../../utils/request");
-const { API_BASE_URL } = require("../../../config/index");
-const { getAccessToken } = require("../../../utils/auth");
+const { request } = require("../../../utils/request");
 const {
   clearUnlockSession,
   setUnlockSession,
@@ -16,9 +14,6 @@ function notebookErrorMessage(error) {
     notebook_book_name_exists: "这个笔记本名称已经存在",
     notebook_book_not_empty: "笔记本里还有笔记，不能删除",
     notebook_book_limit_reached: "笔记本数量已达上限",
-    notebook_media_limit_reached: "附件数量已达上限",
-    notebook_media_too_large: "附件太大，请重新选择",
-    notebook_media_type_invalid: "暂不支持这种文件格式",
     notebook_note_locked: "请先解锁这条加密笔记",
     notebook_note_password_mismatch: "笔记密码不正确",
     notebook_note_password_invalid: "笔记密码需为 6–32 位",
@@ -46,22 +41,6 @@ function isNotebookLockedError(error) {
 function unlockHeader() {
   const token = getUnlockToken();
   return token ? { "X-Notebook-Unlock-Token": token } : {};
-}
-
-function notebookDownloadError(response) {
-  let body = response && response.data;
-  if (typeof body === "string") {
-    try {
-      body = JSON.parse(body);
-    } catch (error) {
-      body = null;
-    }
-  }
-  const error = new Error((body && (body.detail || body.error || body.message)) || "附件加载失败，请重试");
-  error.statusCode = response && response.statusCode;
-  error.code = body && body.error ? body.error : "";
-  error.response = response;
-  return error;
 }
 
 async function getNotebookSecurity() {
@@ -187,61 +166,6 @@ async function deleteNotebookNote(id) {
   return request({ path: `/notebook/notes/${encodeURIComponent(id)}`, method: "DELETE", auth: true });
 }
 
-async function uploadNotebookMedia(noteId, kind, filePath) {
-  const result = await uploadFile({
-    path: `/notebook/notes/${encodeURIComponent(noteId)}/media`,
-    filePath,
-    name: "file",
-    formData: { kind },
-    auth: true,
-    header: unlockHeader(),
-  });
-  return result.media;
-}
-
-async function deleteNotebookMedia(mediaId) {
-  return request({
-    path: `/notebook/media/${encodeURIComponent(mediaId)}`,
-    method: "DELETE",
-    auth: true,
-    header: unlockHeader(),
-  });
-}
-
-function notebookMediaUrl(media) {
-  if (!media || !media.url) return "";
-  if (/^https?:\/\//i.test(media.url)) return media.url;
-  const origin = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
-  return origin + (media.url.startsWith("/") ? media.url : `/${media.url}`);
-}
-
-function downloadNotebookMedia(media, platform = wx) {
-  return new Promise((resolve, reject) => {
-    const token = getAccessToken();
-    if (!token) {
-      reject(Object.assign(new Error("登录状态已失效，请重新登录"), { statusCode: 401, code: "unauthorized" }));
-      return;
-    }
-    const url = notebookMediaUrl(media);
-    if (!url) {
-      reject(new Error("附件地址无效"));
-      return;
-    }
-    platform.downloadFile({
-      url,
-      header: { Authorization: `Bearer ${token}`, ...unlockHeader() },
-      timeout: 15000,
-      success(response) {
-        if (response.statusCode >= 200 && response.statusCode < 300) resolve(response.tempFilePath);
-        else reject(notebookDownloadError(response));
-      },
-      fail(error) {
-        reject(new Error(error && error.errMsg ? error.errMsg : "附件加载失败，请重试"));
-      },
-    });
-  });
-}
-
 function noteInput(note) {
   return {
     bookId: note.bookId,
@@ -273,9 +197,5 @@ module.exports = {
   createNotebookNote,
   updateNotebookNote,
   deleteNotebookNote,
-  uploadNotebookMedia,
-  deleteNotebookMedia,
-  notebookMediaUrl,
-  downloadNotebookMedia,
   noteInput,
 };

@@ -136,6 +136,10 @@ Page({
     });
   },
 
+  manageBooks() {
+    wx.navigateTo({ url: "/packages/notebook/books/index" });
+  },
+
   openSearch() {
     wx.navigateTo({ url: "/packages/notebook/search/index" });
   },

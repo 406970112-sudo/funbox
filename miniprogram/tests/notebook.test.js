@@ -72,7 +72,8 @@ test("notebook API builds filter query and surfaces stable error copy", async ()
     assert.equal(api.isNotebookUnauthorized({ statusCode: 401 }), true);
     assert.equal(api.isNotebookUnauthorized({ statusCode: 403, code: "notebook_note_password_mismatch" }), false);
     assert.equal(api.notebookErrorMessage({ code: "notebook_note_password_mismatch" }), "笔记密码不正确");
-    assert.equal(api.notebookMediaUrl({ url: "/api/v1/notebook/media/abc" }), "https://example.com/api/v1/notebook/media/abc");
+    assert.equal(api.uploadNotebookMedia, undefined);
+    assert.equal(api.downloadNotebookMedia, undefined);
   } finally {
     if (oldRequest) require.cache[requestPath] = oldRequest; else delete require.cache[requestPath];
     if (oldAuth) require.cache[authPath] = oldAuth; else delete require.cache[authPath];
@@ -183,50 +184,11 @@ test("notebook route config and shared remove controls are present", () => {
   assert.match(homeWxss, /\.discover-card\s*\{[^}]*height:\s*230rpx;/s);
   assert.doesNotMatch(homeWxml, /<br\s*\/>/);
   const editorWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxml"), "utf8");
-  const editorWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxss"), "utf8");
-  assert.doesNotMatch(editorWxml, /book-pill-arrow">⌄/);
-  assert.match(editorWxml, /<view class="book-pill-arrow"/);
-  assert.match(editorWxss, /\.book-picker\s*\{[^}]*align-items:\s*center;/s);
-  assert.match(editorWxss, /\.book-pill-arrow\s*\{[^}]*border-top:\s*8rpx solid currentColor;/s);
-  assert.match(editorWxml, /class="tool-icon tool-list"/);
-  assert.match(editorWxml, /class="tool-icon tool-image"/);
-  assert.match(editorWxml, /class="tool-icon tool-tag"/);
-  assert.match(editorWxml, /class="tool-icon tool-mic/);
-  assert.doesNotMatch(editorWxml, /tool-hash/);
-  assert.match(editorWxss, /\.tool-tag-shape\s*\{/);
-  assert.match(editorWxss, /\.tool-photo-frame\s*\{/);
+  assert.doesNotMatch(editorWxml, /chooseImages|toggleRecording|playAudio/);
+  assert.match(editorWxml, /nb-icon/);
 });
 
-test("notebook detail uses a title-first header and the shared action dock", () => {
-  const detailWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxml"), "utf8");
-  const detailWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxss"), "utf8");
-  assert.doesNotMatch(detailWxml, /detail-cover|detail-toolbar|cover-art/);
-  assert.match(detailWxml, /class="detail-context-row"/);
-  assert.match(detailWxml, /class="detail-title-wrap"/);
-  assert.match(detailWxml, /class="detail-summary"/);
-  assert.doesNotMatch(detailWxss, /\.detail-cover\s*\{|\.detail-toolbar\s*\{|\.cover-art\s*\{/);
-  assert.match(detailWxss, /\.detail-title-wrap::before\s*\{[^}]*background:\s*linear-gradient/s);
-  assert.match(detailWxss, /\.detail-summary\s*\{/);
-  assert.match(detailWxml, /class="detail-actionbar"/);
-  assert.match(detailWxml, /class="detail-tool detail-tool-favorite"/);
-  assert.match(detailWxml, /class="detail-tool detail-tool-share"/);
-  assert.match(detailWxml, /class="detail-tool detail-tool-edit"/);
-  assert.match(detailWxml, /favorite-active.*favorite-default/);
-  assert.match(detailWxml, /assets\/icons\/share\.png/);
-  assert.match(detailWxml, /assets\/icons\/edit\.png/);
-  assert.match(detailWxml, /class="detail-tool-image"/);
-  assert.doesNotMatch(detailWxml, /[★☆↗]/);
-  assert.match(detailWxss, /\.detail-action\s*\{[^}]*flex-direction:\s*column;/s);
-  assert.match(detailWxss, /\.detail-tool-favorite\s*\{[^}]*background:\s*#fff0ed;/s);
-  assert.match(detailWxss, /\.detail-tool-share\s*\{[^}]*background:\s*#e8f7f1;/s);
-  assert.match(detailWxss, /\.detail-tool-edit\s*\{[^}]*background:\s*#eaf2ff;/s);
-  assert.match(detailWxss, /\.detail-tool-image\s*\{[^}]*width:\s*38rpx;[^}]*height:\s*32rpx;/s);
-  for (const icon of ["favorite-default", "favorite-active", "share", "edit"]) {
-    assert.ok(fs.existsSync(path.resolve(ROOT, `packages/notebook/assets/icons/${icon}.png`)));
-  }
-});
-
-test("notebook detail summarizes body, checklist, and image content", async () => {
+test("notebook detail summarizes text and checklist without legacy media", async () => {
   const note = {
     id: "note-1",
     title: "去杭州",
@@ -263,19 +225,7 @@ test("notebook detail summarizes body, checklist, and image content", async () =
   await page.loadNote();
   assert.equal(page.data.updatedLabel, "今天 14:32");
   assert.equal(page.data.checklistDone, 1);
-  assert.equal(page.data.summaryLabel, "6 字 · 清单 1/2 · 图片 2 张");
-});
-
-test("search favorite filter reuses the illustrated bookmark without changing pill height", () => {
-  const searchWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxml"), "utf8");
-  const searchWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxss"), "utf8");
-  assert.match(searchWxml, /class="favorite-icon"/);
-  assert.match(searchWxml, /favorite-active.*favorite-default/);
-  assert.match(searchWxml, /class="favorite-icon-image"/);
-  assert.doesNotMatch(searchWxml, /favorite-star|[★☆]/);
-  assert.match(searchWxss, /\.favorite-toggle\s*\{[^}]*min-height:\s*56rpx;[^}]*padding:\s*0 18rpx 0 8rpx;/s);
-  assert.match(searchWxss, /\.favorite-icon\s*\{[^}]*width:\s*40rpx;[^}]*height:\s*36rpx;/s);
-  assert.match(searchWxss, /\.favorite-toggle-active\s*\{[^}]*background:\s*#fff0ed;[^}]*color:\s*#c95e49;/s);
+  assert.equal(page.data.summaryLabel, "6 字 · 清单 1/2");
 });
 
 test("auth accepts notebook subpackage return destinations", () => {
@@ -343,34 +293,11 @@ test("detail favorite toggles only after the server confirms it", async () => {
   assert.equal(page.data.favorite, true);
 });
 
-test("editor uploads a recorded voice memo and exposes playback metadata", async () => {
-  const uploads = [];
-  const stubs = {
-    "../utils/notebook-api": {
-      listNotebookBooks: async () => [],
-      getNotebookNote: async () => ({}),
-      createNotebookNote: async () => ({ id: "note-1" }),
-      updateNotebookNote: async (id, input) => ({ id, ...input }),
-      uploadNotebookMedia: async (id, kind, path) => { uploads.push({ id, kind, path }); return { id: "audio-1", kind: "audio", url: "/api/v1/notebook/media/audio-1" }; },
-      deleteNotebookMedia: async () => ({}),
-      downloadNotebookMedia: async () => "",
-      notebookErrorMessage: error => error.message,
-      isNotebookUnauthorized: () => false,
-    },
-    "../utils/notebook-format": { bookTheme: () => ({ fill: "#eaf2ff", ink: "#2d5bff" }) },
-    "../../../utils/auth": { getAccessToken: () => "token", clearSession() {} },
-  };
-  const definition = loadPage("packages/notebook/editor/index.js", stubs, { showToast() {} });
-  const page = pageInstance(definition);
-  page._active = true;
-  page.noteId = "note-1";
-  await page.uploadRecordedAudio({ tempFilePath: "/tmp/voice.mp3", duration: 3500 });
-  assert.equal(uploads[0].id, "note-1");
-  assert.equal(uploads[0].kind, "audio");
-  assert.equal(uploads[0].path, "/tmp/voice.mp3");
-  assert.equal(page.data.audio.id, "audio-1");
-  assert.equal(page.data.audio.durationLabel, "00:04");
-  assert.equal(page.data.uploadingMedia, false);
+test("editor no longer exposes image or voice operations", () => {
+  const page = loadPage("packages/notebook/editor/index.js");
+  for (const method of ["chooseImages", "playAudio", "setupRecorder", "uploadRecordedAudio"]) {
+    assert.equal(typeof page[method], "undefined");
+  }
 });
 
 test("editor book changes mark the note dirty for autosave", () => {
@@ -397,7 +324,7 @@ test("editor book changes mark the note dirty for autosave", () => {
   ];
   page._saveTimer = null;
   page.scheduleSave = function() { this._dirty = true; };
-  page.onBookChange({ detail: { value: "1" } });
+  page.onBookChange({ currentTarget: { dataset: { index: 1 } } });
   assert.equal(page.data.selectedBookId, "life");
   assert.equal(page.data.selectedBookName, "生活");
   assert.equal(page._dirty, true);
@@ -425,56 +352,17 @@ test("locked notebook notes never derive a visible title or excerpt", () => {
   assert.equal(decorated.tagsText, "");
 });
 
-test("encrypted notebook UI exposes lock, unlock, and password setup states", () => {
-  const homeWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/index/index.wxml"), "utf8");
-  const homeWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/index/index.wxss"), "utf8");
-  const detailWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxml"), "utf8");
-  const detailWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/detail/index.wxss"), "utf8");
-  const editorWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxml"), "utf8");
-  const editorWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxss"), "utf8");
-  const searchWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxml"), "utf8");
-  const searchWxss = fs.readFileSync(path.resolve(ROOT, "packages/notebook/search/index.wxss"), "utf8");
-
-  assert.match(homeWxml, /bindtap="openSecurity"/);
-  assert.match(homeWxml, /item\.locked/);
-  assert.match(homeWxml, /showSecuritySheet/);
-  assert.match(homeWxml, /type="password"/);
-  assert.match(homeWxml, /assets\/icons\/lock-default\.png/);
-  assert.match(homeWxml, /lock-active/);
-  assert.match(homeWxss, /\.security-entry\s*\{/);
-  assert.match(homeWxss, /\.security-entry-icon\s*\{[^}]*display:\s*block;/s);
-  assert.match(homeWxss, /\.security-sheet\s*\{/);
-
-  assert.match(detailWxml, /encrypted && locked/);
-  assert.match(detailWxml, /bindtap="openUnlockSheet"/);
-  assert.match(detailWxml, /showUnlockSheet/);
-  assert.match(detailWxml, /class="unlock-input/);
-  assert.match(detailWxml, /加密笔记不支持分享/);
-  assert.match(detailWxml, /wx:if="\{\{!encrypted\}\}"[^>]*open-type="share"/s);
-  assert.match(detailWxml, /assets\/icons\/lock-white\.png/);
-  assert.match(detailWxml, /assets\/icons\/lock-open-white\.png/);
-  assert.match(detailWxml, /<image[^>]+class="detail-encrypted-mark"[^>]+lock-default\.png/);
-  assert.match(detailWxss, /\.detail-lock-card\s*\{/);
-  assert.match(detailWxss, /\.detail-lock-badge-image\s*\{[^}]*display:\s*block;/s);
-  assert.match(detailWxss, /\.detail-encrypted-mark\s*\{[^}]*display:\s*block;[^}]*flex:\s*0 0 16rpx;/s);
-  assert.match(detailWxss, /\.unlock-sheet\s*\{/);
-
-  assert.match(editorWxml, /bindtap="toggleEncryption"/);
-  assert.match(editorWxml, /showPasswordModal/);
-  assert.match(editorWxml, /passwordMode === 'setup'/);
-  assert.match(editorWxml, /忘记密码后，已加密内容无法找回/);
-  assert.match(editorWxml, /lock-active/);
-  assert.match(editorWxss, /\.editor-lock\s*\{/);
-  assert.match(editorWxss, /\.editor-lock-icon\s*\{[^}]*display:\s*block;/s);
-  assert.match(editorWxss, /\.password-modal\s*\{/);
-
-  assert.match(searchWxml, /hasEncryptedNotes/);
-  assert.match(searchWxml, /加密笔记不参与关键词搜索/);
-  assert.match(searchWxss, /\.encrypted-search-note\s*\{/);
-  assert.doesNotMatch(homeWxss + detailWxss + editorWxss + searchWxss, /(?:mini-lock-mark|list-lock-mark|editor-lock-icon|password-modal-lock|encrypted-search-mark|detail-encrypted-mark)::before/);
-  for (const icon of ["lock-default", "lock-active", "lock-white", "lock-open-white"]) {
-    assert.ok(fs.existsSync(path.resolve(ROOT, `packages/notebook/assets/icons/${icon}.png`)));
-  }
+test("encrypted notebook UI keeps locked, unlock, and setup states", () => {
+  const read = route => fs.readFileSync(path.resolve(ROOT, 'packages/notebook/' + route + '/index.wxml'), 'utf8');
+  const home=read('index'), detail=read('detail'), editor=read('editor'), search=read('search');
+  assert.match(home, /bindtap="openSecurity"/);
+  assert.match(home, /showSecuritySheet/);
+  assert.match(detail, /encrypted && locked/);
+  assert.match(detail, /showUnlockSheet/);
+  assert.match(detail, /加密笔记不支持分享/);
+  assert.match(editor, /showPasswordModal/);
+  assert.match(search, /加密笔记不参与关键词搜索/);
+  for (const markup of [home,detail,editor,search]) assert.match(markup, /nb-icon/);
 });
 
 test("editor opens password setup before enabling encryption", async () => {
@@ -582,7 +470,7 @@ test("notebook API sends the unlock token on protected note requests", async () 
     const api = require("../packages/notebook/utils/notebook-api");
     await api.getNotebookNote("n1");
     await api.updateNotebookNote("n1", { title: "hidden" });
-    await api.deleteNotebookMedia("m1");
+    await api.updateNotebookNote("n1", { favorite: true });
     assert.ok(calls.every(call => call.header && call.header["X-Notebook-Unlock-Token"] === "note-unlock-token"));
   } finally {
     if (oldRequest) require.cache[requestPath] = oldRequest; else delete require.cache[requestPath];
@@ -634,4 +522,19 @@ test("editor payload carries the note encryption state", () => {
   assert.equal(payload.encrypted, true);
   assert.equal(payload.title, "加密标题");
   assert.equal(payload.body, "加密正文");
+});
+
+test("detail favorite request releases busy state when page hides during update", async () => {
+  let resolve;
+  const page = pageInstance(loadPage("packages/notebook/detail/index.js", {
+    "../utils/notebook-api": { updateNotebookNote: () => new Promise(done => { resolve = done; }) },
+  }));
+  page._active = true;
+  page._note = { id: "n1" };
+  page.noteId = "n1";
+  const pending = page.toggleFavorite();
+  page._active = false;
+  resolve({ id: "n1", favorite: true });
+  await pending;
+  assert.equal(page.data.favoriteBusy, false);
 });

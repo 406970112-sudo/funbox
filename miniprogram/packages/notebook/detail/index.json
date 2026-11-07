@@ -3,5 +3,8 @@
   "navigationBarBackgroundColor": "#f5f7fa",
   "navigationBarTextStyle": "black",
   "backgroundColor": "#f5f7fa",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "nb-icon": "../components/nb-icon/index"
+  }
 }

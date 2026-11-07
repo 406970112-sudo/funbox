@@ -2,7 +2,6 @@ const {
   getNotebookNote,
   updateNotebookNote,
   deleteNotebookNote,
-  downloadNotebookMedia,
   unlockNotebook,
   notebookErrorMessage,
   isNotebookUnauthorized,
@@ -11,14 +10,12 @@ const {
 const { decorateNote, formatNoteTime, bookTheme } = require("../utils/notebook-format");
 const { getAccessToken, clearSession } = require("../../../utils/auth");
 
-function noteSummary(body, checklist, images, audio) {
+function noteSummary(body, checklist) {
   const characterCount = Array.from(String(body || "").replace(/\s+/g, "")).length;
   const doneCount = checklist.filter(item => item.done).length;
   const parts = [];
   if (characterCount) parts.push(`${characterCount} 字`);
   if (checklist.length) parts.push(`清单 ${doneCount}/${checklist.length}`);
-  if (images.length) parts.push(`图片 ${images.length} 张`);
-  if (audio) parts.push("语音 1 段");
   return parts.join(" · ");
 }
 
@@ -32,8 +29,8 @@ Page({
     body: "",
     checklist: [],
     tags: [],
-    images: [],
-    audio: null,
+
+
     bookName: "",
     bookFill: "#eaf2ff",
     bookInk: "#2d5bff",
@@ -43,13 +40,15 @@ Page({
     favorite: false,
     pinned: false,
     favoriteBusy: false,
-    audioPlaying: false,
+
     encrypted: false,
     locked: false,
     showUnlockSheet: false,
     unlockPassword: "",
     unlockError: "",
     unlockBusy: false,
+    showMoreSheet: false,
+    passwordVisible: false,
   },
 
   onLoad(options = {}) {
@@ -73,15 +72,10 @@ Page({
   onHide() {
     this._active = false;
     this._generation = (this._generation || 0) + 1;
-    if (this._audioContext) this._audioContext.pause();
   },
 
   onUnload() {
     this.onHide();
-    if (this._audioContext) {
-      this._audioContext.destroy();
-      this._audioContext = null;
-    }
   },
 
   async onPullDownRefresh() {
@@ -116,8 +110,8 @@ Page({
           checklistDone: 0,
           summaryLabel: "",
           tags: [],
-          images: [],
-          audio: null,
+
+
           bookName: note.bookName,
           bookFill: theme.fill,
           bookInk: theme.ink,
@@ -131,8 +125,6 @@ Page({
         return;
       }
       const decorated = decorateNote(note);
-      const images = (note.media || []).filter(item => item.kind === "image").map(item => ({ ...item, localPath: "" }));
-      const audio = (note.media || []).find(item => item.kind === "audio") || null;
       const checklist = (note.checklist || []).map(item => ({ ...item, done: Boolean(item.done) }));
       const checklistDone = checklist.filter(item => item.done).length;
       this.setData({
@@ -142,10 +134,8 @@ Page({
         body: note.body || "",
         checklist,
         checklistDone,
-        summaryLabel: noteSummary(note.body, checklist, images, audio),
+        summaryLabel: noteSummary(note.body, checklist),
         tags: note.tags || [],
-        images,
-        audio: audio ? { ...audio, durationLabel: "点击播放" } : null,
         bookName: note.bookName,
         bookFill: theme.fill,
         bookInk: theme.ink,
@@ -156,7 +146,6 @@ Page({
         locked: false,
         unlockError: "",
       });
-      this.hydrateImages(images);
     } catch (error) {
       if (!this._active || generation !== this._generation) return;
       if (isNotebookUnauthorized(error)) {
@@ -165,20 +154,6 @@ Page({
         return;
       }
       this.setData({ loading: false, error: notebookErrorMessage(error) });
-    }
-  },
-
-  async hydrateImages(images) {
-    for (const image of images) {
-      try {
-        const localPath = await downloadNotebookMedia(image);
-        if (!this._active) return;
-        this.setData({ images: this.data.images.map(item => item.id === image.id ? { ...item, localPath } : item) });
-      } catch (error) {
-        if (!this._active) return;
-        if (isNotebookLockedError(error) || isNotebookUnauthorized(error)) this.handleError(error);
-        else wx.showToast({ title: "图片加载失败", icon: "none" });
-      }
     }
   },
 
@@ -192,38 +167,31 @@ Page({
     this.setData({ favoriteBusy: true, favorite: next });
     try {
       const note = await updateNotebookNote(this.noteId, { favorite: next });
-      if (!this._active) return;
+      if (!this._active) { this.setData({ favoriteBusy: false }); return; }
       this._note = note;
       this.setData({ favoriteBusy: false, favorite: Boolean(note.favorite), pinned: Boolean(note.pinned) });
       wx.showToast({ title: next ? "已收藏" : "已取消收藏", icon: "none" });
     } catch (error) {
-      if (!this._active) return;
+      if (!this._active) { this.setData({ favoriteBusy: false }); return; }
       this.setData({ favoriteBusy: false, favorite: !next });
       this.handleError(error);
     }
   },
 
   openMore() {
-    if (!this._note) return;
-    if (this.data.locked) {
-      wx.showActionSheet({
-        itemList: ["删除这条加密笔记"],
-        itemColor: "#172139",
-        success: result => {
-          if (result.tapIndex === 0) this.confirmDelete();
-        },
-      });
-      return;
-    }
-    const pinLabel = this.data.pinned ? "取消置顶" : "置顶笔记";
-    wx.showActionSheet({
-      itemList: [pinLabel, "删除笔记"],
-      itemColor: "#172139",
-      success: result => {
-        if (result.tapIndex === 0) this.togglePinned();
-        if (result.tapIndex === 1) this.confirmDelete();
-      },
-    });
+    if (this._note) this.setData({ showMoreSheet: true });
+  },
+
+  closeMore() { this.setData({ showMoreSheet: false }); },
+
+  editEncryption() {
+    this.closeMore();
+    this.editNote();
+  },
+
+  deleteFromSheet() {
+    this.closeMore();
+    this.confirmDelete();
   },
 
   async togglePinned() {
@@ -231,6 +199,7 @@ Page({
       this.openUnlockSheet();
       return;
     }
+    this.closeMore();
     const next = !this.data.pinned;
     try {
       const note = await updateNotebookNote(this.noteId, { pinned: next });
@@ -271,45 +240,6 @@ Page({
     wx.navigateTo({ url: `/packages/notebook/editor/index?id=${encodeURIComponent(this.noteId)}` });
   },
 
-  previewImage(event) {
-    const index = Number(event.currentTarget.dataset.index);
-    const urls = this.data.images.map(item => item.localPath).filter(Boolean);
-    if (!urls.length) return;
-    const current = this.data.images[index] && this.data.images[index].localPath;
-    wx.previewImage({ urls, current: current || urls[0] });
-  },
-
-  async playAudio() {
-    if (!this.data.audio) return;
-    if (this.data.audioPlaying) {
-      if (this._audioContext) this._audioContext.pause();
-      this.setData({ audioPlaying: false });
-      return;
-    }
-    try {
-      let localPath = this.data.audio.localPath;
-      if (!localPath) {
-        localPath = await downloadNotebookMedia(this.data.audio);
-        this.setData({ audio: { ...this.data.audio, localPath } });
-      }
-      if (!this._audioContext) {
-        this._audioContext = wx.createInnerAudioContext();
-        this._audioContext.onPlay(() => this.setData({ audioPlaying: true }));
-        this._audioContext.onPause(() => this.setData({ audioPlaying: false }));
-        this._audioContext.onStop(() => this.setData({ audioPlaying: false }));
-        this._audioContext.onEnded(() => this.setData({ audioPlaying: false }));
-        this._audioContext.onError(() => {
-          this.setData({ audioPlaying: false });
-          wx.showToast({ title: "语音播放失败", icon: "none" });
-        });
-      }
-      this._audioContext.src = localPath;
-      this._audioContext.play();
-    } catch (error) {
-      this.handleError(error);
-    }
-  },
-
   handleError(error) {
     if (isNotebookUnauthorized(error)) {
       clearSession();
@@ -325,8 +255,8 @@ Page({
         checklistDone: 0,
         summaryLabel: "",
         tags: [],
-        images: [],
-        audio: null,
+
+
         showUnlockSheet: true,
         unlockError: notebookErrorMessage(error),
       });
@@ -336,13 +266,15 @@ Page({
   },
 
   openUnlockSheet() {
-    this.setData({ showUnlockSheet: true, unlockPassword: "", unlockError: "" });
+    this.setData({ showUnlockSheet: true, unlockPassword: "", unlockError: "", passwordVisible: false });
   },
 
   closeUnlockSheet() {
     if (this.data.unlockBusy) return;
     this.setData({ showUnlockSheet: false, unlockPassword: "", unlockError: "" });
   },
+
+  togglePasswordVisible() { this.setData({ passwordVisible: !this.data.passwordVisible }); },
 
   onUnlockInput(event) {
     this.setData({ unlockPassword: event.detail.value || "", unlockError: "" });

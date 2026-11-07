@@ -24,6 +24,13 @@ Page({
     scopes,
     books: [],
     activeBookId: "all",
+    activeBookName: "",
+    filterCount: 0,
+    filterOpen: false,
+    draftBookId: "all",
+    draftTag: "",
+    draftFavoriteOnly: false,
+    searchFocused: false,
     activeTag: "",
     favoriteOnly: false,
     tags: [],
@@ -86,6 +93,7 @@ Page({
         hasEncryptedNotes: notes.some(note => Boolean(note.encrypted)),
         loading: false,
       });
+      this.syncFilters();
       this.runSearch();
     } catch (error) {
       if (!this._active || generation !== this._generation) return;
@@ -127,19 +135,56 @@ Page({
     const id = event.currentTarget.dataset.id || "all";
     if (id === this.data.activeBookId) return;
     this.setData({ activeBookId: id });
+    this.syncFilters();
     return this.runSearch();
   },
 
   changeTag(event) {
     const tag = event.currentTarget.dataset.tag || "";
     this.setData({ activeTag: tag === this.data.activeTag ? "" : tag });
+    this.syncFilters();
     return this.runSearch();
   },
 
   toggleFavoriteOnly() {
     this.setData({ favoriteOnly: !this.data.favoriteOnly });
+    this.syncFilters();
     return this.runSearch();
   },
+
+  syncFilters() {
+    const book = this.data.books.find(item => item.id === this.data.activeBookId);
+    this.setData({
+      activeBookName: book ? book.name : "",
+      filterCount: Number(this.data.activeBookId !== "all") + Number(Boolean(this.data.activeTag)) + Number(this.data.favoriteOnly),
+    });
+  },
+
+  openFilters() {
+    this.setData({ filterOpen: true, draftBookId: this.data.activeBookId, draftTag: this.data.activeTag, draftFavoriteOnly: this.data.favoriteOnly });
+  },
+
+  closeFilters() { this.setData({ filterOpen: false }); },
+  stopPropagation() {},
+  draftBook(event) { this.setData({ draftBookId: event.currentTarget.dataset.id || "all" }); },
+  draftTag(event) { this.setData({ draftTag: event.currentTarget.dataset.tag || "" }); },
+  draftFavorite() { this.setData({ draftFavoriteOnly: !this.data.draftFavoriteOnly }); },
+  resetDraft() { this.setData({ draftBookId: "all", draftTag: "", draftFavoriteOnly: false }); },
+  applyFilters() {
+    this.setData({ activeBookId: this.data.draftBookId, activeTag: this.data.draftTag, favoriteOnly: this.data.draftFavoriteOnly, filterOpen: false });
+    this.syncFilters();
+    return this.runSearch();
+  },
+  clearFilters() {
+    this.setData({ activeBookId: "all", activeTag: "", favoriteOnly: false });
+    this.syncFilters();
+    return this.runSearch();
+  },
+  removeBook() { this.setData({ activeBookId: "all" }); this.syncFilters(); return this.runSearch(); },
+  removeTag() { this.setData({ activeTag: "" }); this.syncFilters(); return this.runSearch(); },
+  editQuery() { this.setData({ searchFocused: true }); },
+  onBlur() { this.setData({ searchFocused: false }); },
+  cancelSearch() { wx.navigateBack(); },
 
   async runSearch() {
     if (!this.data.isLoggedIn) return;

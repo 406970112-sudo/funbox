@@ -1,152 +1,55 @@
-<import src="/templates/note-art.wxml" />
 <view class="search-page">
-  <view wx:if="{{isLoggedIn}}">
-    <view class="search-hero">
-      <view class="search-hero-copy">
-        <text class="hero-kicker">FunBox / 搜索</text>
-        <text class="hero-title">找一页，</text>
-        <text class="hero-title"><text class="hero-accent">马上找到。</text></text>
+  <block wx:if="{{isLoggedIn}}">
+    <text wx:if="{{!query && !filterCount}}" class="hero-title">找回每一个想法</text>
+    <view class="search-row">
+      <view class="search-field"><nb-icon name="search" size="36" />
+        <input class="search-input" value="{{query}}" placeholder="搜索标题、正文或标签" placeholder-class="placeholder" confirm-type="search" focus="{{searchFocused}}" bindblur="onBlur" bindinput="onInput" bindconfirm="onConfirm" />
+        <view wx:if="{{query}}" class="icon-button clear-button" bindtap="clearSearch" role="button" aria-label="清空关键词"><nb-icon name="close" size="26" /></view>
       </view>
-      <view class="search-hero-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
+      <view class="cancel-link" bindtap="cancelSearch" role="button">取消</view>
     </view>
-
-    <view class="search-field">
-      <view class="search-icon" aria-hidden="true"></view>
-      <input
-        class="search-input"
-        type="text"
-        value="{{query}}"
-        placeholder="搜索标题、正文或标签"
-        placeholder-class="search-placeholder"
-        confirm-type="search"
-        bindinput="onInput"
-        bindconfirm="onConfirm"
-      />
-      <view wx:if="{{query}}" class="clear-button" bindtap="clearSearch" role="button" aria-label="清空搜索">×</view>
+    <view class="scope-row"><view wx:for="{{scopes}}" wx:key="id" class="chip scope {{activeScope === item.id ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="changeScope">{{item.name}}</view></view>
+    <view class="filter-row">
+      <view class="chip filter-button {{favoriteOnly ? 'filter-active' : ''}}" bindtap="toggleFavoriteOnly" role="button"><nb-icon name="star" tone="{{favoriteOnly ? 'primary' : 'default'}}" size="36" /><text>只看收藏</text></view>
+      <view class="chip filter-button {{filterCount ? 'filter-active' : ''}}" bindtap="openFilters" role="button" aria-label="筛选笔记"><nb-icon name="filter" size="36" /><text>筛选</text><text wx:if="{{filterCount}}" class="count-badge">{{filterCount}}</text></view>
     </view>
-
-    <view class="scope-row">
-      <view
-        wx:for="{{scopes}}"
-        wx:key="id"
-        class="scope-chip {{activeScope === item.id ? 'scope-active' : ''}}"
-        data-id="{{item.id}}"
-        bindtap="changeScope"
-      >{{item.name}}</view>
+    <view wx:if="{{activeBookName || activeTag}}" class="applied-filters">
+      <view wx:if="{{activeBookName}}" class="applied-chip" bindtap="removeBook" role="button" aria-label="移除笔记本筛选"><text>{{activeBookName}}</text><nb-icon name="close" tone="primary" size="24" /></view>
+      <view wx:if="{{activeTag}}" class="applied-chip" bindtap="removeTag" role="button" aria-label="移除标签筛选"><text># {{activeTag}}</text><nb-icon name="close" tone="primary" size="24" /></view>
     </view>
-
-    <view class="favorite-row">
-      <view
-        class="favorite-toggle {{favoriteOnly ? 'favorite-toggle-active' : ''}}"
-        bindtap="toggleFavoriteOnly"
-        hover-class="favorite-toggle-pressed"
-        role="button"
-        aria-label="{{favoriteOnly ? '取消只看收藏' : '只看收藏笔记'}}"
-      >
-        <view class="favorite-icon" aria-hidden="true">
-          <image
-            class="favorite-icon-image"
-            src="/packages/notebook/assets/icons/{{favoriteOnly ? 'favorite-active' : 'favorite-default'}}.png"
-            mode="aspectFit"
-          />
-        </view>
-        <text>只看收藏</text>
-      </view>
+    <view wx:if="{{!query && !filterCount}}" class="browse-section">
+      <view class="section-head"><text class="section-title">我的笔记本</text><view class="manage-link" bindtap="manageBooks">管理笔记本</view></view>
+      <view class="book-grid"><view wx:for="{{books}}" wx:key="id" class="book-card" style="background: {{item.fill}};" data-id="{{item.id}}" bindtap="changeBook"><nb-icon name="document" tone="primary" size="48" /><text class="book-name">{{item.name}}</text><text class="book-count">{{item.noteCount}} 篇</text></view></view>
+      <view class="section-head"><text class="section-title">常用标签</text></view>
+      <view class="tag-cloud"><view wx:for="{{tags}}" wx:key="tag" class="applied-chip" data-tag="{{item.tag}}" bindtap="changeTag"># {{item.tag}}</view><text wx:if="{{!tags.length}}" class="muted">添加标签，让笔记更好找</text></view>
     </view>
-
-    <view wx:if="{{hasEncryptedNotes}}" class="encrypted-search-note">
-      <image class="encrypted-search-mark" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
-      <text>加密笔记不参与关键词搜索，可从首页打开。</text>
-    </view>
-
-    <view class="result-head">
-      <text class="result-title">搜索结果</text>
-      <text class="result-meta">{{hasSearched ? resultCount + ' 条 · 按最近编辑' : '正在整理…'}}</text>
-    </view>
-
-    <view wx:if="{{loading}}" class="state-card fb-card">
-      <view class="state-pulse"></view>
-      <text>正在搜索笔记…</text>
-    </view>
-    <view wx:elif="{{error}}" class="state-card fb-card state-error" bindtap="retry">
-      <text>{{error}}</text>
-      <text class="state-action">重新搜索</text>
-    </view>
-    <view wx:elif="{{!results.length}}" class="empty-search fb-card">
-      <view class="empty-search-art" aria-hidden="true"><template is="note-art" data="{{variant: 'sm'}}"></template></view>
-      <text class="empty-search-title">没有找到相关笔记</text>
-      <text class="empty-search-desc">换个关键词，或清空筛选后再试试。</text>
+    <view class="section-head"><text class="section-title">{{query || filterCount ? '找到 ' + resultCount + ' 条笔记' : '最近编辑'}}</text><text wx:if="{{query || filterCount}}" class="muted">按最近编辑</text></view>
+    <view wx:if="{{loading}}" class="state-card"><text>正在搜索笔记…</text></view>
+    <view wx:elif="{{error}}" class="state-card" bindtap="retry"><text>{{error}}</text><text class="manage-link">重新搜索</text></view>
+    <view wx:elif="{{!results.length}}" class="empty-search">
+      <view class="empty-art"><nb-icon name="document" tone="primary" size="128" /><view class="empty-glass"><nb-icon name="search" tone="primary" size="78" /></view></view>
+      <text class="empty-title">{{query || filterCount ? '没有找到相关笔记' : '还没有笔记'}}</text><text class="empty-desc">{{query || filterCount ? '换个关键词，或放宽筛选试试' : '记下第一个想法，让灵感有处安放'}}</text>
+      <button wx:if="{{query || filterCount}}" class="primary empty-button" bindtap="clearFilters">清空筛选</button><button wx:else class="primary empty-button" bindtap="createNote">新建笔记</button>
+      <view wx:if="{{query}}" class="manage-link" bindtap="editQuery">修改关键词</view>
     </view>
     <view wx:else class="result-list">
-      <view
-        wx:for="{{results}}"
-        wx:key="id"
-        class="result-card"
-        data-id="{{item.id}}"
-        bindtap="openNote"
-        role="button"
-        aria-label="打开搜索结果 {{item.displayTitle}}"
-      >
-        <view class="result-top">
-          <text wx:if="{{query}}" class="result-query">包含「{{query}}」</text>
-          <text wx:if="{{item.locked}}" class="result-locked">已加密</text>
-          <text class="note-time">{{item.timeLabel}}</text>
-        </view>
-        <text class="result-title-text">{{item.displayTitle}}</text>
-        <text class="result-snippet">{{item.excerpt}}</text>
-        <text class="result-book">{{item.bookName}}<text wx:if="{{item.tags.length}}"> · #{{item.featureTag}}</text></text>
+      <view wx:for="{{results}}" wx:key="id" wx:if="{{query || filterCount || index < 3}}" class="result-card {{!query && !filterCount ? 'recent-card' : ''}}" data-id="{{item.id}}" bindtap="openNote" role="button" aria-label="打开 {{item.displayTitle}}">
+        <view class="result-icon"><nb-icon name="{{item.locked ? 'lock' : 'document'}}" size="44" /></view>
+        <view class="result-copy"><text class="result-title">{{item.displayTitle}}</text><text wx:if="{{query || filterCount}}" class="result-snippet">{{item.excerpt}}</text><text class="result-meta">{{item.bookName}} · {{item.timeLabel}}</text><view wx:if="{{(query || filterCount) && item.featureTag}}" class="result-tag"># {{item.featureTag}}</view></view>
+        <nb-icon wx:if="{{query || filterCount}}" name="star" tone="{{item.favorite ? 'primary' : 'default'}}" size="34" /><nb-icon wx:else name="chevron" size="30" />
       </view>
     </view>
-
-    <view class="organize-section">
-      <view class="section-head">
-        <text class="section-title">我的笔记本</text>
-        <view class="manage-link" bindtap="manageBooks" role="button" aria-label="管理笔记本">管理 ›</view>
-      </view>
-      <view class="book-grid">
-        <view
-          wx:for="{{books}}"
-          wx:key="id"
-          class="book-card {{activeBookId === item.id ? 'book-card-active' : ''}}"
-          style="background: {{item.fill}}; color: {{item.ink}};"
-          data-id="{{item.id}}"
-          bindtap="changeBook"
-          role="button"
-          aria-label="筛选 {{item.name}} 笔记本"
-        >
-          <view class="book-spine" aria-hidden="true"></view>
-          <text class="book-name">{{item.name}}</text>
-          <text class="book-count">{{item.noteCount}} 篇笔记</text>
-        </view>
-      </view>
+    <view class="encrypted-hint"><nb-icon name="lock" size="28" /><text>加密笔记不参与关键词搜索</text></view>
+  </block>
+  <view wx:else class="login-card"><nb-icon name="search" tone="primary" size="100" /><text class="empty-title">登录后搜索笔记</text><text class="empty-desc">账号内的笔记、标签和笔记本会一起同步。</text><button class="primary" bindtap="openLogin">微信快捷登录</button></view>
+  <view wx:if="{{filterOpen}}" class="overlay" bindtap="closeFilters" catchtouchmove="stopPropagation">
+    <view class="bottom-sheet" catchtap="stopPropagation"><view class="sheet-handle"></view><view class="sheet-heading"><text>筛选笔记</text><view class="icon-button sheet-close" bindtap="closeFilters" aria-label="关闭筛选"><nb-icon name="close" size="36" /></view></view>
+      <scroll-view class="filter-content" scroll-y>
+        <text class="section-title">笔记本</text><view class="option-row"><view class="chip {{draftBookId === 'all' ? 'selected' : ''}}" data-id="all" bindtap="draftBook">全部</view><view wx:for="{{books}}" wx:key="id" class="chip {{draftBookId === item.id ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="draftBook">{{item.name}}</view></view>
+        <text class="section-title">标签</text><view class="option-row"><view class="chip {{!draftTag ? 'selected' : ''}}" data-tag="" bindtap="draftTag">全部</view><view wx:for="{{tags}}" wx:key="tag" class="chip {{draftTag === item.tag ? 'selected' : ''}}" data-tag="{{item.tag}}" bindtap="draftTag"># {{item.tag}}</view></view>
+        <view class="favorite-setting" bindtap="draftFavorite"><nb-icon name="star" size="40" /><text>只看收藏</text><switch color="#2d5bff" checked="{{draftFavoriteOnly}}" catchtap="stopPropagation" bindchange="draftFavorite" /></view>
+      </scroll-view>
+      <text class="sheet-help">可组合筛选，重置后恢复全部</text><view class="sheet-actions"><button class="secondary" bindtap="resetDraft">重置</button><button class="primary" bindtap="applyFilters">查看结果</button></view>
     </view>
-
-    <view class="organize-section">
-      <view class="section-head">
-        <text class="section-title">常用标签</text>
-        <text class="section-note">点按筛选</text>
-      </view>
-      <view class="tag-cloud">
-        <view
-          wx:for="{{tags}}"
-          wx:key="tag"
-          class="cloud-tag {{activeTag === item.tag ? 'cloud-tag-active' : ''}}"
-          data-tag="{{item.tag}}"
-          bindtap="changeTag"
-        ># {{item.tag}}<text class="tag-count">{{item.count}}</text></view>
-        <view wx:if="{{!tags.length}}" class="tag-empty">还没有标签</view>
-      </view>
-    </view>
-
-    <view class="new-note-fab" bindtap="createNote" role="button" aria-label="新建笔记">
-      <view class="fab-plus" aria-hidden="true"></view>
-    </view>
-  </view>
-
-  <view wx:else class="login-card fb-card">
-    <view class="login-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
-    <text class="login-title">登录后搜索笔记</text>
-    <text class="login-desc">账号内的笔记、标签和笔记本会一起同步。</text>
-    <button class="login-button" bindtap="openLogin">微信快捷登录</button>
   </view>
 </view>

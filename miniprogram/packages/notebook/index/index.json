@@ -1,7 +1,10 @@
 {
   "navigationBarTitleText": "笔记本",
-  "navigationBarBackgroundColor": "#f5f7fa",
+  "navigationBarBackgroundColor": "#f5f8ff",
   "navigationBarTextStyle": "black",
   "enablePullDownRefresh": true,
-  "backgroundColor": "#f5f7fa"
+  "backgroundColor": "#f5f8ff",
+  "usingComponents": {
+    "nb-icon": "../components/nb-icon/index"
+  }
 }

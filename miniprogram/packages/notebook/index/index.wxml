@@ -1,20 +1,9 @@
 <import src="/templates/note-art.wxml" />
 <view class="notebook-page">
-  <view class="home-topbar">
-    <view class="brand-wrap">
-      <text class="fb-brand">FunBox</text>
-      <text class="brand-caption">笔记本</text>
-    </view>
-    <view class="account-pill" bindtap="openProfile" role="button" aria-label="进入我的页面">
-      <text class="account-dot">{{isLoggedIn ? '已' : '游'}}</text>
-      <text class="account-name">{{userName}}</text>
-      <text class="account-arrow">›</text>
-    </view>
-  </view>
 
   <view class="hero">
     <view class="hero-copy">
-      <text class="hero-kicker">FunBox / 笔记本</text>
+
       <text class="hero-title">想到什么，</text>
       <text class="hero-title"><text class="hero-accent">随手记下来。</text></text>
       <text class="hero-desc">文字、清单和灵感，都收在这里。</text>
@@ -25,17 +14,10 @@
   <block wx:if="{{isLoggedIn}}">
     <view class="home-search-row">
       <button class="search-bar" bindtap="openSearch" aria-label="搜索笔记、标签或正文">
-        <view class="search-icon" aria-hidden="true"></view>
+        <nb-icon name="search" size="{{36}}" />
         <text class="search-copy">搜索笔记、标签或正文</text>
       </button>
-      <button class="security-entry {{hasSecurityPassword ? 'security-entry-active' : ''}}" bindtap="openSecurity" aria-label="加密笔记设置">
-        <image
-          class="security-entry-icon"
-          src="/packages/notebook/assets/icons/{{hasSecurityPassword ? 'lock-active' : 'lock-default'}}.png"
-          mode="aspectFit"
-          aria-hidden="true"
-        />
-      </button>
+
     </view>
 
     <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
@@ -50,9 +32,12 @@
       </view>
     </scroll-view>
 
-    <view wx:if="{{loading}}" class="state-card fb-card">
-      <view class="state-pulse"></view>
-      <text>正在翻开笔记本…</text>
+    <view wx:if="{{loading}}" class="loading-section" aria-label="正在加载笔记">
+      <view class="section-head"><text class="section-title">最近笔记</text></view>
+      <view class="loading-card">
+        <view wx:for="{{[1, 2, 3]}}" wx:key="*this" class="skeleton-row" aria-hidden="true"><view class="skeleton-icon"></view><view class="skeleton-copy"><view class="skeleton-line skeleton-title"></view><view class="skeleton-line skeleton-meta"></view></view></view>
+        <view class="loading-caption"><view class="loading-spinner" aria-hidden="true"></view><text>正在翻开笔记本…</text></view>
+      </view>
     </view>
 
     <view wx:elif="{{error}}" class="state-card fb-card state-error" bindtap="retry">
@@ -64,7 +49,7 @@
       <view wx:if="{{pinnedNotes.length}}" class="section-block">
         <view class="section-head">
           <text class="section-title">置顶</text>
-          <text class="section-note">{{pinnedNotes.length}} 篇</text>
+          <view class="manage-books" bindtap="manageBooks" role="button">管理笔记本</view>
         </view>
         <view
           wx:for="{{pinnedNotes}}"
@@ -78,9 +63,9 @@
           <view class="pinned-top">
             <text class="note-book-label" style="background: {{item.bookFill}}; color: {{item.bookInk}};">{{item.bookName}}</text>
             <view class="pin-flags">
-              <text class="pin-mark" aria-hidden="true">置顶</text>
+              <view class="pin-mark"><nb-icon name="pin" tone="coral" size="{{28}}" /><text>置顶</text></view>
               <view wx:if="{{item.locked}}" class="pinned-lock">
-                <image class="mini-lock-image" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
+                <nb-icon name="lock" size="{{24}}" />
                 <text>已加密</text>
               </view>
             </view>
@@ -97,7 +82,7 @@
       <view class="section-block recent-block">
         <view class="section-head">
           <text class="section-title">最近笔记</text>
-          <text class="section-note">{{recentNotes.length}} 篇</text>
+          <view wx:if="{{pinnedNotes.length}}" class="section-sort">按更新时间<nb-icon name="chevron-down" size="{{24}}" /></view><view wx:else class="manage-books" bindtap="manageBooks" role="button">管理笔记本</view>
         </view>
         <view wx:if="{{recentNotes.length}}" class="note-list">
           <view
@@ -110,14 +95,13 @@
             aria-label="打开笔记 {{item.displayTitle}}"
           >
             <view class="note-icon {{item.locked ? 'note-icon-locked' : ''}}" style="background: {{item.bookFill}}; color: {{item.bookInk}};">
-              <image wx:if="{{item.locked}}" class="list-lock-image" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
-              <text wx:else>{{item.checklist.length ? '✓' : '文'}}</text>
+              <nb-icon name="{{item.locked ? 'lock' : item.checklist.length ? 'checklist' : 'document'}}" tone="{{item.locked ? 'default' : 'primary'}}" size="{{42}}" />
             </view>
             <view class="note-row-copy">
               <text class="note-row-title">{{item.displayTitle}}</text>
               <text class="note-row-meta">{{item.bookName}} · {{item.timeLabel}}<text wx:if="{{item.locked}}"> · 已加密</text></text>
             </view>
-            <text class="note-row-arrow" aria-hidden="true">›</text>
+            <text wx:if="{{item.locked}}" class="locked-badge">已锁定</text><nb-icon name="chevron" size="{{28}}" />
           </view>
         </view>
         <view wx:else class="empty-card fb-card">
@@ -129,8 +113,9 @@
       </view>
     </block>
 
+    <view class="encryption-management" bindtap="openSecurity" role="button" aria-label="加密管理"><nb-icon name="lock" size="{{34}}" /><text>加密管理</text></view>
     <view class="new-note-fab" bindtap="createNote" role="button" aria-label="新建笔记">
-      <view class="fab-plus" aria-hidden="true"></view>
+      <nb-icon name="plus" tone="white" size="{{38}}" /><text>新建笔记</text>
     </view>
   </block>
 
@@ -146,26 +131,27 @@
       <view class="security-grabber"></view>
       <view class="security-head">
         <view class="security-title-wrap">
-          <text class="security-title">加密笔记</text>
-          <text wx:if="{{hasSecurityPassword}}" class="security-subtitle">{{encryptedNoteCount}} 篇加密笔记 · {{securityUnlocked ? '本次已解锁' : '当前已锁定'}}</text>
+          <text class="security-title">{{securityMode === 'change' ? '修改笔记密码' : securityMode === 'unlock' ? '解锁加密笔记' : '加密管理'}}</text>
+          <text wx:if="{{hasSecurityPassword}}" class="security-subtitle">{{encryptedNoteCount}} 篇加密笔记</text>
           <text wx:else class="security-subtitle">尚未开启。打开任意笔记，在编辑页点击锁按钮即可。</text>
         </view>
-        <view class="security-close" bindtap="closeSecuritySheet" role="button" aria-label="关闭加密笔记设置">×</view>
+        <view class="security-close" bindtap="closeSecuritySheet" role="button" aria-label="关闭加密笔记设置"><nb-icon name="close" size="{{32}}" /></view>
       </view>
 
       <block wx:if="{{securityMode === 'summary'}}">
-        <view wx:if="{{hasSecurityPassword}}" class="security-actions">
-          <button wx:if="{{!securityUnlocked}}" class="security-action security-action-primary" bindtap="beginSecurityUnlock">解锁加密笔记</button>
+        <block wx:if="{{hasSecurityPassword}}">
+          <view class="security-status"><nb-icon name="{{securityUnlocked ? 'unlock' : 'lock'}}" tone="primary" size="{{40}}" /><text>{{securityUnlocked ? '本次已解锁' : '当前已锁定'}}</text></view>
+          <button wx:if="{{!securityUnlocked}}" class="security-action security-action-primary" bindtap="beginSecurityUnlock" disabled="{{securityBusy}}">解锁加密笔记</button>
           <button wx:else class="security-action security-action-primary" bindtap="lockSecurity" disabled="{{securityBusy}}">立即上锁</button>
-          <button class="security-action security-action-secondary" bindtap="beginPasswordChange">修改密码</button>
-        </view>
-        <view wx:if="{{hasSecurityPassword}}" class="security-help-row">
-          <text>忘记密码后无法找回已加密内容。</text>
-          <text class="security-danger-link" bindtap="resetEncryption">清空加密笔记</text>
-        </view>
+          <view class="security-management-list">
+            <button class="security-management-row" bindtap="beginPasswordChange" disabled="{{securityBusy}}"><nb-icon name="key" size="{{40}}" /><text>修改密码</text><nb-icon name="chevron" size="{{28}}" /></button>
+            <button class="security-management-row security-management-danger" bindtap="resetEncryption" disabled="{{securityBusy}}"><nb-icon name="trash" tone="coral" size="{{40}}" /><text>清空加密笔记</text><nb-icon name="chevron" size="{{28}}" /></button>
+          </view>
+          <text class="security-forgot-help">忘记密码无法找回已加密内容</text>
+        </block>
         <view wx:else class="security-empty">
-          <image class="security-empty-mark" src="/packages/notebook/assets/icons/lock-default.png" mode="aspectFit" aria-hidden="true" />
-          <text>开启后，锁定状态不会展示真实标题、摘要、标签和附件。</text>
+          <nb-icon name="lock" size="{{40}}" />
+          <text>开启后，锁定状态不会展示真实标题、摘要和标签。</text>
         </view>
       </block>
 

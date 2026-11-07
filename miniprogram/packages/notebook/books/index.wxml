@@ -1,81 +1,23 @@
-<import src="/templates/note-art.wxml" />
 <view class="books-page">
-  <view wx:if="{{isLoggedIn}}">
-    <view class="books-hero">
-      <view class="books-hero-copy">
-        <text class="hero-kicker">FunBox / 笔记本</text>
-        <text class="hero-title">把主题，</text>
-        <text class="hero-title"><text class="hero-accent">分开记。</text></text>
-        <text class="hero-desc">一本一个主题，找起来更清楚。</text>
-      </view>
-      <view class="books-hero-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
-    </view>
-
-    <view class="create-card fb-card">
-      <view class="create-head">
-        <text class="create-title">新建笔记本</text>
-        <text class="create-note">{{books.length}} / 20</text>
-      </view>
-      <input
-        class="book-name-input"
-        value="{{newBookName}}"
-        maxlength="20"
-        placeholder="例如：旅行、项目、读书"
-        placeholder-class="input-placeholder"
-        confirm-type="done"
-        bindinput="onNameInput"
-        bindconfirm="createBook"
-      />
-      <view class="color-row">
-        <view
-          wx:for="{{colors}}"
-          wx:key="*this"
-          class="color-dot {{selectedColor === item ? 'color-dot-active' : ''}}"
-          style="background: {{item}};"
-          data-color="{{item}}"
-          bindtap="selectColor"
-          role="button"
-          aria-label="选择封面色 {{item}}"
-        ></view>
-        <button class="create-button" loading="{{busy}}" disabled="{{busy}}" bindtap="createBook">创建</button>
-      </view>
-    </view>
-
-    <view class="section-head">
-      <text class="section-title">我的笔记本</text>
-      <text class="section-note">{{books.length}} 本</text>
-    </view>
-
-    <view wx:if="{{loading}}" class="state-card fb-card">
-      <view class="state-pulse"></view>
-      <text>正在加载笔记本…</text>
-    </view>
-    <view wx:elif="{{error}}" class="state-card fb-card state-error" bindtap="retry">
-      <text>{{error}}</text>
-      <text class="state-action">重新加载</text>
-    </view>
-    <view wx:else class="book-list">
-      <view wx:for="{{books}}" wx:key="id" class="book-row" style="background: {{item.fill}};">
-        <view class="book-cover" style="background: {{item.color}};">
-          <view class="book-cover-spine" aria-hidden="true"></view>
-          <text class="book-initial">{{item.initial}}</text>
-        </view>
-        <view class="book-copy">
-          <text class="book-name">{{item.name}}</text>
-          <text class="book-meta">{{item.noteCount}} 篇笔记</text>
-        </view>
-        <view class="book-actions">
-          <view class="book-action" data-id="{{item.id}}" bindtap="renameBook" role="button" aria-label="重命名 {{item.name}}">重命名</view>
-          <view class="book-action delete" data-id="{{item.id}}" bindtap="deleteBook" role="button" aria-label="删除 {{item.name}}">删除</view>
-        </view>
-      </view>
-    </view>
-  </view>
-
-  <view wx:else class="login-card fb-card">
-    <view class="login-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
-    <text class="login-title">登录后管理笔记本</text>
-    <text class="login-desc">工作、生活、灵感分开记录，找起来更轻松。</text>
-    <button class="login-button" bindtap="openLogin">微信快捷登录</button>
-  </view>
+  <block wx:if="{{isLoggedIn}}">
+    <view class="books-hero"><view class="hero-copy"><text class="hero-title">把主题，</text><text class="hero-title hero-accent">分开记。</text><text class="hero-desc">一本一个主题，找起来更清楚。</text></view><view class="hero-art"><view class="mini-cover hero-cover"><view class="cover-spine"></view><view class="cover-label"></view><view class="cover-label short"></view><view class="bookmark"></view></view></view></view>
+    <text class="book-total">{{books.length}} / 20 本</text>
+    <view wx:if="{{loading}}" class="state-card">正在加载笔记本…</view>
+    <view wx:elif="{{error}}" class="state-card" bindtap="retry"><text>{{error}}</text><text class="accent">重新加载</text></view>
+    <view wx:elif="{{!books.length}}" class="state-card"><nb-icon name="book" tone="primary" size="80" /><text>还没有笔记本</text><text class="muted">创建一本，为想法找到归处</text></view>
+    <view wx:else class="book-list"><view wx:for="{{books}}" wx:key="id" class="book-row"><view class="mini-cover" style="background: {{item.color}};"><view class="cover-spine"></view><view class="cover-label"></view></view><view class="book-copy"><text class="book-name">{{item.name}}</text><text class="book-meta">{{item.noteCount}} 篇笔记</text></view><view class="icon-button more-button" data-id="{{item.id}}" bindtap="openBookMenu" role="button" aria-label="管理 {{item.name}}"><nb-icon name="more" size="40" /></view></view></view>
+    <view class="create-footer"><button class="primary new-book-button" bindtap="openCreate"><nb-icon name="plus" tone="white" size="38" /><text>新建笔记本</text></button><text class="footer-help">仅空笔记本可删除</text></view>
+  </block>
+  <view wx:else class="login-card"><nb-icon name="book" tone="primary" size="100" /><text class="login-title">登录后管理笔记本</text><text class="muted">工作、生活、灵感分开记录，找起来更轻松。</text><button class="primary" bindtap="openLogin">微信快捷登录</button></view>
+  <view wx:if="{{createOpen}}" class="overlay" style="bottom: {{keyboardHeight}}px;" bindtap="closeCreate" catchtouchmove="stopPropagation"><view class="bottom-sheet" catchtap="stopPropagation"><view class="sheet-handle"></view><view class="sheet-heading"><text>新建笔记本</text><view class="icon-button sheet-close" bindtap="closeCreate" aria-label="关闭"><nb-icon name="close" size="36" /></view></view>
+    <scroll-view class="create-body" scroll-y scroll-into-view="{{keyboardHeight ? 'create-name-field' : ''}}" style="height: {{createBodyHeight}}px;">
+    <view class="preview"><view class="mini-cover preview-cover" style="background: {{selectedColor}};"><view class="cover-spine"></view><view class="cover-label"></view></view><text>{{newBookName || '新笔记本'}}</text></view>
+    <text class="field-label">名称</text><view id="create-name-field" class="input-wrap"><input class="name-input" value="{{newBookName}}" maxlength="20" placeholder="例如：旅行、项目、读书" bindinput="onNameInput" bindkeyboardheightchange="onCreateKeyboardChange" adjust-position="{{false}}" cursor-spacing="24" confirm-type="done" bindconfirm="createBook" /><text class="input-count">{{newBookName.length}} / 20</text></view>
+    <text class="field-label">封面颜色</text><view class="color-row"><view wx:for="{{colors}}" wx:key="*this" class="color-dot {{selectedColor === item ? 'color-selected' : ''}}" style="background: {{item}};" data-color="{{item}}" bindtap="selectColor" role="button" aria-label="选择封面色 {{item}}"><nb-icon wx:if="{{selectedColor === item}}" name="check" tone="white" size="38" /></view></view><text class="sheet-help">最多创建 20 本</text>
+    </scroll-view>
+    <view class="sheet-actions"><button class="secondary" disabled="{{busy}}" bindtap="closeCreate">取消</button><button class="primary" disabled="{{busy || !nameValid}}" loading="{{busy}}" bindtap="createBook">创建笔记本</button></view>
+  </view></view>
+  <view wx:if="{{selectedBook}}" class="overlay" bindtap="closeBookMenu" catchtouchmove="stopPropagation"><view class="bottom-sheet menu-sheet" catchtap="stopPropagation"><text class="menu-title">{{selectedBook.name}}</text><text class="menu-meta">{{selectedBook.noteCount}} 篇笔记</text><view class="menu-options"><view class="menu-item" bindtap="renameBook" role="button"><nb-icon name="edit" size="38" /><text>重命名</text></view><view class="menu-item danger-text {{selectedBook.noteCount ? 'unavailable' : ''}}" bindtap="deleteBook" role="button"><nb-icon name="trash" tone="coral" size="38" /><text>{{selectedBook.noteCount ? '清空笔记后可删除' : '删除空笔记本'}}</text></view></view><button class="secondary" bindtap="closeBookMenu">取消</button></view></view>
+  <view wx:if="{{renameOpen}}" class="dialog-overlay" catchtouchmove="stopPropagation"><view class="dialog"><text class="dialog-title">重命名笔记本</text><text class="dialog-desc">修改名称不会影响已有笔记</text><view class="input-wrap"><input class="name-input" value="{{renameName}}" maxlength="20" bindinput="onRenameInput" confirm-type="done" bindconfirm="saveRename" /><text class="input-count">{{renameName.length}} / 20</text></view><view class="sheet-actions"><button class="secondary" disabled="{{busy}}" bindtap="closeRename">取消</button><button class="primary" disabled="{{busy || !renameValid}}" loading="{{busy}}" bindtap="saveRename">保存</button></view></view></view>
+  <view wx:if="{{deleteOpen}}" class="dialog-overlay" catchtouchmove="stopPropagation"><view class="dialog"><text class="dialog-title">删除「{{selectedBook.name}}」？</text><text class="dialog-desc">这是一个空笔记本，删除后无法恢复。</text><view class="sheet-actions"><button class="secondary" disabled="{{busy}}" bindtap="closeDelete">取消</button><button class="danger" disabled="{{busy}}" loading="{{busy}}" bindtap="confirmDelete">删除</button></view></view></view>
 </view>

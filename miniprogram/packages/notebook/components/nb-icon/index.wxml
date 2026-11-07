@@ -1,0 +1,1 @@
+<view class="nb-icon" style="width: {{displaySize}}rpx; height: {{displaySize}}rpx;" aria-hidden="true"><image class="nb-icon-image" src="{{source}}" mode="aspectFit" style="width: {{displaySize}}rpx; height: {{displaySize}}rpx;" /></view>
