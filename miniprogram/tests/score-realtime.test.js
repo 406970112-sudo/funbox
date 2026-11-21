@@ -155,6 +155,23 @@ test("network recovery replaces a stale socket and ignores its late callbacks", 
   assert.equal(connection.tasks.length, 2);
 });
 
+test("repeated connected network events leave a healthy socket in place", async (t) => {
+  const connection = createConnection(t);
+  await flushPromises();
+  const [task] = connection.tasks;
+  task.callbacks.open();
+
+  connection.network(true);
+  connection.network(true);
+  await flushPromises();
+  task.callbacks.message({ data: JSON.stringify({ type: "score.room.updated", data: { roomId: "room-1", roomVersion: 5 } }) });
+
+  assert.equal(task.closed, false);
+  assert.equal(connection.tasks.length, 1);
+  assert.deepEqual(connection.statuses, ["connecting", "online"]);
+  assert.deepEqual(connection.invalidations, [5]);
+});
+
 test("a socket handshake that never completes times out and retries", async (t) => {
   const connection = createConnection(t);
   await flushPromises();

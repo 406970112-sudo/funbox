@@ -100,6 +100,9 @@ type RoomSnapshot struct {
 	PasswordHash             string            `json:"-"`
 	Latitude                 *float64          `json:"-"`
 	Longitude                *float64          `json:"-"`
+
+	MahjongHandover  *MahjongHandover       `json:"mahjongHandover,omitempty"`
+	MahjongHandovers []MahjongHandoverEvent `json:"mahjongHandovers,omitempty"`
 }
 
 type Participant struct {
@@ -113,6 +116,9 @@ type Participant struct {
 	AmountCents int64             `json:"amountCents"`
 	JoinedAt    time.Time         `json:"joinedAt"`
 	LastSeenAt  time.Time         `json:"lastSeenAt"`
+
+	MahjongSeat  int    `json:"mahjongSeat,omitempty"`
+	LeftAtPoints *int64 `json:"leftAtPoints,omitempty"`
 }
 
 type Round struct {

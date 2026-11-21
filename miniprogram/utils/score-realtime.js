@@ -119,7 +119,7 @@ function connectScoreRealtime({ credential, roomId, onInvalidate, onStatus }) {
   }
 
   const handleNetworkChange = ({ isConnected }) => {
-    if (disposed) return;
+    if (disposed || networkAvailable === isConnected) return;
     networkAvailable = isConnected;
     if (!isConnected) {
       resetConnection();

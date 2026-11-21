@@ -106,6 +106,34 @@ func (s *Store) migrate() error {
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_score_participants_room_joined
 			ON score_participants(room_id, joined_at, id)`,
+		`CREATE TABLE IF NOT EXISTS score_mahjong_seats (
+			participant_id TEXT PRIMARY KEY REFERENCES score_participants(id) ON DELETE CASCADE,
+			seat INTEGER NOT NULL CHECK(seat BETWEEN 1 AND 4),
+			left_at_points INTEGER
+		)`,
+		`CREATE TABLE IF NOT EXISTS score_mahjong_host_offers (
+			room_id TEXT PRIMARY KEY REFERENCES score_rooms(id) ON DELETE CASCADE,
+			participant_id TEXT NOT NULL REFERENCES score_participants(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS score_mahjong_handovers (
+			id TEXT PRIMARY KEY,
+			room_id TEXT NOT NULL REFERENCES score_rooms(id) ON DELETE CASCADE,
+			scene TEXT NOT NULL UNIQUE,
+			from_participant_id TEXT NOT NULL REFERENCES score_participants(id),
+			seat INTEGER NOT NULL CHECK(seat BETWEEN 1 AND 4),
+			expires_at INTEGER NOT NULL,
+			status TEXT NOT NULL CHECK(status IN ('open', 'accepted', 'reconfirm', 'completed', 'cancelled', 'expired')),
+			claim_hash TEXT NOT NULL DEFAULT '',
+			candidate_id TEXT REFERENCES score_participants(id),
+			candidate_name TEXT NOT NULL DEFAULT '',
+			candidate_user_id TEXT NOT NULL DEFAULT '',
+			accepted_points INTEGER NOT NULL DEFAULT 0,
+			completed_at INTEGER,
+			completed_token_version INTEGER
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_score_mahjong_handovers_room ON score_mahjong_handovers(room_id)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_score_mahjong_handovers_pending ON score_mahjong_handovers(room_id)
+			WHERE status IN ('open', 'accepted', 'reconfirm')`,
 		`CREATE TABLE IF NOT EXISTS score_rounds (
 			id TEXT PRIMARY KEY,
 			room_id TEXT NOT NULL REFERENCES score_rooms(id) ON DELETE CASCADE,
@@ -420,6 +448,11 @@ func (s *Store) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) 
 		return RoomSnapshot{}, err
 	}
 	snapshot.ZhaJinHuaHands = zhaJinHuaHands
+	if snapshot.GameType == GameTypeMahjong {
+		if err := loadMahjongRoom(ctx, q, &snapshot); err != nil {
+			return RoomSnapshot{}, err
+		}
+	}
 	return snapshot, nil
 }
 
@@ -443,7 +476,7 @@ func loadRoomGameConfig(ctx context.Context, q queryer, roomID string) (ScoreSce
 func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoint int64) ([]Participant, error) {
 	rows, err := q.QueryContext(ctx, `
 		SELECT p.id, p.user_id, p.display_name, p.role, p.status, p.joined_at,
-			p.last_seen_at,
+			p.last_seen_at, COALESCE(ms.seat, 0), ms.left_at_points,
 			COALESCE(SUM(CASE WHEN r.status = 'confirmed' THEN e.delta_points ELSE 0 END), 0) +
 			COALESCE((
 				SELECT SUM(CASE
@@ -460,6 +493,7 @@ func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoi
 				WHERE z.participant_id = p.id
 			), 0)
 		FROM score_participants p
+		LEFT JOIN score_mahjong_seats ms ON ms.participant_id = p.id
 		LEFT JOIN score_entries e ON e.participant_id = p.id
 		LEFT JOIN score_rounds r ON r.id = e.round_id
 		WHERE p.room_id = ?
@@ -477,9 +511,10 @@ func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoi
 		var userID sql.NullString
 		var role, status string
 		var joinedAt, lastSeenAt int64
+		var leftAtPoints sql.NullInt64
 		if err := rows.Scan(
 			&participant.ID, &userID, &participant.DisplayName, &role, &status,
-			&joinedAt, &lastSeenAt, &participant.TotalPoints,
+			&joinedAt, &lastSeenAt, &participant.MahjongSeat, &leftAtPoints, &participant.TotalPoints,
 		); err != nil {
 			return nil, fmt.Errorf("scan score participant: %w", err)
 		}
@@ -489,6 +524,9 @@ func loadParticipants(ctx context.Context, q queryer, roomID string, centsPerPoi
 		participant.AmountCents = participant.TotalPoints * centsPerPoint
 		participant.JoinedAt = time.Unix(joinedAt, 0).UTC()
 		participant.LastSeenAt = time.Unix(lastSeenAt, 0).UTC()
+		if leftAtPoints.Valid {
+			participant.LeftAtPoints = &leftAtPoints.Int64
+		}
 		participants = append(participants, participant)
 	}
 	if err := rows.Err(); err != nil {

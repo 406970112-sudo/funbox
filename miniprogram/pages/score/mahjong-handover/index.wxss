@@ -1,0 +1,170 @@
+.handover-page {
+  padding: 22rpx 30rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+
+.invite-card,
+.state-card {
+  padding: 28rpx 26rpx;
+}
+
+.invite-meta,
+.score-caption,
+.action-hint {
+  display: block;
+  color: var(--fb-muted);
+  font-size: 24rpx;
+}
+
+.invite-meta,
+.invite-title,
+.invite-description,
+.state-message {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.invite-title {
+  margin-top: 8rpx;
+  color: var(--fb-ink);
+  font-size: 36rpx;
+  font-weight: 800;
+}
+
+.invite-score {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+
+.invite-seat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 22rpx;
+  background: #edf4ff;
+  color: var(--fb-primary);
+  font-size: 38rpx;
+  font-weight: 800;
+}
+
+.invite-score-copy {
+  min-width: 0;
+}
+
+.score-number {
+  display: block;
+  color: var(--fb-ink);
+  font-size: 48rpx;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.positive { color: var(--fb-primary); }
+.negative { color: #c74d38; }
+
+.score-caption {
+  margin-top: 4rpx;
+}
+
+.invite-description {
+  margin-top: 22rpx;
+  color: #59677e;
+  font-size: 25rpx;
+}
+
+.nickname-field {
+  margin-top: 28rpx;
+}
+
+.nickname-label {
+  display: block;
+  margin-bottom: 10rpx;
+  color: var(--fb-ink);
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.nickname-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 88rpx;
+  min-height: 44px;
+  padding: 0 22rpx;
+  border: 2rpx solid #e2e8f3;
+  border-radius: 18rpx;
+  background: var(--fb-surface);
+  color: var(--fb-ink);
+  font-size: 30rpx;
+}
+
+.nickname-invalid {
+  border-color: #df826e;
+}
+
+.nickname-error {
+  display: block;
+  margin-top: 8rpx;
+  color: #c74d38;
+  font-size: 23rpx;
+}
+
+.primary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88rpx;
+  min-height: max(44px, 88rpx);
+  margin: 20rpx 0 0;
+  padding: 12rpx 24rpx;
+  border-radius: 18rpx;
+  background: var(--fb-primary);
+  color: #fff;
+  font-size: 29rpx;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.primary-button[disabled] {
+  background: #d8e1f4;
+  color: #536383;
+}
+
+.button-pressed {
+  opacity: .86;
+}
+
+.action-hint {
+  margin-top: 12rpx;
+  text-align: center;
+}
+
+.waiting-note,
+.error-banner {
+  margin-top: 20rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 18rpx;
+  font-size: 24rpx;
+}
+
+.waiting-note {
+  color: #2d5bff;
+  background: #edf4ff;
+}
+
+.error-banner {
+  background: #fff0ed;
+  color: #ad4433;
+}
+
+.state-message {
+  color: #59677e;
+  text-align: center;
+}

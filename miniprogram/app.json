@@ -10,6 +10,7 @@
     "pages/score/mahjong/index",
     "pages/score/general/index",
     "pages/score/room/index",
+    "pages/score/mahjong-handover/index",
     "pages/score/poker/index",
     "pages/score/poker-room/index"
   ],

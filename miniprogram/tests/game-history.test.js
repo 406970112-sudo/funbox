@@ -70,6 +70,19 @@ function room(index) {
   };
 }
 
+test("a transferred seat shows the former player's departure score without a settlement amount", async () => {
+  accessToken = "account-token";
+  const settled = room(1);
+  settled.participants[0] = {
+    ...settled.participants[0], status: "left", totalPoints: 0, amountCents: 0, leftAtPoints: -30,
+  };
+  historyResponse = { rooms: [settled], total: 1, limit: 5, offset: 0 };
+  const page = createPage();
+  await page.loadPage(1);
+  assert.equal(page.data.rooms[0].scoreText, "-30 分");
+  assert.equal(page.data.rooms[0].amountText, "离桌分数");
+});
+
 test("game history loads five records and exposes the next page", async () => {
   accessToken = "account-token";
   historyCalls = [];

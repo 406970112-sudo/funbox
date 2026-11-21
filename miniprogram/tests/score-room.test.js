@@ -48,6 +48,10 @@ require.cache[scoreAPI] = {
     startScoreRoom: async (...args) => { lifecycleCalls.push(["start", ...args]); return args[1]; },
     cancelScoreRoom: async (...args) => { lifecycleCalls.push(["cancel", ...args]); if (lifecycleError) throw lifecycleError; return args[1]; },
     reverseScoreGiftBatch: async (...args) => { lifecycleCalls.push(["reverse", ...args]); if (lifecycleError) throw lifecycleError; return args[1]; },
+    submitScoreGifts: async (_credential, room) => {
+      if (lifecycleError) throw lifecycleError;
+      return { ...room, version: room.version + 1 };
+    },
     settleScoreRoom: async (...args) => {
       settleCalls.push(args);
       return { id: "room-1", version: 9, status: "settled", participants: [] };
@@ -236,13 +240,15 @@ test("a logged-in guest participant can bind the current room identity", async (
     bindingAccount: false,
   });
   page.credential = { kind: "guest", token: "participant-token" };
-  page.applyRoom = async () => undefined;
+  page.startRealtime = () => undefined;
+  page.startPolling = () => undefined;
 
   await page.bindParticipantAccount();
 
   assert.deepEqual(bindCalls, [{ roomId: "room-1", participantToken: "participant-token" }]);
   assert.equal(page.data.bindingAccount, false);
-  assert.match(page.data.feedback, /已绑定账号/);
+  assert.equal(page.data.accountBound, true);
+  assert.equal(page.data.feedback, "");
   delete storage.accessToken;
 });
 
@@ -482,16 +488,35 @@ test('recipient order stays in join order when scores change and preserves draft
 });
 
 
-test('quick gift controls validate input, show preview and clear all', () => {
+test('manual gift input shows a preview and revalidates when an invalid entry is cleared', () => {
   const page = createPage({recipients:[{id:'b',displayName:'B',pointsInput:''},{id:'c',displayName:'C',pointsInput:''}]});
-  page.incrementGift({currentTarget:{dataset:{id:'b',amount:5}}});
+  page.handleGiftInput({currentTarget:{dataset:{id:'b'}},detail:{value:'5'}});
   assert.equal(page.data.giftTotal, 5);
   assert.match(page.data.giftPreview,/扣除 5.*B 增加 5/);
   page.handleGiftInput({currentTarget:{dataset:{id:'c'}},detail:{value:'2147483648'}});
   assert.equal(page.data.canSubmitGifts,false);
   assert.ok(page.data.giftError);
-  page.clearGifts();
-  assert.deepEqual(page.data.recipients.map(r=>r.pointsInput),['','']);
+  page.handleGiftInput({ currentTarget: { dataset: { id: 'c' } }, detail: { value: '' } });
+  assert.deepEqual(page.data.recipients.map(r => r.pointsInput), ['5', '']);
+  assert.equal(page.data.giftError, '');
+  assert.equal(page.data.canSubmitGifts, true);
+});
+
+test("confirmed gifts show a short-lived receipt that survives a room refresh", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const page = createPage({ room: { id: "room-1", gameType: "mahjong", status: "active", version: 1, participants: [] },
+    recipients: [{ id: "b", displayName: "B", pointsInput: "5" }] });
+  page.credential = { kind: "account", token: "host-token" };
+  page.startRealtime = () => undefined;
+  page.startPolling = () => undefined;
+
+  await page.submitGifts();
+  assert.equal(page.data.feedback, "");
+  assert.equal(page.data.giftReceipt?.points, 5);
+  await page.applyRoom({ ...page.data.room, version: 3 });
+  assert.equal(page.data.giftReceipt?.points, 5);
+  t.mock.timers.tick(3000);
+  assert.equal(page.data.giftReceipt, null);
 });
 
 test('mahjong start confirmation guards cancellation, duplicate and changed version', async () => {

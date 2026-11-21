@@ -129,6 +129,10 @@ func (s *Server) withAdmin(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (s *Server) withOptionalAuth(next http.HandlerFunc) http.HandlerFunc {
+	return s.withOptionalAuthError(next, "unauthorized")
+}
+
+func (s *Server) withOptionalAuthError(next http.HandlerFunc, errorCode string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authorization := strings.TrimSpace(r.Header.Get("Authorization"))
 		if authorization == "" {
@@ -138,12 +142,12 @@ func (s *Server) withOptionalAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		parts := strings.Fields(authorization)
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": errorCode})
 			return
 		}
 		account, err := s.authService.AuthenticateToken(r.Context(), parts[1])
 		if err != nil {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "unauthorized"})
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": errorCode})
 			return
 		}
 		ctx := contextWithAuthenticatedUser(r.Context(), account)

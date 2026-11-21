@@ -125,7 +125,7 @@ test("active score rooms keep the settlement action fixed above history content"
     .split('<block wx:elif="{{room.status === \'active\'}}">')[1]
     .split('<block wx:elif="{{room.status === \'settled\'}}">')[0];
 
-  assert.match(activeTemplate, /<view wx:if="\{\{isHost && giftHistory\.length\}\}" class="settle-dock">/);
+  assert.match(activeTemplate, /<view wx:if="\{\{isHost && \(giftHistory\.length \|\| handoverHistory\.length\)\}\}" class="settle-dock">/);
   assert.match(activeTemplate, /class="settle-dock-spacer"/);
   assert.match(activeTemplate, /class="settle-dock-bar"[\s\S]*class="settle-button" bindtap="openSettlement"/);
   assert.match(roomStyle, /\.settle-dock-bar\s*\{[^}]*position:\s*fixed;/s);

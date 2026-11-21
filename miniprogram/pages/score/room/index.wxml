@@ -1,3 +1,20 @@
+<template name="mahjong-handover-rows">
+  <view wx:for="{{handoverHistory}}" wx:key="id" class="history-row">
+    <view class="history-number handover-history-icon" aria-hidden="true">⇄</view>
+    <view class="history-copy">
+      <text class="handover-history-meta">{{item.time ? item.time + ' · ' : ''}}换人</text>
+      <text class="history-line">{{item.fromName}} 离桌，{{item.toName}} 接手{{item.wind}}位 {{item.pointsText}} 分</text>
+    </view>
+  </view>
+</template>
+
+<template name="mahjong-departed-seat">
+  <view class="history-card handover-status-card">
+    <text class="section-title">你已离桌</text>
+    <text class="give-hint">离桌时{{departedSeat.wind ? departedSeat.wind + '位' : ''}}累计 {{departedSeat.scoreText}} 分。你可以继续查看本局比分与记录。</text>
+  </view>
+</template>
+
 <view class="room-page {{reducedMotion ? 'motion-reduced' : ''}} {{isGeneral ? 'general-room' : ''}}">
   <view wx:if="{{loading}}" class="state-panel">
     <view class="loading-tile">±</view>
@@ -47,9 +64,9 @@
           <text class="room-kicker">{{isGeneral ? '房间' : '牌桌'}} · {{room.code}}</text>
           <text class="room-title">{{room.name}}</text>
         </view>
-        <view class="realtime-pill realtime-{{realtimeStatus}}" bindtap="retryRealtime">
+        <view class="realtime-pill {{offline ? 'realtime-offline' : realtimeStatus === 'online' && !networkSyncing ? 'realtime-online' : ''}}" bindtap="retryRealtime">
           <view class="realtime-dot"></view>
-          <text>{{realtimeStatus === 'online' ? '实时同步' : realtimeStatus === 'connecting' ? '连接中' : '离线 · 重连'}}</text>
+          <text>{{offline ? '网络已断开' : networkSyncing ? '同步中' : realtimeStatus === 'online' ? '实时同步' : syncWarning ? '同步暂缓' : realtimeError ? '定时刷新' : '连接中'}}</text>
         </view>
       </view>
       <view class="room-footer">
@@ -68,15 +85,15 @@
     <view wx:if="{{feedback}}" class="success-banner">{{feedback}}</view>
     <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
 
-    <view wx:if="{{showAccountBinding && room.status !== 'cancelled'}}" class="account-bind-card {{accountBound ? 'account-bind-complete' : ''}}">
+    <view wx:if="{{showAccountBinding && !accountBound && room.status !== 'cancelled'}}" class="account-bind-card">
       <view class="account-bind-copy">
-        <text class="account-bind-title">{{accountBound ? '本局战绩已关联账号' : '登录后记录本局战绩'}}</text>
-        <text class="account-bind-desc">{{isGeneral ? (accountBound ? "结束结算后，本次记分会出现在你的个人战绩中。" : "游客也能继续记分；登录后可关联当前身份，不影响已有分数。") : (accountBound ? "散场结算后，本局会出现在你的个人战绩中。" : "游客也能继续记分；登录后会追溯到当前座位，不影响已有分数。")}}</text>
+        <text class="account-bind-title">登录后记录本局战绩</text>
+        <text class="account-bind-desc">{{isGeneral ? '游客也能继续记分；登录后可关联当前身份，不影响已有分数。' : '游客也能继续记分；登录后会追溯到当前座位，不影响已有分数。'}}</text>
       </view>
-      <button wx:if="{{!accountBound && isLoggedIn}}" class="account-bind-button" loading="{{bindingAccount}}" disabled="{{offline || networkSyncing || bindingAccount}}" bindtap="bindParticipantAccount">
+      <button wx:if="{{isLoggedIn}}" class="account-bind-button" loading="{{bindingAccount}}" disabled="{{offline || networkSyncing || bindingAccount}}" bindtap="bindParticipantAccount">
         {{bindingAccount ? '绑定中…' : '绑定本局战绩'}}
       </button>
-      <button wx:elif="{{!accountBound}}" class="account-bind-button" bindtap="openAccountLogin">登录并绑定</button>
+      <button wx:else class="account-bind-button" bindtap="openAccountLogin">登录并绑定</button>
     </view>
 
     <block wx:if="{{room.status === 'waiting'}}">
@@ -129,7 +146,7 @@
         </view>
       </view>
 
-      <view class="waiting-note">当前 {{activePlayers}} 人 · 开始后本局成员固定</view>
+      <view class="waiting-note">当前 {{activePlayers}} 人 · {{!isGeneral && room.maxPlayers >= 4 ? '四人开局后可由房主管理座位交接' : '开始后本局成员固定'}}</view>
       <button wx:if="{{isHost}}" class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}" disabled="{{offline || networkSyncing || busy || !canStart}}" bindtap="startRoom">
         {{startLabel}}
       </button>
@@ -140,9 +157,18 @@
     </block>
 
     <block wx:elif="{{room.status === 'active'}}">
+      <view wx:if="{{mahjongHostOfferFrom}}" class="history-card handover-status-card">
+        <text class="section-title">{{mahjongHostOfferFrom.displayName}} 邀请你担任房主</text>
+        <text class="give-hint">接任后，你可以管理牌友、撤销给分和结算。</text>
+        <text wx:if="{{handoverError && !handoverSheet}}" class="error-banner" role="alert">{{handoverError}}</text>
+        <button class="primary-button" disabled="{{offline || networkSyncing || busy}}" bindtap="acceptMahjongHost">查看并确认接任</button>
+      </view>
       <view class="section-head">
         <text class="section-title">{{isGeneral ? '积分榜' : '牌桌积分榜'}}</text>
-        <text class="section-meta">实时比分</text>
+        <button wx:if="{{canManageMahjongHandover}}" class="handover-text-action" bindtap="openMahjongHandover">
+          管理牌友<text wx:if="{{handoverPending && !handoverPending.expired && handoverPending.status === 'accepted'}}" class="handover-action-dot" aria-label="待确认换人"></text>
+        </button>
+        <text wx:else class="section-meta">实时比分</text>
       </view>
       <view wx:if="{{isGeneral}}" class="score-board">
         <view wx:for="{{participants}}" wx:key="id" class="score-row {{item.isSelf ? 'self-row' : ''}}">
@@ -155,7 +181,7 @@
         </view>
       </view>
       <view wx:else class="score-board motion-score-board" style="height: {{motionBoardHeight}}rpx;">
-        <view wx:for="{{motionScoreRows}}" wx:key="id" class="score-row motion-score-row {{item.isSelf ? 'self-row' : ''}}" style="transform: translateY({{item.motionY}}rpx);">
+        <view wx:for="{{motionScoreRows}}" wx:key="id" class="score-row motion-score-row {{item.isSelf ? 'self-row' : ''}} {{handoverReceipt && handoverReceipt.toParticipantId === item.id ? 'handover-score-row' : ''}}" style="transform: translateY({{item.motionY}}rpx);">
           <text class="rank {{item.rankClass}}">{{item.rank}}</text>
           <view class="score-seat">{{item.seatMark}}</view>
           <view class="score-name-block"><text class="score-name">{{item.displayName}}<text wx:if="{{item.isSelf}}" class="self-tag">我</text></text></view>
@@ -168,26 +194,24 @@
         <view wx:for="{{motionTransfers}}" wx:key="key" class="score-travel" style="top: {{item.fromY}}rpx; --travel-y: {{item.travelY}}rpx;" aria-hidden="true"><view class="score-bead"></view></view>
       </view>
 
-      <view class="give-card">
+      <template wx:if="{{departedSeat}}" is="mahjong-departed-seat" data="{{departedSeat: departedSeat}}" />
+      <view wx:else class="give-card">
         <view class="section-head compact-head">
           <text class="section-title">{{isGeneral ? '给好友记分' : '这局怎么给'}}</text>
           <text class="section-meta">{{isGeneral ? '可一次给多人' : '赢家无需填写'}}</text>
         </view>
         <text class="give-hint">{{isGeneral ? '填好要给出的分数，一次提交。' : '填好这局要给的分，一次交账。'}}</text>
-        <view wx:for="{{recipients}}" wx:key="id" class="give-recipient">
-        <view class="give-row">
+        <view wx:if="{{giftRosterReview}}" class="feedback-banner give-roster-review" role="status">
+          <text>{{giftRosterReview}}</text>
+          <button class="quick-button" disabled="{{busy}}" bindtap="reviewGiftRecipients">核对后继续</button>
+        </view>
+        <view wx:for="{{recipients}}" wx:key="id" class="give-row">
           <view class="give-player">
             <text class="give-name">{{item.displayName}}</text>
             <text class="give-current">当前 {{item.scoreText}} 分</text>
           </view>
-          <input class="give-input" data-id="{{item.id}}" type="number" maxlength="10" placeholder="0" value="{{item.pointsInput}}" bindinput="handleGiftInput" />
+          <input class="give-input" data-id="{{item.id}}" type="number" maxlength="10" placeholder="0" value="{{item.pointsInput}}" disabled="{{busy}}" bindinput="handleGiftInput" />
           <text class="give-unit">分</text>
-        </view>
-        <view class="quick-row">
-          <button class="quick-button" data-id="{{item.id}}" data-amount="1" bindtap="incrementGift" disabled="{{busy}}">+1</button>
-          <button class="quick-button" data-id="{{item.id}}" data-amount="5" bindtap="incrementGift" disabled="{{busy}}">+5</button>
-          <button class="quick-button" data-id="{{item.id}}" data-amount="10" bindtap="incrementGift" disabled="{{busy}}">+10</button>
-        </view>
         </view>
         <view class="give-summary">
           <view>
@@ -197,15 +221,15 @@
         </view>
         <text wx:if="{{giftPreview}}" class="give-preview">{{giftPreview}}</text>
         <text wx:if="{{giftError}}" class="error-banner" role="alert">{{giftError}}</text>
-        <button class="secondary-button" disabled="{{busy}}" bindtap="clearGifts">清空本次</button>
         <button class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}" disabled="{{offline || networkSyncing || busy || !canSubmitGifts}}" bindtap="submitGifts">确认给出 {{giftTotal}} 分</button>
       </view>
 
-      <view wx:if="{{giftHistory.length}}" class="history-card">
+      <view wx:if="{{giftHistory.length || handoverHistory.length}}" class="history-card">
         <view class="section-head compact-head">
           <text class="section-title">{{isGeneral ? '记分记录' : '牌桌记事'}}</text>
-          <text class="section-meta">最近 {{giftHistory.length}} 笔</text>
+          <text wx:if="{{giftHistory.length}}" class="section-meta">最近 {{giftHistory.length}} 笔{{handoverHistory.length ? '给分' : ''}}</text>
         </view>
+        <template is="mahjong-handover-rows" data="{{handoverHistory: handoverHistory}}" />
         <view wx:for="{{giftHistory}}" wx:key="id" class="history-row">
           <view class="history-number">{{item.number}}</view>
           <view class="history-copy">
@@ -216,13 +240,13 @@
           <button wx:if="{{item.canReverse}}" class="quick-button" data-id="{{item.id}}" disabled="{{offline || networkSyncing || busy}}" bindtap="reverseGift">撤销</button>
         </view>
         <text wx:if="{{actionError}}" class="error-banner" role="alert">{{actionError}}</text>
-        <text class="give-hint">{{isHost ? '记录有误可由房主撤销，原记录保留。' : '记录有误请联系房主撤销。'}}</text>
+        <text wx:if="{{giftHistory.length}}" class="give-hint">{{isHost ? '记录有误可由房主撤销，原记录保留。' : '记录有误请联系房主撤销。'}}</text>
       </view>
       <text wx:if="{{canCancelRoom && actionError}}" class="error-banner" role="alert">{{actionError}}</text>
       <button wx:if="{{canCancelRoom}}" class="secondary-button" disabled="{{offline || networkSyncing || busy}}" bindtap="cancelRoom">结束空房间</button>
       <button class="secondary-button" disabled="{{busy}}" bindtap="goHome">返回首页</button>
 
-      <view wx:if="{{isHost && giftHistory.length}}" class="settle-dock">
+      <view wx:if="{{isHost && (giftHistory.length || handoverHistory.length)}}" class="settle-dock">
         <view class="settle-dock-spacer"></view>
         <view class="settle-dock-bar">
           <button class="settle-button" bindtap="openSettlement" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120">{{isGeneral ? '结束并结算' : '散场结算'}}</button>
@@ -238,6 +262,7 @@
         <text class="settled-subtitle">{{isGeneral ? '最终积分与转账建议如下' : '最终输赢与转账建议如下'}}</text>
       </view>
 
+      <template wx:if="{{departedSeat}}" is="mahjong-departed-seat" data="{{departedSeat: departedSeat}}" />
       <view class="transfer-card personal-settlement">
         <text class="section-title">{{personalSettlementTitle}}</text>
         <view wx:for="{{personalSettlementRows}}" wx:key="key" class="personal-transfer">{{item.text}}</view>
@@ -259,9 +284,15 @@
         <view wx:for="{{settlementTransfers}}" wx:key="key" class="transfer-row">
           <text class="transfer-from">{{item.fromName}}</text>
           <text class="transfer-arrow">→</text>
-          <text class="transfer-to">{{item.toName}}</text>
-          <text class="transfer-amount">{{item.amountText}}</text>
+          <view class="transfer-destination">
+            <text class="transfer-to">{{item.toName}}</text>
+            <text class="transfer-amount">{{item.amountText}}</text>
+          </view>
         </view>
+      </view>
+      <view wx:if="{{handoverHistory.length}}" class="history-card">
+        <view class="section-head compact-head"><text class="section-title">牌桌记事</text></view>
+        <template is="mahjong-handover-rows" data="{{handoverHistory: handoverHistory}}" />
       </view>
       <text wx:if="{{settlementCopyError}}" class="error-banner" role="alert">{{settlementCopyError}}</text>
       <button class="secondary-button" bindtap="copySettlement">复制完整结算清单</button>
@@ -288,6 +319,80 @@
         <text wx:else class="qr-placeholder">生成微信邀请码中…</text>
       </view>
       <text class="qr-preview-hint">再次点击二维码收起</text>
+    </view>
+  </view>
+
+  <view wx:if="{{handoverSheet && canManageMahjongHandover}}" class="sheet-mask handover-mask" bindtap="closeMahjongHandover">
+    <view class="settlement-sheet handover-sheet" catchtap="noop">
+      <view class="sheet-handle"></view>
+      <view class="handover-sheet-header">
+        <text class="sheet-title">{{handoverSheet === 'host' ? '移交房主' : !handoverPending || handoverPending.expired ? '选择离桌玩家' : handoverPending.status === 'open' ? '邀请接手' + handoverPending.wind + '位' : '确认换人'}}</text>
+        <button class="handover-sheet-close" bindtap="closeMahjongHandover" aria-label="关闭牌友管理">×</button>
+      </view>
+      <view wx:if="{{offline || networkSyncing}}" class="error-banner" role="alert">{{offline ? '网络中断，操作已暂停。' : networkRecoveryError || '正在同步最新记录，请稍候。'}}</view>
+      <button wx:if="{{!offline && networkSyncing && networkRecoveryError}}" class="secondary-button" bindtap="retryNetworkSync">重试同步</button>
+      <view wx:if="{{handoverError}}" class="error-banner" role="alert">{{handoverError}}</view>
+
+      <block wx:if="{{handoverSheet === 'host' && pendingMahjongHost}}">
+        <text class="sheet-desc">正在等待 {{pendingMahjongHost.displayName}} 接受房主邀请。</text>
+        <button class="secondary-button" loading="{{busy}}" disabled="{{offline || networkSyncing || busy}}" bindtap="cancelMahjongHost">取消房主邀请</button>
+      </block>
+      <block wx:elif="{{handoverSheet === 'host' || !handoverPending || handoverPending.expired}}">
+        <text wx:if="{{handoverSheet === 'host'}}" class="sheet-desc">选择一位在桌牌友。对方确认后即成为房主。</text>
+        <text wx:else class="sheet-desc">{{handoverPending && handoverPending.expired ? '接手码已过期，可生成新的接手码。' : '先记完这一把的分，再换人。'}}</text>
+        <view class="handover-options">
+          <button wx:for="{{handoverChoices}}" wx:key="id"
+            class="handover-choice {{handoverSelectedId === item.id ? 'handover-choice-selected' : ''}}"
+            data-id="{{item.id}}" bindtap="selectMahjongHandoverPlayer" disabled="{{busy || item.role === 'host'}}">
+            <text class="score-seat">{{item.seatMark}}</text>
+            <text class="handover-choice-name">{{item.displayName}}{{item.role === 'host' ? ' · 房主' : ''}}</text>
+            <text class="handover-choice-points {{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.scoreText}}</text>
+            <text wx:if="{{item.role !== 'host'}}" class="handover-select {{handoverSelectedId === item.id ? 'handover-select-on' : ''}}" aria-hidden="true">{{handoverSelectedId === item.id ? '✓' : ''}}</text>
+            <view wx:else class="handover-select-place"></view>
+          </button>
+        </view>
+        <button wx:if="{{handoverSheet === 'host'}}" class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}" disabled="{{offline || networkSyncing || busy || !handoverSelection}}" bindtap="offerMahjongHost">
+          {{handoverSelection ? '邀请 ' + handoverSelection.displayName + ' 担任房主' : '发出房主邀请'}}
+        </button>
+        <block wx:else>
+          <button class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}" disabled="{{offline || networkSyncing || busy || !handoverSelection}}" bindtap="inviteMahjongHandover">
+            {{handoverSelection ? '生成' + handoverSelection.wind + '位接手码' : '生成接手码'}}
+          </button>
+          <text class="handover-room-note">房主离桌前需先移交房主。</text>
+        </block>
+      </block>
+      <block wx:elif="{{handoverPending.status === 'open'}}">
+        <text class="sheet-desc">{{handoverPending.fromName}} 准备离桌，{{handoverPending.wind}}位累计 <text class="{{handoverPending.points >= 0 ? 'positive' : 'negative'}}">{{handoverPending.pointsText}} 分</text></text>
+        <view class="handover-qr-stage">
+          <image wx:if="{{handoverCodeImage}}" class="handover-qr" src="{{handoverCodeImage}}" mode="aspectFit" binderror="showHandoverCodeFallback" style="width: {{handoverCodeSize}}px; height: {{handoverCodeSize}}px;" aria-label="接手邀请小程序码" />
+          <canvas wx:elif="{{handoverCodePath && !handoverCodeError}}" canvas-id="mahjongHandoverQr" class="handover-qr" style="width: {{handoverCodeSize}}px; height: {{handoverCodeSize}}px;" aria-label="接手邀请二维码" />
+          <text wx:elif="{{handoverCodeError}}" class="sheet-desc">{{handoverCodeError}}</text>
+          <text wx:else class="sheet-desc">{{offline || networkSyncing ? '连接恢复后显示接手码' : '正在生成接手码…'}}</text>
+        </view>
+        <text class="handover-qr-caption">仅一人可接手{{handoverPending.expiresTime ? ' · ' + handoverPending.expiresTime + ' 前扫码' : ''}}</text>
+        <text wx:if="{{handoverCodePath && !handoverCodeImage && !handoverCodeError}}" class="handover-qr-caption">请在「麻将记分」里点「扫码加入」扫描备用码。</text>
+        <button wx:if="{{handoverCodePath}}" class="primary-button" open-type="share" data-handover-share="true" disabled="{{offline || networkSyncing || busy}}">转发接手邀请</button>
+        <button wx:elif="{{handoverCodeError}}" class="primary-button" disabled="{{offline || networkSyncing || busy}}" bindtap="ensureMahjongHandoverCode">重试生成接手码</button>
+        <button class="secondary-button" disabled="{{offline || networkSyncing || busy}}" bindtap="cancelMahjongHandover">取消邀请</button>
+      </block>
+      <block wx:else>
+        <text class="sheet-desc">{{handoverPending.status === 'accepted' ? handoverPending.candidateName + ' 已确认接手 ' + handoverPending.pointsText + ' 分' : '分数已更新，等待 ' + handoverPending.candidateName + ' 重新确认。'}}</text>
+        <view class="handover-swap-card">
+          <view class="handover-swap-names">
+            <view><text>{{handoverPending.fromName}}</text><text class="handover-swap-role">离桌</text></view>
+            <text class="handover-swap-arrow" aria-hidden="true">→</text>
+            <view><text>{{handoverPending.candidateName}}</text><text class="handover-swap-role">接手</text></view>
+          </view>
+          <view class="handover-swap-points"><text>{{handoverPending.wind}}位累计</text><text class="{{handoverPending.points >= 0 ? 'positive' : 'negative'}}">{{handoverPending.pointsText}} 分</text></view>
+        </view>
+        <text class="sheet-desc">确认后，{{handoverPending.candidateName}} 以该分数继续记分。</text>
+        <button class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{busy}}"
+          disabled="{{offline || networkSyncing || busy || handoverPending.status !== 'accepted'}}" data-id="{{handoverPending.id}}" data-version="{{room.version}}" bindtap="confirmMahjongHandover">确认换人</button>
+        <button class="secondary-button" disabled="{{offline || networkSyncing || busy}}" bindtap="cancelMahjongHandover">取消邀请</button>
+      </block>
+
+      <button wx:if="{{handoverSheet === 'seat'}}" class="handover-text-action handover-sheet-switch" disabled="{{busy}}" bindtap="openMahjongHostTransfer">{{pendingMahjongHost ? '查看房主邀请' : '移交房主'}}</button>
+      <button wx:else class="handover-text-action handover-sheet-switch" disabled="{{busy}}" bindtap="openMahjongHandover">返回牌友管理</button>
     </view>
   </view>
 
@@ -322,7 +427,18 @@
     </view>
   </view>
 
-  <view wx:if="{{motionNotice && !isGeneral}}" class="motion-notice" role="status">✓ {{motionNotice}}<text wx:if="{{motionTransferSummary}}" class="motion-transfer-copy">{{motionTransferSummary}}</text></view>
+  <view wx:if="{{handoverReceipt && room.status === 'active'}}" class="gift-receipt" role="status">
+    <text class="gift-receipt-check" aria-hidden="true">✓</text>
+    <text>{{handoverReceipt.toName}} 已接替 {{handoverReceipt.fromName}}，承接 {{handoverReceipt.pointsText}} 分</text>
+  </view>
+  <block wx:elif="{{giftReceipt && room.status === 'active'}}">
+    <view wx:for="{{[giftReceipt]}}" wx:for-item="receipt" wx:key="version" class="gift-receipt" role="status">
+      <text class="gift-receipt-check" aria-hidden="true">✓</text>
+      <text>给分已入账</text>
+      <text class="gift-receipt-points">{{receipt.points}} 分</text>
+    </view>
+  </block>
+  <view wx:elif="{{motionNotice && !isGeneral}}" class="motion-notice" role="status">✓ {{motionNotice}}<text wx:if="{{motionTransferSummary}}" class="motion-transfer-copy">{{motionTransferSummary}}</text></view>
   <view wx:if="{{motionScene === 'start' || motionScene === 'joined'}}" class="motion-stage" aria-hidden="true">
     <view class="motion-stage-card {{motionScene === 'joined' ? 'join-stage-card' : ''}}">
       <view wx:if="{{motionScene === 'start'}}" class="start-tiles"><view wx:for="{{motionTiles}}" wx:key="*this" class="start-tile tile-{{index}}"><view class="wind-sprite wind-{{index}}"><image class="wind-atlas" src="/assets/illustrations/mahjong-winds-atlas.png" mode="scaleToFill" /></view></view></view>

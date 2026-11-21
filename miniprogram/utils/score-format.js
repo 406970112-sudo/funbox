@@ -64,7 +64,8 @@ function buildHistoryItems(rooms) {
   return (Array.isArray(rooms) ? rooms : []).map((room) => {
     const participants = Array.isArray(room.participants) ? room.participants : [];
     const self = participants.find((participant) => participant.id === room.selfParticipantId) || null;
-    const points = self ? Math.trunc(Number(self.totalPoints) || 0) : 0;
+    const leftSeat = room.gameType === "mahjong" && self?.status === "left" && Number.isSafeInteger(self.leftAtPoints);
+    const points = leftSeat ? self.leftAtPoints : Math.trunc(Number(self?.totalPoints) || 0);
     return {
       id: room.id,
       name: room.name || "未命名牌局",
@@ -74,7 +75,7 @@ function buildHistoryItems(rooms) {
         : "暂无参与者",
       timeText: formatHistoryTime(room.settledAt || room.startedAt || room.createdAt),
       scoreText: self ? `${formatScore(points)} 分` : "—",
-      amountText: self ? formatCNY(self.amountCents) : "—",
+      amountText: leftSeat ? "离桌分数" : self ? formatCNY(self.amountCents) : "—",
       resultClass: points > 0 ? "result-win" : points < 0 ? "result-loss" : "result-even",
     };
   });

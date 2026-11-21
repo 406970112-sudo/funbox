@@ -58,6 +58,7 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/invite-token", api.withScoreActor(api.withAPIPipeline(api.handleScoreInviteToken)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/invite-code", api.withScoreActor(api.withAPIPipeline(api.handleScoreInviteCode)))
 	mux.HandleFunc("POST /api/v1/score-rooms/{roomID}/realtime-ticket", api.withScoreActor(api.withAPIPipeline(api.handleCreateScoreRealtimeTicket)))
+	registerMahjongHandoverRoutes(mux, api)
 }
 
 func (s *Server) withScoreActor(next http.HandlerFunc) http.HandlerFunc {
@@ -524,6 +525,10 @@ func (s *Server) writeScoreError(w http.ResponseWriter, err error) {
 		writeJSON(w, http.StatusForbidden, map[string]any{"error": "score_action_forbidden"})
 	case errors.Is(err, score.ErrInviteInvalid):
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "score_invite_invalid"})
+	case errors.Is(err, score.ErrHandoverScoreChanged):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_handover_score_changed"})
+	case errors.Is(err, score.ErrHandoverClaimed):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": "score_handover_claimed"})
 	case errors.Is(err, score.ErrInviteCodeUnavailable):
 		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "score_invite_code_unavailable"})
 	case errors.Is(err, score.ErrPasswordRequired):

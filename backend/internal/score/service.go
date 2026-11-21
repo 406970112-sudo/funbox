@@ -46,6 +46,7 @@ var (
 )
 
 type Actor struct {
+	tokenVersion  int
 	ParticipantID string          `json:"participantId"`
 	UserID        string          `json:"userId,omitempty"`
 	RoomID        string          `json:"roomId"`
@@ -396,14 +397,14 @@ func (s *Service) createRoomWithCode(ctx context.Context, hostUserID, displayNam
 			return CreateRoomResult{}, false, err
 		}
 	}
-	room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+	room, err := s.loadRoomSnapshot(ctx, tx, roomID)
 	if err != nil {
 		return CreateRoomResult{}, false, err
 	}
 	if err := tx.Commit(); err != nil {
 		return CreateRoomResult{}, false, fmt.Errorf("commit score room: %w", err)
 	}
-	actor := Actor{ParticipantID: participantID, UserID: hostUserID, RoomID: roomID, Role: ParticipantHost}
+	actor := Actor{ParticipantID: participantID, UserID: hostUserID, RoomID: roomID, Role: ParticipantHost, tokenVersion: 1}
 	inviteToken, err := s.signToken(tokenClaims{Type: "score_invite", RoomID: roomID, Code: code}, s.guestTTL)
 	if err != nil {
 		return CreateRoomResult{}, false, err
@@ -462,7 +463,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if err != nil {
 		return JoinRoomResult{}, fmt.Errorf("find score room: %w", err)
 	}
-	joinRoom, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+	joinRoom, err := s.loadRoomSnapshot(ctx, tx, roomID)
 	if err != nil {
 		return JoinRoomResult{}, err
 	}
@@ -484,15 +485,16 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	}
 	if userID != "" {
 		var existingID, existingRole, existingStatus string
+		var tokenVersion int
 		err := tx.QueryRowContext(ctx, `
-			SELECT id, role, status FROM score_participants
+			SELECT id, role, status, token_version FROM score_participants
 			WHERE room_id = ? AND user_id = ?
-		`, roomID, userID).Scan(&existingID, &existingRole, &existingStatus)
+		`, roomID, userID).Scan(&existingID, &existingRole, &existingStatus, &tokenVersion)
 		if err == nil {
 			if existingStatus != string(ParticipantActive) || existingRole != string(ParticipantGuest) {
 				return JoinRoomResult{}, ErrInvalidState
 			}
-			room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+			room, err := s.loadRoomSnapshot(ctx, tx, roomID)
 			if err != nil {
 				return JoinRoomResult{}, err
 			}
@@ -504,7 +506,7 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 				return JoinRoomResult{}, err
 			}
 			room.SelfParticipantID = existingID
-			actor := Actor{ParticipantID: existingID, UserID: userID, RoomID: roomID, Role: ParticipantGuest}
+			actor := Actor{ParticipantID: existingID, UserID: userID, RoomID: roomID, Role: ParticipantGuest, tokenVersion: tokenVersion}
 			return JoinRoomResult{Room: room, Actor: actor, GuestToken: guestToken}, nil
 		}
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -539,14 +541,14 @@ func (s *Service) JoinRoom(ctx context.Context, input JoinRoomInput) (JoinRoomRe
 	if _, err := bumpRoomAndAppendEvent(ctx, tx, roomID, participantID, "participant.joined", map[string]any{"participantId": participantID}, now); err != nil {
 		return JoinRoomResult{}, err
 	}
-	room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+	room, err := s.loadRoomSnapshot(ctx, tx, roomID)
 	if err != nil {
 		return JoinRoomResult{}, err
 	}
 	if err := tx.Commit(); err != nil {
 		return JoinRoomResult{}, fmt.Errorf("commit score room join: %w", err)
 	}
-	actor := Actor{ParticipantID: participantID, UserID: userID, RoomID: roomID, Role: ParticipantGuest}
+	actor := Actor{ParticipantID: participantID, UserID: userID, RoomID: roomID, Role: ParticipantGuest, tokenVersion: 1}
 	guestToken, err := s.signToken(tokenClaims{
 		Type: "score_guest", RoomID: roomID, ParticipantID: participantID, TokenVersion: 1,
 	}, s.guestTTL)
@@ -564,7 +566,7 @@ func (s *Service) PreviewInvite(ctx context.Context, userID string, input Invite
 	if err != nil {
 		return InvitePreviewResult{}, err
 	}
-	room, err := s.store.loadRoomSnapshot(ctx, s.store.db, roomID)
+	room, err := s.readRoomSnapshot(ctx, roomID)
 	if err != nil {
 		return InvitePreviewResult{}, err
 	}
@@ -722,6 +724,11 @@ func (s *Service) StartRoom(ctx context.Context, actor Actor, meta CommandMeta) 
 		}
 		if room.Status != RoomWaiting || len(activeParticipants(room.Participants)) < 2 {
 			return ErrInvalidState
+		}
+		if room.GameType == GameTypeMahjong && len(activeParticipants(room.Participants)) == 4 {
+			if err := seedMahjongSeats(ctx, tx, room.ID); err != nil {
+				return err
+			}
 		}
 		_, err := tx.ExecContext(ctx, `UPDATE score_rooms SET status = 'active', started_at = ? WHERE id = ?`, s.now().UTC().Unix(), room.ID)
 		return err
@@ -1294,7 +1301,7 @@ func (s *Service) CancelRoom(ctx context.Context, actor Actor, meta CommandMeta)
 		canCancelActive := room.Status == RoomActive && (room.GameType == GameTypeMahjong || room.GameType == GameTypeGeneric)
 		if (room.Status != RoomWaiting && !canCancelActive) || len(room.GiftBatches) != 0 ||
 			len(room.Rounds) != 0 || room.CurrentRound != nil ||
-			len(room.ZhaJinHuaHands) != 0 || room.CurrentZhaJinHuaHand != nil {
+			len(room.ZhaJinHuaHands) != 0 || room.CurrentZhaJinHuaHand != nil || len(room.MahjongHandovers) != 0 {
 			return ErrInvalidState
 		}
 		// Snapshots omit cancelled rounds; persisted history still prevents deleting the room.
@@ -1307,6 +1314,11 @@ func (s *Service) CancelRoom(ctx context.Context, actor Actor, meta CommandMeta)
 		}
 		if hasHistory {
 			return ErrInvalidState
+		}
+		if room.GameType == GameTypeMahjong {
+			if err := s.clearMahjongRoomInvitations(ctx, tx, room.ID); err != nil {
+				return err
+			}
 		}
 		_, err := tx.ExecContext(ctx, `UPDATE score_rooms SET status = 'cancelled', cancelled_at = ? WHERE id = ?`, s.now().UTC().Unix(), room.ID)
 		return err
@@ -1324,7 +1336,7 @@ func (s *Service) RemoveParticipant(ctx context.Context, actor Actor, meta Comma
 		if room.Status != RoomWaiting && room.Status != RoomActive {
 			return ErrInvalidState
 		}
-		if room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil {
+		if room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil || len(room.MahjongHandovers) != 0 {
 			return ErrInvalidState
 		}
 		result, err := tx.ExecContext(ctx, `
@@ -1338,6 +1350,9 @@ func (s *Service) RemoveParticipant(ctx context.Context, actor Actor, meta Comma
 		changed, _ := result.RowsAffected()
 		if changed != 1 {
 			return ErrParticipantMissing
+		}
+		if room.GameType == GameTypeMahjong {
+			return s.clearMahjongRoomInvitations(ctx, tx, room.ID)
 		}
 		return nil
 	})
@@ -1353,7 +1368,7 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 			return ErrForbidden
 		}
 		if room.Status != RoomActive || room.CurrentRound != nil || room.CurrentZhaJinHuaHand != nil ||
-			(room.ZhaJinHuaSettings.RulesVersion != 2 && len(room.Rounds) == 0 && len(room.GiftBatches) == 0 && len(room.ZhaJinHuaHands) == 0) {
+			(room.ZhaJinHuaSettings.RulesVersion != 2 && len(room.Rounds) == 0 && len(room.GiftBatches) == 0 && len(room.ZhaJinHuaHands) == 0 && len(room.MahjongHandovers) == 0) {
 			return ErrInvalidState
 		}
 		if room.ZhaJinHuaSettings.RulesVersion == 2 && input.CentsPerPoint != 0 && input.CentsPerPoint != room.CentsPerPoint {
@@ -1373,6 +1388,9 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 		order := make([]string, 0, len(room.Participants))
 		settlementBalances := make([]SettlementBalance, 0, len(room.Participants))
 		for _, participant := range room.Participants {
+			if len(room.MahjongHandovers) != 0 && participant.Status != ParticipantActive {
+				continue
+			}
 			amount := participant.TotalPoints * centsPerPoint
 			balances[participant.ID] = amount
 			order = append(order, participant.ID)
@@ -1397,6 +1415,11 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 		if err != nil {
 			return fmt.Errorf("store score settlement: %w", err)
 		}
+		if room.GameType == GameTypeMahjong {
+			if err := s.clearMahjongRoomInvitations(ctx, tx, room.ID); err != nil {
+				return err
+			}
+		}
 		_, err = tx.ExecContext(ctx, `
 			UPDATE score_rooms SET status = 'settled', cents_per_point = ?, settled_at = ? WHERE id = ?
 		`, centsPerPoint, now, room.ID)
@@ -1404,11 +1427,33 @@ func (s *Service) SettleRoom(ctx context.Context, actor Actor, meta CommandMeta,
 	})
 }
 
-func (s *Service) GetRoom(ctx context.Context, actor Actor) (RoomSnapshot, error) {
-	if err := s.validateActor(ctx, s.store.db, actor, false); err != nil {
+func (s *Service) loadRoomSnapshot(ctx context.Context, q queryer, roomID string) (RoomSnapshot, error) {
+	room, err := s.store.loadRoomSnapshot(ctx, q, roomID)
+	if h := room.MahjongHandover; h != nil && (room.Status != RoomActive || !s.now().Before(h.ExpiresAt)) {
+		room.MahjongHandover = nil
+	}
+	return room, err
+}
+
+func (s *Service) readRoomSnapshot(ctx context.Context, roomID string) (RoomSnapshot, error) {
+	tx, err := s.store.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
 		return RoomSnapshot{}, err
 	}
-	room, err := s.store.loadRoomSnapshot(ctx, s.store.db, actor.RoomID)
+	defer tx.Rollback()
+	return s.loadRoomSnapshot(ctx, tx, roomID)
+}
+
+func (s *Service) GetRoom(ctx context.Context, actor Actor) (RoomSnapshot, error) {
+	tx, err := s.store.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
+	defer tx.Rollback()
+	if err := s.validateActor(ctx, tx, actor, false); err != nil {
+		return RoomSnapshot{}, err
+	}
+	room, err := s.loadRoomSnapshot(ctx, tx, actor.RoomID)
 	if err != nil {
 		return RoomSnapshot{}, err
 	}
@@ -1452,7 +1497,7 @@ func (s *Service) ListHistory(ctx context.Context, userID string, options Histor
 	_ = rows.Close()
 	history := make([]RoomSnapshot, 0, len(roomIDs))
 	for _, roomID := range roomIDs {
-		room, err := s.store.loadRoomSnapshot(ctx, s.store.db, roomID)
+		room, err := s.readRoomSnapshot(ctx, roomID)
 		if err != nil {
 			return nil, err
 		}
@@ -1525,10 +1570,12 @@ func (s *Service) ActorForUser(ctx context.Context, roomID, userID string) (Acto
 	var actor Actor
 	var role string
 	err := s.store.db.QueryRowContext(ctx, `
-		SELECT id, room_id, user_id, role
-		FROM score_participants
-		WHERE room_id = ? AND user_id = ? AND status = 'active'
-	`, roomID, userID).Scan(&actor.ParticipantID, &actor.RoomID, &actor.UserID, &role)
+		SELECT p.id, p.room_id, p.user_id, p.role, p.token_version
+		FROM score_participants p
+		LEFT JOIN score_mahjong_seats ms ON ms.participant_id = p.id
+		WHERE p.room_id = ? AND p.user_id = ?
+			AND (p.status = 'active' OR (p.status = 'left' AND ms.left_at_points IS NOT NULL))
+	`, roomID, userID).Scan(&actor.ParticipantID, &actor.RoomID, &actor.UserID, &role, &actor.tokenVersion)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Actor{}, ErrUnauthorized
 	}
@@ -1671,14 +1718,15 @@ func (s *Service) AuthenticateGuestToken(ctx context.Context, rawToken string) (
 	var roomID, role, participantStatus, roomStatus string
 	var userID sql.NullString
 	var tokenVersion int
-	var settledAt sql.NullInt64
+	var settledAt, leftAtPoints sql.NullInt64
 	err = s.store.db.QueryRowContext(ctx, `
-		SELECT p.room_id, p.user_id, p.role, p.status, p.token_version, r.status, r.settled_at
+		SELECT p.room_id, p.user_id, p.role, p.status, p.token_version, r.status, r.settled_at, ms.left_at_points
 		FROM score_participants p
 		JOIN score_rooms r ON r.id = p.room_id
+		LEFT JOIN score_mahjong_seats ms ON ms.participant_id = p.id
 		WHERE p.id = ? AND p.room_id = ?
 	`, claims.ParticipantID, claims.RoomID).Scan(
-		&roomID, &userID, &role, &participantStatus, &tokenVersion, &roomStatus, &settledAt,
+		&roomID, &userID, &role, &participantStatus, &tokenVersion, &roomStatus, &settledAt, &leftAtPoints,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Actor{}, ErrUnauthorized
@@ -1687,16 +1735,24 @@ func (s *Service) AuthenticateGuestToken(ctx context.Context, rawToken string) (
 		return Actor{}, err
 	}
 	if (role != string(ParticipantHost) && role != string(ParticipantGuest)) ||
-		participantStatus != string(ParticipantActive) || tokenVersion != claims.TokenVersion {
+		!validMahjongReader(participantStatus, leftAtPoints) || tokenVersion != claims.TokenVersion {
 		return Actor{}, ErrUnauthorized
 	}
-	if roomStatus == string(RoomCancelled) {
+	if !allowsGuestRoomAccess(RoomStatus(roomStatus), nullableUnixTime(settledAt), s.now()) {
 		return Actor{}, ErrUnauthorized
 	}
-	if roomStatus == string(RoomSettled) && (!settledAt.Valid || s.now().UTC().After(time.Unix(settledAt.Int64, 0).UTC().Add(24*time.Hour))) {
-		return Actor{}, ErrUnauthorized
+	return Actor{ParticipantID: claims.ParticipantID, UserID: userID.String, RoomID: roomID, Role: ParticipantRole(role), tokenVersion: tokenVersion}, nil
+}
+
+func allowsGuestRoomAccess(status RoomStatus, settledAt *time.Time, now time.Time) bool {
+	switch status {
+	case RoomCancelled:
+		return false
+	case RoomSettled:
+		return settledAt != nil && !now.After(settledAt.Add(24*time.Hour))
+	default:
+		return true
 	}
-	return Actor{ParticipantID: claims.ParticipantID, UserID: userID.String, RoomID: roomID, Role: ParticipantRole(role)}, nil
 }
 
 func (s *Service) BindParticipantAccount(ctx context.Context, accountID, roomID, participantToken string) (RoomSnapshot, error) {
@@ -1720,6 +1776,9 @@ func (s *Service) BindParticipantAccount(ctx context.Context, accountID, roomID,
 		return RoomSnapshot{}, fmt.Errorf("begin score account binding: %w", err)
 	}
 	defer tx.Rollback()
+	if _, err := s.validateActorState(ctx, tx, actor, true); err != nil {
+		return RoomSnapshot{}, err
+	}
 
 	var participantRoomID, participantStatus, participantRole, roomStatus string
 	var boundUserID sql.NullString
@@ -1748,7 +1807,7 @@ func (s *Service) BindParticipantAccount(ctx context.Context, accountID, roomID,
 		if boundAccountID != accountID {
 			return RoomSnapshot{}, ErrAccountAlreadyBound
 		}
-		room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+		room, err := s.loadRoomSnapshot(ctx, tx, roomID)
 		if err != nil {
 			return RoomSnapshot{}, err
 		}
@@ -1794,7 +1853,7 @@ func (s *Service) BindParticipantAccount(ctx context.Context, accountID, roomID,
 		}
 	}
 
-	room, err := s.store.loadRoomSnapshot(ctx, tx, roomID)
+	room, err := s.loadRoomSnapshot(ctx, tx, roomID)
 	if err != nil {
 		return RoomSnapshot{}, err
 	}
@@ -1828,6 +1887,10 @@ func (s *Service) mutate(
 		return RoomSnapshot{}, fmt.Errorf("begin score command: %w", err)
 	}
 	defer tx.Rollback()
+	status, err := s.validateActorState(ctx, tx, actor, true)
+	if err != nil {
+		return RoomSnapshot{}, err
+	}
 
 	var savedHash, savedJSON string
 	err = tx.QueryRowContext(ctx, `
@@ -1847,10 +1910,10 @@ func (s *Service) mutate(
 	if !errors.Is(err, sql.ErrNoRows) {
 		return RoomSnapshot{}, fmt.Errorf("load score command receipt: %w", err)
 	}
-	if err := s.validateActor(ctx, tx, actor, true); err != nil {
-		return RoomSnapshot{}, err
+	if status == RoomSettled || status == RoomCancelled {
+		return RoomSnapshot{}, ErrInvalidState
 	}
-	room, err := s.store.loadRoomSnapshot(ctx, tx, actor.RoomID)
+	room, err := s.loadRoomSnapshot(ctx, tx, actor.RoomID)
 	if err != nil {
 		return RoomSnapshot{}, err
 	}
@@ -1865,9 +1928,14 @@ func (s *Service) mutate(
 	if _, err := bumpRoomAndAppendEvent(ctx, tx, room.ID, actor.ParticipantID, commandType, payload, now); err != nil {
 		return RoomSnapshot{}, err
 	}
-	result, err := s.store.loadRoomSnapshot(ctx, tx, room.ID)
+	result, err := s.loadRoomSnapshot(ctx, tx, room.ID)
 	if err != nil {
 		return RoomSnapshot{}, err
+	}
+	if h := result.MahjongHandover; h != nil && h.Status == "reconfirm" {
+		if _, err := tx.ExecContext(ctx, `UPDATE score_mahjong_handovers SET status = 'reconfirm' WHERE id = ? AND status = 'accepted'`, h.ID); err != nil {
+			return RoomSnapshot{}, err
+		}
 	}
 	result.SelfParticipantID = actor.ParticipantID
 	resultJSON, err := json.Marshal(result)
@@ -1890,31 +1958,47 @@ func (s *Service) mutate(
 }
 
 func (s *Service) validateActor(ctx context.Context, q queryer, actor Actor, write bool) error {
-	var roomID, userID, role, participantStatus, roomStatus string
-	var nullableUserID sql.NullString
-	err := q.QueryRowContext(ctx, `
-		SELECT p.room_id, p.user_id, p.role, p.status, r.status
-		FROM score_participants p
-		JOIN score_rooms r ON r.id = p.room_id
-		WHERE p.id = ?
-	`, actor.ParticipantID).Scan(&roomID, &nullableUserID, &role, &participantStatus, &roomStatus)
-	if errors.Is(err, sql.ErrNoRows) {
-		return ErrUnauthorized
-	}
+	roomStatus, err := s.validateActorState(ctx, q, actor, write)
 	if err != nil {
 		return err
 	}
-	userID = nullableUserID.String
-	if roomID != actor.RoomID || role != string(actor.Role) || participantStatus != string(ParticipantActive) {
-		return ErrUnauthorized
-	}
-	if userID != "" && actor.UserID != userID {
-		return ErrUnauthorized
-	}
-	if write && (roomStatus == string(RoomSettled) || roomStatus == string(RoomCancelled)) {
+	if write && (roomStatus == RoomSettled || roomStatus == RoomCancelled) {
 		return ErrInvalidState
 	}
 	return nil
+}
+
+func (s *Service) validateActorState(ctx context.Context, q queryer, actor Actor, write bool) (RoomStatus, error) {
+	var roomID, role, participantStatus string
+	var roomStatus RoomStatus
+	var userID sql.NullString
+	var leftAtPoints sql.NullInt64
+	var tokenVersion int
+	err := q.QueryRowContext(ctx, `
+		SELECT p.room_id, p.user_id, p.role, p.status, r.status, p.token_version, ms.left_at_points
+		FROM score_participants p
+		JOIN score_rooms r ON r.id = p.room_id
+		LEFT JOIN score_mahjong_seats ms ON ms.participant_id = p.id
+		WHERE p.id = ?
+	`, actor.ParticipantID).Scan(&roomID, &userID, &role, &participantStatus, &roomStatus, &tokenVersion, &leftAtPoints)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", ErrUnauthorized
+	}
+	if err != nil {
+		return "", err
+	}
+	if roomID != actor.RoomID || role != string(actor.Role) || !validMahjongReader(participantStatus, leftAtPoints) ||
+		(userID.String != "" && actor.UserID != userID.String) || (actor.tokenVersion != 0 && actor.tokenVersion != tokenVersion) {
+		return "", ErrUnauthorized
+	}
+	if write && participantStatus != string(ParticipantActive) {
+		return "", ErrForbidden
+	}
+	return roomStatus, nil
+}
+
+func validMahjongReader(status string, leftAtPoints sql.NullInt64) bool {
+	return status == string(ParticipantActive) || (status == string(ParticipantLeft) && leftAtPoints.Valid)
 }
 
 func findZhaJinHuaPlayer(players []ZhaJinHuaPlayer, participantID string) *ZhaJinHuaPlayer {

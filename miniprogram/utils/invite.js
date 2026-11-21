@@ -33,8 +33,14 @@ function buildInviteContent(inviteToken) {
   return `/pages/score/room/index?invite=${encodeURIComponent(inviteToken)}`;
 }
 
+function isMahjongHandoverScene(scene) {
+  // Ordinary invitation scenes contain only the 22-character random token.
+  return /^h_[A-Za-z0-9_-]{22}$/.test(scene);
+}
+
 module.exports = {
   buildInviteContent,
   extractInviteScene,
   extractInviteToken,
+  isMahjongHandoverScene,
 };

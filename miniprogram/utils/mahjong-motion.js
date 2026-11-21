@@ -34,7 +34,6 @@ const motionData = {
   motionJoinedIds: [], motionJoined: {},
   motionTiles: ['東', '南', '西', '北'],
   roomCodeCopied: false,
-  giftConfirmed: false,
 };
 
 const motionPage = {
@@ -55,7 +54,7 @@ const motionPage = {
     this.motionScoreTimer = null;
     this.motionEndTimer = null;
     this.setData({
-      motionScene: '', motionNotice: '', motionTransfers: [], motionTransferSummary: '', motionJoinedIds: [], motionJoined: {}, roomCodeCopied: false, giftConfirmed: false,
+      motionScene: '', motionNotice: '', motionTransfers: [], motionTransferSummary: '', motionJoinedIds: [], motionJoined: {}, roomCodeCopied: false,
       motionScoreRows: this.data.motionScoreRows.map(p => ({ ...p, displayScoreText: formatScore(p.totalPoints), deltaText: '' })),
     });
   },
@@ -67,7 +66,7 @@ const motionPage = {
     this.motionEndTimer = setTimeout(() => {
       this.motionEndTimer = null;
       if (this.pageVisible === false || this.pageActive === false) return;
-      this.setData({ motionScene: '', motionNotice: '', motionJoinedIds: [], motionJoined: {}, motionTransfers: [], motionTransferSummary: '', roomCodeCopied: false, giftConfirmed: false,
+      this.setData({ motionScene: '', motionNotice: '', motionJoinedIds: [], motionJoined: {}, motionTransfers: [], motionTransferSummary: '', roomCodeCopied: false,
         motionScoreRows: this.data.motionScoreRows.map(p => ({ ...p, deltaText: '' })) });
     }, duration);
   },

@@ -10,6 +10,8 @@ const SCORE_ERROR_MESSAGES = {
   score_balances_not_zero: "所有玩家的累计分数没有归零，暂时不能结算。",
   score_cap_exceeded: "本次给分超过房间封顶。",
   score_force_open_locked: "当前还不能强开。",
+  score_handover_claimed: "这份接手邀请已有其他牌友确认，请联系房主。",
+  score_handover_score_changed: "座位分数已变化，请核对最新分数后重新确认。",
   score_invite_invalid: "这不是有效的房间邀请，请让房主重新分享。",
   score_invite_code_unavailable: "微信邀请码暂不可用，请使用房间码或转发邀请。",
   score_invalid_input: "请检查房间设置或分数输入。",
@@ -189,6 +191,49 @@ function issueScoreInviteCode(credential, roomId) {
   });
 }
 
+function manageMahjongHandover(credential, room, input) {
+  return mutateRoom(credential, room, "/mahjong-handover", input);
+}
+
+function issueMahjongHandoverCode(credential, roomId, handoverId) {
+  return scoreRequest({
+    path: `/score-rooms/${encodeURIComponent(roomId)}/mahjong-handover/${encodeURIComponent(handoverId)}/code`,
+    method: "POST",
+    bearerToken: credential.token,
+    data: {},
+  });
+}
+
+function previewMahjongHandover(scene, claimToken) {
+  return scoreRequest({
+    path: "/score-rooms/mahjong-handover/preview",
+    method: "POST",
+    retryOnNetworkError: true,
+    data: { scene, claimToken },
+  }).then(response => response.handover);
+}
+
+async function acceptMahjongHandover(input) {
+  const token = getAccessToken();
+  const options = {
+    path: "/score-rooms/mahjong-handover/accept",
+    method: "POST",
+    bearerToken: token,
+    data: input,
+  };
+  try {
+    const response = await scoreRequest(options);
+    return response.handover;
+  } catch (error) {
+    // Only an account rejected before the consent handler can retry as a guest.
+    // The separate participant proof must still be sent and validated.
+    if (!token || error.scoreCode !== "score_handover_login_expired" || getAccessToken() !== token) throw error;
+    clearSession();
+    const response = await scoreRequest({ ...options, bearerToken: "" });
+    return response.handover;
+  }
+}
+
 function createRealtimeTicket(credential, roomId) {
   return scoreRequest({
     path: `/score-rooms/${encodeURIComponent(roomId)}/realtime-ticket`,
@@ -223,6 +268,7 @@ function getScoreErrorMessage(error) {
 }
 
 module.exports = {
+  acceptMahjongHandover,
   bindScoreParticipantAccount,
   cancelScoreRoom,
   reverseScoreGiftBatch,
@@ -230,12 +276,15 @@ module.exports = {
   createScoreRoom,
   getScoreErrorMessage,
   getScoreRoom,
+  issueMahjongHandoverCode,
   issueScoreInviteCode,
   issueScoreInviteToken,
   joinScoreRoom,
   listScoreHistory,
   listNearbyScoreRooms,
+  manageMahjongHandover,
   mutateRoom,
+  previewMahjongHandover,
   previewScoreInvite,
   previewScoreInviteScene,
   settleScoreRoom,

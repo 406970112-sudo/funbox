@@ -1,0 +1,35 @@
+<view class="handover-page">
+  <block wx:if="{{status === 'open' || status === 'reconfirm' || status === 'accepted'}}">
+    <view class="fb-card invite-card">
+      <text class="invite-meta">{{invite.roomName}} · {{invite.roomCode}}</text>
+      <text class="invite-title">接手 {{invite.fromName}} 的{{invite.seat.label}}</text>
+      <view class="invite-score">
+        <text class="invite-seat" aria-hidden="true">{{invite.seat.mark}}</text>
+        <view class="invite-score-copy">
+          <text class="score-number {{invite.scoreTone}}">{{invite.scoreText}} 分</text>
+          <text class="score-caption">接手时的累计分数</text>
+        </view>
+      </view>
+      <text class="invite-description">从 {{invite.scoreText}} 分继续记分，散场时按{{invite.seat.label}}最终分数结算。</text>
+    </view>
+
+    <view wx:if="{{status === 'accepted'}}" class="waiting-note" role="status">已确认接手，正在等待房主确认换人。</view>
+    <view wx:else class="nickname-field">
+      <label for="handover-name" class="nickname-label">我的桌上昵称</label>
+      <input id="handover-name" class="nickname-input {{nameError ? 'nickname-invalid' : ''}}" value="{{displayName}}" maxlength="16" placeholder="输入本局使用的昵称" disabled="{{submitting}}" bindinput="handleNameInput" aria-label="我的桌上昵称" />
+      <text wx:if="{{nameError}}" class="nickname-error" role="alert">{{nameError}}</text>
+    </view>
+    <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
+    <block wx:if="{{status !== 'accepted'}}">
+      <button class="primary-button" hover-class="button-pressed" loading="{{submitting}}" disabled="{{submitting}}" bindtap="acceptInvitation">{{status === 'reconfirm' ? '重新确认' : '确认'}}接手 {{invite.scoreText}} 分</button>
+      <text class="action-hint">确认后，由房主完成换人。</text>
+    </block>
+  </block>
+
+  <view wx:else class="fb-card state-card" role="status">
+    <text class="state-message" wx:if="{{status === 'loading'}}">正在读取接手邀请…</text>
+    <text class="state-message" wx:elif="{{status === 'completed'}}">换人已完成，正在进入牌局…</text>
+    <text class="state-message" wx:else>{{errorMessage}}</text>
+    <button wx:if="{{status === 'retry'}}" class="primary-button" hover-class="button-pressed" bindtap="refreshInvitation">重试</button>
+  </view>
+</view>

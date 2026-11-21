@@ -29,6 +29,7 @@ const { connectScoreRealtime } = require("./score-realtime");
 const { drawScoreQRCode } = require("./score-qr");
 const { giftDraft, giftHistory: deriveGiftHistory, canCancelRoom, settlementView, rematchRoute } = require("./score-ux");
 const { motionPage, motionData } = require("./mahjong-motion");
+const { handoverView, handoverData, createHandoverPage } = require("./mahjong-handover-host");
 
 // Legacy waiting-room invites remain unchanged. V2 poker can also invite
 // between hands, after the current frozen hand has finished and cleared.
@@ -103,8 +104,10 @@ function removeQrImageFile(filePath) {
 
 module.exports = {
   ...motionPage,
+  ...createHandoverPage({ showModal, writeQrImageFile, removeQrImageFile }),
   data: {
     ...motionData,
+    ...handoverData,
     isGeneral: false,
     loading: true,
     busy: false,
@@ -120,6 +123,7 @@ module.exports = {
     actionError: "",
     canRetryLoad: false,
     feedback: "",
+    giftReceipt: null,
     roomId: "",
     inviteToken: "",
     inviteScene: "",
@@ -144,6 +148,7 @@ module.exports = {
     giftTotal: 0,
     giftPreview: "",
     giftError: "",
+    giftRosterReview: "",
     canCancelRoom: false,
     canSubmitGifts: false,
     giftHistory: [],
@@ -217,6 +222,8 @@ module.exports = {
     this.stopRealtime();
     this.motionResuming = true;
     this.clearMahjongMotion();
+    this.clearGiftReceipt();
+    this.clearHandoverReceipt();
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.pollTimer = null;
   },
@@ -226,6 +233,8 @@ module.exports = {
     this.onHide();
     if (this.qrRenderTimer) clearTimeout(this.qrRenderTimer);
     removeQrImageFile(this.data.qrImageSrc);
+    clearTimeout(this.handoverExpiryTimer);
+    this.clearMahjongHandoverCode();
   },
 
   onPullDownRefresh() {
@@ -385,6 +394,7 @@ module.exports = {
 
   networkStateChanged() {
     if (this.updatePoker) this.updatePoker();
+    if (this.data.handoverSheet === "seat" && !this.writesPaused()) this.syncMahjongHandoverSheet();
   },
 
   async handleNetwork(result) {
@@ -448,7 +458,7 @@ module.exports = {
     });
     const selfID = this.currentParticipantId(room);
     const self = participantMap[selfID] || null;
-    const isHost = Boolean(self && self.role === "host");
+    const isHost = Boolean(self && self.role === "host" && self.status !== "left");
     const isLoggedIn = Boolean(getAccessToken());
     const accountBound = Boolean(self && self.userId);
     const showAccountBinding = Boolean(this.credential && this.credential.kind === "guest" && self && self.status === "active");
@@ -457,25 +467,22 @@ module.exports = {
       clearHostRoomPassword(room.id);
       hostRoomPassword = "";
     }
-    const activePlayers = room.participants.filter((participant) => participant.status === "active").length;
+    const activeParticipants = room.participants.filter((participant) => participant.status === "active");
+    const activePlayers = activeParticipants.length;
     const seatMarks = ["東", "南", "西", "北"];
-    const seatMap = {};
-    room.participants
-      .filter((participant) => participant.status === "active")
-      .sort((left, right) => String(left.joinedAt).localeCompare(String(right.joinedAt)))
-      .forEach((participant, index) => {
-        seatMap[participant.id] = isGeneral
-          ? (Array.from((participant.displayName || "").trim())[0] || "友")
-          : seatMarks[index] || String(index + 1);
-      });
-    const participants = room.participants
-      .filter((participant) => participant.status === "active")
+    const joinOrder = (left, right) => String(left.joinedAt).localeCompare(String(right.joinedAt));
+    const seatOrder = Object.fromEntries(activeParticipants.slice().sort(joinOrder).map((person, index) => [
+      person.id, (room.gameType === "mahjong" && Number(person.mahjongSeat)) || index + 1,
+    ]));
+    const participants = activeParticipants.slice()
       .sort((left, right) => right.totalPoints - left.totalPoints || String(left.joinedAt).localeCompare(String(right.joinedAt)))
       .map((participant, index) => ({
         ...participant,
         rank: index + 1,
         rankClass: index < 3 ? `rank-${index + 1}` : "",
-        seatMark: seatMap[participant.id] || "友",
+        seatOrder: seatOrder[participant.id],
+        seatMark: isGeneral ? (Array.from((participant.displayName || "").trim())[0] || "友")
+          : seatMarks[seatOrder[participant.id] - 1] || String(seatOrder[participant.id]),
         scoreText: formatScore(participant.totalPoints),
         isSelf: participant.id === selfID,
       }));
@@ -483,14 +490,28 @@ module.exports = {
       key: `vacant-${index}`,
       mark: seatMarks[activePlayers + index] || "＋",
     }));
-    const recipients = room.status === "active"
+    const recipients = room.status === "active" && self?.status !== "left"
       ? participants.filter((participant) => participant.id !== selfID)
-        .sort((left, right) => String(left.joinedAt).localeCompare(String(right.joinedAt)) || String(left.id).localeCompare(String(right.id)))
+        .sort((left, right) => room.gameType === "mahjong" && (left.mahjongSeat || right.mahjongSeat)
+          ? left.seatOrder - right.seatOrder : joinOrder(left, right) || String(left.id).localeCompare(String(right.id)))
         .map((participant) => ({
         ...participant,
         pointsInput: this.data.recipients.find((item) => item.id === participant.id)?.pointsInput || "",
       }))
       : [];
+    const handover = handoverView(room, self, participants, isHost);
+    let giftRosterReview = self?.status === "left" ? "" : this.data.giftRosterReview;
+    if (room.gameType === "mahjong" && room.status === "active" && previousRoom?.id === room.id && !handover.departedSeat) {
+      const previousRecipients = this.data.recipients;
+      const currentIds = new Set(recipients.map(person => person.id));
+      const removed = previousRecipients.filter(person => !currentIds.has(person.id));
+      if (removed.length && previousRecipients.some(person => String(person.pointsInput || "").trim())) {
+        const removedDrafts = removed.filter(person => String(person.pointsInput || "").trim()).map(person => person.displayName);
+        giftRosterReview = removedDrafts.length
+          ? `牌友已更换，给 ${removedDrafts.join("、")} 的草稿已清除。请核对本次给分。`
+          : "牌友已更换，已有草稿仍按原对象保留。请核对本次给分。";
+      }
+    }
     const settlementRows = room.settlement
       ? room.settlement.balances.map((balance) => ({
         ...balance,
@@ -498,7 +519,7 @@ module.exports = {
         scoreText: formatScore(balance.totalPoints),
         amountText: formatCNY(balance.amountCents),
       }))
-      : room.participants.map((participant) => ({
+      : (room.gameType === "mahjong" ? activeParticipants : room.participants).map((participant) => ({
         participantId: participant.id,
         name: participant.displayName,
         totalPoints: participant.totalPoints,
@@ -517,12 +538,17 @@ module.exports = {
       : [];
     const giftHistory = deriveGiftHistory(room.giftBatches || [], participantMap, isHost && room.status === "active");
     const draft = giftDraft(recipients);
+    const alreadySeen = new Set((previousRoom?.mahjongHandovers || []).map(item => item.id));
+    const handoverReceipt = previousRoom?.id === room.id && previousRoom.status === "active" && room.status === "active" &&
+      Number(room.version) > Number(previousRoom.version) && !this.motionResuming && !this.writesPaused()
+      ? handover.handoverHistory?.find(item => !alreadySeen.has(item.id)) : null;
 
     this.setData({
       loading: false,
       errorMessage: this.data.canRetryLoad ? "" : this.data.errorMessage,
       canRetryLoad: false,
       room,
+      ...handover,
       self,
       isHost,
       isLoggedIn,
@@ -537,19 +563,22 @@ module.exports = {
       recipients,
       giftHistory,
       ...settlementView(room, self && self.id),
-      canCancelRoom: canCancelRoom(room, isHost),
+      canCancelRoom: !handover.handoverHistory?.length && canCancelRoom(room, isHost),
       settlementRows,
       settlementTransfers,
       hasSettlementTransfers: settlementTransfers.length > 0,
       giftTotal: draft.total,
       giftPreview: draft.preview,
+      giftRosterReview,
       giftError: this.data.giftError || (recipients.some(item => String(item.pointsInput || "").trim()) && !draft.valid ? "请输入有效的正整数，总分不能超过 2147483647。" : ""),
-      canSubmitGifts: draft.valid,
+      canSubmitGifts: draft.valid && !giftRosterReview,
       realtimeStatus: this.data.realtimeStatus,
       qrExpanded: canInviteRoom(room) ? this.data.qrExpanded : false,
-      settlementOpen: room.status === "active" ? this.data.settlementOpen : false,
+      settlementOpen: room.status === "active" && isHost ? this.data.settlementOpen : false,
     });
     this.updateMahjongMotion(previousRoom, room, participants);
+    if (room.gameType === "mahjong") this.syncMahjongHandoverSheet();
+    if (handoverReceipt) this.showHandoverReceipt(handoverReceipt);
     if (this.justJoined && room.gameType === "mahjong") {
       this.justJoined = false;
       this.showMahjongNotice("加入成功，已为你入座", { motionScene: this.data.reducedMotion ? "" : "joined" }, 650);
@@ -610,7 +639,6 @@ module.exports = {
     try {
       const room = await bindScoreParticipantAccount(this.data.room.id, this.credential.token);
       await this.applyRoom(room);
-      this.setData({ feedback: "已绑定账号，本局结算后会记录战绩。" });
     } catch (error) {
       if (error && error.statusCode === 401) {
         clearSession();
@@ -730,7 +758,7 @@ module.exports = {
     if (this.data.busy || this.writesPaused() || !this.data.isHost || !this.data.canStart || !this.data.room || this.data.room.status !== "waiting") return;
     const start = async room => { await this.applyRoom(await startScoreRoom(this.credential, room)); this.setData({ feedback: "牌局已开始，可以给分了。" }); };
     if (this.data.room.gameType === "mahjong" && this.data.activePlayers < 4) {
-      return this.confirmRoomAction(`以当前 ${this.data.activePlayers} 人开始？`, "开始后本局成员固定。", start);
+      return this.confirmRoomAction(`以当前 ${this.data.activePlayers} 人开始？`, "本局成员将在开局后固定。四人开局可在牌局中交接座位。", start);
     }
     this.setData({ busy: true, errorMessage: "", feedback: "" });
     try { await start(this.data.room); } catch (error) { await this.handleMutationError(error, "actionError"); }
@@ -740,7 +768,7 @@ module.exports = {
   updateGiftDraft(recipients) {
     const draft = giftDraft(recipients);
     const hasInput = recipients.some(item => String(item.pointsInput || "").trim());
-    this.setData({ recipients, giftTotal: draft.total, giftPreview: draft.preview, canSubmitGifts: draft.valid,
+    this.setData({ recipients, giftTotal: draft.total, giftPreview: draft.preview, canSubmitGifts: draft.valid && !this.data.giftRosterReview,
       giftError: hasInput && !draft.valid ? "请输入有效的正整数，总分不能超过 2147483647。" : "" });
   },
 
@@ -750,25 +778,19 @@ module.exports = {
     this.updateGiftDraft(this.data.recipients.map(item => item.id === participantId ? { ...item, pointsInput: value } : item));
   },
 
-  incrementGift(event) {
-    if (this.data.busy) return;
-    const { id, amount } = event.currentTarget.dataset;
-    const increment = Number(amount);
-    if (![1, 5, 10].includes(increment)) return;
-    const item = this.data.recipients.find(entry => entry.id === id);
-    if (!item) return;
-    const text = String(item.pointsInput || "").trim();
-    const previous = text ? parsePoints(text) : 0;
-    if (previous === null) { this.setData({ giftError: "请先修正无效分数。" }); return; }
-    this.updateGiftDraft(this.data.recipients.map(entry => entry.id === id ? { ...entry, pointsInput: String(previous + increment) } : entry));
+  reviewGiftRecipients() {
+    this.setData({ giftRosterReview: "" });
+    this.updateGiftDraft(this.data.recipients);
   },
 
-  clearGifts() {
-    if (!this.data.busy) this.updateGiftDraft(this.data.recipients.map(item => ({ ...item, pointsInput: "" })));
+  clearGiftReceipt() {
+    clearTimeout(this.giftReceiptTimer);
+    this.giftReceiptTimer = null;
+    if (this.data.giftReceipt) this.setData({ giftReceipt: null });
   },
 
   async submitGifts() {
-    if (this.data.busy || this.writesPaused() || !this.data.room) return;
+    if (this.data.busy || this.writesPaused() || !this.data.room || this.data.departedSeat || this.data.giftRosterReview) return;
     const draft = giftDraft(this.data.recipients);
     if (!draft.valid) { this.setData({ giftError: "请输入有效的正整数，总分不能超过 2147483647。" }); return; }
     const allocations = this.data.recipients.filter(item => String(item.pointsInput || "").trim()).map(item => ({ toParticipantId: item.id, points: parsePoints(item.pointsInput) }));
@@ -777,9 +799,21 @@ module.exports = {
       const room = await submitScoreGifts(this.credential, this.data.room, allocations);
       this.setData({ recipients: this.data.recipients.map((item) => ({ ...item, pointsInput: "" })) });
       await this.applyRoom(room);
-      this.setData({ busy: false, feedback: "给分已入账。" });
-      this.showMahjongNotice("给分已入账", { giftConfirmed: true });
-    } catch (error) { await this.handleMutationError(error, "giftError"); }
+      this.setData({ busy: false });
+      if (this.pageVisible !== false && this.pageActive !== false &&
+          this.data.room?.id === room.id && this.data.room.status === "active") {
+        clearTimeout(this.giftReceiptTimer);
+        this.setData({ giftReceipt: { version: room.version, points: draft.total } });
+        this.giftReceiptTimer = setTimeout(() => this.clearGiftReceipt(), 2200);
+      }
+    } catch (error) {
+      await this.handleMutationError(error, "giftError");
+      if (this.data.departedSeat) {
+        this.setData({ errorMessage: "本次给分未提交，你已离桌。", giftError: "" });
+      } else if (this.data.giftRosterReview) {
+        this.setData({ errorMessage: "", giftError: "本次给分未提交，牌友名单已更新。" });
+      }
+    }
   },
 
   async reverseGift(event) {
@@ -792,7 +826,7 @@ module.exports = {
   },
 
   async cancelRoom() {
-    if (this.data.busy || this.writesPaused() || !canCancelRoom(this.data.room, this.data.isHost)) return;
+    if (this.data.busy || this.writesPaused() || this.data.handoverHistory.length || !canCancelRoom(this.data.room, this.data.isHost)) return;
     const active = this.data.room.status === "active";
     return this.confirmRoomAction(active ? "结束空房间？" : "取消房间？", "仅无记分记录的房间可取消，操作后不能恢复。", async room => {
       await this.applyRoom(await cancelScoreRoom(this.credential, room));
@@ -894,9 +928,6 @@ module.exports = {
       },
       onStatus: (status, reason) => {
         if (!current()) return;
-        const reconnected = status === "online" && this.hadRealtimeConnection && this.data.realtimeStatus !== "online";
-        if (status === "online") this.hadRealtimeConnection = true;
-        if (reconnected) this.showMahjongNotice("已重连，正在同步最新分数");
         this.setData({
           realtimeStatus: status,
           realtimeError: status === "online" ? "" : (REALTIME_ERRORS[reason] || this.data.realtimeError),
@@ -907,7 +938,7 @@ module.exports = {
   },
 
   async retryRealtime() {
-    if (this.data.realtimeStatus === "online") return;
+    if (this.data.offline || this.data.realtimeStatus === "online") return;
     const result = await showModal({
       title: "实时同步暂不可用",
       content: `${this.data.realtimeError || REALTIME_ERRORS.network} 分数仍会定时刷新。`,
@@ -946,8 +977,12 @@ module.exports = {
 
   noop() {},
 
-  onShareAppMessage() {
+  onShareAppMessage(event) {
     const room = this.data.room;
+    const pending = this.data.handoverPending;
+    if (event?.target?.dataset?.handoverShare && pending?.status === "open" && !pending.expired && this.data.handoverCodePath) {
+      return { title: `邀请你接手「${room.name}」的${pending.wind}位`, path: this.data.handoverCodePath };
+    }
     if (!this.data.inviteToken || !room || !canInviteRoom(room)) {
       return { title: this.data.isGeneral ? "FunBox 通用记分" : "FunBox 麻将记分", path: "/pages/index/index" };
     }

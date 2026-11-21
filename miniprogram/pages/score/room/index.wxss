@@ -486,6 +486,67 @@
   font-size: 23rpx;
 }
 
+.gift-receipt {
+  position: fixed;
+  top: 18rpx;
+  left: 50%;
+  z-index: 42;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  width: max-content;
+  max-width: 90vw;
+  box-sizing: border-box;
+  padding: 12rpx 18rpx;
+  transform: translateX(-50%);
+  border: 2rpx solid #d0ecdf;
+  border-radius: 24rpx;
+  background: #f5fdf9;
+  color: #22644e;
+  box-shadow: 0 8rpx 24rpx rgba(21, 92, 65, .14);
+  font-size: 24rpx;
+  font-weight: 700;
+  pointer-events: none;
+  animation: gift-receipt-in .22s ease-out both, gift-receipt-out .2s 1.95s ease-in forwards;
+}
+
+.gift-receipt-check {
+  flex-shrink: 0;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #237d5a;
+  color: #fff;
+  line-height: 36rpx;
+  text-align: center;
+  animation: gift-receipt-check-in .3s .05s cubic-bezier(.2, .75, .35, 1.3) both;
+}
+
+.gift-receipt-points {
+  padding-left: 12rpx;
+  border-left: 1rpx solid #d0ecdf;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes gift-receipt-in {
+  from { opacity: 0; transform: translate(-50%, -14rpx); }
+  to { opacity: 1; transform: translateX(-50%); }
+}
+
+@keyframes gift-receipt-out {
+  to { opacity: 0; transform: translate(-50%, -8rpx); }
+}
+
+@keyframes gift-receipt-check-in {
+  from { opacity: 0; transform: scale(.65); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.motion-reduced .gift-receipt,
+.motion-reduced .gift-receipt-check {
+  animation: none;
+}
+
 .give-summary {
   justify-content: flex-start;
   margin-top: 9rpx;
@@ -917,12 +978,21 @@
   padding-bottom: 0;
 }
 
-.transfer-from,.transfer-to {
+.transfer-from,.transfer-destination,.transfer-to {
   flex: 1;
   min-width: 0;
+}
+
+.transfer-from,.transfer-to {
   overflow-wrap: break-word;
   font-size: 25rpx;
   font-weight: 700;
+}
+
+.transfer-destination {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
 }
 
 .transfer-arrow {
@@ -932,7 +1002,7 @@
 }
 
 .transfer-amount {
-  max-width: 37%;
+  max-width: 74%;
   overflow-wrap: anywhere;
   color: #2d5bff;
   font-size: 27rpx;
@@ -1168,8 +1238,6 @@
 
 }
 
-.quick-row { display: flex; align-items: center; gap: 12rpx; margin: 10rpx 0; }
-.quick-name { flex: 1; font-size: 24rpx; color: #65708a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .quick-button { margin: 0; padding: 0 20rpx; min-width: 72rpx; line-height: 56rpx; border-radius: 14rpx; background: #eef3ff; color: #2d5bff; font-size: 24rpx; }
 .give-preview { display: block; margin: 16rpx 0; color: #475675; font-size: 25rpx; line-height: 1.5; }
 
@@ -1177,3 +1245,214 @@
 .personal-settlement { margin-bottom: 20rpx; }
 .personal-settlement .section-title, .personal-settlement .section-meta { display: block; }
 .personal-transfer { margin: 20rpx 0; color: #234a9a; font-size: 32rpx; font-weight: 600; line-height: 1.5; overflow-wrap: break-word; }
+
+.handover-text-action {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 12rpx;
+  background: transparent;
+  color: #2d5bff;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.handover-action-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #2d5bff;
+}
+
+.handover-mask {
+  z-index: 24;
+}
+
+.handover-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.handover-sheet-close {
+  flex-shrink: 0;
+  width: 42px;
+  min-height: 42px;
+  margin: 0 -12rpx 0 0;
+  padding: 0;
+  background: transparent;
+  color: #7b879c;
+  font-size: 45rpx;
+  line-height: 42px;
+}
+
+.handover-options {
+  margin-top: 20rpx;
+  padding: 5rpx;
+  border: 2rpx solid #e4ebf6;
+  border-radius: 19rpx;
+}
+
+.handover-choice {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  min-height: 45px;
+  margin: 0;
+  padding: 10rpx 16rpx;
+  border-radius: 13rpx;
+  background: #fff;
+  color: #172139;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.handover-choice + .handover-choice {
+  border-top: 1rpx solid #edf1f8;
+}
+
+.handover-choice-selected {
+  background: #edf3ff;
+}
+
+.handover-choice[disabled] {
+  background: #fff;
+  color: #7b879c;
+}
+
+.handover-choice-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.handover-choice-points {
+  font-size: 29rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.handover-select,.handover-select-place {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 35rpx;
+  height: 35rpx;
+  border-radius: 50%;
+}
+
+.handover-select {
+  border: 2rpx solid #cbd9ff;
+  color: #fff;
+  font-size: 22rpx;
+  line-height: 31rpx;
+  text-align: center;
+}
+
+.handover-select-on {
+  border-color: #2d5bff;
+  background: #2d5bff;
+}
+
+.handover-room-note,.handover-qr-caption {
+  display: block;
+  margin-top: 12rpx;
+  color: #77869b;
+  font-size: 23rpx;
+  text-align: center;
+}
+
+.handover-sheet-switch {
+  margin: 12rpx auto 0;
+}
+
+.handover-qr-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 176px;
+  min-height: 176px;
+  margin: 20rpx auto 0;
+  padding: 10rpx;
+  border: 2rpx solid #e4ebf6;
+  border-radius: 20rpx;
+  background: #fff;
+  text-align: center;
+}
+
+.handover-qr {
+  display: block;
+}
+
+.handover-swap-card {
+  margin: 20rpx 0;
+  padding: 18rpx;
+  border: 2rpx solid #e4ebf6;
+  border-radius: 18rpx;
+  background: #f8faff;
+}
+
+.handover-swap-names,.handover-swap-points {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15rpx;
+  font-size: 29rpx;
+  font-weight: 800;
+}
+
+.handover-swap-names > view {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.handover-swap-names > view:last-child {
+  text-align: right;
+}
+
+.handover-swap-arrow {
+  color: #8490a4;
+  font-size: 34rpx;
+}
+
+.handover-swap-role,.handover-history-meta {
+  display: block;
+  color: #77869b;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.handover-swap-points {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #e4ebf6;
+  font-size: 25rpx;
+}
+
+.handover-history-icon {
+  color: #2d5bff;
+}
+
+.handover-status-card {
+  margin: 22rpx 0;
+}
+
+.handover-score-row {
+  background: #eef9f3;
+}
+
+.give-roster-review > text {
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.give-roster-review .quick-button {
+  margin-left: 0;
+}

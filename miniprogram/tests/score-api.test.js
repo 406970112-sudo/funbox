@@ -17,13 +17,66 @@ global.wx = {
 };
 
 const {
+  acceptMahjongHandover,
   bindScoreParticipantAccount,
   createScoreRoom,
+  issueMahjongHandoverCode,
   joinScoreRoom,
+  manageMahjongHandover,
   listNearbyScoreRooms,
   listScoreHistory,
+  previewMahjongHandover,
   settleScoreRoom,
 } = require("../utils/score-api");
+
+test("Mahjong handover scopes host writes and keeps claimant proof out of request URLs", async (t) => {
+  const requests = [];
+  const handover = { status: "open", points: 0 };
+  accessToken = "account-token";
+  t.after(() => { accessToken = ""; });
+  t.mock.method(wx, "request", options => {
+    requests.push(options);
+    options.success({ statusCode: 200, data: { handover, room: { id: "room-1" }, inviteScene: "h_demo" } });
+  });
+  const host = { token: "host-token" };
+  await manageMahjongHandover(host, { id: "room-1", version: 7 }, { action: "invite", participantId: "player-a" });
+  await issueMahjongHandoverCode(host, "room-1", "handover-1");
+  assert.deepEqual(await previewMahjongHandover("h_demo", "private-claim"), handover);
+  assert.deepEqual(await acceptMahjongHandover({
+    scene: "h_demo", claimToken: "private-claim", displayName: "E", points: 0, participantToken: "old-seat-token",
+  }), handover);
+  const [manage, code, preview, accept] = requests;
+  assert.match(manage.url, /\/score-rooms\/room-1\/mahjong-handover$/);
+  assert.equal(manage.header.Authorization, "Bearer host-token");
+  assert.equal(manage.data.expectedRoomVersion, 7);
+  assert.equal(manage.data.participantId, "player-a");
+  assert.match(code.url, /\/mahjong-handover\/handover-1\/code$/);
+  assert.equal(code.header.Authorization, "Bearer host-token");
+  assert.match(preview.url, /\/mahjong-handover\/preview$/);
+  assert.equal(preview.header.Authorization, undefined);
+  assert.deepEqual(preview.data, { scene: "h_demo", claimToken: "private-claim" });
+  assert.match(accept.url, /\/mahjong-handover\/accept$/);
+  assert.equal(accept.header.Authorization, "Bearer account-token");
+  assert.equal(accept.data.points, 0);
+  assert.equal(accept.data.participantToken, "old-seat-token");
+});
+
+test("an expired account may accept a handover as a guest but invalid seat proof is never bypassed", async (t) => {
+  accessToken = "expired-account";
+  t.after(() => { accessToken = ""; });
+  const calls = [];
+  t.mock.method(wx, "request", options => {
+    calls.push(options);
+    const error = options.header.Authorization ? "score_handover_login_expired" : "unauthorized";
+    options.success({ statusCode: 401, data: { error } });
+  });
+  const input = { scene: "h_demo", claimToken: "claim", displayName: "E", points: -30, participantToken: "old-seat" };
+  await assert.rejects(acceptMahjongHandover(input), { scoreCode: "unauthorized" });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].header.Authorization, "Bearer expired-account");
+  assert.equal(calls[1].header.Authorization, undefined);
+  assert.deepEqual(calls[1].data, input);
+});
 
 test("score API sends authentication and mahjong room settings", async () => {
   calls.length = 0;
