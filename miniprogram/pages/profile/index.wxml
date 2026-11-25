@@ -1,33 +1,124 @@
+<import src="/templates/note-art.wxml" />
 <view class="profile-page {{reduceMotion ? 'profile-motion-reduced' : ''}}">
+  <!-- Compact Brand Topbar (aligned with Home) -->
   <view class="profile-hero">
-    <text class="fb-brand">FunBox</text>
-    <view class="hero-row">
-      <view class="hero-copy"><text class="hero-title">每一局，</text><text class="hero-title">都有<text class="hero-accent">记录。</text></text></view>
-      <view class="profile-art art"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
+    <view class="topbar">
+      <view class="brand-group">
+        <text class="fb-brand">FunBox</text>
+        <text class="brand-tag">个人中心</text>
+      </view>
+      <view wx:if="{{isLoggedIn}}" class="settings-pill" bindtap="openSettings" hover-class="fb-tap-btn" hover-start-time="0" hover-stay-time="100" role="button" aria-label="账号设置">
+        <text>账号设置</text>
+        <text class="settings-pill-arrow" aria-hidden="true">›</text>
+      </view>
     </view>
   </view>
+
+  <!-- Elevated Identity Hero Card -->
   <view wx:if="{{isLoggedIn}}" class="profile-card identity-card fb-card" bindtap="openSettings" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="编辑个人资料">
     <image wx:if="{{avatarUrl}}" class="avatar" src="{{avatarUrl}}" mode="aspectFill" binderror="handleAvatarError" />
     <view wx:else class="avatar avatar-fallback">{{initial}}</view>
-    <view class="identity-copy"><text class="identity-name">{{displayName}}</text><text wx:if="{{maskedUsername}}" class="identity-meta">{{maskedUsername}}</text><text class="identity-date">{{registeredAt}}</text></view>
-    <text class="fb-arrow">›</text>
+    <view class="identity-copy">
+      <view class="identity-head">
+        <text class="identity-name">{{displayName}}</text>
+        <text class="identity-badge">已登录</text>
+      </view>
+      <text wx:if="{{maskedUsername}}" class="identity-meta">{{maskedUsername}}</text>
+      <text class="identity-date">{{registeredAt}}</text>
+    </view>
+    <view class="identity-edit-chip">编辑 ›</view>
   </view>
+
   <view wx:else class="profile-card guest-card fb-card" bindtap="openAuth" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="登录或注册 FunBox">
-    <view class="guest-identity"><view class="avatar avatar-fallback">游</view><view class="guest-copy"><text class="guest-title">游客模式</text><text class="guest-desc">登录或注册，保存你的牌局记录</text></view></view>
+    <view class="guest-identity">
+      <view class="avatar avatar-fallback">游</view>
+      <view class="guest-copy">
+        <text class="guest-title">游客模式</text>
+        <text class="guest-desc">登录或注册，同步你的牌局战绩与笔记</text>
+      </view>
+    </view>
+    <view class="guest-cta">去登录 ›</view>
+  </view>
+
+  <view wx:if="{{userError}}" class="inline-error" bindtap="retryLoad" hover-class="fb-tap-card">
+    <text>{{userError}}</text>
+    <text class="inline-retry">重试</text>
+  </view>
+
+  <!-- My Content Bento Grid -->
+  <view class="section-head">
+    <text class="section-title">我的记录</text>
+    <text class="section-note">战绩、藏图与笔记都在这里</text>
+  </view>
+
+  <view class="content-bento {{isLoggedIn ? 'content-bento-member' : ''}}">
+    <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card fb-card" bindtap="openHistory" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="查看最近牌局">
+      <view class="bento-copy">
+        <text class="history-entry-title">最近牌局</text>
+        <text class="history-entry-desc">回看参与者与输赢</text>
+      </view>
+      <view class="bento-art art art-score">
+        <image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" />
+      </view>
+    </view>
+
+    <view class="profile-card meme-entry-card fb-card" bindtap="openMemeFavorites" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="查看我的藏图">
+      <view class="bento-copy">
+        <text class="history-entry-title">我的藏图</text>
+        <text class="history-entry-desc">收藏的表情包合集</text>
+      </view>
+      <image class="bento-art bento-art-img" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" />
+    </view>
+
+    <view class="profile-card notebook-entry-card fb-card {{isLoggedIn ? 'bento-wide' : ''}}" bindtap="openNotebook" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="打开我的笔记本">
+      <view class="bento-copy">
+        <text class="history-entry-title">我的笔记本</text>
+        <text class="history-entry-desc">{{isLoggedIn ? '想法、清单与私密加密笔记' : '登录后多端同步你的笔记'}}</text>
+      </view>
+      <view class="bento-note-art" aria-hidden="true">
+        <template is="note-art" data="{{variant: 'sm'}}" />
+      </view>
+      <text wx:if="{{isLoggedIn}}" class="fb-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- Service & Support -->
+  <view class="section-head">
+    <text class="section-title">服务与支持</text>
+    <text class="section-note">遇到问题随时告诉我们</text>
+  </view>
+
+  <view class="profile-card feedback-card fb-card" bindtap="openFeedback" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="提交功能反馈">
+    <view class="feedback-copy">
+      <text class="feedback-title">功能反馈</text>
+      <text class="feedback-desc">上传截图，帮助我们把体验打磨更好</text>
+    </view>
+    <view class="feedback-art art art-feedback">
+      <image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" />
+    </view>
     <text class="fb-arrow">›</text>
   </view>
-  <view wx:if="{{userError}}" class="inline-error" bindtap="retryLoad"><text>{{userError}}</text><text class="inline-retry">重试</text></view>
-  <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card fb-card" bindtap="openHistory" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100">
-    <view class="history-entry-copy"><text class="history-entry-title">最近牌局</text><text class="history-entry-desc">按时间回看参与者和输赢</text></view>
-    <view class="history-art art art-score"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="fb-arrow">›</text>
+
+  <view class="service-list fb-card">
+    <view wx:if="{{isLoggedIn}}" class="service-row" bindtap="openSettings" hover-class="fb-tap-row" role="button">
+      <view class="service-row-copy">
+        <text class="service-row-title">个人资料与账号</text>
+        <text class="service-row-desc">更换头像、昵称或退出登录</text>
+      </view>
+      <text class="service-row-arrow" aria-hidden="true">›</text>
+    </view>
+    <view class="service-row" data-type="terms" bindtap="openLegal" hover-class="fb-tap-row" role="button">
+      <text class="service-row-title">用户协议</text>
+      <text class="service-row-arrow" aria-hidden="true">›</text>
+    </view>
+    <view class="service-row" data-type="privacy" bindtap="openLegal" hover-class="fb-tap-row" role="button">
+      <text class="service-row-title">隐私政策</text>
+      <text class="service-row-arrow" aria-hidden="true">›</text>
+    </view>
   </view>
-  <view class="profile-card history-entry-card fb-card" bindtap="openMemeFavorites" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="查看我的藏图">
-    <view class="history-entry-copy"><text class="history-entry-title">我的藏图</text><text class="history-entry-desc">收藏的表情包，随时再翻翻</text></view>
-    <image class="history-art" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" /><text class="fb-arrow">›</text>
+
+  <view class="profile-footer" aria-hidden="true">
+    <view class="footer-dot" />
+    <text>FunBox · 开心玩，清楚记。</text>
   </view>
-  <view class="profile-card feedback-card fb-card" bindtap="openFeedback" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100">
-    <view class="feedback-copy"><text class="feedback-title">功能反馈</text><text class="feedback-desc">上传截图，告诉我们你的问题</text></view>
-    <view class="feedback-art art art-feedback"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view><text class="fb-arrow">›</text>
-  </view>
-  <view class="profile-footer" aria-hidden="true"><view class="footer-dot" /><text>FunBox · 开心玩，清楚记。</text></view>
 </view>

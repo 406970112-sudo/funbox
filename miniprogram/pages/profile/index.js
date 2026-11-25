@@ -137,6 +137,21 @@ Page({
     wx.navigateTo({ url: "/packages/meme/library/index?tab=favorites" });
   },
 
+  openNotebook() {
+    if (!getAccessToken()) {
+      wx.navigateTo({
+        url: `/pages/auth/index?mode=login&returnTo=${encodeURIComponent("/packages/notebook/index/index")}`,
+      });
+      return;
+    }
+    wx.navigateTo({ url: "/packages/notebook/index/index" });
+  },
+
+  openLegal(event) {
+    const type = event.currentTarget.dataset.type === "privacy" ? "privacy" : "terms";
+    wx.navigateTo({ url: `/pages/legal/index?type=${type}` });
+  },
+
   openSettings() {
     if (!getAccessToken()) {
       this.openAuth();

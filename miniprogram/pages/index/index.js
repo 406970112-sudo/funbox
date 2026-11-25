@@ -1,7 +1,8 @@
 const { request } = require("../../utils/request");
 const { getAccessToken, getStoredUser } = require("../../utils/auth");
-const { getRecentScoreRoom, saveRecentScoreRoom, clearRecentScoreRoom, getScoreSession } = require("../../utils/score-session");
-const { getScoreRoom, getScoreErrorMessage } = require("../../utils/score-api");
+const { getRecentScoreRoom, saveRecentScoreRoom, clearRecentScoreRoom, getScoreSession, saveScoreSession } = require("../../utils/score-session");
+const { getScoreRoom, joinScoreRoom, getScoreErrorMessage } = require("../../utils/score-api");
+const { extractInviteScene, extractInviteToken } = require("../../utils/invite");
 const { reduceMotionEnabled } = require("../../utils/ui-motion");
 const { discoverPath, watchHolidayCard } = require("../../utils/discover-entries");
 
@@ -20,6 +21,18 @@ Page({
     reduceMotion: false,
     holidayCard: null,
     discoverSlide: 0,
+    scanning: false,
+    scanError: "",
+    manualJoinOpen: false,
+    manualKeyboardHeight: 0,
+    roomCode: "",
+    joinPassword: "",
+    nickname: "",
+    joining: false,
+    joinSucceeded: false,
+    focusedJoinField: "",
+    joinErrorField: "",
+    joinErrorMessage: "",
     // 暂时隐藏，待用户明确要求开放入口时再设为 true。
     showWebsiteEntry: false,
     websiteUrl: "https://xwhub.cn",
@@ -29,7 +42,6 @@ Page({
 
   onLoad() {
     wx.showShareMenu({ menus: ["shareAppMessage", "shareTimeline"] });
-
   },
 
   onShow() {
@@ -37,11 +49,13 @@ Page({
     this._resumeGeneration = (this._resumeGeneration || 0) + 1;
     this._resumeLookup = null;
     this._resumeNavigating = false;
-    this.setData({ recentRoom: getRecentScoreRoom(), resumeError: "", resumeBusy: false, resumeState: "checking" });
+    this.setData({ recentRoom: getRecentScoreRoom(), resumeError: "", resumeBusy: false, resumeState: "checking", scanError: "", joinSucceeded: false });
     const user = getStoredUser();
+    const displayName = user && user.displayName ? user.displayName : "";
     this.setData({
       isLoggedIn: Boolean(getAccessToken()),
-      userName: user && user.displayName ? user.displayName : "游客",
+      userName: displayName || "游客",
+      nickname: this.data.nickname || displayName,
       reduceMotion: reduceMotionEnabled(),
     });
     this.stopHolidayCard();
@@ -55,6 +69,9 @@ Page({
     this._resumeGeneration = (this._resumeGeneration || 0) + 1;
     this.stopHolidayCard();
     this.closeWebsiteDialog();
+    if (this.data.manualJoinOpen) {
+      this.setData({ manualJoinOpen: false, manualKeyboardHeight: 0 });
+    }
   },
 
   onUnload() { this.stopHolidayCard(); },
@@ -135,6 +152,110 @@ Page({
       }
     })();
     return lookup.promise;
+  },
+
+  scanToJoin() {
+    if (this.data.scanning || this.data.manualJoinOpen) return;
+    this.setData({ scanning: true, scanError: "" });
+    wx.scanCode({
+      scanType: ["qrCode", "wxCode"],
+      success: (result) => {
+        const scannedValue = result.path || result.result || "";
+        const inviteScene = extractInviteScene(scannedValue);
+        if (inviteScene) {
+          wx.navigateTo({ url: `/pages/score/room/index?scene=${encodeURIComponent(inviteScene)}` });
+          return;
+        }
+        const inviteToken = extractInviteToken(scannedValue);
+        if (!inviteToken) {
+          this.setData({ scanError: "未识别到有效的牌局邀请码。" });
+          return;
+        }
+        wx.navigateTo({ url: `/pages/score/room/index?invite=${encodeURIComponent(inviteToken)}` });
+      },
+      fail: (error) => {
+        if (/cancel/i.test((error && error.errMsg) || "")) return;
+        this.setData({ scanError: "无法打开扫码，请检查相机权限，或点击「输码加入」。" });
+      },
+      complete: () => this.setData({ scanning: false }),
+    });
+  },
+
+  openManualJoin() {
+    if (this.data.scanning) return;
+    this.setData({
+      manualJoinOpen: true,
+      manualKeyboardHeight: 0,
+      scanError: "",
+      joinErrorField: "",
+      joinErrorMessage: "",
+      joinSucceeded: false,
+    });
+  },
+
+  closeManualJoin() {
+    if (this.data.joining) return;
+    this.setData({
+      manualJoinOpen: false,
+      manualKeyboardHeight: 0,
+      focusedJoinField: "",
+      joinErrorField: "",
+      joinErrorMessage: "",
+    });
+    if (wx.hideKeyboard) wx.hideKeyboard();
+  },
+
+  handleManualKeyboard(event) {
+    if (!this.data.manualJoinOpen) return;
+    this.setData({ manualKeyboardHeight: Math.max(0, Number(event.detail.height) || 0) });
+  },
+
+  focusJoinField(event) {
+    this.setData({ focusedJoinField: event.currentTarget.dataset.field });
+  },
+
+  blurJoinField() {
+    this.setData({ focusedJoinField: "" });
+  },
+
+  handleJoinField(event) {
+    if (this.data.joining) return;
+    const field = event.currentTarget.dataset.field;
+    this.setData({ [field]: event.detail.value, joinErrorField: "", joinErrorMessage: "" });
+  },
+
+  async joinByCode() {
+    if (this.data.joining) return;
+    const code = this.data.roomCode.trim();
+    const displayName = this.data.nickname.trim();
+    if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+      return this.setData({ joinErrorField: "roomCode", joinErrorMessage: "请输入 6 位数字房间码。" });
+    }
+    if (!/^\d{4,6}$/.test(this.data.joinPassword)) {
+      return this.setData({ joinErrorField: "joinPassword", joinErrorMessage: "请输入 4～6 位数字房间密码。" });
+    }
+    if (!displayName) {
+      return this.setData({ joinErrorField: "nickname", joinErrorMessage: "请输入牌局内显示的昵称。" });
+    }
+    this.setData({ joining: true, joinSucceeded: false, joinErrorField: "", joinErrorMessage: "" });
+    try {
+      const result = await joinScoreRoom({ code, password: this.data.joinPassword, displayName });
+      saveScoreSession({ roomId: result.room.id, guestToken: result.guestToken, participantId: result.actor.participantId });
+      if (this._websiteHidden) return;
+      this.setData({ joinSucceeded: true, manualJoinOpen: false, manualKeyboardHeight: 0, roomCode: "", joinPassword: "" });
+      if (wx.hideKeyboard) wx.hideKeyboard();
+      const isPoker = result.room.gameType === "zhajinhua";
+      const route = isPoker ? "poker-room" : "room";
+      const suffix = result.room.gameType === "generic" || isPoker ? "" : "&joined=1";
+      wx.navigateTo({ url: `/pages/score/${route}/index?roomId=${encodeURIComponent(result.room.id)}${suffix}` });
+    } catch (error) {
+      const joinErrorField = /password/.test(error.code || "") ? "joinPassword" : /not_found|code/.test(error.code || "") ? "roomCode" : "";
+      if (!this._websiteHidden) {
+        this.setData({ joinErrorMessage: getScoreErrorMessage(error), joinErrorField, joinSucceeded: false });
+      }
+    } finally {
+      if (!this._websiteHidden) this.setData({ joining: false });
+    }
   },
 
   copyWebsite() {

@@ -275,16 +275,23 @@ function getHolidayCard(calendar, now) {
   const { upcoming, isMakeupDay } = getHolidayView(calendar, now);
   if (!upcoming) return { label: "放假安排待公布", isMakeupDay };
 
-  const { name, state, duration, startDate, endDate, dayNumber, daysUntil } = upcoming;
+  const { name, year, state, duration, startDate, endDate, dayNumber, daysUntil, monthBadge, dayBadge, hasMakeup, makeupCount } = upcoming;
   const period = formatPeriod(startDate, endDate, true);
   let label = `距${name}放假`;
   if (state === "tomorrow") label = `明天${name}放假`;
   if (state === "holiday") label = duration === 1 ? `今天${name}放假` : `${name}假期`;
   return {
+    name,
+    year,
+    duration,
     label,
     state,
     count: state === "holiday" ? (duration > 1 ? dayNumber : 0) : daysUntil,
     dateLabel: `${period} · ${duration} 天`,
+    monthBadge,
+    dayBadge,
+    hasMakeup,
+    makeupCount,
     isMakeupDay,
   };
 }

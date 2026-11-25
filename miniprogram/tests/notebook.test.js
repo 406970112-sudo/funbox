@@ -180,7 +180,9 @@ test("notebook route config and shared remove controls are present", () => {
   const homeWxml = fs.readFileSync(path.resolve(ROOT, "pages/index/index.wxml"), "utf8");
   const discoverWxml = fs.readFileSync(path.resolve(ROOT, "templates/discover-entry.wxml"), "utf8");
   const discoverWxss = fs.readFileSync(path.resolve(ROOT, "templates/discover-entry.wxss"), "utf8");
-  assert.match(homeWxml, /class="discover-swiper"[^>]*display-multiple-items="\{\{2\}\}"/);
+  assert.match(homeWxml, /template is="discover-notebook"/);
+  assert.match(homeWxml, /template is="discover-memes"/);
+  assert.match(homeWxml, /class="holiday-banner/);
   assert.match(discoverWxml, /class="discover-card notebook-entry"/);
   assert.match(discoverWxml, /class="discover-card meme-entry"/);
   assert.match(discoverWxss, /\.discover-card\s*\{[^}]*height:\s*230rpx;/s);
