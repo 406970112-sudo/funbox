@@ -52,8 +52,8 @@
   align-items: center;
   gap: 8rpx;
   padding: 7rpx 0;
-  color: #8490a4;
-  font-size: 20rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
 }
 
 .realtime-dot {
@@ -95,8 +95,8 @@
   padding: 6rpx 16rpx;
   border-radius: 99rpx;
   background: #edf3ff;
-  color: #2d5bff;
-  font-size: 20rpx;
+  color: var(--fb-primary);
+  font-size: 22rpx;
   font-weight: 700;
 }
 
@@ -164,8 +164,8 @@
 
 .room-code-copy {
   margin-top: 8rpx;
-  color: #2d5bff;
-  font-size: 20rpx;
+  color: var(--fb-primary);
+  font-size: 22rpx;
 }
 
 .room-password-box {
@@ -227,8 +227,8 @@
 
 .qr-expand-hint {
   margin-top: 8rpx;
-  color: #7b879c;
-  font-size: 19rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
 }
 
 .section-head {
@@ -350,8 +350,8 @@
 
 .player-sub {
   margin-top: 6rpx;
-  color: #8490a4;
-  font-size: 19rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
 }
 
 .player-score {
@@ -364,13 +364,13 @@
 
 .self-tag {
   display: inline-block;
-  padding: 1rpx 7rpx;
+  padding: 2rpx 8rpx;
   margin-left: 8rpx;
-  border-radius: 7rpx;
-  background: #2d5bff;
+  border-radius: 8rpx;
+  background: var(--fb-primary);
   color: #fff;
-  font-size: 17rpx;
-  font-weight: 500;
+  font-size: 20rpx;
+  font-weight: 600;
   vertical-align: middle;
 }
 
@@ -389,6 +389,51 @@
 
 .score-row:last-child {
   border-bottom: 0;
+}
+
+.general-score-motion-area { position: relative; }
+
+.general-score-rows {
+  display: grid;
+  grid-auto-rows: 1fr;
+}
+
+.general-score-row {
+  position: relative;
+}
+
+.general-score-row .rank,
+.general-score-row .score-seat,
+.general-score-row .score-name-block,
+.general-score-row .score-value {
+  z-index: 1;
+}
+
+.general-rank-moving {
+  animation: general-rank-move .28s .28s cubic-bezier(.2,.7,.25,1) both;
+}
+
+.general-score-flights {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.general-score-flights .general-score-flight {
+  height: 100%;
+  animation-duration: .32s;
+}
+
+@keyframes general-rank-move {
+  from { transform: translateY(var(--rank-shift)); }
+  to { transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .general-score-row .score-row-flash,
+  .general-score-flights { display: none; }
 }
 
 .rank {
@@ -442,9 +487,63 @@
   font-size: 22rpx;
 }
 
+.give-item {
+  padding: 18rpx 0;
+}
+
+.give-item + .give-item {
+  border-top: 1rpx solid #edf1f8;
+}
+
 .give-row {
   gap: 16rpx;
-  padding: 18rpx 0;
+  padding: 0;
+}
+
+.give-quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 14rpx;
+}
+
+.give-chip {
+  min-width: 82rpx;
+  height: 54rpx;
+  margin: 0;
+  padding: 0 18rpx;
+  border-radius: 14rpx;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 54rpx;
+  transition: transform .1s ease-out, opacity .1s ease-out;
+}
+
+.give-chip::after,
+.give-clear-all::after {
+  border: 0;
+}
+
+.give-chip-clear {
+  margin-left: auto;
+  background: #f2f5fa;
+  color: var(--fb-muted);
+  font-weight: 600;
+}
+
+.give-clear-all {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8rpx 18rpx;
+  border-radius: 14rpx;
+  background: #f2f5fa;
+  color: var(--fb-muted);
+  font-size: 23rpx;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .give-player {
@@ -548,7 +647,7 @@
 }
 
 .give-summary {
-  justify-content: flex-start;
+  justify-content: space-between;
   margin-top: 9rpx;
   padding-top: 20rpx;
   border-top: 1rpx solid #edf1f8;
@@ -832,6 +931,8 @@
 .preview-room-card { margin-top: 38rpx; padding: 28rpx 24rpx 24rpx; border-radius: 30rpx; background: #fff; }
 .preview-room-info { display: flex; align-items: center; gap: 20rpx; }
 .preview-art { width: 220rpx; height: 180rpx; }
+/* The Mahjong illustration occupies a square cell in the shared atlas. */
+.preview-art.art-mahjong { height: 220rpx; }
 .preview-room-copy { flex: 1; min-width: 0; }
 .preview-title { font-size: 37rpx; font-weight: 800; overflow-wrap: break-word; line-height: 1.4; }
 .preview-room-meta { display: block; margin-top: 8rpx; color: #7b879c; font-size: 23rpx; }

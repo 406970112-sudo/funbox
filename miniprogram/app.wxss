@@ -2,16 +2,54 @@ page {
   --fb-canvas: #f5f7fa;
   --fb-surface: #ffffff;
   --fb-primary: #2d5bff;
+  --fb-primary-soft: #edf3ff;
   --fb-ink: #172139;
-  --fb-muted: #7b879c;
+  --fb-ink-secondary: #34425b;
+  --fb-muted: #66758d;
+  --fb-subtle: #7b879c;
   --fb-coral: #ff765e;
+  --fb-danger: #c74d38;
+  --fb-danger-soft: #fff0ed;
+  --fb-success: #227d5b;
+  --fb-success-soft: #e4f7ef;
   --fb-line: #eaf0f7;
   min-height: 100%;
-  background: #f5f7fa;
+  background: var(--fb-canvas);
   color: var(--fb-ink);
   font-family: "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 28rpx;
   line-height: 1.5;
+}
+
+.fb-tap-card {
+  transform: scale(0.985);
+  opacity: 0.92;
+}
+
+.fb-tap-row {
+  background: #f2f6ff !important;
+}
+
+.fb-tap-btn {
+  transform: scale(0.975);
+  opacity: 0.88;
+}
+
+@keyframes fb-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb-tap-card,
+  .fb-tap-btn {
+    transform: none;
+  }
 }
 
 button::after {

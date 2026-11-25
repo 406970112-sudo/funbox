@@ -13,7 +13,7 @@
 
   <block wx:if="{{isLoggedIn}}">
     <view class="home-search-row">
-      <button class="search-bar" bindtap="openSearch" aria-label="搜索笔记、标签或正文">
+      <button class="search-bar" hover-class="fb-tap-card" bindtap="openSearch" aria-label="搜索笔记、标签或正文">
         <nb-icon name="search" size="{{36}}" />
         <text class="search-copy">搜索笔记、标签或正文</text>
       </button>
@@ -28,6 +28,7 @@
           class="filter-chip {{activeBookId === item.id ? 'filter-active' : ''}}"
           data-id="{{item.id}}"
           bindtap="changeFilter"
+          hover-class="fb-tap-btn"
         >{{item.name}}<text class="filter-count">{{item.count}}</text></view>
       </view>
     </scroll-view>
@@ -57,6 +58,7 @@
           class="pinned-card"
           data-id="{{item.id}}"
           bindtap="openNote"
+          hover-class="fb-tap-card"
           role="button"
           aria-label="打开置顶笔记 {{item.displayTitle}}"
         >
@@ -91,6 +93,7 @@
             class="note-row"
             data-id="{{item.id}}"
             bindtap="openNote"
+            hover-class="fb-tap-row"
             role="button"
             aria-label="打开笔记 {{item.displayTitle}}"
           >
@@ -113,8 +116,9 @@
       </view>
     </block>
 
-    <view class="encryption-management" bindtap="openSecurity" role="button" aria-label="加密管理"><nb-icon name="lock" size="{{34}}" /><text>加密管理</text></view>
-    <view class="new-note-fab" bindtap="createNote" role="button" aria-label="新建笔记">
+    <view class="bottom-dock-scrim" aria-hidden="true"></view>
+    <view class="encryption-management" bindtap="openSecurity" hover-class="fb-tap-btn" role="button" aria-label="加密管理"><nb-icon name="lock" size="{{34}}" /><text>加密管理</text></view>
+    <view class="new-note-fab" bindtap="createNote" hover-class="fb-tap-btn" role="button" aria-label="新建笔记">
       <nb-icon name="plus" tone="white" size="{{38}}" /><text>新建笔记</text>
     </view>
   </block>

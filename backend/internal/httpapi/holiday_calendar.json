@@ -1,0 +1,39 @@
+{
+  "version": "2026-11-05.1",
+  "years": [
+    {
+      "year": 2026,
+      "source": {
+        "title": "国务院办公厅关于 2026 年部分节假日安排的通知",
+        "publishedAt": "2025-11-04",
+        "url": "https://www.beijing.gov.cn/zhengce/zhengcefagui/202511/t20251104_4258873.html"
+      },
+      "holidays": [
+        { "id": "new-year", "name": "元旦", "startDate": "2026-01-01", "endDate": "2026-01-03", "makeupDates": ["2026-01-04"] },
+        { "id": "spring-festival", "name": "春节", "startDate": "2026-02-15", "endDate": "2026-02-23", "makeupDates": ["2026-02-14", "2026-02-28"] },
+        { "id": "qingming", "name": "清明节", "startDate": "2026-04-04", "endDate": "2026-04-06", "makeupDates": [] },
+        { "id": "labour-day", "name": "劳动节", "startDate": "2026-05-01", "endDate": "2026-05-05", "makeupDates": ["2026-05-09"] },
+        { "id": "dragon-boat", "name": "端午节", "startDate": "2026-06-19", "endDate": "2026-06-21", "makeupDates": [] },
+        { "id": "mid-autumn", "name": "中秋节", "startDate": "2026-09-25", "endDate": "2026-09-27", "makeupDates": [] },
+        { "id": "national-day", "name": "国庆节", "startDate": "2026-10-01", "endDate": "2026-10-07", "makeupDates": ["2026-09-20", "2026-10-10"] }
+      ]
+    },
+    {
+      "year": 2027,
+      "source": {
+        "title": "国务院办公厅关于 2027 年部分节假日安排的通知",
+        "publishedAt": "2026-11-05",
+        "url": "https://www.dxh.gov.cn/ZWGK/zc_zwgk/ZFWJ/TZGG/202611/t20261106_2875104.shtml"
+      },
+      "holidays": [
+        { "id": "new-year", "name": "元旦", "startDate": "2027-01-01", "endDate": "2027-01-03", "makeupDates": [] },
+        { "id": "spring-festival", "name": "春节", "startDate": "2027-02-05", "endDate": "2027-02-13", "makeupDates": ["2027-01-31", "2027-02-14"] },
+        { "id": "qingming", "name": "清明节", "startDate": "2027-04-03", "endDate": "2027-04-05", "makeupDates": [] },
+        { "id": "labour-day", "name": "劳动节", "startDate": "2027-05-01", "endDate": "2027-05-05", "makeupDates": ["2027-05-08"] },
+        { "id": "dragon-boat", "name": "端午节", "startDate": "2027-06-09", "endDate": "2027-06-09", "makeupDates": [] },
+        { "id": "mid-autumn", "name": "中秋节", "startDate": "2027-09-15", "endDate": "2027-09-15", "makeupDates": [] },
+        { "id": "national-day", "name": "国庆节", "startDate": "2027-10-01", "endDate": "2027-10-07", "makeupDates": ["2027-09-26", "2027-10-09"] }
+      ]
+    }
+  ]
+}

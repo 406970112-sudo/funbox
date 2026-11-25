@@ -1,5 +1,10 @@
 const test=require('node:test');const assert=require('node:assert/strict');const calls=[];let finishAction;let apiError;let readRoom;let startRoomRequest;
 const apiPath=require.resolve('../utils/score-api');require.cache[apiPath]={id:apiPath,filename:apiPath,loaded:true,exports:{getScoreRoom:()=>readRoom(),getScoreErrorMessage:e=>e.message,confirmPokerBonuses:async(c,r,h,bonuses)=>{calls.push({bonuses,h});return {...r,version:r.version+1,currentZhaJinHuaHand:null};},settleScoreRoom:async(c,r,rate)=>{calls.push({settleRate:rate});return {...r,version:r.version+1,status:'settled'};},pokerAction:(c,r,h,input)=>{calls.push({c,r,h,input});if(apiError)return Promise.reject(apiError);return new Promise(resolve=>finishAction=resolve);},startScoreRoom:async(c,r)=>{calls.push({startRoom:r.version});if(startRoomRequest)return startRoomRequest(r);return {...r,status:'active',version:r.version+1};},startPokerHand:async(c,r)=>{calls.push({startHand:r.version});return {...r,version:r.version+1};},updatePokerSettings:async(c,r,settings)=>{calls.push({updateSettings:settings});return {...r,zhaJinHuaSettings:settings,version:r.version+1};},issueScoreInviteCode:async()=>{calls.push({nativeInvite:true});return {imageBase64:'AA==',mediaType:'image/png'};},issueScoreInviteToken:async()=> 'invite'}};
+let realtimeStatus;
+const realtimePath = require.resolve('../utils/score-realtime');
+require.cache[realtimePath] = { id: realtimePath, filename: realtimePath, loaded: true, exports: {
+ connectScoreRealtime({onStatus}) { realtimeStatus = onStatus; return () => {}; },
+} };
 let savedSession;
 global.wx={env:{USER_DATA_PATH:'/tmp'},getFileSystemManager:()=>({writeFile:o=>o.success(),unlink:()=>{}}),getStorageSync:key=>key==='funboxScoreSessionV1'?savedSession||'':'',setStorageSync:()=>{},showModal:o=>o.success({confirm:true}),redirectTo:o=>calls.push(o)};
 let pageDefinition;global.Page=d=>pageDefinition=d;require('../pages/score/poker-room/index');const pokerDefinition=pageDefinition;
@@ -34,6 +39,187 @@ test('checked bonus draft submits selected players only',async()=>{const r=room(
 test('settle action uses fixed room rate and closes the ledger',async()=>{const r=room();r.currentZhaJinHuaHand=null;const p=page(r);await p.applyRoom(r);p.data.sheet='ledger';await p.settle();assert.deepEqual(calls,[{settleRate:50}]);assert.equal(p.data.sheet,'');assert.equal(p.data.poker.ended,true);});
 test('unchanged waiting snapshot still checks account binding after login return',async()=>{const r=room();r.currentZhaJinHuaHand=null;const p=page(r);await p.applyRoom(r);let checks=0;p.maybeBindParticipantAccount=()=>checks++;await p.applyRoom({...r});assert.equal(checks,1);});
 test('poker delegates a single native network subscription to base and removes it on hide',()=>{const p=page();let added=0,removed=0,handler;wx.onNetworkStatusChange=f=>{added++;handler=f;};wx.offNetworkStatusChange=f=>{assert.equal(f,handler);removed++;};wx.getNetworkType=o=>o.success({networkType:'wifi'});p.onLoad({});p.onShow();assert.equal(added,1);p.onHide();assert.equal(removed,1);p.onUnload();assert.equal(removed,1);delete wx.onNetworkStatusChange;delete wx.offNetworkStatusChange;delete wx.getNetworkType;});
+
+function confirmedFollow() {
+ const before = room();
+ before.currentZhaJinHuaHand = {...before.currentZhaJinHuaHand, actions: [], potPoints: 2, currentTurnParticipantId: 'b', players: [
+  {participantId: 'a', position: 1, status: 'active', contributionPoints: 1},
+  {participantId: 'b', position: 2, status: 'active', contributionPoints: 1},
+ ]};
+ const after = structuredClone(before);
+ after.version = 3;
+ after.currentZhaJinHuaHand.potPoints = 4;
+ after.currentZhaJinHuaHand.players[1].contributionPoints = 3;
+ after.currentZhaJinHuaHand.actions.push({sequence: 1, actionType: 'follow', actorParticipantId: 'b', points: 2});
+ after.currentZhaJinHuaHand.currentTurnParticipantId = 'a';
+ return {before, after};
+}
+
+function deferPokerGeometry(t) {
+ const ticks = [];
+ const queries = [];
+ const rectangles = {
+  '#poker-motion-anchor': {left: 6, top: 20, width: 360, height: 740},
+  '#poker-pot-values': {left: 20, top: 152, width: 280, height: 40},
+  '#poker-seat-number-2': {left: 228, top: 312, width: 20, height: 20},
+ };
+ wx.nextTick = fn => ticks.push(fn);
+ wx.createSelectorQuery = () => {
+  const selections = [];
+  return {
+   select: id => ({boundingClientRect: () => selections.push(id)}),
+   exec: cb => queries.push(() => cb(selections.map(id => rectangles[id]))),
+  };
+ };
+ t.after(() => { delete wx.nextTick; delete wx.createSelectorQuery; });
+ return {ticks, queries};
+}
+
+test('confirmed poker state and new turn are usable before chip geometry, and repeated snapshots do not replay', async t => {
+ const {before, after} = confirmedFollow();
+ const {ticks, queries} = deferPokerGeometry(t);
+ const p = page(before);
+ t.after(() => p.onHide());
+ await p.applyRoom(after);
+ assert.equal(p.data.poker.potMoney, '¥2.00');
+ assert.equal(p.data.poker.canAct, true);
+ assert.equal(ticks.length, 1);
+ ticks.shift()();
+ queries.shift()();
+ const motion = p.data.pokerMotion[0];
+ assert.deepEqual(motion.flight, {startX: 232, startY: 302, travelX: -78, travelY: -150});
+ assert.equal(motion.nextActorId, 'a');
+ await p.applyRoom(structuredClone(after));
+ assert.equal(ticks.length, 0);
+ assert.deepEqual(p.data.pokerMotion[0], motion);
+ await p.applyRoom(before);
+ assert.equal(p.data.room.version, 3);
+ assert.deepEqual(p.data.pokerMotion[0], motion);
+});
+
+test('late geometry cannot restart a hidden poker effect and recovery only updates final values', async t => {
+ const {before, after} = confirmedFollow();
+ const {ticks, queries} = deferPokerGeometry(t);
+ const p = page(before);
+ p.data.roomId = 'r';
+ await p.applyRoom(after);
+ assert.equal(ticks.length, 1);
+ ticks.shift()();
+ p.onHide();
+ queries.shift()();
+ assert.deepEqual(p.data.pokerMotion, []);
+
+ const next = structuredClone(after);
+ next.version = 4;
+ next.currentZhaJinHuaHand.potPoints = 6;
+ next.currentZhaJinHuaHand.players[0].contributionPoints = 3;
+ next.currentZhaJinHuaHand.actions.push({sequence: 2, actionType: 'follow', actorParticipantId: 'a', points: 2});
+ next.currentZhaJinHuaHand.currentTurnParticipantId = 'b';
+ readRoom = async () => next;
+ p.onShow();
+ await p.refreshRoom();
+ assert.equal(p.data.poker.potMoney, '¥3.00');
+ assert.equal(p.data.networkSyncing, false);
+ assert.equal(ticks.length, 0);
+ assert.deepEqual(p.data.pokerMotion, []);
+ p.onUnload();
+});
+
+test('newer between-hands state invalidates a chip while the invite token is still loading', async t => {
+ const {before, after} = confirmedFollow();
+ const {ticks, queries} = deferPokerGeometry(t);
+ const p = page(before);
+ t.after(() => p.onHide());
+ await p.applyRoom(after);
+ ticks.shift()();
+
+ const ended = {...after, version: after.version + 1, currentZhaJinHuaHand: null,
+  zhaJinHuaSettings: {...after.zhaJinHuaSettings, rulesVersion: 2}};
+ let finishInvite;
+ p.ensureInviteToken = () => new Promise(resolve => { finishInvite = resolve; });
+ const update = p.applyRoom(ended);
+ assert.equal(p.data.room.version, ended.version);
+ queries.shift()();
+ const staleEffect = p.data.pokerMotion[0];
+ finishInvite();
+ await update;
+ assert.equal(staleEffect, undefined);
+});
+
+test('a socket-only reconnect catches up without animating the missing action', async t => {
+ const {before, after} = confirmedFollow();
+ const {ticks} = deferPokerGeometry(t);
+ const p = page(before);
+ t.after(() => p.onHide());
+ p.data.roomId = 'r';
+ p.startRealtime = pokerDefinition.startRealtime;
+ readRoom = async () => before;
+ p.startRealtime();
+ realtimeStatus('online');
+ await p.refreshPromise;
+ realtimeStatus('offline');
+ readRoom = async () => after;
+ realtimeStatus('online');
+ await p.refreshPromise;
+ assert.equal(p.data.poker.potMoney, '¥2.00');
+ assert.equal(p.data.poker.canAct, true);
+ assert.equal(ticks.length, 0);
+ assert.deepEqual(p.data.pokerMotion, []);
+});
+
+test('a read already in flight cannot consume the post-reconnect poker baseline', async t => {
+ const {before, after} = confirmedFollow();
+ const {ticks} = deferPokerGeometry(t);
+ const p = page(before);
+ t.after(() => p.onHide());
+ p.data.roomId = 'r';
+ p.startRealtime = pokerDefinition.startRealtime;
+ readRoom = async () => before;
+ p.startRealtime();
+ realtimeStatus('online');
+ await p.refreshPromise;
+ realtimeStatus('offline');
+ let finishPoll;
+ readRoom = () => new Promise(resolve => { finishPoll = resolve; });
+ const oldPoll = p.refreshRoom();
+ readRoom = async () => after;
+ realtimeStatus('online');
+ finishPoll(before);
+ await oldPoll;
+ await p.refreshPromise;
+ assert.equal(p.data.poker.potMoney, '¥2.00');
+ assert.equal(ticks.length, 0);
+
+ const liveAction = structuredClone(after);
+ liveAction.version += 1;
+ liveAction.currentZhaJinHuaHand.potPoints += 2;
+ liveAction.currentZhaJinHuaHand.players[0].contributionPoints += 2;
+ liveAction.currentZhaJinHuaHand.currentTurnParticipantId = 'b';
+ liveAction.currentZhaJinHuaHand.actions.push({sequence: 2, actionType: 'follow', actorParticipantId: 'a', points: 2});
+ await p.applyRoom(liveAction);
+ assert.equal(ticks.length, 1);
+});
+
+test('global reduce motion keeps the new-turn vibration and static actor state', async t => {
+ const originalStorage = wx.getStorageSync;
+ let vibrations = 0;
+ wx.getStorageSync = key => key === 'funboxMahjongReducedMotionV1' ? true : originalStorage(key);
+ wx.vibrateShort = () => { vibrations++; };
+ const {before, after} = confirmedFollow();
+ const {ticks} = deferPokerGeometry(t);
+ const p = page(before);
+ t.after(() => {
+  p.onHide();
+  wx.getStorageSync = originalStorage;
+  delete wx.vibrateShort;
+ });
+ await p.applyRoom(after);
+ assert.equal(p.data.poker.canAct, true);
+ assert.equal(p.data.poker.seats.find(seat => seat.isActor).id, 'a');
+ assert.equal(vibrations, 1);
+ assert.equal(ticks.length, 0);
+ assert.deepEqual(p.data.pokerMotion, []);
+});
 
 for (const interruption of ['offline', 'hide', 'recovered']) {
  test(`initial poker start never continues its second write after ${interruption} while room start is pending`, async () => {

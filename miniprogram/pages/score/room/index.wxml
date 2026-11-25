@@ -171,13 +171,27 @@
         <text wx:else class="section-meta">实时比分</text>
       </view>
       <view wx:if="{{isGeneral}}" class="score-board">
-        <view wx:for="{{participants}}" wx:key="id" class="score-row {{item.isSelf ? 'self-row' : ''}}">
-          <text class="rank {{item.rankClass}}">{{item.rank}}</text>
-          <view class="score-seat">{{item.seatMark}}</view>
-          <view class="score-name-block">
-            <text class="score-name">{{item.displayName}}<text wx:if="{{item.isSelf}}" class="self-tag">我</text></text>
+        <view class="general-score-motion-area">
+          <view class="general-score-rows">
+            <view wx:for="{{participants}}" wx:key="id"
+              class="score-row general-score-row {{item.isSelf ? 'self-row' : ''}} {{generalScoreMotion && generalScoreMotion.rows[item.id].shift ? 'general-rank-moving' : ''}}"
+              style="{{generalScoreMotion && generalScoreMotion.rows[item.id].shift ? '--rank-shift:' + generalScoreMotion.rows[item.id].shift + '%;' : ''}}">
+              <text class="rank {{item.rankClass}}">{{item.rank}}</text>
+              <view class="score-seat">{{item.seatMark}}</view>
+              <view class="score-name-block">
+                <text class="score-name">{{item.displayName}}<text wx:if="{{item.isSelf}}" class="self-tag">我</text></text>
+              </view>
+              <text class="score-value {{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.scoreText}}</text>
+              <block wx:if="{{generalScoreMotion && generalScoreMotion.rows[item.id].deltaText}}">
+                <view class="score-row-flash flash-{{generalScoreMotion.rows[item.id].deltaClass}}" aria-hidden="true"></view>
+                <text class="score-delta delta-{{generalScoreMotion.rows[item.id].deltaClass}}" aria-hidden="true">{{generalScoreMotion.rows[item.id].deltaText}}</text>
+              </block>
+            </view>
           </view>
-          <text class="score-value {{item.totalPoints >= 0 ? 'positive' : 'negative'}}">{{item.scoreText}}</text>
+          <view wx:if="{{generalScoreMotion}}" class="general-score-flights" aria-hidden="true">
+            <view wx:for="{{generalScoreMotion.transfers}}" wx:key="key" class="score-travel general-score-flight"
+              style="top: {{item.fromY}}%; --travel-y: {{item.travelY}}%;"><view class="score-bead"></view></view>
+          </view>
         </view>
       </view>
       <view wx:else class="score-board motion-score-board" style="height: {{motionBoardHeight}}rpx;">
@@ -205,19 +219,29 @@
           <text>{{giftRosterReview}}</text>
           <button class="quick-button" disabled="{{busy}}" bindtap="reviewGiftRecipients">核对后继续</button>
         </view>
-        <view wx:for="{{recipients}}" wx:key="id" class="give-row">
-          <view class="give-player">
-            <text class="give-name">{{item.displayName}}</text>
-            <text class="give-current">当前 {{item.scoreText}} 分</text>
+        <view wx:for="{{recipients}}" wx:key="id" class="give-item">
+          <view class="give-row">
+            <view class="give-player">
+              <text class="give-name">{{item.displayName}}</text>
+              <text class="give-current">当前 {{item.scoreText}} 分</text>
+            </view>
+            <input class="give-input" data-id="{{item.id}}" type="number" maxlength="10" placeholder="0" value="{{item.pointsInput}}" disabled="{{busy}}" bindinput="handleGiftInput" />
+            <text class="give-unit">分</text>
           </view>
-          <input class="give-input" data-id="{{item.id}}" type="number" maxlength="10" placeholder="0" value="{{item.pointsInput}}" disabled="{{busy}}" bindinput="handleGiftInput" />
-          <text class="give-unit">分</text>
+          <view class="give-quick-row">
+            <button class="give-chip" hover-class="fb-tap-btn" data-id="{{item.id}}" data-delta="1" disabled="{{busy}}" bindtap="quickAdjustGift">+1</button>
+            <button class="give-chip" hover-class="fb-tap-btn" data-id="{{item.id}}" data-delta="2" disabled="{{busy}}" bindtap="quickAdjustGift">+2</button>
+            <button class="give-chip" hover-class="fb-tap-btn" data-id="{{item.id}}" data-delta="5" disabled="{{busy}}" bindtap="quickAdjustGift">+5</button>
+            <button class="give-chip" hover-class="fb-tap-btn" data-id="{{item.id}}" data-delta="10" disabled="{{busy}}" bindtap="quickAdjustGift">+10</button>
+            <button wx:if="{{item.pointsInput}}" class="give-chip give-chip-clear" hover-class="fb-tap-btn" data-id="{{item.id}}" disabled="{{busy}}" bindtap="clearGiftRecipient">清零</button>
+          </view>
         </view>
         <view class="give-summary">
           <view>
             <text class="give-total-label">本次给出</text>
             <text class="give-total-value">{{giftTotal}} 分</text>
           </view>
+          <button wx:if="{{giftTotal > 0}}" class="give-clear-all" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="clearAllGifts">清空</button>
         </view>
         <text wx:if="{{giftPreview}}" class="give-preview">{{giftPreview}}</text>
         <text wx:if="{{giftError}}" class="error-banner" role="alert">{{giftError}}</text>
@@ -295,8 +319,8 @@
         <template is="mahjong-handover-rows" data="{{handoverHistory: handoverHistory}}" />
       </view>
       <text wx:if="{{settlementCopyError}}" class="error-banner" role="alert">{{settlementCopyError}}</text>
-      <button class="secondary-button" bindtap="copySettlement">复制完整结算清单</button>
-      <button class="primary-button" bindtap="rematch">再开一局</button>
+      <button class="secondary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" bindtap="copySettlement">复制完整结算清单</button>
+      <button class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" bindtap="rematch">再开一局</button>
       <button class="secondary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" bindtap="goHome">返回首页</button>
     </block>
 

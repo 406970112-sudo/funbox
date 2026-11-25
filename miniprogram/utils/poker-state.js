@@ -43,4 +43,36 @@ function potChangeFeedback(previous, next, centsPerPoint, preferences = {}) {
     deltaMoney: formatCNY(deltaPoints * centsPerPoint),
   };
 }
-Object.assign(module.exports, { potAmountBand, potChangeFeedback });
+
+function derivePokerMotion(previousRoom, nextRoom, preferences = {}) {
+  if (!previousRoom || !nextRoom || previousRoom.id !== nextRoom.id ||
+      previousRoom.status !== 'active' || nextRoom.status !== 'active' ||
+      Number(nextRoom.version) !== Number(previousRoom.version) + 1) return null;
+  const previous = previousRoom.currentZhaJinHuaHand;
+  const next = nextRoom.currentZhaJinHuaHand;
+  if (!previous || !next || previous.id !== next.id || preferences.reducedMotion) return null;
+
+  // Catch-up snapshots can cover several moves. Only attribute a deposit when
+  // the server gives us one new action and that actor's matching contribution.
+  const previousActions = previous.actions || [];
+  const actions = next.actions || [];
+  const action = actions[previousActions.length];
+  const actorId = action?.actorParticipantId;
+  if (!actorId || actorId !== previous.currentTurnParticipantId ||
+      actions.length !== previousActions.length + 1 || action.sequence !== actions.length) return null;
+
+  const nextPlayers = next.players || [];
+  const nextActorId = next.phase === 'betting' && next.currentTurnParticipantId !== actorId &&
+      nextPlayers.some(player => player.participantId === next.currentTurnParticipantId && player.status === 'active')
+    ? next.currentTurnParticipantId : '';
+  const isDeposit = ['follow', 'raise', 'compare_pay'].includes(action.actionType);
+  const feedback = isDeposit && potChangeFeedback(previous, next, nextRoom.centsPerPoint, preferences);
+  const source = nextPlayers.find(player => player.participantId === actorId);
+  const previousSource = (previous.players || []).find(player => player.participantId === actorId);
+  const pot = feedback && source && previousSource &&
+    source.contributionPoints - previousSource.contributionPoints === feedback.deltaPoints ? feedback : null;
+  if (!pot && !nextActorId) return null;
+  return {key: `${next.id}:${action.sequence}`, sourcePosition: source?.position, nextActorId, pot};
+}
+
+Object.assign(module.exports, { potAmountBand, potChangeFeedback, derivePokerMotion });

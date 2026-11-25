@@ -1,0 +1,213 @@
+<view class="holiday-page {{reduceMotion ? 'motion-reduced' : ''}}">
+  <view class="holiday-topbar">
+    <view>
+      <text class="entry-brand">FunBox / 节假日倒计时</text>
+    </view>
+    <view wx:if="{{todayLabel}}" class="today-pill {{isMakeupDay ? 'today-pill-makeup' : highlight && highlight.state === 'holiday' ? 'today-pill-holiday' : ''}}">
+      <view class="today-dot" aria-hidden="true"></view>
+      <text>{{todayLabel}}</text>
+    </view>
+  </view>
+
+  <block wx:if="{{status === 'ready'}}">
+    <view wx:if="{{isMakeupDay}}" class="makeup-today-banner" role="status">
+      <view class="makeup-today-badge">班</view>
+      <view class="makeup-today-copy">
+        <text class="makeup-today-title">今天调休上班</text>
+        <text class="makeup-today-desc">辛苦啦，再坚持一下就到下个假期</text>
+      </view>
+    </view>
+
+    <view wx:if="{{highlight}}" class="countdown-hero hero-tone-{{highlight.state}}">
+      <view class="hero-top-row">
+        <view class="hero-state-pill">
+          <view class="hero-state-dot" aria-hidden="true"></view>
+          <text>{{highlight.state === 'holiday' ? '假期进行中' : highlight.state === 'tomorrow' ? '明天就放假啦' : highlight.state === 'near' ? '即将放假' : '下一次放假'}}</text>
+        </view>
+        <view class="hero-calendar" aria-hidden="true">
+          <view class="hero-calendar-rings"><view></view><view></view></view>
+          <view class="hero-calendar-head">{{highlight.monthBadge}}</view>
+          <view class="hero-calendar-day">{{highlight.dayBadge}}</view>
+        </view>
+      </view>
+
+      <view class="hero-main">
+        <view class="hero-info">
+          <text class="hero-name">{{highlight.name}}</text>
+          <text class="hero-period">{{highlight.year}} 年 {{highlight.dateLabel}}</text>
+          <text class="hero-weekdays">{{highlight.weekdayRange}} · 共 {{highlight.duration}} 天</text>
+        </view>
+        <view wx:if="{{highlight.state !== 'holiday' || highlight.duration > 1}}" class="hero-count-block">
+          <text class="hero-count-prefix">{{highlight.state === 'holiday' ? '假期第' : '还有'}}</text>
+          <view class="hero-count-row">
+            <text class="hero-count-number">{{highlight.state === 'holiday' ? highlight.dayNumber : highlight.daysUntil}}</text>
+            <text class="hero-count-unit">天</text>
+          </view>
+        </view>
+        <view wx:else class="hero-count-block">
+          <text class="hero-count-single">今天</text>
+          <text class="hero-count-prefix">放假中</text>
+        </view>
+      </view>
+
+      <view wx:if="{{highlight.state === 'holiday' && highlight.duration > 1}}" class="hero-progress">
+        <view class="hero-progress-head">
+          <text>假期进度</text>
+          <text>{{highlight.dayNumber}} / {{highlight.duration}} 天</text>
+        </view>
+        <view class="hero-progress-track">
+          <view class="hero-progress-fill" style="width: {{highlight.progressPercent}}%;"></view>
+        </view>
+      </view>
+
+      <view class="hero-footnote">
+        <view wx:if="{{highlight.hasMakeup}}" class="hero-makeup-note">
+          <text class="hero-note-tag hero-note-tag-makeup">调休</text>
+          <text class="hero-note-text">{{highlight.makeupDetailLabel}} 上班</text>
+        </view>
+        <view wx:else class="hero-clean-note">
+          <text class="hero-note-tag hero-note-tag-clean">无需调休</text>
+          <text class="hero-note-text">原汁原味假期，安心安排行程</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:elif="{{awaitingNotice}}" class="countdown-hero hero-tone-awaiting">
+      <view class="hero-top-row">
+        <view class="hero-state-pill">
+          <view class="hero-state-dot" aria-hidden="true"></view>
+          <text>等待新安排</text>
+        </view>
+        <view class="hero-calendar" aria-hidden="true">
+          <view class="hero-calendar-rings"><view></view><view></view></view>
+          <view class="hero-calendar-head">休</view>
+          <view class="hero-calendar-day">—</view>
+        </view>
+      </view>
+      <text class="hero-name awaiting-title">下一次放假安排待公布</text>
+      <text class="hero-weekdays">国务院办公厅发布新一年度放假通知后会及时更新，你也可以回看往年安排。</text>
+    </view>
+
+    <view wx:else class="countdown-hero hero-tone-history">
+      <view class="hero-top-row">
+        <view class="hero-state-pill">
+          <view class="hero-state-dot" aria-hidden="true"></view>
+          <text>历史年度回顾</text>
+        </view>
+      </view>
+      <text class="hero-name awaiting-title">{{selectedYear}} 年假期已全部结束</text>
+      <text class="hero-weekdays">全年共 {{yearStats.totalCount}} 个法定节假日 · 累计放假 {{yearStats.totalDays}} 天</text>
+    </view>
+
+    <view wx:if="{{yearStats}}" class="year-stats fb-card">
+      <view class="stat-cell">
+        <text class="stat-value">{{yearStats.totalCount}}</text>
+        <text class="stat-label">法定假期</text>
+      </view>
+      <view class="stat-divider" aria-hidden="true"></view>
+      <view class="stat-cell">
+        <text class="stat-value stat-value-primary">{{yearStats.totalDays}}</text>
+        <text class="stat-label">全年休假(天)</text>
+      </view>
+      <view class="stat-divider" aria-hidden="true"></view>
+      <view class="stat-cell">
+        <text class="stat-value {{yearStats.remainingCount > 0 ? 'stat-value-mint' : ''}}">{{yearStats.remainingCount > 0 ? yearStats.remainingDays : 0}}</text>
+        <text class="stat-label">{{yearStats.remainingCount > 0 ? '剩余可休(天)' : '本年已休完'}}</text>
+      </view>
+    </view>
+
+    <view class="holiday-list-head">
+      <view class="holiday-head-copy">
+        <text class="holiday-section-title">全年放假安排</text>
+        <text class="holiday-section-sub">{{selectedYear}} 年 · 共 {{holidays.length}} 场</text>
+      </view>
+      <view wx:if="{{years.length > 1 && years.length <= 3}}" class="year-tabs" role="tablist" aria-label="切换年份">
+        <view
+          wx:for="{{years}}"
+          wx:key="*this"
+          class="year-tab {{selectedYear === item ? 'year-tab-active' : ''}}"
+          data-year="{{item}}"
+          bindtap="selectYear"
+          hover-class="fb-tap-btn"
+          role="tab"
+          aria-selected="{{selectedYear === item}}"
+        >{{item}}</view>
+      </view>
+      <picker wx:elif="{{years.length > 3}}" range="{{yearLabels}}" value="{{yearIndex}}" bindchange="onYearChange" aria-label="查看年份">
+        <view class="holiday-year" hover-class="fb-tap-btn"><text>{{selectedYear}} 年</text><view class="holiday-year-arrow" aria-hidden="true" /></view>
+      </picker>
+      <text wx:else class="holiday-year">{{selectedYear}} 年</text>
+    </view>
+
+    <view class="fb-card holiday-list">
+      <view
+        wx:for="{{holidays}}"
+        wx:key="id"
+        class="holiday-row {{item.past ? 'holiday-row-past' : ''}} {{item.current ? 'holiday-row-current' : ''}} {{item.inProgress ? 'holiday-row-active' : ''}}"
+      >
+        <view class="date-tile" aria-hidden="true">
+          <text class="date-tile-month">{{item.monthBadge}}</text>
+          <text class="date-tile-day">{{item.dayBadge}}</text>
+        </view>
+        <view class="holiday-row-body">
+          <view class="holiday-row-top">
+            <view class="holiday-title-group">
+              <text class="holiday-row-name">{{item.name}}</text>
+              <text class="duration-pill">{{item.duration > 1 ? '连休 ' + item.duration + ' 天' : '1 天'}}</text>
+              <text wx:if="{{item.inProgress}}" class="current-pill current-pill-live">进行中</text>
+              <text wx:elif="{{item.current}}" class="current-pill">下一假期</text>
+            </view>
+            <view class="holiday-row-status">
+              <text wx:if="{{item.past}}" class="status-past">已结束</text>
+              <text wx:elif="{{item.inProgress}}" class="status-live">{{item.statusText}}</text>
+              <text wx:elif="{{item.daysUntil === 1}}" class="status-tomorrow">明天</text>
+              <view wx:else class="status-days">
+                <text class="status-days-num">{{item.daysUntil}}</text>
+                <text class="status-days-unit">天后</text>
+              </view>
+            </view>
+          </view>
+          <text class="holiday-row-date">{{item.dateLabel}} · {{item.weekdayRange}}</text>
+          <view wx:if="{{item.hasMakeup}}" class="holiday-makeup-row">
+            <text class="makeup-chip">调休上班</text>
+            <text class="holiday-makeup-text">{{item.makeupDetailLabel}}</text>
+          </view>
+          <text wx:elif="{{!item.past}}" class="holiday-clean-tag">无需调休</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{source}}" class="source-card fb-card">
+      <view class="source-card-top">
+        <view class="source-badge">官方公告</view>
+        <text class="source-date">{{source.publishedAt}} 发布</text>
+      </view>
+      <text class="source-title">{{source.title}}</text>
+      <view class="source-actions">
+        <text class="source-note">放假与调休日期以国务院办公厅正式通知为准</text>
+        <button class="holiday-source-button {{copiedSource ? 'source-copied' : ''}}" hover-class="fb-tap-btn" bindtap="copySource">{{copiedSource ? '✓ 已复制' : '复制链接'}}</button>
+      </view>
+    </view>
+  </block>
+
+  <view wx:elif="{{status === 'loading'}}" class="holiday-skeleton" aria-label="正在加载假期日历">
+    <view class="skeleton-hero"></view>
+    <view class="skeleton-stats"></view>
+    <view class="fb-card skeleton-list">
+      <view wx:for="{{[1, 2, 3, 4]}}" wx:key="*this" class="skeleton-row">
+        <view class="skeleton-tile"></view>
+        <view class="skeleton-lines">
+          <view class="skeleton-line skeleton-line-lg"></view>
+          <view class="skeleton-line skeleton-line-sm"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:else class="fb-card holiday-feedback">
+    <view class="feedback-mark" aria-hidden="true">!</view>
+    <text class="holiday-section-title">暂时无法加载假期日历</text>
+    <text class="holiday-hint">请检查网络连接后重新获取最新放假安排。</text>
+    <button class="retry-primary-button" hover-class="fb-tap-btn" bindtap="refreshCalendar">重新加载</button>
+  </view>
+</view>

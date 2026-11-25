@@ -134,7 +134,7 @@ test('resume coalesces repeated taps and rejects a switched account', async () =
 
 function freshHome(kind = 'account') {
   let definition;
-  const state = {token: 'A', user: {id: 'u'}, session: {roomId: 'r', sessionId: 's', guestToken: 'g'},
+  const state = {token: 'A', user: {id: 'u'}, reduceMotion: false, session: {roomId: 'r', sessionId: 's', guestToken: 'g'},
     recent: {roomId: 'r', name: 'old', status: 'active', credentialKind: kind, userId: 'u', guestSessionId: 's'}};
   const reads = [], routes = [];
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../pages/index/index.js'), 'utf8'), {
@@ -144,13 +144,29 @@ function freshHome(kind = 'account') {
       getRecentScoreRoom: () => state.recent, getScoreSession: () => state.session,
       saveRecentScoreRoom: room => {state.recent = {...state.recent, name: room.name, status: room.status};},
       clearRecentScoreRoom: id => {if (state.recent && state.recent.roomId === id) state.recent = null;}
-    } : p.includes('auth') ? {getAccessToken: () => state.token, getStoredUser: () => state.user} : {},
+    } : p.includes('auth') ? {getAccessToken: () => state.token, getStoredUser: () => state.user}
+      : p.includes('ui-motion') ? {reduceMotionEnabled: () => state.reduceMotion}
+      : p.includes('discover-entries') ? {watchHolidayCard: () => () => {}} : {},
     Page: p => {definition = p;}, wx: {navigateTo: o => routes.push(o.url)}
   });
   const page = {...definition, data: {...definition.data}, setData(p) {Object.assign(this.data, p);}};
   return {state, reads, routes, page};
 }
 const homeTick = async () => {for (let i = 0; i < 6; i++) await Promise.resolve();};
+
+test('home refreshes its reduced-motion preference when shown', () => {
+  const {page, state} = freshHome();
+  state.recent = null;
+
+  state.reduceMotion = true;
+  page.onShow();
+  assert.equal(page.data.reduceMotion, true);
+
+  page.onHide();
+  state.reduceMotion = false;
+  page.onShow();
+  assert.equal(page.data.reduceMotion, false);
+});
 
 test('home checks status on show and refreshes waiting room name before advertising it', async () => {
   const h = freshHome(); h.page.onShow();

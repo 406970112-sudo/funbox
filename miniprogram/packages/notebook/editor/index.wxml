@@ -5,7 +5,16 @@
     <text class="state-copy">笔记会跟随你的账号保存，换设备也能继续写。</text>
     <button class="primary-button" bindtap="openLogin">微信快捷登录</button>
   </view>
-  <view wx:elif="{{loading}}" class="state-card"><text>正在打开笔记…</text></view>
+  <view wx:elif="{{loading}}" class="editor-skeleton" aria-label="正在打开笔记">
+    <view class="editor-skeleton-card">
+      <view class="editor-skeleton-title"></view>
+      <view class="editor-skeleton-date"></view>
+      <view class="editor-skeleton-line"></view>
+      <view class="editor-skeleton-line editor-skeleton-short"></view>
+      <view class="editor-skeleton-line"></view>
+    </view>
+    <text class="editor-skeleton-caption">正在打开笔记…</text>
+  </view>
   <view wx:elif="{{error}}" class="state-card"><text class="error-copy">{{error}}</text><button class="primary-button" bindtap="retry">重新加载</button></view>
   <block wx:else>
     <view class="editor-topbar">
@@ -13,7 +22,7 @@
         <nb-icon name="book" tone="primary" size="{{32}}" /><text>{{selectedBookName}}</text><nb-icon name="chevron-down" tone="primary" size="{{26}}" />
       </button>
       <view class="save-state save-{{saveState}}" bindtap="retrySave" role="button" aria-label="{{saveState === 'error' ? '保存失败，点击重试' : saveLabel}}">
-        <nb-icon wx:if="{{saveState === 'saved'}}" name="check" size="{{28}}" /><text>{{saveLabel}}</text>
+        <view wx:if="{{saveState === 'saved'}}" class="save-check {{saveConfirmed ? 'save-check-pulse' : ''}}" aria-hidden="true"><nb-icon name="check" size="{{28}}" /></view><text>{{saveLabel}}</text>
       </view>
       <button class="done-button" bindtap="saveAndClose">完成</button>
     </view>
@@ -23,9 +32,11 @@
         <text class="date-label">{{dateLabel}}</text>
         <textarea id="note-body" class="body-input" auto-height bindlinechange="onBodyLineChange" value="{{body}}" maxlength="20000" placeholder="写点什么…" placeholder-class="body-placeholder" bindinput="onBodyInput" bindfocus="onEditorFocus" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" cursor-spacing="24" />
         <view wx:if="{{checklist.length}}" class="check-section">
-          <view class="section-head"><text class="section-title">清单</text><text class="section-count">{{checklistDone}} / {{checklist.length}} 已完成</text></view>
+          <view class="section-head"><text class="section-title">清单</text><text class="section-count checklist-count-motion-{{checklistCountMotion}}">{{checklistDone}} / {{checklist.length}} 已完成</text></view>
           <view wx:for="{{checklist}}" wx:key="id" class="check-row">
-            <view class="check-control {{item.done ? 'check-control-active' : ''}}" data-index="{{index}}" bindtap="toggleChecklist" role="checkbox" aria-checked="{{item.done}}" aria-label="标记 {{item.text}}"><nb-icon wx:if="{{item.done}}" name="check" tone="white" size="{{28}}" /></view>
+            <view class="check-control {{item.done ? 'check-control-active' : ''}}" data-index="{{index}}" bindtap="toggleChecklist" role="checkbox" aria-checked="{{item.done}}" aria-label="标记 {{item.text}}">
+              <view wx:if="{{item.done}}" class="check-mark {{item.id === checklistMotionItemId ? 'check-mark-draw' : ''}}" aria-hidden="true"><nb-icon name="check" tone="white" size="{{28}}" /></view>
+            </view>
             <input id="check-{{index}}" class="check-input {{item.done ? 'check-input-done' : ''}}" value="{{item.text}}" maxlength="200" placeholder="添加一项" data-index="{{index}}" bindinput="onChecklistInput" bindfocus="onEditorFocus" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" cursor-spacing="24" />
             <button class="icon-button" data-index="{{index}}" bindtap="removeChecklist" aria-label="删除清单项"><nb-icon name="close" size="{{28}}" /></button>
           </view>
@@ -39,7 +50,7 @@
       <view class="privacy-row" bindtap="toggleEncryption" role="button" aria-label="{{encrypted ? '取消这条笔记加密' : '加密这条笔记'}}">
         <nb-icon name="{{encrypted ? 'lock' : 'unlock'}}" tone="{{encrypted ? 'primary' : 'default'}}" size="{{40}}" />
         <view class="privacy-copy"><text class="privacy-title">{{encrypted ? '这条笔记已加密' : '加密这条笔记'}}</text><text class="privacy-hint">仅密码解锁后可见</text></view>
-        <switch checked="{{encrypted}}" color="#2455ff" disabled aria-hidden="true" />
+        <switch checked="{{encrypted}}" color="#2d5bff" disabled aria-hidden="true" />
       </view>
       <text class="autosave-hint">自动保存，让每个想法安心留下</text>
     </scroll-view>

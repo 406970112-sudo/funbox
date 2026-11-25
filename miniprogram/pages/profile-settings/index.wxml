@@ -6,7 +6,7 @@
   </view>
   <view class="avatar-card fb-card">
     <view class="avatar-copy"><text class="section-title">我的头像</text><text class="section-desc">每一局，都有熟悉的你</text></view>
-    <button class="avatar-button" bindtap="chooseAvatar" disabled="{{uploading || saving || userLoading}}" aria-label="更换头像">
+    <button class="avatar-button" hover-class="fb-tap-btn" bindtap="chooseAvatar" disabled="{{uploading || saving || userLoading}}" aria-label="更换头像">
       <image wx:if="{{avatarUrl}}" class="avatar-image" src="{{avatarUrl}}" mode="aspectFill" binderror="handleAvatarError" />
       <view wx:else class="avatar-image avatar-fallback">{{initial}}</view>
       <text class="avatar-edit">{{uploading ? '上传中' : '更换'}}</text>
@@ -19,7 +19,7 @@
     <text class="section-desc">牌友会通过这个名字认识你</text>
   </view>
   <view wx:if="{{errorMessage}}" class="inline-error"><text>{{errorMessage}}</text><text wx:if="{{loadFailed}}" class="retry-link" bindtap="loadProfile">重试</text></view>
-  <button class="save-button" bindtap="saveName" loading="{{saving || userLoading}}" disabled="{{saving || uploading || userLoading}}">{{userLoading ? '正在读取资料' : (saving ? '正在保存' : '保存昵称')}}</button>
-  <button class="logout-button" bindtap="logout" disabled="{{saving || uploading || bindingWeChat || userLoading}}">退出登录</button>
+  <button class="save-button" hover-class="fb-tap-btn" bindtap="saveName" loading="{{saving || userLoading}}" disabled="{{saving || uploading || userLoading}}">{{userLoading ? '正在读取资料' : (saving ? '正在保存' : '保存昵称')}}</button>
+  <button class="logout-button" hover-class="fb-tap-btn" bindtap="logout" disabled="{{saving || uploading || bindingWeChat || userLoading}}">退出登录</button>
   <view class="settings-footer"><text>开心玩，清楚记。</text></view>
 </view>

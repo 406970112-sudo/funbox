@@ -1,4 +1,4 @@
-<view class="room-page">
+<view id="poker-motion-anchor" class="room-page poker-motion-anchor {{poker && poker.ended ? 'poker-ended-page' : ''}}">
   <view wx:if="{{loading}}" class="state-panel">
     <view class="loading-tile">±</view>
     <text class="state-title">正在同步牌局</text>
@@ -40,29 +40,56 @@
   </view>
 
   <block wx:elif="{{room && poker}}">
-    <view class="poker-head"><view><text class="poker-title">{{room.name}}</text><text class="muted">房间码 {{room.code}} · {{poker.seats.length}} 人{{poker.betweenHands ? '入座' : '本场'}}</text></view><button class="tiny" data-sheet="feedback" bindtap="openSheet">提示设置</button></view>
+    <view class="room-hero poker-hero">
+      <view class="room-top">
+        <view>
+          <text class="room-kicker">炸金花 · 房间码 {{room.code}}</text>
+          <text class="room-title">{{room.name}}</text>
+        </view>
+        <view class="realtime-pill {{offline ? 'realtime-offline' : realtimeStatus === 'online' && !networkSyncing ? 'realtime-online' : ''}}" bindtap="retryRealtime">
+          <view class="realtime-dot"></view>
+          <text>{{offline ? '网络已断开' : networkSyncing ? '同步中' : realtimeStatus === 'online' ? '实时同步' : syncWarning ? '同步暂缓' : realtimeError ? '定时刷新' : '连接中'}}</text>
+        </view>
+      </view>
+      <view class="room-footer">
+        <view class="room-metrics">
+          <view class="metric"><text class="metric-label">{{poker.betweenHands ? '入座人数' : '本场人数'}}</text><text class="metric-value">{{poker.seats.length}}{{room.maxPlayers > 0 ? ' / ' + room.maxPlayers : ''}}</text></view>
+        </view>
+        <button class="tiny" hover-class="fb-tap-btn" data-sheet="feedback" bindtap="openSheet">提示设置</button>
+      </view>
+    </view>
     <view wx:if="{{offline || networkSyncing}}" class="warning" role="alert">{{offline ? '网络中断，操作已暂停。恢复后自动同步。' : networkRecoveryError || '网络已恢复，正在同步最新牌局…'}}</view>
-    <button wx:if="{{!offline && networkRecoveryError}}" class="secondary-button" bindtap="retryNetworkSync">重试同步</button>
-    <view wx:if="{{!offline && !networkSyncing && realtimeStatus !== 'online'}}" class="muted sync-note" bindtap="retryRealtime">实时连接恢复中 · 分数定时刷新</view>
+    <button wx:if="{{!offline && networkRecoveryError}}" class="secondary-button" hover-class="motion-pressed" bindtap="retryNetworkSync">重试同步</button>
     <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
     <view wx:if="{{syncWarning}}" class="muted sync-note" role="status">{{syncWarning}}</view>
     <view wx:if="{{feedback}}" class="feedback-banner">{{feedback}}</view>
-    <view wx:if="{{showAccountBinding && !accountBound}}" class="card account-row"><text>登录绑定，散场后保留战绩</text><button class="tiny" bindtap="openAccountLogin">登录并绑定</button></view>
+    <view wx:if="{{showAccountBinding && !accountBound}}" class="card account-row"><text>登录绑定，散场后保留战绩</text><button class="tiny" hover-class="fb-tap-btn" bindtap="openAccountLogin">登录并绑定</button></view>
     <view wx:if="{{poker.seatNotice}}" class="membership-notice" role="status">
       <view class="membership-copy"><text class="card-title">{{poker.seatNotice === 'pending' ? '已申请入座，等待房主确认' : '你已离场，可申请重新入座'}}</text><text class="muted">{{poker.seatNotice === 'pending' ? '房主确认后即可参与下一场，历史账目保留。' : poker.betweenHands ? '重新入座后参与下一场，历史账目保留。' : '本场进行中，结束后可申请重新入座。'}}</text></view>
-      <button wx:if="{{poker.seatNotice === 'left'}}" class="primary-button rejoin-button" data-id="{{self.id}}" data-action="rejoin" bindtap="memberAction" disabled="{{!poker.canRejoin}}" loading="{{busy}}">申请重新入座</button>
+      <button wx:if="{{poker.seatNotice === 'left'}}" class="primary-button rejoin-button" hover-class="motion-pressed" data-id="{{self.id}}" data-action="rejoin" bindtap="memberAction" disabled="{{!poker.canRejoin}}" loading="{{busy}}">申请重新入座</button>
     </view>
     <view wx:if="{{poker.showAdmissionNotice}}" class="membership-notice admission-notice" role="alert">
       <view class="membership-copy"><text class="card-title">有 {{poker.pendingMembers.length}} 位牌友申请入座</text><text class="muted">{{poker.betweenHands ? '开场前请先确认，让牌友及时入座。' : '本场结束后可确认入座，先查看申请。'}}</text></view>
-      <button class="tiny admission-button" data-sheet="members" bindtap="openSheet" disabled="{{busy}}"><text>{{poker.betweenHands ? '去处理' : '查看申请'}}</text><view class="toolbar-arrow" aria-hidden="true"></view></button>
+      <button class="tiny admission-button" hover-class="fb-tap-btn" data-sheet="members" bindtap="openSheet" disabled="{{busy}}"><text>{{poker.betweenHands ? '去处理' : '查看申请'}}</text><view class="toolbar-arrow" aria-hidden="true"></view></button>
     </view>
-    <view wx:if="{{poker.ended}}" class="card">
-      <block wx:if="{{room.status === 'settled'}}">
-        <text class="card-title">{{personalSettlementTitle}}</text>
+    <block wx:if="{{poker.ended}}">
+      <view wx:if="{{room.status === 'settled'}}" class="settled-hero">
+        <view class="settled-art art art-poker" aria-hidden="true"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" /></view>
+        <text class="settled-kicker">这桌，散场了</text>
+        <text class="settled-title">这桌，账已理清</text>
+        <text class="settled-subtitle">全部曾参与玩家已计入 · 每分 {{poker.rateMoney}}</text>
+      </view>
+      <view wx:else class="state-panel error-state">
+        <view class="error-mark">×</view>
+        <text class="state-title">房间已取消</text>
+        <text class="state-desc">本房间没有产生账目。</text>
+      </view>
+      <view wx:if="{{room.status === 'settled'}}" class="transfer-card personal-settlement">
+        <text class="section-title">{{personalSettlementTitle}}</text>
         <view wx:for="{{personalSettlementRows}}" wx:key="key" class="personal-transfer">{{item.text}}</view>
-        <text class="muted">建议仅供核对，不代表已付款。</text>
-      </block>
-      <text class="poker-title">{{room.status === 'cancelled' ? '房间已取消' : '这桌，账已理清'}}</text><text class="muted">{{room.status === 'cancelled' ? '本房间没有产生账目。' : '全部曾参与玩家已计入 · 每分 ' + poker.rateMoney}}</text></view>
+        <text class="section-meta">建议仅供核对，不代表已付款。</text>
+      </view>
+    </block>
     <block wx:elif="{{poker.betweenHands}}">
       <view wx:if="{{isHost}}" class="invite-card poker-invite-card">
         <view class="invite-main">
@@ -88,20 +115,36 @@
     </block>
     <block wx:else>
       <view class="turn-banner {{poker.canAct ? 'my-turn' : ''}}" role="status"><text class="card-title">{{poker.phase === 'comparing' ? '已跟注，等待现场比牌' : poker.phase === 'showdown' ? '封顶 3 圈已满，现场开牌' : poker.phase === 'bonus' ? '亮牌后，记喜钱' : poker.canAct ? '轮到你了，' + poker.actorName : '轮到' + poker.actorName + '了'}}</text><text class="muted">第 {{poker.hand.number}} 场 · 第 {{poker.hand.circleNumber}} 圈 · {{poker.liveCount}} 人在局</text><text wx:if="{{poker.phase === 'betting' && poker.nextActorName}}" class="muted">{{poker.actorPosition}} 号位行动 · 下一位：{{poker.nextActorName}}（{{poker.nextActorPosition}} 号）</text></view>
-      <view class="card pot-card {{potPulse ? 'pot-pulse pot-' + potFeedback.band : ''}}"><view class="pot-caption"><text>公共积分池</text><text>1 分 = {{poker.rateMoney}}</text></view><view class="pot-values"><text class="pot-money">{{poker.potMoney}}</text><text class="pot-points">{{poker.hand.potPoints}}<text class="unit"> 分</text></text></view><text wx:if="{{potPulse && potFeedback}}" class="pot-delta">+{{potFeedback.deltaPoints}} 分 / +{{potFeedback.deltaMoney}}</text></view>
+      <view class="card pot-card">
+        <view class="pot-caption"><text>公共积分池</text><text>1 分 = {{poker.rateMoney}}</text></view>
+        <view id="poker-pot-values" class="pot-values"><text class="pot-money">{{poker.potMoney}}</text><text class="pot-points">{{poker.hand.potPoints}}<text class="unit"> 分</text></text></view>
+        <block wx:for="{{pokerMotion}}" wx:for-item="effect" wx:key="key">
+          <view wx:if="{{effect.pot}}" class="pot-confirmation {{effect.flight ? 'pot-after-flight' : ''}} pot-{{effect.pot.band}}" aria-hidden="true">
+            <view class="pot-ring"></view>
+            <text class="pot-delta">+{{effect.pot.deltaPoints}} 分 / +{{effect.pot.deltaMoney}}</text>
+          </view>
+        </block>
+      </view>
       <view class="base-bet"><text>基准 {{poker.hand.currentBetPoints}} 分</text><text>本人应跟 {{poker.followPoints}} 分</text></view>
       <view wx:if="{{poker.hand.currentBetPoints >= poker.settings.maxBetPoints}}" class="warning">已封顶 · 封顶后剩余 {{poker.hand.capCirclesRemaining}} 圈 · 不再加注</view>
     </block>
     <view wx:if="{{!poker.ended}}" class="seat-grid columns-{{poker.seatColumns}}">
       <view wx:for="{{poker.seats}}" wx:key="id" class="seat {{item.isActor ? 'actor-seat' : ''}} {{item.status === 'folded' || item.status === 'eliminated' ? 'out-seat' : ''}}">
-        <view class="seat-top"><text class="seat-number">{{item.position}}</text><text class="seat-role">{{item.role === 'host' ? '房主' : '牌友'}}</text><text wx:if="{{item.isSelf}}" class="self-mark">我</text></view>
+        <view class="seat-top"><text id="poker-seat-number-{{item.position}}" class="seat-number">{{item.position}}</text><text class="seat-role">{{item.role === 'host' ? '房主' : '牌友'}}</text><text wx:if="{{item.isSelf}}" class="self-mark">我</text></view>
         <text class="seat-name">{{item.name}}</text>
         <view class="seat-status"><text class="seat-dot"></text><text>{{item.isActor ? '行动中 · ' + item.stateText : item.stateText}}</text></view>
         <view class="seat-score"><text class="seat-score-label">{{poker.betweenHands ? '整桌累计' : '本场投入'}}</text><text class="seat-points">{{poker.betweenHands ? item.scoreText : (item.contributionPoints || 0)}}<text class="seat-unit"> 分</text></text></view>
+        <view wx:if="{{item.isActor && item.id === pokerMotion[0].nextActorId}}" class="seat-arrival {{pokerMotion[0].flight ? 'seat-after-flight' : ''}}" aria-hidden="true"></view>
       </view>
     </view>
+    <block wx:for="{{pokerMotion}}" wx:for-item="effect" wx:key="key">
+      <view wx:if="{{effect.flight}}" class="poker-chip-origin" aria-hidden="true"
+        style="left: {{effect.flight.startX}}px; top: {{effect.flight.startY}}px; --chip-x: {{effect.flight.travelX}}px; --chip-y: {{effect.flight.travelY}}px;">
+        <view class="poker-flying-chip">✦</view>
+      </view>
+    </block>
     <button wx:if="{{poker.comparePending}}" class="secondary-button" data-sheet="compare" bindtap="openSheet">继续已付费比牌（不再扣分）</button>
-    <view class="toolbar"><button class="tiny" data-sheet="ledger" bindtap="openSheet"><text>整桌账本</text><view class="toolbar-arrow" aria-hidden="true"></view></button><button class="tiny" data-sheet="members" bindtap="openSheet"><text>管理玩家</text><view class="toolbar-arrow" aria-hidden="true"></view></button><button class="tiny" data-sheet="settings" bindtap="openSheet"><text>规则摘要</text><view class="toolbar-arrow" aria-hidden="true"></view></button></view>
+    <view wx:if="{{!poker.ended}}" class="toolbar"><button class="tiny" hover-class="fb-tap-btn" data-sheet="ledger" bindtap="openSheet"><text>整桌账本</text><view class="toolbar-arrow" aria-hidden="true"></view></button><button class="tiny" hover-class="fb-tap-btn" data-sheet="members" bindtap="openSheet"><text>管理玩家</text><view class="toolbar-arrow" aria-hidden="true"></view></button><button class="tiny" hover-class="fb-tap-btn" data-sheet="settings" bindtap="openSheet"><text>规则摘要</text><view class="toolbar-arrow" aria-hidden="true"></view></button></view>
     <view wx:if="{{poker.phase === 'showdown'}}" class="card"><text class="card-title">现场核对，选择在局赢家</text><text class="muted">并列时先按桌上约定核对唯一赢家</text><view class="choices"><button wx:for="{{poker.showdownPlayers}}" wx:key="id" class="choice {{winnerId === item.id ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="selectWinner" disabled="{{!isHost || busy || offline}}">{{item.name}}</button></view><button wx:if="{{isHost}}" class="primary-button" disabled="{{!winnerId || busy || offline}}" bindtap="confirmShowdown">确认赢家，核对喜钱</button><text wx:else class="muted">等待房主记录现场结果</text></view>
     <view wx:if="{{poker.phase === 'bonus'}}" class="card bonus-card">
       <view class="bonus-heading"><text class="card-title">本场有喜钱吗？</text><text class="muted">默认无喜钱</text></view>
@@ -121,10 +164,37 @@
       <text wx:else class="muted">等待房主核对本场有无喜钱</text>
     </view>
     <view wx:if="{{poker.betweenHands && poker.latestFinishedHand}}" class="card"><text class="card-title">本场账单（含喜钱）</text><view wx:for="{{poker.resultPlayers}}" wx:key="id" class="ledger-row"><text>{{item.name}}</text><text>{{item.deltaText}} 分</text><text>{{item.money}}</text></view></view>
-    <view wx:if="{{poker.ended}}" class="card"><block wx:if="{{room.status === 'settled'}}"><view wx:for="{{settlementRows}}" wx:key="participantId" class="ledger-row"><text>{{item.name}}</text><text>{{item.scoreText}} 分</text><text>{{item.amountText}}</text></view></block><block wx:else><view wx:for="{{poker.members}}" wx:key="id" class="ledger-row"><text>{{item.displayName}}</text><text>{{item.scoreText}} 分</text><text>{{item.money}}</text></view></block><text wx:if="{{room.status === 'settled'}}" class="card-title">转账建议</text><view wx:for="{{settlementTransfers}}" wx:key="key" class="ledger-row"><text>{{item.fromName}} → {{item.toName}}</text><text>{{item.amountText}}</text></view><text wx:if="{{room.status === 'settled' && !hasSettlementTransfers}}" class="muted">本局无需转账</text><text wx:if="{{settlementCopyError}}" class="error-banner" role="alert">{{settlementCopyError}}</text><button wx:if="{{room.status === 'settled'}}" class="secondary-button" bindtap="copySettlement">复制完整结算清单</button><button class="secondary-button" bindtap="goHome">返回首页</button></view>
+    <block wx:if="{{poker.ended}}">
+      <view wx:if="{{room.status === 'settled'}}" class="result-list">
+        <view wx:for="{{settlementRows}}" wx:key="participantId" class="result-row">
+          <view>
+            <text class="result-name">{{item.name}}</text>
+            <text class="result-score">{{item.scoreText}} 分</text>
+          </view>
+          <text class="result-amount {{item.amountCents >= 0 ? 'positive' : 'negative'}}">{{item.amountText}}</text>
+        </view>
+      </view>
+      <view wx:if="{{room.status === 'settled'}}" class="transfer-card">
+        <text class="section-kicker">转账建议</text>
+        <view wx:if="{{!hasSettlementTransfers}}" class="no-transfer">本局无需转账</view>
+        <view wx:for="{{settlementTransfers}}" wx:key="key" class="transfer-row">
+          <text class="transfer-from">{{item.fromName}}</text>
+          <text class="transfer-arrow">→</text>
+          <view class="transfer-destination">
+            <text class="transfer-to">{{item.toName}}</text>
+            <text class="transfer-amount">{{item.amountText}}</text>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{room.status === 'settled'}}" class="toolbar"><button class="tiny" hover-class="fb-tap-btn" data-sheet="ledger" bindtap="openSheet"><text>整桌账本</text><view class="toolbar-arrow" aria-hidden="true"></view></button><button class="tiny" hover-class="fb-tap-btn" data-sheet="settings" bindtap="openSheet"><text>规则摘要</text><view class="toolbar-arrow" aria-hidden="true"></view></button></view>
+      <text wx:if="{{settlementCopyError}}" class="error-banner" role="alert">{{settlementCopyError}}</text>
+      <button wx:if="{{room.status === 'settled'}}" class="secondary-button" hover-class="motion-pressed" bindtap="copySettlement">复制完整结算清单</button>
+      <button wx:if="{{room.status === 'settled'}}" class="primary-button" hover-class="motion-pressed" bindtap="openPokerCreate">再开一局</button>
+      <button class="secondary-button" hover-class="motion-pressed" bindtap="goHome">返回首页</button>
+    </block>
     <view class="action-dock" wx:if="{{!poker.ended}}">
-      <block wx:if="{{poker.betweenHands}}"><button class="primary-button" wx:if="{{isHost}}" disabled="{{!poker.canStart}}" loading="{{busy}}" bindtap="startHand">{{poker.canStart ? (poker.latestFinishedHand ? '开始下一场 · 第 ' : '开始第 ') + poker.nextHandNumber + ' 场' : '至少 2 人入座才能开始'}}</button><button wx:if="{{isHost}}" class="secondary-button dismiss-button" data-sheet="ledger" bindtap="openSheet" disabled="{{!poker.canManage}}">散场 · 核对整桌账本</button><text wx:else class="waiting-copy">{{poker.seatNotice === 'left' ? '申请重新入座后，等待房主确认' : poker.seatNotice === 'pending' ? '入座申请已提交，等待房主确认' : '等待房主开场'}}</text></block>
-      <block wx:elif="{{poker.canAct}}"><button class="primary-button" bindtap="follow">跟注 {{poker.followPoints}} 分（{{poker.followMoney}}）</button><view class="choices"><button class="secondary-button" disabled="{{!poker.canRaise}}" bindtap="openRaise">加注</button><button class="secondary-button" disabled="{{!poker.canLook}}" bindtap="look">{{poker.canLook ? '我已看牌' : '已看 · 2倍'}}</button><button class="secondary-button" bindtap="fold">弃牌</button></view><button wx:if="{{poker.canCompare}}" class="secondary-button" bindtap="openCompare">比牌（剩 {{poker.liveCount}} 人）</button></block>
+      <block wx:if="{{poker.betweenHands}}"><button class="primary-button" hover-class="motion-pressed" wx:if="{{isHost}}" disabled="{{!poker.canStart}}" loading="{{busy}}" bindtap="startHand">{{poker.canStart ? (poker.latestFinishedHand ? '开始下一场 · 第 ' : '开始第 ') + poker.nextHandNumber + ' 场' : '至少 2 人入座才能开始'}}</button><button wx:if="{{isHost}}" class="secondary-button dismiss-button" hover-class="motion-pressed" data-sheet="ledger" bindtap="openSheet" disabled="{{!poker.canManage}}">散场 · 核对整桌账本</button><text wx:else class="waiting-copy">{{poker.seatNotice === 'left' ? '申请重新入座后，等待房主确认' : poker.seatNotice === 'pending' ? '入座申请已提交，等待房主确认' : '等待房主开场'}}</text></block>
+      <block wx:elif="{{poker.canAct}}"><button class="primary-button" hover-class="motion-pressed" bindtap="follow">跟注 {{poker.followPoints}} 分（{{poker.followMoney}}）</button><view class="choices"><button class="secondary-button" hover-class="motion-pressed" disabled="{{!poker.canRaise}}" bindtap="openRaise">加注</button><button class="secondary-button" hover-class="motion-pressed" disabled="{{!poker.canLook}}" bindtap="look">{{poker.canLook ? '我已看牌' : '已看 · 2倍'}}</button><button class="secondary-button" hover-class="motion-pressed" bindtap="fold">弃牌</button></view><button wx:if="{{poker.canCompare}}" class="secondary-button" hover-class="motion-pressed" bindtap="openCompare">比牌（剩 {{poker.liveCount}} 人）</button></block>
       <text wx:elif="{{busy}}" class="waiting-copy">同步中，请勿重复操作…</text><text wx:elif="{{poker.phase === 'betting'}}" class="waiting-copy">{{offline ? '网络中断，操作已暂停' : '等待' + poker.actorName + '行动 · 自动同步，无需反复刷新'}}</text>
     </view>
   </block>

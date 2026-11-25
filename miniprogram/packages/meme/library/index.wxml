@@ -14,15 +14,7 @@
         confirm-type="search"
         placeholder="{{mode === 'online' ? '输入关键词，点击搜索' : (tab === 'categories' ? '搜索分类名称' : '搜索表情包、分类')}}"
         aria-label="搜索表情包或分类"
-      /><button bindtap="search">搜索</button></view>
-    <view
-      wx:if="{{mode === 'library'}}"
-      class="source"
-      bindtap="copySource"
-      role="button"
-      aria-label="复制 ChineseBQB 来源网址"
-      hover-class="source-pressed"
-    ><text class="source-label">ChineseBQB · {{tab === 'categories' ? categoryTotal + ' 个分类' : '按已有标签与分类搜索'}}</text><view class="copy-icon" aria-hidden="true" /></view>
+      /><button hover-class="fb-tap-btn" bindtap="search">搜索</button></view>
     <view wx:if="{{mode === 'library'}}" class="tabs">
       <view
         wx:for="{{tabs}}"
@@ -30,9 +22,18 @@
         class="tab {{tab === item.id ? 'selected' : ''}}"
         data-tab="{{item.id}}"
         bindtap="changeTab"
+        hover-class="fb-tap-btn"
       >{{item.title}}</view>
     </view>
   </view>
+  <view
+    wx:if="{{mode === 'library'}}"
+    class="source"
+    bindtap="copySource"
+    role="button"
+    aria-label="复制 ChineseBQB 来源网址"
+    hover-class="source-pressed"
+  ><text class="source-label">ChineseBQB · {{tab === 'categories' ? categoryTotal + ' 个分类' : '按已有标签与分类搜索'}}</text><view class="copy-icon" aria-hidden="true" /></view>
   <view wx:if="{{mode === 'online'}}" class="online-panel">
     <button class="online-toggle" bindtap="toggleOnlineDetails" aria-expanded="{{onlineDetailsExpanded}}" aria-label="{{onlineDetailsExpanded ? '收起多站搜索信息' : '展开多站搜索信息'}}">
       <text class="online-toggle-title">多站搜索</text>
@@ -87,6 +88,7 @@
         data-id="{{item.id}}"
         data-title="{{item.title}}"
         bindtap="chooseCategory"
+        hover-class="fb-tap-card"
       >
         <image
           wx:if="{{item.coverUrl}}"
@@ -150,6 +152,7 @@
           class="rank-card"
           data-id="{{item.id}}"
           bindtap="openImage"
+          hover-class="fb-tap-card"
         ><text
             wx:if="{{rankMode === 'ranking' && item.rank}}"
             class="rank-number"
@@ -250,6 +253,7 @@
           class="image-tile"
           wx:for="{{items}}"
           wx:key="id"
+          hover-class="fb-tap-card"
         >
           <view
             class="tile-media"
@@ -271,8 +275,8 @@
             >{{item.unavailable ? '内容已下架' : '图片暂不可用'}}<text>{{item.unavailable ? '可移除此收藏' : '点按详情可重试'}}</text></view><text
               wx:if="{{item.animated}}"
               class="gif-badge"
-            >动图</text>
-          </view><text class="tile-title">{{item.title}}</text><button wx:if="{{!item.unavailable}}" class="tile-favorite {{item.favorite ? 'is-favorite' : ''}}" data-id="{{item.id}}" catchtap="toggleFavorite" disabled="{{favoriteBusy[item.id]}}" aria-label="{{item.favorite ? '取消收藏' : '收藏图片'}}">{{favoriteBusy[item.id] ? '处理中' : (item.favorite ? '已收藏' : '收藏')}}</button><text wx:if="{{mode === 'online' && item.sourceName}}" class="tile-source">{{item.sourceName}}</text><text
+            >动图</text><button wx:if="{{!item.unavailable}}" class="tile-favorite-fab {{item.favorite ? 'is-favorite' : ''}}" hover-class="fb-tap-btn" data-id="{{item.id}}" catchtap="toggleFavorite" disabled="{{favoriteBusy[item.id]}}" aria-label="{{item.favorite ? '取消收藏' : '收藏图片'}}">{{item.favorite ? '★' : '☆'}}</button>
+          </view><text class="tile-title">{{item.title}}</text><text wx:if="{{mode === 'online' && item.sourceName}}" class="tile-source">{{item.sourceName}}</text><text
             wx:if="{{mode === 'library' && (item.unavailable || broken[item.id]) && tab === 'favorites' && favoriteMode === 'favorites'}}"
             class="remove-link"
             data-id="{{item.id}}"

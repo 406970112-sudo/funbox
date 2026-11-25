@@ -42,12 +42,13 @@
 
 .profile-card {
   box-sizing: border-box;
-  height: 200rpx;
+  min-height: 200rpx;
+  transition: transform .12s ease-out, opacity .12s ease-out;
 }
 
 .history-entry-card,
 .feedback-card {
-  height: 168rpx;
+  min-height: 168rpx;
 }
 
 .identity-card {
@@ -175,15 +176,15 @@
 }
 
 .history-entry-title {
-  font-size: 35rpx;
+  font-size: 34rpx;
   font-weight: 800;
 }
 
 .history-entry-desc {
-  max-width: 310rpx;
+  max-width: 340rpx;
   margin-top: 8rpx;
-  color: #7b879c;
-  font-size: 22rpx;
+  color: var(--fb-muted);
+  font-size: 23rpx;
 }
 
 .history-art {
@@ -205,14 +206,14 @@
 }
 
 .feedback-title {
-  font-size: 31rpx;
+  font-size: 34rpx;
   font-weight: 800;
 }
 
 .feedback-desc {
-  margin-top: 7rpx;
-  color: #7b879c;
-  font-size: 22rpx;
+  margin-top: 8rpx;
+  color: var(--fb-muted);
+  font-size: 23rpx;
 }
 
 .feedback-art {
@@ -222,20 +223,19 @@
 
 .profile-footer {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding-top: 25rpx;
-  color: #8490a4;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 48rpx 0 12rpx;
+  color: var(--fb-subtle);
   font-size: 22rpx;
 }
 
-.footer-art {
-  width: 310rpx;
-  height: 310rpx;
-}
-
-.profile-footer > text {
-  margin-top: -10rpx;
+.footer-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #c5d4f5;
 }
 
 @media (max-width:350px) {
@@ -251,4 +251,10 @@
   }
 
 
+}
+
+.profile-motion-reduced .profile-hero { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-hero { animation: none; }
 }

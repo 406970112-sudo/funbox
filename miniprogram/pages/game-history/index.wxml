@@ -16,6 +16,7 @@
         class="filter-chip {{activeRange === item.key ? 'filter-active' : ''}}"
         data-range="{{item.key}}"
         bindtap="changeRange"
+        hover-class="fb-tap-btn"
       >{{item.label}}</view>
     </view>
   </scroll-view>
@@ -62,8 +63,8 @@
   <view class="pagination fb-card">
     <view class="page-summary">第 {{page}} / {{totalPages}} 页 · 共 {{total}} 场</view>
     <view class="page-actions">
-      <button class="page-button" disabled="{{!hasPrev || loading}}" bindtap="previousPage">上一页</button>
-      <button class="page-button page-button-primary" disabled="{{!hasNext || loading}}" bindtap="nextPage">下一页</button>
+      <button class="page-button" hover-class="fb-tap-btn" disabled="{{!hasPrev || loading}}" bindtap="previousPage">上一页</button>
+      <button class="page-button page-button-primary" hover-class="fb-tap-btn" disabled="{{!hasNext || loading}}" bindtap="nextPage">下一页</button>
     </view>
   </view>
 </view>

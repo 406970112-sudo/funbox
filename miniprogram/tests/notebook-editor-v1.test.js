@@ -26,6 +26,7 @@ function load(api = {}, wxPatch = {}) {
       },
       '../utils/notebook-format': { bookTheme: () => ({ fill: '#e8eeff', ink: '#2455ff' }) },
       '../../../utils/auth': { getAccessToken: () => 'token', clearSession() {} },
+      '../../../utils/ui-motion': { reduceMotionEnabled: () => Boolean(wx.getStorageSync?.('funboxMahjongReducedMotionV1')) },
     }[request] || {}),
     setTimeout: fn => { const id = ++timerId; timers.set(id, fn); return id; },
     clearTimeout: id => timers.delete(id),
@@ -82,25 +83,60 @@ test('failed autosave preserves text, checklist, tags and retry dirty state', as
   assert.equal(page.data.tags[0], '旅行');
   assert.equal(page._dirty, true);
   assert.equal(page.data.saveState, 'error');
+  assert.equal(Boolean(page.data.saveConfirmed), false);
 });
 
 test('edits during an in-flight save are saved without replacing newer input', async () => {
-  let release;
+  const releases = [];
   const payloads = [];
+  let startSecond;
+  const secondStarted = new Promise(resolve => { startSecond = resolve; });
   const { page } = load({ updateNotebookNote: async (_id, payload) => {
     payloads.push(payload);
-    if (payloads.length === 1) await new Promise(resolve => { release = resolve; });
+    if (payloads.length === 2) startSecond();
+    await new Promise(resolve => { releases.push(resolve); });
     return loadedNote(payload);
   } });
   page.applyLoadedNote(loadedNote(), []);
+  assert.equal(Boolean(page.data.saveConfirmed), false);
   page.onBodyInput({ detail: { value: '第一版' } });
   const saved = page.saveNow();
   page.onBodyInput({ detail: { value: '第二版' } });
-  release();
+  releases[0]();
+  await secondStarted;
+  assert.equal(page.data.saveState, 'saving');
+  assert.equal(Boolean(page.data.saveConfirmed), false);
+  releases[1]();
   assert.equal(await saved, true);
   assert.equal(payloads.length, 2);
   assert.equal(payloads[1].body, '第二版');
   assert.equal(page.data.body, '第二版');
+  assert.equal(page.data.saveConfirmed, true);
+});
+
+test('checklist motion targets only an explicit check and respects the preference on return', async () => {
+  let reduced = false;
+  const { page } = load({}, { getStorageSync: () => reduced });
+  page.applyLoadedNote(loadedNote({ checklist: [{ id: 'c1', text: '带水', done: true }, { id: 'c2', text: '带钥匙', done: false }] }), []);
+  const first = { currentTarget: { dataset: { index: '0' } } };
+  const second = { currentTarget: { dataset: { index: '1' } } };
+  assert.equal(Boolean(page.data.checklistMotionItemId), false);
+  page.toggleChecklist(second);
+  assert.equal(page.data.checklistMotionItemId, 'c2');
+  assert.equal(page.data.checklistDone, 2);
+  const firstPop = page.data.checklistCountMotion;
+  assert.ok(firstPop);
+  page.toggleChecklist(first);
+  assert.equal(Boolean(page.data.checklistMotionItemId), false);
+  assert.notEqual(page.data.checklistCountMotion, firstPop);
+  page._dirty = false;
+  page.onHide();
+  reduced = true;
+  await page.onShow();
+  page.toggleChecklist(first);
+  assert.equal(page.data.checklistDone, 2);
+  assert.equal(Boolean(page.data.checklistMotionItemId), false);
+  assert.equal(Boolean(page.data.checklistCountMotion), false);
 });
 
 test('failed encryption retains encryption intent for all subsequent retries', async () => {

@@ -1,8 +1,8 @@
 .settings-page {
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 38rpx 30rpx 48rpx;
-  background: radial-gradient(ellipse at 90% 3%, #e9f2ff, transparent 44%), #f5f7fa;
+  padding: 38rpx 30rpx calc(48rpx + env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 90% 3%, #e9f2ff, transparent 44%), var(--fb-canvas);
 }
 
 .settings-header {

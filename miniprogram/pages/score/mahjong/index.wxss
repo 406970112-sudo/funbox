@@ -1,8 +1,8 @@
 .mahjong-page {
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 28rpx 30rpx 52rpx;
-  background: radial-gradient(ellipse at 100% 0%,#eaf3ff,transparent 36%),#f5f7fa;
+  padding: 28rpx 30rpx calc(52rpx + env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 100% 0%,#eaf3ff,transparent 36%), var(--fb-canvas);
 }
 
 .mahjong-join-page {
@@ -153,11 +153,11 @@
 
 .form-badge {
   flex-shrink: 0;
-  padding: 5rpx 13rpx;
+  padding: 6rpx 14rpx;
   border-radius: 99rpx;
   background: #f1f5fc;
-  color: #8490a4;
-  font-size: 19rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
 }
 
 .room-name-row {
@@ -172,31 +172,32 @@
   box-sizing: border-box;
   min-width: 0;
   min-height: 44px;
-  border-bottom: 2rpx solid transparent;
-  border-radius: 8rpx 8rpx 0 0;
+  border-bottom: 2rpx solid #eef2f8;
+  border-radius: 10rpx 10rpx 0 0;
   transition: background .15s ease, border-color .15s ease;
 }
 
 .inline-control-active {
-  border-bottom-color: #2d5bff;
+  border-bottom-color: var(--fb-primary);
   background: #edf4ff;
 }
 
 .room-name-control {
+  flex: 1;
   max-width: 100%;
 }
 
 .inline-input {
+  flex: 1;
   min-width: 0;
   height: 76rpx;
   min-height: 44px;
-  padding: 0 4rpx;
-  color: #34425b;
+  padding: 0 8rpx;
+  color: #172139;
 }
 
 .room-name-input {
-  width: 220rpx;
-  font-size: 29rpx;
+  font-size: 30rpx;
   font-weight: 700;
 }
 
@@ -240,9 +241,9 @@
 
 .create-settings-hint {
   display: block;
-  margin-top: 2rpx;
-  color: #8b97a9;
-  font-size: 21rpx;
+  margin-top: 6rpx;
+  color: var(--fb-subtle);
+  font-size: 22rpx;
   line-height: 1.5;
 }
 
@@ -272,8 +273,8 @@
 
 .field-hint {
   flex-shrink: 0;
-  color: #97a2b4;
-  font-size: 20rpx;
+  color: var(--fb-subtle);
+  font-size: 22rpx;
 }
 
 .field-input {
@@ -310,11 +311,11 @@
 }
 
 .password-control {
-  flex: 0 1 auto;
+  flex: 1;
+  max-width: 280rpx;
 }
 
 .password-input {
-  width: 116rpx;
   font-size: 28rpx;
   letter-spacing: 2rpx;
 }
@@ -384,8 +385,8 @@
 .create-footer {
   display: block;
   margin-top: 28rpx;
-  color: #97a2b4;
-  font-size: 21rpx;
+  color: var(--fb-subtle);
+  font-size: 22rpx;
   line-height: 1.7;
   text-align: center;
 }
@@ -445,11 +446,11 @@
   position: absolute;
   top: 20rpx;
   left: 24rpx;
-  padding: 5rpx 18rpx;
+  padding: 6rpx 18rpx;
   border-radius: 99rpx;
   background: #e8f0ff;
-  color: #2d5bff;
-  font-size: 20rpx;
+  color: var(--fb-primary);
+  font-size: 22rpx;
   font-weight: 700;
 }
 

@@ -1,8 +1,11 @@
 <view class="detail-page">
-  <view
-    wx:if="{{loading}}"
-    class="status"
-  >正在加载图片…</view>
+  <view wx:if="{{loading}}" class="detail-skeleton" aria-label="正在加载图片">
+    <view class="detail-skeleton-media"></view>
+    <view class="detail-skeleton-title"></view>
+    <view class="detail-skeleton-meta"></view>
+    <view class="detail-skeleton-actions"><view></view><view></view></view>
+    <text class="detail-skeleton-text">正在加载图片…</text>
+  </view>
   <view
     wx:if="{{error}}"
     class="status"
@@ -45,17 +48,33 @@
       class="source"
     >原始标签：{{image.label}}</view>
     <view class="action-row"><button
+        class="favorite-button"
+        hover-class="fb-tap-btn"
         bindtap="favorite"
         loading="{{favoriteBusy}}"
         disabled="{{favoriteBusy}}"
-      >{{favorite ? '★ 已收藏' : '☆ 收藏'}}</button><button open-type="share">↗ 分享页面</button></view>
+        aria-label="{{favorite ? '已收藏' : '收藏'}}"
+        aria-pressed="{{favorite}}"
+      >
+        <view class="favorite-mark {{favorite ? 'favorite-mark-selected' : ''}} {{favoriteEffect ? 'favorite-mark-confirmed' : ''}}" aria-hidden="true">
+          <text class="favorite-star">{{favorite ? '★' : '☆'}}</text>
+          <block wx:if="{{favoriteEffect}}">
+            <text class="favorite-spark favorite-spark-left">✦</text>
+            <text class="favorite-spark favorite-spark-top">✧</text>
+            <text class="favorite-spark favorite-spark-right">✦</text>
+          </block>
+        </view>
+        <text>{{favorite ? '已收藏' : '收藏'}}</text>
+      </button><button hover-class="fb-tap-btn" open-type="share">↗ 分享页面</button></view>
     <button
       class="primary"
+      hover-class="fb-tap-btn"
       bindtap="shareImage"
       disabled="{{busy}}"
       loading="{{busy}}"
     >分享图片</button><button
       class="secondary"
+      hover-class="fb-tap-btn"
       bindtap="save"
       disabled="{{busy}}"
     >保存到相册</button>
@@ -84,6 +103,7 @@
           class="related-card"
           data-id="{{item.id}}"
           bindtap="openRelated"
+          hover-class="fb-tap-card"
         >
           <image
             wx:if="{{!broken[item.id]}}"

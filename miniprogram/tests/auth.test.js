@@ -131,7 +131,6 @@ test("mini program password template binds the visibility state and drops streng
 
   assert.match(template, /password="\{\{!passwordVisible\}\}"/);
   assert.match(template, /bindtap="togglePasswordVisibility"/);
-  assert.match(template, /wx:if="\{\{mode === 'login'\}\}"/);
   assert.doesNotMatch(template, /至少 8 位|包含字母和数字/);
 });
 

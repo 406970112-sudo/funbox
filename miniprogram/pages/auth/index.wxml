@@ -18,7 +18,7 @@
     <block wx:if="{{mode === 'wechat'}}">
       <text class="welcome-title">欢迎来到 FunBox</text>
       <text class="welcome-subtitle">首次登录将自动创建账号</text>
-      <button class="wechat-button" loading="{{loading}}" disabled="{{loading}}" bindtap="handleWeChatLogin">
+      <button class="wechat-button" hover-class="fb-tap-btn" loading="{{loading}}" disabled="{{loading}}" bindtap="handleWeChatLogin">
         <image class="wechat-icon" src="/assets/icons/wechat.png" mode="aspectFit" aria-hidden="true" />
         <text>{{loading ? '正在登录' : '微信一键登录'}}</text>
       </button>
@@ -27,13 +27,13 @@
         <checkbox class="agreement-checkbox" value="agree" checked="{{agreed}}" disabled="{{loading}}" aria-label="同意用户协议和隐私政策" />
         <view class="agreement-copy"><text bindtap="toggleAgreement">我已阅读并同意 </text><text class="agreement-link" data-type="terms" bindtap="openLegal">《用户协议》</text><text> 和 </text><text class="agreement-link" data-type="privacy" bindtap="openLegal">《隐私政策》</text></view>
       </checkbox-group>
-      <button class="phone-fallback" data-mode="login" bindtap="switchMode" disabled="{{loading}}">
+      <button class="phone-fallback" data-mode="login" bindtap="switchMode" hover-class="fb-tap-btn" disabled="{{loading}}">
         <text>手机号密码登录 / 注册</text>
         <text class="phone-fallback-arrow" aria-hidden="true">›</text>
       </button>
     </block>
     <block wx:else>
-      <button class="back-wechat" data-mode="wechat" bindtap="switchMode" disabled="{{loading}}">‹ 返回微信快捷登录</button>
+      <button class="back-wechat" data-mode="wechat" bindtap="switchMode" hover-class="fb-tap-btn" disabled="{{loading}}">‹ 返回微信快捷登录</button>
       <view class="tabs">
         <view class="tab {{mode === 'login' ? 'tab-active' : ''}}" data-mode="login" bindtap="switchMode">登录</view>
         <view class="tab {{mode === 'register' ? 'tab-active' : ''}}" data-mode="register" bindtap="switchMode">注册</view>
@@ -46,8 +46,8 @@
       <view class="field">
         <text class="field-label">密码</text>
         <view class="password-input-wrap">
-          <input class="field-input {{mode === 'login' ? 'password-input' : ''}}" placeholder-class="field-placeholder" data-field="password" maxlength="72" password="{{!passwordVisible}}" placeholder="请输入密码" value="{{password}}" bindinput="handleInput" />
-          <view wx:if="{{mode === 'login'}}" class="password-toggle" bindtap="togglePasswordVisibility" hover-class="password-toggle-hover" aria-label="{{passwordVisible ? '隐藏密码' : '显示密码'}}">{{passwordVisible ? '隐藏' : '显示'}}</view>
+          <input class="field-input password-input" placeholder-class="field-placeholder" data-field="password" maxlength="72" password="{{!passwordVisible}}" placeholder="请输入密码" value="{{password}}" bindinput="handleInput" />
+          <view class="password-toggle" bindtap="togglePasswordVisibility" hover-class="password-toggle-hover" aria-label="{{passwordVisible ? '隐藏密码' : '显示密码'}}">{{passwordVisible ? '隐藏' : '显示'}}</view>
         </view>
       </view>
 
@@ -66,7 +66,7 @@
         </view>
       </block>
 
-      <button class="primary-button" loading="{{loading}}" disabled="{{loading}}" bindtap="handleSubmit">
+      <button class="primary-button" hover-class="fb-tap-btn" loading="{{loading}}" disabled="{{loading}}" bindtap="handleSubmit">
         {{mode === 'register' ? '注册并登录' : '登录'}}
       </button>
       <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
@@ -76,7 +76,7 @@
       </checkbox-group>
     </block>
   </view>
-  <view class="guest-note" bindtap="continueAsGuest" role="button" aria-label="暂不登录，继续游客使用">
+  <view class="guest-note" bindtap="continueAsGuest" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="暂不登录，继续游客使用">
     <view class="fb-score-mark" aria-hidden="true">±</view>
     <view class="guest-copy">
       <text class="guest-title">先开一局，也没问题</text>

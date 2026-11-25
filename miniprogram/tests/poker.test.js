@@ -12,6 +12,49 @@ test('pending applicants cannot leave seated roster and narrow screens keep twel
 test('cancelled hands retain numbering but never replace latest finished bill',()=>{const r=room();r.currentZhaJinHuaHand=null;r.zhaJinHuaHands=[{id:'c',number:6,status:'cancelled',players:[]},{id:'f',number:5,status:'finished',phase:'finished',players:[{participantId:'a',deltaPoints:3}]}];const v=poker.derivePoker(r,'a');assert.equal(v.nextHandNumber,7);assert.equal(v.latestFinishedHand.id,'f');assert.equal(v.resultPlayers[0].deltaText,'+3');assert.equal(v.ledger.length,2);});
 test('pot amount bands use exact cents at both boundaries',()=>{assert.equal(poker.potAmountBand(19999),'small');assert.equal(poker.potAmountBand(20000),'medium');assert.equal(poker.potAmountBand(49999),'medium');assert.equal(poker.potAmountBand(50000),'large');});
 test('finite pot emphasis includes positive increment and obeys motion preferences',()=>{const before={id:'h',potPoints:10},after={id:'h',potPoints:12};assert.deepEqual(poker.potChangeFeedback(before,after,50,{}),{band:'small',deltaPoints:2,deltaMoney:'¥1.00'});assert.equal(poker.potChangeFeedback(before,after,50,{reducedMotion:true}),null);assert.equal(poker.potChangeFeedback(before,after,50,{potMotion:false}),null);assert.equal(poker.potChangeFeedback(after,before,50,{}),null);assert.equal(poker.potChangeFeedback(before,{...after,id:'next'},50,{}),null);});
+
+function seenRaiseSnapshots() {
+  const before = {...room(), version: 8};
+  before.currentZhaJinHuaHand.actions = [{sequence: 1, actionType: 'look', actorParticipantId: 'a', points: 0}];
+  before.currentZhaJinHuaHand.players = [
+    {participantId: 'a', position: 1, status: 'active', seen: true, contributionPoints: 6},
+    {participantId: 'b', position: 2, status: 'active', contributionPoints: 5},
+  ];
+  const after = structuredClone(before);
+  after.version = 9;
+  after.currentZhaJinHuaHand.currentTurnParticipantId = 'b';
+  after.currentZhaJinHuaHand.actions.push({sequence: 2, actionType: 'raise', actorParticipantId: 'a', points: 7});
+  after.currentZhaJinHuaHand.players[0].contributionPoints = 20;
+  after.currentZhaJinHuaHand.potPoints = 25;
+  return {before, after};
+}
+
+test('seen raise shows the confirmed doubled contribution from the logged seat', () => {
+  const {before, after} = seenRaiseSnapshots();
+  const motion = poker.derivePokerMotion?.(before, after);
+  assert.equal(motion?.sourcePosition, 1);
+  assert.deepEqual(motion?.pot, {band: 'small', deltaPoints: 14, deltaMoney: '¥7.00'});
+  assert.equal(motion?.nextActorId, 'b');
+});
+
+test('historical or coalesced updates cannot attribute a pool increase to a single seat', () => {
+  const {before, after} = seenRaiseSnapshots();
+  const skipped = {...after, version: 10};
+  const multiple = structuredClone(after);
+  multiple.currentZhaJinHuaHand.actions.push({sequence: 3, actionType: 'fold', actorParticipantId: 'b', points: 0});
+  for (const [previous, next] of [[null, after], [after, after], [after, before], [before, skipped], [before, multiple]]) {
+    assert.equal(poker.derivePokerMotion?.(previous, next), null);
+  }
+  after.currentZhaJinHuaHand.players[0].contributionPoints = 13;
+  assert.equal(poker.derivePokerMotion?.(before, after)?.pot, null);
+});
+
+test('amount feedback can be disabled independently of the confirmed new turn', () => {
+  const {before, after} = seenRaiseSnapshots();
+  const motion = poker.derivePokerMotion?.(before, after, {potMotion: false});
+  assert.equal(motion?.pot, null);
+  assert.equal(motion?.nextActorId, 'b');
+});
 test('actor and next seat skip folded players and wrap in seat order',()=>{const r=room();r.participants.push({id:'c',displayName:'丙'});r.currentZhaJinHuaHand.players=[{participantId:'a',position:1,status:'active'},{participantId:'b',position:2,status:'folded'},{participantId:'c',position:3,status:'active'}];let v=poker.derivePoker(r,'a');assert.equal(v.actorPosition,1);assert.equal(v.nextActorName,'丙');assert.equal(v.nextActorPosition,3);r.currentZhaJinHuaHand.currentTurnParticipantId='c';v=poker.derivePoker(r,'a');assert.equal(v.nextActorName,'甲');assert.equal(v.nextActorPosition,1);});
 test('rejoining and admission notices stay visible outside management until resolved',()=>{const r=room();r.currentZhaJinHuaHand=null;r.participants[1].seatStatus='left';let view=poker.derivePoker(r,'b');assert.equal(view.seatNotice,'left');assert.equal(view.canRejoin,true);assert.equal(poker.derivePoker(r,'b',{offline:true}).seatNotice,'left');r.participants[1].seatStatus='pending';view=poker.derivePoker(r,'b');assert.equal(view.seatNotice,'pending');assert.equal(view.canRejoin,false);assert.equal(view.showAdmissionNotice,false);assert.equal(poker.derivePoker(r,'a').showAdmissionNotice,true);r.participants[1].seatStatus='seated';assert.equal(poker.derivePoker(r,'b').seatNotice,'');assert.equal(poker.derivePoker(r,'a').showAdmissionNotice,false);});
 test('membership notices respect active hands and final settlement',()=>{const r=room();r.participants[1].seatStatus='left';let view=poker.derivePoker(r,'b');assert.equal(view.seatNotice,'left');assert.equal(view.canRejoin,false);r.participants[1].seatStatus='pending';assert.equal(poker.derivePoker(r,'a').showAdmissionNotice,true);assert.equal(poker.derivePoker(r,'a').canManage,false);r.status='settled';assert.equal(poker.derivePoker(r,'b').seatNotice,'');assert.equal(poker.derivePoker(r,'a').showAdmissionNotice,false);});

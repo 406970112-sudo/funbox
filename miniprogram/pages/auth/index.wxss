@@ -223,10 +223,10 @@
 .wechat-button { display: flex; align-items: center; justify-content: center; gap: 20rpx; box-sizing: border-box; width: 100%; min-height: 120rpx; margin-top: 36rpx; padding: 24rpx 16rpx; border-radius: 36rpx; background: linear-gradient(135deg, #27cf79 0%, #14b85c 100%); box-shadow: 0 18rpx 34rpx rgba(7, 193, 96, .22); color: #fff; font-size: 34rpx; font-weight: 800; line-height: 1.5; letter-spacing: 1rpx; }
 .wechat-button[disabled] { background: #8bdab0; box-shadow: none; color: #fff; }
 .wechat-icon { display: block; width: 58rpx; height: 58rpx; flex-shrink: 0; }
-.phone-fallback { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: auto; min-height: 44px; margin: 0 auto; padding: 0 12rpx; border: 0; background: transparent; box-shadow: none; color: #929cad; font-size: 22rpx; font-weight: 400; line-height: 1.5; text-align: center; }
+.phone-fallback { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: auto; min-height: 44px; margin: 8rpx auto 0; padding: 0 12rpx; border: 0; background: transparent; box-shadow: none; color: #66758d; font-size: 24rpx; font-weight: 500; line-height: 1.5; text-align: center; }
 .phone-fallback::after { border: 0; }
 .phone-fallback[disabled] { opacity: .5; }
-.phone-fallback-arrow { margin-left: 6rpx; color: #bac2ce; font-size: 22rpx; line-height: 1; }
+.phone-fallback-arrow { margin-left: 6rpx; color: #8490a4; font-size: 24rpx; line-height: 1; }
 .back-wechat { min-height: 44px; margin: -10rpx 0 16rpx; padding: 0; background: transparent; color: var(--fb-primary); text-align: left; font-size: 25rpx; line-height: 44px; }
 .agreement-row { display: flex; align-items: center; margin: 28rpx -8rpx -8rpx; }
 .agreement-row-wechat { justify-content: center; margin: 26rpx 0 -10rpx; }
@@ -237,5 +237,5 @@
 .agreement-row-wechat .agreement-copy { flex: 0 1 auto; min-width: 0; text-align: center; }
 .agreement-link { color: var(--fb-primary); }
 .guest-arrow { color: var(--fb-primary); font-size: 46rpx; }
-.auth-footer { margin-top: 28rpx; color: #98a4b9; font-size: 21rpx; }
+.auth-footer { margin-top: 28rpx; color: #6e7d94; font-size: 22rpx; }
 @media (max-width: 350px) { .auth-page { padding-left: 24rpx; padding-right: 24rpx; } .auth-card { padding: 28rpx; } .welcome-title { font-size: 35rpx; } .agreement-copy { font-size: 22rpx; } }

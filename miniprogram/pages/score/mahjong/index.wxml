@@ -2,7 +2,7 @@
   <view class="hero">
     <view class="hero-top">
       <text class="entry-brand">FunBox / 棋牌记分</text>
-      <view class="account-link" bindtap="openAuth">
+      <view class="account-link" bindtap="openAuth" hover-class="fb-tap-btn">
         <text class="account-mark">{{isLoggedIn ? '已' : '游'}}</text>
         <text>{{userName}}</text>
       </view>
@@ -29,7 +29,7 @@
 
     <view class="room-name-row">
       <view class="inline-control room-name-control {{editingField === 'roomName' ? 'inline-control-active' : ''}}">
-        <input class="inline-input room-name-input" style="width: {{roomName.length > 8 ? 270 : (roomName.length || 4) * 30 + 12}}rpx;" data-field="roomName" maxlength="40" placeholder="输入房间名" value="{{roomName}}" bindinput="handleField" bindfocus="beginInlineEdit" bindblur="endInlineEdit" bindconfirm="endInlineEdit" focus="{{editingField === 'roomName'}}" disabled="{{creating}}" confirm-type="done" aria-label="房间名，点按修改" />
+        <input class="inline-input room-name-input" data-field="roomName" maxlength="40" placeholder="输入房间名" value="{{roomName}}" bindinput="handleField" bindfocus="beginInlineEdit" bindblur="endInlineEdit" bindconfirm="endInlineEdit" focus="{{editingField === 'roomName'}}" disabled="{{creating}}" confirm-type="done" aria-label="房间名，点按修改" />
         <button class="inline-edit" data-field="roomName" bindtap="beginInlineEdit" disabled="{{creating}}" aria-label="编辑房间名"><view class="edit-pencil" aria-hidden="true"></view></button>
       </view>
     </view>
@@ -44,7 +44,7 @@
       <view class="password-lock" aria-hidden="true"></view>
       <text class="password-label">房间密码</text>
       <view class="inline-control password-control {{editingField === 'roomPassword' ? 'inline-control-active' : ''}}">
-        <input class="inline-input password-input" style="width: {{roomPassword.length ? roomPassword.length * 18 + 8 : 164}}rpx;" data-field="roomPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{roomPassword}}" bindinput="handleField" bindfocus="beginInlineEdit" bindblur="endInlineEdit" bindconfirm="endInlineEdit" focus="{{editingField === 'roomPassword'}}" disabled="{{creating}}" confirm-type="done" aria-label="房间密码，4～6 位数字，点按修改" />
+        <input class="inline-input password-input" data-field="roomPassword" maxlength="6" type="number" placeholder="4～6 位数字" value="{{roomPassword}}" bindinput="handleField" bindfocus="beginInlineEdit" bindblur="endInlineEdit" bindconfirm="endInlineEdit" focus="{{editingField === 'roomPassword'}}" disabled="{{creating}}" confirm-type="done" aria-label="房间密码，4～6 位数字，点按修改" />
         <button class="inline-edit" data-field="roomPassword" bindtap="beginInlineEdit" disabled="{{creating}}" aria-label="编辑房间密码"><view class="edit-pencil" aria-hidden="true"></view></button>
       </view>
     </view>
@@ -55,7 +55,7 @@
     </view>
 
     <view wx:if="{{errorMessage}}" class="error-banner" role="alert">{{errorMessage}}</view>
-    <button class="primary-button" loading="{{creating}}" disabled="{{creating}}" bindtap="createRoom">
+    <button class="primary-button" hover-class="motion-pressed" hover-start-time="0" hover-stay-time="120" loading="{{creating}}" disabled="{{creating}}" bindtap="createRoom">
       创建房间
     </button>
   </view>

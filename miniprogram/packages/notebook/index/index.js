@@ -50,8 +50,12 @@ Page({
     this._active = true;
     const token = getAccessToken();
     const user = getStoredUser();
-    this.setData({ isLoggedIn: Boolean(token), userName: user && user.displayName ? user.displayName : "游客" });
-    if (token) this.loadNotes();
+    if (token !== this._accountToken) {
+      this._accountToken = token;
+      this.resetNotes();
+    }
+    this.updateView({ isLoggedIn: Boolean(token), userName: user && user.displayName ? user.displayName : "游客" });
+    if (token) return this.loadNotes();
   },
 
   onHide() {
@@ -65,17 +69,50 @@ Page({
 
   async onPullDownRefresh() {
     try {
-      if (this.data.isLoggedIn) await this.loadNotes();
+      if (this.data.isLoggedIn) await this.loadNotes({ manual: true });
     } finally {
       wx.stopPullDownRefresh();
     }
   },
 
-  async loadNotes() {
+  // Cache is scoped to this page instance and the current login session.
+  resetNotes() {
+    this._hasLoadedNotes = false;
+    this._notes = [];
+    this._generation = (this._generation || 0) + 1;
+    this.updateView({
+      books: [], filters: [{ id: "all", name: "全部", count: 0 }],
+      activeBookId: "all", pinnedNotes: [], recentNotes: [],
+      noteCount: 0, hasNotes: false, loading: false, error: "",
+      hasSecurityPassword: false, encryptedNoteCount: 0, securityUnlocked: false,
+      showSecuritySheet: false, securityBusy: false, securityMode: "summary",
+      securityPassword: "", securityNewPassword: "", securityConfirmPassword: "", securityError: "",
+    });
+  },
+
+  updateView(next) {
+    const patch = {};
+    Object.keys(next).forEach(key => {
+      if (JSON.stringify(this.data[key]) !== JSON.stringify(next[key])) patch[key] = next[key];
+    });
+    if (Object.keys(patch).length) this.setData(patch);
+  },
+
+  filteredState(notes, activeBookId) {
+    const filtered = activeBookId === "all" ? notes : notes.filter(note => note.bookId === activeBookId);
+    return {
+      pinnedNotes: filtered.filter(note => note.pinned),
+      recentNotes: filtered.filter(note => !note.pinned),
+      noteCount: filtered.length,
+      hasNotes: filtered.length > 0,
+    };
+  },
+
+  async loadNotes(options = {}) {
     if (!this.data.isLoggedIn) return;
     const generation = (this._generation || 0) + 1;
     this._generation = generation;
-    this.setData({ loading: true, error: "" });
+    this.updateView({ loading: !this._hasLoadedNotes, error: "" });
     try {
       const [books, result, security] = await Promise.all([
         listNotebookBooks(),
@@ -86,7 +123,12 @@ Page({
       const themedBooks = filterBooks(books, this.data.activeBookId);
       const notes = (result.notes || []).map((note, index) => decorateNote(note, index));
       this._notes = notes;
-      this.setData({
+      this._hasLoadedNotes = true;
+      const activeBookId = this.data.activeBookId === "all" || themedBooks.some(book => book.id === this.data.activeBookId)
+        ? this.data.activeBookId : "all";
+      this.updateView({
+        activeBookId,
+        ...this.filteredState(notes, activeBookId),
         books: themedBooks,
         hasSecurityPassword: Boolean(security.hasPassword),
         encryptedNoteCount: Number(security.encryptedNoteCount) || 0,
@@ -97,30 +139,24 @@ Page({
         ],
         loading: false,
       });
-      this.applyFilter();
     } catch (error) {
       if (!this._active || generation !== this._generation) return;
       if (isNotebookUnauthorized(error)) {
         clearSession();
-        this.setData({ isLoggedIn: false, loading: false, error: "" });
+        this.resetNotes();
+        this.updateView({ isLoggedIn: false });
         return;
       }
-      this.setData({ loading: false, error: notebookErrorMessage(error) });
+      // A failed background refresh must not replace a usable list with an error screen.
+      this.updateView({ loading: false, error: this._hasLoadedNotes ? "" : notebookErrorMessage(error) });
+      if (this._hasLoadedNotes && options.manual && typeof wx.showToast === "function") {
+        wx.showToast({ title: notebookErrorMessage(error), icon: "none" });
+      }
     }
   },
 
   applyFilter() {
-    const active = this.data.activeBookId;
-    const all = this._notes || [];
-    const filtered = active === "all" ? all : all.filter(note => note.bookId === active);
-    const pinnedNotes = filtered.filter(note => note.pinned);
-    const recentNotes = filtered.filter(note => !note.pinned);
-    this.setData({
-      pinnedNotes,
-      recentNotes,
-      noteCount: filtered.length,
-      hasNotes: filtered.length > 0,
-    });
+    this.updateView(this.filteredState(this._notes || [], this.data.activeBookId));
   },
 
   changeFilter(event) {

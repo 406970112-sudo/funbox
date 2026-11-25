@@ -1,36 +1,96 @@
 const base=require('../../../utils/score-room-base');
 const api=require('../../../utils/score-api');
 const {formatCNY}=require('../../../utils/score-format');
-const {derivePoker,shouldRemind,createPokerInput,potChangeFeedback}=require('../../../utils/poker-state');
+const {derivePoker,shouldRemind,createPokerInput,derivePokerMotion}=require('../../../utils/poker-state');
 const {saveRecentScoreRoom}=require('../../../utils/score-session');
+const {reduceMotionEnabled}=require('../../../utils/ui-motion');
+const POKER_MOTION_DURATION = 960;
+
 function confirm(title,content){return new Promise(resolve=>wx.showModal({title,content,confirmColor:'#2d5bff',success:r=>resolve(r.confirm),fail:()=>resolve(false)}));}
+
+function chipFlight(anchor, pot, seat) {
+ if (!anchor || !pot?.width || !pot.height || !seat?.width || !seat.height) return null;
+ const fromX = seat.left + seat.width / 2;
+ const fromY = seat.top + seat.height / 2;
+ return {
+  startX: fromX - anchor.left,
+  startY: fromY - anchor.top,
+  travelX: pot.left + pot.width / 2 - fromX,
+  travelY: pot.top + pot.height / 2 - fromY,
+ };
+}
+
 Page({...base,
- data:{...base.data,qrSize:96,poker:null,offline:false,sheet:'',targetId:'',outcome:'',winnerId:'',raiseBase:'',bonusSelections:[],bonusRows:[],bonusEnabled:false,expandedBonusId:'',bonusChecked:false,reducedMotion:false,potMotion:true,vibrate:true,potPulse:false,settingsDraft:{},vibrationKeys:[]},
+ data:{...base.data,qrSize:96,poker:null,offline:false,sheet:'',targetId:'',outcome:'',winnerId:'',raiseBase:'',bonusSelections:[],bonusRows:[],bonusEnabled:false,expandedBonusId:'',bonusChecked:false,reducedMotion:false,potMotion:true,vibrate:true,pokerMotion:[],settingsDraft:{},vibrationKeys:[]},
  onLoad(options){
   if(wx.getWindowInfo){try{this.setData({windowWidth:wx.getWindowInfo().windowWidth});}catch(e){}}
   const prefs=wx.getStorageSync('funboxPokerFeedback')||{};this.setData({reducedMotion:!!prefs.reducedMotion,potMotion:prefs.potMotion!==false,vibrate:prefs.vibrate!==false});
   base.onLoad.call(this,options);
  },
- onUnload(){if(this.pulseTimer)clearTimeout(this.pulseTimer);base.onUnload.call(this);},
+
+ networkStateChanged() {
+  base.networkStateChanged.call(this);
+  if (this.writesPaused()) this.clearPokerMotion();
+ },
+
+ clearPokerMotion() {
+  clearTimeout(this.pokerMotionTimer);
+  this.pokerMotionTimer = null;
+  this.pendingPokerMotion = null;
+  if (this.data.pokerMotion.length) this.setData({pokerMotion: []});
+ },
+
+ canPlayPokerMotion() {
+  return !this.realtimeMotionBaseline && !this.writesPaused() && !this.data.reducedMotion && !reduceMotionEnabled();
+ },
+
+ updatePokerMotion(previous, room) {
+  const matchesRoom = () => this.data.room?.id === room.id && Number(this.data.room?.version) === Number(room.version);
+  if (!matchesRoom()) return;
+  if (previous?.id === room.id && Number(previous.version) === Number(room.version)) return;
+  if (!this.canPlayPokerMotion()) return;
+  const effect = derivePokerMotion(previous, room, {potMotion: this.data.potMotion});
+  if (!effect) return;
+
+  this.pendingPokerMotion = effect;
+  const current = () => this.pendingPokerMotion === effect && matchesRoom() && this.canPlayPokerMotion();
+  const show = (flight = null) => {
+   if (!current()) return;
+   this.setData({pokerMotion: [{...effect, flight}]});
+   this.pokerMotionTimer = setTimeout(() => this.clearPokerMotion(), POKER_MOTION_DURATION);
+  };
+  if (!effect.pot || !Number.isSafeInteger(effect.sourcePosition) || !wx.nextTick || !wx.createSelectorQuery) {
+   show();
+   return;
+  }
+
+  wx.nextTick(() => {
+   if (!current()) return;
+   const query = wx.createSelectorQuery();
+   query.select('#poker-motion-anchor').boundingClientRect();
+   query.select('#poker-pot-values').boundingClientRect();
+   query.select(`#poker-seat-number-${effect.sourcePosition}`).boundingClientRect();
+   query.exec(results => {
+    const [anchor, pot, seat] = results || [];
+    show(chipFlight(anchor, pot, seat));
+   });
+  });
+ },
 
  updatePoker(){if(!this.data.room)return;const id=this.currentParticipantId(this.data.room);this.setData({poker:derivePoker(this.data.room,id,{offline:this.data.offline||this.data.networkSyncing,busy:this.data.busy,width:this.data.windowWidth})});},
  async applyRoom(room){
   const old=this.data.room;if(old&&old.id===room.id&&room.version<old.version)return false;
+  const suppressMotion = this.motionResuming || this.realtimeMotionBaseline;
+  if (this.pageVisible !== false && this.pageActive !== false && !this.data.offline) this.motionResuming = false;
   if(old&&old.id===room.id&&old.version===room.version&&!this.data.loading&&this.data.poker?.betweenHands){saveRecentScoreRoom(room,this.credential);this.lastRoomSyncAt=Date.now();this.maybeBindParticipantAccount();return false;}
+  if (old?.id !== room.id || Number(old?.version) !== Number(room.version)) this.clearPokerMotion();
   const id=this.currentParticipantId(room);
+  const liveBeforeApply = !suppressMotion && !this.writesPaused();
+  const generation = this.networkGeneration || 0;
   const remind=shouldRemind(old,room,id),key=room.currentZhaJinHuaHand?`${room.currentZhaJinHuaHand.id}:${(room.currentZhaJinHuaHand.actions||[]).length}`:'';
   await base.applyRoom.call(this,room);this.updatePoker();
   if(remind&&this.pageVisible!==false&&!this.remindedKeys?.has(key)){this.remindedKeys=this.remindedKeys||new Set();this.remindedKeys.add(key);if(this.data.vibrate&&wx.vibrateShort)wx.vibrateShort({type:'light'});}
   const h=room.currentZhaJinHuaHand,oldH=old&&old.currentZhaJinHuaHand;
-  const potFeedback = potChangeFeedback(oldH, h, room.centsPerPoint, this.data);
-  if (potFeedback) {
-    if (this.pulseTimer) clearTimeout(this.pulseTimer);
-    this.setData({potPulse: true, potFeedback});
-    this.pulseTimer = setTimeout(() => this.setData({potPulse: false, potFeedback: null}), 600);
-  } else if (!h || !oldH || h.id !== oldH.id || this.data.reducedMotion || !this.data.potMotion) {
-    if (this.pulseTimer) clearTimeout(this.pulseTimer);
-    this.setData({potPulse: false, potFeedback: null});
-  }
   const ownsPaidComparison = h && h.phase === 'comparing' && h.pendingComparison?.actorParticipantId === id;
   const sameHand = oldH && h && oldH.id === h.id;
   // Transport state disables submission, but must not discard a valid draft.
@@ -44,6 +104,7 @@ Page({...base,
   if(!oldH||oldH.id!==(h&&h.id)||oldH.phase!==(h&&h.phase))this.setData({bonusSelections:[],bonusEnabled:false,expandedBonusId:'',bonusChecked:false,winnerId:''});
   this.updateBonusRows();
   if(this.data.poker.ended)this.setData({sheet:''});
+  if (liveBeforeApply && generation === (this.networkGeneration || 0)) this.updatePokerMotion(old, room);
   return true;
  },
  async ensureInviteToken(){return base.ensureInviteToken.call(this);},
@@ -94,6 +155,7 @@ Page({...base,
  async saveSettings(){if(!this.data.poker.canManage)return;try{const s=createPokerInput({roomName:'局',hostNickname:'我',roomPassword:'666666',rate:String(this.data.room.centsPerPoint/100),...this.data.settingsDraft});await this.runMutation(()=>api.updatePokerSettings(this.credential,this.data.room,s.zhaJinHuaSettings));this.setData({sheet:''});}catch(e){this.setData({errorMessage:e.message});}},
  async cancelHand(){const p=this.data.poker;if(!this.data.isHost||!p.hand||p.betweenHands||p.ended||this.data.busy||this.data.offline)return;const reviewed=this.data.room,handId=p.hand.id;if(await this.confirmCurrent('撤销本场？','全部本场投入和喜钱不入账，累计历史保留。仅用于现场牌局无法继续的情况。'))await this.runMutation(()=>api.cancelPokerHand(this.credential,reviewed,handId));},
  async settle(){if(!this.data.poker.canManage)return;if(await this.confirmCurrent('确定散场结算？',`每分金额固定为 ${this.data.poker.rateMoney}，含全部已离场玩家。确认后只读。`))return this.runMutation(()=>api.settleScoreRoom(this.credential,this.data.room,this.data.room.centsPerPoint));},
- togglePreference(e){const field=e.currentTarget.dataset.field;this.setData({[field]:e.detail.value,potPulse:false});wx.setStorageSync('funboxPokerFeedback',{reducedMotion:this.data.reducedMotion,potMotion:this.data.potMotion,vibrate:this.data.vibrate});},
+ togglePreference(e){const field=e.currentTarget.dataset.field;this.setData({[field]:e.detail.value});if(field!=='vibrate')this.clearPokerMotion();wx.setStorageSync('funboxPokerFeedback',{reducedMotion:this.data.reducedMotion,potMotion:this.data.potMotion,vibrate:this.data.vibrate});},
+ openPokerCreate(){const name=encodeURIComponent(this.data.room?.name||'');const nick=encodeURIComponent(this.data.self?.displayName||'');wx.navigateTo({url:`/pages/score/poker/index?roomName=${name}&hostNickname=${nick}`});},
  onShareAppMessage(){return {title:`邀请你加入「${this.data.room?.name||'炸金花'}」`,path:this.data.inviteToken?require('../../../utils/invite').buildInviteContent(this.data.inviteToken):'/pages/score/poker/index'};}
 });

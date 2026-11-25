@@ -29,6 +29,7 @@ const { connectScoreRealtime } = require("./score-realtime");
 const { drawScoreQRCode } = require("./score-qr");
 const { giftDraft, giftHistory: deriveGiftHistory, canCancelRoom, settlementView, rematchRoute } = require("./score-ux");
 const { motionPage, motionData } = require("./mahjong-motion");
+const { deriveGeneralScoreMotion } = require("./general-score-motion");
 const { handoverView, handoverData, createHandoverPage } = require("./mahjong-handover-host");
 
 // Legacy waiting-room invites remain unchanged. V2 poker can also invite
@@ -109,6 +110,7 @@ module.exports = {
     ...motionData,
     ...handoverData,
     isGeneral: false,
+    generalScoreMotion: null,
     loading: true,
     busy: false,
     offline: false,
@@ -205,6 +207,7 @@ module.exports = {
   onShow() {
     this.pageVisible = true;
     this.startNetworkWatch();
+    if (this.motionInitialized) this.initMahjongMotion();
     this.setData({ isLoggedIn: Boolean(getAccessToken()) });
     if (this.credential && this.data.room) {
       this.startRealtime();
@@ -224,6 +227,7 @@ module.exports = {
     this.clearMahjongMotion();
     this.clearGiftReceipt();
     this.clearHandoverReceipt();
+    if (this.data.isGeneral) this.clearGeneralScoreMotion();
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.pollTimer = null;
   },
@@ -333,6 +337,7 @@ module.exports = {
   async loadRoom(options) {
     if (!this.credential || !this.data.roomId || this.pageActive === false || this.pageVisible === false) return false;
     const generation = this.networkGeneration || 0;
+    const motionBaseline = this.realtimeMotionBaseline;
     const current = () => generation === (this.networkGeneration || 0) && this.pageActive !== false && this.pageVisible !== false;
     const quiet = options && options.quiet;
     if (!quiet) this.setData({ loading: true, errorMessage: "", canRetryLoad: false });
@@ -345,6 +350,10 @@ module.exports = {
       }
       await this.applyRoom(room);
       if (!current()) return false;
+      // A poll started before reconnect cannot establish its motion baseline.
+      if (motionBaseline && this.realtimeMotionBaseline === motionBaseline && this.data.room?.id === room.id) {
+        this.realtimeMotionBaseline = null;
+      }
       this.setData({ syncWarning: "" });
       if (!this.data.offline) {
         this.setData({ networkSyncing: false, networkRecoveryError: "" });
@@ -402,6 +411,7 @@ module.exports = {
     if (!result.isConnected) {
       this.networkGeneration = (this.networkGeneration || 0) + 1;
       this.setData({ offline: true, networkSyncing: true, networkRecoveryError: "" });
+      if (this.data.isGeneral) this.clearGeneralScoreMotion();
       this.networkStateChanged();
       return false;
     }
@@ -558,6 +568,7 @@ module.exports = {
       activePlayers,
       canStart: activePlayers >= 2,
       startLabel: activePlayers >= 2 ? (isGeneral ? "开始记分" : "开始牌局") : "至少 2 人才能开始",
+      ...(isGeneral ? this.prepareGeneralScoreMotion(previousRoom, room, participants) : {}),
       participants,
       vacantSeats,
       recipients,
@@ -609,7 +620,7 @@ module.exports = {
   },
 
   setRoomTheme(room) {
-    if (room.gameType === "mahjong" && !this.motionInitialized) {
+    if ((room.gameType === "mahjong" || room.gameType === "generic") && !this.motionInitialized) {
       this.motionInitialized = true;
       this.initMahjongMotion();
     }
@@ -618,6 +629,31 @@ module.exports = {
     if (wx.setNavigationBarTitle && room.gameType !== "zhajinhua") {
       wx.setNavigationBarTitle({ title: isGeneral ? "通用记分" : "麻将牌局" });
     }
+  },
+
+  prepareGeneralScoreMotion(previous, room, participants) {
+    const visible = this.pageVisible !== false && this.pageActive !== false;
+    const paused = this.data.reducedMotion || this.data.offline || this.data.networkSyncing ||
+      this.motionResuming || this.realtimeMotionBaseline || !visible;
+    if (visible && !this.data.offline) this.motionResuming = false;
+    if (!paused && previous?.id === room.id && previous.version === room.version) return {};
+
+    // A burst of updates should settle on the latest scores without stacking animations.
+    const wasPlaying = this.generalScoreMotionTimer != null;
+    if (wasPlaying) clearTimeout(this.generalScoreMotionTimer);
+    this.generalScoreMotionTimer = null;
+    const generalScoreMotion = paused || wasPlaying ? null
+      : deriveGeneralScoreMotion(previous, room, this.data.participants, participants);
+    if (generalScoreMotion) {
+      this.generalScoreMotionTimer = setTimeout(() => this.clearGeneralScoreMotion(), 720);
+    }
+    return { generalScoreMotion };
+  },
+
+  clearGeneralScoreMotion() {
+    if (this.generalScoreMotionTimer != null) clearTimeout(this.generalScoreMotionTimer);
+    this.generalScoreMotionTimer = null;
+    if (this.data.generalScoreMotion) this.setData({ generalScoreMotion: null });
   },
 
   maybeBindParticipantAccount() {
@@ -778,6 +814,31 @@ module.exports = {
     this.updateGiftDraft(this.data.recipients.map(item => item.id === participantId ? { ...item, pointsInput: value } : item));
   },
 
+  quickAdjustGift(event) {
+    if (this.data.busy) return;
+    const participantId = event.currentTarget.dataset.id;
+    const delta = Number(event.currentTarget.dataset.delta);
+    if (!participantId || !Number.isFinite(delta) || delta <= 0) return;
+    this.updateGiftDraft(this.data.recipients.map(item => {
+      if (item.id !== participantId) return item;
+      const raw = String(item.pointsInput || "").trim();
+      const current = /^\d+$/.test(raw) ? Number(raw) : 0;
+      return { ...item, pointsInput: String(current + delta) };
+    }));
+  },
+
+  clearGiftRecipient(event) {
+    if (this.data.busy) return;
+    const participantId = event.currentTarget.dataset.id;
+    if (!participantId) return;
+    this.updateGiftDraft(this.data.recipients.map(item => item.id === participantId ? { ...item, pointsInput: "" } : item));
+  },
+
+  clearAllGifts() {
+    if (this.data.busy) return;
+    this.updateGiftDraft(this.data.recipients.map(item => ({ ...item, pointsInput: "" })));
+  },
+
   reviewGiftRecipients() {
     this.setData({ giftRosterReview: "" });
     this.updateGiftDraft(this.data.recipients);
@@ -928,6 +989,16 @@ module.exports = {
       },
       onStatus: (status, reason) => {
         if (!current()) return;
+        const reconnected = status === "online" && this.hadRealtimeConnection && this.data.realtimeStatus !== "online";
+        if (status === "online") this.hadRealtimeConnection = true;
+        if (reconnected) {
+          if (this.data.isGeneral || this.clearPokerMotion) this.realtimeMotionBaseline = {};
+          if (this.data.isGeneral) {
+            this.clearGeneralScoreMotion();
+          } else if (this.clearPokerMotion) {
+            this.clearPokerMotion();
+          }
+        }
         this.setData({
           realtimeStatus: status,
           realtimeError: status === "online" ? "" : (REALTIME_ERRORS[reason] || this.data.realtimeError),

@@ -257,7 +257,7 @@ test('home entry navigates to meme subpackage while score routes stay functional
   let definition;
   const routes = [];
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../pages/index/index.js'), 'utf8'), {
-    require: () => ({}),
+    require: name => name.endsWith('/discover-entries') ? require('../utils/discover-entries') : {},
     Page: p => {
       definition = p;
     },
@@ -284,11 +284,10 @@ function loadPage(file, client, token = '', platformOverrides = {}) {
     ...platformOverrides
   };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../packages/meme/' + file + '/index.js'), 'utf8'), {
-    require: name => name.includes('auth') ? {
-      getAccessToken: () => typeof token === 'function' ? token() : token
-    } : {
-      ...api(),
-      getMemeClient: () => client
+    require: name => {
+      if (name.includes('auth')) return {getAccessToken: () => typeof token === 'function' ? token() : token};
+      if (name.includes('ui-motion')) return {reduceMotionEnabled: () => Boolean(platform.getStorageSync?.('funboxMahjongReducedMotionV1'))};
+      return {...api(), getMemeClient: () => client};
     },
     Page: p => {
       definition = p;
@@ -505,7 +504,7 @@ test('returning to detail after hiding during initial fetch restarts loading ins
   });
   await Promise.resolve();
 });
-test('favorite controls unlock when a response arrives while detail is hidden', async () => {
+test('favorite controls unlock without replaying feedback after returning to detail', async () => {
   let finish;
   const client = {
     detail: async () => ({
@@ -525,10 +524,11 @@ test('favorite controls unlock when a response arrives while detail is hidden', 
   });
   const pending = page.favorite();
   page.onHide();
-  finish();
-  await pending;
   page.onShow();
+  finish(true);
+  await pending;
   assert.equal(page.data.favoriteBusy, false);
+  assert.equal(Boolean(page.data.favoriteEffect), false);
 });
 test('library resumes interrupted page loads after returning without resetting the search', async () => {
   let finish;
@@ -1048,9 +1048,67 @@ test('detail favorite restores visible state only when no pending intention was 
   await page.onLoad({id: 'a'});
   await page.favorite();
   assert.equal(page.data.favorite, false);
+  assert.equal(Boolean(page.data.favoriteEffect), false);
   client.pendingFavorite = () => ({desired: true});
   await page.favorite();
   assert.equal(page.data.favorite, true);
+  assert.equal(Boolean(page.data.favoriteEffect), false);
+});
+
+test('detail celebrates a confirmed favorite and re-reads reduced motion on return', async () => {
+  const e = env();
+  e.token('A');
+  let complete, reduced = false;
+  const client = api().createMemeClient({...e.options, request: async input => {
+    if (input.path.endsWith('/favorite') && input.method === 'PUT') {
+      return new Promise(resolve => {complete = resolve;});
+    }
+    return {image: image('a')};
+  }});
+  const page = loadPage('detail', client, 'A', {getStorageSync: () => reduced});
+  await page.onLoad({id: 'a'});
+  const first = page.favorite();
+  assert.equal(page.data.favorite, true);
+  assert.equal(page.data.favoriteBusy, true);
+  assert.equal(Boolean(page.data.favoriteEffect), false);
+  complete({favorite: true});
+  await first;
+  assert.equal(page.data.favoriteEffect, true);
+  await page.favorite();
+  assert.equal(page.data.favorite, false);
+  assert.equal(Boolean(page.data.favoriteEffect), false);
+  page.onHide();
+  reduced = true;
+  page.onShow();
+  const second = page.favorite();
+  complete({favorite: true});
+  await second;
+  assert.equal(page.data.favorite, true);
+  assert.equal(Boolean(page.data.favoriteEffect), false);
+});
+
+test('an old favorite completion cannot update or unlock a new operation after switching accounts', async () => {
+  let token = 'A';
+  const completions = [];
+  const client = {detail: async () => ({image: image('a')}), pendingFavorite: () => null,
+    favorite: () => new Promise(resolve => completions.push(resolve)), remember() {}, event: async () => {}};
+  const page = loadPage('detail', client, () => token);
+  await page.onLoad({id: 'a'});
+  const old = page.favorite();
+  token = 'B';
+  page.onShow();
+  token = 'A';
+  page.onShow();
+  await Promise.resolve();
+  const current = page.favorite();
+  completions[0](true);
+  await old;
+  assert.equal(page.data.favoriteBusy, true);
+  assert.equal(Boolean(page.data.favoriteEffect), false);
+  completions[1](true);
+  await current;
+  assert.equal(page.data.favoriteBusy, false);
+  assert.equal(page.data.favoriteEffect, true);
 });
 
 test('library append failures retain browse position and retry online page; new queries fence old responses', async () => {

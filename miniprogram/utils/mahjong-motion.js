@@ -1,5 +1,5 @@
 const { formatScore } = require('./score-format');
-const MOTION_PREF = 'funboxMahjongReducedMotionV1';
+const { reduceMotionEnabled, setReduceMotionEnabled } = require('./ui-motion');
 const ROW_HEIGHT = 112;
 
 // Only adjacent, newer snapshots can describe a new event. Initial loads are
@@ -38,12 +38,12 @@ const motionData = {
 
 const motionPage = {
   initMahjongMotion() {
-    this.setData({ reducedMotion: !!wx.getStorageSync(MOTION_PREF) });
+    this.setData({ reducedMotion: reduceMotionEnabled() });
   },
 
   toggleMahjongMotion() {
     const reducedMotion = !this.data.reducedMotion;
-    wx.setStorageSync(MOTION_PREF, reducedMotion);
+    setReduceMotionEnabled(reducedMotion);
     this.clearMahjongMotion();
     this.setData({ reducedMotion });
   },

@@ -1,0 +1,949 @@
+.holiday-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 22rpx 30rpx calc(52rpx + env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 92% 4%, #e8f1ff 0%, transparent 42%), var(--fb-canvas);
+}
+
+/* Topbar & today context */
+.holiday-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 22rpx;
+}
+
+.entry-brand {
+  color: var(--fb-primary);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.today-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 10rpx 20rpx;
+  border: 1rpx solid rgba(255, 255, 255, .95);
+  border-radius: 99rpx;
+  background: #fff;
+  box-shadow: 0 6rpx 18rpx rgba(38, 76, 133, .05);
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.today-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: var(--fb-primary);
+}
+
+.today-pill-holiday .today-dot { background: #14a678; }
+.today-pill-makeup .today-dot { background: #e06b2d; }
+
+/* Today is makeup workday banner */
+.makeup-today-banner {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-bottom: 20rpx;
+  padding: 20rpx 24rpx;
+  border: 2rpx solid #ffd9bd;
+  border-radius: 26rpx;
+  background: #fff5ec;
+}
+
+.makeup-today-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 16rpx;
+  background: #e06b2d;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 900;
+}
+
+.makeup-today-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.makeup-today-title {
+  display: block;
+  color: #9d4214;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.makeup-today-desc {
+  display: block;
+  margin-top: 2rpx;
+  color: #b1653c;
+  font-size: 22rpx;
+}
+
+/* Countdown Hero Card */
+.countdown-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 28rpx 30rpx 26rpx;
+  border: 2rpx solid #fff;
+  border-radius: 34rpx;
+  background: linear-gradient(145deg, #ebf2ff 0%, #e1ecff 55%, #f5f9ff 100%);
+  box-shadow: 0 16rpx 40rpx rgba(45, 91, 255, .09);
+  animation: fb-reveal .32s ease-out both;
+}
+
+.hero-tone-holiday {
+  background: linear-gradient(145deg, #e5f7ef 0%, #d8f3e7 55%, #f2fcf7 100%);
+  box-shadow: 0 16rpx 40rpx rgba(16, 136, 98, .09);
+}
+
+.hero-tone-near,
+.hero-tone-tomorrow {
+  background: linear-gradient(145deg, #fff3e8 0%, #ffe8d6 55%, #fff9f4 100%);
+  box-shadow: 0 16rpx 40rpx rgba(196, 86, 26, .09);
+}
+
+.hero-tone-awaiting,
+.hero-tone-history {
+  background: linear-gradient(145deg, #f0f4fa 0%, #e9eff8 55%, #f7f9fc 100%);
+  box-shadow: 0 12rpx 32rpx rgba(38, 76, 133, .05);
+}
+
+.hero-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.hero-state-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 99rpx;
+  background: rgba(255, 255, 255, .86);
+  color: var(--fb-primary);
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.hero-state-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.hero-tone-holiday .hero-state-pill { color: #0a7a59; }
+.hero-tone-near .hero-state-pill,
+.hero-tone-tomorrow .hero-state-pill { color: #bd4c16; }
+.hero-tone-awaiting .hero-state-pill,
+.hero-tone-history .hero-state-pill { color: var(--fb-muted); }
+
+/* 3D-inspired tear-off mini calendar artwork */
+.hero-calendar {
+  position: relative;
+  flex-shrink: 0;
+  width: 96rpx;
+  border: 2rpx solid #fff;
+  border-radius: 18rpx;
+  background: #fff;
+  box-shadow: 5rpx 7rpx 0 rgba(45, 91, 255, .14), 0 10rpx 20rpx rgba(23, 33, 57, .08);
+  text-align: center;
+  transform: rotate(5deg);
+  overflow: visible;
+}
+
+.hero-tone-holiday .hero-calendar {
+  box-shadow: 5rpx 7rpx 0 rgba(14, 132, 95, .16), 0 10rpx 20rpx rgba(23, 33, 57, .08);
+}
+
+.hero-tone-near .hero-calendar,
+.hero-tone-tomorrow .hero-calendar {
+  box-shadow: 5rpx 7rpx 0 rgba(196, 86, 26, .16), 0 10rpx 20rpx rgba(23, 33, 57, .08);
+}
+
+.hero-calendar-rings {
+  position: absolute;
+  top: -7rpx;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20rpx;
+}
+
+.hero-calendar-rings view {
+  width: 8rpx;
+  height: 14rpx;
+  border-radius: 4rpx;
+  background: #d8e4fb;
+  border: 1rpx solid #fff;
+}
+
+.hero-calendar-head {
+  padding: 9rpx 0 5rpx;
+  border-radius: 15rpx 15rpx 0 0;
+  background: var(--fb-primary);
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.hero-tone-holiday .hero-calendar-head { background: #13936c; }
+.hero-tone-near .hero-calendar-head,
+.hero-tone-tomorrow .hero-calendar-head { background: #dc6428; }
+.hero-tone-awaiting .hero-calendar-head { background: #8c9ab0; }
+
+.hero-calendar-day {
+  padding: 6rpx 0 9rpx;
+  color: var(--fb-ink);
+  font-size: 36rpx;
+  font-weight: 900;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-main {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-top: 12rpx;
+}
+
+.hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-name {
+  display: block;
+  color: var(--fb-ink);
+  font-size: 48rpx;
+  font-weight: 900;
+  letter-spacing: -1.5rpx;
+  line-height: 1.25;
+}
+
+.awaiting-title {
+  margin-top: 18rpx;
+  font-size: 38rpx;
+}
+
+.hero-period {
+  display: block;
+  margin-top: 10rpx;
+  color: var(--fb-ink-secondary);
+  font-size: 25rpx;
+  font-weight: 700;
+}
+
+.hero-weekdays {
+  display: block;
+  margin-top: 4rpx;
+  color: var(--fb-muted);
+  font-size: 23rpx;
+  line-height: 1.5;
+}
+
+.hero-count-block {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.hero-count-prefix {
+  display: block;
+  color: var(--fb-muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.hero-count-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6rpx;
+  margin-top: 4rpx;
+  color: var(--fb-primary);
+}
+
+.hero-tone-holiday .hero-count-row { color: #0a7a59; }
+.hero-tone-near .hero-count-row,
+.hero-tone-tomorrow .hero-count-row { color: #c24d18; }
+
+.hero-count-number {
+  font-size: 84rpx;
+  font-weight: 900;
+  line-height: 0.96;
+  letter-spacing: -3rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-count-unit {
+  font-size: 26rpx;
+  font-weight: 800;
+}
+
+.hero-count-single {
+  display: block;
+  color: #0a7a59;
+  font-size: 48rpx;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+/* Progress bar during an active multi-day holiday */
+.hero-progress {
+  margin-top: 22rpx;
+}
+
+.hero-progress-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+  color: #146a4f;
+  font-size: 22rpx;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-progress-track {
+  height: 12rpx;
+  overflow: hidden;
+  border-radius: 99rpx;
+  background: rgba(10, 122, 89, .14);
+}
+
+.hero-progress-fill {
+  height: 100%;
+  border-radius: 99rpx;
+  background: linear-gradient(90deg, #20b486, #0c8a64);
+}
+
+/* Hero bottom note */
+.hero-footnote {
+  margin-top: 22rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid rgba(23, 33, 57, .07);
+}
+
+.hero-makeup-note,
+.hero-clean-note {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.hero-note-tag {
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.hero-note-tag-makeup {
+  background: rgba(224, 107, 45, .14);
+  color: #a64617;
+}
+
+.hero-note-tag-clean {
+  background: rgba(18, 148, 108, .13);
+  color: #0d7958;
+}
+
+.hero-note-text {
+  flex: 1;
+  min-width: 0;
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  line-height: 1.45;
+}
+
+/* Year Stats Strip */
+.year-stats {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+  padding: 22rpx 12rpx;
+  animation: fb-reveal .36s ease-out .04s both;
+}
+
+.stat-cell {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  color: var(--fb-ink);
+  font-size: 38rpx;
+  font-weight: 900;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value-primary { color: var(--fb-primary); }
+.stat-value-mint { color: #0d825f; }
+
+.stat-label {
+  display: block;
+  margin-top: 6rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
+}
+
+.stat-divider {
+  width: 1rpx;
+  height: 44rpx;
+  background: #e7edf6;
+}
+
+/* Section header & year segmented switcher */
+.holiday-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin: 30rpx 4rpx 16rpx;
+}
+
+.holiday-head-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.holiday-section-title {
+  color: var(--fb-ink);
+  font-size: 33rpx;
+  font-weight: 900;
+}
+
+.holiday-section-sub {
+  color: var(--fb-muted);
+  font-size: 22rpx;
+}
+
+.year-tabs {
+  display: inline-flex;
+  gap: 6rpx;
+  padding: 5rpx;
+  border-radius: 18rpx;
+  background: #e7edf6;
+  flex-shrink: 0;
+}
+
+.year-tab {
+  min-width: 92rpx;
+  padding: 10rpx 18rpx;
+  border-radius: 14rpx;
+  color: var(--fb-muted);
+  font-size: 23rpx;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: background .15s ease, color .15s ease;
+}
+
+.year-tab-active {
+  background: #fff;
+  color: var(--fb-primary);
+  font-weight: 800;
+  box-shadow: 0 4rpx 12rpx rgba(45, 91, 255, .1);
+}
+
+.holiday-year {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  min-height: 60rpx;
+  box-sizing: border-box;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.holiday-year-arrow {
+  width: 9rpx;
+  height: 9rpx;
+  border-right: 3rpx solid;
+  border-bottom: 3rpx solid;
+  transform: translateY(-3rpx) rotate(45deg);
+}
+
+/* Annual Holiday List */
+.holiday-list {
+  overflow: hidden;
+  padding: 8rpx 0;
+  animation: fb-reveal .38s ease-out .08s both;
+}
+
+.holiday-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  padding: 22rpx 24rpx;
+}
+
+.holiday-row + .holiday-row {
+  border-top: 1rpx solid var(--fb-line);
+}
+
+.holiday-row-current {
+  background: #f4f8ff;
+}
+
+.holiday-row-current::before {
+  content: "";
+  position: absolute;
+  top: 20rpx;
+  bottom: 20rpx;
+  left: 0;
+  width: 6rpx;
+  border-radius: 0 6rpx 6rpx 0;
+  background: var(--fb-primary);
+}
+
+.holiday-row-active {
+  background: #effaf5;
+}
+
+.holiday-row-active::before {
+  background: #12916a;
+}
+
+.date-tile {
+  flex-shrink: 0;
+  width: 84rpx;
+  overflow: hidden;
+  border: 1rpx solid #e1e9f8;
+  border-radius: 18rpx;
+  background: #fff;
+  text-align: center;
+}
+
+.date-tile-month {
+  display: block;
+  padding: 4rpx 0;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.date-tile-day {
+  display: block;
+  padding: 7rpx 0 8rpx;
+  color: var(--fb-ink);
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.holiday-row-current .date-tile {
+  border-color: #c8daff;
+}
+
+.holiday-row-current .date-tile-month {
+  background: var(--fb-primary);
+  color: #fff;
+}
+
+.holiday-row-active .date-tile {
+  border-color: #bae8d7;
+}
+
+.holiday-row-active .date-tile-month {
+  background: #12916a;
+  color: #fff;
+}
+
+.holiday-row-past .date-tile {
+  border-color: #ebeff6;
+  background: #f8fafd;
+}
+
+.holiday-row-past .date-tile-month {
+  background: #eef2f8;
+  color: #8490a4;
+}
+
+.holiday-row-past .date-tile-day {
+  color: #8490a4;
+}
+
+.holiday-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.holiday-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.holiday-title-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.holiday-row-name {
+  color: var(--fb-ink);
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.holiday-row-current .holiday-row-name { color: var(--fb-primary); }
+.holiday-row-active .holiday-row-name { color: #0a7a59; }
+.holiday-row-past .holiday-row-name { color: var(--fb-muted); }
+
+.duration-pill {
+  padding: 3rpx 12rpx;
+  border-radius: 10rpx;
+  background: #f1f5fc;
+  color: var(--fb-ink-secondary);
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.holiday-row-past .duration-pill {
+  background: #f2f4f8;
+  color: #8490a4;
+}
+
+.current-pill {
+  padding: 3rpx 12rpx;
+  border-radius: 10rpx;
+  background: #e3ecff;
+  color: var(--fb-primary);
+  font-size: 21rpx;
+  font-weight: 800;
+}
+
+.current-pill-live {
+  background: #daf4e9;
+  color: #0a7a59;
+}
+
+.holiday-row-status {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.status-past {
+  color: #8c98ab;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.status-live {
+  color: #0a7a59;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.status-tomorrow {
+  color: #c24d18;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.status-days {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3rpx;
+  color: var(--fb-ink-secondary);
+}
+
+.holiday-row-current .status-days {
+  color: var(--fb-primary);
+}
+
+.status-days-num {
+  font-size: 28rpx;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.status-days-unit {
+  font-size: 21rpx;
+  font-weight: 600;
+}
+
+.holiday-row-date {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--fb-muted);
+  font-size: 23rpx;
+}
+
+.holiday-makeup-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  margin-top: 10rpx;
+}
+
+.makeup-chip {
+  flex-shrink: 0;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  background: #fff1e5;
+  color: #a84919;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.holiday-row-past .makeup-chip {
+  background: #f4f1ee;
+  color: #8f7465;
+}
+
+.holiday-makeup-text {
+  flex: 1;
+  min-width: 0;
+  color: #9e4b20;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.holiday-row-past .holiday-makeup-text {
+  color: #8c95a5;
+}
+
+.holiday-clean-tag {
+  display: inline-block;
+  margin-top: 10rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  background: #e9f8f2;
+  color: #127c5c;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+/* Official Source Card */
+.source-card {
+  margin-top: 24rpx;
+  padding: 24rpx 26rpx;
+}
+
+.source-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.source-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 21rpx;
+  font-weight: 800;
+}
+
+.source-date {
+  color: var(--fb-muted);
+  font-size: 22rpx;
+}
+
+.source-title {
+  display: block;
+  margin-top: 12rpx;
+  color: var(--fb-ink);
+  font-size: 25rpx;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.source-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid var(--fb-line);
+}
+
+.source-note {
+  flex: 1;
+  min-width: 0;
+  color: var(--fb-subtle);
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.holiday-source-button {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12rpx 22rpx;
+  border-radius: 16rpx;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 23rpx;
+  font-weight: 800;
+  line-height: 1.4;
+  transition: transform .12s ease-out, opacity .12s ease-out;
+}
+
+.source-copied {
+  background: var(--fb-success-soft);
+  color: var(--fb-success);
+}
+
+/* Skeleton & Error states */
+.skeleton-hero,
+.skeleton-stats,
+.skeleton-tile,
+.skeleton-line {
+  background: linear-gradient(90deg, #e7edf7 25%, #f3f6fb 50%, #e7edf7 75%);
+  background-size: 200% 100%;
+  animation: fb-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-hero {
+  height: 310rpx;
+  border-radius: 34rpx;
+}
+
+.skeleton-stats {
+  height: 124rpx;
+  margin-top: 20rpx;
+  border-radius: 32rpx;
+}
+
+.skeleton-list {
+  margin-top: 28rpx;
+  padding: 10rpx 24rpx;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 22rpx 0;
+}
+
+.skeleton-row + .skeleton-row {
+  border-top: 1rpx solid var(--fb-line);
+}
+
+.skeleton-tile {
+  flex-shrink: 0;
+  width: 84rpx;
+  height: 92rpx;
+  border-radius: 18rpx;
+}
+
+.skeleton-lines {
+  flex: 1;
+  min-width: 0;
+}
+
+.skeleton-line {
+  height: 24rpx;
+  border-radius: 8rpx;
+}
+
+.skeleton-line-lg { width: 62%; }
+.skeleton-line-sm { width: 42%; height: 20rpx; margin-top: 14rpx; }
+
+.holiday-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+  padding: 56rpx 32rpx;
+  text-align: center;
+}
+
+.feedback-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 24rpx;
+  background: var(--fb-danger-soft);
+  color: var(--fb-danger);
+  font-size: 42rpx;
+  font-weight: 900;
+}
+
+.holiday-hint {
+  color: var(--fb-muted);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.retry-primary-button {
+  min-width: 240rpx;
+  margin-top: 8rpx;
+  padding: 18rpx 36rpx;
+  border-radius: 20rpx;
+  background: var(--fb-primary);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.motion-reduced .countdown-hero,
+.motion-reduced .year-stats,
+.motion-reduced .holiday-list,
+.motion-reduced .skeleton-hero,
+.motion-reduced .skeleton-stats,
+.motion-reduced .skeleton-tile,
+.motion-reduced .skeleton-line {
+  animation: none;
+}
+
+@media (max-width: 350px) {
+  .holiday-page { padding-left: 22rpx; padding-right: 22rpx; }
+  .hero-name { font-size: 42rpx; }
+  .hero-count-number { font-size: 72rpx; }
+  .date-tile { width: 76rpx; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown-hero,
+  .year-stats,
+  .holiday-list,
+  .skeleton-hero,
+  .skeleton-stats,
+  .skeleton-tile,
+  .skeleton-line {
+    animation: none;
+  }
+}

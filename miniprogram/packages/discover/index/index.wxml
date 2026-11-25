@@ -1,0 +1,9 @@
+<import src="/templates/discover-entry.wxml" />
+
+<view class="discover-page {{reduceMotion ? 'motion-reduced' : ''}}">
+  <view class="discover-grid">
+    <template is="discover-notebook" />
+    <template is="discover-memes" />
+    <template is="discover-holidays" data="{{card: holidayCard}}" />
+  </view>
+</view>

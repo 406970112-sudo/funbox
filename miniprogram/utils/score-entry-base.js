@@ -2,6 +2,7 @@ const { createScoreRoom, getScoreErrorMessage, joinScoreRoom } = require("./scor
 const { clearScoreSession, saveHostRoomPassword, saveScoreSession } = require("./score-session");
 const { getAccessToken, getStoredUser } = require("./auth");
 const { extractInviteScene, extractInviteToken } = require("./invite");
+const { reduceMotionEnabled } = require("./ui-motion");
 
 module.exports = {
   data: {
@@ -44,7 +45,7 @@ module.exports = {
 
   onShow() {
     this.entryVisible = true;
-    this.setData({ joining: !!this.joinRequestPending, joinSucceeded: false, reducedMotion: !!wx.getStorageSync("funboxMahjongReducedMotionV1") });
+    this.setData({ joining: !!this.joinRequestPending, joinSucceeded: false, reducedMotion: reduceMotionEnabled() });
     this.syncAuth();
   },
 

@@ -64,6 +64,10 @@
         "search/index",
         "books/index"
       ]
+    },
+    {
+      "root": "packages/discover",
+      "pages": ["index/index", "holidays/index"]
     }
   ]
 }

@@ -2,6 +2,8 @@ const { request } = require("../../utils/request");
 const { getAccessToken, getStoredUser } = require("../../utils/auth");
 const { getRecentScoreRoom, saveRecentScoreRoom, clearRecentScoreRoom, getScoreSession } = require("../../utils/score-session");
 const { getScoreRoom, getScoreErrorMessage } = require("../../utils/score-api");
+const { reduceMotionEnabled } = require("../../utils/ui-motion");
+const { discoverPath, watchHolidayCard } = require("../../utils/discover-entries");
 
 Page({
   data: {
@@ -15,6 +17,9 @@ Page({
     backendMessage: "正在连接牌局服务…",
     isLoggedIn: false,
     userName: "游客",
+    reduceMotion: false,
+    holidayCard: null,
+    discoverSlide: 0,
     // 暂时隐藏，待用户明确要求开放入口时再设为 true。
     showWebsiteEntry: false,
     websiteUrl: "https://xwhub.cn",
@@ -37,7 +42,10 @@ Page({
     this.setData({
       isLoggedIn: Boolean(getAccessToken()),
       userName: user && user.displayName ? user.displayName : "游客",
+      reduceMotion: reduceMotionEnabled(),
     });
+    this.stopHolidayCard();
+    this._stopHolidayCard = watchHolidayCard(this);
     return this.validateRecentRoom();
   },
 
@@ -45,7 +53,15 @@ Page({
     this._websiteHidden = true;
     this._resumeLookup = null;
     this._resumeGeneration = (this._resumeGeneration || 0) + 1;
+    this.stopHolidayCard();
     this.closeWebsiteDialog();
+  },
+
+  onUnload() { this.stopHolidayCard(); },
+
+  stopHolidayCard() {
+    if (this._stopHolidayCard) this._stopHolidayCard();
+    this._stopHolidayCard = null;
   },
 
   resumeRoom() {
@@ -177,16 +193,24 @@ Page({
   },
 
   openNotebook() {
-    if (!getAccessToken()) {
-      wx.navigateTo({
-        url: `/pages/auth/index?mode=login&returnTo=${encodeURIComponent("/packages/notebook/index/index")}`,
-      });
-      return;
-    }
-    wx.navigateTo({ url: "/packages/notebook/index/index" });
+    wx.navigateTo({ url: discoverPath("notebook", Boolean(getAccessToken())) });
   },
 
-  openMemes() { wx.navigateTo({ url: "/packages/meme/library/index" }); },
+  openMemes() { wx.navigateTo({ url: discoverPath("memes") }); },
+
+  openDiscover() { wx.navigateTo({ url: discoverPath("all") }); },
+
+  openHolidays() { wx.navigateTo({ url: discoverPath("holidays") }); },
+
+  onDiscoverSlideChange(event) { this.setDiscoverSlide(event.detail.current); },
+
+  selectDiscoverSlide(event) { this.setDiscoverSlide(Number(event.currentTarget.dataset.index)); },
+
+  setDiscoverSlide(index) {
+    if ((index === 0 || index === 1) && index !== this.data.discoverSlide) {
+      this.setData({ discoverSlide: index });
+    }
+  },
 
   openPoker() { wx.navigateTo({ url: "/pages/score/poker/index" }); },
 

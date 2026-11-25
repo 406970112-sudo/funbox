@@ -6,6 +6,7 @@ const {
   runImageMedia,
   normalizeImage
 } = require('../../../utils/meme');
+const { reduceMotionEnabled } = require('../../../utils/ui-motion');
 Page({
   data: {
     image: null,
@@ -14,6 +15,8 @@ Page({
     error: '',
     favorite: false,
     favoriteBusy: false,
+    favoriteEffect: false,
+    reduceMotion: false,
     busy: false,
     progress: 0,
     actionError: '',
@@ -34,13 +37,16 @@ Page({
   },
   onShow() {
     this._active = true;
+    this.setData({reduceMotion: reduceMotionEnabled()});
     const token = getAccessToken();
     if (token !== this._lastToken) {
       this._lastToken = token;
       this._wasHidden = false;
+      this._favoriteOperation = null;
       this.setData({
         favorite: false,
         favoriteBusy: false,
+        favoriteEffect: false,
         actionError: ''
       });
       this.load();
@@ -54,12 +60,13 @@ Page({
   onHide() {
     this._active = false;
     this._wasHidden = true;
-    this.setData({busy: false});
+    this.setData({busy: false, favoriteEffect: false});
     this._operationGeneration = (this._operationGeneration || 0) + 1;
     this._generation = (this._generation || 0) + 1;
   },
   onUnload() {
     this._active = false;
+    this._favoriteOperation = null;
     this._operationGeneration = (this._operationGeneration || 0) + 1;
     this._generation = (this._generation || 0) + 1;
   },
@@ -67,7 +74,8 @@ Page({
     const generation = this._generation = (this._generation || 0) + 1;
     this.setData({
       loading: true,
-      error: ''
+      error: '',
+      favoriteEffect: false
     });
     try {
       if (!this.id) throw new Error('缺少图片编号');
@@ -97,25 +105,34 @@ Page({
   },
   async favorite() {
     if (this.data.favoriteBusy || !this.data.image) return;
-    const previous = this.data.favorite;
+    const {favorite: previous, image} = this.data;
     const token = getAccessToken();
     const desired = !previous;
+    const operation = this._favoriteOperation = {};
+    const visibilityGeneration = this._operationGeneration;
+    const isCurrent = () => this._favoriteOperation === operation && token === getAccessToken();
+    let favoriteEffect = false;
     this.setData({
       favorite: desired,
       favoriteBusy: true,
+      favoriteEffect: false,
       actionError: ''
     });
     try {
-      await this.client.favorite(this.data.image, desired);
+      const confirmed = await this.client.favorite(image, desired);
+      favoriteEffect = desired && confirmed === true && isCurrent() && this._active
+        && visibilityGeneration === this._operationGeneration && !this.data.reduceMotion
+        && (!token || !this.client.pendingFavorite(image.id));
     } catch (e) {
-      if (this._active && token === getAccessToken()) {
-        const pending = this.client.pendingFavorite(this.data.image.id);
+      if (isCurrent()) {
+        const pending = this.client.pendingFavorite(image.id);
         this.setData({favorite: pending ? pending.desired : previous, actionError: e.message});
       }
     } finally {
-      if (token === getAccessToken()) this.setData({
-        favoriteBusy: false
-      });
+      if (isCurrent()) {
+        this._favoriteOperation = null;
+        this.setData({favoriteBusy: false, favoriteEffect});
+      }
     }
   },
   preview() {

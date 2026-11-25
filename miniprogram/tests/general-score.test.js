@@ -46,6 +46,81 @@ test('general room displays every member with name avatar and no fixed empty sea
   assert.ok(calls.some(c=>c.title==='通用记分'));
 });
 
+function giftSnapshots() {
+  const participants = members.slice(0, 3).map((member, index) => ({
+    ...member, totalPoints: [18, 14, 11][index],
+  }));
+  const previous = { ...snapshot, participants };
+  const next = {
+    ...previous,
+    version: previous.version + 1,
+    participants: participants.map((member, index) => ({ ...member, totalPoints: [8, 20, 15][index] })),
+    giftBatches: [{ id: 'gift-1', kind: 'normal', gifts: [
+      { fromParticipantId: 'p0', toParticipantId: 'p1', points: 6 },
+      { fromParticipantId: 'p0', toParticipantId: 'p2', points: 4 },
+    ] }],
+  };
+  return { previous, next };
+}
+
+test('confirmed general gifts animate both recipients while keeping authoritative scores and the input order', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { previous, next } = giftSnapshots();
+  const p = page(roomDefinition);
+  await p.applyRoom(previous);
+  p.setData({ recipients: p.data.recipients.map(item => ({ ...item, pointsInput: '5' })) });
+  await p.applyRoom(next);
+
+  const effect = p.data.generalScoreMotion;
+  assert.deepEqual(p.data.participants.map(({ id, totalPoints }) => [id, totalPoints]), [
+    ['p1', 20], ['p2', 15], ['p0', 8],
+  ]);
+  assert.deepEqual(p.data.recipients.map(({ id, pointsInput }) => [id, pointsInput]), [['p1', '5'], ['p2', '5']]);
+  assert.deepEqual(Object.fromEntries(Object.entries(effect.rows).map(([id, row]) => [id, row.deltaText])), {
+    p0: '-10', p1: '+6', p2: '+4',
+  });
+  assert.deepEqual([effect.rows.p0.shift, effect.rows.p1.shift, effect.rows.p2.shift], [-200, 100, 100]);
+  assert.equal(effect.transfers.length, 2);
+  assert.ok(effect.transfers[1].travelY > effect.transfers[0].travelY);
+
+  await p.applyRoom(next);
+  assert.equal(p.data.generalScoreMotion, effect);
+  t.mock.timers.tick(1000);
+  assert.equal(p.data.generalScoreMotion, null);
+  assert.equal(p.data.participants[0].totalPoints, 20);
+});
+
+test('general score loads history, reconnects, and reduces motion with final values immediately', async () => {
+  const { previous, next } = giftSnapshots();
+  for (const condition of ['initial', 'reconnect', 'reduced', 'gap', 'reversal']) {
+    const p = page(roomDefinition);
+    if (condition === 'reduced') storage.funboxMahjongReducedMotionV1 = true;
+    if (condition !== 'initial') await p.applyRoom(previous);
+    if (condition === 'reconnect') p.setData({ networkSyncing: true });
+    const incoming = condition === 'gap' ? { ...next, version: next.version + 1 }
+      : condition === 'reversal' ? { ...next, giftBatches: [{ ...next.giftBatches[0], kind: 'reversal' }] }
+        : next;
+    await p.applyRoom(incoming);
+    assert.equal(p.data.generalScoreMotion, null, condition);
+    assert.equal(p.data.participants[0].totalPoints, 20, condition);
+    delete storage.funboxMahjongReducedMotionV1;
+  }
+});
+
+test('backgrounding a general room removes its effects and skips any historical gifts', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { previous, next } = giftSnapshots();
+  const p = page(roomDefinition);
+  await p.applyRoom(previous);
+  await p.applyRoom(next);
+  assert.ok(p.data.generalScoreMotion);
+  p.onHide();
+  assert.equal(p.data.generalScoreMotion, null);
+  await p.applyRoom({ ...next, version: next.version + 1 });
+  assert.equal(p.data.generalScoreMotion, null);
+  assert.equal(p.motionResuming, true);
+});
+
 test('invite preview uses the general theme before the member joins',async()=>{
   const p=page(roomDefinition);
   await p.prepareInvitePreview(async()=>({room:snapshot}));

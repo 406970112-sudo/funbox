@@ -3,7 +3,7 @@
     <view class="success-art art art-score"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     <text class="success-title">反馈已提交</text>
     <text class="success-copy">管理员可在后台查看你的描述和截图，处理结果会通过账号通知触达。</text>
-    <button class="success-button" bindtap="goBack">返回我的</button>
+    <button class="success-button" hover-class="fb-tap-btn" bindtap="goBack">返回我的</button>
   </view>
 
   <block wx:else>
@@ -39,7 +39,7 @@
           <image class="image-preview" src="{{image.tempFilePath}}" mode="aspectFill" bindtap="previewImage" />
           <view class="image-remove" bindtap="removeImage">×</view>
         </view>
-        <view wx:else class="image-picker" bindtap="chooseImage">
+        <view wx:else class="image-picker" hover-class="fb-tap-card" bindtap="chooseImage">
           <text class="image-plus">＋</text>
           <text class="image-picker-title">选择截图</text>
           <text class="image-picker-note">JPG、PNG 或 WebP，最大 5 MB</text>
@@ -47,7 +47,7 @@
       </view>
 
       <view wx:if="{{errorMessage}}" class="error-banner">{{errorMessage}}</view>
-      <button class="submit-button" loading="{{submitting}}" disabled="{{submitting}}" bindtap="handleSubmit">
+      <button class="submit-button" hover-class="fb-tap-btn" loading="{{submitting}}" disabled="{{submitting}}" bindtap="handleSubmit">
         {{submitting ? '正在提交' : '提交反馈'}}
       </button>
     </view>

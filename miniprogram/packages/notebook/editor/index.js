@@ -12,6 +12,7 @@ const {
 } = require("../utils/notebook-api");
 const { bookTheme } = require("../utils/notebook-format");
 const { getAccessToken, clearSession } = require("../../../utils/auth");
+const { reduceMotionEnabled } = require("../../../utils/ui-motion");
 
 function localID() {
   return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -38,6 +39,7 @@ Page({
     favorite: false,
     saveState: "saved",
     saveLabel: "开始输入后自动保存",
+    saveConfirmed: false,
     showTagModal: false,
     tagDraft: "",
     tagError: "",
@@ -56,6 +58,9 @@ Page({
     modalFocus: "",
     scrollTop: 0,
     checklistDone: 0,
+    checklistMotionItemId: "",
+    checklistCountMotion: 0,
+    reduceMotion: false,
     dateLabel: "",
   },
 
@@ -80,6 +85,7 @@ Page({
 
   onHide() {
     this._active = false;
+    this.setData({ checklistMotionItemId: "", checklistCountMotion: 0, saveConfirmed: false });
     if (this._loadInFlightGeneration) this._retryLoadOnShow = true;
     this._loadGeneration = (this._loadGeneration || 0) + 1;
     this._loadInFlightGeneration = null;
@@ -101,6 +107,7 @@ Page({
 
   async onShow() {
     this._active = true;
+    this.setData({ reduceMotion: reduceMotionEnabled() });
     if (this.data.isLoggedIn) {
       if (!this._editorLoaded && (this._retryLoadOnShow || !this._loadInFlightGeneration)) {
         this._retryLoadOnShow = false;
@@ -260,18 +267,21 @@ Page({
       checklist: (note.checklist || []).map(item => ({ ...item, id: item.id || localID() })),
       tags: note.tags || [],
       checklistDone: (note.checklist || []).filter(item => item.done).length,
+      checklistMotionItemId: "",
+      checklistCountMotion: 0,
       pinned: Boolean(note.pinned),
       favorite: Boolean(note.favorite),
       encrypted: Boolean(note.encrypted),
       saveLabel: note.encrypted ? "已加密 · 已自动保存" : "已自动保存",
       saveState: "saved",
+      saveConfirmed: false,
     });
     this._hydrating = false;
     this._lastPersistedEncrypted = Boolean(note.encrypted);
   },
 
-  updateSaveIndicator(state, label) {
-    this.setData({ saveState: state, saveLabel: label });
+  updateSaveIndicator(state, label, confirmed = false) {
+    this.setData({ saveState: state, saveLabel: label, saveConfirmed: confirmed && !this.data.reduceMotion });
   },
 
   onTitleInput(event) {
@@ -305,9 +315,18 @@ Page({
 
   toggleChecklist(event) {
     const index = Number(event.currentTarget.dataset.index);
-    if (!Number.isInteger(index) || index < 0) return;
-    const checklist = this.data.checklist.map((item, i) => i === index ? { ...item, done: !item.done } : item);
-    this.setData({ checklist, checklistDone: checklist.filter(item => item.done).length });
+    const item = this.data.checklist[index];
+    if (!item) return;
+    const done = !item.done;
+    const checklist = this.data.checklist.map((entry, i) => i === index ? { ...entry, done } : entry);
+    const { reduceMotion, checklistCountMotion } = this.data;
+    // A different animation name restarts the pop on consecutive taps.
+    this.setData({
+      checklist,
+      checklistDone: checklist.filter(entry => entry.done).length,
+      checklistMotionItemId: done && !reduceMotion ? item.id : "",
+      checklistCountMotion: reduceMotion ? 0 : checklistCountMotion === 1 ? 2 : 1,
+    });
     this.scheduleSave();
   },
 
@@ -477,7 +496,7 @@ Page({
       if (saved) {
         this._dirty = false;
         if (options.unloading !== true && this._active) {
-          this.updateSaveIndicator("saved", this.data.encrypted ? "已加密 · 已自动保存" : "已自动保存");
+          this.updateSaveIndicator("saved", this.data.encrypted ? "已加密 · 已自动保存" : "已自动保存", true);
         }
       }
       return saved;

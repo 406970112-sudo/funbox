@@ -1,0 +1,105 @@
+.discover-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108rpx;
+  grid-template-rows: auto 1fr;
+  gap: 8rpx;
+  align-content: start;
+  height: 230rpx;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 24rpx;
+  overflow: hidden;
+  border: 2rpx solid #fff;
+  border-radius: 32rpx;
+  transition: transform 125ms ease-out, filter 125ms ease-out;
+}
+
+.notebook-entry { background: #eaf2ff; }
+.meme-entry { background: #eeeaff; }
+.holiday-entry { background: #e8f7f1; }
+
+.discover-title {
+  grid-column: 1 / -1;
+  display: block;
+  color: var(--fb-ink);
+  font-size: 31rpx;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+.discover-copy { min-width: 0; }
+.discover-desc { display: block; color: #5c6b82; font-size: 22rpx; line-height: 1.35; }
+.discover-copy .discover-desc + .discover-desc { margin-top: 6rpx; }
+.meme-entry .discover-desc { color: #615e7c; }
+
+.discover-entry-art {
+  position: relative;
+  align-self: end;
+  width: 108rpx;
+  height: 108rpx;
+  transition: transform 240ms cubic-bezier(.18,.84,.29,1.2);
+}
+
+.discover-card-pressed { transform: translateY(3rpx) scale(.972); filter: brightness(.97); }
+.discover-card-pressed .discover-entry-art { transform: translateY(6rpx) rotate(-7deg) scale(.96); }
+.meme-entry.discover-card-pressed .discover-entry-art { transform: translateY(6rpx) rotate(7deg) scale(.96); }
+
+.holiday-entry {
+  grid-template-columns: minmax(0, 1fr) 82rpx;
+  grid-template-rows: auto auto minmax(56rpx, 1fr) auto;
+  row-gap: 2rpx;
+}
+
+.holiday-entry-status, .holiday-entry-footer { grid-column: 1 / -1; }
+.holiday-entry-count {
+  display: flex;
+  align-self: center;
+  align-items: baseline;
+  gap: 4rpx;
+  color: var(--fb-primary);
+  font-size: 22rpx;
+  font-weight: 800;
+}
+.holiday-entry-number { font-size: 44rpx; line-height: 1; font-variant-numeric: tabular-nums; }
+.holiday-tone-near, .holiday-tone-tomorrow, .holiday-workday { color: #b54a18; }
+.holiday-tone-holiday { color: #0a7a59; }
+
+.holiday-art { display: flex; align-items: center; justify-content: center; width: 82rpx; height: 68rpx; }
+.holiday-art-sheet {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 60rpx;
+  height: 56rpx;
+  padding-bottom: 4rpx;
+  transform: rotate(7deg);
+  border: 2rpx solid #fff;
+  border-radius: 10rpx;
+  background: linear-gradient(#56ae90 0 32%, #f7fffb 32% 100%);
+  box-shadow: 4rpx 5rpx 0 #c4e0d7, 4rpx 8rpx 14rpx rgba(36,98,76,.22);
+  color: #1c6b56;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 1.15;
+}
+.holiday-art-sheet::before, .holiday-art-sheet::after {
+  content: "";
+  position: absolute;
+  top: -5rpx;
+  width: 5rpx;
+  height: 12rpx;
+  border-radius: 3rpx;
+  background: #e8f8f1;
+}
+.holiday-art-sheet::before { left: 13rpx; }
+.holiday-art-sheet::after { right: 13rpx; }
+
+.motion-reduced .discover-card, .motion-reduced .discover-entry-art { transition: none; }
+.motion-reduced .discover-card-pressed, .motion-reduced .discover-card-pressed .discover-entry-art { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-card, .discover-entry-art { transition: none; }
+  .discover-card-pressed, .discover-card-pressed .discover-entry-art { transform: none; }
+}

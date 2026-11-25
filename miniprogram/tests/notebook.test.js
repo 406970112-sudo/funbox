@@ -90,6 +90,7 @@ test("home notebook entry gates guests and opens the notebook for signed-in user
     "../../utils/auth": { getAccessToken: () => token, getStoredUser: () => null },
     "../../utils/score-session": { getRecentScoreRoom: () => null, saveRecentScoreRoom() {}, clearRecentScoreRoom() {}, getScoreSession: () => null },
     "../../utils/score-api": { getScoreRoom: async () => ({}), getScoreErrorMessage: error => error.message },
+    "../../utils/discover-entries": require("../utils/discover-entries"),
   }, { navigateTo: options => navigations.push(options.url), switchTab() {} });
   const page = pageInstance(definition);
   page.openNotebook();
@@ -177,11 +178,12 @@ test("notebook route config and shared remove controls are present", () => {
   assert.ok(notebook);
   assert.deepEqual(notebook.pages, ["index/index", "editor/index", "detail/index", "search/index", "books/index"]);
   const homeWxml = fs.readFileSync(path.resolve(ROOT, "pages/index/index.wxml"), "utf8");
-  const homeWxss = fs.readFileSync(path.resolve(ROOT, "pages/index/index.wxss"), "utf8");
-  assert.match(homeWxml, /class="discover-grid"/);
-  assert.match(homeWxml, /class="discover-card notebook-entry"/);
-  assert.match(homeWxml, /class="discover-card meme-entry"/);
-  assert.match(homeWxss, /\.discover-card\s*\{[^}]*height:\s*230rpx;/s);
+  const discoverWxml = fs.readFileSync(path.resolve(ROOT, "templates/discover-entry.wxml"), "utf8");
+  const discoverWxss = fs.readFileSync(path.resolve(ROOT, "templates/discover-entry.wxss"), "utf8");
+  assert.match(homeWxml, /class="discover-swiper"[^>]*display-multiple-items="\{\{2\}\}"/);
+  assert.match(discoverWxml, /class="discover-card notebook-entry"/);
+  assert.match(discoverWxml, /class="discover-card meme-entry"/);
+  assert.match(discoverWxss, /\.discover-card\s*\{[^}]*height:\s*230rpx;/s);
   assert.doesNotMatch(homeWxml, /<br\s*\/>/);
   const editorWxml = fs.readFileSync(path.resolve(ROOT, "packages/notebook/editor/index.wxml"), "utf8");
   assert.doesNotMatch(editorWxml, /chooseImages|toggleRecording|playAudio/);

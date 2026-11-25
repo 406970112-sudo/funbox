@@ -834,6 +834,7 @@ func newServer(
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", api.handleHealthz)
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
+	mux.HandleFunc("GET /api/v1/holiday-calendar", api.withAPIPipeline(handleHolidayCalendar))
 	mux.HandleFunc("GET /api/v1/features", api.withOptionalAuth(api.withAPIPipeline(api.handleVisibleFeatures)))
 	mux.HandleFunc("GET /api/v1/membership/features", api.withAuth(api.withAPIPipeline(api.handleMembershipFeatureMatrix)))
 	mux.HandleFunc("GET /api/v1/membership/payment", api.withAuth(api.withAPIPipeline(api.handleMembershipPaymentInfo)))

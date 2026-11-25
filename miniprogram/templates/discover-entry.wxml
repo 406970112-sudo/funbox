@@ -1,0 +1,40 @@
+<import src="/templates/note-art.wxml" />
+
+<template name="discover-notebook">
+  <view class="discover-card notebook-entry" bindtap="openNotebook" hover-class="discover-card-pressed" hover-start-time="0" hover-stay-time="120" role="button" aria-label="笔记本，记录想法、清单和灵感">
+    <text class="discover-title">笔记本</text>
+    <view class="discover-copy">
+      <text class="discover-desc">想法、清单</text>
+      <text class="discover-desc">和灵感</text>
+    </view>
+    <view class="discover-entry-art" aria-hidden="true"><template is="note-art" data="{{variant: 'sm'}}" /></view>
+  </view>
+</template>
+
+<template name="discover-memes">
+  <view class="discover-card meme-entry" bindtap="openMemes" hover-class="discover-card-pressed" hover-start-time="0" hover-stay-time="120" role="button" aria-label="表情包，分类搜图，热门排行">
+    <text class="discover-title">表情包</text>
+    <view class="discover-copy">
+      <text class="discover-desc">分类搜图 ·</text>
+      <text class="discover-desc">热门排行</text>
+    </view>
+    <image class="discover-entry-art" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" />
+  </view>
+</template>
+
+<template name="discover-holidays">
+  <view class="discover-card holiday-entry" bindtap="openHolidays" hover-class="discover-card-pressed" hover-start-time="0" hover-stay-time="120" role="button" aria-label="节假日倒计时，{{card ? card.label : '查看放假与调休'}}">
+    <text class="discover-title">节假日倒计时</text>
+    <text class="discover-desc holiday-entry-status">{{card ? card.label : '查看放假与调休'}}</text>
+    <view class="holiday-entry-count holiday-tone-{{card.state}}">
+      <block wx:if="{{card.count}}">
+        <text wx:if="{{card.state === 'holiday'}}">第</text><text class="holiday-entry-number">{{card.count}}</text><text>天</text>
+      </block>
+    </view>
+    <view class="discover-entry-art holiday-art" aria-hidden="true"><view class="holiday-art-sheet"><text>休</text></view></view>
+    <view class="holiday-entry-footer">
+      <text wx:if="{{card.dateLabel}}" class="discover-desc">{{card.dateLabel}}</text>
+      <text wx:if="{{card.isMakeupDay}}" class="discover-desc holiday-workday">今天调休上班</text>
+    </view>
+  </view>
+</template>

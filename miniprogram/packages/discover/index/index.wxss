@@ -1,0 +1,10 @@
+@import "../../../templates/discover-entry.wxss";
+
+.discover-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 30rpx 30rpx 44rpx;
+  background: radial-gradient(ellipse at 90% 5%, #eaf2ff, transparent 38%), #f5f7fa;
+}
+
+.discover-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }

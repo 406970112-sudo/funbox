@@ -1,11 +1,66 @@
 page {
-  background: #f5f7fa;
-  color: #17243d;
-  font-size: 26rpx
+  background: var(--fb-canvas);
+  color: var(--fb-ink);
+  font-size: 26rpx;
 }
 
 .detail-page {
-  padding: 26rpx 28rpx 60rpx
+  padding: 26rpx 28rpx calc(60rpx + env(safe-area-inset-bottom));
+}
+
+.detail-skeleton-media,
+.detail-skeleton-title,
+.detail-skeleton-meta,
+.detail-skeleton-actions view {
+  background: linear-gradient(90deg, #e7edf7 25%, #f3f6fb 50%, #e7edf7 75%);
+  background-size: 200% 100%;
+  animation: fb-shimmer 1.4s ease-in-out infinite;
+}
+
+.detail-skeleton-media {
+  height: 630rpx;
+  border-radius: 30rpx;
+}
+
+.detail-skeleton-title {
+  width: 62%;
+  height: 38rpx;
+  margin-top: 26rpx;
+  border-radius: 10rpx;
+}
+
+.detail-skeleton-meta {
+  width: 44%;
+  height: 24rpx;
+  margin-top: 16rpx;
+  border-radius: 8rpx;
+}
+
+.detail-skeleton-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 28rpx;
+}
+
+.detail-skeleton-actions view {
+  flex: 1;
+  height: 82rpx;
+  border-radius: 19rpx;
+}
+
+.detail-skeleton-text {
+  display: block;
+  margin-top: 24rpx;
+  color: var(--fb-muted);
+  font-size: 23rpx;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-skeleton-media,
+  .detail-skeleton-title,
+  .detail-skeleton-meta,
+  .detail-skeleton-actions view { animation: none; }
 }
 
 button::after {
@@ -116,6 +171,67 @@ button {
   color: #25334c;
   border: 1rpx solid #e0e7f2;
   margin: 0
+}
+
+.action-row .favorite-button {
+  overflow: visible;
+}
+
+.favorite-mark {
+  display: inline-block;
+  position: relative;
+  margin-right: 8rpx;
+  font-size: 32rpx;
+  line-height: 1;
+  vertical-align: -2rpx;
+}
+
+.favorite-mark-selected {
+  color: #a56904;
+}
+
+.favorite-star {
+  display: block;
+}
+
+.favorite-mark-confirmed .favorite-star {
+  animation: meme-star-pop 370ms cubic-bezier(.2, .7, .25, 1);
+}
+
+.favorite-spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -9rpx 0 0 -9rpx;
+  font-size: 18rpx;
+  line-height: 1;
+  color: #a56904;
+  opacity: 0;
+  pointer-events: none;
+  animation: meme-spark-flight 545ms cubic-bezier(.2, .7, .25, 1) both;
+}
+
+.favorite-spark-left { --spark-x: -38rpx; --spark-y: -25rpx; }
+.favorite-spark-top { --spark-x: 7rpx; --spark-y: -52rpx; animation-duration: 585ms; }
+.favorite-spark-right { --spark-x: 43rpx; --spark-y: -28rpx; animation-duration: 625ms; }
+
+@keyframes meme-star-pop {
+  0%, 100% { transform: scale(1); }
+  39% { transform: scale(1.46); }
+  70% { transform: scale(.94); }
+}
+
+@keyframes meme-spark-flight {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-20deg) scale(.4); }
+  46% { opacity: 1; transform: translate(calc(var(--spark-x) * .76), calc(var(--spark-y) * .76)) rotate(14deg); }
+  100% { opacity: 0; transform: translate(var(--spark-x), var(--spark-y)) rotate(43deg) scale(.57); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .favorite-mark-confirmed .favorite-star,
+  .favorite-spark {
+    animation: none;
+  }
 }
 
 .primary {

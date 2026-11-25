@@ -9,6 +9,7 @@ let currentUserError = null;
 let clearedSessions = 0;
 let syncedAuth = 0;
 const navigations = [];
+const preferences = {};
 
 const authPath = require.resolve("../utils/auth");
 require.cache[authPath] = {
@@ -37,6 +38,7 @@ global.getApp = () => ({
   },
 });
 global.wx = {
+  getStorageSync: (key) => preferences[key],
   navigateTo(options) {
     navigations.push(options);
   },
@@ -75,6 +77,17 @@ test("profile page shows one tappable auth entry for a guest", async () => {
   const template = fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.wxml"), "utf8");
   assert.match(template, /class="profile-card guest-card fb-card" bindtap="openAuth"/);
   assert.doesNotMatch(template, /login-button|register-button|bindtap="openLogin"|bindtap="openRegister"/);
+});
+
+test("profile respects the saved motion preference without showing a switch", (t) => {
+  accessToken = "";
+  preferences.funboxMahjongReducedMotionV1 = true;
+  t.after(() => { delete preferences.funboxMahjongReducedMotionV1; });
+  const page = createPage();
+  page.onShow();
+  assert.equal(page.data.reduceMotion, true);
+  const template = fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.wxml"), "utf8");
+  assert.doesNotMatch(template, /减少动效/);
 });
 
 test("profile page loads current user details and opens the history entrance", async () => {

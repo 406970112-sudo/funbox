@@ -1,5 +1,6 @@
 const { clearSession, getAccessToken, getCurrentUser, getStoredUser } = require("../../utils/auth");
 const { API_BASE_URL } = require("../../config/index");
+const { reduceMotionEnabled } = require("../../utils/ui-motion");
 
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 
@@ -44,9 +45,11 @@ Page({
     avatarUrl: "",
     maskedUsername: "",
     registeredAt: "",
+    reduceMotion: false,
   },
 
   onShow() {
+    this.setData({ reduceMotion: reduceMotionEnabled() });
     this.loadProfile();
   },
 
