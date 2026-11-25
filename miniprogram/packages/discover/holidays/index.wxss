@@ -1,23 +1,28 @@
 .holiday-page {
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 22rpx 30rpx calc(52rpx + env(safe-area-inset-bottom));
+  padding: 24rpx 30rpx calc(56rpx + env(safe-area-inset-bottom));
   background: radial-gradient(ellipse at 92% 4%, #e8f1ff 0%, transparent 42%), var(--fb-canvas);
 }
 
-/* Topbar & today context */
-.holiday-topbar {
+/* Editorial Hero Header (matches Home / Notebook / Profile) */
+.holiday-hero {
+  animation: fb-reveal .3s ease-out both;
+}
+
+.topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  margin-bottom: 22rpx;
 }
 
-.entry-brand {
-  color: var(--fb-primary);
-  font-size: 24rpx;
-  font-weight: 800;
+.brand-caption {
+  display: block;
+  margin-top: 4rpx;
+  color: var(--fb-muted);
+  font-size: 23rpx;
+  font-weight: 700;
 }
 
 .today-pill {
@@ -28,7 +33,7 @@
   border: 1rpx solid rgba(255, 255, 255, .95);
   border-radius: 99rpx;
   background: #fff;
-  box-shadow: 0 6rpx 18rpx rgba(38, 76, 133, .05);
+  box-shadow: 0 8rpx 22rpx rgba(45, 91, 255, .06);
   color: var(--fb-ink-secondary);
   font-size: 23rpx;
   font-weight: 700;
@@ -44,12 +49,187 @@
 .today-pill-holiday .today-dot { background: #14a678; }
 .today-pill-makeup .today-dot { background: #e06b2d; }
 
-/* Today is makeup workday banner */
+.hero-editorial {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  min-height: 214rpx;
+  margin-top: 12rpx;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.headline {
+  display: block;
+  color: var(--fb-ink);
+  font-size: 48rpx;
+  font-weight: 900;
+  line-height: 1.38;
+  letter-spacing: -2rpx;
+}
+
+.headline-accent { color: var(--fb-primary); }
+.headline-accent-mint { color: #0e8a64; }
+.headline-accent-warm { color: #cc521a; }
+
+.weekend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 14rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 99rpx;
+  background: #e9f0ff;
+  color: var(--fb-primary);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.weekend-dot {
+  width: 9rpx;
+  height: 9rpx;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.weekend-holiday,
+.weekend-weekend {
+  background: #e2f6ee;
+  color: #0d7b5a;
+}
+
+.weekend-near {
+  background: #fff1e5;
+  color: #b54c18;
+}
+
+.weekend-makeup {
+  background: #fff0ed;
+  color: #c74d38;
+}
+
+/* Handcrafted 3D Layered Calendar Artwork (FunBox note-art aesthetic) */
+.cal-art {
+  position: relative;
+  flex-shrink: 0;
+  width: 196rpx;
+  height: 184rpx;
+  margin-right: -4rpx;
+}
+
+.cal-art-back {
+  position: absolute;
+  top: 16rpx;
+  right: 12rpx;
+  width: 126rpx;
+  height: 138rpx;
+  border-radius: 22rpx;
+  background: linear-gradient(155deg, #ffffff 0%, #eef3fc 75%, #dfe8f8 100%);
+  box-shadow: 8rpx 10rpx 20rpx rgba(45, 76, 138, .12), inset 0 0 0 2rpx rgba(255, 255, 255, .95);
+  transform: rotate(9deg);
+}
+
+.cal-art-front {
+  position: absolute;
+  top: 14rpx;
+  right: 28rpx;
+  width: 128rpx;
+  height: 142rpx;
+  border: 2rpx solid #fff;
+  border-radius: 22rpx;
+  background: #fff;
+  box-shadow: 8rpx 14rpx 28rpx rgba(45, 91, 255, .18), inset 0 -6rpx 0 rgba(232, 240, 255, .75);
+  transform: rotate(-5deg);
+  text-align: center;
+}
+
+.cal-art-rings {
+  position: absolute;
+  top: -9rpx;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 24rpx;
+}
+
+.cal-art-rings view {
+  width: 10rpx;
+  height: 20rpx;
+  border: 2rpx solid #fff;
+  border-radius: 6rpx;
+  background: linear-gradient(180deg, #dce6fb, #b9cdf7);
+}
+
+.cal-art-head {
+  padding: 15rpx 0 8rpx;
+  border-radius: 20rpx 20rpx 0 0;
+  background: linear-gradient(145deg, #527dff, #2d5bff);
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.cal-art-holiday .cal-art-head { background: linear-gradient(145deg, #27b889, #0e8d66); }
+.cal-art-near .cal-art-head,
+.cal-art-tomorrow .cal-art-head { background: linear-gradient(145deg, #f07e46, #d65722); }
+
+.cal-art-day {
+  margin-top: 10rpx;
+  color: var(--fb-ink);
+  font-size: 48rpx;
+  font-weight: 900;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-art-dots {
+  width: 56rpx;
+  height: 6rpx;
+  margin: 10rpx auto 0;
+  border-radius: 6rpx;
+  background: #dce6fa;
+}
+
+.cal-art-badge {
+  position: absolute;
+  z-index: 4;
+  left: 8rpx;
+  bottom: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62rpx;
+  height: 62rpx;
+  border: 3rpx solid #fff;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ff8b73, #ff6c54);
+  box-shadow: 0 10rpx 20rpx rgba(255, 108, 84, .28);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 900;
+  transform: rotate(-8deg);
+}
+
+.cal-art-holiday .cal-art-badge {
+  background: linear-gradient(145deg, #2cc392, #10946a);
+  box-shadow: 0 10rpx 20rpx rgba(16, 148, 106, .28);
+}
+
+/* Makeup workday alert banner */
 .makeup-today-banner {
   display: flex;
   align-items: center;
   gap: 18rpx;
-  margin-bottom: 20rpx;
+  margin-top: 14rpx;
   padding: 20rpx 24rpx;
   border: 2rpx solid #ffd9bd;
   border-radius: 26rpx;
@@ -61,188 +241,128 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 56rpx;
-  height: 56rpx;
+  width: 54rpx;
+  height: 54rpx;
   border-radius: 16rpx;
   background: #e06b2d;
   color: #fff;
-  font-size: 26rpx;
+  font-size: 25rpx;
   font-weight: 900;
 }
 
-.makeup-today-copy {
-  flex: 1;
-  min-width: 0;
-}
+.makeup-today-copy { flex: 1; min-width: 0; }
+.makeup-today-title { display: block; color: #9d4214; font-size: 26rpx; font-weight: 800; }
+.makeup-today-desc { display: block; margin-top: 2rpx; color: #b1653c; font-size: 22rpx; }
 
-.makeup-today-title {
-  display: block;
-  color: #9d4214;
-  font-size: 27rpx;
-  font-weight: 800;
-}
-
-.makeup-today-desc {
-  display: block;
-  margin-top: 2rpx;
-  color: #b1653c;
-  font-size: 22rpx;
-}
-
-/* Countdown Hero Card */
-.countdown-hero {
+/* Spotlight Ticket Countdown Card */
+.spotlight-card {
   position: relative;
-  overflow: hidden;
-  padding: 28rpx 30rpx 26rpx;
+  margin-top: 16rpx;
   border: 2rpx solid #fff;
   border-radius: 34rpx;
-  background: linear-gradient(145deg, #ebf2ff 0%, #e1ecff 55%, #f5f9ff 100%);
-  box-shadow: 0 16rpx 40rpx rgba(45, 91, 255, .09);
-  animation: fb-reveal .32s ease-out both;
+  background: linear-gradient(155deg, #eaf2ff 0%, #e1ecff 52%, #f4f8ff 100%);
+  box-shadow: 0 18rpx 44rpx rgba(45, 91, 255, .09);
+  animation: fb-reveal .34s ease-out .04s both;
 }
 
-.hero-tone-holiday {
-  background: linear-gradient(145deg, #e5f7ef 0%, #d8f3e7 55%, #f2fcf7 100%);
-  box-shadow: 0 16rpx 40rpx rgba(16, 136, 98, .09);
+.spotlight-holiday {
+  background: linear-gradient(155deg, #e4f7ef 0%, #d8f3e7 52%, #f1fcf7 100%);
+  box-shadow: 0 18rpx 44rpx rgba(16, 136, 98, .09);
 }
 
-.hero-tone-near,
-.hero-tone-tomorrow {
-  background: linear-gradient(145deg, #fff3e8 0%, #ffe8d6 55%, #fff9f4 100%);
-  box-shadow: 0 16rpx 40rpx rgba(196, 86, 26, .09);
+.spotlight-near,
+.spotlight-tomorrow {
+  background: linear-gradient(155deg, #fff3e8 0%, #ffe8d6 52%, #fff9f3 100%);
+  box-shadow: 0 18rpx 44rpx rgba(196, 86, 26, .09);
 }
 
-.hero-tone-awaiting,
-.hero-tone-history {
-  background: linear-gradient(145deg, #f0f4fa 0%, #e9eff8 55%, #f7f9fc 100%);
+.spotlight-awaiting,
+.spotlight-history {
+  background: linear-gradient(155deg, #eff3fa 0%, #e8eef8 52%, #f7f9fc 100%);
   box-shadow: 0 12rpx 32rpx rgba(38, 76, 133, .05);
 }
 
-.hero-top-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
+.spotlight-upper {
+  padding: 26rpx 28rpx 22rpx;
 }
 
-.hero-state-pill {
+.spotlight-tags {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.spotlight-state-pill {
   display: inline-flex;
   align-items: center;
-  gap: 10rpx;
-  padding: 8rpx 18rpx;
+  gap: 8rpx;
+  padding: 7rpx 16rpx;
   border-radius: 99rpx;
-  background: rgba(255, 255, 255, .86);
+  background: rgba(255, 255, 255, .88);
   color: var(--fb-primary);
   font-size: 22rpx;
   font-weight: 800;
 }
 
-.hero-state-dot {
+.spotlight-state-dot {
   width: 10rpx;
   height: 10rpx;
   border-radius: 50%;
   background: currentColor;
 }
 
-.hero-tone-holiday .hero-state-pill { color: #0a7a59; }
-.hero-tone-near .hero-state-pill,
-.hero-tone-tomorrow .hero-state-pill { color: #bd4c16; }
-.hero-tone-awaiting .hero-state-pill,
-.hero-tone-history .hero-state-pill { color: var(--fb-muted); }
+.spotlight-holiday .spotlight-state-pill { color: #0a7a59; }
+.spotlight-near .spotlight-state-pill,
+.spotlight-tomorrow .spotlight-state-pill { color: #bd4c16; }
+.spotlight-awaiting .spotlight-state-pill,
+.spotlight-history .spotlight-state-pill { color: var(--fb-muted); }
 
-/* 3D-inspired tear-off mini calendar artwork */
-.hero-calendar {
-  position: relative;
-  flex-shrink: 0;
-  width: 96rpx;
-  border: 2rpx solid #fff;
-  border-radius: 18rpx;
-  background: #fff;
-  box-shadow: 5rpx 7rpx 0 rgba(45, 91, 255, .14), 0 10rpx 20rpx rgba(23, 33, 57, .08);
-  text-align: center;
-  transform: rotate(5deg);
-  overflow: visible;
-}
-
-.hero-tone-holiday .hero-calendar {
-  box-shadow: 5rpx 7rpx 0 rgba(14, 132, 95, .16), 0 10rpx 20rpx rgba(23, 33, 57, .08);
-}
-
-.hero-tone-near .hero-calendar,
-.hero-tone-tomorrow .hero-calendar {
-  box-shadow: 5rpx 7rpx 0 rgba(196, 86, 26, .16), 0 10rpx 20rpx rgba(23, 33, 57, .08);
-}
-
-.hero-calendar-rings {
-  position: absolute;
-  top: -7rpx;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 20rpx;
-}
-
-.hero-calendar-rings view {
-  width: 8rpx;
-  height: 14rpx;
-  border-radius: 4rpx;
-  background: #d8e4fb;
-  border: 1rpx solid #fff;
-}
-
-.hero-calendar-head {
-  padding: 9rpx 0 5rpx;
-  border-radius: 15rpx 15rpx 0 0;
-  background: var(--fb-primary);
-  color: #fff;
-  font-size: 20rpx;
+.spotlight-duration-pill {
+  padding: 7rpx 16rpx;
+  border-radius: 99rpx;
+  background: rgba(45, 91, 255, .1);
+  color: var(--fb-primary);
+  font-size: 22rpx;
   font-weight: 800;
-  line-height: 1.2;
 }
 
-.hero-tone-holiday .hero-calendar-head { background: #13936c; }
-.hero-tone-near .hero-calendar-head,
-.hero-tone-tomorrow .hero-calendar-head { background: #dc6428; }
-.hero-tone-awaiting .hero-calendar-head { background: #8c9ab0; }
-
-.hero-calendar-day {
-  padding: 6rpx 0 9rpx;
-  color: var(--fb-ink);
-  font-size: 36rpx;
-  font-weight: 900;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
+.spotlight-holiday .spotlight-duration-pill {
+  background: rgba(10, 122, 89, .12);
+  color: #0a7a59;
 }
 
-.hero-main {
+.spotlight-near .spotlight-duration-pill,
+.spotlight-tomorrow .spotlight-duration-pill {
+  background: rgba(194, 77, 24, .12);
+  color: #bd4c16;
+}
+
+.spotlight-main {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 20rpx;
-  margin-top: 12rpx;
+  margin-top: 20rpx;
 }
 
-.hero-info {
-  flex: 1;
-  min-width: 0;
-}
+.spotlight-info { flex: 1; min-width: 0; }
 
-.hero-name {
+.spotlight-name {
   display: block;
   color: var(--fb-ink);
-  font-size: 48rpx;
+  font-size: 46rpx;
   font-weight: 900;
   letter-spacing: -1.5rpx;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
-.awaiting-title {
+.awaiting-name {
   margin-top: 18rpx;
-  font-size: 38rpx;
+  font-size: 36rpx;
 }
 
-.hero-period {
+.spotlight-date {
   display: block;
   margin-top: 10rpx;
   color: var(--fb-ink-secondary);
@@ -250,7 +370,7 @@
   font-weight: 700;
 }
 
-.hero-weekdays {
+.spotlight-weekdays {
   display: block;
   margin-top: 4rpx;
   color: var(--fb-muted);
@@ -258,45 +378,45 @@
   line-height: 1.5;
 }
 
-.hero-count-block {
+.spotlight-count {
   flex-shrink: 0;
   text-align: right;
 }
 
-.hero-count-prefix {
+.spotlight-count-label {
   display: block;
   color: var(--fb-muted);
   font-size: 22rpx;
   font-weight: 700;
 }
 
-.hero-count-row {
+.spotlight-count-figure {
   display: flex;
   align-items: baseline;
   justify-content: flex-end;
   gap: 6rpx;
-  margin-top: 4rpx;
+  margin-top: 2rpx;
   color: var(--fb-primary);
 }
 
-.hero-tone-holiday .hero-count-row { color: #0a7a59; }
-.hero-tone-near .hero-count-row,
-.hero-tone-tomorrow .hero-count-row { color: #c24d18; }
+.spotlight-holiday .spotlight-count-figure { color: #0a7a59; }
+.spotlight-near .spotlight-count-figure,
+.spotlight-tomorrow .spotlight-count-figure { color: #c24d18; }
 
-.hero-count-number {
-  font-size: 84rpx;
+.spotlight-count-number {
+  font-size: 86rpx;
   font-weight: 900;
-  line-height: 0.96;
+  line-height: 0.94;
   letter-spacing: -3rpx;
   font-variant-numeric: tabular-nums;
 }
 
-.hero-count-unit {
+.spotlight-count-unit {
   font-size: 26rpx;
   font-weight: 800;
 }
 
-.hero-count-single {
+.spotlight-count-single {
   display: block;
   color: #0a7a59;
   font-size: 48rpx;
@@ -304,12 +424,8 @@
   line-height: 1.1;
 }
 
-/* Progress bar during an active multi-day holiday */
-.hero-progress {
-  margin-top: 22rpx;
-}
-
-.hero-progress-head {
+.spotlight-progress { margin-top: 22rpx; }
+.spotlight-progress-head {
   display: flex;
   justify-content: space-between;
   margin-bottom: 10rpx;
@@ -318,102 +434,212 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-
-.hero-progress-track {
+.spotlight-progress-track {
   height: 12rpx;
   overflow: hidden;
   border-radius: 99rpx;
   background: rgba(10, 122, 89, .14);
 }
-
-.hero-progress-fill {
+.spotlight-progress-fill {
   height: 100%;
   border-radius: 99rpx;
   background: linear-gradient(90deg, #20b486, #0c8a64);
 }
 
-/* Hero bottom note */
-.hero-footnote {
-  margin-top: 22rpx;
-  padding-top: 18rpx;
+/* Ticket tear-line */
+.ticket-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 28rpx;
+  overflow: hidden;
+}
+
+.ticket-notch {
+  position: absolute;
+  top: 2rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: var(--fb-canvas);
+}
+
+.ticket-notch-left { left: -14rpx; }
+.ticket-notch-right { right: -14rpx; }
+
+.ticket-dash {
+  width: 100%;
+  margin: 0 24rpx;
+  border-top: 2rpx dashed rgba(23, 33, 57, .12);
+}
+
+.spotlight-lower {
+  padding: 10rpx 28rpx 24rpx;
+}
+
+/* Visual Day-by-Day Calendar Strip */
+.day-strip-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.day-strip {
+  display: inline-flex;
+  gap: 12rpx;
+  padding: 4rpx 2rpx;
+}
+
+.day-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 86rpx;
+  padding: 12rpx 10rpx 10rpx;
+  border: 2rpx solid rgba(255, 255, 255, .9);
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, .86);
+  box-sizing: border-box;
+}
+
+.day-chip-rest {
+  border-color: #d6e4ff;
+  background: #fff;
+}
+
+.day-chip-makeup {
+  border-color: #ffd7bd;
+  background: #fff6ef;
+}
+
+.day-chip-today {
+  border-color: var(--fb-primary);
+  box-shadow: 0 4rpx 12rpx rgba(45, 91, 255, .16);
+}
+
+.day-chip-week {
+  color: var(--fb-muted);
+  font-size: 20rpx;
+  line-height: 1.2;
+}
+
+.day-chip-date {
+  margin-top: 4rpx;
+  color: var(--fb-ink);
+  font-size: 24rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-chip-badge {
+  margin-top: 6rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 99rpx;
+  font-size: 20rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.day-chip-rest .day-chip-badge {
+  background: #e5f7f0;
+  color: #0e7c5a;
+}
+
+.day-chip-makeup .day-chip-badge {
+  background: #ffe6d3;
+  color: #b54a17;
+}
+
+/* Spotlight bottom action row */
+.spotlight-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 18rpx;
+  padding-top: 16rpx;
   border-top: 1rpx solid rgba(23, 33, 57, .07);
 }
 
-.hero-makeup-note,
-.hero-clean-note {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  flex-wrap: wrap;
-}
-
-.hero-note-tag {
-  flex-shrink: 0;
-  padding: 4rpx 12rpx;
-  border-radius: 10rpx;
-  font-size: 22rpx;
+.status-pill-clean {
+  color: #0d7a59;
+  font-size: 23rpx;
   font-weight: 800;
 }
 
-.hero-note-tag-makeup {
-  background: rgba(224, 107, 45, .14);
-  color: #a64617;
-}
-
-.hero-note-tag-clean {
-  background: rgba(18, 148, 108, .13);
-  color: #0d7958;
-}
-
-.hero-note-text {
-  flex: 1;
-  min-width: 0;
-  color: var(--fb-ink-secondary);
+.status-pill-makeup {
+  color: #b04b18;
   font-size: 23rpx;
-  line-height: 1.45;
+  font-weight: 800;
 }
 
-/* Year Stats Strip */
-.year-stats {
+.spotlight-actions {
   display: flex;
   align-items: center;
-  margin-top: 20rpx;
-  padding: 22rpx 12rpx;
-  animation: fb-reveal .36s ease-out .04s both;
+  gap: 12rpx;
 }
 
-.stat-cell {
-  flex: 1;
-  text-align: center;
+.spotlight-action-btn {
+  margin: 0;
+  padding: 11rpx 22rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, .92);
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  transition: transform .12s ease-out, opacity .12s ease-out;
 }
 
-.stat-value {
+.spotlight-action-primary {
+  background: var(--fb-primary);
+  color: #fff;
+}
+
+.spotlight-action-done {
+  background: var(--fb-success-soft);
+  color: var(--fb-success);
+}
+
+/* Annual Overview Strip */
+.overview-strip {
+  display: flex;
+  align-items: center;
+  margin-top: 22rpx;
+  padding: 24rpx 12rpx;
+  animation: fb-reveal .36s ease-out .08s both;
+}
+
+.overview-cell { flex: 1; text-align: center; }
+
+.overview-num {
   display: block;
   color: var(--fb-ink);
-  font-size: 38rpx;
+  font-size: 40rpx;
   font-weight: 900;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
 
-.stat-value-primary { color: var(--fb-primary); }
-.stat-value-mint { color: #0d825f; }
+.overview-num-primary { color: var(--fb-primary); }
+.overview-num-mint { color: #0d825f; }
+.overview-num-warm { color: #c4521c; }
 
-.stat-label {
+.overview-label {
   display: block;
   margin-top: 6rpx;
   color: var(--fb-muted);
   font-size: 22rpx;
 }
 
-.stat-divider {
+.overview-divider {
   width: 1rpx;
-  height: 44rpx;
+  height: 46rpx;
   background: #e7edf6;
 }
 
-/* Section header & year segmented switcher */
-.holiday-list-head {
+/* Section Head & Year Switcher */
+.section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -421,20 +647,20 @@
   margin: 30rpx 4rpx 16rpx;
 }
 
-.holiday-head-copy {
+.section-head-left {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 12rpx;
 }
 
-.holiday-section-title {
+.section-title {
   color: var(--fb-ink);
-  font-size: 33rpx;
+  font-size: 34rpx;
   font-weight: 900;
 }
 
-.holiday-section-sub {
+.section-note {
   color: var(--fb-muted);
   font-size: 22rpx;
 }
@@ -467,12 +693,11 @@
   box-shadow: 0 4rpx 12rpx rgba(45, 91, 255, .1);
 }
 
-.holiday-year {
+.year-picker {
   display: inline-flex;
   align-items: center;
   gap: 10rpx;
   min-height: 60rpx;
-  box-sizing: border-box;
   padding: 0 20rpx;
   border-radius: 18rpx;
   background: #edf3ff;
@@ -481,7 +706,7 @@
   font-weight: 800;
 }
 
-.holiday-year-arrow {
+.year-picker-arrow {
   width: 9rpx;
   height: 9rpx;
   border-right: 3rpx solid;
@@ -489,61 +714,92 @@
   transform: translateY(-3rpx) rotate(45deg);
 }
 
-/* Annual Holiday List */
-.holiday-list {
-  overflow: hidden;
-  padding: 8rpx 0;
-  animation: fb-reveal .38s ease-out .08s both;
+/* Filter Chips (matches Notebook) */
+.filter-scroll {
+  width: 100%;
+  white-space: nowrap;
+  margin-bottom: 18rpx;
 }
 
-.holiday-row {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 20rpx;
-  padding: 22rpx 24rpx;
+.filter-row {
+  display: inline-flex;
+  gap: 14rpx;
+  padding: 2rpx;
 }
 
-.holiday-row + .holiday-row {
-  border-top: 1rpx solid var(--fb-line);
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  min-height: 60rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid #e7edf6;
+  border-radius: 99rpx;
+  background: #fff;
+  color: #52617d;
+  font-size: 24rpx;
+  font-weight: 600;
+  box-shadow: 0 3rpx 8rpx rgba(44, 66, 105, .03);
+  transition: transform .12s ease-out, background .15s ease;
 }
 
-.holiday-row-current {
-  background: #f4f8ff;
-}
-
-.holiday-row-current::before {
-  content: "";
-  position: absolute;
-  top: 20rpx;
-  bottom: 20rpx;
-  left: 0;
-  width: 6rpx;
-  border-radius: 0 6rpx 6rpx 0;
+.filter-active {
+  border-color: var(--fb-primary);
   background: var(--fb-primary);
+  color: #fff;
+  font-weight: 700;
 }
 
-.holiday-row-active {
-  background: #effaf5;
+.filter-count {
+  font-size: 22rpx;
+  opacity: .82;
+  font-variant-numeric: tabular-nums;
 }
 
-.holiday-row-active::before {
-  background: #12916a;
+/* Individual Expandable Holiday Cards */
+.holiday-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  animation: fb-reveal .38s ease-out .1s both;
 }
 
+.holiday-card {
+  padding: 24rpx;
+  border-radius: 30rpx;
+  transition: transform .12s ease-out, opacity .12s ease-out, border-color .15s ease;
+}
+
+.holiday-card-current {
+  border: 2rpx solid #cfe0ff;
+  box-shadow: 0 12rpx 32rpx rgba(45, 91, 255, .07);
+}
+
+.holiday-card-live {
+  border: 2rpx solid #bae8d7;
+  box-shadow: 0 12rpx 32rpx rgba(16, 136, 98, .08);
+}
+
+.holiday-card-head {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+/* Mini Calendar Date Tile with Festival Themes */
 .date-tile {
   flex-shrink: 0;
-  width: 84rpx;
+  width: 88rpx;
   overflow: hidden;
-  border: 1rpx solid #e1e9f8;
-  border-radius: 18rpx;
+  border: 1rpx solid #e0e8f8;
+  border-radius: 20rpx;
   background: #fff;
   text-align: center;
 }
 
 .date-tile-month {
   display: block;
-  padding: 4rpx 0;
+  padding: 5rpx 0;
   background: #edf3ff;
   color: var(--fb-primary);
   font-size: 20rpx;
@@ -553,76 +809,49 @@
 
 .date-tile-day {
   display: block;
-  padding: 7rpx 0 8rpx;
+  padding: 8rpx 0 9rpx;
   color: var(--fb-ink);
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 900;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
-.holiday-row-current .date-tile {
-  border-color: #c8daff;
-}
+.card-theme-coral .date-tile { border-color: #ffdcd4; }
+.card-theme-coral .date-tile-month { background: #fff0ed; color: #cc4c34; }
 
-.holiday-row-current .date-tile-month {
-  background: var(--fb-primary);
-  color: #fff;
-}
+.card-theme-mint .date-tile { border-color: #c8ecdf; }
+.card-theme-mint .date-tile-month { background: #e8f7f1; color: #0e7d5b; }
 
-.holiday-row-active .date-tile {
-  border-color: #bae8d7;
-}
+.card-theme-amber .date-tile { border-color: #f8e2be; }
+.card-theme-amber .date-tile-month { background: #fff4e0; color: #b25d15; }
 
-.holiday-row-active .date-tile-month {
-  background: #12916a;
-  color: #fff;
-}
+.holiday-card-current .date-tile-month { background: var(--fb-primary); color: #fff; }
+.holiday-card-live .date-tile-month { background: #12916a; color: #fff; }
 
-.holiday-row-past .date-tile {
-  border-color: #ebeff6;
-  background: #f8fafd;
-}
+.holiday-card-past .date-tile { border-color: #ebeff6; background: #f8fafd; }
+.holiday-card-past .date-tile-month { background: #eef2f8; color: #8490a4; }
+.holiday-card-past .date-tile-day { color: #8490a4; }
 
-.holiday-row-past .date-tile-month {
-  background: #eef2f8;
-  color: #8490a4;
-}
+.holiday-card-copy { flex: 1; min-width: 0; }
 
-.holiday-row-past .date-tile-day {
-  color: #8490a4;
-}
-
-.holiday-row-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.holiday-row-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12rpx;
-}
-
-.holiday-title-group {
+.holiday-card-title-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10rpx;
-  min-width: 0;
 }
 
-.holiday-row-name {
+.holiday-card-name {
   color: var(--fb-ink);
-  font-size: 30rpx;
+  font-size: 31rpx;
   font-weight: 800;
   line-height: 1.3;
 }
 
-.holiday-row-current .holiday-row-name { color: var(--fb-primary); }
-.holiday-row-active .holiday-row-name { color: #0a7a59; }
-.holiday-row-past .holiday-row-name { color: var(--fb-muted); }
+.holiday-card-current .holiday-card-name { color: var(--fb-primary); }
+.holiday-card-live .holiday-card-name { color: #0a7a59; }
+.holiday-card-past .holiday-card-name { color: var(--fb-muted); }
 
 .duration-pill {
   padding: 3rpx 12rpx;
@@ -633,12 +862,9 @@
   font-weight: 700;
 }
 
-.holiday-row-past .duration-pill {
-  background: #f2f4f8;
-  color: #8490a4;
-}
+.holiday-card-past .duration-pill { background: #f2f4f8; color: #8490a4; }
 
-.current-pill {
+.badge-next {
   padding: 3rpx 12rpx;
   border-radius: 10rpx;
   background: #e3ecff;
@@ -647,72 +873,30 @@
   font-weight: 800;
 }
 
-.current-pill-live {
+.badge-live {
+  padding: 3rpx 12rpx;
+  border-radius: 10rpx;
   background: #daf4e9;
   color: #0a7a59;
-}
-
-.holiday-row-status {
-  flex-shrink: 0;
-  text-align: right;
-}
-
-.status-past {
-  color: #8c98ab;
-  font-size: 22rpx;
-  font-weight: 600;
-}
-
-.status-live {
-  color: #0a7a59;
-  font-size: 24rpx;
-  font-weight: 800;
-}
-
-.status-tomorrow {
-  color: #c24d18;
-  font-size: 24rpx;
-  font-weight: 800;
-}
-
-.status-days {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3rpx;
-  color: var(--fb-ink-secondary);
-}
-
-.holiday-row-current .status-days {
-  color: var(--fb-primary);
-}
-
-.status-days-num {
-  font-size: 28rpx;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
-
-.status-days-unit {
   font-size: 21rpx;
-  font-weight: 600;
+  font-weight: 800;
 }
 
-.holiday-row-date {
+.holiday-card-date {
   display: block;
-  margin-top: 8rpx;
+  margin-top: 6rpx;
   color: var(--fb-muted);
   font-size: 23rpx;
 }
 
-.holiday-makeup-row {
+.holiday-card-meta {
   display: flex;
-  align-items: flex-start;
-  gap: 10rpx;
-  margin-top: 10rpx;
+  align-items: center;
+  gap: 14rpx;
+  margin-top: 8rpx;
 }
 
-.makeup-chip {
-  flex-shrink: 0;
+.meta-makeup {
   padding: 2rpx 10rpx;
   border-radius: 8rpx;
   background: #fff1e5;
@@ -721,26 +905,9 @@
   font-weight: 700;
 }
 
-.holiday-row-past .makeup-chip {
-  background: #f4f1ee;
-  color: #8f7465;
-}
+.holiday-card-past .meta-makeup { background: #f3f0ed; color: #8c7b70; }
 
-.holiday-makeup-text {
-  flex: 1;
-  min-width: 0;
-  color: #9e4b20;
-  font-size: 22rpx;
-  line-height: 1.45;
-}
-
-.holiday-row-past .holiday-makeup-text {
-  color: #8c95a5;
-}
-
-.holiday-clean-tag {
-  display: inline-block;
-  margin-top: 10rpx;
+.meta-clean {
   padding: 2rpx 10rpx;
   border-radius: 8rpx;
   background: #e9f8f2;
@@ -749,9 +916,139 @@
   font-weight: 700;
 }
 
+.meta-past-note {
+  color: #8c98ab;
+  font-size: 21rpx;
+}
+
+.expand-hint {
+  color: var(--fb-subtle);
+  font-size: 21rpx;
+}
+
+.holiday-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+.countdown-past { color: #8c98ab; font-size: 23rpx; font-weight: 600; }
+.countdown-live { color: #0a7a59; font-size: 24rpx; font-weight: 800; }
+.countdown-tomorrow { color: #c24d18; font-size: 25rpx; font-weight: 800; }
+
+.countdown-days {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3rpx;
+  color: var(--fb-ink-secondary);
+}
+
+.holiday-card-current .countdown-days { color: var(--fb-primary); }
+
+.countdown-days-num {
+  font-size: 32rpx;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-days-unit {
+  font-size: 21rpx;
+  font-weight: 600;
+}
+
+.chevron {
+  width: 12rpx;
+  height: 12rpx;
+  border-right: 3rpx solid #9aa6ba;
+  border-bottom: 3rpx solid #9aa6ba;
+  transform: rotate(45deg);
+  transition: transform .18s ease;
+}
+
+.chevron-up {
+  transform: translateY(4rpx) rotate(-135deg);
+  border-color: var(--fb-primary);
+}
+
+/* Expandable Calendar Drawer */
+.holiday-drawer {
+  margin-top: 20rpx;
+  padding: 18rpx 18rpx 16rpx;
+  border-radius: 22rpx;
+  background: #f6f8fc;
+}
+
+.drawer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14rpx;
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid #e7edf6;
+}
+
+.drawer-makeup-copy { flex: 1; min-width: 0; }
+
+.drawer-makeup-text {
+  display: block;
+  color: #9e4b20;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.drawer-clean-text {
+  display: block;
+  color: #137c5c;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.drawer-copy-btn {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8rpx 20rpx;
+  border-radius: 14rpx;
+  background: #eaf1ff;
+  color: var(--fb-primary);
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.drawer-copy-done {
+  background: var(--fb-success-soft);
+  color: var(--fb-success);
+}
+
+/* Empty Filter State */
+.empty-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18rpx;
+  padding: 44rpx 28rpx;
+  text-align: center;
+}
+
+.empty-filter-title { color: var(--fb-muted); font-size: 25rpx; }
+.empty-filter-btn {
+  margin: 0;
+  padding: 14rpx 28rpx;
+  border-radius: 18rpx;
+  background: #edf3ff;
+  color: var(--fb-primary);
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 /* Official Source Card */
 .source-card {
-  margin-top: 24rpx;
+  margin-top: 26rpx;
   padding: 24rpx 26rpx;
 }
 
@@ -771,10 +1068,7 @@
   font-weight: 800;
 }
 
-.source-date {
-  color: var(--fb-muted);
-  font-size: 22rpx;
-}
+.source-date { color: var(--fb-muted); font-size: 22rpx; }
 
 .source-title {
   display: block;
@@ -821,7 +1115,7 @@
   color: var(--fb-success);
 }
 
-/* Skeleton & Error states */
+/* Shimmer Skeleton & Error */
 .skeleton-hero,
 .skeleton-stats,
 .skeleton-tile,
@@ -831,52 +1125,14 @@
   animation: fb-shimmer 1.4s ease-in-out infinite;
 }
 
-.skeleton-hero {
-  height: 310rpx;
-  border-radius: 34rpx;
-}
-
-.skeleton-stats {
-  height: 124rpx;
-  margin-top: 20rpx;
-  border-radius: 32rpx;
-}
-
-.skeleton-list {
-  margin-top: 28rpx;
-  padding: 10rpx 24rpx;
-}
-
-.skeleton-row {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 22rpx 0;
-}
-
-.skeleton-row + .skeleton-row {
-  border-top: 1rpx solid var(--fb-line);
-}
-
-.skeleton-tile {
-  flex-shrink: 0;
-  width: 84rpx;
-  height: 92rpx;
-  border-radius: 18rpx;
-}
-
-.skeleton-lines {
-  flex: 1;
-  min-width: 0;
-}
-
-.skeleton-line {
-  height: 24rpx;
-  border-radius: 8rpx;
-}
-
+.skeleton-hero { height: 380rpx; margin-top: 16rpx; border-radius: 34rpx; }
+.skeleton-stats { height: 124rpx; margin-top: 22rpx; border-radius: 32rpx; }
+.skeleton-card { display: flex; align-items: center; gap: 20rpx; margin-top: 18rpx; padding: 24rpx; }
+.skeleton-tile { flex-shrink: 0; width: 88rpx; height: 96rpx; border-radius: 20rpx; }
+.skeleton-lines { flex: 1; min-width: 0; }
+.skeleton-line { height: 24rpx; border-radius: 8rpx; }
 .skeleton-line-lg { width: 62%; }
-.skeleton-line-sm { width: 42%; height: 20rpx; margin-top: 14rpx; }
+.skeleton-line-sm { width: 44%; height: 20rpx; margin-top: 14rpx; }
 
 .holiday-feedback {
   display: flex;
@@ -901,11 +1157,7 @@
   font-weight: 900;
 }
 
-.holiday-hint {
-  color: var(--fb-muted);
-  font-size: 24rpx;
-  line-height: 1.5;
-}
+.holiday-hint { color: var(--fb-muted); font-size: 24rpx; line-height: 1.5; }
 
 .retry-primary-button {
   min-width: 240rpx;
@@ -919,9 +1171,10 @@
   line-height: 1.4;
 }
 
-.motion-reduced .countdown-hero,
-.motion-reduced .year-stats,
-.motion-reduced .holiday-list,
+.motion-reduced .holiday-hero,
+.motion-reduced .spotlight-card,
+.motion-reduced .overview-strip,
+.motion-reduced .holiday-cards,
 .motion-reduced .skeleton-hero,
 .motion-reduced .skeleton-stats,
 .motion-reduced .skeleton-tile,
@@ -931,15 +1184,18 @@
 
 @media (max-width: 350px) {
   .holiday-page { padding-left: 22rpx; padding-right: 22rpx; }
-  .hero-name { font-size: 42rpx; }
-  .hero-count-number { font-size: 72rpx; }
-  .date-tile { width: 76rpx; }
+  .headline { font-size: 42rpx; }
+  .cal-art { width: 172rpx; height: 166rpx; }
+  .spotlight-name { font-size: 40rpx; }
+  .spotlight-count-number { font-size: 72rpx; }
+  .date-tile { width: 78rpx; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .countdown-hero,
-  .year-stats,
-  .holiday-list,
+  .holiday-hero,
+  .spotlight-card,
+  .overview-strip,
+  .holiday-cards,
   .skeleton-hero,
   .skeleton-stats,
   .skeleton-tile,

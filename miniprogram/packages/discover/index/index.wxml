@@ -1,6 +1,11 @@
 <import src="/templates/discover-entry.wxml" />
 
 <view class="discover-page {{reduceMotion ? 'motion-reduced' : ''}}">
+  <view class="discover-hero">
+    <text class="fb-brand">FunBox</text>
+    <text class="discover-headline">实用小工具，<text class="discover-accent">顺手用起来。</text></text>
+    <text class="discover-sub">牌局之外的记录、搜图与假期日历，都在这里。</text>
+  </view>
   <view class="discover-grid">
     <template is="discover-notebook" />
     <template is="discover-memes" />

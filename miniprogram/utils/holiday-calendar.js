@@ -86,9 +86,63 @@ function watchHolidayCalendar(update) {
 }
 
 const WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+const SHORT_WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
 function weekdayLabel(date) {
   return WEEKDAYS[new Date(dayIndex(date) * DAY).getUTCDay()];
+}
+
+function shortWeekdayLabel(date) {
+  return SHORT_WEEKDAYS[new Date(dayIndex(date) * DAY).getUTCDay()];
+}
+
+function holidayTheme(id) {
+  if (id === "spring-festival" || id === "national-day") return "coral";
+  if (id === "qingming" || id === "dragon-boat") return "mint";
+  if (id === "mid-autumn") return "amber";
+  return "blue";
+}
+
+function buildHolidayDays(holiday, today) {
+  const days = [];
+  const startIdx = dayIndex(holiday.startDate);
+  const endIdx = dayIndex(holiday.endDate);
+  for (let idx = startIdx; idx <= endIdx; idx += 1) {
+    const iso = new Date(idx * DAY).toISOString().slice(0, 10);
+    const [, m, d] = iso.split("-").map(Number);
+    days.push({
+      date: iso,
+      monthDay: `${m}.${d}`,
+      dayNum: String(d),
+      weekday: shortWeekdayLabel(iso),
+      kind: "rest",
+      badge: "休",
+      isToday: idx === today,
+    });
+  }
+  holiday.makeupDates.forEach(iso => {
+    const idx = dayIndex(iso);
+    const [, m, d] = iso.split("-").map(Number);
+    days.push({
+      date: iso,
+      monthDay: `${m}.${d}`,
+      dayNum: String(d),
+      weekday: shortWeekdayLabel(iso),
+      kind: "makeup",
+      badge: "班",
+      isToday: idx === today,
+    });
+  });
+  return days.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function computeWeekendInfo(today, isMakeupDay, inHoliday) {
+  if (inHoliday) return { label: "假期愉快", tone: "holiday" };
+  if (isMakeupDay) return { label: "今天调休上班", tone: "makeup" };
+  const weekday = new Date(today * DAY).getUTCDay();
+  if (weekday === 0 || weekday === 6) return { label: "周末愉快", tone: "weekend" };
+  if (weekday === 5) return { label: "明天就是周末", tone: "near" };
+  return { label: `距周末 ${6 - weekday} 天`, tone: "workday" };
 }
 
 function formatDay(date, compact = false) {
@@ -119,6 +173,8 @@ function holidayRow(holiday, today) {
   const daysUntil = Math.max(startIdx - today, 0);
   const dayNumber = inProgress ? today - startIdx + 1 : 0;
   const [, startMonth, startDay] = holiday.startDate.split("-").map(Number);
+  const dateLabel = formatPeriod(holiday.startDate, holiday.endDate);
+  const makeupDetailLabel = holiday.makeupDates.map(date => `${formatDay(date)}(${weekdayLabel(date)})`).join("、");
   const statusText = past
     ? "已结束"
     : inProgress
@@ -126,23 +182,28 @@ function holidayRow(holiday, today) {
       : daysUntil === 1
         ? "明天放假"
         : `${daysUntil} 天后`;
+  const copySummary = `${holiday.year ? `${holiday.year} 年` : ""}${holiday.name}：${dateLabel}（共 ${duration} 天），${holiday.makeupDates.length ? `调休上班：${makeupDetailLabel}` : "无需调休"}`;
 
   return {
     ...holiday,
     duration,
-    dateLabel: formatPeriod(holiday.startDate, holiday.endDate),
+    theme: holidayTheme(holiday.id),
+    dateLabel,
     weekdayRange: formatWeekdayRange(holiday.startDate, holiday.endDate),
     monthBadge: `${startMonth}月`,
     dayBadge: String(startDay).padStart(2, "0"),
     makeupLabel: holiday.makeupDates.map(date => formatDay(date)).join("、"),
-    makeupDetailLabel: holiday.makeupDates.map(date => `${formatDay(date)}(${weekdayLabel(date)})`).join("、"),
+    makeupDetailLabel,
+    makeupCount: holiday.makeupDates.length,
     hasMakeup: holiday.makeupDates.length > 0,
+    days: buildHolidayDays(holiday, today),
     past,
     inProgress,
     daysUntil,
     dayNumber,
     progressPercent: inProgress ? Math.round((dayNumber / duration) * 100) : 0,
     statusText,
+    copySummary,
   };
 }
 
@@ -175,12 +236,15 @@ function getHolidayView(calendar, now = Date.now(), year) {
     current: holiday === nextInYear,
   }));
 
+  const isMakeupDay = holidays.some(holiday => holiday.makeupDates.includes(date));
   const totalDays = decoratedHolidays.reduce((sum, item) => sum + item.duration, 0);
   const remainingHolidays = decoratedHolidays.filter(item => !item.past);
   const remainingDays = remainingHolidays.reduce((sum, item) => (
     sum + (item.inProgress ? item.duration - item.dayNumber + 1 : item.duration)
   ), 0);
   const makeupCount = decoratedHolidays.reduce((sum, item) => sum + item.makeupDates.length, 0);
+  const cleanCount = decoratedHolidays.filter(item => !item.hasMakeup).length;
+  const withMakeupCount = decoratedHolidays.length - cleanCount;
   const [todayYear] = date.split("-").map(Number);
 
   return {
@@ -189,15 +253,18 @@ function getHolidayView(calendar, now = Date.now(), year) {
     source,
     upcoming,
     highlight: nextInYear === next ? upcoming : upcomingHoliday(nextInYear, today),
-    isMakeupDay: holidays.some(holiday => holiday.makeupDates.includes(date)),
+    isMakeupDay,
     todayLabel: `${formatDay(date)} · ${weekdayLabel(date)}`,
     todayFullLabel: `${todayYear} 年 ${formatDay(date)} · ${weekdayLabel(date)}`,
+    weekend: computeWeekendInfo(today, isMakeupDay, Boolean(upcoming && upcoming.state === "holiday")),
     yearStats: {
       totalCount: decoratedHolidays.length,
       totalDays,
       remainingCount: remainingHolidays.length,
       remainingDays,
       makeupCount,
+      cleanCount,
+      withMakeupCount,
     },
     holidays: decoratedHolidays,
   };
