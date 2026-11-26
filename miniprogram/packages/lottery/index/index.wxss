@@ -1,0 +1,282 @@
+@import "../shared.wxss";
+
+.lottery-page {
+  min-height: 100vh;
+  padding: 20rpx 28rpx calc(56rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: var(--fb-canvas);
+}
+
+.hall-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.hall-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.hall-title {
+  color: var(--fb-ink);
+  font-size: 42rpx;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.6rpx;
+}
+
+.today-pill {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: #eaf1ff;
+  color: var(--fb-primary);
+  font-size: 22rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.schedule-banner {
+  margin-top: 20rpx;
+  padding: 22rpx 24rpx;
+  background: linear-gradient(135deg, #ffffff 0%, #f4f8ff 100%);
+  border: 1rpx solid #e4ecfa;
+}
+
+.schedule-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 10rpx;
+}
+
+.schedule-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: var(--fb-primary);
+  box-shadow: 0 0 0 6rpx rgba(45, 91, 255, .14);
+}
+
+.schedule-label {
+  color: var(--fb-ink);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.schedule-tip {
+  margin-left: auto;
+  color: var(--fb-subtle);
+  font-size: 21rpx;
+}
+
+.schedule-line {
+  display: block;
+  margin-top: 6rpx;
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.org-tabs {
+  display: flex;
+  gap: 8rpx;
+  margin-top: 22rpx;
+  padding: 8rpx;
+  border-radius: 22rpx;
+  background: #e9eff8;
+}
+
+.org-tab {
+  flex: 1;
+  height: 68rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  color: var(--fb-muted);
+  font-size: 26rpx;
+  font-weight: 700;
+  transition: background-color .16s ease, color .16s ease;
+}
+
+.org-tab-active {
+  background: #ffffff;
+  color: var(--fb-ink);
+  font-weight: 800;
+  box-shadow: 0 4rpx 14rpx rgba(23, 33, 57, .08);
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 22rpx;
+}
+
+.game-card {
+  padding: 26rpx 24rpx 22rpx;
+  border: 1rpx solid rgba(23, 33, 57, .05);
+}
+
+.game-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.game-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
+}
+
+.game-name {
+  color: var(--fb-ink);
+  font-size: 32rpx;
+  font-weight: 800;
+  letter-spacing: -0.4rpx;
+}
+
+.game-sched {
+  color: var(--fb-subtle);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.pin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 16rpx;
+  background: #f4f7fc;
+  color: #9aa7bd;
+  font-size: 30rpx;
+  flex-shrink: 0;
+}
+
+.pin-btn-active {
+  background: #fff6e5;
+  color: #e5900e;
+}
+
+.game-issue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.game-issue {
+  color: var(--fb-ink-secondary);
+  font-size: 24rpx;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-date {
+  color: var(--fb-subtle);
+  font-size: 22rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-balls {
+  margin-top: 20rpx;
+  min-height: 64rpx;
+}
+
+.game-syncing {
+  margin-top: 18rpx;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  background: #f6f8fc;
+  color: var(--fb-muted);
+  font-size: 23rpx;
+}
+
+.game-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 22rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid var(--fb-line);
+}
+
+.game-metric {
+  color: var(--fb-muted);
+  font-size: 23rpx;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+.action-pill {
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: #f2f5fb;
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.action-pill-primary {
+  background: #eaf1ff;
+  color: var(--fb-primary);
+}
+
+.skel-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.skel-tag {
+  width: 72rpx;
+  height: 36rpx;
+  border-radius: 10rpx;
+}
+
+.skel-title {
+  width: 180rpx;
+  height: 36rpx;
+  border-radius: 10rpx;
+}
+
+.skel-balls {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 24rpx;
+}
+
+.skel-ball {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+}
+
+.skel-foot {
+  width: 100%;
+  height: 32rpx;
+  margin-top: 24rpx;
+  border-radius: 10rpx;
+}

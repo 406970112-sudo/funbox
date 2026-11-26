@@ -1,0 +1,93 @@
+<import src="/templates/discover-entry.wxml" />
+
+<view class="discover-page {{reduceMotion ? 'motion-reduced' : ''}}">
+  <!-- Compact FunBox Header (aligned with Home & Profile) -->
+  <view class="discover-hero">
+    <view class="brand-group">
+      <text class="fb-brand">FunBox</text>
+      <text class="brand-tag">工具箱</text>
+    </view>
+    <text class="discover-headline">实用小工具，<text class="discover-accent">顺手用起来。</text></text>
+    <text class="discover-sub">生活查询、记录灵感与趣味互动，持续上新中</text>
+  </view>
+
+  <!-- Recently Used Strip -->
+  <view wx:if="{{recentTools.length}}" class="recent-section">
+    <text class="recent-label">最近使用</text>
+    <scroll-view class="recent-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="recent-row">
+        <view
+          wx:for="{{recentTools}}"
+          wx:key="id"
+          class="recent-pill"
+          data-id="{{item.id}}"
+          bindtap="openRecentTool"
+          hover-class="fb-tap-btn"
+          role="button"
+        >
+          <view class="recent-dot recent-dot-{{item.id}}" aria-hidden="true"></view>
+          <text>{{item.shortLabel}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- Scalable Category Filter Chips -->
+  <scroll-view class="category-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="category-row">
+      <view class="category-chip {{activeCategory === 'all' ? 'category-active' : ''}}" data-category="all" bindtap="selectCategory" hover-class="fb-tap-btn">全部工具</view>
+      <view class="category-chip {{activeCategory === 'life' ? 'category-active' : ''}}" data-category="life" bindtap="selectCategory" hover-class="fb-tap-btn">生活查询</view>
+      <view class="category-chip {{activeCategory === 'notes' ? 'category-active' : ''}}" data-category="notes" bindtap="selectCategory" hover-class="fb-tap-btn">记录工具</view>
+      <view class="category-chip {{activeCategory === 'fun' ? 'category-active' : ''}}" data-category="fun" bindtap="selectCategory" hover-class="fb-tap-btn">趣味娱乐</view>
+    </view>
+  </scroll-view>
+
+  <!-- Group 1: Life Queries -->
+  <view wx:if="{{activeCategory === 'all' || activeCategory === 'life'}}" class="tool-group">
+    <view class="group-head">
+      <text class="group-title">生活查询</text>
+      <text class="group-note">官方公告数据 · 随时可查</text>
+    </view>
+    <view class="discover-grid">
+      <template is="discover-lottery" />
+      <template is="discover-holidays" data="{{card: holidayCard}}" />
+    </view>
+  </view>
+
+  <!-- Group 2: Notes & Fun -->
+  <view wx:if="{{activeCategory === 'all'}}" class="tool-group">
+    <view class="group-head">
+      <text class="group-title">记录与趣味</text>
+      <text class="group-note">灵感留档 · 斗图解闷</text>
+    </view>
+    <view class="discover-grid">
+      <template is="discover-notebook" />
+      <template is="discover-memes" />
+    </view>
+  </view>
+
+  <view wx:elif="{{activeCategory === 'notes'}}" class="tool-group">
+    <view class="group-head">
+      <text class="group-title">记录工具</text>
+      <text class="group-note">文字、清单与私密加密</text>
+    </view>
+    <view class="discover-grid">
+      <template is="discover-notebook" />
+    </view>
+  </view>
+
+  <view wx:elif="{{activeCategory === 'fun'}}" class="tool-group">
+    <view class="group-head">
+      <text class="group-title">趣味娱乐</text>
+      <text class="group-note">全网热门表情包随手搜</text>
+    </view>
+    <view class="discover-grid">
+      <template is="discover-memes" />
+    </view>
+  </view>
+
+  <view class="discover-footer" aria-hidden="true">
+    <view class="footer-dot" />
+    <text>更多实用小工具持续上新中</text>
+  </view>
+</view>

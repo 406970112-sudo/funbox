@@ -25,4 +25,6 @@ Page({
   openMemes() { wx.navigateTo({ url: discoverPath("memes") }); },
 
   openHolidays() { wx.navigateTo({ url: discoverPath("holidays") }); },
+
+  openLottery() { wx.navigateTo({ url: discoverPath("lottery") }); },
 });

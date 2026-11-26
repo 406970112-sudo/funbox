@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/discover/index",
     "pages/profile/index",
     "pages/profile-settings/index",
     "pages/game-history/index",
@@ -32,6 +33,12 @@
         "text": "首页",
         "iconPath": "assets/icons/tab-home.png",
         "selectedIconPath": "assets/icons/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/discover/index",
+        "text": "发现",
+        "iconPath": "assets/icons/tab-discover.png",
+        "selectedIconPath": "assets/icons/tab-discover-active.png"
       },
       {
         "pagePath": "pages/profile/index",
@@ -68,6 +75,10 @@
     {
       "root": "packages/discover",
       "pages": ["index/index", "holidays/index"]
+    },
+    {
+      "root": "packages/lottery",
+      "pages": ["index/index", "history/index", "detail/index"]
     }
   ]
 }

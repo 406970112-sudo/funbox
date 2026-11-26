@@ -1,0 +1,176 @@
+/* Shared Lottery visual tokens & 3D tactile balls */
+.ball-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.ball-row-compact {
+  gap: 8rpx;
+}
+
+.ball {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.ball-sm {
+  width: 50rpx;
+  height: 50rpx;
+  font-size: 23rpx;
+}
+
+.ball-lg {
+  width: 68rpx;
+  height: 68rpx;
+  font-size: 29rpx;
+}
+
+.ball-red {
+  background: radial-gradient(circle at 32% 28%, #ff8570 0%, #ef4b38 56%, #cb2e1d 100%);
+  box-shadow: 0 6rpx 16rpx rgba(239, 75, 56, .28), inset 0 2rpx 4rpx rgba(255, 255, 255, .42);
+}
+
+.ball-blue {
+  background: radial-gradient(circle at 32% 28%, #6c96ff 0%, #2d5bff 58%, #1d42cc 100%);
+  box-shadow: 0 6rpx 16rpx rgba(45, 91, 255, .3), inset 0 2rpx 4rpx rgba(255, 255, 255, .42);
+}
+
+.ball-amber {
+  background: radial-gradient(circle at 32% 28%, #ffd166 0%, #f29922 58%, #cc740b 100%);
+  box-shadow: 0 6rpx 16rpx rgba(242, 153, 34, .32), inset 0 2rpx 4rpx rgba(255, 255, 255, .48);
+}
+
+.ball-digit {
+  border: 2rpx solid #d6e3fb;
+  border-radius: 18rpx;
+  background: linear-gradient(160deg, #fff 0%, #eef3fc 100%);
+  color: var(--fb-ink);
+  box-shadow: 0 4rpx 12rpx rgba(45, 91, 255, .08);
+}
+
+.ball-sep {
+  width: 2rpx;
+  height: 30rpx;
+  margin: 0 4rpx;
+  background: #dce4f2;
+  flex-shrink: 0;
+}
+
+.org-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  font-size: 21rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.org-tag-cwl {
+  background: #fff0ed;
+  color: #cf3f2c;
+}
+
+.org-tag-sport {
+  background: #eaf2ff;
+  color: var(--fb-primary);
+}
+
+.disclaimer-card {
+  margin-top: 26rpx;
+  padding: 22rpx 24rpx;
+  border: 1rpx solid #e7edf6;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, .86);
+}
+
+.disclaimer-title {
+  display: block;
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.disclaimer-copy {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
+  line-height: 1.55;
+}
+
+.state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+  padding: 52rpx 32rpx;
+  text-align: center;
+}
+
+.state-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 82rpx;
+  height: 82rpx;
+  border-radius: 24rpx;
+  background: var(--fb-danger-soft);
+  color: var(--fb-danger);
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.state-title {
+  color: var(--fb-ink);
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.state-desc {
+  color: var(--fb-muted);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.retry-btn {
+  min-width: 240rpx;
+  margin-top: 8rpx;
+  padding: 16rpx 36rpx;
+  border-radius: 20rpx;
+  background: var(--fb-primary);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.stale-banner {
+  margin-top: 16rpx;
+  padding: 16rpx 22rpx;
+  border-radius: 18rpx;
+  background: #fff5ec;
+  color: #a64a19;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.skel-box {
+  background: linear-gradient(90deg, #e7edf7 25%, #f3f6fb 50%, #e7edf7 75%);
+  background-size: 200% 100%;
+  animation: fb-shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel-box { animation: none; }
+}

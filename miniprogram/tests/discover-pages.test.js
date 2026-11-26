@@ -20,15 +20,46 @@ function mount(relativePath, platform, stubs = {}, now = Date.now()) {
   return { ...definition, data: { ...definition.data }, setData(patch) { Object.assign(this.data, patch); } };
 }
 
-test("home opens the separate discover page and the guest calendar directly", () => {
+test("home switches to the discover tab and opens guest utilities directly", () => {
   const routes = [];
-  const page = mount("pages/index/index", { navigateTo: ({ url }) => routes.push(url) });
+  const tabs = [];
+  const page = mount("pages/index/index", {
+    navigateTo: ({ url }) => routes.push(url),
+    switchTab: ({ url }) => tabs.push(url),
+  });
   page.openDiscover();
   page.openHolidays();
-  assert.deepEqual(routes, ["/packages/discover/index/index", "/packages/discover/holidays/index"]);
+  page.openLottery();
+  assert.deepEqual(tabs, ["/pages/discover/index"]);
+  assert.deepEqual(routes, ["/packages/discover/holidays/index", "/packages/lottery/index/index"]);
   const app = require("../app.json");
-  const registered = app.subPackages.flatMap(({ root, pages }) => pages.map(pagePath => `/${root}/${pagePath}`));
-  assert.ok(routes.every(route => registered.includes(route)));
+  const registeredPages = app.pages.map(pagePath => `/${pagePath}`);
+  const registeredSubs = app.subPackages.flatMap(({ root, pages }) => pages.map(pagePath => `/${root}/${pagePath}`));
+  assert.ok(tabs.every(route => registeredPages.includes(route)));
+  assert.ok(routes.every(route => registeredSubs.includes(route)));
+});
+
+test("discover tab filters categories and routes to all tools including lottery", () => {
+  let token = "";
+  const routes = [];
+  const page = mount("pages/discover/index", { navigateTo: ({ url }) => routes.push(url) }, {
+    "../../utils/auth": { getAccessToken: () => token },
+  });
+  page.selectCategory({ currentTarget: { dataset: { category: "life" } } });
+  assert.equal(page.data.activeCategory, "life");
+  page.openLottery();
+  page.openHolidays();
+  page.openNotebook();
+  token = "account-token";
+  page.openNotebook();
+  page.openMemes();
+  assert.deepEqual(routes.map(decodeURIComponent), [
+    "/packages/lottery/index/index",
+    "/packages/discover/holidays/index",
+    "/pages/auth/index?mode=login&returnTo=/packages/notebook/index/index",
+    "/packages/notebook/index/index",
+    "/packages/meme/library/index",
+  ]);
 });
 
 test("home pagination stays on the two visible carousel positions", () => {

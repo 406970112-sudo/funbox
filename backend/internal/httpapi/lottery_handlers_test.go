@@ -64,3 +64,54 @@ func TestLotteryHistoryHandlerMapsSourceErrors(t *testing.T) {
 }
 
 var _ lotteryHistoryService = fakeLotteryService{}
+
+type fakeLotteryDrawService struct {
+	latest  lottery.LatestSnapshot
+	history lottery.GameHistoryPage
+	detail  lottery.GameIssueDetail
+	err     error
+}
+
+func (f fakeLotteryDrawService) Latest(context.Context) (lottery.LatestSnapshot, error) {
+	return f.latest, f.err
+}
+func (f fakeLotteryDrawService) GameHistory(context.Context, string, lottery.GameHistoryQuery) (lottery.GameHistoryPage, error) {
+	return f.history, f.err
+}
+func (f fakeLotteryDrawService) IssueDetail(context.Context, string, string) (lottery.GameIssueDetail, error) {
+	return f.detail, f.err
+}
+
+func TestLotteryMultiGameRoutes(t *testing.T) {
+	api := &Server{
+		lotteryService: fakeLotteryService{},
+		lotteryDrawService: fakeLotteryDrawService{
+			latest:  lottery.LatestSnapshot{Games: []lottery.LatestGameItem{{Game: "dlt", Name: "超级大乐透", Available: true}}},
+			history: lottery.GameHistoryPage{Game: "dlt", Total: 1, Draws: []lottery.GameDraw{{Issue: "26135", Front: []string{"03", "11", "19", "25", "34"}, Back: []string{"04", "11"}}}},
+			detail:  lottery.GameIssueDetail{Game: "dlt", Draw: lottery.GameDraw{Issue: "26135"}, PrevIssue: "26134"},
+		},
+	}
+	mux := http.NewServeMux()
+	registerLotteryRoutes(mux, api)
+
+	for _, path := range []string{
+		"/api/v1/lottery/latest",
+		"/api/v1/lottery/games/dlt/history?limit=20&year=2026",
+		"/api/v1/lottery/games/dlt/issues/26135",
+	} {
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s status = %d body = %s", path, rec.Code, rec.Body.String())
+		}
+	}
+
+	notFoundAPI := &Server{lotteryDrawService: fakeLotteryDrawService{err: lottery.ErrGameNotFound}}
+	mux2 := http.NewServeMux()
+	registerLotteryRoutes(mux2, notFoundAPI)
+	rec := httptest.NewRecorder()
+	mux2.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/lottery/games/unknown/history", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("unknown game status = %d", rec.Code)
+	}
+}

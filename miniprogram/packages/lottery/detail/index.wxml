@@ -1,0 +1,221 @@
+<view class="detail-page">
+  <view wx:if="{{loading && !draw}}" class="hero-card fb-card">
+    <view class="skel-box skel-top" />
+    <view class="skel-balls">
+      <view class="skel-box skel-ball" />
+      <view class="skel-box skel-ball" />
+      <view class="skel-box skel-ball" />
+      <view class="skel-box skel-ball" />
+      <view class="skel-box skel-ball" />
+      <view class="skel-box skel-ball" />
+    </view>
+    <view class="skel-box skel-kpi" />
+  </view>
+
+  <view wx:elif="{{errorMessage && !draw}}" class="state-card fb-card">
+    <view class="state-mark">!</view>
+    <text class="state-title">该期开奖详情暂无法加载</text>
+    <text class="state-desc">{{errorMessage}}</text>
+    <button class="retry-btn" hover-class="fb-tap-btn" bindtap="retryLoad">重新加载</button>
+  </view>
+
+  <block wx:elif="{{draw}}">
+    <view class="hero-card fb-card">
+      <view class="hero-head">
+        <view class="hero-title-group">
+          <text class="org-tag {{draw.org === 'cwl' ? 'org-tag-cwl' : 'org-tag-sport'}}">{{draw.orgName}}</text>
+          <text class="hero-game">{{draw.name}}</text>
+        </view>
+        <view class="history-link" hover-class="fb-tap-row" hover-stay-time="60" bindtap="openHistory">历史期次 ›</view>
+      </view>
+
+      <view class="issue-nav">
+        <view
+          class="nav-step {{prevIssue ? '' : 'nav-step-disabled'}}"
+          hover-class="{{prevIssue ? 'fb-tap-row' : ''}}"
+          bindtap="goPrevIssue"
+        >‹ 上一期</view>
+        <view class="issue-center">
+          <text class="issue-code">第 {{draw.issue}} 期</text>
+          <text class="issue-date">{{draw.dateWithWeek}}</text>
+        </view>
+        <view
+          class="nav-step {{nextIssue ? '' : 'nav-step-disabled'}}"
+          hover-class="{{nextIssue ? 'fb-tap-row' : ''}}"
+          bindtap="goNextIssue"
+        >下一期 ›</view>
+      </view>
+
+      <view class="hero-balls-wrap">
+        <view class="ball-row hero-balls {{draw.compactBalls ? 'ball-row-compact' : ''}}">
+          <block wx:for="{{draw.balls}}" wx:for-item="ball" wx:key="key">
+            <view wx:if="{{ball.sep}}" class="ball-sep" />
+            <view wx:else class="ball {{draw.compactBalls ? '' : 'ball-lg'}} ball-{{ball.kind}}">{{ball.n}}</view>
+          </block>
+        </view>
+        <view class="copy-btn" hover-class="fb-tap-row" hover-stay-time="60" bindtap="copyDrawSummary">复制开奖号</view>
+      </view>
+
+      <view class="tear-line">
+        <view class="tear-notch tear-notch-left" />
+        <view class="tear-dash" />
+        <view class="tear-notch tear-notch-right" />
+      </view>
+
+      <view class="kpi-grid">
+        <view class="kpi-cell">
+          <text class="kpi-label">本期全国销量</text>
+          <text class="kpi-value">{{draw.salesText || '官方未公布'}}</text>
+        </view>
+        <view class="kpi-divider" />
+        <view class="kpi-cell">
+          <text class="kpi-label">{{draw.poolText ? '奖池滚存' : (draw.sumText ? '号码特征' : '开奖时间')}}</text>
+          <text class="kpi-value {{draw.poolText ? 'kpi-value-accent' : ''}}">{{draw.poolText || draw.sumText || draw.schedule}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Local Ticket Checker (100% client-side) -->
+    <view wx:if="{{checker}}" class="checker-card fb-card">
+      <view class="section-head" hover-class="fb-tap-row" hover-stay-time="60" bindtap="toggleChecker">
+        <view class="section-title-wrap">
+          <text class="section-title">本地对号核奖</text>
+          <text class="privacy-badge">纯本地 · 不上传</text>
+        </view>
+        <text class="toggle-text">{{checkerOpen ? '收起' : '展开'}}</text>
+      </view>
+
+      <view wx:if="{{checkerOpen}}" class="checker-body">
+        <view class="result-bar {{checker.evalResult.won ? 'result-bar-won' : (checker.evalResult.ready ? 'result-bar-miss' : 'result-bar-idle')}}">
+          <view class="result-copy">
+            <text class="result-badge">{{checker.evalResult.badge}}</text>
+            <text class="result-summary">{{checker.evalResult.summary}}</text>
+          </view>
+          <view
+            wx:if="{{checker.hasAnySelection}}"
+            class="clear-pick-btn"
+            hover-class="fb-tap-row"
+            bindtap="clearChecker"
+          >清空</view>
+        </view>
+
+        <!-- Pool games: SSQ / DLT / QLC -->
+        <block wx:if="{{checker.mode === 'pool'}}">
+          <view class="picker-group">
+            <view class="picker-head">
+              <text class="picker-label">{{checker.frontLabel}}（选 {{checker.frontCount}} 个）</text>
+              <text class="picker-count">{{checker.frontSelectedCount}}/{{checker.frontCount}}</text>
+            </view>
+            <view class="picker-grid">
+              <view
+                wx:for="{{checker.frontItems}}"
+                wx:key="n"
+                class="pick-cell {{item.selected ? 'pick-selected-' + checker.frontKind : ''}} {{item.hit ? 'pick-hit' : ''}}"
+                hover-class="fb-tap-row"
+                hover-stay-time="40"
+                data-area="front"
+                data-num="{{item.n}}"
+                bindtap="togglePoolBall"
+              >{{item.n}}</view>
+            </view>
+          </view>
+
+          <view wx:if="{{checker.backItems.length}}" class="picker-group">
+            <view class="picker-head">
+              <text class="picker-label">{{checker.backLabel}}（选 {{checker.backCount}} 个）</text>
+              <text class="picker-count">{{checker.backSelectedCount}}/{{checker.backCount}}</text>
+            </view>
+            <view class="picker-grid">
+              <view
+                wx:for="{{checker.backItems}}"
+                wx:key="n"
+                class="pick-cell {{item.selected ? 'pick-selected-' + checker.backKind : ''}} {{item.hit ? 'pick-hit' : ''}}"
+                hover-class="fb-tap-row"
+                hover-stay-time="40"
+                data-area="back"
+                data-num="{{item.n}}"
+                bindtap="togglePoolBall"
+              >{{item.n}}</view>
+            </view>
+          </view>
+        </block>
+
+        <!-- Positional games: FC3D / PL3 / PL5 / QXC -->
+        <block wx:else>
+          <view class="pos-list">
+            <view wx:for="{{checker.positionRows}}" wx:key="index" class="pos-row">
+              <view class="pos-meta">
+                <text class="pos-label">{{item.label}}</text>
+                <text wx:if="{{item.matched}}" class="pos-hit-tag">命中</text>
+              </view>
+              <view class="digit-strip">
+                <view
+                  wx:for="{{item.digits}}"
+                  wx:for-item="d"
+                  wx:key="n"
+                  class="digit-cell {{d.selected ? 'digit-selected' : ''}} {{d.hit ? 'pick-hit' : ''}}"
+                  hover-class="fb-tap-row"
+                  hover-stay-time="40"
+                  data-pos="{{item.index}}"
+                  data-num="{{d.n}}"
+                  bindtap="selectPositionDigit"
+                >{{d.n}}</view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:if="{{checker.mode === 'qxc'}}" class="picker-group">
+            <view class="picker-head">
+              <text class="picker-label">{{checker.backLabel}}（选 1 个）</text>
+              <text class="picker-count">{{checker.backSelectedCount}}/1</text>
+            </view>
+            <view class="picker-grid picker-grid-compact">
+              <view
+                wx:for="{{checker.backItems}}"
+                wx:key="n"
+                class="pick-cell {{item.selected ? 'pick-selected-amber' : ''}} {{item.hit ? 'pick-hit' : ''}}"
+                hover-class="fb-tap-row"
+                hover-stay-time="40"
+                data-num="{{item.n}}"
+                bindtap="selectQxcBack"
+              >{{item.n}}</view>
+            </view>
+          </view>
+        </block>
+
+        <text class="checker-footnote">绿色外圈表示命中本期开奖号码。仅用于核对已购纸质彩票，不保存不上传，不提供选号建议。</text>
+      </view>
+    </view>
+
+    <!-- Official Prize Grade Table -->
+    <view class="prize-card fb-card">
+      <view class="prize-head">
+        <text class="section-title">本期中奖详情</text>
+        <text class="prize-unit">单位：元</text>
+      </view>
+
+      <view wx:if="{{draw.prizeGrades.length}}" class="prize-table">
+        <view class="prize-row prize-row-head">
+          <text class="col-grade">奖级</text>
+          <text class="col-count">中奖注数</text>
+          <text class="col-money">单注奖金</text>
+        </view>
+        <view
+          wx:for="{{draw.prizeGrades}}"
+          wx:key="key"
+          class="prize-row {{item.isTop ? 'prize-row-top' : ''}}"
+        >
+          <text class="col-grade">{{item.grade}}</text>
+          <text class="col-count">{{item.countText}}</text>
+          <text class="col-money {{item.isTop ? 'col-money-top' : ''}}">{{item.moneyText}}</text>
+        </view>
+      </view>
+      <view wx:else class="prize-empty">官方公告暂未附带本期详细奖级分布。</view>
+    </view>
+
+    <view class="disclaimer-card">
+      <text class="disclaimer-title">官方来源：{{sourceName}}</text>
+      <text class="disclaimer-copy">本期数据同步自 {{sourceName}}（{{sourceUrl}}）。本地核对结果仅供参考，实际中奖资格与奖金派发请以线下官方兑奖终端及正式公告为准。</text>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,128 @@
+<view class="lottery-page">
+  <view class="hall-header">
+    <view class="hall-title-wrap">
+      <text class="fb-brand">OFFICIAL DRAWS</text>
+      <text class="hall-title">福彩 · 体彩开奖</text>
+    </view>
+    <view class="today-pill">{{tonight.todayBadge}}</view>
+  </view>
+
+  <view class="schedule-banner fb-card">
+    <view class="schedule-head">
+      <view class="schedule-dot" />
+      <text class="schedule-label">今日开奖日历</text>
+      <text class="schedule-tip">按北京时间</text>
+    </view>
+    <text class="schedule-line">{{tonight.cwlLine}}</text>
+    <text class="schedule-line">{{tonight.sportLine}}</text>
+  </view>
+
+  <view class="org-tabs" role="tablist">
+    <view
+      wx:for="{{orgTabs}}"
+      wx:key="key"
+      class="org-tab {{activeOrg === item.key ? 'org-tab-active' : ''}}"
+      hover-class="fb-tap-row"
+      hover-stay-time="60"
+      data-org="{{item.key}}"
+      bindtap="selectOrg"
+    >{{item.label}}</view>
+  </view>
+
+  <view wx:if="{{staleNotice}}" class="stale-banner">{{staleNotice}}</view>
+
+  <view wx:if="{{loading && !cards.length}}" class="card-list">
+    <view wx:for="{{skeletonList}}" wx:key="*this" class="game-card fb-card">
+      <view class="skel-row">
+        <view class="skel-box skel-tag" />
+        <view class="skel-box skel-title" />
+      </view>
+      <view class="skel-balls">
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+      </view>
+      <view class="skel-box skel-foot" />
+    </view>
+  </view>
+
+  <view wx:elif="{{errorMessage && !cards.length}}" class="state-card fb-card">
+    <view class="state-mark">!</view>
+    <text class="state-title">开奖公告暂无法加载</text>
+    <text class="state-desc">{{errorMessage}}</text>
+    <button class="retry-btn" hover-class="fb-tap-btn" bindtap="retryLoad">重新加载</button>
+  </view>
+
+  <view wx:else class="card-list">
+    <view
+      wx:for="{{cards}}"
+      wx:key="game"
+      class="game-card fb-card"
+      hover-class="fb-tap-card"
+      hover-stay-time="70"
+      data-game="{{item.game}}"
+      data-issue="{{item.latest ? item.latest.issue : 'latest'}}"
+      bindtap="openDetail"
+    >
+      <view class="game-head">
+        <view class="game-title-row">
+          <text class="org-tag {{item.org === 'cwl' ? 'org-tag-cwl' : 'org-tag-sport'}}">{{item.orgName}}</text>
+          <text class="game-name">{{item.name}}</text>
+          <text class="game-sched">{{item.shortSchedule}}</text>
+        </view>
+        <view
+          class="pin-btn {{item.pinned ? 'pin-btn-active' : ''}}"
+          hover-class="fb-tap-row"
+          hover-stay-time="60"
+          data-game="{{item.game}}"
+          catchtap="togglePin"
+        >{{item.pinned ? '★' : '☆'}}</view>
+      </view>
+
+      <view wx:if="{{item.latest}}" class="game-issue-row">
+        <text class="game-issue">第 {{item.latest.issue}} 期</text>
+        <text class="game-date">{{item.latest.dateWithWeek}}</text>
+      </view>
+      <view wx:else class="game-issue-row">
+        <text class="game-date">{{item.schedule}}</text>
+      </view>
+
+      <view wx:if="{{item.latest}}" class="ball-row {{item.latest.compactBalls ? 'ball-row-compact' : ''}} game-balls">
+        <block wx:for="{{item.latest.balls}}" wx:for-item="ball" wx:key="key">
+          <view wx:if="{{ball.sep}}" class="ball-sep" />
+          <view wx:else class="ball {{item.latest.compactBalls ? 'ball-sm' : ''}} ball-{{ball.kind}}">{{ball.n}}</view>
+        </block>
+      </view>
+      <view wx:else class="game-syncing">官方数据同步中，点击可查看历史期次</view>
+
+      <view class="game-foot">
+        <text class="game-metric">{{item.metricText}}</text>
+        <view class="game-actions">
+          <view
+            class="action-pill"
+            hover-class="fb-tap-row"
+            hover-stay-time="60"
+            data-game="{{item.game}}"
+            catchtap="openHistory"
+          >历史</view>
+          <view
+            class="action-pill action-pill-primary"
+            hover-class="fb-tap-row"
+            hover-stay-time="60"
+            data-game="{{item.game}}"
+            data-issue="{{item.latest ? item.latest.issue : 'latest'}}"
+            catchtap="openDetail"
+          >详情 ›</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="disclaimer-card">
+    <text class="disclaimer-title">官方数据来源与免责声明</text>
+    <text class="disclaimer-copy">开奖公告同步自中国福彩网（cwl.gov.cn）与中国体彩网（lottery.gov.cn），仅提供历史开奖信息查询与已购彩票本地核对，不提供彩票销售、代购、选号推荐或走势预测服务。请以官方纸质公告及线下兑奖终端为准，理性购彩，未成年人禁止购买彩票。</text>
+  </view>
+</view>

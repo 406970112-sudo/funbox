@@ -55,6 +55,7 @@ test("mini program registers scoring pages without requesting location access", 
   const config = JSON.parse(fs.readFileSync(path.join(root, "app.json"), "utf8"));
   for (const page of [
     "pages/index/index",
+    "pages/discover/index",
     "pages/profile/index",
     "pages/profile-settings/index",
     "pages/game-history/index",
@@ -70,6 +71,7 @@ test("mini program registers scoring pages without requesting location access", 
   }
   assert.deepEqual(config.tabBar.list.map((item) => [item.pagePath, item.text]), [
     ["pages/index/index", "首页"],
+    ["pages/discover/index", "发现"],
     ["pages/profile/index", "我的"],
   ]);
   assert.notEqual(config.tabBar.custom, true);

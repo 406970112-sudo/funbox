@@ -4,7 +4,7 @@ const { getRecentScoreRoom, saveRecentScoreRoom, clearRecentScoreRoom, getScoreS
 const { getScoreRoom, joinScoreRoom, getScoreErrorMessage } = require("../../utils/score-api");
 const { extractInviteScene, extractInviteToken } = require("../../utils/invite");
 const { reduceMotionEnabled } = require("../../utils/ui-motion");
-const { discoverPath, watchHolidayCard } = require("../../utils/discover-entries");
+const { discoverPath, watchHolidayCard, recordRecentTool } = require("../../utils/discover-entries");
 
 Page({
   data: {
@@ -314,14 +314,30 @@ Page({
   },
 
   openNotebook() {
+    if (recordRecentTool) recordRecentTool("notebook");
     wx.navigateTo({ url: discoverPath("notebook", Boolean(getAccessToken())) });
   },
 
-  openMemes() { wx.navigateTo({ url: discoverPath("memes") }); },
+  openMemes() {
+    if (recordRecentTool) recordRecentTool("memes");
+    wx.navigateTo({ url: discoverPath("memes") });
+  },
 
-  openDiscover() { wx.navigateTo({ url: discoverPath("all") }); },
+  openDiscover() {
+    const url = discoverPath("all");
+    if (wx.switchTab) wx.switchTab({ url });
+    else wx.navigateTo({ url });
+  },
 
-  openHolidays() { wx.navigateTo({ url: discoverPath("holidays") }); },
+  openHolidays() {
+    if (recordRecentTool) recordRecentTool("holidays");
+    wx.navigateTo({ url: discoverPath("holidays") });
+  },
+
+  openLottery() {
+    if (recordRecentTool) recordRecentTool("lottery");
+    wx.navigateTo({ url: discoverPath("lottery") });
+  },
 
   onDiscoverSlideChange(event) { this.setDiscoverSlide(event.detail.current); },
 

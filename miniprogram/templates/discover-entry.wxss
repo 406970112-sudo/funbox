@@ -17,6 +17,58 @@
 .notebook-entry { background: #eaf2ff; }
 .meme-entry { background: #eeeaff; }
 .holiday-entry { background: #e8f7f1; }
+.lottery-entry { background: #fff0ed; }
+.lottery-entry .discover-desc { color: #7e5c55; }
+
+.lottery-art {
+  position: relative;
+  width: 108rpx;
+  height: 108rpx;
+}
+
+.lottery-ball {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.lottery-ball-red {
+  top: 8rpx;
+  left: 6rpx;
+  z-index: 2;
+  width: 56rpx;
+  height: 56rpx;
+  background: radial-gradient(circle at 32% 28%, #ff8570 0%, #ef4b38 56%, #cb2e1d 100%);
+  box-shadow: 0 8rpx 16rpx rgba(239, 75, 56, .28), inset 0 2rpx 4rpx rgba(255, 255, 255, .45);
+  font-size: 23rpx;
+}
+
+.lottery-ball-blue {
+  right: 4rpx;
+  bottom: 8rpx;
+  z-index: 3;
+  width: 52rpx;
+  height: 52rpx;
+  background: radial-gradient(circle at 32% 28%, #6c96ff 0%, #2d5bff 58%, #1d42cc 100%);
+  box-shadow: 0 8rpx 16rpx rgba(45, 91, 255, .28), inset 0 2rpx 4rpx rgba(255, 255, 255, .45);
+  font-size: 21rpx;
+}
+
+.lottery-ball-gold {
+  top: 14rpx;
+  right: 8rpx;
+  z-index: 1;
+  width: 38rpx;
+  height: 38rpx;
+  background: radial-gradient(circle at 32% 28%, #ffd166 0%, #f29922 58%, #cc740b 100%);
+  box-shadow: 0 6rpx 12rpx rgba(242, 153, 34, .26), inset 0 2rpx 3rpx rgba(255, 255, 255, .48);
+  font-size: 18rpx;
+}
 
 .discover-title {
   grid-column: 1 / -1;

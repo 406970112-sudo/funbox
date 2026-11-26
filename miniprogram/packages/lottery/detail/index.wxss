@@ -1,0 +1,516 @@
+@import "../shared.wxss";
+
+.detail-page {
+  min-height: 100vh;
+  padding: 20rpx 28rpx calc(56rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: var(--fb-canvas);
+}
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+  padding: 26rpx 24rpx 24rpx;
+  border: 1rpx solid rgba(23, 33, 57, .05);
+}
+
+.hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.hero-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.hero-game {
+  color: var(--fb-ink);
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.history-link {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: #f2f5fb;
+  color: var(--fb-primary);
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.issue-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 22rpx;
+  padding: 14rpx 16rpx;
+  border-radius: 20rpx;
+  background: #f5f8fd;
+}
+
+.nav-step {
+  padding: 10rpx 16rpx;
+  border-radius: 14rpx;
+  background: #ffffff;
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  font-weight: 700;
+  box-shadow: 0 2rpx 8rpx rgba(23, 33, 57, .05);
+  flex-shrink: 0;
+}
+
+.nav-step-disabled {
+  opacity: .38;
+  box-shadow: none;
+}
+
+.issue-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.issue-code {
+  color: var(--fb-ink);
+  font-size: 27rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.issue-date {
+  color: var(--fb-subtle);
+  font-size: 21rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-balls-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 28rpx;
+}
+
+.hero-balls {
+  justify-content: center;
+}
+
+.copy-btn {
+  padding: 8rpx 22rpx;
+  border-radius: 999rpx;
+  background: #f2f5fb;
+  color: var(--fb-muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.tear-line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 26rpx -24rpx 22rpx;
+  height: 24rpx;
+}
+
+.tear-notch {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: var(--fb-canvas);
+  flex-shrink: 0;
+}
+
+.tear-notch-left {
+  margin-left: -12rpx;
+}
+
+.tear-notch-right {
+  margin-right: -12rpx;
+}
+
+.tear-dash {
+  flex: 1;
+  height: 0;
+  margin: 0 12rpx;
+  border-top: 2rpx dashed #dce4f2;
+}
+
+.kpi-grid {
+  display: flex;
+  align-items: center;
+}
+
+.kpi-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.kpi-divider {
+  width: 1rpx;
+  height: 54rpx;
+  background: var(--fb-line);
+}
+
+.kpi-label {
+  color: var(--fb-subtle);
+  font-size: 22rpx;
+}
+
+.kpi-value {
+  color: var(--fb-ink);
+  font-size: 28rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-value-accent {
+  color: var(--fb-primary);
+}
+
+/* Local Ticket Checker */
+.checker-card {
+  margin-top: 22rpx;
+  padding: 24rpx;
+  border: 1rpx solid rgba(23, 33, 57, .05);
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.section-title {
+  color: var(--fb-ink);
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.privacy-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 10rpx;
+  background: var(--fb-success-soft);
+  color: var(--fb-success);
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.toggle-text {
+  color: var(--fb-primary);
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.checker-body {
+  margin-top: 20rpx;
+}
+
+.result-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+}
+
+.result-bar-idle {
+  background: #f4f7fc;
+}
+
+.result-bar-won {
+  background: var(--fb-success-soft);
+}
+
+.result-bar-miss {
+  background: #f6f7fa;
+}
+
+.result-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  min-width: 0;
+}
+
+.result-badge {
+  color: var(--fb-ink);
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.result-bar-won .result-badge {
+  color: var(--fb-success);
+}
+
+.result-summary {
+  color: var(--fb-muted);
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.clear-pick-btn {
+  padding: 10rpx 20rpx;
+  border-radius: 14rpx;
+  background: rgba(255, 255, 255, .92);
+  color: var(--fb-ink-secondary);
+  font-size: 22rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.picker-group {
+  margin-top: 22rpx;
+}
+
+.picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14rpx;
+}
+
+.picker-label {
+  color: var(--fb-ink-secondary);
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.picker-count {
+  color: var(--fb-subtle);
+  font-size: 22rpx;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12rpx;
+}
+
+.picker-grid-compact {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.pick-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 68rpx;
+  border-radius: 50%;
+  background: #f4f7fc;
+  color: var(--fb-ink-secondary);
+  font-size: 24rpx;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 2rpx solid transparent;
+  box-sizing: border-box;
+}
+
+.pick-selected-red {
+  background: linear-gradient(160deg, #ff705b 0%, #df3826 100%);
+  color: #ffffff;
+}
+
+.pick-selected-blue {
+  background: linear-gradient(160deg, #5b87ff 0%, #2d5bff 100%);
+  color: #ffffff;
+}
+
+.pick-selected-amber {
+  background: linear-gradient(160deg, #ffbe4d 0%, #de8614 100%);
+  color: #ffffff;
+}
+
+.pick-hit {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 4rpx rgba(22, 163, 74, .22);
+}
+
+.pos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-top: 20rpx;
+}
+
+.pos-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.pos-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pos-label {
+  color: var(--fb-ink-secondary);
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.pos-hit-tag {
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  background: var(--fb-success-soft);
+  color: var(--fb-success);
+  font-size: 20rpx;
+  font-weight: 800;
+}
+
+.digit-strip {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 8rpx;
+}
+
+.digit-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62rpx;
+  border-radius: 14rpx;
+  background: #f4f7fc;
+  color: var(--fb-ink-secondary);
+  font-size: 24rpx;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 2rpx solid transparent;
+  box-sizing: border-box;
+}
+
+.digit-selected {
+  background: var(--fb-primary);
+  color: #ffffff;
+}
+
+.checker-footnote {
+  display: block;
+  margin-top: 18rpx;
+  color: var(--fb-subtle);
+  font-size: 21rpx;
+  line-height: 1.5;
+}
+
+/* Official Prize Grades */
+.prize-card {
+  margin-top: 22rpx;
+  padding: 24rpx;
+  border: 1rpx solid rgba(23, 33, 57, .05);
+}
+
+.prize-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.prize-unit {
+  color: var(--fb-subtle);
+  font-size: 22rpx;
+}
+
+.prize-table {
+  border-radius: 18rpx;
+  overflow: hidden;
+  border: 1rpx solid var(--fb-line);
+}
+
+.prize-row {
+  display: flex;
+  align-items: center;
+  padding: 18rpx 18rpx;
+  border-top: 1rpx solid var(--fb-line);
+  font-size: 24rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+.prize-row-head {
+  border-top: none;
+  background: #f5f8fd;
+  color: var(--fb-muted);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.prize-row-top {
+  background: #fbfcff;
+}
+
+.col-grade {
+  flex: 1.1;
+  color: var(--fb-ink);
+  font-weight: 700;
+}
+
+.col-count {
+  flex: 1;
+  text-align: center;
+  color: var(--fb-ink-secondary);
+}
+
+.col-money {
+  flex: 1.1;
+  text-align: right;
+  color: var(--fb-ink);
+  font-weight: 700;
+}
+
+.col-money-top {
+  color: #d63b29;
+  font-weight: 800;
+}
+
+.prize-empty {
+  padding: 26rpx 12rpx;
+  text-align: center;
+  color: var(--fb-muted);
+  font-size: 24rpx;
+}
+
+.skel-top {
+  width: 240rpx;
+  height: 36rpx;
+  border-radius: 10rpx;
+}
+
+.skel-balls {
+  display: flex;
+  justify-content: center;
+  gap: 12rpx;
+  margin-top: 32rpx;
+}
+
+.skel-ball {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+}
+
+.skel-kpi {
+  width: 100%;
+  height: 76rpx;
+  margin-top: 32rpx;
+  border-radius: 16rpx;
+}

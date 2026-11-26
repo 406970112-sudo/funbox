@@ -88,6 +88,7 @@ type Server struct {
 	scoreCreateRateLimiter    *RateLimiter
 	realtimeHub               *realtime.Hub
 	lotteryService            lotteryHistoryService
+	lotteryDrawService        lotteryDrawQueryService
 	lotteryLabService         lotteryLabHistoryService
 	leftoverManagerStore      *leftovermanager.Store
 	marketRadarService        marketRadarSnapshotService
@@ -796,6 +797,7 @@ func newServer(
 		scoreCreateRateLimiter:    NewRateLimiter(scoreCreateRateLimitWindow(cfg), scoreCreateRateLimitMax(cfg)),
 		realtimeHub:               realtimeHub,
 		lotteryService:            lottery.NewService(cfg.Lottery),
+		lotteryDrawService:        lottery.NewDrawService(lottery.DrawServiceConfig{}),
 		lotteryLabService:         lotterylab.NewService(lotterylab.Config{}),
 		leftoverManagerStore:      leftoverManagerStore,
 		marketRadarService:        marketradar.NewService(marketradar.Config(cfg.MarketRadar)),

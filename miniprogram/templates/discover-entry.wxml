@@ -38,3 +38,18 @@
     </view>
   </view>
 </template>
+
+<template name="discover-lottery">
+  <view class="discover-card lottery-entry" bindtap="openLottery" hover-class="discover-card-pressed" hover-start-time="0" hover-stay-time="120" role="button" aria-label="开奖查询，福彩体彩开奖与历史记录">
+    <text class="discover-title">开奖查询</text>
+    <view class="discover-copy">
+      <text class="discover-desc">福彩 · 体彩</text>
+      <text class="discover-desc">历史与核奖</text>
+    </view>
+    <view class="discover-entry-art lottery-art" aria-hidden="true">
+      <view class="lottery-ball lottery-ball-red">08</view>
+      <view class="lottery-ball lottery-ball-blue">16</view>
+      <view class="lottery-ball lottery-ball-gold">04</view>
+    </view>
+  </view>
+</template>

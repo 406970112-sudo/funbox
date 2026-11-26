@@ -1,0 +1,133 @@
+<view class="history-page">
+  <scroll-view class="game-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+    <view class="game-pills">
+      <view
+        wx:for="{{games}}"
+        wx:key="game"
+        class="game-pill {{game === item.game ? 'game-pill-active' : ''}}"
+        hover-class="fb-tap-row"
+        hover-stay-time="60"
+        data-game="{{item.game}}"
+        bindtap="selectGame"
+      >{{item.shortName}}</view>
+    </view>
+  </scroll-view>
+
+  <view class="filter-panel fb-card">
+    <view class="search-row">
+      <view class="search-box">
+        <text class="search-icon">⌕</text>
+        <input
+          class="search-input"
+          type="text"
+          confirm-type="search"
+          placeholder="按期号搜索（如 2026032）"
+          placeholder-class="search-placeholder"
+          value="{{issueInput}}"
+          bindinput="onIssueInput"
+          bindconfirm="submitSearch"
+        />
+        <view wx:if="{{issueInput || appliedIssue}}" class="clear-btn" bindtap="clearIssue">×</view>
+      </view>
+      <view class="search-submit" hover-class="fb-tap-btn" hover-stay-time="60" bindtap="submitSearch">查询</view>
+    </view>
+
+    <scroll-view class="range-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+      <view class="range-chips">
+        <view
+          wx:for="{{rangeChips}}"
+          wx:key="key"
+          class="range-chip {{activeRange === item.key ? 'range-chip-active' : ''}}"
+          hover-class="fb-tap-row"
+          hover-stay-time="60"
+          data-key="{{item.key}}"
+          bindtap="selectRange"
+        >{{item.label}}</view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="summary-bar">
+    <view class="summary-left">
+      <text class="org-tag {{gameMeta.org === 'cwl' ? 'org-tag-cwl' : 'org-tag-sport'}}">{{gameMeta.orgName}}</text>
+      <text class="summary-game">{{gameMeta.name}}</text>
+    </view>
+    <text class="summary-count">共 {{total}} 期</text>
+  </view>
+
+  <view wx:if="{{staleNotice}}" class="stale-banner">{{staleNotice}}</view>
+
+  <view wx:if="{{loading && !draws.length}}" class="history-list">
+    <view wx:for="{{skeletonList}}" wx:key="*this" class="history-row fb-card">
+      <view class="skel-box skel-head" />
+      <view class="skel-balls">
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+        <view class="skel-box skel-ball" />
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{errorMessage && !draws.length}}" class="state-card fb-card">
+    <view class="state-mark">!</view>
+    <text class="state-title">历史开奖加载失败</text>
+    <text class="state-desc">{{errorMessage}}</text>
+    <button class="retry-btn" hover-class="fb-tap-btn" bindtap="retryLoad">重新加载</button>
+  </view>
+
+  <view wx:elif="{{!draws.length}}" class="state-card fb-card">
+    <view class="state-mark state-mark-neutral">?</view>
+    <text class="state-title">未找到匹配的开奖记录</text>
+    <text class="state-desc">{{appliedIssue ? '请检查期号格式，或清空筛选查看最近开奖期次。' : '当前筛选条件下暂无历史记录。'}}</text>
+    <button wx:if="{{appliedIssue || selectedYear}}" class="retry-btn" hover-class="fb-tap-btn" bindtap="resetFilters">重置筛选</button>
+  </view>
+
+  <view wx:else class="history-list">
+    <view
+      wx:for="{{draws}}"
+      wx:key="issue"
+      class="history-row fb-card"
+      hover-class="fb-tap-card"
+      hover-stay-time="70"
+      data-issue="{{item.issue}}"
+      bindtap="openDetail"
+    >
+      <view class="row-top">
+        <view class="row-issue-group">
+          <text class="row-issue">第 {{item.issue}} 期</text>
+          <text class="row-date">{{item.compactDate}}</text>
+        </view>
+        <view class="row-right">
+          <text wx:if="{{item.poolText}}" class="row-meta">奖池 {{item.poolText}}</text>
+          <text wx:elif="{{item.sumText}}" class="row-meta">{{item.sumText}}</text>
+          <text class="row-chevron">›</text>
+        </view>
+      </view>
+
+      <view class="ball-row ball-row-compact row-balls">
+        <block wx:for="{{item.balls}}" wx:for-item="ball" wx:key="key">
+          <view wx:if="{{ball.sep}}" class="ball-sep" />
+          <view wx:else class="ball ball-sm ball-{{ball.kind}}">{{ball.n}}</view>
+        </block>
+      </view>
+    </view>
+
+    <view class="list-footer">
+      <button
+        wx:if="{{hasMore}}"
+        class="load-more-btn"
+        hover-class="fb-tap-row"
+        disabled="{{loadingMore}}"
+        bindtap="loadMore"
+      >{{loadingMore ? '正在加载更多...' : '加载更多期次'}}</button>
+      <text wx:else class="end-note">已展示当前条件下的全部 {{draws.length}} 期记录</text>
+    </view>
+  </view>
+
+  <view class="disclaimer-card">
+    <text class="disclaimer-title">历史开奖数据说明</text>
+    <text class="disclaimer-copy">所有历史期次开奖号码均同步自中国福彩网与中国体彩网官方公告，点击任意一期可查看该期奖级分布并进行纯本地对号核奖。</text>
+  </view>
+</view>
