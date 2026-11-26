@@ -40,6 +40,7 @@ Page({
     favorite: false,
     pinned: false,
     favoriteBusy: false,
+    checklistBusy: false,
 
     encrypted: false,
     locked: false,
@@ -176,6 +177,74 @@ Page({
       this.setData({ favoriteBusy: false, favorite: !next });
       this.handleError(error);
     }
+  },
+
+  async toggleChecklistItem(event) {
+    if (this.data.locked) {
+      this.openUnlockSheet();
+      return;
+    }
+    if (this.data.checklistBusy || !this._note) return;
+    const index = Number(event.currentTarget.dataset.index);
+    const prevList = this.data.checklist || [];
+    if (!Number.isInteger(index) || !prevList[index]) return;
+    const nextList = prevList.map((item, i) => i === index ? { ...item, done: !item.done } : item);
+    const nextDone = nextList.filter(item => item.done).length;
+    this.setData({
+      checklistBusy: true,
+      checklist: nextList,
+      checklistDone: nextDone,
+      summaryLabel: noteSummary(this.data.body, nextList),
+    });
+    try {
+      const payload = nextList.map(item => ({ id: item.id || "", text: item.text, done: Boolean(item.done) }));
+      const note = await updateNotebookNote(this.noteId, { checklist: payload });
+      if (!this._active) { this.setData({ checklistBusy: false }); return; }
+      this._note = note;
+      const savedList = (note.checklist || nextList).map(item => ({ ...item, done: Boolean(item.done) }));
+      const savedDone = savedList.filter(item => item.done).length;
+      this.setData({
+        checklistBusy: false,
+        checklist: savedList,
+        checklistDone: savedDone,
+        summaryLabel: noteSummary(this.data.body, savedList),
+      });
+    } catch (error) {
+      if (!this._active) { this.setData({ checklistBusy: false }); return; }
+      const prevDone = prevList.filter(item => item.done).length;
+      this.setData({
+        checklistBusy: false,
+        checklist: prevList,
+        checklistDone: prevDone,
+        summaryLabel: noteSummary(this.data.body, prevList),
+      });
+      this.handleError(error);
+    }
+  },
+
+  copyNoteText() {
+    this.closeMore();
+    if (this.data.locked) {
+      this.openUnlockSheet();
+      return;
+    }
+    const parts = [];
+    if (this.data.title) parts.push(this.data.title);
+    if (this.data.body) parts.push(this.data.body);
+    if (this.data.checklist && this.data.checklist.length) {
+      parts.push(this.data.checklist.map(item => `${item.done ? "[已完成]" : "[待办]"} ${item.text}`).join("\n"));
+    }
+    const text = parts.join("\n\n").trim();
+    if (!text) {
+      wx.showToast({ title: "没有可复制的内容", icon: "none" });
+      return;
+    }
+    wx.setClipboardData({
+      data: text,
+      success() {
+        wx.showToast({ title: "已复制笔记内容", icon: "none" });
+      },
+    });
   },
 
   openMore() {

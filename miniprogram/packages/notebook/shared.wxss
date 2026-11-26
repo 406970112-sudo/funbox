@@ -1,3 +1,58 @@
-/* Notebook subpackage foundation. Page-specific rules stay with each page. */
-page { --fb-primary:#2d5bff; --fb-ink:#172139; --fb-muted:#66758d; --fb-canvas:#f5f7fa; background:var(--fb-canvas); color:var(--fb-ink); }
-button::after { border:0; }
+/* Notebook subpackage foundation. Aligned with FunBox design tokens. */
+page {
+  --fb-primary: #2d5bff;
+  --fb-primary-soft: #eaf1ff;
+  --fb-ink: #172139;
+  --fb-ink-secondary: #34425b;
+  --fb-muted: #66758d;
+  --fb-subtle: #7b879c;
+  --fb-canvas: #f5f7fa;
+  --fb-line: #eaf0f7;
+  --fb-danger: #c74d38;
+  --fb-danger-soft: #fff0ed;
+  --fb-success: #227d5b;
+  --fb-success-soft: #e4f7ef;
+  background: var(--fb-canvas);
+  color: var(--fb-ink);
+}
+
+button::after {
+  border: 0;
+}
+
+.nb-tap-card {
+  transform: scale(0.988);
+  opacity: 0.92;
+}
+
+.nb-tap-row {
+  background: #f5f8fd !important;
+}
+
+.nb-tap-btn {
+  transform: scale(0.97);
+  opacity: 0.88;
+}
+
+@keyframes nb-sheet-up {
+  from {
+    transform: translateY(40rpx);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes nb-mask-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-tap-card,
+  .nb-tap-btn {
+    transform: none;
+  }
+}

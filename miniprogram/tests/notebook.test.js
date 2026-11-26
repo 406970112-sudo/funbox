@@ -542,3 +542,51 @@ test("detail favorite request releases busy state when page hides during update"
   await pending;
   assert.equal(page.data.favoriteBusy, false);
 });
+
+test("detail allows direct checklist toggling and updates summary counts", async () => {
+  const updates = [];
+  const page = pageInstance(loadPage("packages/notebook/detail/index.js", {
+    "../utils/notebook-api": {
+      updateNotebookNote: async (id, patch) => {
+        updates.push({ id, patch });
+        return { id, checklist: patch.checklist };
+      },
+      notebookErrorMessage: error => error.message,
+      isNotebookUnauthorized: () => false,
+      isNotebookLockedError: () => false,
+    },
+  }), {
+    body: "买菜清单",
+    checklist: [
+      { id: "c1", text: "牛奶", done: false },
+      { id: "c2", text: "面包", done: true },
+    ],
+    checklistDone: 1,
+  });
+  page._active = true;
+  page._note = { id: "n1" };
+  page.noteId = "n1";
+  await page.toggleChecklistItem({ currentTarget: { dataset: { index: "0" } } });
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].patch.checklist[0].done, true);
+  assert.equal(page.data.checklistDone, 2);
+  assert.equal(page.data.summaryLabel, "4 字 · 清单 2/2");
+});
+
+test("notebook home supports switching sort order and extended book colors", () => {
+  const format = require("../packages/notebook/utils/notebook-format");
+  assert.deepEqual(format.bookTheme("#7b61ff"), { fill: "#f2eeff", ink: "#684be6" });
+  assert.deepEqual(format.bookTheme("#e8a33d"), { fill: "#fff6e6", ink: "#b87414" });
+  const page = pageInstance(loadPage("packages/notebook/index/index.js", {
+    "../utils/notebook-api": {},
+    "../utils/notebook-format": format,
+    "../../../utils/auth": { getAccessToken: () => "token", getStoredUser: () => null, clearSession() {} },
+  }, { showToast() {} }), { activeBookId: "all", sortMode: "updated" });
+  page._notes = [
+    { id: "1", bookId: "work", pinned: false, displayTitle: "B 笔记" },
+    { id: "2", bookId: "work", pinned: false, displayTitle: "A 笔记" },
+  ];
+  page.toggleSortMode();
+  assert.equal(page.data.sortMode, "title");
+  assert.equal(page.data.recentNotes[0].id, "2");
+});

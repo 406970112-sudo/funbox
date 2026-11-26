@@ -1,10 +1,11 @@
 <view class="editor-page" style="height: {{viewportHeight}}px;">
   <view wx:if="{{!isLoggedIn}}" class="state-card">
-    <nb-icon name="book" tone="primary" size="{{80}}" />
+    <nb-icon name="book" tone="primary" size="{{76}}" />
     <text class="state-title">登录后开始记录</text>
     <text class="state-copy">笔记会跟随你的账号保存，换设备也能继续写。</text>
-    <button class="primary-button" bindtap="openLogin">微信快捷登录</button>
+    <button class="primary-button" hover-class="nb-tap-btn" bindtap="openLogin">微信快捷登录</button>
   </view>
+
   <view wx:elif="{{loading}}" class="editor-skeleton" aria-label="正在打开笔记">
     <view class="editor-skeleton-card">
       <view class="editor-skeleton-title"></view>
@@ -15,70 +16,284 @@
     </view>
     <text class="editor-skeleton-caption">正在打开笔记…</text>
   </view>
-  <view wx:elif="{{error}}" class="state-card"><text class="error-copy">{{error}}</text><button class="primary-button" bindtap="retry">重新加载</button></view>
+
+  <view wx:elif="{{error}}" class="state-card">
+    <text class="error-copy">{{error}}</text>
+    <button class="primary-button" hover-class="nb-tap-btn" bindtap="retry">重新加载</button>
+  </view>
+
   <block wx:else>
     <view class="editor-topbar">
-      <button class="book-pill" bindtap="openBookSheet" aria-label="选择笔记本">
-        <nb-icon name="book" tone="primary" size="{{32}}" /><text>{{selectedBookName}}</text><nb-icon name="chevron-down" tone="primary" size="{{26}}" />
+      <button class="book-pill" style="background: {{selectedBookFill}}; color: {{selectedBookInk}};" hover-class="nb-tap-btn" bindtap="openBookSheet" aria-label="选择笔记本">
+        <nb-icon name="book" tone="primary" size="{{28}}" />
+        <text>{{selectedBookName}}</text>
+        <nb-icon name="chevron-down" tone="primary" size="{{24}}" />
       </button>
       <view class="save-state save-{{saveState}}" bindtap="retrySave" role="button" aria-label="{{saveState === 'error' ? '保存失败，点击重试' : saveLabel}}">
-        <view wx:if="{{saveState === 'saved'}}" class="save-check {{saveConfirmed ? 'save-check-pulse' : ''}}" aria-hidden="true"><nb-icon name="check" size="{{28}}" /></view><text>{{saveLabel}}</text>
+        <view wx:if="{{saveState === 'saved'}}" class="save-check {{saveConfirmed ? 'save-check-pulse' : ''}}" aria-hidden="true"><nb-icon name="check" size="{{26}}" /></view>
+        <text>{{saveLabel}}</text>
       </view>
-      <button class="done-button" bindtap="saveAndClose">完成</button>
+      <button class="done-button" hover-class="nb-tap-btn" bindtap="saveAndClose">完成</button>
     </view>
+
     <scroll-view class="editor-scroll" scroll-y scroll-top="{{scrollTop}}" bindscroll="onEditorScroll" enhanced show-scrollbar="{{false}}">
       <view class="writing-sheet">
-        <textarea id="note-title" class="title-input" value="{{title}}" maxlength="80" auto-height placeholder="写个标题…" placeholder-class="title-placeholder" bindinput="onTitleInput" bindfocus="onEditorFocus" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" cursor-spacing="24" />
-        <text class="date-label">{{dateLabel}}</text>
-        <textarea id="note-body" class="body-input" auto-height bindlinechange="onBodyLineChange" value="{{body}}" maxlength="20000" placeholder="写点什么…" placeholder-class="body-placeholder" bindinput="onBodyInput" bindfocus="onEditorFocus" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" cursor-spacing="24" />
-        <view wx:if="{{checklist.length}}" class="check-section">
-          <view class="section-head"><text class="section-title">清单</text><text class="section-count checklist-count-motion-{{checklistCountMotion}}">{{checklistDone}} / {{checklist.length}} 已完成</text></view>
-          <view wx:for="{{checklist}}" wx:key="id" class="check-row">
-            <view class="check-control {{item.done ? 'check-control-active' : ''}}" data-index="{{index}}" bindtap="toggleChecklist" role="checkbox" aria-checked="{{item.done}}" aria-label="标记 {{item.text}}">
-              <view wx:if="{{item.done}}" class="check-mark {{item.id === checklistMotionItemId ? 'check-mark-draw' : ''}}" aria-hidden="true"><nb-icon name="check" tone="white" size="{{28}}" /></view>
-            </view>
-            <input id="check-{{index}}" class="check-input {{item.done ? 'check-input-done' : ''}}" value="{{item.text}}" maxlength="200" placeholder="添加一项" data-index="{{index}}" bindinput="onChecklistInput" bindfocus="onEditorFocus" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" cursor-spacing="24" />
-            <button class="icon-button" data-index="{{index}}" bindtap="removeChecklist" aria-label="删除清单项"><nb-icon name="close" size="{{28}}" /></button>
-          </view>
-          <button class="add-link" bindtap="addChecklistItem"><nb-icon name="plus" tone="primary" size="{{32}}" /><text>添加一项</text></button>
+        <textarea
+          id="note-title"
+          class="title-input"
+          value="{{title}}"
+          maxlength="80"
+          auto-height
+          placeholder="写个标题…"
+          placeholder-class="title-placeholder"
+          bindinput="onTitleInput"
+          bindfocus="onEditorFocus"
+          bindkeyboardheightchange="onKeyboardHeightChange"
+          adjust-position="{{false}}"
+          cursor-spacing="24"
+        />
+        <view class="sheet-meta-bar">
+          <text class="date-label">{{dateLabel}}</text>
+          <text wx:if="{{wordCount}}" class="word-count">{{wordCount}} 字</text>
         </view>
-        <view class="tag-cloud">
-          <view wx:for="{{tags}}" wx:key="*this" class="editor-tag"><text># {{item}}</text><button class="tag-remove" data-index="{{index}}" bindtap="removeTag" aria-label="删除标签 {{item}}"><nb-icon name="close" tone="primary" size="{{24}}" /></button></view>
-          <button wx:if="{{tags.length < 8}}" class="add-tag" bindtap="openTagModal"><nb-icon name="plus" size="{{26}}" /><text>标签</text></button>
+
+        <textarea
+          id="note-body"
+          class="body-input"
+          auto-height
+          bindlinechange="onBodyLineChange"
+          value="{{body}}"
+          maxlength="20000"
+          placeholder="想到什么，直接写下来…"
+          placeholder-class="body-placeholder"
+          bindinput="onBodyInput"
+          bindfocus="onEditorFocus"
+          bindkeyboardheightchange="onKeyboardHeightChange"
+          adjust-position="{{false}}"
+          cursor-spacing="24"
+        />
+
+        <view wx:if="{{checklist.length}}" class="check-section">
+          <view class="section-head">
+            <view class="section-title-group">
+              <nb-icon name="checklist" tone="primary" size="{{28}}" />
+              <text class="section-title">待办清单</text>
+            </view>
+            <text class="section-count checklist-count-motion-{{checklistCountMotion}}">{{checklistDone}} / {{checklist.length}} 已完成</text>
+          </view>
+          <view wx:for="{{checklist}}" wx:key="id" class="check-row">
+            <view
+              class="check-control {{item.done ? 'check-control-active' : ''}}"
+              data-index="{{index}}"
+              bindtap="toggleChecklist"
+              role="checkbox"
+              aria-checked="{{item.done}}"
+              aria-label="标记 {{item.text}}"
+            >
+              <view wx:if="{{item.done}}" class="check-mark {{item.id === checklistMotionItemId ? 'check-mark-draw' : ''}}" aria-hidden="true">
+                <nb-icon name="check" tone="white" size="{{26}}" />
+              </view>
+            </view>
+            <input
+              id="check-{{index}}"
+              class="check-input {{item.done ? 'check-input-done' : ''}}"
+              value="{{item.text}}"
+              maxlength="200"
+              focus="{{item.id === focusChecklistId}}"
+              placeholder="输入清单内容，回车续加下一项"
+              placeholder-class="body-placeholder"
+              confirm-type="next"
+              data-index="{{index}}"
+              bindinput="onChecklistInput"
+              bindconfirm="onChecklistConfirm"
+              bindfocus="onEditorFocus"
+              bindkeyboardheightchange="onKeyboardHeightChange"
+              adjust-position="{{false}}"
+              cursor-spacing="24"
+            />
+            <button class="icon-button" hover-class="nb-tap-btn" data-index="{{index}}" bindtap="removeChecklist" aria-label="删除清单项">
+              <nb-icon name="close" size="{{26}}" />
+            </button>
+          </view>
+          <button class="add-link" hover-class="nb-tap-btn" bindtap="addChecklistItem">
+            <nb-icon name="plus" tone="primary" size="{{28}}" />
+            <text>再加一项</text>
+          </button>
+        </view>
+
+        <view wx:if="{{tags.length}}" class="tag-cloud">
+          <view wx:for="{{tags}}" wx:key="*this" class="editor-tag">
+            <text># {{item}}</text>
+            <button class="tag-remove" hover-class="nb-tap-btn" data-index="{{index}}" bindtap="removeTag" aria-label="删除标签 {{item}}">
+              <nb-icon name="close" tone="primary" size="{{22}}" />
+            </button>
+          </view>
+          <button wx:if="{{tags.length < 8}}" class="add-tag" hover-class="nb-tap-btn" bindtap="openTagModal">
+            <nb-icon name="plus" size="{{24}}" />
+            <text>加标签</text>
+          </button>
         </view>
       </view>
-      <view class="privacy-row" bindtap="toggleEncryption" role="button" aria-label="{{encrypted ? '取消这条笔记加密' : '加密这条笔记'}}">
-        <nb-icon name="{{encrypted ? 'lock' : 'unlock'}}" tone="{{encrypted ? 'primary' : 'default'}}" size="{{40}}" />
-        <view class="privacy-copy"><text class="privacy-title">{{encrypted ? '这条笔记已加密' : '加密这条笔记'}}</text><text class="privacy-hint">仅密码解锁后可见</text></view>
+
+      <view class="privacy-row" hover-class="nb-tap-card" bindtap="toggleEncryption" role="button" aria-label="{{encrypted ? '取消这条笔记加密' : '加密这条笔记'}}">
+        <view class="privacy-icon {{encrypted ? 'privacy-icon-on' : ''}}">
+          <nb-icon name="{{encrypted ? 'lock' : 'unlock'}}" tone="{{encrypted ? 'primary' : 'default'}}" size="{{34}}" />
+        </view>
+        <view class="privacy-copy">
+          <text class="privacy-title">{{encrypted ? '已开启私密加密' : '加密这条笔记'}}</text>
+          <text class="privacy-hint">{{encrypted ? '标题、正文与清单均以密文保存' : '开启后需输入笔记密码才可查看'}}</text>
+        </view>
         <switch checked="{{encrypted}}" color="#2d5bff" disabled aria-hidden="true" />
       </view>
-      <text class="autosave-hint">自动保存，让每个想法安心留下</text>
+      <view class="scroll-bottom-spacer"></view>
     </scroll-view>
+
     <view class="format-wrap {{keyboardHeight > 0 ? 'keyboard-open' : ''}}">
-      <view class="format-bar"><button class="format-item" bindtap="addChecklistItem"><nb-icon name="checklist" size="{{42}}" /><text>清单</text></button><button class="format-item" bindtap="openTagModal"><nb-icon name="tag" size="{{42}}" /><text>标签</text></button></view>
+      <view class="format-bar">
+        <button class="format-item" hover-class="nb-tap-btn" bindtap="addChecklistItem">
+          <nb-icon name="checklist" tone="primary" size="{{34}}" />
+          <text>清单</text>
+        </button>
+        <button class="format-item" hover-class="nb-tap-btn" bindtap="openTagModal">
+          <nb-icon name="tag" tone="primary" size="{{34}}" />
+          <text>标签{{tags.length ? ' ' + tags.length : ''}}</text>
+        </button>
+        <button class="format-item {{encrypted ? 'format-item-active' : ''}}" hover-class="nb-tap-btn" bindtap="toggleEncryption">
+          <nb-icon name="{{encrypted ? 'lock' : 'unlock'}}" tone="{{encrypted ? 'primary' : 'default'}}" size="{{34}}" />
+          <text>{{encrypted ? '已加密' : '加密'}}</text>
+        </button>
+      </view>
     </view>
   </block>
 
   <view wx:if="{{showBookSheet}}" class="modal-mask bottom-mask" bindtap="closeBookSheet" catchtouchmove="noop">
-    <view class="book-sheet" catchtap="noop"><view class="sheet-handle" /><text class="sheet-title">保存到笔记本</text>
-      <scroll-view class="book-options" scroll-y><view wx:for="{{books}}" wx:key="id" class="book-option {{item.id === selectedBookId ? 'book-option-selected' : ''}}" data-index="{{index}}" bindtap="onBookChange" role="button" aria-label="{{item.name}}"><nb-icon name="book" size="{{40}}" /><text class="book-name">{{item.name}}</text><text class="section-count">{{item.noteCount || 0}} 篇</text><view class="selection-icon"><nb-icon wx:if="{{item.id === selectedBookId}}" name="check" tone="primary" size="{{40}}" /></view></view></scroll-view>
-      <view class="sheet-actions"><button class="text-button" bindtap="manageBooks">管理笔记本</button><button class="primary-button" bindtap="closeBookSheet">完成</button></view>
+    <view class="book-sheet" catchtap="noop">
+      <view class="sheet-handle" />
+      <text class="sheet-title">保存到笔记本</text>
+      <scroll-view class="book-options" scroll-y>
+        <view
+          wx:for="{{books}}"
+          wx:key="id"
+          class="book-option {{item.id === selectedBookId ? 'book-option-selected' : ''}}"
+          hover-class="nb-tap-row"
+          data-index="{{index}}"
+          bindtap="onBookChange"
+          role="button"
+          aria-label="{{item.name}}"
+        >
+          <view class="book-option-dot" style="background: {{item.fill}};">
+            <nb-icon name="book" tone="primary" size="{{34}}" />
+          </view>
+          <text class="book-name">{{item.name}}</text>
+          <text class="section-count">{{item.noteCount || 0}} 篇</text>
+          <view class="selection-icon">
+            <nb-icon wx:if="{{item.id === selectedBookId}}" name="check" tone="primary" size="{{36}}" />
+          </view>
+        </view>
+      </scroll-view>
+      <view class="sheet-actions">
+        <button class="text-button" bindtap="manageBooks">管理笔记本</button>
+        <button class="primary-button" hover-class="nb-tap-btn" bindtap="closeBookSheet">完成</button>
+      </view>
     </view>
   </view>
 
-  <view wx:if="{{showTagModal}}" class="modal-mask" style="bottom: {{keyboardHeight}}px;" catchtouchmove="noop">
-    <view class="tag-modal panel" catchtap="noop"><button class="panel-close icon-button" bindtap="closeTagModal" aria-label="关闭标签面板"><nb-icon name="close" size="{{36}}" /></button><text class="panel-title">添加标签</text>
-      <text class="field-label">标签名称</text><view class="tag-input-wrap"><input class="modal-input tag-input" value="{{tagDraft}}" maxlength="20" placeholder="例如：周末计划" bindinput="onTagInput" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" bindconfirm="confirmTag" confirm-type="done" /><text class="input-count">{{tagDraft.length}} / 20</text></view><text class="panel-hint">无需输入 #</text>
-      <text class="field-label">已有标签</text><view class="tag-cloud"><text wx:for="{{tags}}" wx:key="*this" class="editor-tag"># {{item}}</text><text wx:if="{{!tags.length}}" class="panel-hint">还没有标签</text></view><text class="panel-hint">最多 8 个标签</text><text wx:if="{{tagError}}" class="error-copy">{{tagError}}</text>
-      <view class="panel-actions"><button class="secondary-button" bindtap="closeTagModal">取消</button><button class="primary-button" bindtap="confirmTag">添加标签</button></view>
+  <view wx:if="{{showTagModal}}" class="modal-mask bottom-mask" style="bottom: {{keyboardHeight}}px;" bindtap="closeTagModal" catchtouchmove="noop">
+    <view class="tag-modal panel" catchtap="noop">
+      <view class="sheet-handle" />
+      <button class="panel-close icon-button" hover-class="nb-tap-btn" bindtap="closeTagModal" aria-label="关闭标签面板"><nb-icon name="close" size="{{32}}" /></button>
+      <text class="panel-title">添加标签</text>
+      <text class="field-label">自定义标签</text>
+      <view class="tag-input-wrap">
+        <input
+          class="modal-input tag-input"
+          value="{{tagDraft}}"
+          maxlength="20"
+          focus="{{showTagModal}}"
+          placeholder="例如：周末计划（无需输入 #）"
+          bindinput="onTagInput"
+          bindkeyboardheightchange="onKeyboardHeightChange"
+          adjust-position="{{false}}"
+          bindconfirm="confirmTag"
+          confirm-type="done"
+        />
+        <text class="input-count">{{tagDraft.length}}/20</text>
+      </view>
+      <text class="field-label">快速选择</text>
+      <view class="suggestion-cloud">
+        <view
+          wx:for="{{tagSuggestions}}"
+          wx:key="*this"
+          class="suggestion-chip"
+          hover-class="nb-tap-btn"
+          data-tag="{{item}}"
+          bindtap="pickTagSuggestion"
+        ># {{item}}</view>
+      </view>
+      <block wx:if="{{tags.length}}">
+        <text class="field-label">已添加（{{tags.length}} / 8）</text>
+        <view class="tag-cloud modal-tag-cloud">
+          <text wx:for="{{tags}}" wx:key="*this" class="editor-tag"># {{item}}</text>
+        </view>
+      </block>
+      <text wx:if="{{tagError}}" class="error-copy">{{tagError}}</text>
+      <view class="panel-actions">
+        <button class="secondary-button" hover-class="nb-tap-btn" bindtap="closeTagModal">取消</button>
+        <button class="primary-button" hover-class="nb-tap-btn" bindtap="confirmTag">添加标签</button>
+      </view>
     </view>
   </view>
 
-  <view wx:if="{{showPasswordModal}}" class="modal-mask bottom-mask" style="bottom: {{keyboardHeight}}px;" catchtouchmove="noop">
-    <scroll-view class="password-modal panel" scroll-y style="height: {{passwordPanelHeight}}px;" scroll-into-view="{{modalFocus}}"><view class="sheet-handle" /><button class="panel-close icon-button" bindtap="closePasswordModal" aria-label="关闭密码面板"><nb-icon name="close" size="{{36}}" /></button><view class="password-symbol"><nb-icon name="lock" tone="primary" size="{{58}}" /></view><text class="panel-title">{{passwordMode === 'setup' ? '开启加密笔记' : '解锁加密笔记'}}</text><text class="panel-description">{{passwordMode === 'setup' ? '设置一个密码，保护账号下的全部加密笔记' : '输入账号统一的笔记密码'}}</text>
-      <text class="field-label">笔记密码</text><input id="password-value" bindfocus="onModalFocus" class="modal-input {{passwordError ? 'input-error' : ''}}" password value="{{passwordValue}}" maxlength="32" placeholder="{{passwordMode === 'setup' ? '6–32 位字符' : '请输入笔记密码'}}" bindinput="onPasswordInput" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" cursor-spacing="24" />
-      <block wx:if="{{passwordMode === 'setup'}}"><text class="field-label">确认密码</text><input id="password-confirm" bindfocus="onModalFocus" class="modal-input" password value="{{passwordConfirm}}" maxlength="32" placeholder="再次输入密码" bindinput="onPasswordConfirmInput" bindkeyboardheightchange="onKeyboardHeightChange" adjust-position="{{false}}" cursor-spacing="24" /><view class="password-warning">忘记密码后，加密内容无法找回。请妥善记住密码。</view><view class="acknowledge" bindtap="togglePasswordAcknowledged" role="checkbox" aria-checked="{{passwordAcknowledged}}"><view class="check-control {{passwordAcknowledged ? 'check-control-active' : ''}}"><nb-icon wx:if="{{passwordAcknowledged}}" name="check" tone="white" size="{{28}}" /></view><text>我已了解并记住密码</text></view></block>
-      <text wx:if="{{passwordError}}" class="error-copy">{{passwordError}}</text><view class="panel-actions"><button class="secondary-button" bindtap="closePasswordModal" disabled="{{passwordBusy}}">取消</button><button class="primary-button" bindtap="submitPasswordModal" disabled="{{passwordBusy}}">{{passwordBusy ? '处理中…' : (passwordMode === 'setup' ? '开启加密' : '解锁查看')}}</button></view><text class="panel-footer">{{passwordMode === 'setup' ? '当前笔记将在保存后加密' : '解锁后 30 分钟内可访问加密笔记'}}</text>
+  <view wx:if="{{showPasswordModal}}" class="modal-mask bottom-mask" style="bottom: {{keyboardHeight}}px;" bindtap="closePasswordModal" catchtouchmove="noop">
+    <scroll-view class="password-modal panel" scroll-y style="height: {{passwordPanelHeight}}px;" scroll-into-view="{{modalFocus}}" catchtap="noop">
+      <view class="sheet-handle" />
+      <button class="panel-close icon-button" hover-class="nb-tap-btn" bindtap="closePasswordModal" aria-label="关闭密码面板"><nb-icon name="close" size="{{32}}" /></button>
+      <view class="password-symbol"><nb-icon name="lock" tone="primary" size="{{54}}" /></view>
+      <text class="panel-title">{{passwordMode === 'setup' ? '开启加密笔记' : '解锁加密笔记'}}</text>
+      <text class="panel-description">{{passwordMode === 'setup' ? '设置一个密码，保护账号下的全部加密笔记' : '输入账号统一的笔记密码'}}</text>
+      <text class="field-label">笔记密码</text>
+      <input
+        id="password-value"
+        bindfocus="onModalFocus"
+        class="modal-input {{passwordError ? 'input-error' : ''}}"
+        password
+        value="{{passwordValue}}"
+        maxlength="32"
+        placeholder="{{passwordMode === 'setup' ? '6–32 位字符' : '请输入笔记密码'}}"
+        bindinput="onPasswordInput"
+        bindkeyboardheightchange="onKeyboardHeightChange"
+        adjust-position="{{false}}"
+        cursor-spacing="24"
+      />
+      <block wx:if="{{passwordMode === 'setup'}}">
+        <text class="field-label">确认密码</text>
+        <input
+          id="password-confirm"
+          bindfocus="onModalFocus"
+          class="modal-input"
+          password
+          value="{{passwordConfirm}}"
+          maxlength="32"
+          placeholder="再次输入密码"
+          bindinput="onPasswordConfirmInput"
+          bindkeyboardheightchange="onKeyboardHeightChange"
+          adjust-position="{{false}}"
+          cursor-spacing="24"
+        />
+        <view class="password-warning">忘记密码后，加密内容无法找回。请妥善记住密码。</view>
+        <view class="acknowledge" bindtap="togglePasswordAcknowledged" role="checkbox" aria-checked="{{passwordAcknowledged}}">
+          <view class="check-control {{passwordAcknowledged ? 'check-control-active' : ''}}">
+            <nb-icon wx:if="{{passwordAcknowledged}}" name="check" tone="white" size="{{26}}" />
+          </view>
+          <text>我已了解并记住密码</text>
+        </view>
+      </block>
+      <text wx:if="{{passwordError}}" class="error-copy">{{passwordError}}</text>
+      <view class="panel-actions">
+        <button class="secondary-button" hover-class="nb-tap-btn" bindtap="closePasswordModal" disabled="{{passwordBusy}}">取消</button>
+        <button class="primary-button" hover-class="nb-tap-btn" bindtap="submitPasswordModal" disabled="{{passwordBusy}}">{{passwordBusy ? '处理中…' : (passwordMode === 'setup' ? '开启加密' : '解锁查看')}}</button>
+      </view>
+      <text class="panel-footer">{{passwordMode === 'setup' ? '当前笔记将在保存后加密' : '解锁后 30 分钟内可访问加密笔记'}}</text>
     </scroll-view>
   </view>
 </view>

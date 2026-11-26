@@ -1,55 +1,191 @@
 <view class="search-page">
   <block wx:if="{{isLoggedIn}}">
-    <text wx:if="{{!query && !filterCount}}" class="hero-title">找回每一个想法</text>
     <view class="search-row">
-      <view class="search-field"><nb-icon name="search" size="36" />
-        <input class="search-input" value="{{query}}" placeholder="搜索标题、正文或标签" placeholder-class="placeholder" confirm-type="search" focus="{{searchFocused}}" bindblur="onBlur" bindinput="onInput" bindconfirm="onConfirm" />
-        <view wx:if="{{query}}" class="icon-button clear-button" bindtap="clearSearch" role="button" aria-label="清空关键词"><nb-icon name="close" size="26" /></view>
+      <view class="search-field">
+        <nb-icon name="search" size="34" />
+        <input
+          class="search-input"
+          value="{{query}}"
+          placeholder="搜索标题、正文或标签"
+          placeholder-class="placeholder"
+          confirm-type="search"
+          focus="{{searchFocused}}"
+          bindblur="onBlur"
+          bindinput="onInput"
+          bindconfirm="onConfirm"
+        />
+        <view wx:if="{{query}}" class="icon-button clear-button" hover-class="nb-tap-btn" bindtap="clearSearch" role="button" aria-label="清空关键词">
+          <nb-icon name="close" size="24" />
+        </view>
       </view>
-      <view class="cancel-link" bindtap="cancelSearch" role="button">取消</view>
+      <view class="cancel-link" hover-class="nb-tap-btn" bindtap="cancelSearch" role="button">取消</view>
     </view>
-    <view class="scope-row"><view wx:for="{{scopes}}" wx:key="id" class="chip scope {{activeScope === item.id ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="changeScope">{{item.name}}</view></view>
+
+    <view wx:if="{{query}}" class="scope-seg" role="tablist">
+      <view
+        wx:for="{{scopes}}"
+        wx:key="id"
+        class="scope-item {{activeScope === item.id ? 'scope-active' : ''}}"
+        hover-class="nb-tap-btn"
+        data-id="{{item.id}}"
+        bindtap="changeScope"
+      >{{item.name}}</view>
+    </view>
+
     <view class="filter-row">
-      <view class="chip filter-button {{favoriteOnly ? 'filter-active' : ''}}" bindtap="toggleFavoriteOnly" role="button"><nb-icon name="star" tone="{{favoriteOnly ? 'primary' : 'default'}}" size="36" /><text>只看收藏</text></view>
-      <view class="chip filter-button {{filterCount ? 'filter-active' : ''}}" bindtap="openFilters" role="button" aria-label="筛选笔记"><nb-icon name="filter" size="36" /><text>筛选</text><text wx:if="{{filterCount}}" class="count-badge">{{filterCount}}</text></view>
+      <view class="filter-button {{favoriteOnly ? 'filter-active' : ''}}" hover-class="nb-tap-btn" bindtap="toggleFavoriteOnly" role="button">
+        <nb-icon name="star" tone="{{favoriteOnly ? 'primary' : 'default'}}" size="32" />
+        <text>只看收藏</text>
+      </view>
+      <view class="filter-button {{filterCount ? 'filter-active' : ''}}" hover-class="nb-tap-btn" bindtap="openFilters" role="button" aria-label="筛选笔记">
+        <nb-icon name="filter" tone="{{filterCount ? 'primary' : 'default'}}" size="32" />
+        <text>组合筛选</text>
+        <text wx:if="{{filterCount}}" class="count-badge">{{filterCount}}</text>
+      </view>
     </view>
+
     <view wx:if="{{activeBookName || activeTag}}" class="applied-filters">
-      <view wx:if="{{activeBookName}}" class="applied-chip" bindtap="removeBook" role="button" aria-label="移除笔记本筛选"><text>{{activeBookName}}</text><nb-icon name="close" tone="primary" size="24" /></view>
-      <view wx:if="{{activeTag}}" class="applied-chip" bindtap="removeTag" role="button" aria-label="移除标签筛选"><text># {{activeTag}}</text><nb-icon name="close" tone="primary" size="24" /></view>
+      <view wx:if="{{activeBookName}}" class="applied-chip" hover-class="nb-tap-btn" bindtap="removeBook" role="button" aria-label="移除笔记本筛选">
+        <text>{{activeBookName}}</text>
+        <nb-icon name="close" tone="primary" size="22" />
+      </view>
+      <view wx:if="{{activeTag}}" class="applied-chip" hover-class="nb-tap-btn" bindtap="removeTag" role="button" aria-label="移除标签筛选">
+        <text># {{activeTag}}</text>
+        <nb-icon name="close" tone="primary" size="22" />
+      </view>
     </view>
+
     <view wx:if="{{!query && !filterCount}}" class="browse-section">
-      <view class="section-head"><text class="section-title">我的笔记本</text><view class="manage-link" bindtap="manageBooks">管理笔记本</view></view>
-      <view class="book-grid"><view wx:for="{{books}}" wx:key="id" class="book-card" style="background: {{item.fill}};" data-id="{{item.id}}" bindtap="changeBook"><nb-icon name="document" tone="primary" size="48" /><text class="book-name">{{item.name}}</text><text class="book-count">{{item.noteCount}} 篇</text></view></view>
-      <view class="section-head"><text class="section-title">常用标签</text></view>
-      <view class="tag-cloud"><view wx:for="{{tags}}" wx:key="tag" class="applied-chip" data-tag="{{item.tag}}" bindtap="changeTag"># {{item.tag}}</view><text wx:if="{{!tags.length}}" class="muted">添加标签，让笔记更好找</text></view>
+      <view class="section-head">
+        <text class="section-title">按笔记本浏览</text>
+        <view class="manage-link" hover-class="nb-tap-btn" bindtap="manageBooks">管理笔记本</view>
+      </view>
+      <view class="book-grid">
+        <view
+          wx:for="{{books}}"
+          wx:key="id"
+          class="book-card"
+          hover-class="nb-tap-card"
+          data-id="{{item.id}}"
+          bindtap="changeBook"
+        >
+          <view class="book-badge-icon" style="background: {{item.fill}};">
+            <nb-icon name="book" tone="primary" size="38" />
+          </view>
+          <text class="book-name">{{item.name}}</text>
+          <text class="book-count">{{item.noteCount}} 篇</text>
+        </view>
+      </view>
+
+      <view class="section-head">
+        <text class="section-title">常用标签</text>
+      </view>
+      <view class="tag-cloud">
+        <view
+          wx:for="{{tags}}"
+          wx:key="tag"
+          class="tag-pill"
+          hover-class="nb-tap-btn"
+          data-tag="{{item.tag}}"
+          bindtap="changeTag"
+        ># {{item.tag}}</view>
+        <text wx:if="{{!tags.length}}" class="muted">在笔记中添加标签，这里会自动汇总</text>
+      </view>
     </view>
-    <view class="section-head"><text class="section-title">{{query || filterCount ? '找到 ' + resultCount + ' 条笔记' : '最近编辑'}}</text><text wx:if="{{query || filterCount}}" class="muted">按最近编辑</text></view>
-    <view wx:if="{{loading}}" class="state-card"><text>正在搜索笔记…</text></view>
-    <view wx:elif="{{error}}" class="state-card" bindtap="retry"><text>{{error}}</text><text class="manage-link">重新搜索</text></view>
+
+    <view class="section-head">
+      <text class="section-title">{{query || filterCount ? '找到 ' + resultCount + ' 条笔记' : '最近编辑'}}</text>
+      <text wx:if="{{query || filterCount}}" class="muted">按最近编辑</text>
+    </view>
+
+    <view wx:if="{{loading}}" class="state-card">
+      <text>正在搜索笔记…</text>
+    </view>
+    <view wx:elif="{{error}}" class="state-card" bindtap="retry">
+      <text>{{error}}</text>
+      <text class="manage-link">重新搜索</text>
+    </view>
     <view wx:elif="{{!results.length}}" class="empty-search">
-      <view class="empty-art"><nb-icon name="document" tone="primary" size="128" /><view class="empty-glass"><nb-icon name="search" tone="primary" size="78" /></view></view>
-      <text class="empty-title">{{query || filterCount ? '没有找到相关笔记' : '还没有笔记'}}</text><text class="empty-desc">{{query || filterCount ? '换个关键词，或放宽筛选试试' : '记下第一个想法，让灵感有处安放'}}</text>
-      <button wx:if="{{query || filterCount}}" class="primary empty-button" bindtap="clearFilters">清空筛选</button><button wx:else class="primary empty-button" bindtap="createNote">新建笔记</button>
+      <view class="empty-art">
+        <nb-icon name="document" tone="primary" size="110" />
+        <view class="empty-glass"><nb-icon name="search" tone="primary" size="64" /></view>
+      </view>
+      <text class="empty-title">{{query || filterCount ? '没有找到相关笔记' : '还没有笔记'}}</text>
+      <text class="empty-desc">{{query || filterCount ? '换个关键词，或放宽筛选条件试试' : '记下第一个想法，让灵感有处安放'}}</text>
+      <button wx:if="{{query || filterCount}}" class="primary empty-button" hover-class="nb-tap-btn" bindtap="clearFilters">清空筛选</button>
+      <button wx:else class="primary empty-button" hover-class="nb-tap-btn" bindtap="createNote">新建笔记</button>
       <view wx:if="{{query}}" class="manage-link" bindtap="editQuery">修改关键词</view>
     </view>
     <view wx:else class="result-list">
-      <view wx:for="{{results}}" wx:key="id" wx:if="{{query || filterCount || index < 3}}" class="result-card {{!query && !filterCount ? 'recent-card' : ''}}" data-id="{{item.id}}" bindtap="openNote" role="button" aria-label="打开 {{item.displayTitle}}">
-        <view class="result-icon"><nb-icon name="{{item.locked ? 'lock' : 'document'}}" size="44" /></view>
-        <view class="result-copy"><text class="result-title">{{item.displayTitle}}</text><text wx:if="{{query || filterCount}}" class="result-snippet">{{item.excerpt}}</text><text class="result-meta">{{item.bookName}} · {{item.timeLabel}}</text><view wx:if="{{(query || filterCount) && item.featureTag}}" class="result-tag"># {{item.featureTag}}</view></view>
-        <nb-icon wx:if="{{query || filterCount}}" name="star" tone="{{item.favorite ? 'primary' : 'default'}}" size="34" /><nb-icon wx:else name="chevron" size="30" />
+      <view
+        wx:for="{{results}}"
+        wx:key="id"
+        wx:if="{{query || filterCount || index < 5}}"
+        class="result-card {{!query && !filterCount ? 'recent-card' : ''}}"
+        hover-class="nb-tap-card"
+        data-id="{{item.id}}"
+        bindtap="openNote"
+        role="button"
+        aria-label="打开 {{item.displayTitle}}"
+      >
+        <view class="result-icon" style="background: {{item.locked ? '#eef1f7' : item.bookFill}};">
+          <nb-icon name="{{item.locked ? 'lock' : item.checklistCount ? 'checklist' : 'document'}}" tone="{{item.locked ? 'default' : 'primary'}}" size="38" />
+        </view>
+        <view class="result-copy">
+          <text class="result-title">{{item.displayTitle}}</text>
+          <text wx:if="{{(query || filterCount) && item.showExcerpt}}" class="result-snippet">{{item.excerpt}}</text>
+          <text class="result-meta">{{item.bookName}} · {{item.timeLabel}}</text>
+          <view wx:if="{{(query || filterCount) && item.featureTag}}" class="result-tag"># {{item.featureTag}}</view>
+        </view>
+        <nb-icon wx:if="{{(query || filterCount) && item.favorite}}" name="star" tone="primary" size="32" />
+        <nb-icon wx:else name="chevron" size="28" />
       </view>
     </view>
-    <view class="encrypted-hint"><nb-icon name="lock" size="28" /><text>加密笔记不参与关键词搜索</text></view>
+
+    <view class="encrypted-hint">
+      <nb-icon name="lock" size="26" />
+      <text>加密笔记不参与关键词搜索</text>
+    </view>
   </block>
-  <view wx:else class="login-card"><nb-icon name="search" tone="primary" size="100" /><text class="empty-title">登录后搜索笔记</text><text class="empty-desc">账号内的笔记、标签和笔记本会一起同步。</text><button class="primary" bindtap="openLogin">微信快捷登录</button></view>
+
+  <view wx:else class="login-card">
+    <nb-icon name="search" tone="primary" size="96" />
+    <text class="empty-title">登录后搜索笔记</text>
+    <text class="empty-desc">账号内的笔记、标签和笔记本会一起同步。</text>
+    <button class="primary" hover-class="nb-tap-btn" bindtap="openLogin">微信快捷登录</button>
+  </view>
+
   <view wx:if="{{filterOpen}}" class="overlay" bindtap="closeFilters" catchtouchmove="stopPropagation">
-    <view class="bottom-sheet" catchtap="stopPropagation"><view class="sheet-handle"></view><view class="sheet-heading"><text>筛选笔记</text><view class="icon-button sheet-close" bindtap="closeFilters" aria-label="关闭筛选"><nb-icon name="close" size="36" /></view></view>
+    <view class="bottom-sheet" catchtap="stopPropagation">
+      <view class="sheet-handle"></view>
+      <view class="sheet-heading">
+        <text>筛选笔记</text>
+        <view class="icon-button sheet-close" hover-class="nb-tap-btn" bindtap="closeFilters" aria-label="关闭筛选">
+          <nb-icon name="close" size="32" />
+        </view>
+      </view>
       <scroll-view class="filter-content" scroll-y>
-        <text class="section-title">笔记本</text><view class="option-row"><view class="chip {{draftBookId === 'all' ? 'selected' : ''}}" data-id="all" bindtap="draftBook">全部</view><view wx:for="{{books}}" wx:key="id" class="chip {{draftBookId === item.id ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="draftBook">{{item.name}}</view></view>
-        <text class="section-title">标签</text><view class="option-row"><view class="chip {{!draftTag ? 'selected' : ''}}" data-tag="" bindtap="draftTag">全部</view><view wx:for="{{tags}}" wx:key="tag" class="chip {{draftTag === item.tag ? 'selected' : ''}}" data-tag="{{item.tag}}" bindtap="draftTag"># {{item.tag}}</view></view>
-        <view class="favorite-setting" bindtap="draftFavorite"><nb-icon name="star" size="40" /><text>只看收藏</text><switch color="#2d5bff" checked="{{draftFavoriteOnly}}" catchtap="stopPropagation" bindchange="draftFavorite" /></view>
+        <text class="sheet-label">笔记本</text>
+        <view class="option-row">
+          <view class="chip {{draftBookId === 'all' ? 'selected' : ''}}" hover-class="nb-tap-btn" data-id="all" bindtap="draftBook">全部</view>
+          <view wx:for="{{books}}" wx:key="id" class="chip {{draftBookId === item.id ? 'selected' : ''}}" hover-class="nb-tap-btn" data-id="{{item.id}}" bindtap="draftBook">{{item.name}}</view>
+        </view>
+        <text class="sheet-label">标签</text>
+        <view class="option-row">
+          <view class="chip {{!draftTag ? 'selected' : ''}}" hover-class="nb-tap-btn" data-tag="" bindtap="draftTag">全部</view>
+          <view wx:for="{{tags}}" wx:key="tag" class="chip {{draftTag === item.tag ? 'selected' : ''}}" hover-class="nb-tap-btn" data-tag="{{item.tag}}" bindtap="draftTag"># {{item.tag}}</view>
+        </view>
+        <view class="favorite-setting" bindtap="draftFavorite">
+          <nb-icon name="star" tone="{{draftFavoriteOnly ? 'primary' : 'default'}}" size="36" />
+          <text>只看收藏</text>
+          <switch color="#2d5bff" checked="{{draftFavoriteOnly}}" catchtap="stopPropagation" bindchange="draftFavorite" />
+        </view>
       </scroll-view>
-      <text class="sheet-help">可组合筛选，重置后恢复全部</text><view class="sheet-actions"><button class="secondary" bindtap="resetDraft">重置</button><button class="primary" bindtap="applyFilters">查看结果</button></view>
+      <text class="sheet-help">可多条件组合筛选，重置后恢复全部</text>
+      <view class="sheet-actions">
+        <button class="secondary" hover-class="nb-tap-btn" bindtap="resetDraft">重置</button>
+        <button class="primary" hover-class="nb-tap-btn" bindtap="applyFilters">查看结果</button>
+      </view>
     </view>
   </view>
 </view>

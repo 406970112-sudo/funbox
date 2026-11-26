@@ -55,6 +55,8 @@ function bookTheme(color) {
   if (value === "#20a97a") return { fill: "#e8f7f1", ink: "#228364" };
   if (value === "#ff765e") return { fill: "#fff0ed", ink: "#c95e49" };
   if (value === "#2d5bff") return { fill: "#eaf2ff", ink: "#2d5bff" };
+  if (value === "#7b61ff") return { fill: "#f2eeff", ink: "#684be6" };
+  if (value === "#e8a33d") return { fill: "#fff6e6", ink: "#b87414" };
   return { fill: "#eef3fb", ink: "#5f7088" };
 }
 
@@ -62,11 +64,19 @@ function decorateNote(note, index = 0) {
   const theme = bookTheme(note && note.bookColor);
   const locked = isLockedNote(note);
   const tags = locked || !Array.isArray(note && note.tags) ? [] : note.tags;
+  const checklist = locked || !Array.isArray(note && note.checklist) ? [] : note.checklist;
+  const checklistDone = checklist.filter(item => item && item.done).length;
+  const displayTitle = noteTitle(note);
+  const excerpt = noteExcerpt(note);
+  const showExcerpt = !locked && excerpt && excerpt !== "空白笔记" && excerpt !== displayTitle;
   return {
     ...note,
     locked,
-    displayTitle: noteTitle(note),
-    excerpt: noteExcerpt(note),
+    displayTitle,
+    excerpt,
+    showExcerpt,
+    checklistCount: checklist.length,
+    checklistDone,
     timeLabel: formatNoteTime(note && note.updatedAt),
     bookFill: theme.fill,
     bookInk: theme.ink,

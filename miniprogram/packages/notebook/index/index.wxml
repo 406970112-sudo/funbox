@@ -1,23 +1,25 @@
 <import src="/templates/note-art.wxml" />
 <view class="notebook-page">
-
-  <view class="hero">
-    <view class="hero-copy">
-
-      <text class="hero-title">想到什么，</text>
-      <text class="hero-title"><text class="hero-accent">随手记下来。</text></text>
-      <text class="hero-desc">文字、清单和灵感，都收在这里。</text>
+  <view class="nb-header">
+    <view class="nb-header-copy">
+      <text class="fb-brand">NOTEBOOK</text>
+      <view class="nb-title-row">
+        <text class="nb-title">笔记本</text>
+        <text wx:if="{{isLoggedIn && totalCount}}" class="nb-count-pill">{{totalCount}} 篇</text>
+      </view>
     </view>
-    <view class="hero-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
+    <view wx:if="{{isLoggedIn}}" class="nb-manage-btn" bindtap="manageBooks" hover-class="nb-tap-btn" role="button" aria-label="管理笔记本">
+      <nb-icon name="book" tone="primary" size="{{30}}" />
+      <text>管理笔记本</text>
+    </view>
   </view>
 
   <block wx:if="{{isLoggedIn}}">
     <view class="home-search-row">
-      <button class="search-bar" hover-class="fb-tap-card" bindtap="openSearch" aria-label="搜索笔记、标签或正文">
-        <nb-icon name="search" size="{{36}}" />
+      <button class="search-bar" hover-class="nb-tap-card" bindtap="openSearch" aria-label="搜索笔记、标签或正文">
+        <nb-icon name="search" size="{{34}}" />
         <text class="search-copy">搜索笔记、标签或正文</text>
       </button>
-
     </view>
 
     <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
@@ -28,29 +30,43 @@
           class="filter-chip {{activeBookId === item.id ? 'filter-active' : ''}}"
           data-id="{{item.id}}"
           bindtap="changeFilter"
-          hover-class="fb-tap-btn"
-        >{{item.name}}<text class="filter-count">{{item.count}}</text></view>
+          hover-class="nb-tap-btn"
+        >
+          <view wx:if="{{item.ink && activeBookId !== item.id}}" class="filter-dot" style="background: {{item.ink}};" aria-hidden="true"></view>
+          <text class="filter-name">{{item.name}}</text>
+          <text class="filter-count">{{item.count}}</text>
+        </view>
       </view>
     </scroll-view>
 
     <view wx:if="{{loading}}" class="loading-section" aria-label="正在加载笔记">
       <view class="section-head"><text class="section-title">最近笔记</text></view>
       <view class="loading-card">
-        <view wx:for="{{[1, 2, 3]}}" wx:key="*this" class="skeleton-row" aria-hidden="true"><view class="skeleton-icon"></view><view class="skeleton-copy"><view class="skeleton-line skeleton-title"></view><view class="skeleton-line skeleton-meta"></view></view></view>
+        <view wx:for="{{[1, 2, 3]}}" wx:key="*this" class="skeleton-row" aria-hidden="true">
+          <view class="skeleton-icon"></view>
+          <view class="skeleton-copy">
+            <view class="skeleton-line skeleton-title"></view>
+            <view class="skeleton-line skeleton-meta"></view>
+          </view>
+        </view>
         <view class="loading-caption"><view class="loading-spinner" aria-hidden="true"></view><text>正在翻开笔记本…</text></view>
       </view>
     </view>
 
     <view wx:elif="{{error}}" class="state-card fb-card state-error" bindtap="retry">
-      <text>{{error}}</text>
-      <text class="state-action">重新加载</text>
+      <nb-icon name="refresh" tone="coral" size="{{52}}" />
+      <text class="state-msg">{{error}}</text>
+      <text class="state-action">点击重新加载</text>
     </view>
 
     <block wx:else>
       <view wx:if="{{pinnedNotes.length}}" class="section-block">
         <view class="section-head">
-          <text class="section-title">置顶</text>
-          <view class="manage-books" bindtap="manageBooks" role="button">管理笔记本</view>
+          <view class="section-title-group">
+            <nb-icon name="pin" tone="coral" size="{{28}}" />
+            <text class="section-title">置顶笔记</text>
+          </view>
+          <text class="section-meta">{{pinnedNotes.length}} 篇</text>
         </view>
         <view
           wx:for="{{pinnedNotes}}"
@@ -58,34 +74,44 @@
           class="pinned-card"
           data-id="{{item.id}}"
           bindtap="openNote"
-          hover-class="fb-tap-card"
+          hover-class="nb-tap-card"
+          hover-stay-time="70"
           role="button"
           aria-label="打开置顶笔记 {{item.displayTitle}}"
         >
+          <view class="pinned-accent-bar" aria-hidden="true"></view>
           <view class="pinned-top">
             <text class="note-book-label" style="background: {{item.bookFill}}; color: {{item.bookInk}};">{{item.bookName}}</text>
             <view class="pin-flags">
-              <view class="pin-mark"><nb-icon name="pin" tone="coral" size="{{28}}" /><text>置顶</text></view>
+              <view wx:if="{{item.favorite}}" class="flag-chip"><nb-icon name="star" tone="primary" size="{{24}}" /></view>
               <view wx:if="{{item.locked}}" class="pinned-lock">
                 <nb-icon name="lock" size="{{24}}" />
                 <text>已加密</text>
               </view>
+              <text class="note-time">{{item.timeLabel}}</text>
             </view>
           </view>
           <text class="pinned-title">{{item.displayTitle}}</text>
-          <text class="pinned-excerpt">{{item.excerpt}}</text>
-          <view class="pinned-foot">
+          <text wx:if="{{item.showExcerpt || item.locked}}" class="pinned-excerpt">{{item.excerpt}}</text>
+          <view wx:if="{{item.featureTag || item.checklistCount}}" class="pinned-foot">
             <text wx:if="{{item.featureTag}}" class="note-tag"># {{item.featureTag}}</text>
-            <text class="note-time">{{item.timeLabel}}</text>
+            <view wx:if="{{item.checklistCount}}" class="check-pill">
+              <nb-icon name="checklist" tone="primary" size="{{24}}" />
+              <text>{{item.checklistDone}}/{{item.checklistCount}}</text>
+            </view>
           </view>
         </view>
       </view>
 
-      <view class="section-block recent-block">
+      <view class="section-block {{pinnedNotes.length ? 'recent-block' : ''}}">
         <view class="section-head">
           <text class="section-title">最近笔记</text>
-          <view wx:if="{{pinnedNotes.length}}" class="section-sort">按更新时间<nb-icon name="chevron-down" size="{{24}}" /></view><view wx:else class="manage-books" bindtap="manageBooks" role="button">管理笔记本</view>
+          <view wx:if="{{recentNotes.length > 1 || pinnedNotes.length > 1}}" class="section-sort" bindtap="toggleSortMode" hover-class="nb-tap-btn" role="button">
+            <text>{{sortMode === 'title' ? '按标题排序' : '按更新时间'}}</text>
+            <nb-icon name="chevron-down" tone="primary" size="{{24}}" />
+          </view>
         </view>
+
         <view wx:if="{{recentNotes.length}}" class="note-list">
           <view
             wx:for="{{recentNotes}}"
@@ -93,33 +119,51 @@
             class="note-row"
             data-id="{{item.id}}"
             bindtap="openNote"
-            hover-class="fb-tap-row"
+            hover-class="nb-tap-row"
+            hover-stay-time="60"
             role="button"
             aria-label="打开笔记 {{item.displayTitle}}"
           >
             <view class="note-icon {{item.locked ? 'note-icon-locked' : ''}}" style="background: {{item.bookFill}}; color: {{item.bookInk}};">
-              <nb-icon name="{{item.locked ? 'lock' : item.checklist.length ? 'checklist' : 'document'}}" tone="{{item.locked ? 'default' : 'primary'}}" size="{{42}}" />
+              <nb-icon name="{{item.locked ? 'lock' : item.checklistCount ? 'checklist' : 'document'}}" tone="{{item.locked ? 'default' : 'primary'}}" size="{{40}}" />
             </view>
             <view class="note-row-copy">
-              <text class="note-row-title">{{item.displayTitle}}</text>
-              <text class="note-row-meta">{{item.bookName}} · {{item.timeLabel}}<text wx:if="{{item.locked}}"> · 已加密</text></text>
+              <view class="note-row-top">
+                <text class="note-row-title">{{item.displayTitle}}</text>
+                <view wx:if="{{item.favorite}}" class="row-star" aria-hidden="true"><nb-icon name="star" tone="primary" size="{{26}}" /></view>
+              </view>
+              <text wx:if="{{item.showExcerpt}}" class="note-row-excerpt">{{item.excerpt}}</text>
+              <view class="note-row-meta">
+                <text class="meta-book" style="color: {{item.bookInk}};">{{item.bookName}}</text>
+                <text class="meta-dot">·</text>
+                <text>{{item.timeLabel}}</text>
+                <text wx:if="{{item.checklistCount}}" class="meta-check">· 清单 {{item.checklistDone}}/{{item.checklistCount}}</text>
+                <text wx:if="{{item.featureTag && !item.checklistCount}}" class="meta-tag">· #{{item.featureTag}}</text>
+              </view>
             </view>
-            <text wx:if="{{item.locked}}" class="locked-badge">已锁定</text><nb-icon name="chevron" size="{{28}}" />
+            <text wx:if="{{item.locked}}" class="locked-badge">已锁定</text>
+            <nb-icon name="chevron" size="{{28}}" />
           </view>
         </view>
-        <view wx:else class="empty-card fb-card">
+
+        <view wx:elif="{{!pinnedNotes.length}}" class="empty-card fb-card">
           <view class="empty-art" aria-hidden="true"><template is="note-art" data="{{variant: 'sm'}}"></template></view>
-          <text class="empty-title">{{hasNotes ? '这一本还没有最近笔记' : '还没有笔记'}}</text>
-          <text class="empty-desc">从一句话开始，把想到的留在这里。</text>
-          <button class="empty-button" bindtap="createNote">新建第一页</button>
+          <text class="empty-title">{{activeBookId === 'all' ? '还没有笔记' : '这本笔记本还是空的'}}</text>
+          <text class="empty-desc">随手记下想法、待办清单或灵感，支持私密加密保存。</text>
+          <button class="empty-button" hover-class="nb-tap-btn" bindtap="createNote">新建第一页</button>
         </view>
       </view>
     </block>
 
     <view class="bottom-dock-scrim" aria-hidden="true"></view>
-    <view class="encryption-management" bindtap="openSecurity" hover-class="fb-tap-btn" role="button" aria-label="加密管理"><nb-icon name="lock" size="{{34}}" /><text>加密管理</text></view>
-    <view class="new-note-fab" bindtap="createNote" hover-class="fb-tap-btn" role="button" aria-label="新建笔记">
-      <nb-icon name="plus" tone="white" size="{{38}}" /><text>新建笔记</text>
+    <view class="encryption-management" bindtap="openSecurity" hover-class="nb-tap-btn" role="button" aria-label="加密管理">
+      <nb-icon name="{{securityUnlocked ? 'unlock' : 'lock'}}" tone="{{hasSecurityPassword ? 'primary' : 'default'}}" size="{{34}}" />
+      <text>加密管理</text>
+      <view wx:if="{{hasSecurityPassword}}" class="security-dot {{securityUnlocked ? 'security-dot-open' : ''}}" aria-hidden="true"></view>
+    </view>
+    <view class="new-note-fab" bindtap="createNote" hover-class="nb-tap-btn" role="button" aria-label="新建笔记">
+      <nb-icon name="plus" tone="white" size="{{36}}" />
+      <text>新建笔记</text>
     </view>
   </block>
 
@@ -127,35 +171,38 @@
     <view class="login-art" aria-hidden="true"><template is="note-art" data="{{variant: 'md'}}"></template></view>
     <text class="login-title">登录后开始记录</text>
     <text class="login-desc">笔记会跟随你的账号保存，换设备也能继续写。</text>
-    <button class="login-button" bindtap="openLogin">微信快捷登录</button>
+    <button class="login-button" hover-class="nb-tap-btn" bindtap="openLogin">微信快捷登录</button>
   </view>
 
-  <view wx:if="{{showSecuritySheet}}" class="security-mask" catchtouchmove="noop">
+  <view wx:if="{{showSecuritySheet}}" class="security-mask" bindtap="closeSecuritySheet" catchtouchmove="noop">
     <view class="security-sheet" catchtap="noop">
       <view class="security-grabber"></view>
       <view class="security-head">
         <view class="security-title-wrap">
           <text class="security-title">{{securityMode === 'change' ? '修改笔记密码' : securityMode === 'unlock' ? '解锁加密笔记' : '加密管理'}}</text>
           <text wx:if="{{hasSecurityPassword}}" class="security-subtitle">{{encryptedNoteCount}} 篇加密笔记</text>
-          <text wx:else class="security-subtitle">尚未开启。打开任意笔记，在编辑页点击锁按钮即可。</text>
+          <text wx:else class="security-subtitle">尚未开启。在任意笔记的编辑页点击「加密」开关即可设置。</text>
         </view>
-        <view class="security-close" bindtap="closeSecuritySheet" role="button" aria-label="关闭加密笔记设置"><nb-icon name="close" size="{{32}}" /></view>
+        <view class="security-close" bindtap="closeSecuritySheet" hover-class="nb-tap-btn" role="button" aria-label="关闭加密笔记设置"><nb-icon name="close" size="{{32}}" /></view>
       </view>
 
       <block wx:if="{{securityMode === 'summary'}}">
         <block wx:if="{{hasSecurityPassword}}">
-          <view class="security-status"><nb-icon name="{{securityUnlocked ? 'unlock' : 'lock'}}" tone="primary" size="{{40}}" /><text>{{securityUnlocked ? '本次已解锁' : '当前已锁定'}}</text></view>
-          <button wx:if="{{!securityUnlocked}}" class="security-action security-action-primary" bindtap="beginSecurityUnlock" disabled="{{securityBusy}}">解锁加密笔记</button>
-          <button wx:else class="security-action security-action-primary" bindtap="lockSecurity" disabled="{{securityBusy}}">立即上锁</button>
+          <view class="security-status {{securityUnlocked ? 'security-status-open' : ''}}">
+            <nb-icon name="{{securityUnlocked ? 'unlock' : 'lock'}}" tone="primary" size="{{38}}" />
+            <text>{{securityUnlocked ? '本次会话已解锁（30 分钟有效）' : '当前已锁定，需输入密码查看'}}</text>
+          </view>
+          <button wx:if="{{!securityUnlocked}}" class="security-action security-action-primary" hover-class="nb-tap-btn" bindtap="beginSecurityUnlock" disabled="{{securityBusy}}">解锁加密笔记</button>
+          <button wx:else class="security-action security-action-primary" hover-class="nb-tap-btn" bindtap="lockSecurity" disabled="{{securityBusy}}">立即上锁</button>
           <view class="security-management-list">
-            <button class="security-management-row" bindtap="beginPasswordChange" disabled="{{securityBusy}}"><nb-icon name="key" size="{{40}}" /><text>修改密码</text><nb-icon name="chevron" size="{{28}}" /></button>
-            <button class="security-management-row security-management-danger" bindtap="resetEncryption" disabled="{{securityBusy}}"><nb-icon name="trash" tone="coral" size="{{40}}" /><text>清空加密笔记</text><nb-icon name="chevron" size="{{28}}" /></button>
+            <button class="security-management-row" hover-class="nb-tap-row" bindtap="beginPasswordChange" disabled="{{securityBusy}}"><nb-icon name="key" size="{{38}}" /><text>修改密码</text><nb-icon name="chevron" size="{{28}}" /></button>
+            <button class="security-management-row security-management-danger" hover-class="nb-tap-row" bindtap="resetEncryption" disabled="{{securityBusy}}"><nb-icon name="trash" tone="coral" size="{{38}}" /><text>清空加密笔记</text><nb-icon name="chevron" size="{{28}}" /></button>
           </view>
           <text class="security-forgot-help">忘记密码无法找回已加密内容</text>
         </block>
         <view wx:else class="security-empty">
-          <nb-icon name="lock" size="{{40}}" />
-          <text>开启后，锁定状态不会展示真实标题、摘要和标签。</text>
+          <nb-icon name="lock" tone="primary" size="{{40}}" />
+          <text>开启后，锁定状态不会展示真实标题、摘要和标签，保护隐私内容。</text>
         </view>
       </block>
 
@@ -175,8 +222,8 @@
           bindconfirm="submitSecurityUnlock"
         />
         <text wx:if="{{securityError}}" class="security-error">{{securityError}}</text>
-        <button class="security-submit" bindtap="submitSecurityUnlock" disabled="{{securityBusy}}">{{securityBusy ? '正在解锁…' : '解锁'}}</button>
-        <button class="security-back" bindtap="backToSecuritySummary">返回</button>
+        <button class="security-submit" hover-class="nb-tap-btn" bindtap="submitSecurityUnlock" disabled="{{securityBusy}}">{{securityBusy ? '正在解锁…' : '解锁'}}</button>
+        <button class="security-back" hover-class="nb-tap-btn" bindtap="backToSecuritySummary">返回</button>
       </block>
 
       <block wx:else>
@@ -187,8 +234,8 @@
         <text class="security-field-label">再次输入</text>
         <input class="security-input" type="password" password value="{{securityConfirmPassword}}" maxlength="32" placeholder="再次输入新密码" placeholder-class="security-placeholder" bindinput="onSecurityConfirmPasswordInput" />
         <text wx:if="{{securityError}}" class="security-error">{{securityError}}</text>
-        <button class="security-submit" bindtap="submitPasswordChange" disabled="{{securityBusy}}">{{securityBusy ? '正在更新…' : '更新密码'}}</button>
-        <button class="security-back" bindtap="backToSecuritySummary">返回</button>
+        <button class="security-submit" hover-class="nb-tap-btn" bindtap="submitPasswordChange" disabled="{{securityBusy}}">{{securityBusy ? '正在更新…' : '更新密码'}}</button>
+        <button class="security-back" hover-class="nb-tap-btn" bindtap="backToSecuritySummary">返回</button>
       </block>
     </view>
   </view>

@@ -18,6 +18,12 @@ function localID() {
   return `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function countChars(body) {
+  return Array.from(String(body || "").replace(/\s+/g, "")).length;
+}
+
+const DEFAULT_TAG_SUGGESTIONS = ["工作", "生活", "灵感", "待办", "旅行", "读书"];
+
 Page({
   data: {
     isLoggedIn: false,
@@ -43,6 +49,7 @@ Page({
     showTagModal: false,
     tagDraft: "",
     tagError: "",
+    tagSuggestions: DEFAULT_TAG_SUGGESTIONS,
     encrypted: false,
     showPasswordModal: false,
     passwordMode: "setup",
@@ -58,6 +65,8 @@ Page({
     modalFocus: "",
     scrollTop: 0,
     checklistDone: 0,
+    focusChecklistId: "",
+    wordCount: 0,
     checklistMotionItemId: "",
     checklistCountMotion: 0,
     reduceMotion: false,
@@ -264,9 +273,11 @@ Page({
       selectedBookInk: book.ink || bookTheme(book.color).ink,
       title: note.title || "",
       body: note.body || "",
+      wordCount: countChars(note.body),
       checklist: (note.checklist || []).map(item => ({ ...item, id: item.id || localID() })),
       tags: note.tags || [],
       checklistDone: (note.checklist || []).filter(item => item.done).length,
+      focusChecklistId: "",
       checklistMotionItemId: "",
       checklistCountMotion: 0,
       pinned: Boolean(note.pinned),
@@ -294,15 +305,29 @@ Page({
   },
 
   onBodyInput(event) {
-    this.setData({ body: event.detail.value || "" });
+    const body = event.detail.value || "";
+    this.setData({ body, wordCount: countChars(body) });
     this.scheduleSave();
   },
 
   addChecklistItem() {
-    this.setData({ checklist: [...this.data.checklist, { id: localID(), text: "", done: false }] });
+    const id = localID();
+    this.setData({
+      checklist: [...this.data.checklist, { id, text: "", done: false }],
+      focusChecklistId: id,
+    });
     this._focusedField = `check-${this.data.checklist.length - 1}`;
     this.revealFocusedField();
     this.scheduleSave();
+  },
+
+  onChecklistConfirm(event) {
+    const index = Number(event.currentTarget.dataset.index);
+    const list = this.data.checklist || [];
+    if (!Number.isInteger(index) || !list[index]) return;
+    if (String(list[index].text || "").trim()) {
+      this.addChecklistItem();
+    }
   },
 
   onChecklistInput(event) {
@@ -349,6 +374,13 @@ Page({
 
   onTagInput(event) {
     this.setData({ tagDraft: event.detail.value || "", tagError: "" });
+  },
+
+  pickTagSuggestion(event) {
+    const tag = String((event.currentTarget && event.currentTarget.dataset && event.currentTarget.dataset.tag) || "").trim();
+    if (!tag) return;
+    this.setData({ tagDraft: tag, tagError: "" });
+    this.confirmTag();
   },
 
   confirmTag() {

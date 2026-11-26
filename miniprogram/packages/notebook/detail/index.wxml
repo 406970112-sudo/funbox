@@ -1,24 +1,188 @@
 <import src="/templates/note-art.wxml" />
 <view class="detail-page">
   <block wx:if="{{isLoggedIn}}">
-    <view wx:if="{{loading}}" class="state-card"><view class="skeleton-title"></view><view class="skeleton-line"></view><view class="skeleton-line"></view><text>正在打开笔记…</text></view>
-    <view wx:elif="{{error}}" class="state-card"><nb-icon name="refresh" size="{{64}}" /><text class="state-title">暂时没能加载笔记</text><text>{{error}}</text><button class="primary-button" bindtap="retry">重新加载</button></view>
+    <view wx:if="{{loading}}" class="state-card">
+      <view class="skeleton-title"></view>
+      <view class="skeleton-line"></view>
+      <view class="skeleton-line skeleton-short"></view>
+      <text class="muted">正在打开笔记…</text>
+    </view>
+    <view wx:elif="{{error}}" class="state-card">
+      <nb-icon name="refresh" tone="coral" size="{{60}}" />
+      <text class="state-title">暂时没能加载笔记</text>
+      <text class="muted">{{error}}</text>
+      <button class="primary-button" hover-class="nb-tap-btn" bindtap="retry">重新加载</button>
+    </view>
     <block wx:else>
-      <view class="detail-context-row"><view class="detail-context-main"><nb-icon name="book" tone="primary" size="{{32}}" /><text class="detail-book-name">{{bookName}}</text><text wx:if="{{pinned}}" class="detail-status">已置顶</text></view><button class="icon-button" bindtap="openMore" aria-label="更多操作"><nb-icon name="more" /></button></view>
+      <view class="detail-context-row">
+        <view class="detail-context-main">
+          <view class="book-badge" style="background: {{bookFill}}; color: {{bookInk}};">
+            <nb-icon name="book" tone="primary" size="{{28}}" />
+            <text class="detail-book-name">{{bookName}}</text>
+          </view>
+          <view wx:if="{{pinned}}" class="detail-status">
+            <nb-icon name="pin" tone="coral" size="{{24}}" />
+            <text>已置顶</text>
+          </view>
+          <view wx:if="{{encrypted}}" class="detail-encrypted-pill">
+            <nb-icon name="lock" size="{{24}}" />
+            <text>已加密</text>
+          </view>
+        </view>
+        <button class="more-circle-btn" hover-class="nb-tap-btn" bindtap="openMore" aria-label="更多操作">
+          <nb-icon name="more" size="{{38}}" />
+        </button>
+      </view>
+
       <block wx:if="{{encrypted && locked}}">
-        <view class="locked-art"><view class="locked-paper"><view></view><view></view><view></view></view><view class="locked-badge"><nb-icon name="lock" tone="white" size="{{64}}" /></view></view>
-        <view class="locked-copy"><text class="locked-title">这条笔记已加密</text><text class="muted">输入笔记密码后，才能查看内容</text></view>
-        <button class="primary-button unlock-main" bindtap="openUnlockSheet">解锁查看</button><view class="privacy-note"><nb-icon name="lock" size="{{28}}" /><text>加密笔记不支持分享</text></view>
+        <view class="locked-card">
+          <view class="locked-art">
+            <view class="locked-paper"><view></view><view></view><view></view></view>
+            <view class="locked-badge"><nb-icon name="lock" tone="white" size="{{58}}" /></view>
+          </view>
+          <view class="locked-copy">
+            <text class="locked-title">这条笔记已加密</text>
+            <text class="muted">输入账号统一的笔记密码后即可查看与编辑</text>
+          </view>
+          <button class="primary-button unlock-main" hover-class="nb-tap-btn" bindtap="openUnlockSheet">解锁查看</button>
+          <view class="privacy-note">
+            <nb-icon name="lock" size="{{26}}" />
+            <text>加密笔记不支持分享</text>
+          </view>
+        </view>
       </block>
+
       <block wx:else>
-        <view class="detail-heading"><text class="detail-title">{{title}}</text><text class="detail-updated">更新于{{updatedLabel}}</text><view wx:if="{{encrypted}}" class="detail-encrypted-pill"><nb-icon name="lock" size="{{26}}" /><text>已加密</text></view><view class="detail-tags"><text wx:for="{{tags}}" wx:key="*this" class="detail-tag"># {{item}}</text></view></view>
-        <view class="reading-card"><text wx:if="{{body}}" class="detail-body">{{body}}</text><view wx:if="{{checklist.length}}" class="detail-check-section {{body ? 'with-divider' : ''}}"><view class="detail-card-head"><text class="detail-card-title">清单</text><text class="muted">{{checklistDone}} / {{checklist.length}} 已完成</text></view><view wx:for="{{checklist}}" wx:key="id" class="detail-check-row"><view class="detail-check-box {{item.done ? 'is-done' : ''}}"><nb-icon wx:if="{{item.done}}" name="check" tone="white" size="{{28}}" /></view><text class="detail-check-text {{item.done ? 'text-done' : ''}}">{{item.text}}</text></view></view><text wx:if="{{!body && !checklist.length}}" class="muted">这条笔记暂时没有正文</text></view>
-        <text wx:if="{{summaryLabel}}" class="detail-summary">{{summaryLabel}}</text>
-        <view class="detail-actionbar" role="toolbar" aria-label="笔记操作"><text class="dock-hint">更多操作可置顶、加密或删除</text><button class="detail-action {{favorite ? 'action-active' : ''}}" bindtap="toggleFavorite" disabled="{{favoriteBusy}}" aria-label="{{favorite ? '取消收藏' : '收藏笔记'}}"><nb-icon name="star" tone="{{favorite ? 'primary' : 'default'}}" /><text>{{favorite ? '已收藏' : '收藏'}}</text></button><button wx:if="{{!encrypted}}" class="detail-action" open-type="share" aria-label="分享笔记"><nb-icon name="share" /><text>分享</text></button><button class="detail-action detail-primary" bindtap="editNote"><nb-icon name="edit" tone="white" /><text>编辑笔记</text></button></view>
+        <view class="reading-card">
+          <view class="detail-heading">
+            <text class="detail-title" user-select>{{title}}</text>
+            <view class="detail-meta-row">
+              <text class="detail-updated">更新于 {{updatedLabel}}</text>
+              <text wx:if="{{summaryLabel}}" class="detail-summary-inline">{{summaryLabel}}</text>
+            </view>
+            <view wx:if="{{tags.length}}" class="detail-tags">
+              <text wx:for="{{tags}}" wx:key="*this" class="detail-tag"># {{item}}</text>
+            </view>
+          </view>
+
+          <view class="reading-divider" aria-hidden="true"></view>
+
+          <text wx:if="{{body}}" class="detail-body" user-select>{{body}}</text>
+
+          <view wx:if="{{checklist.length}}" class="detail-check-section {{body ? 'with-divider' : ''}}">
+            <view class="detail-card-head">
+              <view class="check-head-left">
+                <nb-icon name="checklist" tone="primary" size="{{30}}" />
+                <text class="detail-card-title">待办清单</text>
+              </view>
+              <text class="check-progress-pill">{{checklistDone}} / {{checklist.length}}</text>
+            </view>
+            <view
+              wx:for="{{checklist}}"
+              wx:key="id"
+              class="detail-check-row"
+              hover-class="nb-tap-row"
+              data-index="{{index}}"
+              bindtap="toggleChecklistItem"
+              role="checkbox"
+              aria-checked="{{item.done}}"
+            >
+              <view class="detail-check-box {{item.done ? 'is-done' : ''}}">
+                <nb-icon wx:if="{{item.done}}" name="check" tone="white" size="{{26}}" />
+              </view>
+              <text class="detail-check-text {{item.done ? 'text-done' : ''}}">{{item.text}}</text>
+            </view>
+            <text class="check-tap-tip">轻点条目即可直接勾选完成</text>
+          </view>
+
+          <text wx:if="{{!body && !checklist.length}}" class="empty-body-hint">这条笔记暂时还没有正文内容，点击下方按钮开始补充。</text>
+        </view>
+
+        <view class="detail-actionbar" role="toolbar" aria-label="笔记操作">
+          <button
+            class="detail-action {{favorite ? 'action-active' : ''}}"
+            hover-class="nb-tap-btn"
+            bindtap="toggleFavorite"
+            disabled="{{favoriteBusy}}"
+            aria-label="{{favorite ? '取消收藏' : '收藏笔记'}}"
+          >
+            <nb-icon name="star" tone="{{favorite ? 'primary' : 'default'}}" size="{{36}}" />
+            <text>{{favorite ? '已收藏' : '收藏'}}</text>
+          </button>
+          <button
+            wx:if="{{!encrypted}}"
+            class="detail-action"
+            hover-class="nb-tap-btn"
+            open-type="share"
+            aria-label="分享笔记"
+          >
+            <nb-icon name="share" size="{{36}}" />
+            <text>分享</text>
+          </button>
+          <button
+            class="detail-action detail-primary"
+            hover-class="nb-tap-btn"
+            bindtap="editNote"
+          >
+            <nb-icon name="edit" tone="white" size="{{36}}" />
+            <text>编辑笔记</text>
+          </button>
+        </view>
       </block>
     </block>
   </block>
-  <view wx:else class="login-card"><view class="login-art"><template is="note-art" data="{{variant: 'md'}}" /></view><text class="state-title">登录后查看笔记</text><text class="muted">笔记跟随账号保存，换设备也能继续写。</text><button class="primary-button" bindtap="openLogin">微信快捷登录</button></view>
-  <view wx:if="{{showUnlockSheet}}" class="sheet-mask" catchtouchmove="noop" bindtap="closeUnlockSheet"><view class="unlock-sheet" catchtap="noop"><view class="grabber"></view><button class="sheet-close icon-button" bindtap="closeUnlockSheet" aria-label="关闭"><nb-icon name="close" /></button><view class="unlock-badge"><nb-icon name="lock" tone="primary" size="{{52}}" /></view><text class="sheet-title">解锁加密笔记</text><text class="sheet-caption">输入账号统一的笔记密码</text><text class="field-label">笔记密码</text><view class="password-field {{unlockError ? 'input-error' : ''}}"><input password="{{!passwordVisible}}" value="{{unlockPassword}}" maxlength="32" focus="{{showUnlockSheet}}" placeholder="请输入笔记密码" bindinput="onUnlockInput" confirm-type="done" bindconfirm="submitUnlock" adjust-position="{{true}}" /><button class="password-toggle" bindtap="togglePasswordVisible">{{passwordVisible ? '隐藏' : '显示'}}</button></view><text wx:if="{{unlockError}}" class="field-error">{{unlockError}}</text><button class="primary-button" bindtap="submitUnlock" disabled="{{unlockBusy}}">{{unlockBusy ? '正在解锁…' : '解锁查看'}}</button><button class="text-button" bindtap="forgotPassword">忘记密码？</button><text class="sheet-caption">解锁后 30 分钟内可访问加密笔记</text></view></view>
-  <view wx:if="{{showMoreSheet}}" class="sheet-mask" bindtap="closeMore" catchtouchmove="noop"><view class="more-sheet" catchtap="noop"><view class="grabber"></view><text class="more-title">更多操作</text><button wx:if="{{!locked}}" class="menu-row" bindtap="togglePinned"><nb-icon name="pin" /><text class="menu-label">{{pinned ? '取消置顶' : '置顶笔记'}}</text><text wx:if="{{pinned}}" class="menu-status">已置顶</text></button><button wx:if="{{!locked}}" class="menu-row" bindtap="editEncryption"><nb-icon name="lock" /><text class="menu-label">{{encrypted ? '管理这条笔记的加密' : '加密这条笔记'}}</text><nb-icon name="chevron" size="{{32}}" /></button><button class="menu-row danger" bindtap="deleteFromSheet"><nb-icon name="trash" tone="coral" /><text class="menu-label">删除笔记</text></button><button class="cancel-button" bindtap="closeMore">取消</button></view></view>
+
+  <view wx:else class="login-card">
+    <view class="login-art"><template is="note-art" data="{{variant: 'md'}}" /></view>
+    <text class="state-title">登录后查看笔记</text>
+    <text class="muted">笔记跟随账号保存，换设备也能继续写。</text>
+    <button class="primary-button" hover-class="nb-tap-btn" bindtap="openLogin">微信快捷登录</button>
+  </view>
+
+  <view wx:if="{{showUnlockSheet}}" class="sheet-mask" catchtouchmove="noop" bindtap="closeUnlockSheet">
+    <view class="unlock-sheet" catchtap="noop">
+      <view class="grabber"></view>
+      <button class="sheet-close icon-button" hover-class="nb-tap-btn" bindtap="closeUnlockSheet" aria-label="关闭"><nb-icon name="close" size="{{32}}" /></button>
+      <view class="unlock-badge"><nb-icon name="lock" tone="primary" size="{{50}}" /></view>
+      <text class="sheet-title">解锁加密笔记</text>
+      <text class="sheet-caption">输入账号统一的笔记密码</text>
+      <text class="field-label">笔记密码</text>
+      <view class="password-field {{unlockError ? 'input-error' : ''}}">
+        <input password="{{!passwordVisible}}" value="{{unlockPassword}}" maxlength="32" focus="{{showUnlockSheet}}" placeholder="请输入笔记密码" bindinput="onUnlockInput" confirm-type="done" bindconfirm="submitUnlock" adjust-position="{{true}}" />
+        <button class="password-toggle" bindtap="togglePasswordVisible">{{passwordVisible ? '隐藏' : '显示'}}</button>
+      </view>
+      <text wx:if="{{unlockError}}" class="field-error">{{unlockError}}</text>
+      <button class="primary-button" hover-class="nb-tap-btn" bindtap="submitUnlock" disabled="{{unlockBusy}}">{{unlockBusy ? '正在解锁…' : '解锁查看'}}</button>
+      <button class="text-button" bindtap="forgotPassword">忘记密码？</button>
+      <text class="sheet-caption">解锁后 30 分钟内可访问加密笔记</text>
+    </view>
+  </view>
+
+  <view wx:if="{{showMoreSheet}}" class="sheet-mask" bindtap="closeMore" catchtouchmove="noop">
+    <view class="more-sheet" catchtap="noop">
+      <view class="grabber"></view>
+      <text class="more-title">更多操作</text>
+      <view class="more-group">
+        <button wx:if="{{!locked}}" class="menu-row" hover-class="nb-tap-row" bindtap="togglePinned">
+          <nb-icon name="pin" tone="{{pinned ? 'coral' : 'default'}}" size="{{38}}" />
+          <text class="menu-label">{{pinned ? '取消置顶' : '置顶笔记'}}</text>
+          <text wx:if="{{pinned}}" class="menu-status">已置顶</text>
+        </button>
+        <button wx:if="{{!locked}}" class="menu-row" hover-class="nb-tap-row" bindtap="copyNoteText">
+          <nb-icon name="document" size="{{38}}" />
+          <text class="menu-label">复制文字内容</text>
+        </button>
+        <button wx:if="{{!locked}}" class="menu-row" hover-class="nb-tap-row" bindtap="editEncryption">
+          <nb-icon name="lock" tone="{{encrypted ? 'primary' : 'default'}}" size="{{38}}" />
+          <text class="menu-label">{{encrypted ? '管理这条笔记的加密' : '加密这条笔记'}}</text>
+          <nb-icon name="chevron" size="{{28}}" />
+        </button>
+        <button class="menu-row danger" hover-class="nb-tap-row" bindtap="deleteFromSheet">
+          <nb-icon name="trash" tone="coral" size="{{38}}" />
+          <text class="menu-label">删除笔记</text>
+        </button>
+      </view>
+      <button class="cancel-button" hover-class="nb-tap-btn" bindtap="closeMore">取消</button>
+    </view>
+  </view>
 </view>

@@ -25,9 +25,11 @@ Page({
     books: [],
     filters: [{ id: "all", name: "全部", count: 0 }],
     activeBookId: "all",
+    sortMode: "updated",
     pinnedNotes: [],
     recentNotes: [],
     noteCount: 0,
+    totalCount: 0,
     hasNotes: false,
     hasSecurityPassword: false,
     encryptedNoteCount: 0,
@@ -82,8 +84,8 @@ Page({
     this._generation = (this._generation || 0) + 1;
     this.updateView({
       books: [], filters: [{ id: "all", name: "全部", count: 0 }],
-      activeBookId: "all", pinnedNotes: [], recentNotes: [],
-      noteCount: 0, hasNotes: false, loading: false, error: "",
+      activeBookId: "all", sortMode: "updated", pinnedNotes: [], recentNotes: [],
+      noteCount: 0, totalCount: 0, hasNotes: false, loading: false, error: "",
       hasSecurityPassword: false, encryptedNoteCount: 0, securityUnlocked: false,
       showSecuritySheet: false, securityBusy: false, securityMode: "summary",
       securityPassword: "", securityNewPassword: "", securityConfirmPassword: "", securityError: "",
@@ -100,10 +102,17 @@ Page({
 
   filteredState(notes, activeBookId) {
     const filtered = activeBookId === "all" ? notes : notes.filter(note => note.bookId === activeBookId);
+    const sortMode = this.data.sortMode || "updated";
+    const sortList = list => (
+      sortMode === "title"
+        ? [...list].sort((a, b) => String(a.displayTitle || a.title || "").localeCompare(String(b.displayTitle || b.title || ""), "zh-CN"))
+        : list
+    );
     return {
-      pinnedNotes: filtered.filter(note => note.pinned),
-      recentNotes: filtered.filter(note => !note.pinned),
+      pinnedNotes: sortList(filtered.filter(note => note.pinned)),
+      recentNotes: sortList(filtered.filter(note => !note.pinned)),
       noteCount: filtered.length,
+      totalCount: notes.length,
       hasNotes: filtered.length > 0,
     };
   },
@@ -164,6 +173,15 @@ Page({
     if (!id || id === this.data.activeBookId) return;
     this.setData({ activeBookId: id });
     this.applyFilter();
+  },
+
+  toggleSortMode() {
+    const next = this.data.sortMode === "title" ? "updated" : "title";
+    this.setData({ sortMode: next });
+    this.applyFilter();
+    if (typeof wx.showToast === "function") {
+      wx.showToast({ title: next === "title" ? "已按标题排序" : "已按更新时间排序", icon: "none", duration: 1000 });
+    }
   },
 
   openLogin() {
