@@ -65,23 +65,30 @@ function buildQuickStats(modules, summary) {
 }
 
 adminPage({
+  rememberView: true,
   data: { modules: [], quickStats: [], owner: false, userId: "", displayName: "" },
   async load({ api, active, session }) {
     const allowed = MODULES.filter((module) => (module.owner ? session.owner : hasPermission(session, module.permission)));
-    const summaryResponse = await api("/summary").catch(() => null);
+    const summaryResponse = await api("/summary").catch(error => {
+      if (error.statusCode === 401 || error.statusCode === 403) throw error;
+      return null;
+    });
     if (!active()) return;
-    const summary = summaryResponse && summaryResponse.summary ? summaryResponse.summary : null;
+    const summary = summaryResponse?.summary;
+    const previousModules = this.data.modules;
     const modules = allowed.map((module) => ({
       ...module,
-      ...buildModuleBadge(module.id, summary),
+      ...(summary ? buildModuleBadge(module.id, summary) : previousModules.find(item => item.id === module.id)),
     }));
-    this.setData({
+    const view = {
       modules,
-      quickStats: buildQuickStats(modules, summary),
+      quickStats: summary ? buildQuickStats(modules, summary)
+        : this.data.quickStats.filter(({ id }) => allowed.some(module => module.id === id)),
       owner: session.owner,
       userId: session.userId || "",
       displayName: session.displayName || "",
-    });
+    };
+    if (Object.keys(view).some(key => JSON.stringify(this.data[key]) !== JSON.stringify(view[key]))) this.setData(view);
   },
   openModule(event) {
     if (!this.data.ready) return;

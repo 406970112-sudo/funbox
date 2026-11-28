@@ -165,6 +165,60 @@ test("the workbench entrance follows mini-program grants rather than the web rol
   }
 });
 
+test("returning to the same profile keeps its Workbench entrance during permission refresh", async t => {
+  accessToken = "returning-admin";
+  currentUserError = null;
+  currentUser = { id: "returning-user", displayName: "运营" };
+  const requests = [];
+  wx.request = options => requests.push(options);
+  t.after(() => { delete wx.request; });
+  const page = createPage();
+  const initial = page.loadProfile();
+  await Promise.resolve();
+  requests[0].success({ statusCode: 200, data: { owner: true, permissions: [] } });
+  await initial;
+  assert.equal(page.data.showWorkbench, true);
+
+  const returning = page.loadProfile();
+  assert.equal(page.data.showWorkbench, true);
+  await Promise.resolve();
+  requests[1].fail({ errMsg: "network down" });
+  await returning;
+  assert.equal(page.data.showWorkbench, true);
+
+  const denied = page.loadProfile();
+  await Promise.resolve();
+  requests[2].success({ statusCode: 403, data: { error: "mini_admin_forbidden" } });
+  await denied;
+  assert.equal(page.data.showWorkbench, false);
+});
+
+test("a previous account's late Workbench grant cannot show the entrance after an account switch", async t => {
+  accessToken = "first-admin-token";
+  currentUserError = null;
+  currentUser = { id: "first-user" };
+  const requests = [];
+  wx.request = options => requests.push(options);
+  t.after(() => { delete wx.request; });
+  const page = createPage();
+  const first = page.loadProfile();
+  await Promise.resolve();
+  requests[0].success({ statusCode: 200, data: { owner: true, permissions: [] } });
+  await first;
+  const oldRefresh = page.loadProfile();
+  await Promise.resolve();
+
+  accessToken = "second-account-token";
+  currentUser = { id: "second-user" };
+  const second = page.loadProfile();
+  assert.equal(page.data.showWorkbench, false);
+  await Promise.resolve();
+  requests[2].success({ statusCode: 200, data: { owner: false, permissions: [] } });
+  requests[1].success({ statusCode: 200, data: { owner: true, permissions: [] } });
+  await Promise.all([second, oldRefresh]);
+  assert.equal(page.data.showWorkbench, false);
+});
+
 test("expired profile sessions clear local state", async () => {
   accessToken = "expired-token";
   currentUserError = Object.assign(new Error("unauthorized"), { statusCode: 401 });

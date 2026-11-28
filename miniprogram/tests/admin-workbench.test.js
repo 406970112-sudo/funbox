@@ -40,10 +40,13 @@ function createPage(name, options = {}) {
   const file = require.resolve(`../packages/admin/${name}/index.js`);
   delete require.cache[file];
   require(file);
-  const page = { ...definition, data: { ...definition.data }, setData(patch) { Object.assign(this.data, patch); } };
-  Object.defineProperty(page, "route", { value: "packages/admin/" + name + "/index" });
-  page.onLoad(options);
-  return page;
+  const mount = () => {
+    const page = { ...definition, data: { ...definition.data }, setData(patch) { Object.assign(this.data, patch); } };
+    Object.defineProperties(page, { route: { value: "packages/admin/" + name + "/index" }, remount: { value: mount } });
+    page.onLoad(options);
+    return page;
+  };
+  return mount();
 }
 
 function event(dataset = {}, detail = {}) {
@@ -199,6 +202,59 @@ test("workbench surfaces summary KPIs and badges and preserves view on silent re
   await page.onShow();
   assert.equal(clearedReady, false);
   assert.equal(env.requests.filter((r) => r.route === "GET /mini-admin/summary").length, 2);
+});
+
+test("reopening workbench restores the same account's view while rechecking permissions", async () => {
+  let hasAccess = true;
+  const env = harness({
+    "GET /mini-admin/session": () => ({ owner: hasAccess, permissions: [], userId: accountId }),
+    "GET /mini-admin/summary": { summary: { pendingFeedback: 3 } },
+  });
+  const first = createPage("workbench");
+  await first.onShow();
+  first.onUnload();
+
+  const reopened = first.remount();
+  const refresh = reopened.onShow();
+  assert.equal(reopened.data.ready, true);
+  assert.equal(reopened.data.loading, false);
+  assert.equal(reopened.data.quickStats[0].value, 3);
+  await refresh;
+  assert.equal(env.requests.filter(({ route }) => route === "GET /mini-admin/session").length, 2);
+
+  hasAccess = false;
+  await reopened.onShow();
+  assert.equal(reopened.data.denied, true);
+  const denied = reopened.remount();
+  assert.equal(denied.data.ready, false);
+  assert.deepEqual(denied.data.quickStats, []);
+  await denied.onShow();
+
+  hasAccess = true;
+  await reopened.onShow();
+  env.setToken("different-account");
+  const different = reopened.remount();
+  assert.equal(different.data.ready, false);
+  assert.deepEqual(different.data.quickStats, []);
+});
+
+test("a transient summary failure keeps KPIs but removes modules with revoked grants", async () => {
+  let permissions = ["feedback.manage", "features.manage"];
+  let summaryAvailable = true;
+  harness({
+    "GET /mini-admin/session": () => ({ owner: false, permissions }),
+    "GET /mini-admin/summary": () => {
+      if (!summaryAvailable) throw new Error("network down");
+      return { summary: { pendingFeedback: 3, featuresTotal: 10 } };
+    },
+  });
+  const page = createPage("workbench");
+  await page.onShow();
+  permissions = ["feedback.manage"];
+  summaryAvailable = false;
+  await page.onShow();
+  assert.deepEqual(page.data.modules.map(({ id, badge }) => [id, badge]), [["feedback", "3 条待处理"]]);
+  assert.deepEqual(page.data.quickStats.map(({ id, value }) => [id, value]), [["feedback", 3]]);
 });
 
 test("feedback list defaults to pending and switches filters without re-fetching session", async () => {

@@ -139,104 +139,34 @@
 
 .workbench-icon {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
   width: 72rpx;
   height: 72rpx;
+  overflow: hidden;
   border-radius: 22rpx;
-  color: var(--fb-primary);
-  background: var(--fb-primary-soft);
+  background: linear-gradient(145deg, #f5f8ff, #e5edff);
 }
 
 .workbench-icon--feedback {
-  background: #fff3ea;
-  color: #cf6320;
+  background: linear-gradient(145deg, #fff8f2, #ffecdf);
 }
 
 .workbench-icon--users {
-  background: #eaf7f2;
-  color: #1f8a65;
+  background: linear-gradient(145deg, #f3faf6, #e0f5e9);
 }
 
 .workbench-icon--grants {
-  background: #f2eeff;
-  color: #6b4ce6;
+  background: linear-gradient(145deg, #f8f4ff, #eee6ff);
 }
 
-.workbench-glyph {
-  position: relative;
-  box-sizing: border-box;
-  width: 31rpx;
-  height: 29rpx;
-}
-
-.workbench-glyph--features {
-  height: 17rpx;
-  border-top: 3rpx solid currentColor;
-  border-bottom: 3rpx solid currentColor;
-}
-
-.workbench-glyph--features::before,
-.workbench-glyph--features::after {
+.workbench-icon-art {
   position: absolute;
-  width: 9rpx;
-  height: 9rpx;
-  box-sizing: border-box;
-  border: 2rpx solid currentColor;
-  border-radius: 50%;
-  background: var(--fb-primary-soft);
-  content: "";
+  top: 0;
+  left: 0;
+  width: 144rpx;
+  height: 144rpx;
 }
 
-.workbench-glyph--features::before { top: -6rpx; left: 7rpx; }
-.workbench-glyph--features::after { bottom: -6rpx; right: 5rpx; }
-
-.workbench-glyph--users::before,
-.workbench-glyph--users::after {
-  position: absolute;
-  box-sizing: border-box;
-  border: 3rpx solid currentColor;
-  content: "";
-}
-
-.workbench-glyph--users::before { top: 0; left: 9rpx; height: 13rpx; width: 13rpx; border-radius: 50%; }
-.workbench-glyph--users::after { bottom: 0; left: 3rpx; height: 13rpx; width: 25rpx; border-radius: 99rpx 99rpx 6rpx 6rpx; }
-
-.workbench-glyph--feedback {
-  height: 23rpx;
-  margin-top: -4rpx;
-  border: 3rpx solid currentColor;
-  border-radius: 7rpx;
-}
-
-.workbench-glyph--feedback::after {
-  position: absolute;
-  bottom: -7rpx;
-  left: 5rpx;
-  width: 9rpx;
-  height: 7rpx;
-  border-bottom: 3rpx solid currentColor;
-  border-left: 3rpx solid currentColor;
-  transform: skewY(-36deg);
-  content: "";
-}
-
-.workbench-glyph--grants {
-  width: 27rpx;
-  border: 3rpx solid currentColor;
-  border-radius: 6rpx 6rpx 12rpx 12rpx;
-}
-
-.workbench-glyph--grants::after {
-  position: absolute;
-  top: 5rpx;
-  left: 5rpx;
-  width: 9rpx;
-  height: 5rpx;
-  border-bottom: 3rpx solid currentColor;
-  border-left: 3rpx solid currentColor;
-  transform: rotate(-45deg);
-  content: "";
-}
+.workbench-icon--feedback .workbench-icon-art { left: -72rpx; }
+.workbench-icon--users .workbench-icon-art { top: -72rpx; }
+.workbench-icon--grants .workbench-icon-art { top: -72rpx; left: -72rpx; }

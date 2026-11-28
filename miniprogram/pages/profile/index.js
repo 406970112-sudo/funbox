@@ -65,7 +65,10 @@ Page({
 
   onHide() { this.stopFeatureEntries(); },
 
-  onUnload() { this.stopFeatureEntries(); },
+  onUnload() {
+    this.loadGeneration = (this.loadGeneration || 0) + 1;
+    this.stopFeatureEntries();
+  },
 
   loadFeatureEntries() {
     this.stopFeatureEntries();
@@ -78,6 +81,7 @@ Page({
   },
 
   resetLoggedOut() {
+    this.workbenchToken = "";
     this.setData({
       isLoggedIn: false,
       userError: "",
@@ -111,9 +115,14 @@ Page({
       return;
     }
 
+    if (this.workbenchToken !== token) {
+      this.workbenchToken = token;
+      this.setData({ showWorkbench: false });
+    }
     const cachedUser = getStoredUser();
     if (cachedUser) this.applyUser(cachedUser);
-    this.setData({ userError: "", showWorkbench: false });
+    this.setData({ userError: "" });
+    const workbenchAccess = this.loadWorkbenchAccess(token, generation);
     try {
       const user = await getCurrentUser();
       if (generation !== this.loadGeneration || token !== getAccessToken()) return;
@@ -130,21 +139,22 @@ Page({
         return;
       }
       this.setData({ userError: error.message || "个人信息刷新失败，请稍后重试。" });
-      return;
     }
-    await this.loadWorkbenchAccess(token, generation);
+    await workbenchAccess;
   },
 
   async loadWorkbenchAccess(token, generation) {
+    const isCurrent = () => generation === this.loadGeneration && token === getAccessToken();
     try {
       const session = await request({ path: "/mini-admin/session", bearerToken: token });
-      if (generation !== this.loadGeneration || token !== getAccessToken()) return;
       const showWorkbench = Boolean(session && (
         session.owner === true || (Array.isArray(session.permissions) && session.permissions.length)
       ));
-      this.setData({ showWorkbench });
-    } catch (_) {
-      // Profile remains usable when the workbench endpoint cannot be reached.
+      if (isCurrent() && this.data.showWorkbench !== showWorkbench) this.setData({ showWorkbench });
+    } catch (error) {
+      if (isCurrent() && this.data.showWorkbench && (error.statusCode === 401 || error.statusCode === 403)) {
+        this.setData({ showWorkbench: false });
+      }
     }
   },
 
@@ -201,7 +211,7 @@ Page({
   },
 
   openWorkbench() {
-    if (!getAccessToken() || !this.data.showWorkbench) return;
+    if (!this.data.showWorkbench || this.workbenchToken !== getAccessToken()) return;
     wx.navigateTo({ url: "/packages/admin/workbench/index" });
   },
 

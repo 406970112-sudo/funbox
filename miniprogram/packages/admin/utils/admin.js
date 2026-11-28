@@ -143,13 +143,23 @@ function downloadImage(path, token) {
   });
 }
 
-function adminPage({ required, ownerOnly, load, data, ...page }) {
+function adminPage({ required, ownerOnly, load, data, rememberView, ...page }) {
   const initial = { ready: false, denied: false, loading: true, refreshing: false, busy: false, error: "", ...data };
+  let previousView;
   Page({
     ...page,
     data: initial,
     onLoad(options) {
       this.pageOptions = options || {};
+      if (!previousView) return;
+      const token = getAccessToken();
+      if (token !== previousView.token) {
+        previousView = undefined;
+        return;
+      }
+      this.token = token;
+      this.session = previousView.session;
+      this.setData({ ...previousView.data, ready: true, loading: false });
     },
     onShow() {
       return this.refresh({ silent: Boolean(this.data.ready) });
@@ -177,6 +187,8 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
     },
     block(error) {
       this.revision += 1;
+      if (previousView?.token === this.token) previousView = undefined;
+      this.session = null;
       this.setData({ ...initial, denied: true, loading: false, refreshing: false, error });
     },
     async refresh(options = {}) {
@@ -188,7 +200,10 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
       }
       const sameAccount = this.token === token;
       const keepVisible = Boolean(options.silent && sameAccount && this.data.ready);
-      if (!sameAccount) this.setData(initial);
+      if (!sameAccount) {
+        previousView = undefined;
+        this.setData(initial);
+      }
       this.token = token;
       if (keepVisible) {
         this.setData({ denied: false, refreshing: true, error: "" });
@@ -212,7 +227,13 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
         }
         this.session = session;
         await load.call(this, { ...context, session });
-        if (context.active()) this.setData({ ready: true, loading: false, refreshing: false });
+        if (context.active()) {
+          this.setData({ ready: true, loading: false, refreshing: false });
+          if (rememberView) {
+            const view = Object.fromEntries(Object.keys(data).map(key => [key, this.data[key]]));
+            previousView = { token, session, data: view };
+          }
+        }
       } catch (error) {
         if (!context.active()) return;
         if (error.statusCode === 401 || error.statusCode === 403) {

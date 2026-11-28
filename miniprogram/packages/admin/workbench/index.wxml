@@ -48,7 +48,7 @@
         aria-label="{{item.title}}"
       >
         <view class="workbench-icon workbench-icon--{{item.id}}" aria-hidden="true">
-          <view class="workbench-glyph workbench-glyph--{{item.id}}"></view>
+          <image class="workbench-icon-art" src="/packages/admin/workbench/icons.png" mode="scaleToFill" />
         </view>
         <view class="admin-grow">
           <text class="admin-item-title">{{item.title}}</text>
