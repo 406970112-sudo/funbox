@@ -5,10 +5,10 @@
     <view class="fb-card workbench-hero">
       <view class="admin-split">
         <view class="workbench-head-copy">
-          <text class="fb-brand">FUNBOX ADMIN</text>
+          <text class="admin-eyebrow">FUNBOX ADMIN</text>
           <text class="workbench-title">小程序工作台</text>
         </view>
-        <text class="workbench-role {{owner ? 'workbench-role--owner' : ''}}">{{owner ? '负责人' : '运营人员'}}</text>
+        <view class="workbench-role {{owner ? 'workbench-role--owner' : ''}}">{{owner ? '负责人' : '运营人员'}}</view>
       </view>
 
       <view wx:if="{{quickStats.length}}" class="workbench-kpi-grid">
@@ -30,9 +30,12 @@
         <view wx:if="{{userId}}" class="workbench-id-copy" bindtap="copyMyId" hover-class="fb-tap-btn" role="button">
           <text class="workbench-id-label">我的 FunBox ID</text>
           <text class="workbench-id-code">{{userId}}</text>
-          <text class="workbench-id-action">复制</text>
+          <view class="workbench-id-action">复制</view>
         </view>
-        <button wx:else class="workbench-account" hover-class="fb-tap-btn" bindtap="openProfileSettings">我的 FunBox ID <text aria-hidden="true">›</text></button>
+        <view wx:else class="workbench-account" hover-class="fb-tap-btn" bindtap="openProfileSettings" role="button">
+          <text>查看我的 FunBox ID</text>
+          <view class="admin-chevron admin-chevron--primary" aria-hidden="true"></view>
+        </view>
       </view>
     </view>
 
@@ -48,14 +51,14 @@
         aria-label="{{item.title}}"
       >
         <view class="workbench-icon workbench-icon--{{item.id}}" aria-hidden="true">
-          <image class="workbench-icon-art" src="/packages/admin/workbench/icons.png" mode="scaleToFill" />
+          <view class="workbench-glyph workbench-glyph--{{item.id}}"></view>
         </view>
         <view class="admin-grow">
           <text class="admin-item-title">{{item.title}}</text>
           <text class="admin-meta">{{item.description}}</text>
         </view>
-        <text wx:if="{{item.badge}}" class="admin-pill admin-pill--{{item.badgeTone}}">{{item.badge}}</text>
-        <text class="fb-arrow" aria-hidden="true">›</text>
+        <view wx:if="{{item.badge}}" class="admin-pill admin-pill--{{item.badgeTone}}">{{item.badge}}</view>
+        <view class="admin-chevron" aria-hidden="true"></view>
       </view>
     </view>
   </block>

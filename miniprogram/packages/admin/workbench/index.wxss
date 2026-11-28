@@ -2,7 +2,7 @@
 
 .workbench-hero {
   margin-bottom: 22rpx;
-  padding: 28rpx 26rpx 22rpx;
+  padding: 26rpx 26rpx 20rpx;
   border-color: #dce7ff;
   background: linear-gradient(145deg, #ffffff 0%, #f4f8ff 54%, #e7efff 100%);
   box-shadow: 0 12rpx 32rpx rgba(45, 91, 255, .07);
@@ -16,20 +16,26 @@
 
 .workbench-title {
   color: var(--fb-ink);
-  font-size: 42rpx;
-  font-weight: 900;
+  font-size: 40rpx;
+  font-weight: 850;
   line-height: 1.2;
-  letter-spacing: -0.8rpx;
+  letter-spacing: -0.6rpx;
 }
 
 .workbench-role {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  padding: 6rpx 16rpx;
+  height: 44rpx;
+  padding: 0 16rpx;
   border-radius: 999rpx;
   background: #edf2fb;
   color: var(--fb-ink-secondary);
-  font-size: 22rpx;
-  font-weight: 800;
+  font-size: 21rpx;
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .workbench-role--owner {
@@ -40,7 +46,7 @@
 .workbench-kpi-grid {
   display: flex;
   gap: 12rpx;
-  margin-top: 22rpx;
+  margin-top: 20rpx;
 }
 
 .workbench-kpi {
@@ -49,7 +55,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4rpx;
+  gap: 6rpx;
   padding: 16rpx 18rpx;
   border-radius: 20rpx;
   border: 1rpx solid rgba(255, 255, 255, .85);
@@ -58,8 +64,8 @@
 
 .workbench-kpi-val {
   color: var(--fb-ink);
-  font-size: 36rpx;
-  font-weight: 900;
+  font-size: 34rpx;
+  font-weight: 850;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
@@ -76,6 +82,7 @@
   color: var(--fb-muted);
   font-size: 21rpx;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .workbench-id-bar {
@@ -87,8 +94,8 @@
 .workbench-id-copy {
   display: flex;
   align-items: center;
-  gap: 10rpx;
-  min-height: 54rpx;
+  gap: 12rpx;
+  min-height: 48rpx;
 }
 
 .workbench-id-label {
@@ -110,27 +117,29 @@
 }
 
 .workbench-id-action {
-  padding: 4rpx 14rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42rpx;
+  padding: 0 16rpx;
   border-radius: 999rpx;
   background: #e2ebff;
   color: var(--fb-primary);
   font-size: 21rpx;
   font-weight: 700;
+  line-height: 1;
   flex-shrink: 0;
 }
 
 .workbench-account {
   display: inline-flex;
   align-items: center;
-  gap: 6rpx;
-  min-height: 54rpx;
-  margin: 0;
-  padding: 0;
-  background: transparent;
+  gap: 10rpx;
+  height: 48rpx;
   color: var(--fb-primary);
   font-size: 24rpx;
   font-weight: 750;
-  line-height: 1.5;
+  line-height: 1;
 }
 
 .workbench-featured {
@@ -139,34 +148,104 @@
 
 .workbench-icon {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 72rpx;
-  height: 72rpx;
-  overflow: hidden;
-  border-radius: 22rpx;
-  background: linear-gradient(145deg, #f5f8ff, #e5edff);
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 20rpx;
+  color: var(--fb-primary);
+  background: var(--fb-primary-soft);
 }
 
 .workbench-icon--feedback {
-  background: linear-gradient(145deg, #fff8f2, #ffecdf);
+  background: #fff3ea;
+  color: #cf6320;
 }
 
 .workbench-icon--users {
-  background: linear-gradient(145deg, #f3faf6, #e0f5e9);
+  background: #eaf7f2;
+  color: #1f8a65;
 }
 
 .workbench-icon--grants {
-  background: linear-gradient(145deg, #f8f4ff, #eee6ff);
+  background: #f2eeff;
+  color: #6b4ce6;
 }
 
-.workbench-icon-art {
+.workbench-glyph {
+  position: relative;
+  box-sizing: border-box;
+  width: 31rpx;
+  height: 29rpx;
+}
+
+.workbench-glyph--features {
+  height: 17rpx;
+  border-top: 3rpx solid currentColor;
+  border-bottom: 3rpx solid currentColor;
+}
+
+.workbench-glyph--features::before,
+.workbench-glyph--features::after {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 144rpx;
-  height: 144rpx;
+  width: 9rpx;
+  height: 9rpx;
+  box-sizing: border-box;
+  border: 2rpx solid currentColor;
+  border-radius: 50%;
+  background: var(--fb-primary-soft);
+  content: "";
 }
 
-.workbench-icon--feedback .workbench-icon-art { left: -72rpx; }
-.workbench-icon--users .workbench-icon-art { top: -72rpx; }
-.workbench-icon--grants .workbench-icon-art { top: -72rpx; left: -72rpx; }
+.workbench-glyph--features::before { top: -6rpx; left: 7rpx; }
+.workbench-glyph--features::after { bottom: -6rpx; right: 5rpx; }
+
+.workbench-glyph--users::before,
+.workbench-glyph--users::after {
+  position: absolute;
+  box-sizing: border-box;
+  border: 3rpx solid currentColor;
+  content: "";
+}
+
+.workbench-glyph--users::before { top: 0; left: 9rpx; height: 13rpx; width: 13rpx; border-radius: 50%; }
+.workbench-glyph--users::after { bottom: 0; left: 3rpx; height: 13rpx; width: 25rpx; border-radius: 99rpx 99rpx 6rpx 6rpx; }
+
+.workbench-glyph--feedback {
+  height: 23rpx;
+  margin-top: -4rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 7rpx;
+}
+
+.workbench-glyph--feedback::after {
+  position: absolute;
+  bottom: -7rpx;
+  left: 5rpx;
+  width: 9rpx;
+  height: 7rpx;
+  border-bottom: 3rpx solid currentColor;
+  border-left: 3rpx solid currentColor;
+  transform: skewY(-36deg);
+  content: "";
+}
+
+.workbench-glyph--grants {
+  width: 27rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 6rpx 6rpx 12rpx 12rpx;
+}
+
+.workbench-glyph--grants::after {
+  position: absolute;
+  top: 5rpx;
+  left: 5rpx;
+  width: 9rpx;
+  height: 5rpx;
+  border-bottom: 3rpx solid currentColor;
+  border-left: 3rpx solid currentColor;
+  transform: rotate(-45deg);
+  content: "";
+}

@@ -5,21 +5,24 @@
     <view class="fb-card admin-panel admin-stack">
       <view class="admin-row user-identity">
         <image wx:if="{{user.avatar}}" class="admin-avatar" src="{{user.avatar}}" mode="aspectFill" />
-        <text wx:else class="admin-avatar">{{user.avatarMark}}</text>
+        <view wx:else class="admin-avatar">{{user.avatarMark}}</view>
         <view class="admin-grow">
           <text class="admin-item-title">{{user.displayName}}</text>
           <text class="admin-meta">{{user.accountLabel}}<text wx:if="{{user.registration}}"> · 注册于 {{user.registration}}</text></text>
         </view>
-        <text class="admin-pill admin-pill--{{user.roleTone}}">{{user.roleLabel}}</text>
+        <view class="admin-pill admin-pill--{{user.roleTone}}">{{user.roleLabel}}</view>
       </view>
       <view class="user-id-box">
         <view class="admin-grow">
           <text class="user-id-label">FunBox ID</text>
           <text class="admin-code" user-select>{{user.id}}</text>
         </view>
-        <button class="admin-link" hover-class="fb-tap-btn" bindtap="copyId">复制</button>
+        <view class="admin-link" hover-class="fb-tap-btn" bindtap="copyId" role="button">复制</view>
       </view>
-      <button wx:if="{{canManageGrants}}" class="admin-secondary user-grant-btn" hover-class="fb-tap-btn" bindtap="openGrants">去配置此账号的小程序管理权限 ›</button>
+      <view wx:if="{{canManageGrants}}" class="admin-secondary user-grant-btn" hover-class="fb-tap-btn" bindtap="openGrants" role="button">
+        <text>去配置此账号的小程序管理权限</text>
+        <view class="admin-chevron admin-chevron--primary" aria-hidden="true"></view>
+      </view>
     </view>
 
     <view wx:if="{{canEdit}}" class="fb-card admin-panel admin-stack">

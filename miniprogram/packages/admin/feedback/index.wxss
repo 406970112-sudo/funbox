@@ -9,7 +9,7 @@
 
 .feedback-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12rpx;
 }
@@ -43,11 +43,16 @@
 }
 
 .feedback-img-tag {
-  padding: 3rpx 12rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36rpx;
+  padding: 0 12rpx;
   border-radius: 999rpx;
   background: #eaf1ff;
   color: var(--fb-primary);
   font-size: 20rpx;
   font-weight: 700;
+  line-height: 1;
   flex-shrink: 0;
 }

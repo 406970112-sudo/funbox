@@ -6,7 +6,7 @@
       <view class="fb-card admin-panel">
         <view class="admin-split">
           <text class="feature-hero-title">{{feature.name}}</text>
-          <text class="admin-pill admin-pill--{{feature.tone}}">{{feature.statusLabel}}</text>
+          <view class="admin-pill admin-pill--{{feature.tone}}">{{feature.statusLabel}}</view>
         </view>
         <text class="admin-meta">支持位置：{{feature.placementLabel}}</text>
         <text class="admin-meta">当前开放：{{feature.audienceLabel}} · 版本 #{{feature.revision}}</text>
@@ -18,7 +18,7 @@
             <text class="admin-item-title">展示功能入口</text>
             <text class="admin-meta">关闭后将在小程序各位置隐藏入口，业务数据会保留</text>
           </view>
-          <switch aria-label="展示功能入口" color="#2d5bff" checked="{{draft.enabled}}" disabled="{{busy}}" bindchange="changeEnabled" />
+          <switch class="admin-switch" aria-label="展示功能入口" color="#2d5bff" checked="{{draft.enabled}}" disabled="{{busy}}" bindchange="changeEnabled" />
         </view>
 
         <view wx:if="{{!draft.enabled}}" class="feature-disabled-tip">入口当前已关闭，以下展示位置与人群配置会在重新开启后生效。</view>
@@ -39,7 +39,8 @@
               role="checkbox"
               aria-checked="{{item.checked}}"
             >
-              <text>{{item.checked ? '✓ ' : ''}}{{item.name}}</text>
+              <view wx:if="{{item.checked}}" class="admin-tick" aria-hidden="true"></view>
+              <text>{{item.name}}</text>
             </view>
           </view>
         </view>
@@ -49,7 +50,7 @@
             <text class="admin-item-title">仅登录后展示</text>
             <text class="admin-meta">开启后，游客看不到此功能入口</text>
           </view>
-          <switch aria-label="仅登录后展示" color="#2d5bff" checked="{{draft.audience !== 'all'}}" disabled="{{busy}}" bindchange="changeRequireLogin" />
+          <switch class="admin-switch" aria-label="仅登录后展示" color="#2d5bff" checked="{{draft.audience !== 'all'}}" disabled="{{busy}}" bindchange="changeRequireLogin" />
         </view>
 
         <view wx:if="{{draft.audience !== 'all'}}" class="admin-field {{draft.enabled ? '' : 'admin-field--dimmed'}}">
@@ -73,7 +74,7 @@
             <text class="admin-item-title">维护停用</text>
             <text class="admin-meta">{{feature.id === 'mahjong' || feature.id === 'poker' || feature.id === 'general' ? '暂停创建新牌局，进行中的牌局可继续' : '打开此功能时提示维护中'}}</text>
           </view>
-          <switch aria-label="维护停用" color="#2d5bff" checked="{{draft.maintenance}}" disabled="{{busy}}" bindchange="changeMaintenance" />
+          <switch class="admin-switch" aria-label="维护停用" color="#2d5bff" checked="{{draft.maintenance}}" disabled="{{busy}}" bindchange="changeMaintenance" />
         </view>
       </view>
     </view>

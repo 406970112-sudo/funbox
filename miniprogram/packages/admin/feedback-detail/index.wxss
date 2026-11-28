@@ -4,7 +4,7 @@
   flex: 1;
   min-width: 0;
   color: var(--fb-ink);
-  font-size: 34rpx;
+  font-size: 32rpx;
   font-weight: 850;
   line-height: 1.35;
 }
@@ -31,14 +31,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 72rpx;
-  padding: 0 24rpx;
-  margin: 0;
-  border-radius: 18rpx;
+  height: 60rpx;
+  padding: 0 22rpx;
+  border-radius: 16rpx;
   background: #eaf1ff;
   color: var(--fb-primary);
-  font-size: 24rpx;
+  font-size: 23rpx;
   font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .reply-counter {
@@ -58,9 +59,11 @@
 }
 
 .reply-actions .admin-secondary {
+  width: auto;
   flex: 0.9;
 }
 
 .reply-actions .admin-primary {
+  width: auto;
   flex: 1.4;
 }

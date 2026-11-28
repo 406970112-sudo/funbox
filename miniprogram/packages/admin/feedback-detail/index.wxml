@@ -5,32 +5,33 @@
     <view class="fb-card admin-panel admin-stack">
       <view class="admin-split">
         <text class="detail-hero-title">{{item.title || '用户反馈'}}</text>
-        <text class="admin-pill admin-pill--{{item.status}}">{{item.statusLabel}}</text>
+        <view class="admin-pill admin-pill--{{item.status}}">{{item.statusLabel}}</view>
       </view>
       <view class="admin-split">
         <view class="admin-grow">
           <text class="admin-muted">{{item.user.displayName || '用户'}}</text>
           <text class="admin-meta">{{item.timestamp}}</text>
         </view>
-        <button wx:if="{{showUser}}" class="admin-link" hover-class="fb-tap-btn" bindtap="openUser">查看账号 ›</button>
+        <view wx:if="{{showUser}}" class="admin-link" hover-class="fb-tap-btn" bindtap="openUser" role="button">
+          <text>查看账号</text>
+          <view class="admin-chevron admin-chevron--primary" aria-hidden="true"></view>
+        </view>
       </view>
       <view class="detail-body-box">
         <text class="admin-copy" selectable user-select>{{item.description}}</text>
       </view>
       <view wx:if="{{item.images.length}}" class="admin-attachments">
-        <view class="attachments-head">
-          <text class="admin-meta">反馈截图（{{item.images.length}} 张，点击可滑动连看）</text>
-        </view>
+        <text class="admin-meta">反馈截图（{{item.images.length}} 张，点击可滑动连看）</text>
         <view class="attachments-grid">
-          <button
+          <view
             wx:for="{{item.images}}"
             wx:key="id"
-            class="attachment-btn"
+            class="attachment-btn {{busy ? 'admin-link--disabled' : ''}}"
             hover-class="fb-tap-btn"
             data-index="{{index}}"
-            disabled="{{busy}}"
             bindtap="openImage"
-          >查看截图 {{item.images.length > 1 ? index + 1 : ''}}</button>
+            role="button"
+          >查看截图 {{item.images.length > 1 ? index + 1 : ''}}</view>
         </view>
       </view>
     </view>

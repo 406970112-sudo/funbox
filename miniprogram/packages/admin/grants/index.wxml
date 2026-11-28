@@ -2,29 +2,29 @@
 <view class="admin-page">
   <view class="admin-page-head">
     <text class="admin-heading">管理员授权</text>
-    <text wx:if="{{ready}}" class="admin-count-pill">{{grantsTotal}} 位管理员</text>
+    <view wx:if="{{ready}}" class="admin-count-pill">{{grantsTotal}} 位管理员</view>
   </view>
   <template is="admin-state" data="{{loading, ready, denied, error}}" />
   <view wx:if="{{ready}}" class="admin-stack">
     <view class="fb-card admin-panel admin-stack">
       <view class="admin-split">
         <text class="admin-item-title">按 FunBox ID 授权</text>
-        <button class="admin-link" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="pasteUserId">粘贴 ID</button>
+        <view class="admin-link {{busy ? 'admin-link--disabled' : ''}}" hover-class="fb-tap-btn" bindtap="pasteUserId" role="button">粘贴 ID</view>
       </view>
       <view class="admin-search-row grant-search-row">
         <view class="admin-search-box">
           <input class="admin-search-input" placeholder="输入完整 FunBox ID" placeholder-class="admin-placeholder" value="{{userId}}"
             maxlength="100" disabled="{{busy}}" bindinput="editUserId" bindconfirm="findUser" confirm-type="search" aria-label="FunBox ID" />
-          <view wx:if="{{userId}}" class="admin-search-clear" hover-class="fb-tap-btn" bindtap="clearUserId" role="button" aria-label="清空">×</view>
+          <view wx:if="{{userId}}" class="admin-search-clear" hover-class="fb-tap-btn" bindtap="clearUserId" role="button" aria-label="清空"></view>
         </view>
-        <button class="admin-secondary admin-search-btn" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="findUser">查找</button>
+        <view class="admin-search-btn {{busy ? 'admin-link--disabled' : ''}}" hover-class="fb-tap-btn" bindtap="findUser" role="button">查找</view>
       </view>
 
       <block wx:if="{{target}}">
         <view class="grant-target-box">
           <view class="admin-split">
             <text class="admin-item-title">{{target.displayName}}</text>
-            <text class="admin-pill {{target.owner ? 'admin-pill--primary' : 'admin-pill--muted'}}">{{target.owner ? '负责人' : target.accountLabel}}</text>
+            <view class="admin-pill {{target.owner ? 'admin-pill--primary' : 'admin-pill--muted'}}">{{target.owner ? '负责人' : target.accountLabel}}</view>
           </view>
           <text class="admin-code grant-target-id" user-select>{{target.id}}</text>
 
@@ -40,11 +40,13 @@
               role="checkbox"
               aria-checked="{{item.checked}}"
             >
-              <view class="perm-check {{item.checked ? 'perm-check--on' : ''}}">{{item.checked ? '✓' : ''}}</view>
+              <view class="perm-check {{item.checked ? 'perm-check--on' : ''}}">
+                <view wx:if="{{item.checked}}" class="admin-tick" aria-hidden="true"></view>
+              </view>
               <view class="admin-grow">
                 <view class="perm-title-row">
                   <text class="perm-label">{{item.label}}</text>
-                  <text wx:if="{{item.lockedByDep}}" class="perm-dep-tag">已联动必选</text>
+                  <view wx:if="{{item.lockedByDep}}" class="perm-dep-tag">联动必选</view>
                 </view>
                 <text class="perm-hint">{{item.hint}}</text>
               </view>
@@ -65,13 +67,13 @@
       <view wx:for="{{grants}}" wx:key="id" class="admin-field">
         <view class="admin-split">
           <text class="admin-item-title">{{item.user.displayName}}</text>
-          <text class="admin-pill {{item.owner ? 'admin-pill--primary' : 'admin-pill--svip'}}">{{item.owner ? '负责人' : '运营人员'}}</text>
+          <view class="admin-pill {{item.owner ? 'admin-pill--primary' : 'admin-pill--svip'}}">{{item.owner ? '负责人' : '运营人员'}}</view>
         </view>
         <text class="admin-code grant-row-id" user-select>{{item.user.id}}</text>
         <text class="admin-meta">{{item.labels}}</text>
         <view wx:if="{{!item.owner}}" class="grant-actions">
-          <button class="admin-link" hover-class="fb-tap-btn" data-id="{{item.user.id}}" disabled="{{busy}}" bindtap="editGrant">编辑权限</button>
-          <button class="admin-link admin-link--danger" hover-class="fb-tap-btn" data-id="{{item.user.id}}" disabled="{{busy}}" bindtap="revokeGrant">撤销</button>
+          <view class="admin-link {{busy ? 'admin-link--disabled' : ''}}" hover-class="fb-tap-btn" data-id="{{item.user.id}}" bindtap="editGrant" role="button">编辑权限</view>
+          <view class="admin-link admin-link--danger {{busy ? 'admin-link--disabled' : ''}}" hover-class="fb-tap-btn" data-id="{{item.user.id}}" bindtap="revokeGrant" role="button">撤销</view>
         </view>
       </view>
       <button wx:if="{{grantsOffset < grantsTotal}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" loading="{{busy}}" bindtap="loadMoreGrants">加载更多（{{grants.length}} / {{grantsTotal}}）</button>
@@ -82,7 +84,7 @@
       <view wx:for="{{changes}}" wx:key="key" class="admin-field">
         <view class="admin-split">
           <view class="grant-audit-head">
-            <text class="admin-pill {{item.labels ? 'admin-pill--primary' : 'admin-pill--danger'}}">{{item.labels ? '更新权限' : '撤销权限'}}</text>
+            <view class="admin-pill {{item.labels ? 'admin-pill--primary' : 'admin-pill--danger'}}">{{item.labels ? '更新权限' : '撤销权限'}}</view>
             <text class="admin-item-title">{{item.targetName}}</text>
           </view>
           <text class="admin-meta">{{item.date}}</text>
