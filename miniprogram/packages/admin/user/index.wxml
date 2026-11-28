@@ -6,35 +6,81 @@
       <view class="admin-row user-identity">
         <image wx:if="{{user.avatar}}" class="admin-avatar" src="{{user.avatar}}" mode="aspectFill" />
         <text wx:else class="admin-avatar">{{user.avatarMark}}</text>
-        <view class="admin-grow"><text class="admin-item-title">{{user.displayName}}</text><text class="admin-meta">{{user.accountLabel}}</text></view>
-        <text class="admin-pill">{{user.roleLabel}}</text>
+        <view class="admin-grow">
+          <text class="admin-item-title">{{user.displayName}}</text>
+          <text class="admin-meta">{{user.accountLabel}}<text wx:if="{{user.registration}}"> · 注册于 {{user.registration}}</text></text>
+        </view>
+        <text class="admin-pill admin-pill--{{user.roleTone}}">{{user.roleLabel}}</text>
       </view>
-      <view class="admin-split">
-        <view class="admin-grow"><text class="admin-item-title">FunBox ID</text><text class="admin-code" user-select>{{user.id}}</text></view>
-        <button class="admin-link" hover-class="fb-tap-btn" bindtap="copyId">复制 ID</button>
+      <view class="user-id-box">
+        <view class="admin-grow">
+          <text class="user-id-label">FunBox ID</text>
+          <text class="admin-code" user-select>{{user.id}}</text>
+        </view>
+        <button class="admin-link" hover-class="fb-tap-btn" bindtap="copyId">复制</button>
       </view>
-      <text wx:if="{{user.registration}}" class="admin-meta">注册于 {{user.registration}}</text>
+      <button wx:if="{{canManageGrants}}" class="admin-secondary user-grant-btn" hover-class="fb-tap-btn" bindtap="openGrants">去配置此账号的小程序管理权限 ›</button>
     </view>
+
     <view wx:if="{{canEdit}}" class="fb-card admin-panel admin-stack">
       <text class="admin-item-title">调整会员身份</text>
-      <view class="admin-tabs" role="group" aria-label="会员身份">
-        <button wx:for="{{roles}}" wx:key="id" class="admin-tab {{selectedRole === item.id ? 'admin-tab--active' : ''}}"
-          data-role="{{item.id}}" bindtap="chooseRole" disabled="{{busy}}" aria-pressed="{{selectedRole === item.id}}">{{item.label}}</button>
+      <view class="admin-pill-grid" role="group" aria-label="会员身份">
+        <view
+          wx:for="{{roles}}"
+          wx:key="id"
+          class="admin-choice-pill user-role-pill {{selectedRole === item.id ? 'admin-choice-pill--active' : ''}} {{busy ? 'admin-choice-pill--disabled' : ''}}"
+          hover-class="fb-tap-btn"
+          data-role="{{item.id}}"
+          bindtap="chooseRole"
+          role="radio"
+          aria-checked="{{selectedRole === item.id}}"
+        >{{item.label}}</view>
       </view>
-      <textarea class="admin-textarea" value="{{reason}}" maxlength="-1" placeholder-class="admin-placeholder"
-        placeholder="调整原因（选填，最多 100 字）" disabled="{{busy}}" bindinput="editReason" aria-label="调整原因" />
+
+      <view class="admin-split">
+        <text class="admin-meta">调整原因（选填）</text>
+        <text class="reason-counter {{reasonLength > 100 ? 'reason-counter--warn' : ''}}">{{reasonLength}} / 100</text>
+      </view>
+
+      <view class="admin-quick-row">
+        <view
+          wx:for="{{quickReasons}}"
+          wx:key="*this"
+          class="admin-quick-chip"
+          hover-class="fb-tap-btn"
+          data-text="{{item}}"
+          bindtap="useQuickReason"
+          role="button"
+        >{{item}}</view>
+      </view>
+
+      <textarea
+        class="admin-textarea user-reason-area"
+        value="{{reason}}"
+        maxlength="-1"
+        placeholder-class="admin-placeholder"
+        placeholder="填写调整原因（最多 100 字）"
+        disabled="{{busy}}"
+        bindinput="editReason"
+        aria-label="调整原因"
+      />
+      <text wx:if="{{reasonError}}" class="admin-inline-error">{{reasonError}}</text>
       <button class="admin-primary" hover-class="fb-tap-btn" disabled="{{busy || selectedRole === user.role}}"
-        loading="{{busy}}" bindtap="saveRole">确认调整</button>
+        loading="{{busy}}" bindtap="saveRole">{{selectedRole === user.role ? '身份未变更' : '确认调整会员身份'}}</button>
     </view>
+
     <view class="fb-card admin-panel">
-      <text class="admin-panel-title">身份变更记录</text>
+      <view class="admin-split user-history-head">
+        <text class="admin-panel-title user-history-title">身份变更记录</text>
+        <text wx:if="{{total}}" class="admin-meta">共 {{total}} 条</text>
+      </view>
       <text wx:if="{{!changes.length}}" class="admin-muted">暂无变更记录</text>
       <view wx:for="{{changes}}" wx:key="id" class="admin-field">
-        <view class="admin-split"><text class="admin-item-title">{{item.transition}}</text><text class="admin-muted">{{item.date}}</text></view>
-        <text class="admin-meta">操作人 {{item.operatorDisplayName || item.operatorId}}</text>
-        <text wx:if="{{item.reason}}" class="admin-copy">{{item.reason}}</text>
+        <view class="admin-split"><text class="admin-item-title">{{item.transition}}</text><text class="admin-meta">{{item.date}}</text></view>
+        <text class="admin-meta">操作人：{{item.operatorDisplayName || item.operatorId}}</text>
+        <text wx:if="{{item.reason}}" class="admin-copy user-change-reason">{{item.reason}}</text>
       </view>
-      <button wx:if="{{offset < total}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="loadMore">加载更多</button>
+      <button wx:if="{{offset < total}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" loading="{{busy}}" bindtap="loadMore">加载更多（{{changes.length}} / {{total}}）</button>
     </view>
   </view>
 </view>

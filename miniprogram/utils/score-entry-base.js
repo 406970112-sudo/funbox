@@ -8,7 +8,7 @@ const { watchFeatureEntries, canOpenFeatureEntry } = require("./feature-entries"
 module.exports = {
   data: {
     mode: "create",
-    roomJoinEntry: "visible",
+    roomJoinEntry: "hidden",
     isLoggedIn: false,
     userName: "游客",
     roomName: "老友局",

@@ -1,7 +1,66 @@
 @import "../shared.wxss";
 
+.detail-hero-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--fb-ink);
+  font-size: 34rpx;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.detail-body-box {
+  padding: 20rpx 22rpx;
+  border-radius: 20rpx;
+  background: #f6f8fd;
+}
+
 .admin-attachments {
   display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.attachments-grid {
+  display: flex;
   flex-wrap: wrap;
-  gap: 10rpx;
+  gap: 12rpx;
+}
+
+.attachment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72rpx;
+  padding: 0 24rpx;
+  margin: 0;
+  border-radius: 18rpx;
+  background: #eaf1ff;
+  color: var(--fb-primary);
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.reply-counter {
+  color: var(--fb-subtle);
+  font-size: 22rpx;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reply-counter--warn {
+  color: var(--fb-danger);
+}
+
+.reply-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
+.reply-actions .admin-secondary {
+  flex: 0.9;
+}
+
+.reply-actions .admin-primary {
+  flex: 1.4;
 }

@@ -346,7 +346,7 @@ test("failed WeChat invite code draws fallback QR and suppresses it during retry
 
 test("internal scanner routes mini program code paths by scene", () => {
   navigateCalls.length = 0;
-  const page = createPage(mahjongPage, {});
+  const page = createPage(mahjongPage, { roomJoinEntry: "visible" });
   let scanOptions;
   global.wx.scanCode = (options) => {
     scanOptions = options;

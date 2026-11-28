@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/miniadmin"
 	"my-first-expo-app/backend/internal/user"
 )
@@ -17,6 +18,7 @@ func registerMiniAdminRoutes(mux *http.ServeMux, api *Server) {
 		mux.HandleFunc(pattern, api.withAuth(api.withMiniAdmin(permission, api.withAPIPipeline(handler))))
 	}
 	register("GET /api/v1/mini-admin/session", "", api.handleMiniAdminSession)
+	register("GET /api/v1/mini-admin/summary", "", api.handleMiniAdminSummary)
 	register("GET /api/v1/mini-admin/users", miniadmin.UsersRead, api.handleAdminUsers)
 	register("GET /api/v1/mini-admin/users/{userID}", miniadmin.UsersRead, api.handleAdminUser)
 	register("PUT /api/v1/mini-admin/users/{userID}/role", miniadmin.UsersRole, api.handleUpdateAdminUserRole)
@@ -68,7 +70,76 @@ func (s *Server) handleMiniAdminSession(w http.ResponseWriter, r *http.Request) 
 		writeMiniAdminError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"owner": grant.Owner, "permissions": grant.Permissions})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"owner":       grant.Owner,
+		"permissions": grant.Permissions,
+		"userId":      account.ID,
+		"displayName": account.DisplayName,
+	})
+}
+
+func (s *Server) handleMiniAdminSummary(w http.ResponseWriter, r *http.Request) {
+	account, _ := authenticatedUserFromContext(r.Context())
+	grant, err := s.authService.MiniAdmin().GetGrant(r.Context(), account.ID)
+	if err != nil {
+		writeMiniAdminError(w, err)
+		return
+	}
+	if !grant.Owner && len(grant.Permissions) == 0 {
+		writeJSON(w, http.StatusForbidden, map[string]any{"error": "mini_admin_forbidden"})
+		return
+	}
+	has := func(permission string) bool {
+		return grant.Owner || slices.Contains(grant.Permissions, permission)
+	}
+	intPtr := func(value int) *int { return &value }
+
+	type summaryPayload struct {
+		PendingFeedback     *int `json:"pendingFeedback,omitempty"`
+		ProcessingFeedback  *int `json:"processingFeedback,omitempty"`
+		FeaturesTotal       *int `json:"featuresTotal,omitempty"`
+		FeaturesDisabled    *int `json:"featuresDisabled,omitempty"`
+		FeaturesMaintenance *int `json:"featuresMaintenance,omitempty"`
+		UsersTotal          *int `json:"usersTotal,omitempty"`
+		GrantsTotal         *int `json:"grantsTotal,omitempty"`
+	}
+	var summary summaryPayload
+
+	if has(miniadmin.FeedbackManage) && s.feedbackService != nil {
+		if page, err := s.feedbackService.List(r.Context(), feedback.ListOptions{Status: "pending", Limit: 1}); err == nil {
+			summary.PendingFeedback = intPtr(page.Total)
+		}
+		if page, err := s.feedbackService.List(r.Context(), feedback.ListOptions{Status: "processing", Limit: 1}); err == nil {
+			summary.ProcessingFeedback = intPtr(page.Total)
+		}
+	}
+	if has(miniadmin.FeaturesManage) {
+		if features, err := s.authService.MiniAdmin().ListFeatures(r.Context()); err == nil {
+			disabled, maintenance := 0, 0
+			for _, feature := range features {
+				if !feature.Enabled {
+					disabled++
+				} else if feature.Maintenance {
+					maintenance++
+				}
+			}
+			summary.FeaturesTotal = intPtr(len(features))
+			summary.FeaturesDisabled = intPtr(disabled)
+			summary.FeaturesMaintenance = intPtr(maintenance)
+		}
+	}
+	if has(miniadmin.UsersRead) {
+		if result, err := s.authService.ListUsers(r.Context(), user.ListOptions{Limit: 1}); err == nil {
+			summary.UsersTotal = intPtr(result.Total)
+		}
+	}
+	if grant.Owner {
+		if _, total, err := s.authService.MiniAdmin().ListGrants(r.Context(), 1, 0); err == nil {
+			summary.GrantsTotal = intPtr(total)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"summary": summary})
 }
 
 func (s *Server) handleListMiniAdminGrants(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +208,37 @@ func (s *Server) handleMiniAdminGrantChanges(w http.ResponseWriter, r *http.Requ
 		writeMiniAdminError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"changes": changes, "total": total, "limit": limit, "offset": offset})
+	type grantChangeResponse struct {
+		miniadmin.GrantChange
+		UserDisplayName     string `json:"userDisplayName,omitempty"`
+		OperatorDisplayName string `json:"operatorDisplayName,omitempty"`
+	}
+	nameCache := make(map[string]string)
+	lookupName := func(id string) string {
+		id = strings.TrimSpace(id)
+		if id == "" {
+			return ""
+		}
+		if cached, exists := nameCache[id]; exists {
+			return cached
+		}
+		account, err := s.authService.GetUserByID(r.Context(), id)
+		if err != nil {
+			nameCache[id] = ""
+			return ""
+		}
+		nameCache[id] = account.DisplayName
+		return account.DisplayName
+	}
+	enriched := make([]grantChangeResponse, 0, len(changes))
+	for _, change := range changes {
+		enriched = append(enriched, grantChangeResponse{
+			GrantChange:         change,
+			UserDisplayName:     lookupName(change.UserID),
+			OperatorDisplayName: lookupName(change.OperatorID),
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"changes": enriched, "total": total, "limit": limit, "offset": offset})
 }
 
 func (s *Server) handleMiniFeatures(w http.ResponseWriter, r *http.Request) {

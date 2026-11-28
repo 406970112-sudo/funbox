@@ -6,7 +6,12 @@ function permissionLabels(permissions) {
 }
 
 function grantView(grant) {
-  return { ...grant, id: grant.user.id, user: userSummary(grant.user), labels: grant.owner ? "拥有小程序工作台的全部权限" : permissionLabels(grant.permissions) };
+  return {
+    ...grant,
+    id: grant.user.id,
+    user: userSummary(grant.user),
+    labels: grant.owner ? "拥有小程序工作台的全部权限" : permissionLabels(grant.permissions),
+  };
 }
 
 function changeView(change, index) {
@@ -15,14 +20,42 @@ function changeView(change, index) {
     key: change.id || change.userId + "-" + change.createdAt + "-" + index,
     date: formatDate(change.createdAt),
     labels: permissionLabels(change.permissions),
+    targetName: change.userDisplayName || change.userId,
+    operatorName: change.operatorDisplayName || change.operatorId || "服务器",
   };
 }
 
 adminPage({
   ownerOnly: true,
-  data: { userId: "", target: null, permissions: [], selected: [], grants: [], grantsTotal: 0, grantsOffset: 0, changes: [], auditTotal: 0, auditOffset: 0 },
+  data: {
+    activeTab: "grants",
+    userId: "",
+    target: null,
+    permissions: [],
+    selected: [],
+    grants: [],
+    grantsTotal: 0,
+    grantsOffset: 0,
+    changes: [],
+    auditTotal: 0,
+    auditOffset: 0,
+  },
   async load(context) {
     await this.loadGrants(context);
+    const prefill = this.pageOptions && this.pageOptions.userId ? String(this.pageOptions.userId).trim() : "";
+    if (prefill && !this._prefilled) {
+      this._prefilled = true;
+      this.setData({ userId: prefill, activeTab: "grants" });
+      try {
+        const [{ user }, { grant }] = await Promise.all([
+          context.api(resource("/users", prefill)),
+          context.api(resource("/grants", prefill)),
+        ]);
+        if (context.active() && this.data.userId.trim() === prefill) this.applyTarget(user, grant);
+      } catch (error) {
+        // Ignore prefill lookup errors so the main list still loads cleanly.
+      }
+    }
   },
   async loadGrants({ api, active }) {
     const [list, history] = await Promise.all([
@@ -33,6 +66,10 @@ adminPage({
     this.applyGrants(list, [], 0);
     this.applyHistory(history, [], 0);
   },
+  switchTab(event) {
+    const tab = event.currentTarget.dataset.tab;
+    if (tab && tab !== this.data.activeTab) this.setData({ activeTab: tab });
+  },
   applyGrants(list, current, offset) {
     const existing = new Set(current.map(({ id }) => id));
     this.setData({
@@ -40,6 +77,10 @@ adminPage({
       grantsTotal: list.total || 0,
       grantsOffset: offset + list.grants.length,
     });
+  },
+  handleReachBottom() {
+    if (this.data.activeTab === "history") this.loadMoreHistory();
+    else this.loadMoreGrants();
   },
   loadMoreGrants() {
     const { grants, grantsOffset, grantsTotal } = this.data;
@@ -65,20 +106,44 @@ adminPage({
     });
   },
   editUserId({ detail }) {
-    this.setData({ userId: detail.value, target: null, permissions: [], selected: [] });
+    this.setData({ userId: detail.value, target: null, permissions: [], selected: [], error: "" });
+  },
+  clearUserId() {
+    this.setData({ userId: "", target: null, permissions: [], selected: [], error: "" });
+  },
+  pasteUserId() {
+    if (this.data.busy || typeof wx.getClipboardData !== "function") return;
+    wx.getClipboardData({
+      success: ({ data }) => {
+        const pasted = String(data || "").trim();
+        if (!pasted) {
+          toast("剪贴板为空");
+          return;
+        }
+        this.setData({ userId: pasted, target: null, permissions: [], selected: [], error: "" });
+        this.findUser();
+      },
+      fail: () => toast("无法读取剪贴板"),
+    });
   },
   applyTarget(user, grant) {
     const selected = grant && grant.permissions || [];
     this.setData({
       target: { ...userSummary(user), owner: Boolean(grant && grant.owner) },
       selected,
-      permissions: PERMISSIONS.map((permission) => ({ ...permission, checked: selected.includes(permission.id) })),
+      permissions: PERMISSIONS.map((permission) => ({
+        ...permission,
+        checked: selected.includes(permission.id),
+        lockedByDep: permission.id === "users.read" && selected.includes("users.role"),
+      })),
     });
   },
   findUser() {
     const id = this.data.userId.trim();
     if (!id) {
-      this.setData({ error: "请输入完整的 FunBox ID。" });
+      const msg = "请输入完整的 FunBox ID。";
+      this.setData({ error: msg });
+      toast(msg);
       return;
     }
     return this.action(async ({ api, active }) => {
@@ -89,9 +154,24 @@ adminPage({
   editGrant(event) {
     const grant = this.data.grants.find(({ user }) => user.id === event.currentTarget.dataset.id);
     if (!grant || grant.owner || this.data.busy) return;
-    this.setData({ userId: grant.user.id, target: null, selected: [], permissions: [], error: "" });
-    wx.pageScrollTo({ scrollTop: 0, duration: 180 });
+    this.setData({ activeTab: "grants", userId: grant.user.id, target: null, selected: [], permissions: [], error: "" });
+    if (typeof wx.pageScrollTo === "function") wx.pageScrollTo({ scrollTop: 0, duration: 180 });
     return this.findUser();
+  },
+  togglePermission(event) {
+    const id = event.currentTarget.dataset.id;
+    if (!id || !this.data.target || this.data.target.owner || this.data.busy) return;
+    const choices = new Set(this.data.selected || []);
+    if (choices.has(id)) {
+      if (id === "users.read" && choices.has("users.role")) {
+        toast("「调整会员」依赖「查看用户」权限");
+        return;
+      }
+      choices.delete(id);
+    } else {
+      choices.add(id);
+    }
+    this.changePermissions({ detail: { value: Array.from(choices) } });
   },
   changePermissions({ detail }) {
     if (!this.data.target || this.data.target.owner || this.data.busy) return;
@@ -99,7 +179,11 @@ adminPage({
     if (choices.has("users.role")) choices.add("users.read");
     this.setData({
       selected: PERMISSIONS.filter(({ id }) => choices.has(id)).map(({ id }) => id),
-      permissions: PERMISSIONS.map((permission) => ({ ...permission, checked: choices.has(permission.id) })),
+      permissions: PERMISSIONS.map((permission) => ({
+        ...permission,
+        checked: choices.has(permission.id),
+        lockedByDep: permission.id === "users.read" && choices.has("users.role"),
+      })),
     });
   },
   saveGrant() {

@@ -1,6 +1,20 @@
-const { adminPage, resource, query, confirm, toast, copy, formatDate, userSummary, hasPermission, PAGE_SIZE, ROLE_LABELS } = require("../utils/admin");
+const {
+  adminPage,
+  resource,
+  query,
+  openPage,
+  confirm,
+  toast,
+  copy,
+  formatDate,
+  userSummary,
+  hasPermission,
+  PAGE_SIZE,
+  ROLE_LABELS,
+} = require("../utils/admin");
 
 const roles = ["normal", "vip", "svip"].map((id) => ({ id, label: ROLE_LABELS[id] }));
+const QUICK_REASONS = ["活动赠送", "内测体验", "客诉补偿", "到期调整"];
 
 function changeView(change) {
   return {
@@ -12,7 +26,20 @@ function changeView(change) {
 
 adminPage({
   required: "users.read",
-  data: { user: null, canEdit: false, roles, selectedRole: "", reason: "", changes: [], offset: 0, total: 0 },
+  data: {
+    user: null,
+    canEdit: false,
+    canManageGrants: false,
+    roles,
+    quickReasons: QUICK_REASONS,
+    selectedRole: "",
+    reason: "",
+    reasonLength: 0,
+    reasonError: "",
+    changes: [],
+    offset: 0,
+    total: 0,
+  },
   async load({ api, active, session }) {
     if (!this.pageOptions.id) throw { code: "user_not_found" };
     const [account, history] = await Promise.all([
@@ -24,7 +51,15 @@ adminPage({
     this.applyChanges(history, []);
   },
   applyUser(user, session) {
-    this.setData({ user: userSummary(user), canEdit: user.role !== "admin" && hasPermission(session, "users.role"), selectedRole: user.role, reason: "" });
+    this.setData({
+      user: userSummary(user),
+      canEdit: user.role !== "admin" && hasPermission(session, "users.role"),
+      canManageGrants: Boolean(session && session.owner),
+      selectedRole: user.role,
+      reason: "",
+      reasonLength: 0,
+      reasonError: "",
+    });
   },
   applyChanges(response, current, offset = 0) {
     const existing = new Set(current.map(({ id }) => id));
@@ -33,6 +68,9 @@ adminPage({
       total: response.total,
       offset: offset + response.changes.length,
     });
+  },
+  handleReachBottom() {
+    this.loadMore();
   },
   loadMore() {
     const { user, offset, total, changes } = this.data;
@@ -43,20 +81,35 @@ adminPage({
     });
   },
   copyId() {
-    copy(this.data.user && this.data.user.id);
+    copy(this.data.user && this.data.user.id, "已复制 FunBox ID");
+  },
+  openGrants() {
+    if (this.data.canManageGrants && this.data.user) {
+      openPage("grants", { userId: this.data.user.id });
+    }
   },
   chooseRole(event) {
     const { role } = event.currentTarget.dataset;
-    if (this.data.canEdit && !this.data.busy && ROLE_LABELS[role] && role !== "admin") this.setData({ selectedRole: role });
+    if (this.data.canEdit && !this.data.busy && ROLE_LABELS[role] && role !== "admin") {
+      this.setData({ selectedRole: role, reasonError: "" });
+    }
   },
   editReason({ detail }) {
-    this.setData({ reason: detail.value });
+    const value = detail.value || "";
+    this.setData({ reason: value, reasonLength: Array.from(value.trim()).length, reasonError: "" });
+  },
+  useQuickReason(event) {
+    const text = event.currentTarget.dataset.text || "";
+    if (!text || this.data.busy) return;
+    this.setData({ reason: text, reasonLength: Array.from(text).length, reasonError: "" });
   },
   saveRole() {
     const { user, canEdit, selectedRole, reason } = this.data;
     if (!canEdit || !user || user.role === selectedRole) return;
     if (Array.from(reason.trim()).length > 100) {
-      this.setData({ error: "调整原因最多 100 个字符。" });
+      const msg = "调整原因最多 100 个字符。";
+      this.setData({ error: msg, reasonError: msg });
+      toast(msg);
       return;
     }
     return this.action(async ({ api, active }) => {

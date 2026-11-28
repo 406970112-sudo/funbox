@@ -1,36 +1,86 @@
 <import src="../state.wxml" />
-<view class="admin-page">
+<view class="admin-page admin-page--with-bar">
   <template is="admin-state" data="{{loading, ready, denied, error}}" />
-  <view wx:if="{{ready}}" class="admin-stack">
-    <view class="fb-card admin-panel">
-      <view class="admin-split"><text class="admin-item-title">{{feature.name}}</text><text class="admin-pill admin-pill--{{feature.tone}}">{{feature.statusLabel}}</text></view>
-      <text class="admin-meta">{{feature.placementLabel}}</text>
-    </view>
-    <view class="fb-card admin-panel">
-      <view class="admin-field admin-split">
-        <view class="admin-grow"><text class="admin-item-title">展示功能入口</text><text class="admin-meta">关闭后隐藏此功能在各处的入口</text></view>
-        <switch aria-label="展示功能入口" color="#2d5bff" checked="{{draft.enabled}}" disabled="{{busy}}" bindchange="changeEnabled" />
-      </view>
-      <view class="admin-field">
-        <text class="admin-item-title">展示位置</text>
-        <checkbox-group class="admin-location-options" bindchange="changePlacements">
-          <label wx:for="{{placements}}" wx:key="id" class="admin-choice">
-            <checkbox value="{{item.id}}" color="#2d5bff" checked="{{item.checked}}" disabled="{{busy}}" /><text>{{item.name}}</text>
-          </label>
-        </checkbox-group>
-      </view>
-      <picker class="admin-field admin-picker" mode="selector" range="{{audiences}}" range-key="label" value="{{audienceIndex}}"
-        disabled="{{busy}}" bindchange="changeAudience" aria-label="开放对象">
-        <view class="admin-split"><text class="admin-item-title">开放给</text><text class="admin-muted">{{audiences[audienceIndex].label}} ›</text></view>
-      </picker>
-      <view class="admin-field admin-split">
-        <view class="admin-grow">
-          <text class="admin-item-title">维护停用</text>
-          <text class="admin-meta">{{feature.id === 'mahjong' || feature.id === 'poker' || feature.id === 'general' ? '暂停创建新牌局，进行中的牌局可继续' : '打开此功能时提示维护中'}}</text>
+  <block wx:if="{{ready}}">
+    <view class="admin-stack">
+      <view class="fb-card admin-panel">
+        <view class="admin-split">
+          <text class="feature-hero-title">{{feature.name}}</text>
+          <text class="admin-pill admin-pill--{{feature.tone}}">{{feature.statusLabel}}</text>
         </view>
-        <switch aria-label="维护停用" color="#2d5bff" checked="{{draft.maintenance}}" disabled="{{busy}}" bindchange="changeMaintenance" />
+        <text class="admin-meta">支持位置：{{feature.placementLabel}}</text>
+        <text class="admin-meta">当前开放：{{feature.audienceLabel}} · 版本 #{{feature.revision}}</text>
+      </view>
+
+      <view class="fb-card admin-panel">
+        <view class="admin-field admin-split">
+          <view class="admin-grow">
+            <text class="admin-item-title">展示功能入口</text>
+            <text class="admin-meta">关闭后将在小程序各位置隐藏入口，业务数据会保留</text>
+          </view>
+          <switch aria-label="展示功能入口" color="#2d5bff" checked="{{draft.enabled}}" disabled="{{busy}}" bindchange="changeEnabled" />
+        </view>
+
+        <view wx:if="{{!draft.enabled}}" class="feature-disabled-tip">入口当前已关闭，以下展示位置与人群配置会在重新开启后生效。</view>
+
+        <view class="admin-field {{draft.enabled ? '' : 'admin-field--dimmed'}}">
+          <view class="admin-split">
+            <text class="admin-item-title">展示位置</text>
+            <text class="admin-meta">可多选</text>
+          </view>
+          <view class="admin-pill-grid">
+            <view
+              wx:for="{{placements}}"
+              wx:key="id"
+              class="admin-choice-pill {{item.checked ? 'admin-choice-pill--active' : ''}} {{busy ? 'admin-choice-pill--disabled' : ''}}"
+              hover-class="fb-tap-btn"
+              data-id="{{item.id}}"
+              bindtap="togglePlacement"
+              role="checkbox"
+              aria-checked="{{item.checked}}"
+            >
+              <text>{{item.checked ? '✓ ' : ''}}{{item.name}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="admin-field admin-split {{draft.enabled ? '' : 'admin-field--dimmed'}}">
+          <view class="admin-grow">
+            <text class="admin-item-title">仅登录后展示</text>
+            <text class="admin-meta">开启后，游客看不到此功能入口</text>
+          </view>
+          <switch aria-label="仅登录后展示" color="#2d5bff" checked="{{draft.audience !== 'all'}}" disabled="{{busy}}" bindchange="changeRequireLogin" />
+        </view>
+
+        <view wx:if="{{draft.audience !== 'all'}}" class="admin-field {{draft.enabled ? '' : 'admin-field--dimmed'}}">
+          <text class="admin-item-title">开放对象</text>
+          <view class="admin-pill-grid">
+            <view
+              wx:for="{{audiences}}"
+              wx:key="id"
+              class="admin-choice-pill {{draft.audience === item.id ? 'admin-choice-pill--active' : ''}} {{busy ? 'admin-choice-pill--disabled' : ''}}"
+              hover-class="fb-tap-btn"
+              data-audience="{{item.id}}"
+              bindtap="changeAudience"
+              role="radio"
+              aria-checked="{{draft.audience === item.id}}"
+            >{{item.label}}</view>
+          </view>
+        </view>
+
+        <view class="admin-field admin-split {{draft.enabled ? '' : 'admin-field--dimmed'}}">
+          <view class="admin-grow">
+            <text class="admin-item-title">维护停用</text>
+            <text class="admin-meta">{{feature.id === 'mahjong' || feature.id === 'poker' || feature.id === 'general' ? '暂停创建新牌局，进行中的牌局可继续' : '打开此功能时提示维护中'}}</text>
+          </view>
+          <switch aria-label="维护停用" color="#2d5bff" checked="{{draft.maintenance}}" disabled="{{busy}}" bindchange="changeMaintenance" />
+        </view>
       </view>
     </view>
-    <button class="admin-primary" hover-class="fb-tap-btn" disabled="{{busy || !changed}}" loading="{{busy}}" bindtap="publish">发布设置</button>
-  </view>
+
+    <view class="admin-sticky-bar">
+      <button wx:if="{{changed}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="resetDraft">还原</button>
+      <button class="admin-primary" hover-class="fb-tap-btn" disabled="{{busy || !changed}}" loading="{{busy}}" bindtap="publish">{{changed ? '发布设置' : '当前无变更'}}</button>
+    </view>
+  </block>
 </view>

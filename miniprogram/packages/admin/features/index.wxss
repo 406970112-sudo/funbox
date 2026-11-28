@@ -1,1 +1,38 @@
 @import "../shared.wxss";
+
+.feature-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 22rpx 22rpx;
+}
+
+.feature-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.feature-card-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.feature-card-meta {
+  margin-top: 6rpx;
+}
+
+.feature-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+
+.feature-card-side {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-shrink: 0;
+}

@@ -22,6 +22,9 @@ adminPage({
   editSearch({ detail }) {
     this.updateItems({ search: detail.value });
   },
+  clearSearch() {
+    this.updateItems({ search: "" });
+  },
   chooseLocation(event) {
     this.updateItems({ location: event.currentTarget.dataset.location || "" });
   },

@@ -1,11 +1,103 @@
 @import "../shared.wxss";
 
-.grant-fixed {
+.grant-search-row {
+  margin-bottom: 0;
+}
+
+.grant-target-box {
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: #f5f8fd;
+}
+
+.grant-target-id,
+.grant-row-id {
+  margin-top: 6rpx;
+}
+
+.perm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+.perm-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 18rpx;
+  border: 1rpx solid #e3eaf6;
+  background: #fff;
+}
+
+.perm-row--active {
+  border-color: #c5d6ff;
+  background: #f4f7ff;
+}
+
+.perm-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38rpx;
+  height: 38rpx;
+  margin-top: 2rpx;
+  border-radius: 10rpx;
+  border: 2rpx solid #a3b1c6;
+  background: #fff;
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 800;
   flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.perm-check--on {
+  border-color: var(--fb-primary);
+  background: var(--fb-primary);
+}
+
+.perm-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.perm-label {
+  color: var(--fb-ink);
+  font-size: 26rpx;
+  font-weight: 750;
+}
+
+.perm-dep-tag {
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  background: #eaf1ff;
+  color: var(--fb-primary);
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.perm-hint {
+  display: block;
+  margin-top: 4rpx;
+  color: var(--fb-muted);
+  font-size: 22rpx;
+  line-height: 1.45;
 }
 
 .grant-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8rpx;
+  gap: 12rpx;
+  margin-top: 14rpx;
+}
+
+.grant-audit-head {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
 }

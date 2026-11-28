@@ -141,3 +141,62 @@ func TestMiniFeatureCatalogIsPublicAndUsesExistingDefaults(t *testing.T) {
 	}
 	t.Fatal("lottery not found")
 }
+
+func TestMiniAdminSummaryAndGrantChangeDisplayNames(t *testing.T) {
+	fixture := newAdminUsersTestServer(t)
+	client, root := fixture.Server.Client(), fixture.Server.URL+"/api/v1"
+	if err := fixture.Store.MiniAdmin().BootstrapOwner(context.Background(), fixture.MemberID); err != nil {
+		t.Fatal(err)
+	}
+	// Non-admin user is forbidden from summary.
+	requestJSON[map[string]any](t, client, http.MethodGet, root+"/mini-admin/summary", "", fixture.AdminToken, http.StatusForbidden)
+
+	// Grant feedback-only permission to VIP.
+	requestJSON[map[string]any](t, client, http.MethodPut, root+"/mini-admin/grants/"+fixture.VIPID, `{"permissions":["feedback.manage"]}`, fixture.MemberToken, http.StatusOK)
+
+	// Submit one pending feedback.
+	body, contentType := feedbackMultipart(t, "反馈列表想看摘要和截图标记。", nil)
+	upload := performFeedbackRequest(t, fixture.Server, http.MethodPost, "/api/v1/feedback", body, fixture.VIPToken, contentType)
+	upload.Body.Close()
+	if upload.StatusCode != http.StatusCreated {
+		t.Fatalf("feedback upload returned %d", upload.StatusCode)
+	}
+
+	// Feedback-only operator only receives feedback counters.
+	scoped := requestJSON[struct {
+		Summary struct {
+			PendingFeedback *int `json:"pendingFeedback"`
+			UsersTotal      *int `json:"usersTotal"`
+			GrantsTotal     *int `json:"grantsTotal"`
+		} `json:"summary"`
+	}](t, client, http.MethodGet, root+"/mini-admin/summary", "", fixture.VIPToken, http.StatusOK)
+	if scoped.Summary.PendingFeedback == nil || *scoped.Summary.PendingFeedback != 1 || scoped.Summary.UsersTotal != nil || scoped.Summary.GrantsTotal != nil {
+		t.Fatalf("unexpected scoped summary: %+v", scoped.Summary)
+	}
+
+	// Owner receives full summary.
+	full := requestJSON[struct {
+		Summary struct {
+			PendingFeedback *int `json:"pendingFeedback"`
+			FeaturesTotal   *int `json:"featuresTotal"`
+			UsersTotal      *int `json:"usersTotal"`
+			GrantsTotal     *int `json:"grantsTotal"`
+		} `json:"summary"`
+	}](t, client, http.MethodGet, root+"/mini-admin/summary", "", fixture.MemberToken, http.StatusOK)
+	if full.Summary.PendingFeedback == nil || *full.Summary.PendingFeedback != 1 || full.Summary.FeaturesTotal == nil || *full.Summary.FeaturesTotal == 0 || full.Summary.UsersTotal == nil || *full.Summary.UsersTotal < 3 || full.Summary.GrantsTotal == nil || *full.Summary.GrantsTotal < 2 {
+		t.Fatalf("unexpected owner summary: %+v", full.Summary)
+	}
+
+	// Grant changes include display names alongside IDs.
+	audit := requestJSON[struct {
+		Changes []struct {
+			UserID              string `json:"userId"`
+			UserDisplayName     string `json:"userDisplayName"`
+			OperatorID          string `json:"operatorId"`
+			OperatorDisplayName string `json:"operatorDisplayName"`
+		} `json:"changes"`
+	}](t, client, http.MethodGet, root+"/mini-admin/grant-changes", "", fixture.MemberToken, http.StatusOK)
+	if len(audit.Changes) == 0 || audit.Changes[0].UserDisplayName == "" || audit.Changes[0].OperatorDisplayName == "" {
+		t.Fatalf("expected display names in grant changes: %+v", audit.Changes)
+	}
+}

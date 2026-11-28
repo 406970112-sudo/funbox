@@ -29,11 +29,73 @@ const notebook = (changes = {}) => ({
   id: "notebook", enabled: true, visiblePlacements: ["home", "discover", "profile", "recent"],
   audience: "all", maintenance: false, ...changes,
 });
+const lottery = (changes = {}) => ({ ...notebook({ id: "lottery", visiblePlacements: ["home", "discover", "recent"] }), ...changes });
 
-test("homepage registers the lottery tile as a controlled entry", () => {
-  const template = fs.readFileSync(path.resolve(__dirname, "../pages/index/index.wxml"), "utf8");
-  assert.match(template, /wx:if="\{\{featureEntries\.lottery !== 'hidden'\}\}" class="discover-pair discover-pair-single"/);
-  assert.match(template, /<template is="discover-lottery"\s*\/>/);
+test("home and discover render the lottery tile only when it has a visible status", () => {
+  for (const page of ["pages/index", "pages/discover", "packages/discover/index"]) {
+    const template = fs.readFileSync(path.resolve(__dirname, "..", page, "index.wxml"), "utf8");
+    assert.match(template, /wx:if="\{\{\(?featureEntries\.lottery && featureEntries\.lottery !== 'hidden'\)?\}\}"/);
+    assert.match(template, /<template is="discover-lottery"\s*\/>/);
+  }
+});
+
+test("guests do not see a cached lottery entry before the public settings confirm it", async t => {
+  const { watchFeatureEntries, requests, storage } = setup(t);
+  storage["funbox.feature-entries.v1"] = [lottery()];
+  const placements = ["home", "discover", "recent"];
+  const current = {};
+  for (const place of placements) watchFeatureEntries(place, entries => { current[place] = entries.lottery; });
+  assert.deepEqual(current, { home: "hidden", discover: "hidden", recent: "hidden" });
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].header.Authorization, undefined);
+  respond(requests[0], [lottery({ enabled: false })]);
+  await nextTick();
+  assert.deepEqual(current, { home: "hidden", discover: "hidden", recent: "hidden" });
+});
+
+test("a guest can see a public entry from a text JSON response, but a failed refresh hides it", async t => {
+  const { watchFeatureEntries, requests } = setup(t);
+  const updates = [];
+  watchFeatureEntries("home", entries => updates.push(entries.lottery));
+  requests[0].success({ statusCode: 200, data: JSON.stringify({ features: [lottery()], viewerRole: "" }) });
+  await nextTick();
+  assert.deepEqual(updates, ["hidden", "visible"]);
+
+  watchFeatureEntries("home", entries => updates.push(entries.lottery));
+  requests[1].fail({ errMsg: "network down" });
+  await nextTick();
+  assert.equal(updates.at(-1), "hidden");
+});
+
+test("a login-only entry appears after login and disappears again after logout", async t => {
+  const { watchFeatureEntries, watchFeatureAccess, requests, storage } = setup(t);
+  const settings = [lottery({ audience: "signed_in" })];
+  const entries = [];
+  const access = [];
+  const watch = () => {
+    watchFeatureEntries("discover", result => entries.push(result.lottery));
+    watchFeatureAccess("lottery", result => access.push(result));
+  };
+  watch();
+  respond(requests.at(-1), settings);
+  await nextTick();
+  assert.equal(entries.at(-1), "hidden");
+  assert.equal(access.at(-1), "restricted");
+
+  storage[ACCESS_TOKEN_STORAGE_KEY] = "account-token";
+  watch();
+  respond(requests.at(-1), settings, "normal");
+  await nextTick();
+  assert.equal(entries.at(-1), "visible");
+  assert.equal(access.at(-1), "available");
+
+  delete storage[ACCESS_TOKEN_STORAGE_KEY];
+  watch();
+  assert.equal(entries.at(-1), "hidden");
+  respond(requests.at(-1), settings);
+  await nextTick();
+  assert.equal(entries.at(-1), "hidden");
+  assert.equal(access.at(-1), "restricted");
 });
 
 test("master and placement visibility are independent of access through an existing link", async t => {
@@ -44,7 +106,7 @@ test("master and placement visibility are independent of access through an exist
   watchFeatureEntries("home", entries => home.push(entries));
   watchFeatureEntries("recent", entries => recent.push(entries));
   watchFeatureAccess("notebook", status => access.push(status));
-  assert.equal(home.at(-1).notebook, "visible");
+  assert.equal(home.at(-1).notebook, "hidden");
   assert.equal(home.at(-1).website, "hidden");
   assert.equal(requests.length, 1);
   respond(requests[0], [notebook({ visiblePlacements: ["recent"] })]);

@@ -24,6 +24,7 @@ const ROLES = ["", "normal", "vip", "svip", "admin"];
 let policies;
 let viewer;
 let pending;
+let hasConfirmedPolicies = false;
 
 function currentToken() {
   return typeof wx !== "undefined" && typeof wx.getStorageSync === "function" ? getAccessToken() : "";
@@ -70,11 +71,13 @@ function refreshPolicies(token) {
   if (pending && pending.token === token) return pending.result;
   const active = { token };
   pending = active;
-  active.result = request({ path: "/miniprogram/features", bearerToken: token }).then(response => {
+  active.result = request({ path: "/miniprogram/features", bearerToken: token }).then(payload => {
     if (pending !== active || currentToken() !== token) return "failed";
+    const response = typeof payload === "string" ? JSON.parse(payload) : payload;
     const next = normalizePolicies(response && response.features);
-    if (!Object.keys(next).length) return "failed";
-    policies = { ...getPolicies(), ...next };
+    if (!Object.keys(next).length) throw new Error("Invalid feature settings");
+    policies = next;
+    hasConfirmedPolicies = true;
     if (ROLES.includes(response.viewerRole)) viewer = { token, role: response.viewerRole };
     try {
       wx.setStorageSync(STORAGE_KEY, Object.values(policies));
@@ -83,7 +86,10 @@ function refreshPolicies(token) {
     }
     return "live";
   }).catch(error => {
-    if (error.statusCode === 401 && pending === active && currentToken() === token) viewer = { token, role: "" };
+    if (pending === active && currentToken() === token) {
+      hasConfirmedPolicies = false;
+      if (error.statusCode === 401) viewer = { token, role: "" };
+    }
     return "failed";
   }).finally(() => {
     if (pending === active) pending = null;
@@ -126,12 +132,8 @@ function watchFeatureEntries(placement, update) {
     for (const [id, supported] of Object.entries(PLACEMENTS)) {
       if (!supported.includes(placement)) continue;
       const key = id.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
-      const policy = snapshot[id];
-      if (!policy) {
-        entries[key] = id === "website" ? "hidden" : "visible";
-        continue;
-      }
-      if (!policy.enabled || !policy.visiblePlacements.includes(placement) || !allowsAudience(policy.audience, role)) {
+      const policy = hasConfirmedPolicies && snapshot[id];
+      if (!policy || !policy.enabled || !policy.visiblePlacements.includes(placement) || !allowsAudience(policy.audience, role)) {
         entries[key] = "hidden";
       } else {
         entries[key] = policy.maintenance ? "maintenance" : "visible";

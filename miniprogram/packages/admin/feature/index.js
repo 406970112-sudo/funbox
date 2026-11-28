@@ -1,9 +1,11 @@
 const { adminPage, resource, confirm, toast, PLACEMENT_LABELS, AUDIENCES } = require("../utils/admin");
 const { featureView, featurePayload } = require("../utils/feature");
 
+const SIGNED_IN_AUDIENCES = AUDIENCES.filter(({ id }) => id !== "all");
+
 adminPage({
   required: "features.manage",
-  data: { feature: null, draft: null, placements: [], audiences: AUDIENCES, audienceIndex: 0, changed: false },
+  data: { feature: null, draft: null, placements: [], audiences: SIGNED_IN_AUDIENCES, audienceIndex: 0, changed: false },
   async load({ api, active }) {
     const { features } = await api("/features");
     if (!active()) return;
@@ -22,22 +24,46 @@ adminPage({
       placements: feature.placements.map((id) => ({
         id, name: PLACEMENT_LABELS[id] || id, checked: draft.visiblePlacements.includes(id),
       })),
-      audienceIndex: Math.max(AUDIENCES.findIndex(({ id }) => id === draft.audience), 0),
+      audienceIndex: Math.max(SIGNED_IN_AUDIENCES.findIndex(({ id }) => id === draft.audience), 0),
       changed: JSON.stringify(featurePayload(feature)) !== JSON.stringify(draft),
     });
   },
   editDraft(patch) {
     if (this.data.ready && !this.data.busy) this.applyDraft({ draft: { ...this.data.draft, ...patch } });
   },
+  resetDraft() {
+    if (this.data.feature && !this.data.busy) {
+      this.applyDraft({ draft: featurePayload(this.data.feature), error: "" });
+      toast("已还原修改");
+    }
+  },
   changeEnabled({ detail }) {
     this.editDraft({ enabled: detail.value });
+  },
+  togglePlacement(event) {
+    const id = event.currentTarget.dataset.id;
+    if (!id || !this.data.draft) return;
+    const selected = new Set(this.data.draft.visiblePlacements || []);
+    if (selected.has(id)) selected.delete(id);
+    else selected.add(id);
+    this.editDraft({ visiblePlacements: this.data.feature.placements.filter((item) => selected.has(item)) });
   },
   changePlacements({ detail }) {
     const selected = new Set(detail.value);
     this.editDraft({ visiblePlacements: this.data.feature.placements.filter((id) => selected.has(id)) });
   },
-  changeAudience({ detail }) {
-    const selected = AUDIENCES[Number(detail.value)];
+  changeRequireLogin({ detail }) {
+    const current = this.data.draft.audience;
+    const audience = current === "all" ? "signed_in" : current;
+    this.editDraft({ audience: detail.value ? audience : "all" });
+  },
+  changeAudience(event) {
+    const datasetAudience = event.currentTarget && event.currentTarget.dataset && event.currentTarget.dataset.audience;
+    if (datasetAudience && SIGNED_IN_AUDIENCES.some(({ id }) => id === datasetAudience)) {
+      this.editDraft({ audience: datasetAudience });
+      return;
+    }
+    const selected = SIGNED_IN_AUDIENCES[Number(event.detail && event.detail.value)];
     if (selected) this.editDraft({ audience: selected.id });
   },
   changeMaintenance({ detail }) {

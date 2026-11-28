@@ -25,13 +25,20 @@ adminPage({
   },
   searchUsers() {
     this.setData({ submitted: this.data.search.trim() });
-    return this.refresh();
+    return this.reload();
+  },
+  clearSearch() {
+    this.setData({ search: "", submitted: "" });
+    return this.reload();
   },
   chooseRole(event) {
     const role = event.currentTarget.dataset.role || "";
     if (this.data.role === role) return;
     this.setData({ role });
-    return this.refresh();
+    return this.reload();
+  },
+  handleReachBottom() {
+    this.loadMore();
   },
   loadMore() {
     if (this.data.offset < this.data.total) return this.action((context) => this.loadItems(context, false));

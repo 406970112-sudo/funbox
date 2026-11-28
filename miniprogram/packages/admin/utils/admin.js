@@ -5,13 +5,14 @@ const { request } = require("../../../utils/request");
 const PREFIX = "/mini-admin";
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 const PERMISSIONS = [
-  { id: "users.read", label: "查看用户" },
-  { id: "users.role", label: "调整会员" },
-  { id: "feedback.manage", label: "处理反馈" },
-  { id: "features.manage", label: "管理功能入口" },
+  { id: "users.read", label: "查看用户", hint: "检索账号与查看身份变更记录" },
+  { id: "users.role", label: "调整会员", hint: "修改普通/VIP/SVIP 身份（自动包含查看用户）" },
+  { id: "feedback.manage", label: "处理反馈", hint: "查看反馈详情、截图并回复用户" },
+  { id: "features.manage", label: "管理功能入口", hint: "控制各位置展示、人群与维护开关" },
 ];
 const PAGE_SIZE = 20;
 const ROLE_LABELS = { normal: "普通用户", vip: "VIP", svip: "SVIP", admin: "网页管理员" };
+const ROLE_TONES = { normal: "muted", vip: "primary", svip: "svip", admin: "pending" };
 const STATUS_LABELS = { pending: "待处理", processing: "处理中", resolved: "已处理" };
 const PLACEMENT_LABELS = { home: "首页", discover: "发现", profile: "我的", recent: "最近使用", score: "记分页" };
 const AUDIENCES = [
@@ -20,6 +21,7 @@ const AUDIENCES = [
   { id: "vip", label: "VIP 与 SVIP" },
   { id: "svip", label: "仅 SVIP" },
 ];
+const AUDIENCE_LABELS = AUDIENCES.reduce((acc, item) => ({ ...acc, [item.id]: item.label }), {});
 const ERRORS = {
   unauthorized: "登录状态已失效，请返回「我的」重新登录。",
   mini_admin_required: "当前账号没有此项管理权限。",
@@ -52,26 +54,41 @@ function hasPermission(session, permission) {
   return Boolean(session && (session.owner || session.permissions.includes(permission)));
 }
 
-function openPage(name, id) {
+function openPage(name, params) {
   const url = "/packages/admin/" + name + "/index";
-  wx.navigateTo({ url: id ? query(url, { id }) : url });
+  if (!params) {
+    wx.navigateTo({ url });
+    return;
+  }
+  const fields = typeof params === "string" ? { id: params } : params;
+  wx.navigateTo({ url: query(url, fields) });
 }
 
 function confirm(title, content, confirmText = "确认") {
   return new Promise((resolve) => {
-    wx.showModal({ title, content, confirmText, confirmColor: "#2d5bff",
+    wx.showModal({
+      title,
+      content,
+      confirmText,
+      confirmColor: "#2d5bff",
       success: ({ confirm: accepted }) => resolve(accepted),
       fail: () => resolve(false),
     });
   });
 }
 
-function toast(title) {
-  wx.showToast({ title, icon: "none" });
+function toast(title, icon = "none") {
+  if (typeof wx.showToast === "function") wx.showToast({ title, icon });
 }
 
-function copy(text) {
-  if (text) wx.setClipboardData({ data: text });
+function copy(text, tip = "已复制") {
+  if (!text) return;
+  wx.setClipboardData({
+    data: text,
+    success: () => {
+      if (tip) toast(tip);
+    },
+  });
 }
 
 function formatDate(input) {
@@ -92,6 +109,7 @@ function userSummary(user) {
     avatarMark: Array.from(name)[0],
     accountLabel: user.accountType === "wechat" ? "微信注册" : user.wechatBound ? "已绑定微信" : "手机号注册",
     roleLabel: ROLE_LABELS[user.role] || user.role || "",
+    roleTone: ROLE_TONES[user.role] || "muted",
     registration: formatDate(user.createdAt),
   };
 }
@@ -104,8 +122,12 @@ function errorText(error) {
   return ERRORS[error.code] || error.displayMessage || "操作失败，请稍后重试。";
 }
 
+function isFeedbackImagePath(path) {
+  return /^\/api\/v1\/mini-admin\/feedback\/[^/?#]+\/images\/[^/?#]+$/.test(path || "");
+}
+
 function downloadImage(path, token) {
-  if (!/^\/api\/v1\/mini-admin\/feedback\/[^/?#]+\/images\/[^/?#]+$/.test(path || "")) {
+  if (!isFeedbackImagePath(path)) {
     return Promise.reject({ displayMessage: "截图地址无效。" });
   }
   return new Promise((resolve, reject) => {
@@ -122,7 +144,7 @@ function downloadImage(path, token) {
 }
 
 function adminPage({ required, ownerOnly, load, data, ...page }) {
-  const initial = { ready: false, denied: false, loading: true, busy: false, error: "", ...data };
+  const initial = { ready: false, denied: false, loading: true, refreshing: false, busy: false, error: "", ...data };
   Page({
     ...page,
     data: initial,
@@ -130,10 +152,17 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
       this.pageOptions = options || {};
     },
     onShow() {
-      return this.refresh();
+      return this.refresh({ silent: Boolean(this.data.ready) });
     },
     onPullDownRefresh() {
-      return this.refresh().finally(() => wx.stopPullDownRefresh());
+      return this.refresh({ silent: Boolean(this.data.ready) }).finally(() => {
+        if (typeof wx.stopPullDownRefresh === "function") wx.stopPullDownRefresh();
+      });
+    },
+    onReachBottom() {
+      if (this.data.ready && !this.data.busy && !this.data.refreshing && typeof this.handleReachBottom === "function") {
+        this.handleReachBottom();
+      }
     },
     onUnload() {
       this.revision += 1;
@@ -148,23 +177,34 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
     },
     block(error) {
       this.revision += 1;
-      this.setData({ ...initial, denied: true, loading: false, error });
+      this.setData({ ...initial, denied: true, loading: false, refreshing: false, error });
     },
-    async refresh() {
+    async refresh(options = {}) {
       this.revision = (this.revision || 0) + 1;
       const token = getAccessToken();
       if (!token) {
         this.block(ERRORS.unauthorized);
         return;
       }
-      if (this.token !== token) this.setData(initial);
+      const sameAccount = this.token === token;
+      const keepVisible = Boolean(options.silent && sameAccount && this.data.ready);
+      if (!sameAccount) this.setData(initial);
       this.token = token;
-      this.setData({ ready: false, denied: false, loading: true, busy: false, error: "" });
+      if (keepVisible) {
+        this.setData({ denied: false, refreshing: true, error: "" });
+      } else {
+        this.setData({ ready: false, denied: false, loading: true, refreshing: false, busy: false, error: "" });
+      }
       const context = this.context(token);
       try {
         const response = await context.api("/session");
         if (!context.active()) return;
-        const session = { owner: Boolean(response.owner), permissions: Array.isArray(response.permissions) ? response.permissions : [] };
+        const session = {
+          owner: Boolean(response.owner),
+          permissions: Array.isArray(response.permissions) ? response.permissions : [],
+          userId: response.userId || "",
+          displayName: response.displayName || "",
+        };
         if ((!session.owner && !session.permissions.length) || (ownerOnly && !session.owner)
           || (required && !hasPermission(session, required))) {
           this.block("当前账号没有此项管理权限。");
@@ -172,11 +212,40 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
         }
         this.session = session;
         await load.call(this, { ...context, session });
-        if (context.active()) this.setData({ ready: true, loading: false });
+        if (context.active()) this.setData({ ready: true, loading: false, refreshing: false });
       } catch (error) {
         if (!context.active()) return;
-        if (error.statusCode === 401 || error.statusCode === 403) this.block(errorText(error));
-        else this.setData({ error: errorText(error), loading: false });
+        if (error.statusCode === 401 || error.statusCode === 403) {
+          this.block(errorText(error));
+        } else {
+          const message = errorText(error);
+          this.setData({ error: message, loading: false, refreshing: false });
+          if (keepVisible) toast(message);
+        }
+      }
+    },
+    async reload() {
+      if (!this.data.ready || !this.session) return this.refresh();
+      const token = getAccessToken();
+      if (!token || token !== this.token) {
+        this.block(ERRORS.unauthorized);
+        return;
+      }
+      this.revision = (this.revision || 0) + 1;
+      const context = this.context(token);
+      this.setData({ refreshing: true, error: "" });
+      try {
+        await load.call(this, { ...context, session: this.session });
+        if (context.active()) this.setData({ refreshing: false });
+      } catch (error) {
+        if (!context.active()) return;
+        if (error.statusCode === 401 || error.statusCode === 403) {
+          this.block(errorText(error));
+        } else {
+          const message = errorText(error);
+          this.setData({ error: message, refreshing: false });
+          toast(message);
+        }
       }
     },
     async action(task) {
@@ -191,8 +260,13 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
         await task(context);
       } catch (error) {
         if (!context.active()) return;
-        if (error.statusCode === 401 || error.statusCode === 403) this.block(errorText(error));
-        else this.setData({ error: errorText(error) });
+        if (error.statusCode === 401 || error.statusCode === 403) {
+          this.block(errorText(error));
+        } else {
+          const message = errorText(error);
+          this.setData({ error: message });
+          toast(message);
+        }
       } finally {
         if (context.active()) this.setData({ busy: false });
         else if (this.token === context.token && context.token !== getAccessToken()) this.block(ERRORS.unauthorized);
@@ -206,5 +280,6 @@ function adminPage({ required, ownerOnly, load, data, ...page }) {
 
 module.exports = {
   adminPage, hasPermission, query, resource, openPage, confirm, toast, copy, formatDate,
-  userSummary, downloadImage, PAGE_SIZE, PERMISSIONS, ROLE_LABELS, STATUS_LABELS, PLACEMENT_LABELS, AUDIENCES,
+  userSummary, downloadImage, isFeedbackImagePath, PAGE_SIZE, PERMISSIONS,
+  ROLE_LABELS, ROLE_TONES, STATUS_LABELS, PLACEMENT_LABELS, AUDIENCES, AUDIENCE_LABELS,
 };

@@ -1,8 +1,33 @@
-const { adminPage, resource, openPage, hasPermission, formatDate, downloadImage, toast, STATUS_LABELS } = require("../utils/admin");
+const {
+  adminPage,
+  resource,
+  openPage,
+  hasPermission,
+  formatDate,
+  downloadImage,
+  isFeedbackImagePath,
+  toast,
+  STATUS_LABELS,
+} = require("../utils/admin");
+
+const QUICK_REPLIES = [
+  { label: "已定位修复", text: "感谢反馈！该问题我们已定位并修复，请重新打开小程序体验。" },
+  { label: "正在排查中", text: "收到你的反馈，我们正在加紧排查定位，修复后会第一时间更新通知你。" },
+  { label: "建议已收录", text: "感谢你的宝贵建议！我们已经记录进产品优化清单，后续版本会安排评估上线。" },
+  { label: "请补充复现", text: "已收到反馈，为了更快定位问题，方便时可补充具体操作步骤或页面截图。" },
+];
 
 adminPage({
   required: "feedback.manage",
-  data: { item: null, reply: "", replyLength: 0, showUser: false },
+  data: {
+    item: null,
+    reply: "",
+    replyLength: 0,
+    replyTrimLength: 0,
+    replyError: "",
+    quickReplies: QUICK_REPLIES,
+    showUser: false,
+  },
   async load({ api, active, session }) {
     if (!this.pageOptions.id) throw { code: "feedback_not_found" };
     const { item } = await api(resource("/feedback", this.pageOptions.id));
@@ -23,18 +48,57 @@ adminPage({
       },
       reply: draft,
       replyLength: Array.from(draft).length,
+      replyTrimLength: Array.from(draft.trim()).length,
+      replyError: "",
     });
   },
   editReply({ detail }) {
-    this.setData({ reply: detail.value, replyLength: Array.from(detail.value).length });
+    const value = detail.value || "";
+    this.setData({
+      reply: value,
+      replyLength: Array.from(value).length,
+      replyTrimLength: Array.from(value.trim()).length,
+      replyError: "",
+    });
+  },
+  useQuickReply(event) {
+    const text = event.currentTarget.dataset.text || "";
+    if (!text || this.data.busy) return;
+    this.setData({
+      reply: text,
+      replyLength: Array.from(text).length,
+      replyTrimLength: Array.from(text.trim()).length,
+      replyError: "",
+    });
   },
   openImage(event) {
     const index = Number(event.currentTarget.dataset.index);
-    const image = (this.data.item && this.data.item.images || [])[index];
-    if (!image) return;
+    const images = (this.data.item && this.data.item.images) || [];
+    const tapped = images[index];
+    if (!tapped) return;
     return this.action(async ({ token, active }) => {
-      const file = await downloadImage(image.path, token);
-      if (active()) wx.previewImage({ current: file, urls: [file] });
+      if (!isFeedbackImagePath(tapped.path)) {
+        throw { displayMessage: "截图地址无效。" };
+      }
+      if (!this._imageCache) this._imageCache = {};
+      const fetchOne = async (path) => {
+        if (this._imageCache[path]) return this._imageCache[path];
+        const file = await downloadImage(path, token);
+        this._imageCache[path] = file;
+        return file;
+      };
+      const tappedFile = await fetchOne(tapped.path);
+      const validPaths = images.map((img) => img && img.path).filter(isFeedbackImagePath);
+      const urls = [];
+      for (const path of validPaths) {
+        if (!active()) return;
+        try {
+          urls.push(path === tapped.path ? tappedFile : await fetchOne(path));
+        } catch (error) {
+          // Skip other screenshots if an individual download fails.
+        }
+      }
+      if (active()) wx.previewImage({ current: tappedFile, urls: urls.length ? urls : [tappedFile] });
     });
   },
   openUser() {
@@ -50,7 +114,9 @@ adminPage({
     const reply = this.data.reply.trim();
     const length = Array.from(reply).length;
     if (length < 10 || length > 1000) {
-      this.setData({ error: "回复需填写 10～1000 个字符。" });
+      const msg = "回复需填写 10～1000 个字符。";
+      this.setData({ error: msg, replyError: msg });
+      toast(msg);
       return;
     }
     return this.updateFeedback("resolved", reply);

@@ -1,8 +1,53 @@
 @import "../shared.wxss";
 
+.feedback-card {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  padding: 22rpx 22rpx;
+}
+
+.feedback-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12rpx;
+}
+
 .feedback-headline {
+  flex: 1;
+  min-width: 0;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+}
+
+.feedback-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin-top: 8rpx;
+  color: var(--fb-muted);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.feedback-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 10rpx;
+}
+
+.feedback-img-tag {
+  padding: 3rpx 12rpx;
+  border-radius: 999rpx;
+  background: #eaf1ff;
+  color: var(--fb-primary);
+  font-size: 20rpx;
+  font-weight: 700;
+  flex-shrink: 0;
 }

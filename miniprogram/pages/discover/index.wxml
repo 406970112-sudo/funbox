@@ -49,8 +49,8 @@
       <text class="group-note">官方公告数据 · 随时可查</text>
     </view>
     <view class="discover-grid">
-      <block wx:if="{{featureEntries.lottery !== 'hidden'}}"><template is="discover-lottery" /></block>
-      <block wx:if="{{featureEntries.holidays !== 'hidden'}}"><template is="discover-holidays" data="{{card: holidayCard}}" /></block>
+      <block wx:if="{{(featureEntries.lottery && featureEntries.lottery !== 'hidden')}}"><template is="discover-lottery" /></block>
+      <block wx:if="{{(featureEntries.holidays && featureEntries.holidays !== 'hidden')}}"><template is="discover-holidays" data="{{card: holidayCard}}" /></block>
     </view>
   </view>
 

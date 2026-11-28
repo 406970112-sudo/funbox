@@ -1,24 +1,50 @@
 <import src="../state.wxml" />
 <view class="admin-page">
-  <text class="admin-heading">入口管理</text>
+  <view class="admin-page-head">
+    <text class="admin-heading">入口管理</text>
+    <text wx:if="{{ready}}" class="admin-count-pill">{{items.length}} / {{features.length}} 项</text>
+  </view>
   <template is="admin-state" data="{{loading, ready, denied, error}}" />
   <block wx:if="{{ready}}">
-    <input class="admin-input" placeholder-class="admin-placeholder" placeholder="搜索功能名称" value="{{search}}"
-      bindinput="editSearch" confirm-type="search" aria-label="搜索功能名称" />
-    <view class="admin-tabs" role="group" aria-label="入口位置">
-      <button wx:for="{{filters}}" wx:key="id" class="admin-tab {{location === item.id ? 'admin-tab--active' : ''}}"
-        data-location="{{item.id}}" bindtap="chooseLocation" aria-pressed="{{location === item.id}}">{{item.name}}</button>
+    <view class="admin-search-row">
+      <view class="admin-search-box">
+        <input class="admin-search-input" placeholder-class="admin-placeholder" placeholder="搜索功能名称或标识" value="{{search}}"
+          bindinput="editSearch" confirm-type="search" aria-label="搜索功能名称" />
+        <view wx:if="{{search}}" class="admin-search-clear" hover-class="fb-tap-btn" bindtap="clearSearch" role="button" aria-label="清空搜索">×</view>
+      </view>
     </view>
-    <view wx:if="{{!items.length}}" class="fb-card admin-state"><text class="admin-muted">没有匹配的功能</text></view>
+
+    <scroll-view class="admin-tab-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+      <view class="admin-tab-row" role="group" aria-label="入口位置">
+        <button wx:for="{{filters}}" wx:key="id" class="admin-chip {{location === item.id ? 'admin-chip--active' : ''}}"
+          hover-class="fb-tap-btn" data-location="{{item.id}}" bindtap="chooseLocation" aria-pressed="{{location === item.id}}">{{item.name}}</button>
+      </view>
+    </scroll-view>
+
+    <view wx:if="{{!items.length}}" class="fb-card admin-state">
+      <text class="admin-muted">没有匹配的功能入口</text>
+      <button wx:if="{{search || location}}" class="admin-secondary" hover-class="fb-tap-btn" bindtap="clearSearch">清空搜索</button>
+    </view>
     <view wx:else class="admin-stack">
-      <view wx:for="{{items}}" wx:key="id" class="fb-card admin-row" hover-class="fb-tap-row"
+      <view wx:for="{{items}}" wx:key="id" class="fb-card feature-card" hover-class="fb-tap-row"
         data-id="{{item.id}}" bindtap="openFeature" role="button" aria-label="{{item.name}}入口设置">
-        <view class="admin-grow">
-          <text class="admin-item-title">{{item.name}}</text><text class="admin-meta">{{item.placementLabel}}</text>
+        <view class="feature-card-main">
+          <view class="feature-card-top">
+            <text class="admin-item-title">{{item.name}}</text>
+            <text class="admin-pill admin-pill--{{item.tone}}">{{item.statusLabel}}</text>
+          </view>
+          <view class="feature-card-meta">
+            <text class="admin-meta">展示 {{item.visibleCount}}/{{item.totalCount}} 处 · {{item.visibleLabel}}</text>
+          </view>
+          <view wx:if="{{item.audienceRestricted}}" class="feature-card-tags">
+            <text class="admin-pill admin-pill--svip">{{item.audienceLabel}}</text>
+          </view>
         </view>
-        <text class="admin-pill admin-pill--{{item.tone}}">{{item.statusLabel}}</text>
-        <button class="admin-link" hover-class="fb-tap-btn" data-id="{{item.id}}" disabled="{{busy}}"
-          catchtap="toggleFeature" aria-label="{{item.enabled ? '关闭' : '开启'}}{{item.name}}入口">{{item.enabled ? '关闭' : '开启'}}</button>
+        <view class="feature-card-side">
+          <button class="admin-link {{item.enabled ? 'admin-link--danger' : ''}}" hover-class="fb-tap-btn" data-id="{{item.id}}" disabled="{{busy}}"
+            catchtap="toggleFeature" aria-label="{{item.enabled ? '关闭' : '开启'}}{{item.name}}入口">{{item.enabled ? '关闭' : '开启'}}</button>
+          <text class="fb-arrow" aria-hidden="true">›</text>
+        </view>
       </view>
     </view>
   </block>

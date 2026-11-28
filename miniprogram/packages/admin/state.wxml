@@ -1,14 +1,26 @@
 <template name="admin-state">
-  <view wx:if="{{loading}}" class="fb-card admin-state" role="status"><text class="admin-muted">加载中…</text></view>
+  <view wx:if="{{loading}}" class="admin-stack" role="status" aria-label="加载中">
+    <view class="fb-card admin-skel-card">
+      <view class="admin-skel-line admin-skel-title"></view>
+      <view class="admin-skel-line admin-skel-sub"></view>
+    </view>
+    <view class="fb-card admin-skel-card">
+      <view class="admin-skel-row"><view class="admin-skel-avatar"></view><view class="admin-grow"><view class="admin-skel-line admin-skel-mid"></view><view class="admin-skel-line admin-skel-short"></view></view></view>
+      <view class="admin-skel-row"><view class="admin-skel-avatar"></view><view class="admin-grow"><view class="admin-skel-line admin-skel-mid"></view><view class="admin-skel-line admin-skel-short"></view></view></view>
+      <view class="admin-skel-row"><view class="admin-skel-avatar"></view><view class="admin-grow"><view class="admin-skel-line admin-skel-mid"></view><view class="admin-skel-line admin-skel-short"></view></view></view>
+    </view>
+  </view>
   <view wx:elif="{{denied}}" class="fb-card admin-state">
+    <view class="admin-state-mark">!</view>
     <text class="admin-item-title">无法进入管理工作台</text>
     <text class="admin-muted">{{error}}</text>
-    <button class="admin-secondary" hover-class="fb-tap-btn" bindtap="backToProfile">返回我的</button>
+    <button class="admin-secondary admin-state-btn" hover-class="fb-tap-btn" bindtap="backToProfile">返回我的</button>
   </view>
   <view wx:elif="{{!ready && error}}" class="fb-card admin-state">
+    <view class="admin-state-mark">!</view>
     <text class="admin-item-title">加载失败</text>
     <text class="admin-muted">{{error}}</text>
-    <button class="admin-secondary" hover-class="fb-tap-btn" bindtap="refresh">重试</button>
+    <button class="admin-primary admin-state-btn" hover-class="fb-tap-btn" bindtap="refresh">重新加载</button>
   </view>
   <view wx:elif="{{error}}" class="admin-error" role="alert">{{error}}</view>
 </template>

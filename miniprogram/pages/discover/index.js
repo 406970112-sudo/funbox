@@ -11,7 +11,7 @@ Page({
     recentTools: [],
     featureEntries: {},
     recentFeatureEntries: {},
-    toolGroups: { life: true, notes: true, fun: true },
+    toolGroups: { life: false, notes: false, fun: false },
   },
 
   onShow() {

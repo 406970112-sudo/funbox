@@ -1,24 +1,51 @@
 <import src="../state.wxml" />
 <view class="admin-page">
-  <text class="admin-heading">反馈处理</text>
+  <view class="admin-page-head">
+    <text class="admin-heading">反馈处理</text>
+    <text wx:if="{{ready}}" class="admin-count-pill">共 {{total}} 条</text>
+  </view>
   <template is="admin-state" data="{{loading, ready, denied, error}}" />
   <block wx:if="{{ready}}">
-    <view class="admin-tabs" role="group" aria-label="反馈状态">
-      <button wx:for="{{filters}}" wx:key="id" class="admin-tab {{status === item.id ? 'admin-tab--active' : ''}}"
-        data-status="{{item.id}}" bindtap="chooseStatus" aria-pressed="{{status === item.id}}">{{item.label}}</button>
+    <view class="admin-search-row">
+      <view class="admin-search-box">
+        <input class="admin-search-input" placeholder-class="admin-placeholder" placeholder="搜索反馈内容或标题" maxlength="100"
+          value="{{search}}" bindinput="editSearch" bindconfirm="searchFeedback" confirm-type="search" aria-label="搜索反馈内容" />
+        <view wx:if="{{search || submitted}}" class="admin-search-clear" hover-class="fb-tap-btn" bindtap="clearSearch" role="button" aria-label="清空搜索">×</view>
+      </view>
+      <button class="admin-secondary admin-search-btn" hover-class="fb-tap-btn" bindtap="searchFeedback">搜索</button>
     </view>
-    <view wx:if="{{!items.length}}" class="fb-card admin-state"><text class="admin-muted">该状态暂无反馈</text></view>
+
+    <scroll-view class="admin-tab-scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+      <view class="admin-tab-row" role="group" aria-label="反馈状态">
+        <button wx:for="{{filters}}" wx:key="id" class="admin-chip {{status === item.id ? 'admin-chip--active' : ''}}"
+          hover-class="fb-tap-btn" data-status="{{item.id}}" bindtap="chooseStatus" aria-pressed="{{status === item.id}}">{{item.label}}</button>
+      </view>
+    </scroll-view>
+
+    <view wx:if="{{refreshing}}" class="admin-refreshing-bar">正在刷新列表…</view>
+
+    <view wx:if="{{!items.length}}" class="fb-card admin-state">
+      <text class="admin-item-title">{{status === 'pending' && !submitted ? '太棒了，当前没有待处理反馈' : '没有匹配的反馈记录'}}</text>
+      <text class="admin-muted">{{submitted ? '试试更换搜索关键词或切换到「全部」状态查看。' : '下拉页面可重新同步最新反馈。'}}</text>
+    </view>
     <view wx:else class="admin-stack">
-      <view wx:for="{{items}}" wx:key="id" class="fb-card admin-row" hover-class="fb-tap-row"
+      <view wx:for="{{items}}" wx:key="id" class="fb-card feedback-card" hover-class="fb-tap-row"
         data-id="{{item.id}}" bindtap="openFeedback" role="button" aria-label="查看反馈">
         <view class="admin-grow">
-          <text class="admin-item-title feedback-headline">{{item.headline}}</text>
-          <text class="admin-meta">{{item.author}}<text wx:if="{{item.timestamp}}"> · {{item.timestamp}}</text></text>
+          <view class="feedback-top">
+            <text class="admin-item-title feedback-headline">{{item.headline}}</text>
+            <text class="admin-pill admin-pill--{{item.status}}">{{item.statusLabel}}</text>
+          </view>
+          <text wx:if="{{item.excerpt}}" class="feedback-excerpt">{{item.excerpt}}</text>
+          <view class="feedback-foot">
+            <text class="admin-meta">{{item.author}}<text wx:if="{{item.timestamp}}"> · {{item.timestamp}}</text></text>
+            <text wx:if="{{item.imageCount}}" class="feedback-img-tag">含 {{item.imageCount}} 张截图</text>
+          </view>
         </view>
-        <text class="admin-pill admin-pill--{{item.status}}">{{item.statusLabel}}</text>
         <text class="fb-arrow" aria-hidden="true">›</text>
       </view>
-      <button wx:if="{{offset < total}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" loading="{{busy}}" bindtap="loadMore">加载更多</button>
+      <button wx:if="{{offset < total}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" loading="{{busy}}" bindtap="loadMore">加载更多（{{items.length}} / {{total}}）</button>
+      <text wx:elif="{{items.length > 5}}" class="admin-list-end">已展示全部 {{items.length}} 条反馈</text>
     </view>
   </block>
 </view>

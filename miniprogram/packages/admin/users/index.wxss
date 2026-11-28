@@ -1,5 +1,1 @@
 @import "../shared.wxss";
-
-.users-search {
-  flex-shrink: 0;
-}

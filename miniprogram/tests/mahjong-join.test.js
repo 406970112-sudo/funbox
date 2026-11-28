@@ -28,7 +28,7 @@ require("../pages/score/mahjong/index");
 function createPage(data) {
   return {
     ...definition,
-    data: { ...definition.data, mode: "join", ...data },
+    data: { ...definition.data, mode: "join", roomJoinEntry: "visible", ...data },
     setData(patch) { Object.assign(this.data, patch); },
   };
 }

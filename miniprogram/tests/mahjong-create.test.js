@@ -57,7 +57,7 @@ test("moving between inline fields ignores an old blur and preserves edits", () 
 });
 
 test("switching tabs finishes inline editing without discarding the values", () => {
-  const page = createPage({ editingField: "roomName", roomName: "周末老友局" });
+  const page = createPage({ editingField: "roomName", roomName: "周末老友局", roomJoinEntry: "visible" });
   page.switchMode({ currentTarget: { dataset: { mode: "join" } } });
   assert.equal(page.data.editingField, "");
   assert.equal(page.data.roomName, "周末老友局");
