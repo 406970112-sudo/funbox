@@ -1,0 +1,55 @@
+<import src="../state.wxml" />
+<view class="admin-page">
+  <text class="admin-heading">管理员授权</text>
+  <template is="admin-state" data="{{loading, ready, denied, error}}" />
+  <view wx:if="{{ready}}" class="admin-stack">
+    <view class="fb-card admin-panel admin-stack">
+      <text class="admin-item-title">按 FunBox ID 查找账号</text>
+      <view class="admin-split">
+        <input class="admin-input admin-grow" placeholder="输入完整 FunBox ID" placeholder-class="admin-placeholder" value="{{userId}}"
+          maxlength="100" disabled="{{busy}}" bindinput="editUserId" bindconfirm="findUser" confirm-type="search" aria-label="FunBox ID" />
+        <button class="admin-secondary grant-fixed" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="findUser">查找</button>
+      </view>
+      <block wx:if="{{target}}">
+        <view class="admin-field">
+          <view class="admin-split"><text class="admin-item-title">{{target.displayName}}</text><text class="admin-pill">{{target.owner ? '负责人' : target.accountLabel}}</text></view>
+          <text class="admin-code" user-select>{{target.id}}</text>
+          <text wx:if="{{target.owner}}" class="admin-meta">负责人授权在服务器上管理。</text>
+          <checkbox-group wx:else bindchange="changePermissions">
+            <label wx:for="{{permissions}}" wx:key="id" class="admin-choice">
+              <checkbox value="{{item.id}}" checked="{{item.checked}}" disabled="{{busy}}" color="#2d5bff" /><text>{{item.label}}</text>
+            </label>
+          </checkbox-group>
+        </view>
+        <button wx:if="{{!target.owner}}" class="admin-primary" hover-class="fb-tap-btn" disabled="{{busy || !selected.length}}" bindtap="saveGrant">确认授权</button>
+      </block>
+    </view>
+    <view class="fb-card admin-panel">
+      <text class="admin-panel-title">已授权账号</text>
+      <text wx:if="{{!grants.length}}" class="admin-muted">暂无运营人员授权</text>
+      <view wx:for="{{grants}}" wx:key="id" class="admin-field">
+        <view class="admin-split">
+          <text class="admin-item-title">{{item.user.displayName}}</text><text class="admin-pill">{{item.owner ? '负责人' : '运营人员'}}</text>
+        </view>
+        <text class="admin-code">{{item.user.id}}</text>
+        <text class="admin-meta">{{item.labels}}</text>
+        <view wx:if="{{!item.owner}}" class="grant-actions">
+          <button class="admin-link" hover-class="fb-tap-btn" data-id="{{item.user.id}}" disabled="{{busy}}" bindtap="editGrant">编辑权限</button>
+          <button class="admin-link admin-link--danger" hover-class="fb-tap-btn" data-id="{{item.user.id}}" disabled="{{busy}}" bindtap="revokeGrant">撤销</button>
+        </view>
+      </view>
+      <button wx:if="{{grantsOffset < grantsTotal}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="loadMoreGrants">加载更多</button>
+    </view>
+    <view class="fb-card admin-panel">
+      <text class="admin-panel-title">授权记录</text>
+      <text wx:if="{{!changes.length}}" class="admin-muted">暂无授权变更</text>
+      <view wx:for="{{changes}}" wx:key="key" class="admin-field">
+        <view class="admin-split"><text class="admin-item-title">{{item.labels ? '更新权限' : '撤销权限'}}</text><text class="admin-meta">{{item.date}}</text></view>
+        <text wx:if="{{item.labels}}" class="admin-meta">{{item.labels}}</text>
+        <text class="admin-code">账号 {{item.userId}}</text>
+        <text class="admin-code">操作人 {{item.operatorId || '服务器'}}</text>
+      </view>
+      <button wx:if="{{auditOffset < auditTotal}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="loadMoreHistory">加载更多</button>
+    </view>
+  </view>
+</view>

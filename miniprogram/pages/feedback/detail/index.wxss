@@ -1,0 +1,47 @@
+@import "../records.wxss";
+
+.detail-card {
+  margin-bottom: 18rpx;
+  padding: 26rpx;
+}
+
+.detail-title {
+  flex: 1;
+  color: var(--fb-ink);
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.detail-copy {
+  display: block;
+  margin-top: 18rpx;
+  color: var(--fb-ink-secondary);
+  font-size: 27rpx;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.reply-card {
+  border-color: #dce7ff;
+}
+
+.reply-empty {
+  display: block;
+  margin-top: 16rpx;
+  color: var(--fb-muted);
+  font-size: 25rpx;
+}
+
+.detail-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 24rpx;
+}
+
+.image-error {
+  width: 100%;
+  color: var(--fb-danger);
+  font-size: 23rpx;
+}

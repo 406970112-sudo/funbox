@@ -16,7 +16,7 @@
   </view>
 
   <!-- Active Room Resume Banner -->
-  <view wx:if="{{recentRoom}}" class="resume-card" bindtap="resumeRoom" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100">
+  <view wx:if="{{recentRoom && featureEntries.roomResume !== 'hidden'}}" class="resume-card" bindtap="resumeRoom" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100">
     <view class="resume-copy">
       <view class="resume-status-row">
         <view class="resume-live-dot" aria-hidden="true"></view>
@@ -26,10 +26,10 @@
     </view>
     <button class="resume-button" hover-class="fb-tap-btn" loading="{{resumeBusy}}" disabled="{{resumeBusy}}" catchtap="resumeRoom">{{resumeState === 'retry' ? '重试继续' : '回到牌桌 ›'}}</button>
   </view>
-  <view wx:if="{{resumeError}}" class="resume-error" role="alert">{{resumeError}}</view>
+  <view wx:if="{{resumeError && featureEntries.roomResume !== 'hidden'}}" class="resume-error" role="alert">{{resumeError}}</view>
 
   <!-- 1-Tap Quick Join Action Bar -->
-  <view class="quick-join-bar">
+  <view wx:if="{{featureEntries.roomJoin !== 'hidden'}}" class="quick-join-bar">
     <button class="quick-scan-btn" hover-class="fb-tap-btn" hover-start-time="0" hover-stay-time="100" loading="{{scanning}}" disabled="{{scanning}}" bindtap="scanToJoin">
       <image class="quick-btn-icon" src="/assets/icons/scan-white.png" mode="aspectFit" aria-hidden="true" />
       <text>扫一扫入桌</text>
@@ -39,15 +39,15 @@
       <text>输码加入</text>
     </button>
   </view>
-  <view wx:if="{{scanError}}" class="resume-error" role="alert">{{scanError}}</view>
+  <view wx:if="{{scanError && featureEntries.roomJoin !== 'hidden'}}" class="resume-error" role="alert">{{scanError}}</view>
 
   <!-- 1+2 Bento Score Matrix -->
-  <view class="section-head">
+  <view wx:if="{{featureEntries.mahjong !== 'hidden' || featureEntries.poker !== 'hidden' || featureEntries.general !== 'hidden'}}" class="section-head">
     <text class="section-title">开一局</text>
     <text class="section-note">每局都算数，散场好结算</text>
   </view>
-  <view class="bento-grid">
-    <view class="scene-entrance">
+  <view wx:if="{{featureEntries.mahjong !== 'hidden' || featureEntries.poker !== 'hidden' || featureEntries.general !== 'hidden'}}" class="bento-grid">
+    <view wx:if="{{featureEntries.mahjong !== 'hidden'}}" class="scene-entrance">
       <view class="scene-card mahjong-card" bindtap="openMahjong" hover-class="home-card-pressed" hover-start-time="0" hover-stay-time="120">
         <view class="scene-copy">
           <text class="scene-tag scene-tag-mint">热门 · 4 人牌局</text>
@@ -60,8 +60,8 @@
       </view>
     </view>
 
-    <view class="bento-pair">
-      <view class="scene-entrance">
+    <view wx:if="{{featureEntries.poker !== 'hidden' || featureEntries.general !== 'hidden'}}" class="bento-pair {{featureEntries.poker === 'hidden' || featureEntries.general === 'hidden' ? 'bento-pair-single' : ''}}">
+      <view wx:if="{{featureEntries.poker !== 'hidden'}}" class="scene-entrance">
         <view class="scene-card poker-card" bindtap="openPoker" hover-class="home-card-pressed" hover-start-time="0" hover-stay-time="120">
           <view class="bento-top">
             <text class="scene-title bento-title">炸金花</text>
@@ -74,7 +74,7 @@
         </view>
       </view>
 
-      <view class="scene-entrance">
+      <view wx:if="{{featureEntries.general !== 'hidden'}}" class="scene-entrance">
         <view class="scene-card general-card" bindtap="openGeneral" hover-class="home-card-pressed" hover-start-time="0" hover-stay-time="120">
           <view class="bento-top">
             <text class="scene-title bento-title">通用记分</text>
@@ -93,12 +93,12 @@
     <view class="discover-more"><text>全部工具</text><view class="discover-more-arrow" aria-hidden="true"></view></view>
   </view>
 
-  <view class="discover-pair">
-    <view class="discover-slot"><template is="discover-notebook" /></view>
-    <view class="discover-slot"><template is="discover-memes" /></view>
+  <view wx:if="{{featureEntries.notebook !== 'hidden' || featureEntries.memes !== 'hidden'}}" class="discover-pair {{featureEntries.notebook === 'hidden' || featureEntries.memes === 'hidden' ? 'discover-pair-single' : ''}}">
+    <view wx:if="{{featureEntries.notebook !== 'hidden'}}" class="discover-slot"><template is="discover-notebook" /></view>
+    <view wx:if="{{featureEntries.memes !== 'hidden'}}" class="discover-slot"><template is="discover-memes" /></view>
   </view>
 
-  <view class="holiday-banner holiday-banner-{{holidayCard ? holidayCard.state : 'upcoming'}}" bindtap="openHolidays" hover-class="discover-card-pressed" hover-start-time="0" hover-stay-time="120" role="button" aria-label="节假日倒计时，{{holidayCard ? holidayCard.label : '查看放假与调休'}}">
+  <view wx:if="{{featureEntries.holidays !== 'hidden'}}" class="holiday-banner holiday-banner-{{holidayCard ? holidayCard.state : 'upcoming'}}" bindtap="openHolidays" hover-class="discover-card-pressed" hover-start-time="0" hover-stay-time="120" role="button" aria-label="节假日倒计时，{{holidayCard ? holidayCard.label : '查看放假与调休'}}">
     <view class="holiday-banner-left">
       <view class="holiday-mini-cal" aria-hidden="true">
         <text class="holiday-mini-month">{{holidayCard && holidayCard.monthBadge ? holidayCard.monthBadge : '假期'}}</text>
@@ -123,7 +123,11 @@
     </view>
   </view>
 
-  <view wx:if="{{showWebsiteEntry}}" class="website-card" bindtap="copyWebsite" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="更多功能，复制 xwhub.cn 网址">
+  <view wx:if="{{featureEntries.lottery !== 'hidden'}}" class="discover-pair discover-pair-single">
+    <template is="discover-lottery" />
+  </view>
+
+  <view wx:if="{{featureEntries.website && featureEntries.website !== 'hidden'}}" class="website-card" bindtap="copyWebsite" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="更多功能，复制 xwhub.cn 网址">
     <image class="website-logo" src="/assets/icons/funbox-logo.png" mode="aspectFit" aria-hidden="true" />
     <view class="website-copy">
       <text class="website-title">更多功能</text>
@@ -134,7 +138,7 @@
 </view>
 
 <!-- Quick Manual Room Code Join Bottom Sheet -->
-<view wx:if="{{manualJoinOpen}}" class="manual-mask {{reduceMotion ? 'motion-reduced' : ''}}" bindtap="closeManualJoin" catchtouchmove="noop">
+<view wx:if="{{manualJoinOpen && featureEntries.roomJoin !== 'hidden'}}" class="manual-mask {{reduceMotion ? 'motion-reduced' : ''}}" bindtap="closeManualJoin" catchtouchmove="noop">
   <view class="manual-sheet" style="bottom: {{manualKeyboardHeight}}px;" catchtap="noop" role="dialog" aria-label="输入房间码加入">
     <view class="sheet-handle" aria-hidden="true"></view>
     <view class="sheet-heading">

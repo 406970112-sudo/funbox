@@ -138,6 +138,33 @@ test("WeChat users do not render a missing-phone placeholder", async () => {
   assert.doesNotMatch(fs.readFileSync(path.resolve(__dirname, "../pages/profile/index.js"), "utf8"), /未设置手机号/);
 });
 
+test("the workbench entrance follows mini-program grants rather than the web role", async () => {
+  const page = createPage();
+  accessToken = "wechat-owner-token";
+  currentUserError = null;
+  currentUser = { id: "u-wechat", displayName: "运营", role: "admin" };
+  let permissions = [];
+  wx.request = (options) => options.success({ statusCode: 200, data: { owner: false, permissions } });
+  navigations.length = 0;
+  try {
+    await page.loadProfile();
+    assert.equal(page.data.showWorkbench, false);
+    page.openWorkbench();
+    assert.equal(navigations.length, 0);
+    currentUser.role = "normal";
+    permissions = ["feedback.manage"];
+    await page.loadProfile();
+    assert.equal(page.data.showWorkbench, true);
+    page.openWorkbench();
+    assert.equal(navigations[0].url, "/packages/admin/workbench/index");
+    permissions = [];
+    await page.loadProfile();
+    assert.equal(page.data.showWorkbench, false);
+  } finally {
+    delete wx.request;
+  }
+});
+
 test("expired profile sessions clear local state", async () => {
   accessToken = "expired-token";
   currentUserError = Object.assign(new Error("unauthorized"), { statusCode: 401 });

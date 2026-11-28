@@ -1,0 +1,21 @@
+<import src="../state.wxml" />
+<view class="admin-page">
+  <template is="admin-state" data="{{loading, ready, denied, error}}" />
+  <block wx:if="{{ready}}">
+    <view class="fb-card workbench-hero">
+      <view class="admin-split">
+        <text class="workbench-title">小程序工作台</text>
+        <text wx:if="{{owner}}" class="workbench-role">负责人</text>
+      </view>
+      <button class="workbench-account" hover-class="fb-tap-btn" bindtap="openProfileSettings">我的 FunBox ID <text aria-hidden="true">›</text></button>
+    </view>
+    <view class="admin-stack">
+      <view wx:for="{{modules}}" wx:key="id" class="fb-card admin-row {{item.id === 'features' ? 'workbench-featured' : ''}}"
+        hover-class="fb-tap-row" data-id="{{item.id}}" bindtap="openModule" role="button" aria-label="{{item.title}}">
+        <view class="workbench-icon" aria-hidden="true"><view class="workbench-glyph workbench-glyph--{{item.id}}"></view></view>
+        <view class="admin-grow"><text class="admin-item-title">{{item.title}}</text><text class="admin-meta">{{item.description}}</text></view>
+        <text class="fb-arrow" aria-hidden="true">›</text>
+      </view>
+    </view>
+  </block>
+</view>

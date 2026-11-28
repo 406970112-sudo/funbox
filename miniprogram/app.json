@@ -8,6 +8,8 @@
     "pages/auth/index",
     "pages/legal/index",
     "pages/feedback/index",
+    "pages/feedback/history/index",
+    "pages/feedback/detail/index",
     "pages/score/mahjong/index",
     "pages/score/general/index",
     "pages/score/room/index",
@@ -55,6 +57,19 @@
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
   "subPackages": [
+    {
+      "root": "packages/admin",
+      "pages": [
+        "workbench/index",
+        "users/index",
+        "user/index",
+        "feedback/index",
+        "feedback-detail/index",
+        "features/index",
+        "feature/index",
+        "grants/index"
+      ]
+    },
     {
       "root": "packages/meme",
       "pages": [

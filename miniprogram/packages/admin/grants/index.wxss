@@ -1,0 +1,11 @@
+@import "../shared.wxss";
+
+.grant-fixed {
+  flex-shrink: 0;
+}
+
+.grant-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8rpx;
+}

@@ -1,0 +1,25 @@
+<import src="../state.wxml" />
+<view class="admin-page">
+  <text class="admin-heading">入口管理</text>
+  <template is="admin-state" data="{{loading, ready, denied, error}}" />
+  <block wx:if="{{ready}}">
+    <input class="admin-input" placeholder-class="admin-placeholder" placeholder="搜索功能名称" value="{{search}}"
+      bindinput="editSearch" confirm-type="search" aria-label="搜索功能名称" />
+    <view class="admin-tabs" role="group" aria-label="入口位置">
+      <button wx:for="{{filters}}" wx:key="id" class="admin-tab {{location === item.id ? 'admin-tab--active' : ''}}"
+        data-location="{{item.id}}" bindtap="chooseLocation" aria-pressed="{{location === item.id}}">{{item.name}}</button>
+    </view>
+    <view wx:if="{{!items.length}}" class="fb-card admin-state"><text class="admin-muted">没有匹配的功能</text></view>
+    <view wx:else class="admin-stack">
+      <view wx:for="{{items}}" wx:key="id" class="fb-card admin-row" hover-class="fb-tap-row"
+        data-id="{{item.id}}" bindtap="openFeature" role="button" aria-label="{{item.name}}入口设置">
+        <view class="admin-grow">
+          <text class="admin-item-title">{{item.name}}</text><text class="admin-meta">{{item.placementLabel}}</text>
+        </view>
+        <text class="admin-pill admin-pill--{{item.tone}}">{{item.statusLabel}}</text>
+        <button class="admin-link" hover-class="fb-tap-btn" data-id="{{item.id}}" disabled="{{busy}}"
+          catchtap="toggleFeature" aria-label="{{item.enabled ? '关闭' : '开启'}}{{item.name}}入口">{{item.enabled ? '关闭' : '开启'}}</button>
+      </view>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,44 @@
+@import "../records.wxss";
+
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.record-row {
+  padding: 26rpx;
+}
+
+.record-title {
+  display: -webkit-box;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--fb-ink);
+  font-size: 28rpx;
+  font-weight: 800;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.record-row-footer {
+  margin-top: 14rpx;
+}
+
+.record-row-footer .record-time {
+  margin-right: auto;
+}
+
+.record-chevron {
+  color: var(--fb-subtle);
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+.record-pagination {
+  justify-content: space-between;
+  margin-top: 24rpx;
+}

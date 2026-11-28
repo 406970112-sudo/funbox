@@ -67,6 +67,26 @@ func TestStoreGetImageChecksFeedbackOwnership(t *testing.T) {
 	}
 }
 
+func TestStaleProcessingWriteCannotReopenResolvedFeedback(t *testing.T) {
+	store, userID := openFeedbackTestStore(t)
+	ctx := context.Background()
+	item, err := store.Create(ctx, userID, "feedback about an interrupted scoring session", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reply := "The scoring issue is fixed."
+	if _, err := store.Resolve(ctx, item.ID, "web-operator", StatusResolved, reply); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Resolve(ctx, item.ID, "mini-operator", StatusProcessing, ""); !errors.Is(err, ErrStatusInvalid) {
+		t.Fatalf("stale transition error = %v, want ErrStatusInvalid", err)
+	}
+	item, err = store.Get(ctx, item.ID)
+	if err != nil || item.Status != StatusResolved || item.AdminReply != reply || item.AdminUserID != "web-operator" {
+		t.Fatalf("resolved reply was changed: %+v, error %v", item, err)
+	}
+}
+
 func TestStoreFiltersResolvesAndTracksNotifications(t *testing.T) {
 	store, userID := openFeedbackTestStore(t)
 	created, err := store.CreateWithType(

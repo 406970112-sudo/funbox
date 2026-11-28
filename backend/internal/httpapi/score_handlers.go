@@ -33,7 +33,9 @@ func registerScoreRoutes(mux *http.ServeMux, api *Server) {
 		return
 	}
 	mux.HandleFunc("POST /api/v1/score-rooms", api.withOptionalAuth(api.withScoreCreateRateLimitedPipeline(api.handleCreateScoreRoom)))
+	mux.HandleFunc("POST /api/v1/miniprogram/score-rooms", api.withOptionalAuth(api.withScoreCreateRateLimitedPipeline(api.handleCreateScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/join", api.withOptionalAuth(api.withRateLimitedAPIPipeline("score-join", api.handleJoinScoreRoom)))
+	mux.HandleFunc("POST /api/v1/miniprogram/score-rooms/join", api.withOptionalAuth(api.withRateLimitedAPIPipeline("score-join", api.handleJoinScoreRoom)))
 	mux.HandleFunc("POST /api/v1/score-rooms/invite-preview", api.withOptionalAuth(api.withRateLimitedAPIPipeline("score-join", api.handlePreviewScoreInvite)))
 	mux.HandleFunc("GET /api/v1/score-rooms/nearby", api.withRateLimitedAPIPipeline("score-nearby", api.handleNearbyScoreRooms))
 	mux.HandleFunc("GET /api/v1/score-rooms/history", api.withAuth(api.withAPIPipeline(api.handleScoreRoomHistory)))
@@ -102,6 +104,22 @@ func (s *Server) handleCreateScoreRoom(w http.ResponseWriter, r *http.Request) {
 		writeRequestBodyError(w, err)
 		return
 	}
+	if r.URL.Path == "/api/v1/miniprogram/score-rooms" {
+		feature := "general"
+		switch strings.TrimSpace(string(input.GameType)) {
+		case string(score.GameTypeMahjong):
+			feature = "mahjong"
+		case string(score.GameTypeZhaJinHua):
+			feature = "poker"
+		case "":
+			if strings.TrimSpace(string(input.Scene)) == string(score.SceneZhaJinHua) {
+				feature = "poker"
+			}
+		}
+		if !s.allowMiniFeature(w, r, feature) {
+			return
+		}
+	}
 	hostUserID := ""
 	displayName := strings.TrimSpace(input.DisplayName)
 	if account, ok := authenticatedUserFromContext(r.Context()); ok {
@@ -139,6 +157,9 @@ func (s *Server) handleJoinScoreRoom(w http.ResponseWriter, r *http.Request) {
 	var input score.JoinRoomInput
 	if err := decodeJSONBody(r, &input); err != nil {
 		writeRequestBodyError(w, err)
+		return
+	}
+	if r.URL.Path == "/api/v1/miniprogram/score-rooms/join" && !s.allowMiniFeature(w, r, "room-join") {
 		return
 	}
 	if account, ok := authenticatedUserFromContext(r.Context()); ok {

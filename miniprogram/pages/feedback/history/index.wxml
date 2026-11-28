@@ -1,0 +1,46 @@
+<view class="record-page">
+  <view class="record-hero">
+    <text class="record-heading">我的反馈</text>
+    <text wx:if="{{unreadCount}}" class="reply-badge">{{unreadCount}} 条新回复</text>
+  </view>
+
+  <view wx:if="{{loading && !items.length}}" class="fb-card record-state">
+    <text>正在加载反馈</text>
+  </view>
+  <view wx:if="{{errorMessage}}" class="fb-card record-state error-state">
+    <text>{{errorMessage}}</text>
+    <button class="record-button" hover-class="fb-tap-btn" bindtap="retryLoad">重试</button>
+  </view>
+  <view wx:if="{{!loading && !errorMessage && !items.length}}" class="fb-card record-state">
+    <text class="empty-title">暂无反馈记录</text>
+    <text>提交后的处理进度和回复会显示在这里。</text>
+  </view>
+
+  <view wx:if="{{items.length}}" class="record-list">
+    <view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="fb-card record-row"
+      hover-class="fb-tap-card"
+      role="button"
+      data-id="{{item.id}}"
+      bindtap="openFeedback"
+    >
+      <view class="record-row-header">
+        <text class="record-title">{{item.title}}</text>
+        <text class="record-status status-{{item.status}}">{{item.statusLabel}}</text>
+      </view>
+      <view class="record-row-footer">
+        <text class="record-time">{{item.submittedAt}}</text>
+        <text wx:if="{{item.unread}}" class="reply-badge">新回复</text>
+        <text class="record-chevron" aria-hidden="true">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{totalPages > 1}}" class="record-pagination">
+    <button class="record-button" hover-class="fb-tap-btn" disabled="{{loading || page <= 1}}" bindtap="previousPage">上一页</button>
+    <text class="record-time">{{page}} / {{totalPages}}</text>
+    <button class="record-button" hover-class="fb-tap-btn" disabled="{{loading || page >= totalPages}}" bindtap="nextPage">下一页</button>
+  </view>
+</view>

@@ -104,6 +104,10 @@ Page({
     this.saveDraft();
   },
 
+  openHistory() {
+    wx.navigateTo({ url: "/pages/feedback/history/index" });
+  },
+
   async handleSubmit() {
     if (this.data.submitting) return;
     const description = this.data.description.trim();

@@ -20,6 +20,10 @@
   </view>
   <view wx:if="{{errorMessage}}" class="inline-error"><text>{{errorMessage}}</text><text wx:if="{{loadFailed}}" class="retry-link" bindtap="loadProfile">重试</text></view>
   <button class="save-button" hover-class="fb-tap-btn" bindtap="saveName" loading="{{saving || userLoading}}" disabled="{{saving || uploading || userLoading}}">{{userLoading ? '正在读取资料' : (saving ? '正在保存' : '保存昵称')}}</button>
+  <view wx:if="{{funBoxId}}" class="account-id-card fb-card">
+    <view class="account-id-copy"><text class="section-title">FunBox ID</text><text class="account-id-value" user-select>{{funBoxId}}</text></view>
+    <button class="copy-id-button" hover-class="fb-tap-btn" bindtap="copyFunBoxId">复制 ID</button>
+  </view>
   <button class="logout-button" hover-class="fb-tap-btn" bindtap="logout" disabled="{{saving || uploading || bindingWeChat || userLoading}}">退出登录</button>
   <view class="settings-footer"><text>开心玩，清楚记。</text></view>
 </view>

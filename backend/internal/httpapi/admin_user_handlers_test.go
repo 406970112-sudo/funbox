@@ -12,7 +12,9 @@ import (
 	"my-first-expo-app/backend/internal/access"
 	"my-first-expo-app/backend/internal/auth"
 	"my-first-expo-app/backend/internal/config"
+	"my-first-expo-app/backend/internal/feedback"
 	"my-first-expo-app/backend/internal/roles"
+	"my-first-expo-app/backend/internal/score"
 	"my-first-expo-app/backend/internal/social"
 	"my-first-expo-app/backend/internal/user"
 )
@@ -60,7 +62,10 @@ type adminUsersTestFixture struct {
 	AdminToken  string
 	MemberID    string
 	MemberToken string
+	VIPID       string
+	VIPToken    string
 	Server      *httptest.Server
+	Store       *user.Store
 }
 
 func TestAdminUsersRequireAdministrator(t *testing.T) {
@@ -239,7 +244,19 @@ func newAdminUsersTestServer(t *testing.T) adminUsersTestFixture {
 		},
 	}
 	authService := auth.NewService(userStore, []byte(strings.Repeat("k", 32)), time.Hour)
-	httpServer := NewServer(cfg, nil, nil, authService, socialStore, accessStore, nil)
+	feedbackStore, err := feedback.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = feedbackStore.Close() })
+	feedbackService := feedback.NewService(feedbackStore, filepath.Join(tempDir, "feedback"), 5<<20, 3)
+	scoreStore, err := score.OpenStore(databasePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = scoreStore.Close() })
+	scoreService := score.NewService(scoreStore, []byte(strings.Repeat("k", 32)), time.Hour)
+	httpServer := NewServerWithReadingNewsAndFeedback(cfg, nil, nil, authService, socialStore, accessStore, nil, nil, feedbackService, scoreService)
 	testServer := httptest.NewServer(httpServer.Handler)
 	t.Cleanup(testServer.Close)
 
@@ -282,6 +299,9 @@ func newAdminUsersTestServer(t *testing.T) adminUsersTestFixture {
 		AdminToken:  admin.AccessToken,
 		MemberID:    member.User.ID,
 		MemberToken: member.AccessToken,
+		VIPID:       vip.User.ID,
+		VIPToken:    vip.AccessToken,
 		Server:      testServer,
+		Store:       userStore,
 	}
 }

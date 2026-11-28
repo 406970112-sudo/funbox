@@ -26,7 +26,7 @@
           role="button"
         >
           <view class="recent-dot recent-dot-{{item.id}}" aria-hidden="true"></view>
-          <text>{{item.shortLabel}}</text>
+          <text>{{item.shortLabel}}{{recentFeatureEntries[item.id] === 'maintenance' ? ' · 维护中' : ''}}</text>
         </view>
       </view>
     </scroll-view>
@@ -43,30 +43,30 @@
   </scroll-view>
 
   <!-- Group 1: Life Queries -->
-  <view wx:if="{{activeCategory === 'all' || activeCategory === 'life'}}" class="tool-group">
+  <view wx:if="{{toolGroups.life && (activeCategory === 'all' || activeCategory === 'life')}}" class="tool-group">
     <view class="group-head">
       <text class="group-title">生活查询</text>
       <text class="group-note">官方公告数据 · 随时可查</text>
     </view>
     <view class="discover-grid">
-      <template is="discover-lottery" />
-      <template is="discover-holidays" data="{{card: holidayCard}}" />
+      <block wx:if="{{featureEntries.lottery !== 'hidden'}}"><template is="discover-lottery" /></block>
+      <block wx:if="{{featureEntries.holidays !== 'hidden'}}"><template is="discover-holidays" data="{{card: holidayCard}}" /></block>
     </view>
   </view>
 
   <!-- Group 2: Notes & Fun -->
-  <view wx:if="{{activeCategory === 'all'}}" class="tool-group">
+  <view wx:if="{{activeCategory === 'all' && (toolGroups.notes || toolGroups.fun)}}" class="tool-group">
     <view class="group-head">
       <text class="group-title">记录与趣味</text>
       <text class="group-note">灵感留档 · 斗图解闷</text>
     </view>
     <view class="discover-grid">
-      <template is="discover-notebook" />
-      <template is="discover-memes" />
+      <block wx:if="{{toolGroups.notes}}"><template is="discover-notebook" /></block>
+      <block wx:if="{{toolGroups.fun}}"><template is="discover-memes" /></block>
     </view>
   </view>
 
-  <view wx:elif="{{activeCategory === 'notes'}}" class="tool-group">
+  <view wx:elif="{{activeCategory === 'notes' && toolGroups.notes}}" class="tool-group">
     <view class="group-head">
       <text class="group-title">记录工具</text>
       <text class="group-note">文字、清单与私密加密</text>
@@ -76,7 +76,7 @@
     </view>
   </view>
 
-  <view wx:elif="{{activeCategory === 'fun'}}" class="tool-group">
+  <view wx:elif="{{activeCategory === 'fun' && toolGroups.fun}}" class="tool-group">
     <view class="group-head">
       <text class="group-title">趣味娱乐</text>
       <text class="group-note">全网热门表情包随手搜</text>
@@ -84,6 +84,10 @@
     <view class="discover-grid">
       <template is="discover-memes" />
     </view>
+  </view>
+
+  <view wx:if="{{activeCategory === 'all' ? !toolGroups.life && !toolGroups.notes && !toolGroups.fun : !toolGroups[activeCategory]}}" class="discover-empty fb-card">
+    <text>该分类暂无可用工具</text>
   </view>
 
   <view class="discover-footer" aria-hidden="true">

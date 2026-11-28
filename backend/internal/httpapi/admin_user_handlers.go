@@ -21,6 +21,7 @@ type updateAdminUserRoleRequest struct {
 }
 
 type adminUserSummaryResponse struct {
+	AccountType    string     `json:"accountType"`
 	AvatarURL      string     `json:"avatarUrl"`
 	CreatedAt      string     `json:"createdAt"`
 	DisplayName    string     `json:"displayName"`
@@ -28,16 +29,12 @@ type adminUserSummaryResponse struct {
 	MaskedUsername string     `json:"maskedUsername"`
 	Role           roles.Role `json:"role"`
 	UpdatedAt      string     `json:"updatedAt"`
+	WeChatBound    bool       `json:"wechatBound"`
 }
 
 type adminUserDetailResponse struct {
-	AvatarURL   string     `json:"avatarUrl"`
-	CreatedAt   string     `json:"createdAt"`
-	DisplayName string     `json:"displayName"`
-	ID          string     `json:"id"`
-	Role        roles.Role `json:"role"`
-	UpdatedAt   string     `json:"updatedAt"`
-	Username    string     `json:"username"`
+	adminUserSummaryResponse
+	Username string `json:"username,omitempty"`
 }
 
 type adminUserRoleChangeResponse struct {
@@ -63,10 +60,11 @@ func (s *Server) handleAdminUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.authService.ListUsers(r.Context(), user.ListOptions{
-		Limit:  limit,
-		Offset: offset,
-		Query:  r.URL.Query().Get("q"),
-		Role:   role,
+		Limit:    limit,
+		Offset:   offset,
+		Query:    r.URL.Query().Get("q"),
+		Role:     role,
+		SearchID: isMiniAdminRequest(r),
 	})
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "list_users_failed"})
@@ -91,7 +89,7 @@ func (s *Server) handleAdminUser(w http.ResponseWriter, r *http.Request) {
 		s.writeAdminUserError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"user": s.adminUserDetail(account)})
+	writeJSON(w, http.StatusOK, map[string]any{"user": s.adminUserDetail(account, isMiniAdminRequest(r))})
 }
 
 func (s *Server) handleUpdateAdminUserRole(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +123,7 @@ func (s *Server) handleUpdateAdminUserRole(w http.ResponseWriter, r *http.Reques
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"changed": changed,
-		"user":    s.adminUserDetail(updated),
+		"user":    s.adminUserDetail(updated, isMiniAdminRequest(r)),
 	})
 }
 
@@ -169,6 +167,7 @@ func (s *Server) handleAdminUserRoleChanges(w http.ResponseWriter, r *http.Reque
 func (s *Server) adminUserSummary(account user.User) adminUserSummaryResponse {
 	public := s.publicUser(account)
 	return adminUserSummaryResponse{
+		AccountType:    account.AccountType,
 		AvatarURL:      public.AvatarURL,
 		CreatedAt:      account.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		DisplayName:    account.DisplayName,
@@ -176,20 +175,16 @@ func (s *Server) adminUserSummary(account user.User) adminUserSummaryResponse {
 		MaskedUsername: maskUsername(account.Username),
 		Role:           account.Role,
 		UpdatedAt:      account.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		WeChatBound:    account.WeChatBound,
 	}
 }
 
-func (s *Server) adminUserDetail(account user.User) adminUserDetailResponse {
-	public := s.publicUser(account)
-	return adminUserDetailResponse{
-		AvatarURL:   public.AvatarURL,
-		CreatedAt:   account.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		DisplayName: account.DisplayName,
-		ID:          account.ID,
-		Role:        account.Role,
-		UpdatedAt:   account.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		Username:    account.Username,
+func (s *Server) adminUserDetail(account user.User, mini bool) adminUserDetailResponse {
+	detail := adminUserDetailResponse{adminUserSummaryResponse: s.adminUserSummary(account)}
+	if !mini {
+		detail.Username = account.Username
 	}
+	return detail
 }
 
 func (s *Server) writeAdminUserError(w http.ResponseWriter, err error) {

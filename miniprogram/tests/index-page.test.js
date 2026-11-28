@@ -146,6 +146,7 @@ function freshHome(kind = 'account') {
       clearRecentScoreRoom: id => {if (state.recent && state.recent.roomId === id) state.recent = null;}
     } : p.includes('auth') ? {getAccessToken: () => state.token, getStoredUser: () => state.user}
       : p.includes('ui-motion') ? {reduceMotionEnabled: () => state.reduceMotion}
+      : p.includes('feature-entries') ? require('../utils/feature-entries')
       : p.includes('discover-entries') ? {watchHolidayCard: () => () => {}} : {},
     Page: p => {definition = p;}, wx: {navigateTo: o => routes.push(o.url)}
   });

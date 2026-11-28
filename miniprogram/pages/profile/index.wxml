@@ -46,23 +46,25 @@
   </view>
 
   <!-- My Content Bento Grid -->
-  <view class="section-head">
+  <view wx:if="{{(isLoggedIn && featureEntries.gameHistory !== 'hidden') || featureEntries.memes !== 'hidden' || featureEntries.notebook !== 'hidden'}}" class="section-head">
     <text class="section-title">我的记录</text>
     <text class="section-note">战绩、藏图与笔记都在这里</text>
   </view>
 
-  <view class="content-bento {{isLoggedIn ? 'content-bento-member' : ''}}">
-    <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card fb-card" bindtap="openHistory" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="查看最近牌局">
-      <view class="bento-copy">
-        <text class="history-entry-title">最近牌局</text>
-        <text class="history-entry-desc">回看参与者与输赢</text>
+  <view wx:if="{{(isLoggedIn && featureEntries.gameHistory !== 'hidden') || featureEntries.memes !== 'hidden' || featureEntries.notebook !== 'hidden'}}" class="content-bento {{isLoggedIn ? 'content-bento-member' : ''}}">
+    <block wx:if="{{featureEntries.gameHistory !== 'hidden'}}">
+      <view wx:if="{{isLoggedIn}}" class="profile-card history-entry-card fb-card" bindtap="openHistory" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="查看最近牌局">
+        <view class="bento-copy">
+          <text class="history-entry-title">最近牌局</text>
+          <text class="history-entry-desc">回看参与者与输赢</text>
+        </view>
+        <view class="bento-art art art-score">
+          <image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" />
+        </view>
       </view>
-      <view class="bento-art art art-score">
-        <image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" />
-      </view>
-    </view>
+    </block>
 
-    <view class="profile-card meme-entry-card fb-card" bindtap="openMemeFavorites" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="查看我的藏图">
+    <view wx:if="{{featureEntries.memes !== 'hidden'}}" class="profile-card meme-entry-card fb-card" bindtap="openMemeFavorites" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="查看我的藏图">
       <view class="bento-copy">
         <text class="history-entry-title">我的藏图</text>
         <text class="history-entry-desc">收藏的表情包合集</text>
@@ -70,7 +72,7 @@
       <image class="bento-art bento-art-img" src="/assets/illustrations/meme-entry.png" mode="aspectFit" aria-hidden="true" />
     </view>
 
-    <view class="profile-card notebook-entry-card fb-card {{isLoggedIn ? 'bento-wide' : ''}}" bindtap="openNotebook" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="打开我的笔记本">
+    <view wx:if="{{featureEntries.notebook !== 'hidden'}}" class="profile-card notebook-entry-card fb-card {{isLoggedIn ? 'bento-wide' : ''}}" bindtap="openNotebook" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="打开我的笔记本">
       <view class="bento-copy">
         <text class="history-entry-title">我的笔记本</text>
         <text class="history-entry-desc">{{isLoggedIn ? '想法、清单与私密加密笔记' : '登录后多端同步你的笔记'}}</text>
@@ -88,7 +90,7 @@
     <text class="section-note">遇到问题随时告诉我们</text>
   </view>
 
-  <view class="profile-card feedback-card fb-card" bindtap="openFeedback" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="提交功能反馈">
+  <view wx:if="{{featureEntries.feedback !== 'hidden'}}" class="profile-card feedback-card fb-card" bindtap="openFeedback" hover-class="fb-tap-card" hover-start-time="0" hover-stay-time="100" role="button" aria-label="提交功能反馈">
     <view class="feedback-copy">
       <text class="feedback-title">功能反馈</text>
       <text class="feedback-desc">上传截图，帮助我们把体验打磨更好</text>
@@ -100,6 +102,13 @@
   </view>
 
   <view class="service-list fb-card">
+    <view wx:if="{{showWorkbench}}" class="service-row" bindtap="openWorkbench" hover-class="fb-tap-row" role="button">
+      <view class="service-row-copy">
+        <text class="service-row-title">管理工作台</text>
+        <text class="service-row-desc">管理小程序功能与用户反馈</text>
+      </view>
+      <text class="service-row-arrow" aria-hidden="true">›</text>
+    </view>
     <view wx:if="{{isLoggedIn}}" class="service-row" bindtap="openSettings" hover-class="fb-tap-row" role="button">
       <view class="service-row-copy">
         <text class="service-row-title">个人资料与账号</text>

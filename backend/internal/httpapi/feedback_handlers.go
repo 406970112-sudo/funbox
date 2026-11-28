@@ -163,7 +163,7 @@ func (s *Server) handleListFeedback(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "list_feedback_failed"})
 		return
 	}
-	writeJSON(w, http.StatusOK, s.feedbackPageResponse(page, "/api/v1/admin/feedback", 0))
+	writeJSON(w, http.StatusOK, s.feedbackPageResponse(page, adminFeedbackPath(r), 0))
 }
 
 func (s *Server) handleListMyFeedback(w http.ResponseWriter, r *http.Request) {
@@ -307,8 +307,15 @@ func (s *Server) handleResolveFeedback(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 	writeJSON(w, http.StatusOK, map[string]any{
-		"item": s.feedbackItemResponse(updated, "/api/v1/admin/feedback"),
+		"item": s.feedbackItemResponse(updated, adminFeedbackPath(r)),
 	})
+}
+
+func adminFeedbackPath(r *http.Request) string {
+	if isMiniAdminRequest(r) {
+		return miniAdminPrefix + "feedback"
+	}
+	return "/api/v1/admin/feedback"
 }
 
 func (s *Server) handleMyFeedbackImage(w http.ResponseWriter, r *http.Request) {
@@ -364,7 +371,9 @@ func (s *Server) serveFeedbackImage(w http.ResponseWriter, r *http.Request, imag
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "read_feedback_image_failed"})
 		return
 	}
-	w.Header().Set("Cache-Control", "private, max-age=300")
+	if !isMiniAdminRequest(r) {
+		w.Header().Set("Cache-Control", "private, max-age=300")
+	}
 	w.Header().Set("Content-Type", image.ContentType)
 	http.ServeContent(w, r, image.StoredName, info.ModTime(), file)
 }
@@ -429,6 +438,10 @@ func (s *Server) feedbackItemResponse(item feedback.Submission, imageBase string
 			avatarURL = baseURL + avatarURL
 		}
 	}
+	username := item.User.Username
+	if strings.HasPrefix(imageBase, miniAdminPrefix) {
+		username = ""
+	}
 	return map[string]any{
 		"adminReply":     item.AdminReply,
 		"category":       item.Category,
@@ -446,7 +459,7 @@ func (s *Server) feedbackItemResponse(item feedback.Submission, imageBase string
 			"avatarUrl":   avatarURL,
 			"displayName": item.User.DisplayName,
 			"id":          item.User.ID,
-			"username":    item.User.Username,
+			"username":    username,
 		},
 	}
 }

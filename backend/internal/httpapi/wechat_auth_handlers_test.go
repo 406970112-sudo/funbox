@@ -60,6 +60,13 @@ func TestWeChatHTTPLoginAndLegacyBinding(t *testing.T) {
 	if second.User.ID != current["user"].ID {
 		t.Fatal("repeated login created new account")
 	}
+	if err := store.MiniAdmin().BootstrapOwner(context.Background(), second.User.ID); err != nil {
+		t.Fatal(err)
+	}
+	owner := requestJSON[struct{ Owner bool }](t, server.Client(), "GET", server.URL+"/api/v1/mini-admin/session", "", token, 200)
+	if !owner.Owner || second.User.Role != "normal" {
+		t.Fatalf("WeChat owner must have independent authorization, account = %+v", second.User)
+	}
 	requestJSON[map[string]any](t, server.Client(), "POST", loginURL, `{"code":" "}`, "", 400)
 	requestJSON[map[string]any](t, server.Client(), "POST", loginURL, `{"code":"invalid"}`, "", 401)
 	requestJSON[map[string]any](t, server.Client(), "POST", loginURL, `{"code":"busy"}`, "", 429)

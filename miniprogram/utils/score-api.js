@@ -2,6 +2,8 @@ const { request } = require("./request");
 const { clearSession, getAccessToken } = require("./auth");
 
 const SCORE_ERROR_MESSAGES = {
+  mini_feature_maintenance: "该功能维护中，已有牌局仍可继续。",
+  mini_feature_restricted: "当前账号暂未开放此功能。",
   request_timeout: "网络请求超时，请检查网络后重试。",
   request_network_failed: "网络连接失败，请检查网络后重试。",
   score_action_forbidden: "当前身份不能执行这个操作。",
@@ -57,7 +59,7 @@ async function scoreRequest({ retryOnNetworkError = false, ...options }) {
 
 function createScoreRoom(token, input) {
   return scoreRequest({
-    path: "/score-rooms",
+    path: "/miniprogram/score-rooms",
     method: "POST",
     bearerToken: token,
     data: input,
@@ -67,7 +69,7 @@ function createScoreRoom(token, input) {
 function joinScoreRoom(input) {
   const token = getAccessToken();
   const options = {
-    path: "/score-rooms/join",
+    path: input.code && !input.inviteToken ? "/miniprogram/score-rooms/join" : "/score-rooms/join",
     method: "POST",
     bearerToken: token,
     data: input,

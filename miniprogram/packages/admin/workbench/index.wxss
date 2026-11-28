@@ -1,0 +1,134 @@
+@import "../shared.wxss";
+
+.workbench-hero {
+  margin-bottom: 22rpx;
+  padding: 30rpx 28rpx 19rpx;
+  border-color: #e1eaff;
+  background: linear-gradient(145deg, #ffffff 0%, #f4f8ff 52%, #e7efff 100%);
+  box-shadow: 0 14rpx 36rpx rgba(45, 91, 255, .07);
+}
+
+.workbench-title {
+  color: var(--fb-ink);
+  font-size: 44rpx;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -1rpx;
+}
+
+.workbench-role {
+  flex-shrink: 0;
+  padding: 5rpx 14rpx;
+  border-radius: 99rpx;
+  background: #e2ebff;
+  color: var(--fb-primary);
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.workbench-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 7rpx;
+  min-height: 44px;
+  margin: 7rpx 0 0;
+  padding: 0;
+  background: transparent;
+  color: var(--fb-primary);
+  font-size: 25rpx;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.workbench-featured {
+  border-color: #cddcff;
+}
+
+.workbench-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 20rpx;
+  color: var(--fb-primary);
+  background: var(--fb-primary-soft);
+}
+
+.workbench-glyph {
+  position: relative;
+  box-sizing: border-box;
+  width: 31rpx;
+  height: 29rpx;
+}
+
+.workbench-glyph--features {
+  height: 17rpx;
+  border-top: 3rpx solid currentColor;
+  border-bottom: 3rpx solid currentColor;
+}
+
+.workbench-glyph--features::before,
+.workbench-glyph--features::after {
+  position: absolute;
+  width: 9rpx;
+  height: 9rpx;
+  box-sizing: border-box;
+  border: 2rpx solid currentColor;
+  border-radius: 50%;
+  background: var(--fb-primary-soft);
+  content: "";
+}
+
+.workbench-glyph--features::before { top: -6rpx; left: 7rpx; }
+.workbench-glyph--features::after { bottom: -6rpx; right: 5rpx; }
+
+.workbench-glyph--users::before,
+.workbench-glyph--users::after {
+  position: absolute;
+  box-sizing: border-box;
+  border: 3rpx solid currentColor;
+  content: "";
+}
+
+.workbench-glyph--users::before { top: 0; left: 9rpx; height: 13rpx; width: 13rpx; border-radius: 50%; }
+.workbench-glyph--users::after { bottom: 0; left: 3rpx; height: 13rpx; width: 25rpx; border-radius: 99rpx 99rpx 6rpx 6rpx; }
+
+.workbench-glyph--feedback {
+  height: 23rpx;
+  margin-top: -4rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 7rpx;
+}
+
+.workbench-glyph--feedback::after {
+  position: absolute;
+  bottom: -7rpx;
+  left: 5rpx;
+  width: 9rpx;
+  height: 7rpx;
+  border-bottom: 3rpx solid currentColor;
+  border-left: 3rpx solid currentColor;
+  transform: skewY(-36deg);
+  content: "";
+}
+
+.workbench-glyph--grants {
+  width: 27rpx;
+  border: 3rpx solid currentColor;
+  border-radius: 6rpx 6rpx 12rpx 12rpx;
+}
+
+.workbench-glyph--grants::after {
+  position: absolute;
+  top: 5rpx;
+  left: 5rpx;
+  width: 9rpx;
+  height: 5rpx;
+  border-bottom: 3rpx solid currentColor;
+  border-left: 3rpx solid currentColor;
+  transform: rotate(-45deg);
+  content: "";
+}

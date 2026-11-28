@@ -1,6 +1,7 @@
 const { getAccessToken } = require("../../utils/auth");
-const { discoverPath, watchHolidayCard, recordRecentTool, getRecentTools } = require("../../utils/discover-entries");
+const { discoverPath, watchHolidayCard, recordRecentTool, getRecentTools, TOOL_CATALOG } = require("../../utils/discover-entries");
 const { reduceMotionEnabled } = require("../../utils/ui-motion");
+const { watchFeatureEntries, canOpenFeatureEntry } = require("../../utils/feature-entries");
 
 Page({
   data: {
@@ -8,24 +9,49 @@ Page({
     reduceMotion: false,
     activeCategory: "all",
     recentTools: [],
+    featureEntries: {},
+    recentFeatureEntries: {},
+    toolGroups: { life: true, notes: true, fun: true },
   },
 
   onShow() {
     this.setData({
       reduceMotion: reduceMotionEnabled(),
-      recentTools: getRecentTools(),
     });
     this.stopHolidayCard();
     this._stopHolidayCard = watchHolidayCard(this);
+    this.stopFeatureEntries();
+    this._stopFeatureEntries = [
+      watchFeatureEntries("discover", featureEntries => {
+        const toolGroups = {
+          life: featureEntries.lottery !== "hidden" || featureEntries.holidays !== "hidden",
+          notes: featureEntries.notebook !== "hidden",
+          fun: featureEntries.memes !== "hidden",
+        };
+        this.setData({ featureEntries, toolGroups });
+      }),
+      watchFeatureEntries("recent", recentFeatureEntries => {
+        const recentTools = getRecentTools().filter(tool => recentFeatureEntries[tool.id] !== "hidden");
+        this.setData({ recentFeatureEntries, recentTools });
+      }),
+    ];
   },
 
-  onHide() { this.stopHolidayCard(); },
+  onHide() {
+    this.stopHolidayCard();
+    this.stopFeatureEntries();
+  },
 
-  onUnload() { this.stopHolidayCard(); },
+  onUnload() { this.onHide(); },
 
   stopHolidayCard() {
     if (this._stopHolidayCard) this._stopHolidayCard();
     this._stopHolidayCard = null;
+  },
+
+  stopFeatureEntries() {
+    for (const stop of this._stopFeatureEntries || []) stop();
+    this._stopFeatureEntries = [];
   },
 
   selectCategory(event) {
@@ -36,30 +62,20 @@ Page({
   },
 
   openRecentTool(event) {
-    const id = event.currentTarget.dataset.id;
-    if (id === "lottery") return this.openLottery();
-    if (id === "holidays") return this.openHolidays();
-    if (id === "notebook") return this.openNotebook();
-    if (id === "memes") return this.openMemes();
+    this.openTool(event.currentTarget.dataset.id, this.data.recentFeatureEntries);
   },
 
-  openLottery() {
-    recordRecentTool("lottery");
-    wx.navigateTo({ url: discoverPath("lottery") });
+  openTool(id, entries = this.data.featureEntries) {
+    if (!TOOL_CATALOG.some(tool => tool.id === id) || !canOpenFeatureEntry(entries[id])) return;
+    recordRecentTool(id);
+    wx.navigateTo({ url: discoverPath(id, id === "notebook" && Boolean(getAccessToken())) });
   },
 
-  openHolidays() {
-    recordRecentTool("holidays");
-    wx.navigateTo({ url: discoverPath("holidays") });
-  },
+  openLottery() { this.openTool("lottery"); },
 
-  openNotebook() {
-    recordRecentTool("notebook");
-    wx.navigateTo({ url: discoverPath("notebook", Boolean(getAccessToken())) });
-  },
+  openHolidays() { this.openTool("holidays"); },
 
-  openMemes() {
-    recordRecentTool("memes");
-    wx.navigateTo({ url: discoverPath("memes") });
-  },
+  openNotebook() { this.openTool("notebook"); },
+
+  openMemes() { this.openTool("memes"); },
 });

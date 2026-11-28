@@ -1,0 +1,30 @@
+<import src="../state.wxml" />
+<view class="admin-page">
+  <text class="admin-heading">用户管理</text>
+  <template is="admin-state" data="{{loading, ready, denied, error}}" />
+  <block wx:if="{{ready}}">
+    <view class="admin-split">
+      <input class="admin-input admin-grow" placeholder-class="admin-placeholder" placeholder="搜索昵称或 FunBox ID" maxlength="100"
+        value="{{search}}" bindinput="editSearch" bindconfirm="searchUsers" confirm-type="search" aria-label="搜索昵称或 FunBox ID" />
+      <button class="admin-secondary users-search" hover-class="fb-tap-btn" bindtap="searchUsers">搜索</button>
+    </view>
+    <view class="admin-tabs" role="group" aria-label="会员身份">
+      <button wx:for="{{filters}}" wx:key="id" class="admin-tab {{role === item.id ? 'admin-tab--active' : ''}}"
+        data-role="{{item.id}}" bindtap="chooseRole" aria-pressed="{{role === item.id}}">{{item.label}}</button>
+    </view>
+    <view wx:if="{{!items.length}}" class="fb-card admin-state"><text class="admin-muted">没有找到匹配的用户</text></view>
+    <view wx:else class="admin-stack">
+      <view wx:for="{{items}}" wx:key="id" class="fb-card admin-row" hover-class="fb-tap-row" data-id="{{item.id}}" bindtap="openUser" role="button">
+        <image wx:if="{{item.avatar}}" class="admin-avatar" src="{{item.avatar}}" mode="aspectFill" lazy-load />
+        <text wx:else class="admin-avatar">{{item.avatarMark}}</text>
+        <view class="admin-grow">
+          <text class="admin-item-title">{{item.displayName}}</text>
+          <text class="admin-meta">{{item.accountLabel}}<text wx:if="{{item.maskedUsername && item.accountType !== 'wechat'}}"> · {{item.maskedUsername}}</text></text>
+        </view>
+        <text class="admin-pill">{{item.roleLabel}}</text>
+        <text class="fb-arrow" aria-hidden="true">›</text>
+      </view>
+      <button wx:if="{{offset < total}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" loading="{{busy}}" bindtap="loadMore">加载更多</button>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,6 @@
+@import "../shared.wxss";
+
+.user-identity {
+  padding: 0;
+  min-height: 76rpx;
+}

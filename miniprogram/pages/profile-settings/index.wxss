@@ -177,6 +177,39 @@
   color: #c95744;
 }
 
+.account-id-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-top: 28rpx;
+  padding: 24rpx 28rpx;
+}
+
+.account-id-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-id-value {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--fb-muted);
+  font-size: 24rpx;
+  overflow-wrap: break-word;
+}
+
+.copy-id-button {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 14rpx 20rpx;
+  border-radius: 16rpx;
+  background: #edf2ff;
+  color: var(--fb-primary);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
 .save-button[disabled], .logout-button[disabled] {
   opacity: .55;
 }

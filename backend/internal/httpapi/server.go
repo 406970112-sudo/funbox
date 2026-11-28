@@ -838,6 +838,7 @@ func newServer(
 	mux.HandleFunc("GET /api/v1/system/ping", api.handlePing)
 	mux.HandleFunc("GET /api/v1/holiday-calendar", api.withAPIPipeline(handleHolidayCalendar))
 	mux.HandleFunc("GET /api/v1/features", api.withOptionalAuth(api.withAPIPipeline(api.handleVisibleFeatures)))
+	registerMiniAdminRoutes(mux, api)
 	mux.HandleFunc("GET /api/v1/membership/features", api.withAuth(api.withAPIPipeline(api.handleMembershipFeatureMatrix)))
 	mux.HandleFunc("GET /api/v1/membership/payment", api.withAuth(api.withAPIPipeline(api.handleMembershipPaymentInfo)))
 	mux.HandleFunc("GET /api/v1/admin/membership/settings", api.withAuth(api.withAdmin(api.withAPIPipeline(api.handleAdminMembershipSettings))))

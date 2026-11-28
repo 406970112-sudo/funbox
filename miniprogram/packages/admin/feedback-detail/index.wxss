@@ -1,0 +1,7 @@
+@import "../shared.wxss";
+
+.admin-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}

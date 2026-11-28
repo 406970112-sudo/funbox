@@ -5,6 +5,7 @@ const { getScoreRoom, joinScoreRoom, getScoreErrorMessage } = require("../../uti
 const { extractInviteScene, extractInviteToken } = require("../../utils/invite");
 const { reduceMotionEnabled } = require("../../utils/ui-motion");
 const { discoverPath, watchHolidayCard, recordRecentTool } = require("../../utils/discover-entries");
+const { watchFeatureEntries, canOpenFeatureEntry } = require("../../utils/feature-entries");
 
 Page({
   data: {
@@ -21,6 +22,7 @@ Page({
     reduceMotion: false,
     holidayCard: null,
     discoverSlide: 0,
+    featureEntries: {},
     scanning: false,
     scanError: "",
     manualJoinOpen: false,
@@ -33,8 +35,6 @@ Page({
     focusedJoinField: "",
     joinErrorField: "",
     joinErrorMessage: "",
-    // 暂时隐藏，待用户明确要求开放入口时再设为 true。
-    showWebsiteEntry: false,
     websiteUrl: "https://xwhub.cn",
     copyingWebsite: false,
     showWebsiteDialog: false,
@@ -60,6 +60,11 @@ Page({
     });
     this.stopHolidayCard();
     this._stopHolidayCard = watchHolidayCard(this);
+    if (this._stopFeatureEntries) this._stopFeatureEntries();
+    this._stopFeatureEntries = watchFeatureEntries("home", featureEntries => {
+      this.setData({ featureEntries });
+      if (featureEntries.roomJoin !== "visible" && this.data.manualJoinOpen) this.closeManualJoin();
+    });
     return this.validateRecentRoom();
   },
 
@@ -68,13 +73,17 @@ Page({
     this._resumeLookup = null;
     this._resumeGeneration = (this._resumeGeneration || 0) + 1;
     this.stopHolidayCard();
+    if (this._stopFeatureEntries) this._stopFeatureEntries();
     this.closeWebsiteDialog();
     if (this.data.manualJoinOpen) {
       this.setData({ manualJoinOpen: false, manualKeyboardHeight: 0 });
     }
   },
 
-  onUnload() { this.stopHolidayCard(); },
+  onUnload() {
+    this.stopHolidayCard();
+    if (this._stopFeatureEntries) this._stopFeatureEntries();
+  },
 
   stopHolidayCard() {
     if (this._stopHolidayCard) this._stopHolidayCard();
@@ -82,7 +91,13 @@ Page({
   },
 
   resumeRoom() {
+    if (!this.canOpenFeature("roomResume")) return;
     return this.validateRecentRoom(true);
+  },
+
+  canOpenFeature(key) {
+    const status = this.data.featureEntries[key];
+    return !status || canOpenFeatureEntry(status);
   },
 
   validateRecentRoom(navigate = false) {
@@ -155,11 +170,12 @@ Page({
   },
 
   scanToJoin() {
-    if (this.data.scanning || this.data.manualJoinOpen) return;
+    if (this.data.scanning || this.data.manualJoinOpen || !this.canOpenFeature("roomJoin")) return;
     this.setData({ scanning: true, scanError: "" });
     wx.scanCode({
       scanType: ["qrCode", "wxCode"],
       success: (result) => {
+        if (!this.canOpenFeature("roomJoin")) return;
         const scannedValue = result.path || result.result || "";
         const inviteScene = extractInviteScene(scannedValue);
         if (inviteScene) {
@@ -182,7 +198,7 @@ Page({
   },
 
   openManualJoin() {
-    if (this.data.scanning) return;
+    if (this.data.scanning || !this.canOpenFeature("roomJoin")) return;
     this.setData({
       manualJoinOpen: true,
       manualKeyboardHeight: 0,
@@ -225,7 +241,7 @@ Page({
   },
 
   async joinByCode() {
-    if (this.data.joining) return;
+    if (this.data.joining || !this.canOpenFeature("roomJoin")) return;
     const code = this.data.roomCode.trim();
     const displayName = this.data.nickname.trim();
     if (code.length !== 6 || !/^\d{6}$/.test(code)) {
@@ -259,7 +275,7 @@ Page({
   },
 
   copyWebsite() {
-    if (this.data.copyingWebsite || this.data.showWebsiteDialog) return;
+    if (this.data.copyingWebsite || this.data.showWebsiteDialog || !this.canOpenFeature("website")) return;
     this.setData({ copyingWebsite: true });
     wx.setClipboardData({
       data: this.data.websiteUrl,
@@ -314,11 +330,13 @@ Page({
   },
 
   openNotebook() {
+    if (!this.canOpenFeature("notebook")) return;
     if (recordRecentTool) recordRecentTool("notebook");
     wx.navigateTo({ url: discoverPath("notebook", Boolean(getAccessToken())) });
   },
 
   openMemes() {
+    if (!this.canOpenFeature("memes")) return;
     if (recordRecentTool) recordRecentTool("memes");
     wx.navigateTo({ url: discoverPath("memes") });
   },
@@ -330,11 +348,13 @@ Page({
   },
 
   openHolidays() {
+    if (!this.canOpenFeature("holidays")) return;
     if (recordRecentTool) recordRecentTool("holidays");
     wx.navigateTo({ url: discoverPath("holidays") });
   },
 
   openLottery() {
+    if (!this.canOpenFeature("lottery")) return;
     if (recordRecentTool) recordRecentTool("lottery");
     wx.navigateTo({ url: discoverPath("lottery") });
   },
@@ -349,12 +369,16 @@ Page({
     }
   },
 
-  openPoker() { wx.navigateTo({ url: "/pages/score/poker/index" }); },
+  openPoker() {
+    if (this.canOpenFeature("poker")) wx.navigateTo({ url: "/pages/score/poker/index" });
+  },
 
-  openGeneral() { wx.navigateTo({ url: "/pages/score/general/index" }); },
+  openGeneral() {
+    if (this.canOpenFeature("general")) wx.navigateTo({ url: "/pages/score/general/index" });
+  },
 
   openMahjong() {
-    wx.navigateTo({ url: "/pages/score/mahjong/index" });
+    if (this.canOpenFeature("mahjong")) wx.navigateTo({ url: "/pages/score/mahjong/index" });
   },
 
   showComingSoon(event) {

@@ -242,3 +242,22 @@
   font-size: 24rpx;
   line-height: 1.8;
 }
+
+.history-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  min-height: 44px;
+  margin: 12rpx 0 0;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
+  background: var(--fb-primary-soft);
+  color: var(--fb-primary);
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.history-link.history-entry {
+  margin-top: 16rpx;
+}

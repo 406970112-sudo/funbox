@@ -86,7 +86,7 @@ test("score API sends authentication and mahjong room settings", async () => {
     password: "1234",
   });
   assert.equal(calls.length, 1);
-  assert.match(calls[0].url, /\/score-rooms$/);
+  assert.match(calls[0].url, /\/miniprogram\/score-rooms$/);
   assert.equal(calls[0].method, "POST");
   assert.equal(calls[0].header.Authorization, "Bearer access-token");
   assert.deepEqual(calls[0].data, {

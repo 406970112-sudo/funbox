@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { API_BASE_URL } = require("../config/index");
+const { API_BASE_URL, ACCESS_TOKEN_STORAGE_KEY } = require("../config/index");
 
 const storage = {};
 const requests = [];
@@ -78,6 +78,25 @@ test("settings does not render the WeChat login or binding card", () => {
 
   assert.doesNotMatch(template, /微信登录|绑定微信|wechat-binding-card|wechat-bind-button/);
   assert.match(template, /bindtap="logout"/);
+});
+
+test("a WeChat account can copy its full FunBox ID from settings", async () => {
+  responseUser = { ...responseUser, id: "db15896f-bb99-470c-baf2-1a1e615b8143", accountType: "wechat", username: "" };
+  let clipboard;
+  wx.setClipboardData = (options) => { clipboard = options.data; };
+  try {
+    const page = createPage();
+    await page.loadProfile();
+    assert.equal(page.data.funBoxId, responseUser.id);
+    page.copyFunBoxId();
+    assert.equal(clipboard, responseUser.id);
+    wx.removeStorageSync(ACCESS_TOKEN_STORAGE_KEY);
+    clipboard = "";
+    page.copyFunBoxId();
+    assert.equal(clipboard, "");
+  } finally {
+    delete wx.setClipboardData;
+  }
 });
 
 test("saving a nickname trims it and updates persistent account state", async () => {

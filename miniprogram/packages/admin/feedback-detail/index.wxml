@@ -1,0 +1,28 @@
+<import src="../state.wxml" />
+<view class="admin-page">
+  <template is="admin-state" data="{{loading, ready, denied, error}}" />
+  <view wx:if="{{ready}}" class="admin-stack">
+    <view class="fb-card admin-panel admin-stack">
+      <view class="admin-split">
+        <text class="admin-item-title">{{item.title || '用户反馈'}}</text><text class="admin-pill admin-pill--{{item.status}}">{{item.statusLabel}}</text>
+      </view>
+      <view class="admin-split">
+        <view class="admin-grow"><text class="admin-muted">{{item.user.displayName || '用户'}}</text><text class="admin-meta">{{item.timestamp}}</text></view>
+        <button wx:if="{{showUser}}" class="admin-link" hover-class="fb-tap-btn" bindtap="openUser">查看账号 ›</button>
+      </view>
+      <text class="admin-copy" selectable user-select>{{item.description}}</text>
+      <view wx:if="{{item.images.length}}" class="admin-attachments">
+        <button wx:for="{{item.images}}" wx:key="id" class="admin-secondary" hover-class="fb-tap-btn" data-index="{{index}}"
+          disabled="{{busy}}" bindtap="openImage">查看截图 {{item.images.length > 1 ? index + 1 : ''}}</button>
+      </view>
+    </view>
+    <view class="fb-card admin-panel admin-stack">
+      <view class="admin-split"><text class="admin-item-title">回复用户</text><text class="admin-muted">{{replyLength}} / 1000</text></view>
+      <textarea class="admin-textarea" placeholder-class="admin-placeholder" placeholder="填写处理结果"
+        value="{{reply}}" maxlength="-1" disabled="{{busy}}" bindinput="editReply" aria-label="回复用户" />
+      <text wx:if="{{item.replyTimestamp}}" class="admin-meta">上次回复 {{item.replyTimestamp}}</text>
+      <button class="admin-primary" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="submitReply">{{item.status === 'resolved' ? '更新回复' : '回复并标记已处理'}}</button>
+      <button wx:if="{{item.status === 'pending'}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" bindtap="markProcessing">标记处理中</button>
+    </view>
+  </view>
+</view>

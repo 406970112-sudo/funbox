@@ -7,9 +7,9 @@
     <text class="discover-sub">牌局之外的记录、搜图与假期日历，都在这里。</text>
   </view>
   <view class="discover-grid">
-    <template is="discover-lottery" />
-    <template is="discover-holidays" data="{{card: holidayCard}}" />
-    <template is="discover-notebook" />
-    <template is="discover-memes" />
+    <template wx:if="{{featureEntries.lottery !== 'hidden'}}" is="discover-lottery" />
+    <template wx:if="{{featureEntries.holidays !== 'hidden'}}" is="discover-holidays" data="{{card: holidayCard}}" />
+    <template wx:if="{{featureEntries.notebook !== 'hidden'}}" is="discover-notebook" />
+    <template wx:if="{{featureEntries.memes !== 'hidden'}}" is="discover-memes" />
   </view>
 </view>

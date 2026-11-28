@@ -18,7 +18,7 @@
 
   <view class="mode-tabs">
     <view class="mode-tab {{mode === 'create' ? 'active' : ''}}" data-mode="create" bindtap="switchMode">创建房间</view>
-    <view class="mode-tab {{mode === 'join' ? 'active' : ''}}" data-mode="join" bindtap="switchMode">加入房间</view>
+    <view wx:if="{{roomJoinEntry !== 'hidden'}}" class="mode-tab {{mode === 'join' ? 'active' : ''}}" data-mode="join" bindtap="switchMode">加入房间</view>
   </view>
 
   <view wx:if="{{mode === 'create'}}" class="form-card">

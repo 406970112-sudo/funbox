@@ -14,6 +14,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"my-first-expo-app/backend/internal/miniadmin"
 	"my-first-expo-app/backend/internal/roles"
 	"my-first-expo-app/backend/internal/user"
 )
@@ -65,6 +66,16 @@ type Service struct {
 	signingKey   []byte
 	store        Store
 	tokenTTL     time.Duration
+}
+
+func (s *Service) MiniAdmin() *miniadmin.Store {
+	if s == nil {
+		return nil
+	}
+	if store, ok := s.store.(interface{ MiniAdmin() *miniadmin.Store }); ok {
+		return store.MiniAdmin()
+	}
+	return nil
 }
 
 type Session struct {

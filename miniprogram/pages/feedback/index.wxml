@@ -2,8 +2,9 @@
   <view wx:if="{{submitted}}" class="success-card">
     <view class="success-art art art-score"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
     <text class="success-title">反馈已提交</text>
-    <text class="success-copy">管理员可在后台查看你的描述和截图，处理结果会通过账号通知触达。</text>
-    <button class="success-button" hover-class="fb-tap-btn" bindtap="goBack">返回我的</button>
+    <text class="success-copy">可在「我的反馈」查看处理进度和回复。</text>
+    <button class="success-button" hover-class="fb-tap-btn" bindtap="openHistory">查看我的反馈</button>
+    <button class="history-link" hover-class="fb-tap-btn" bindtap="goBack">返回我的</button>
   </view>
 
   <block wx:else>
@@ -14,6 +15,7 @@
         <view class="feedback-art art art-feedback"><image class="art-atlas" src="/assets/illustrations/tabletop-atlas.png" mode="scaleToFill" aria-hidden="true" /></view>
       </view>
       <text class="hero-copy">请描述操作过程、预期结果和实际结果。可附 1 张截图帮助定位问题。</text>
+      <button class="history-link history-entry" hover-class="fb-tap-btn" bindtap="openHistory">我的反馈 <text aria-hidden="true">›</text></button>
     </view>
 
     <view class="form-card">

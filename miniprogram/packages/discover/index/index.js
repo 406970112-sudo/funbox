@@ -1,30 +1,40 @@
 const { getAccessToken } = require("../../../utils/auth");
 const { discoverPath, watchHolidayCard } = require("../../../utils/discover-entries");
 const { reduceMotionEnabled } = require("../../../utils/ui-motion");
+const { watchFeatureEntries, canOpenFeatureEntry } = require("../../../utils/feature-entries");
 
 Page({
-  data: { holidayCard: null, reduceMotion: false },
+  data: { holidayCard: null, reduceMotion: false, featureEntries: {} },
 
   onShow() {
     this.setData({ reduceMotion: reduceMotionEnabled() });
-    this.stopHolidayCard();
+    this.stopWatching();
     this._stopHolidayCard = watchHolidayCard(this);
+    this._stopFeatureEntries = watchFeatureEntries("discover", featureEntries => this.setData({ featureEntries }));
   },
 
-  onHide() { this.stopHolidayCard(); },
+  onHide() { this.stopWatching(); },
 
-  onUnload() { this.stopHolidayCard(); },
+  onUnload() { this.stopWatching(); },
 
-  stopHolidayCard() {
+  stopWatching() {
     if (this._stopHolidayCard) this._stopHolidayCard();
+    if (this._stopFeatureEntries) this._stopFeatureEntries();
     this._stopHolidayCard = null;
+    this._stopFeatureEntries = null;
   },
 
-  openNotebook() { wx.navigateTo({ url: discoverPath("notebook", Boolean(getAccessToken())) }); },
+  openTool(id) {
+    if (canOpenFeatureEntry(this.data.featureEntries[id])) {
+      wx.navigateTo({ url: discoverPath(id, Boolean(getAccessToken())) });
+    }
+  },
 
-  openMemes() { wx.navigateTo({ url: discoverPath("memes") }); },
+  openNotebook() { this.openTool("notebook"); },
 
-  openHolidays() { wx.navigateTo({ url: discoverPath("holidays") }); },
+  openMemes() { this.openTool("memes"); },
 
-  openLottery() { wx.navigateTo({ url: discoverPath("lottery") }); },
+  openHolidays() { this.openTool("holidays"); },
+
+  openLottery() { this.openTool("lottery"); },
 });

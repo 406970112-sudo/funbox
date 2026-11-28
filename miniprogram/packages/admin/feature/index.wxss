@@ -1,0 +1,13 @@
+@import "../shared.wxss";
+
+.admin-location-options {
+  display: flex;
+  gap: 6rpx 22rpx;
+  flex-wrap: wrap;
+}
+
+.admin-picker {
+  display: block;
+  min-height: 44px;
+  box-sizing: border-box;
+}

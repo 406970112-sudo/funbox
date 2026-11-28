@@ -445,7 +445,7 @@ func (s *Store) Resolve(
 		     reply_updated_at = CASE WHEN ? = 'resolved' THEN ? ELSE reply_updated_at END,
 		     user_read_at = CASE WHEN ? = 'resolved' THEN NULL ELSE user_read_at END,
 		     updated_at = ?
-		 WHERE id = ?`,
+		 WHERE id = ? AND (? <> 'processing' OR status <> 'resolved')`,
 		status,
 		adminUserID,
 		status,
@@ -457,6 +457,7 @@ func (s *Store) Resolve(
 		status,
 		now,
 		feedbackID,
+		status,
 	)
 	if err != nil {
 		return Submission{}, fmt.Errorf("resolve feedback submission: %w", err)
@@ -466,6 +467,12 @@ func (s *Store) Resolve(
 		return Submission{}, fmt.Errorf("resolve feedback rows affected: %w", err)
 	}
 	if affected == 0 {
+		if status == StatusProcessing {
+			if _, err := s.Get(ctx, feedbackID); err != nil {
+				return Submission{}, err
+			}
+			return Submission{}, ErrStatusInvalid
+		}
 		return Submission{}, ErrNotFound
 	}
 	return s.Get(ctx, feedbackID)

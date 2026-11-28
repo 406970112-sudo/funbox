@@ -26,6 +26,7 @@ Page({
     displayName: "",
     initial: "我",
     avatarUrl: "",
+    funBoxId: "",
     userLoading: false,
     saving: false,
     uploading: false,
@@ -64,6 +65,7 @@ Page({
       ...(preserveName ? {} : { displayName }),
       initial: Array.from(displayName)[0],
       avatarUrl: resolveAvatarUrl(user.avatarUrl),
+      funBoxId: user.id || "",
       wechatBound: Boolean(user.wechatBound),
     });
   },
@@ -94,6 +96,12 @@ Page({
 
   handleNameInput(event) {
     this.setData({ displayName: event.detail.value, errorMessage: "" });
+  },
+
+  copyFunBoxId() {
+    const user = getStoredUser();
+    if (!getAccessToken() || !user || !user.id || user.id !== this.data.funBoxId) return;
+    wx.setClipboardData({ data: user.id, fail: () => wx.showToast({ title: "复制失败，请重试", icon: "none" }) });
   },
 
   handleAvatarError() {

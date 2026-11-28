@@ -250,6 +250,10 @@
   animation: fb-reveal .36s ease-out .06s both;
 }
 
+.content-bento > .profile-card:only-child {
+  grid-column: 1 / -1;
+}
+
 .history-entry-card,
 .meme-entry-card,
 .notebook-entry-card {

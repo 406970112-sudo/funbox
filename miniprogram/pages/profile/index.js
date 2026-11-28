@@ -1,6 +1,8 @@
 const { clearSession, getAccessToken, getCurrentUser, getStoredUser } = require("../../utils/auth");
 const { API_BASE_URL } = require("../../config/index");
 const { reduceMotionEnabled } = require("../../utils/ui-motion");
+const { request } = require("../../utils/request");
+const { watchFeatureEntries, canOpenFeatureEntry } = require("../../utils/feature-entries");
 
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
 
@@ -46,15 +48,33 @@ Page({
     maskedUsername: "",
     registeredAt: "",
     reduceMotion: false,
+    featureEntries: {},
+    showWorkbench: false,
   },
 
   onShow() {
     this.setData({ reduceMotion: reduceMotionEnabled() });
+    this.loadFeatureEntries();
     this.loadProfile();
   },
 
   onPullDownRefresh() {
+    this.loadFeatureEntries();
     this.loadProfile().finally(() => wx.stopPullDownRefresh());
+  },
+
+  onHide() { this.stopFeatureEntries(); },
+
+  onUnload() { this.stopFeatureEntries(); },
+
+  loadFeatureEntries() {
+    this.stopFeatureEntries();
+    this._stopFeatureEntries = watchFeatureEntries("profile", featureEntries => this.setData({ featureEntries }));
+  },
+
+  stopFeatureEntries() {
+    if (this._stopFeatureEntries) this._stopFeatureEntries();
+    this._stopFeatureEntries = null;
   },
 
   resetLoggedOut() {
@@ -66,6 +86,7 @@ Page({
       avatarUrl: "",
       maskedUsername: "",
       registeredAt: "",
+      showWorkbench: false,
     });
   },
 
@@ -92,22 +113,38 @@ Page({
 
     const cachedUser = getStoredUser();
     if (cachedUser) this.applyUser(cachedUser);
-    this.setData({ userError: "" });
+    this.setData({ userError: "", showWorkbench: false });
     try {
       const user = await getCurrentUser();
-      if (generation !== this.loadGeneration) return;
+      if (generation !== this.loadGeneration || token !== getAccessToken()) return;
       if (!user) throw new Error("未获取到个人信息。");
       this.applyUser(user);
       syncAppAuthState();
     } catch (error) {
-      if (generation !== this.loadGeneration) return;
+      if (generation !== this.loadGeneration || token !== getAccessToken()) return;
       if (error && error.statusCode === 401) {
         clearSession();
         this.resetLoggedOut();
+        this.loadFeatureEntries();
         syncAppAuthState();
         return;
       }
       this.setData({ userError: error.message || "个人信息刷新失败，请稍后重试。" });
+      return;
+    }
+    await this.loadWorkbenchAccess(token, generation);
+  },
+
+  async loadWorkbenchAccess(token, generation) {
+    try {
+      const session = await request({ path: "/mini-admin/session", bearerToken: token });
+      if (generation !== this.loadGeneration || token !== getAccessToken()) return;
+      const showWorkbench = Boolean(session && (
+        session.owner === true || (Array.isArray(session.permissions) && session.permissions.length)
+      ));
+      this.setData({ showWorkbench });
+    } catch (_) {
+      // Profile remains usable when the workbench endpoint cannot be reached.
     }
   },
 
@@ -120,6 +157,7 @@ Page({
   },
 
   openHistory() {
+    if (!canOpenFeatureEntry(this.data.featureEntries.gameHistory)) return;
     if (!getAccessToken()) {
       wx.navigateTo({
         url: `/pages/auth/index?mode=login&returnTo=${encodeURIComponent("/pages/game-history/index")}`,
@@ -134,10 +172,12 @@ Page({
   },
 
   openMemeFavorites() {
+    if (!canOpenFeatureEntry(this.data.featureEntries.memes)) return;
     wx.navigateTo({ url: "/packages/meme/library/index?tab=favorites" });
   },
 
   openNotebook() {
+    if (!canOpenFeatureEntry(this.data.featureEntries.notebook)) return;
     if (!getAccessToken()) {
       wx.navigateTo({
         url: `/pages/auth/index?mode=login&returnTo=${encodeURIComponent("/packages/notebook/index/index")}`,
@@ -160,7 +200,13 @@ Page({
     wx.navigateTo({ url: "/pages/profile-settings/index" });
   },
 
+  openWorkbench() {
+    if (!getAccessToken() || !this.data.showWorkbench) return;
+    wx.navigateTo({ url: "/packages/admin/workbench/index" });
+  },
+
   openFeedback() {
+    if (!canOpenFeatureEntry(this.data.featureEntries.feedback)) return;
     if (!getAccessToken()) {
       wx.navigateTo({
         url: `/pages/auth/index?mode=login&returnTo=${encodeURIComponent("/pages/feedback/index")}`,

@@ -1,0 +1,24 @@
+<import src="../state.wxml" />
+<view class="admin-page">
+  <text class="admin-heading">反馈处理</text>
+  <template is="admin-state" data="{{loading, ready, denied, error}}" />
+  <block wx:if="{{ready}}">
+    <view class="admin-tabs" role="group" aria-label="反馈状态">
+      <button wx:for="{{filters}}" wx:key="id" class="admin-tab {{status === item.id ? 'admin-tab--active' : ''}}"
+        data-status="{{item.id}}" bindtap="chooseStatus" aria-pressed="{{status === item.id}}">{{item.label}}</button>
+    </view>
+    <view wx:if="{{!items.length}}" class="fb-card admin-state"><text class="admin-muted">该状态暂无反馈</text></view>
+    <view wx:else class="admin-stack">
+      <view wx:for="{{items}}" wx:key="id" class="fb-card admin-row" hover-class="fb-tap-row"
+        data-id="{{item.id}}" bindtap="openFeedback" role="button" aria-label="查看反馈">
+        <view class="admin-grow">
+          <text class="admin-item-title feedback-headline">{{item.headline}}</text>
+          <text class="admin-meta">{{item.author}}<text wx:if="{{item.timestamp}}"> · {{item.timestamp}}</text></text>
+        </view>
+        <text class="admin-pill admin-pill--{{item.status}}">{{item.statusLabel}}</text>
+        <text class="fb-arrow" aria-hidden="true">›</text>
+      </view>
+      <button wx:if="{{offset < total}}" class="admin-secondary" hover-class="fb-tap-btn" disabled="{{busy}}" loading="{{busy}}" bindtap="loadMore">加载更多</button>
+    </view>
+  </block>
+</view>

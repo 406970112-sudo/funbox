@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 
+	"my-first-expo-app/backend/internal/miniadmin"
 	"my-first-expo-app/backend/internal/roles"
 )
 
@@ -43,14 +44,16 @@ type User struct {
 }
 
 type Store struct {
-	db *sql.DB
+	db        *sql.DB
+	miniAdmin *miniadmin.Store
 }
 
 type ListOptions struct {
-	Limit  int
-	Offset int
-	Query  string
-	Role   roles.Role
+	Limit    int
+	Offset   int
+	Query    string
+	Role     roles.Role
+	SearchID bool
 }
 
 type ListResult struct {
@@ -97,8 +100,17 @@ func OpenStore(databasePath string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	store.miniAdmin, err = miniadmin.Open(db)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
 
 	return store, nil
+}
+
+func (s *Store) MiniAdmin() *miniadmin.Store {
+	return s.miniAdmin
 }
 
 func (s *Store) Close() error {
@@ -298,9 +310,14 @@ func (s *Store) List(ctx context.Context, options ListOptions) (ListResult, erro
 	clauses := make([]string, 0, 2)
 	args := make([]any, 0, 4)
 	if query := strings.TrimSpace(options.Query); query != "" {
-		clauses = append(clauses, `(username LIKE ? COLLATE NOCASE OR display_name LIKE ? COLLATE NOCASE)`)
 		pattern := "%" + query + "%"
-		args = append(args, pattern, pattern)
+		if options.SearchID {
+			clauses = append(clauses, `(id = ? COLLATE NOCASE OR display_name LIKE ? COLLATE NOCASE)`)
+			args = append(args, query, pattern)
+		} else {
+			clauses = append(clauses, `(username LIKE ? COLLATE NOCASE OR display_name LIKE ? COLLATE NOCASE)`)
+			args = append(args, pattern, pattern)
+		}
 	}
 	if options.Role != "" {
 		if !roles.IsValid(options.Role) {

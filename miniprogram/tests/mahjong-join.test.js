@@ -63,6 +63,20 @@ test("switching create/join closes the manual sheet and clears its keyboard offs
   assert.equal(page.data.manualKeyboardHeight, 0);
 });
 
+test("a hidden room-join entry blocks the secondary score page shortcuts", async () => {
+  const page = createPage({ mode: "create", roomJoinEntry: "hidden", roomCode: "123456", joinPassword: "666666", nickname: "小林" });
+  scanOptions = undefined;
+  joinRequest = undefined;
+  page.switchMode({ currentTarget: { dataset: { mode: "join" } } });
+  page.openManualJoin();
+  page.scanToJoin();
+  await page.joinByCode();
+  assert.equal(page.data.mode, "create");
+  assert.equal(page.data.manualJoinOpen, false);
+  assert.equal(scanOptions, undefined);
+  assert.equal(joinRequest, undefined);
+});
+
 test("manual submission keeps the sheet open on failure and can retry with edited credentials", async () => {
   const page = createPage({ manualJoinOpen: true, roomCode: "123456", joinPassword: "2468", nickname: " 小林 " });
   submitJoin = async () => { throw new Error("房间密码不正确"); };

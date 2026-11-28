@@ -3,10 +3,12 @@ const { clearScoreSession, saveHostRoomPassword, saveScoreSession } = require(".
 const { getAccessToken, getStoredUser } = require("./auth");
 const { extractInviteScene, extractInviteToken } = require("./invite");
 const { reduceMotionEnabled } = require("./ui-motion");
+const { watchFeatureEntries, canOpenFeatureEntry } = require("./feature-entries");
 
 module.exports = {
   data: {
     mode: "create",
+    roomJoinEntry: "visible",
     isLoggedIn: false,
     userName: "游客",
     roomName: "老友局",
@@ -47,9 +49,22 @@ module.exports = {
     this.entryVisible = true;
     this.setData({ joining: !!this.joinRequestPending, joinSucceeded: false, reducedMotion: reduceMotionEnabled() });
     this.syncAuth();
+    if (this.stopEntryPolicy) this.stopEntryPolicy();
+    this.stopEntryPolicy = watchFeatureEntries("score", ({ roomJoin }) => {
+      const patch = { roomJoinEntry: roomJoin };
+      if (roomJoin !== "visible" && this.data.mode === "join" && !this.data.joining) {
+        patch.mode = "create";
+        patch.manualJoinOpen = false;
+        patch.manualKeyboardHeight = 0;
+        patch.errorMessage = "";
+      }
+      this.setData(patch);
+    });
   },
 
   onHide() {
+    if (this.stopEntryPolicy) this.stopEntryPolicy();
+    this.stopEntryPolicy = null;
     this.entryVisible = false;
     if (this.joinSuccessTimer) clearTimeout(this.joinSuccessTimer);
     this.joinSuccessTimer = null;
@@ -87,12 +102,14 @@ module.exports = {
 
   switchMode(event) {
     if (this.data.joining || this.data.creating) return;
+    const mode = event.currentTarget.dataset.mode;
+    if (mode === "join" && !canOpenFeatureEntry(this.data.roomJoinEntry)) return;
     this.closeManualJoin();
-    this.setData({ mode: event.currentTarget.dataset.mode, editingField: "", errorMessage: "" });
+    this.setData({ mode, editingField: "", errorMessage: "" });
   },
 
   openManualJoin() {
-    if (this.data.scanning) return;
+    if (this.data.scanning || !canOpenFeatureEntry(this.data.roomJoinEntry)) return;
     this.setData({ manualJoinOpen: true, manualKeyboardHeight: 0, joinErrorField: "", errorMessage: "" });
   },
 
@@ -176,11 +193,12 @@ module.exports = {
   },
 
   scanToJoin() {
-    if (this.data.scanning || this.data.manualJoinOpen) return;
+    if (this.data.scanning || this.data.manualJoinOpen || !canOpenFeatureEntry(this.data.roomJoinEntry)) return;
     this.setData({ scanning: true, errorMessage: "" });
     wx.scanCode({
       scanType: ["qrCode", "wxCode"],
       success: (result) => {
+        if (!canOpenFeatureEntry(this.data.roomJoinEntry)) return;
         const scannedValue = result.path || result.result || "";
         const inviteScene = extractInviteScene(scannedValue);
         if (inviteScene) {
@@ -203,7 +221,7 @@ module.exports = {
   },
 
   async joinByCode() {
-    if (this.data.joining) return;
+    if (this.data.joining || !canOpenFeatureEntry(this.data.roomJoinEntry)) return;
     const code = this.data.roomCode.trim();
     const displayName = this.data.nickname.trim();
     if (code.length !== 6 || !/^\d{6}$/.test(code)) return this.setData({ joinErrorField: "roomCode", errorMessage: "请输入 6 位房间码。" });

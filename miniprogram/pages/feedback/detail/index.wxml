@@ -1,0 +1,49 @@
+<view class="record-page">
+  <view wx:if="{{loading && !item}}" class="fb-card record-state">
+    <text>正在加载反馈</text>
+  </view>
+  <view wx:if="{{errorMessage}}" class="fb-card record-state error-state">
+    <text>{{errorMessage}}</text>
+    <button class="record-button" hover-class="fb-tap-btn" bindtap="retryLoad">重试</button>
+  </view>
+
+  <block wx:if="{{item}}">
+    <view class="record-hero">
+      <text class="record-heading">反馈详情</text>
+      <text class="record-status status-{{item.status}}">{{item.statusLabel}}</text>
+    </view>
+
+    <view class="fb-card detail-card">
+      <view class="record-row-header">
+        <text class="detail-title">提交内容</text>
+        <text wx:if="{{item.submittedAt}}" class="record-time">{{item.submittedAt}}</text>
+      </view>
+      <text class="detail-copy" user-select="true">{{item.description}}</text>
+      <view wx:if="{{item.images.length}}" class="detail-images">
+        <button
+          wx:for="{{item.images}}"
+          wx:for-item="attachment"
+          wx:key="id"
+          class="record-button attachment-button"
+          hover-class="fb-tap-btn"
+          loading="{{downloadingImage === attachment.id}}"
+          disabled="{{!!downloadingImage}}"
+          data-id="{{attachment.id}}"
+          bindtap="previewImage"
+        >
+          {{item.images.length === 1 ? '查看截图' : '查看截图 ' + (index + 1)}}
+        </button>
+        <text wx:if="{{imageError}}" class="image-error" role="alert">{{imageError}}</text>
+      </view>
+    </view>
+
+    <view class="fb-card detail-card reply-card">
+      <view class="record-row-header">
+        <text class="detail-title">管理员回复</text>
+        <text wx:if="{{item.repliedAt}}" class="record-time">{{item.repliedAt}}</text>
+      </view>
+      <text wx:if="{{item.adminReply}}" class="detail-copy" user-select="true">{{item.adminReply}}</text>
+      <text wx:else class="reply-empty">暂未收到回复</text>
+    </view>
+  </block>
+</view>
