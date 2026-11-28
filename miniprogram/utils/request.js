@@ -25,6 +25,16 @@ function parseResponseData(data) {
   }
 }
 
+function responseError(response) {
+  const body = parseResponseData(response.data);
+  const parsed = { ...response, data: body };
+  const error = new Error(getErrorMessage(parsed));
+  error.statusCode = parsed.statusCode;
+  error.response = parsed;
+  error.code = body && body.error ? body.error : "";
+  return error;
+}
+
 function request({ path, method = "GET", data, auth = false, bearerToken = "", header = {} }) {
   return new Promise((resolve, reject) => {
     const token = bearerToken || (auth ? wx.getStorageSync(ACCESS_TOKEN_STORAGE_KEY) : "");
@@ -49,12 +59,7 @@ function request({ path, method = "GET", data, auth = false, bearerToken = "", h
           return;
         }
 
-        const body = response && response.data;
-        const error = new Error(getErrorMessage(response));
-        error.statusCode = response.statusCode;
-        error.response = response;
-        error.code = body && body.error ? body.error : "";
-        reject(error);
+        reject(responseError(response));
       },
       fail(error) {
         const requestError = new Error(error.errMsg || "网络请求失败，请稍后重试");
@@ -88,21 +93,12 @@ function uploadFile({
       header: requestHeader,
       timeout: REQUEST_TIMEOUT,
       success(response) {
-        const parsed = {
-          ...response,
-          data: parseResponseData(response.data),
-        };
         if (response.statusCode >= 200 && response.statusCode < 300) {
-          resolve(parsed.data);
+          resolve(parseResponseData(response.data));
           return;
         }
 
-        const body = parsed.data;
-        const error = new Error(getErrorMessage(parsed));
-        error.statusCode = response.statusCode;
-        error.response = parsed;
-        error.code = body && body.error ? body.error : "";
-        reject(error);
+        reject(responseError(response));
       },
       fail(error) {
         reject(new Error(error.errMsg || "文件上传失败，请稍后重试"));

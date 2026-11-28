@@ -2,10 +2,13 @@ const { request, uploadFile } = require("./request");
 const { ACCESS_TOKEN_STORAGE_KEY } = require("../config/index");
 
 const USER_STORAGE_KEY = "funboxUser";
+const WECHAT_LOGIN_GATEWAY_STATUSES = new Set([502, 503, 504]);
 let sessionRevision = 0;
 const AUTH_ERROR_MESSAGES = {
   wechat_code_invalid: "微信登录凭证已失效，请点击重试。",
   wechat_unavailable: "微信登录暂不可用，请稍后重试或使用手机号密码登录。",
+  wechat_gateway_unavailable: "登录服务暂时无法连接，请稍后重试或使用手机号密码登录。",
+  wechat_login_timeout: "登录请求超时，请检查网络后重试。",
   wechat_login_failed: "未能获取微信登录凭证，请重试。",
   wechat_already_bound: "当前微信或账号已有绑定，请使用原账号登录；如需处理，请通过功能反馈联系维护者。",
   session_changed: "登录状态已变化，请重新操作。",
@@ -102,11 +105,24 @@ function getWeChatCode() {
 
 async function loginWithWeChat({ isActive } = {}) {
   const commit = sessionAttempt(isActive);
-  const code = await getWeChatCode();
-  commit.check();
-  const session = await request({ path: "/auth/wechat/login", method: "POST", data: { code } });
-  commit(session);
-  return session;
+  for (let attempt = 0; ; attempt += 1) {
+    commit.check();
+    const code = await getWeChatCode();
+    commit.check();
+    try {
+      const session = await request({ path: "/auth/wechat/login", method: "POST", data: { code } });
+      commit(session);
+      return session;
+    } catch (error) {
+      const gatewayFailure = WECHAT_LOGIN_GATEWAY_STATUSES.has(error.statusCode);
+      const timedOut = error.code === "request_timeout";
+      // The first request may have consumed its code even if the client received an error.
+      if (attempt === 0 && (gatewayFailure || timedOut)) continue;
+      if (gatewayFailure && error.code !== "wechat_unavailable") error.code = "wechat_gateway_unavailable";
+      if (timedOut) error.code = "wechat_login_timeout";
+      throw error;
+    }
+  }
 }
 
 async function bindWeChat({ isActive } = {}) {

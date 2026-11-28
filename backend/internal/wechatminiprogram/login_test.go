@@ -1,13 +1,46 @@
 package wechatminiprogram
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
+
+type loginTestTransport func(*http.Request) (*http.Response, error)
+
+func (transport loginTestTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	return transport(request)
+}
+
+func TestCode2SessionLogsTransportTimeoutWithoutCredentials(t *testing.T) {
+	client, err := NewClient(Config{AppID: "test-app", AppSecret: "private-secret", Page: "page"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client.httpClient.Transport = loginTestTransport(func(*http.Request) (*http.Response, error) {
+		return nil, context.DeadlineExceeded
+	})
+	var output bytes.Buffer
+	originalOutput := log.Writer()
+	log.SetOutput(&output)
+	t.Cleanup(func() { log.SetOutput(originalOutput) })
+
+	if _, err := client.Code2Session(context.Background(), "private-login-code"); err == nil {
+		t.Fatal("accepted timed-out exchange")
+	}
+	entry := output.String()
+	if !strings.Contains(entry, "reason=transport_error timeout=true") {
+		t.Fatalf("missing transport timeout diagnosis: %q", entry)
+	}
+	if strings.Contains(entry, "private-secret") || strings.Contains(entry, "private-login-code") {
+		t.Fatal("diagnostic leaks credentials")
+	}
+}
 
 func TestCode2Session(t *testing.T) {
 	for _, tc := range []struct {

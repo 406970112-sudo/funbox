@@ -3,9 +3,11 @@ package auth
 import (
 	"context"
 	"errors"
+	"log"
+	"strings"
+
 	"my-first-expo-app/backend/internal/user"
 	"my-first-expo-app/backend/internal/wechatminiprogram"
-	"strings"
 )
 
 var (
@@ -28,6 +30,7 @@ func (s *Service) weChatIdentity(ctx context.Context, code string) (wechatminipr
 		return wechatminiprogram.Identity{}, ErrWeChatCodeInvalid
 	}
 	if s.weChatClient == nil {
+		log.Print("wechat code exchange unavailable: reason=client_disabled")
 		return wechatminiprogram.Identity{}, ErrWeChatUnavailable
 	}
 	identity, err := s.weChatClient.Code2Session(ctx, code)
@@ -40,6 +43,7 @@ func (s *Service) weChatIdentity(ctx context.Context, code string) (wechatminipr
 			case 45011:
 				return identity, ErrWeChatBusy
 			}
+			log.Printf("wechat code exchange failed: reason=upstream_api_error code=%d", apiErr.Code)
 		}
 		return wechatminiprogram.Identity{}, ErrWeChatUnavailable
 	}

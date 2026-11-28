@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,14 +28,20 @@ func (c *Client) Code2Session(ctx context.Context, code string) (Identity, error
 	// Never propagate transport errors: their URL can contain AppSecret and code.
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		if !errors.Is(err, context.Canceled) {
+			var networkError net.Error
+			log.Printf("wechat code exchange failed: reason=transport_error timeout=%t", errors.As(err, &networkError) && networkError.Timeout())
+		}
 		return Identity{}, errors.New("wechat login request failed")
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("wechat code exchange failed: reason=upstream_http_error status=%d", resp.StatusCode)
 		return Identity{}, errors.New("wechat login service unavailable")
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, defaultResponseLimit+1))
 	if err != nil || len(body) > defaultResponseLimit {
+		log.Print("wechat code exchange failed: reason=read_response")
 		return Identity{}, errors.New("read wechat login response failed")
 	}
 	var result struct {
@@ -42,12 +50,14 @@ func (c *Client) Code2Session(ctx context.Context, code string) (Identity, error
 		ErrCode int    `json:"errcode"`
 	}
 	if json.Unmarshal(body, &result) != nil {
+		log.Print("wechat code exchange failed: reason=invalid_response")
 		return Identity{}, errors.New("invalid wechat login response")
 	}
 	if result.ErrCode != 0 {
 		return Identity{}, &APIError{Code: result.ErrCode, Message: "wechat login exchange rejected"}
 	}
 	if strings.TrimSpace(result.OpenID) == "" {
+		log.Print("wechat code exchange failed: reason=missing_identity")
 		return Identity{}, errors.New("wechat login identity missing")
 	}
 	return Identity{AppID: c.cfg.AppID, OpenID: result.OpenID, UnionID: result.UnionID}, nil

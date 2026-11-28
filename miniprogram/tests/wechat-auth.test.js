@@ -71,9 +71,84 @@ test('WeChat failure permits a fresh-code retry without clearing an existing acc
  auth.saveSession({accessToken:'old-token',user:{id:'old'}});
  nextResponse={statusCode:401,data:{error:'wechat_code_invalid'}};
  const p=page({agreed:true});await p.handleWeChatLogin();
+ assert.equal(loginCalls,1);
  assert.equal(p.data.loading,false);assert.equal(auth.getAccessToken(),'old-token');assert.match(p.data.errorMessage,/重试/);
  nextResponse={statusCode:200,data:{accessToken:'new-token',user:{id:'new'}}};await p.handleWeChatLogin();
  assert.equal(loginCalls,2);assert.equal(auth.getAccessToken(),'new-token');
+});
+
+test('one tap retries a temporary login failure with a newly issued WeChat code', async () => {
+ const originalLogin = wx.login;
+ const originalRequest = wx.request;
+ wx.login = options => options.success({ code: 'fresh-' + ++loginCalls });
+ wx.request = options => {
+  requests.push(options);
+  if (requests.length === 1) options.success({ statusCode: 503, data: '<html>Service Unavailable</html>' });
+  else options.success(nextResponse);
+ };
+ try {
+  const p = page({ agreed: true });
+  await p.handleWeChatLogin();
+  assert.deepEqual(requests.map(request => request.data.code), ['fresh-1', 'fresh-2']);
+  assert.equal(auth.getAccessToken(), 'wechat-jwt');
+  assert.equal(syncs, 1);
+  assert.equal(p.data.errorMessage, '');
+ } finally {
+  wx.login = originalLogin;
+  wx.request = originalRequest;
+ }
+});
+
+test('persistent HTTP errors stop after one retry and distinguish raw backend JSON from a gateway page', async () => {
+ for (const sample of [
+  { data: '{"error":"wechat_unavailable"}', message: '微信登录暂不可用，请稍后重试或使用手机号密码登录。' },
+  { data: '<html>Service Unavailable</html>', message: '登录服务暂时无法连接，请稍后重试或使用手机号密码登录。' },
+ ]) {
+  loginCalls = 0;
+  nextResponse = { statusCode: 503, data: sample.data };
+  auth.saveSession({ accessToken: 'existing-token', user: { id: 'existing' } });
+  const p = page({ agreed: true });
+  await p.handleWeChatLogin();
+  assert.equal(loginCalls, 2);
+  assert.equal(auth.getAccessToken(), 'existing-token');
+  assert.equal(p.data.errorMessage, sample.message);
+  assert.equal(p.data.loading, false);
+ }
+});
+
+test('a WeChat login request timeout retries with a new credential', async () => {
+ const originalRequest = wx.request;
+ wx.request = options => {
+  requests.push(options);
+  if (requests.length === 1) options.fail({ errMsg: 'request:fail timeout' });
+  else options.success(nextResponse);
+ };
+ try {
+  await auth.loginWithWeChat();
+  assert.equal(loginCalls, 2);
+  assert.equal(auth.getAccessToken(), 'wechat-jwt');
+ } finally {
+  wx.request = originalRequest;
+ }
+});
+
+test('leaving the page during the first request cancels automatic login retry', async () => {
+ const originalRequest = wx.request;
+ let pending;
+ wx.request = options => { pending = options; };
+ try {
+  const p = page({ agreed: true });
+  const work = p.handleWeChatLogin();
+  await Promise.resolve();
+  p.onUnload();
+  pending.success({ statusCode: 503, data: '<html>Service Unavailable</html>' });
+  await work;
+  assert.equal(loginCalls, 1);
+  assert.equal(auth.getAccessToken(), '');
+  assert.equal(navigations.length, 0);
+ } finally {
+  wx.request = originalRequest;
+ }
 });
 
 test('binding requires the current account, preserves its token and stores the updated user',async()=>{
